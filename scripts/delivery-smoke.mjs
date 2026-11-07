@@ -2,6 +2,8 @@
 import { chromium } from '@playwright/test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
+import {spawn} from 'node:child_process';
+import {createServer} from 'node:net';
 import { unzipSync, strFromU8 } from 'fflate';
 import { toProjectFile } from '../src/project-file.mjs';
 import { WORK_PHASES } from '../src/estimate.mjs';
@@ -9,7 +11,16 @@ const out='/tmp/forma-qa/delivery';fs.mkdirSync(out,{recursive:true});
 const node=(id,label,kind,x)=>({id,type:'resource',position:{x,y:100},data:{label,kind,provider:'aws',description:label,origin:'proposed',config:{region:'ap-southeast-2',classification:'Internal',timeout:5000}}});
 const project={id:'browser-delivery',version:1,revision:4,name:'AWS policy assistant',provider:'aws',requirements:'Answer staff policy questions',nodes:[node('files','Amazon S3','source',0),node('llm','Amazon Bedrock','agent',300),node('guard','Bedrock Guardrails','guard',600),node('api','AWS Lambda','tool',900)],edges:[['files','llm'],['llm','guard'],['guard','api']].map(([source,target],i)=>({id:`e${i}`,source,target,type:'smoothstep',label:'policy context'})),needs:[],assumptions:[],openQuestions:[{id:'region',question:'Confirm data retention with the customer',status:'open'}],decisions:[{id:'cloud',title:'Cloud',subject:'platform.cloud',decision:'aws',status:'Accepted'},{id:'location',title:'Region',subject:'cloud.region',decision:'ap-southeast-2',status:'Accepted'}]};
 fs.writeFileSync(`${out}/input.atforma.json`,JSON.stringify(toProjectFile(project)));
-const browser=await chromium.launch({...(fs.existsSync('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome')?{executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'}:{}),headless:true});
+let server, browser;
+let base=process.env.ATMEM_ARCHITECT_DELIVERY_TEST_URL;
+if(!base){
+ const probe=createServer();await new Promise(resolve=>probe.listen(0,'127.0.0.1',resolve));
+ const port=probe.address().port;await new Promise(resolve=>probe.close(resolve));base=`http://127.0.0.1:${port}`;
+ server=spawn(process.execPath,['node_modules/vite/bin/vite.js','--host','127.0.0.1','--port',String(port),'--strictPort'],{cwd:new URL('..',import.meta.url),stdio:'ignore'});
+}
+try {
+ for(let i=0;i<100;i++){try{if((await fetch(base)).ok)break;}catch{}if(i===99)throw Error('Delivery test server did not start');await new Promise(r=>setTimeout(r,100));}
+ browser=await chromium.launch({...(fs.existsSync('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome')?{executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'}:{}),headless:true});
 const page=await browser.newPage({viewport:{width:1440,height:1000}});
 const errors=[],external=[];page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>{const u=new URL(r.url());if(['http:','https:'].includes(u.protocol)&&!['127.0.0.1','localhost'].includes(u.hostname))external.push(r.url());});
 await page.addInitScript(()=>{localStorage.clear();localStorage.setItem('atforma-connection-v1',JSON.stringify({provider:'claude-code',model:'default'}));});
@@ -20,7 +31,7 @@ await page.route('**/api/architect',r=>r.fulfill({json:{message:'Which usage ass
 await page.route('**/api/memory/*',r=>r.fulfill({json:{status:'disabled'}}));
 await page.route('**/api/pricing/*',r=>r.fulfill({json:{available:false,reason:'Synthetic test uses explicitly entered prices.'}}));
 let validationCalls=0;await page.route('**/api/terraform/validate',r=>{validationCalls++;return r.fulfill({json:validationCalls===1?{status:'passed',message:'Configuration schema passed. No cloud plan was run.',checks:[{name:'Terraform schema validation',passed:true,output:'Fixture validation result'}]}:{status:'unavailable',message:'Terraform is not installed. No CLI validation was run.',checks:[]}});});
-await page.goto('http://127.0.0.1:5174');
+await page.goto(base);
 await page.locator('input[type=file]').setInputFiles(`${out}/input.atforma.json`);
 assert.equal(await page.locator('.journey-actions .primary').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(31, 119, 124)');
 await page.getByText('Project opened.',{exact:true}).waitFor();
@@ -79,6 +90,12 @@ await page.screenshot({path:`${out}/delivery-desktop.png`,fullPage:true});
 await page.getByRole('region',{name:'Architecture journey'}).getByRole('button',{name:'Outputs',exact:true}).click();
 const outputs=page.getByRole('region',{name:'Outputs',exact:true});
 await outputs.getByRole('heading',{name:'Implementation Spec Kit',exact:true}).waitFor();
+await outputs.getByRole('complementary',{name:'Handoff readiness'}).waitFor();
+await outputs.getByRole('button',{name:'Review handoff gaps',exact:true}).click();
+await outputs.getByRole('heading',{name:'Handoff readiness',exact:true}).waitFor();
+assert.match(await outputs.getByLabel('Output preview').innerText(),/cloudPlan: not_run/);
+const readiness=JSON.parse(read('spec-kit/readiness.json'));
+assert.equal(readiness.snapshotId,manifest.snapshotId);assert.equal(readiness.status,'engineering_required');
 const directory=outputs.getByRole('navigation',{name:'Output files'});
 await directory.getByRole('button',{name:'tasks.md',exact:true}).click();
 await outputs.getByRole('heading',{name:'Detailed implementation tasks',exact:true}).waitFor();
@@ -97,7 +114,7 @@ const reviewedZip=unzipSync(fs.readFileSync(`${out}/reviewed.zip`));
 assert.equal(JSON.parse(strFromU8(reviewedZip['manifest.json'])).snapshotId,reviewedSnapshot);
 await page.screenshot({path:`${out}/outputs-directory.png`,fullPage:true});
 await page.setViewportSize({width:390,height:844});
-assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth),false);
+assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth),false,JSON.stringify(await page.evaluate(()=>[...document.querySelectorAll('body *')].filter(el=>el.getBoundingClientRect().right>innerWidth+1).slice(0,8).map(el=>({tag:el.tagName,cls:el.className,width:el.getBoundingClientRect().width,right:el.getBoundingClientRect().right})))));
 await page.setViewportSize({width:1440,height:1000});
 
 await page.getByRole('region',{name:'Architecture journey'}).getByRole('button',{name:'Terraform',exact:true}).click();
@@ -137,6 +154,8 @@ await page.getByRole('button',{name:'Start over',exact:true}).click();await page
 await page.getByRole('button',{name:'Start over',exact:true}).click();dl=page.waitForEvent('download');await page.getByRole('button',{name:'Save project and start over',exact:true}).click();file=await dl;await file.saveAs(`${out}/before-reset.atforma.json`);
 assert.equal(JSON.parse(fs.readFileSync(`${out}/before-reset.atforma.json`)).estimate.details.length,5);assert.equal((await state()).nodes.length,0);assert.equal((await state()).estimate,undefined);assert.equal(await page.getByRole('button',{name:'Undo',exact:true}).isDisabled(),true);assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('atforma-connection-v1')).provider),'claude-code');
 await page.locator('input[type=file]').setInputFiles(`${out}/before-reset.atforma.json`);await page.getByText('Project opened.',{exact:true}).waitFor();assert.equal((await state()).estimate.details.length,5);
-await page.setViewportSize({width:390,height:844});await tab('Estimate');await est.getByLabel('Detailed cloud charges').locator('summary').click();await page.screenshot({path:`${out}/estimate-mobile.png`,fullPage:true});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth),false);
+await page.setViewportSize({width:390,height:844});await tab('Estimate');await est.getByLabel('Detailed cloud charges').locator('summary').click();await page.screenshot({path:`${out}/estimate-mobile.png`,fullPage:true});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>window.innerWidth),false,JSON.stringify(await page.evaluate(()=>[...document.querySelectorAll('body *')].filter(el=>el.getBoundingClientRect().right>innerWidth+1).slice(0,8).map(el=>({tag:el.tagName,cls:el.className,width:el.getBoundingClientRect().width,right:el.getBoundingClientRect().right})))));
 assert.deepEqual(errors,[]);assert.deepEqual(external,[]);await browser.close();
 console.log('Delivery scenarios passed: ROM → detailed charges, mixed currencies, consulting effort, AWS inventory, ZIP contents, regenerate after edit, undo/redo/branch, cancel/reset/save/reopen, mobile, no external requests. Synthetic prices and provider session only.');
+
+} finally { await browser?.close();server?.kill('SIGTERM'); }

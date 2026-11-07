@@ -1,0 +1,458 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "uploader",
+      "address": "block_75706c6f61646572",
+      "label": "Existing uploader (IAM principal)",
+      "provider": "tools",
+      "service": "Existing AWS IAM principal",
+      "selection": "Explicit principal binding",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing IAM principal — required ARN input generated",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": true,
+      "implemented": true
+    },
+    {
+      "id": "bucket",
+      "address": "block_6275636b6574",
+      "label": "Private source bucket",
+      "provider": "aws",
+      "service": "Amazon S3",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "ap-southeast-2 (candidate)",
+      "resources": [
+        "aws_s3_bucket",
+        "aws_s3_bucket_public_access_block",
+        "aws_s3_bucket_server_side_encryption_configuration",
+        "aws_s3_bucket_versioning",
+        "aws_s3_bucket_ownership_controls",
+        "aws_s3_bucket_policy"
+      ],
+      "costDrivers": "Storage, requests, retrieval and transfer",
+      "dependencies": [
+        "uploader",
+        "worker"
+      ],
+      "terraform": "S3 foundation generated",
+      "foundation": true,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": true
+    },
+    {
+      "id": "queue",
+      "address": "block_7175657565",
+      "label": "Work queue",
+      "provider": "aws",
+      "service": "Amazon SQS",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "ap-southeast-2 (candidate)",
+      "resources": [
+        "aws_sqs_queue"
+      ],
+      "costDrivers": "Requests, payload size and transfer",
+      "dependencies": [
+        "bucket"
+      ],
+      "terraform": "Typed asynchronous pipeline implementation generated",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": true
+    },
+    {
+      "id": "dlq",
+      "address": "block_646c71",
+      "label": "Dead-letter queue",
+      "provider": "aws",
+      "service": "Amazon SQS",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "ap-southeast-2 (candidate)",
+      "resources": [
+        "aws_sqs_queue"
+      ],
+      "costDrivers": "Requests, payload size and transfer",
+      "dependencies": [
+        "queue"
+      ],
+      "terraform": "Typed asynchronous pipeline implementation generated",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": true
+    },
+    {
+      "id": "worker",
+      "address": "block_776f726b6572",
+      "label": "Word-count worker",
+      "provider": "aws",
+      "service": "AWS Lambda",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "ap-southeast-2 (candidate)",
+      "resources": [
+        "aws_lambda_function",
+        "aws_iam_role"
+      ],
+      "costDrivers": "Requests, duration, memory and logs",
+      "dependencies": [
+        "queue"
+      ],
+      "terraform": "Typed asynchronous pipeline implementation generated",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {
+        "memoryMb": 256,
+        "functionTimeoutSeconds": 30,
+        "concurrency": 2,
+        "maxInputBytes": 1000000,
+        "logRetentionDays": 30
+      },
+      "reference": false,
+      "implemented": true
+    },
+    {
+      "id": "results",
+      "address": "block_726573756c7473",
+      "label": "Word-count results",
+      "provider": "aws",
+      "service": "Amazon DynamoDB",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "ap-southeast-2 (candidate)",
+      "resources": [
+        "aws_dynamodb_table"
+      ],
+      "costDrivers": "Read/write requests, storage and backup",
+      "dependencies": [
+        "worker"
+      ],
+      "terraform": "Typed asynchronous pipeline implementation generated",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": true
+    }
+  ],
+  "connections": [
+    {
+      "id": "e-up-bucket",
+      "source": "uploader",
+      "target": "bucket",
+      "data": "store/read files",
+      "generated": true,
+      "status": "Scoped access policy generated; account and runtime verification required"
+    },
+    {
+      "id": "e-bucket-queue",
+      "source": "bucket",
+      "target": "queue",
+      "data": "ObjectCreated event",
+      "generated": true,
+      "status": "Scoped access policy generated; account and runtime verification required"
+    },
+    {
+      "id": "e-queue-worker",
+      "source": "queue",
+      "target": "worker",
+      "data": "event source mapping",
+      "generated": true,
+      "status": "Scoped access policy generated; account and runtime verification required"
+    },
+    {
+      "id": "e-worker-bucket",
+      "source": "worker",
+      "target": "bucket",
+      "data": "GetObjectVersion",
+      "generated": true,
+      "status": "Scoped access policy generated; account and runtime verification required"
+    },
+    {
+      "id": "e-worker-results",
+      "source": "worker",
+      "target": "results",
+      "data": "conditional put count",
+      "generated": true,
+      "status": "Scoped access policy generated; account and runtime verification required"
+    },
+    {
+      "id": "e-queue-dlq",
+      "source": "queue",
+      "target": "dlq",
+      "data": "redrive after max receives",
+      "generated": true,
+      "status": "Scoped access policy generated; account and runtime verification required"
+    }
+  ],
+  "accessPlan": {
+    "connections": [
+      {
+        "id": "e-up-bucket",
+        "source": "uploader",
+        "target": "bucket",
+        "access": "s3-read-write",
+        "principalVariable": "principal_block_75706c6f61646572_arn"
+      }
+    ],
+    "bindings": [
+      {
+        "id": "uploader",
+        "variable": "principal_block_75706c6f61646572_arn"
+      }
+    ]
+  },
+  "asyncPlan": {
+    "pipelines": [
+      {
+        "worker": {
+          "id": "worker",
+          "address": "block_776f726b6572",
+          "label": "Word-count worker",
+          "provider": "aws",
+          "service": "AWS Lambda",
+          "selection": "Explicit service field; deployment review required",
+          "existing": false,
+          "region": "ap-southeast-2 (candidate)",
+          "resources": [
+            "aws_lambda_function",
+            "aws_iam_role"
+          ],
+          "costDrivers": "Requests, duration, memory and logs",
+          "dependencies": [
+            "queue"
+          ],
+          "terraform": "Typed asynchronous pipeline implementation generated",
+          "foundation": false,
+          "compute": false,
+          "api": false,
+          "summary": false,
+          "settings": {
+            "memoryMb": 256,
+            "functionTimeoutSeconds": 30,
+            "concurrency": 2,
+            "maxInputBytes": 1000000,
+            "logRetentionDays": 30
+          },
+          "reference": false,
+          "implemented": true
+        },
+        "queue": {
+          "id": "queue",
+          "address": "block_7175657565",
+          "label": "Work queue",
+          "provider": "aws",
+          "service": "Amazon SQS",
+          "selection": "Explicit service field; deployment review required",
+          "existing": false,
+          "region": "ap-southeast-2 (candidate)",
+          "resources": [
+            "aws_sqs_queue"
+          ],
+          "costDrivers": "Requests, payload size and transfer",
+          "dependencies": [
+            "bucket"
+          ],
+          "terraform": "Typed asynchronous pipeline implementation generated",
+          "foundation": false,
+          "compute": false,
+          "api": false,
+          "summary": false,
+          "settings": {},
+          "reference": false,
+          "implemented": true
+        },
+        "bucket": {
+          "id": "bucket",
+          "address": "block_6275636b6574",
+          "label": "Private source bucket",
+          "provider": "aws",
+          "service": "Amazon S3",
+          "selection": "Explicit service field; deployment review required",
+          "existing": false,
+          "region": "ap-southeast-2 (candidate)",
+          "resources": [
+            "aws_s3_bucket",
+            "aws_s3_bucket_public_access_block",
+            "aws_s3_bucket_server_side_encryption_configuration",
+            "aws_s3_bucket_versioning",
+            "aws_s3_bucket_ownership_controls",
+            "aws_s3_bucket_policy"
+          ],
+          "costDrivers": "Storage, requests, retrieval and transfer",
+          "dependencies": [
+            "uploader",
+            "worker"
+          ],
+          "terraform": "S3 foundation generated",
+          "foundation": true,
+          "compute": false,
+          "api": false,
+          "summary": false,
+          "settings": {},
+          "reference": false,
+          "implemented": true
+        },
+        "table": {
+          "id": "results",
+          "address": "block_726573756c7473",
+          "label": "Word-count results",
+          "provider": "aws",
+          "service": "Amazon DynamoDB",
+          "selection": "Explicit service field; deployment review required",
+          "existing": false,
+          "region": "ap-southeast-2 (candidate)",
+          "resources": [
+            "aws_dynamodb_table"
+          ],
+          "costDrivers": "Read/write requests, storage and backup",
+          "dependencies": [
+            "worker"
+          ],
+          "terraform": "Typed asynchronous pipeline implementation generated",
+          "foundation": false,
+          "compute": false,
+          "api": false,
+          "summary": false,
+          "settings": {},
+          "reference": false,
+          "implemented": true
+        },
+        "dlq": {
+          "id": "dlq",
+          "address": "block_646c71",
+          "label": "Dead-letter queue",
+          "provider": "aws",
+          "service": "Amazon SQS",
+          "selection": "Explicit service field; deployment review required",
+          "existing": false,
+          "region": "ap-southeast-2 (candidate)",
+          "resources": [
+            "aws_sqs_queue"
+          ],
+          "costDrivers": "Requests, payload size and transfer",
+          "dependencies": [
+            "queue"
+          ],
+          "terraform": "Typed asynchronous pipeline implementation generated",
+          "foundation": false,
+          "compute": false,
+          "api": false,
+          "summary": false,
+          "settings": {},
+          "reference": false,
+          "implemented": true
+        },
+        "edges": [
+          {
+            "id": "e-queue-worker",
+            "source": "queue",
+            "target": "worker",
+            "type": "smoothstep",
+            "label": "event source mapping",
+            "integration": "sqs-lambda"
+          },
+          {
+            "id": "e-worker-bucket",
+            "source": "worker",
+            "target": "bucket",
+            "type": "smoothstep",
+            "label": "GetObjectVersion",
+            "integration": "lambda-s3-read"
+          },
+          {
+            "id": "e-worker-results",
+            "source": "worker",
+            "target": "results",
+            "type": "smoothstep",
+            "label": "conditional put count",
+            "integration": "lambda-dynamodb-write"
+          },
+          {
+            "id": "e-bucket-queue",
+            "source": "bucket",
+            "target": "queue",
+            "type": "smoothstep",
+            "label": "ObjectCreated event",
+            "integration": "s3-object-created"
+          },
+          {
+            "id": "e-queue-dlq",
+            "source": "queue",
+            "target": "dlq",
+            "type": "smoothstep",
+            "label": "redrive after max receives",
+            "integration": "sqs-redrive"
+          }
+        ]
+      }
+    ],
+    "componentIds": [
+      "worker",
+      "queue",
+      "results",
+      "dlq"
+    ],
+    "edgeIds": [
+      "e-queue-worker",
+      "e-worker-bucket",
+      "e-worker-results",
+      "e-bucket-queue",
+      "e-queue-dlq"
+    ]
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [],
+  "gapDetails": [],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

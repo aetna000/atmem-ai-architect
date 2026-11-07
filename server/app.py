@@ -12,8 +12,17 @@ from .memory_service import service as memory_service, safe as memory_safe
 
 app=FastAPI(title='AtMem AI Architect helper',docs_url=None,redoc_url=None,openapi_url=None)
 app.include_router(memory_router)
+from .voice_routes import router as voice_router, engine as voice_engine
+app.include_router(voice_router)
+
+@app.on_event("shutdown")
+async def shutdown_voice():
+    await voice_engine.close()
+
 from .terraform_routes import router as terraform_router
 app.include_router(terraform_router)
+from .emulation_routes import router as emulation_router
+app.include_router(emulation_router)
 TOKEN=secrets.token_urlsafe(32)
 ARCHITECT=AtMemArchitect()
 ALLOWED_HOSTS={'127.0.0.1:5174','localhost:5174','127.0.0.1:8766','localhost:8766','testserver'}
@@ -36,7 +45,7 @@ async def local_boundary(request:Request,call_next):
     if request.method=='POST':
         if not secrets.compare_digest(request.headers.get('authorization',''),f'Bearer {TOKEN}'):
             return JSONResponse({'detail':'Missing local session token'},status_code=401)
-        limit=2_100_000 if request.url.path in {'/api/projects/save','/api/memory/sync'} else 250000
+        limit=2_100_000 if request.url.path in {'/api/projects/save','/api/memory/sync','/api/voice/transcribe'} else 250000
         if len(await request.body())>limit:
             return JSONResponse({'detail':'Request too large'},status_code=413)
     response=await call_next(request)

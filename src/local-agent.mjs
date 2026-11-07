@@ -1,3 +1,5 @@
+import { runtimeSettings } from "./runtime-settings.mjs";
+import { handoffAssessment } from './handoff.mjs';
 import { journey } from "./journey.mjs";
 import { requirementNumber } from "./derive.mjs";
 import { estimate, consultingEstimate } from "./estimate.mjs";
@@ -22,6 +24,7 @@ export function toAgentProject(p) {
         provider: n.data.provider,
         description: String(n.data.description || "").slice(0, 1000),
         config: {
+          ...runtimeSettings(n.data.config),
           region: n.data.config?.region || "To be selected",
           classification: ["Public", "Internal", "Confidential"].includes(
             n.data.config?.classification,
@@ -34,6 +37,8 @@ export function toAgentProject(p) {
         outputPosition: n.data.outputPosition || "right",
         origin: String(n.data.origin || "proposed").slice(0, 100),
         ...(n.data.service ? { service: n.data.service } : {}),
+        ...(["aws-iam-principal","aws-bedrock-model","normalized-source-contract","web-browser"].includes(n.data.binding) ? { binding: n.data.binding } : {}),
+        ...(["rag-web-app","rag-user-pool","bounded-keyword-rag","iam-rag-api","bounded-rag-catalog","text-statistics","bedrock-summary","async-word-count","sqs-standard","sqs-dead-letter","word-count-results"].includes(n.data.implementation) ? { implementation: n.data.implementation } : {}),
         ...(n.data.category ? { category: n.data.category } : {}),
         ...(n.data.poc ? { poc: true } : {}),
         ...(n.data.role ? { role: n.data.role } : {}),
@@ -46,6 +51,8 @@ export function toAgentProject(p) {
       target: e.target,
       type: "smoothstep",
       label: String(e.label || "data").slice(0, 150),
+      ...(["s3-read", "s3-read-write", "lambda-invoke", "api-invoke"].includes(e.access) ? { access: e.access } : {}),
+      ...(["browser-https","web-rag-api","oauth-pkce","jwt-authorizer","source-catalog-sync","http-api-lambda","lambda-catalog-read","bedrock-converse","s3-object-created","sqs-lambda","lambda-s3-read","lambda-dynamodb-write","sqs-redrive"].includes(e.integration) ? { integration: e.integration } : {}),
     })),
   };
 }
@@ -54,12 +61,14 @@ export function agentContext(p) {
   const item = (type, id, text) => ({ type, id: String(id).slice(0, 60), text: String(text).slice(0, 1000) });
   const measure = (m) => (m ? ` [${m.metric} ${m.op} ${m.target}${m.unit || ""}]` : "");
   const next = journey(p);
-  const costs = estimate(p), work = consultingEstimate(p), resources = resourcePlan(p);
+  const costs = estimate(p), work = consultingEstimate(p), resources = resourcePlan(p), handoff = handoffAssessment(p);
   return [
     item("discovery","guided-journey",`Current journey step: ${next.id} — ${next.title}. ${next.reason} Next action: ${next.action}. Lead with one useful question and update the board/document from the answer. Later stages remain hidden until the working draft progresses; never direct the user to a hidden tab. Named service mapping is not verified cloud compatibility.`),
     item("discovery", "estimate-summary", `Current estimate stage: ${costs.maturity}. Monthly cloud subtotal ${costs.expected ?? "unknown"} ${costs.currency || "currency unresolved"}; range ${costs.low ?? "?"}–${costs.high ?? "?"}; ${costs.gaps.length} worksheet gaps. One-off consulting/build subtotal ${work.expected ?? "unknown"} ${work.currency}; ${work.complete ? "all phases entered" : "incomplete"}. Values are user inputs, not provider quotes. Later journey stages provide costs and a downloadable delivery draft with a Terraform sketch. Follow guided-journey before directing the user to those stages.`),
     ...costs.gaps.slice(0, 5).map((g, i) => item("question", `cost-gap-${i}`, g)),
-    item("discovery", "infrastructure-coverage", `${resources.rows.length} diagram components; ${resources.gaps.length} infrastructure/integration gaps. Native Terraform coverage is AWS S3 foundations only. Deployment is not connected.`),
+    item("discovery", "infrastructure-coverage", `${resources.rows.length} diagram components; ${resources.gaps.length} infrastructure/integration gaps. Native Terraform coverage is AWS S3 foundations, typed text-statistics, asynchronous word counts, Bedrock summaries and explicit existing-IAM-principal access. Deployment is not connected.`),
+    item("discovery", "handoff-readiness", `Handoff: ${handoff.status}; ${handoff.counts.priorityDecisions} priority decisions. Next: ${handoff.nextAction} Preserve accepted design decisions, distinguish country from deployment region, and resolve one highest-impact gap at a time. Do not equate schema validation with deployed behavior.`),
+    ...handoff.findings.filter(f=>f.priority===1).slice(0,5).map(f=>item("question",`handoff-${f.id}`,`${f.message} ${f.action}`)),
     ...(p.needs || []).map((r) => item("requirement", r.id, `${requirementNumber(p,r.id)} — ${r.priority} ${r.kind} ${r.category}: ${r.statement}${measure(r.measure)} (${r.status})`)),
     ...(p.assumptions || []).map((a) => item("assumption", a.id, `${a.statement} (stated ${a.madeAt})`)),
     ...(p.openQuestions || []).filter((q) => q.status === "open").map((q) => item("question", q.id, q.question)),

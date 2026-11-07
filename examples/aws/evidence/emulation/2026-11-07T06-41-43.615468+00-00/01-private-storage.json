@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "kind": "local-aws-emulation",
+  "backend": "moto",
+  "status": "passed",
+  "cloudOperations": false,
+  "terraformApply": "not_run",
+  "modelMode": "scripted-fixture",
+  "checks": [
+    {
+      "name": "Stateful emulator resource setup",
+      "passed": true,
+      "evidence": "stateful-emulation"
+    },
+    {
+      "name": "Versioned storage and prior-version recovery: block_646f632d6275636b6574",
+      "passed": true,
+      "evidence": "stateful-emulation"
+    }
+  ],
+  "capabilities": [
+    {
+      "service": "S3",
+      "mode": "stateful-service-API"
+    }
+  ],
+  "limitations": [
+    "Terraform apply and real AWS account prerequisites are not emulated; run provider checks separately.",
+    "IAM enforcement, API Gateway routing/signatures, Cognito sign-in/MFA and CloudFront delivery remain unverified.",
+    "Generated Python handlers execute on this host, not the AWS Lambda ARM64 runtime; event polling is driven by the harness.",
+    "Bedrock responses and authenticated request envelopes are deterministic fixtures, not model-quality or authentication evidence.",
+    "Quotas, billing, latency, service outages and native SharePoint/Confluence APIs require separate qualification."
+  ],
+  "cleanup": "passed",
+  "backendVersion": "5.2.5",
+  "message": "Supported local emulation checks passed. Review the unverified boundaries before deployment.",
+  "designRevision": 2,
+  "environment": "staging",
+  "artifactDigest": "c69feeb12e0350b5c64a8a14c5637199e6c259bdbcd28a8bfd283b637ea9dd4b",
+  "fileDigests": {
+    "preflight-requirements.lock": "17322a01f8cf7f5d85ddb1203853fb1bdc87e716971f4efb2559c0c49fb2ef17",
+    "preflight-aws.py": "4eb9d90ffdc2c8cf2262bf6a87e0231ffd7e71ae0ae86dca202c87ec9ca35231",
+    "PREFLIGHT.md": "00c7b9a27e4d768aa44570a6b5c80685bcfcb7f57fda2c6ee7b6dcd648cf1209",
+    ".gitignore": "bcaa9b020d6c4a5721412085a5024d510f1bd8c9fce03dd8c918881b31e26980",
+    "tests/storage-access.tftest.hcl": "9485c1a5f63f63c6b002c92efb54df2f9abc9dd0eb81151bbdf34b360b0e3607",
+    "deployment.tfvars.json.example": "feeac72295863c190b35b88f8ff6e69da0492d3c1d27f7ce2fa308c03aff461f",
+    "VALIDATION.md": "556baa226715d9d2633bf9aa637681a1b36a09ab5b1523fbb8e9f3beecb6aeb7",
+    "main.tf.json": "817b28c1901297133ecc22b78de0ead4f4ba42f58c414a67142884937f6756a7",
+    "resource-schedule.json": "b1faa26a6910494320ad4192eec7e8aafce96e12125b0920ecb938a86f74393a",
+    "README.md": "39a286452dc5fb3df05b133639c28e814680b8ae177eabf0fb0054d247f7cb88"
+  },
+  "workspaceCleanup": "passed"
+}

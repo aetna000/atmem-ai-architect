@@ -65,7 +65,7 @@ const RULES = [
       return open.map((n) => ({
         statement: `${n.data.label} can reach users or systems without a guardrail or approval step.`,
         rationale: "Generated content can be wrong, unsafe or leak data; it needs a check before it leaves the system.",
-        action: "Add a guardrail or human approval block between the model and its outputs.",
+        action: "Define and represent output validation or an approval control where needed; specify failure behavior and test it. Verify source authorization before retrieval and citation grounding separately: a guardrail block alone proves neither.",
         components: [n.id],
       }));
     },

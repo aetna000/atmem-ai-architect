@@ -1,0 +1,116 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "operator",
+      "address": "block_6f70657261746f72",
+      "label": "Test operator (existing IAM principal)",
+      "provider": "tools",
+      "service": "Existing AWS IAM principal",
+      "selection": "Explicit principal binding",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing IAM principal — required ARN input generated",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": true,
+      "implemented": true
+    },
+    {
+      "id": "doc-bucket",
+      "address": "block_646f632d6275636b6574",
+      "label": "Synthetic document bucket",
+      "provider": "aws",
+      "service": "Amazon S3",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "Candidate: ap-southeast-2 (Sydney), not approved",
+      "resources": [
+        "aws_s3_bucket",
+        "aws_s3_bucket_public_access_block",
+        "aws_s3_bucket_server_side_encryption_configuration",
+        "aws_s3_bucket_versioning",
+        "aws_s3_bucket_ownership_controls",
+        "aws_s3_bucket_policy"
+      ],
+      "costDrivers": "Storage, requests, retrieval and transfer",
+      "dependencies": [
+        "operator"
+      ],
+      "terraform": "S3 foundation generated",
+      "foundation": true,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": true
+    }
+  ],
+  "connections": [
+    {
+      "id": "operator-doc-bucket",
+      "source": "operator",
+      "target": "doc-bucket",
+      "data": "Upload and read documents (S3 read/write)",
+      "generated": true,
+      "status": "Scoped access policy generated; account and runtime verification required"
+    }
+  ],
+  "accessPlan": {
+    "connections": [
+      {
+        "id": "operator-doc-bucket",
+        "source": "operator",
+        "target": "doc-bucket",
+        "access": "s3-read-write",
+        "principalVariable": "principal_block_6f70657261746f72_arn"
+      }
+    ],
+    "bindings": [
+      {
+        "id": "operator",
+        "variable": "principal_block_6f70657261746f72_arn"
+      }
+    ]
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [],
+  "gapDetails": [],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

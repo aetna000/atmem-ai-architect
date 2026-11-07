@@ -1,0 +1,237 @@
+{
+  "terraform": {
+    "required_version": ">= 1.5.0, < 2.0.0",
+    "required_providers": {
+      "aws": {
+        "source": "hashicorp/aws",
+        "version": "~> 6.0"
+      }
+    }
+  },
+  "variable": {
+    "principal_block_63616c6c6572_arn": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing IAM role or user ARN for input principal_block_63616c6c6572_arn. The referenced identity is not modified; API access contracts create a separate scoped caller role.",
+      "validation": {
+        "condition": "${can(regex(\"^arn:aws:iam::[0-9]{12}:(role|user)/[A-Za-z0-9_+=,.@/-]+$\", var.principal_block_63616c6c6572_arn))}",
+        "error_message": "Supply an IAM role/user ARN, not a root, session, wildcard or service principal."
+      }
+    },
+    "block_746578742d7374617473_memory_mb": {
+      "type": "number",
+      "default": 128,
+      "description": "Reviewable memory_mb for block_746578742d7374617473; confirm workload requirements.",
+      "validation": {
+        "condition": "${var.block_746578742d7374617473_memory_mb >= 128 && var.block_746578742d7374617473_memory_mb <= 10240 && floor(var.block_746578742d7374617473_memory_mb) == var.block_746578742d7374617473_memory_mb}",
+        "error_message": "Use an integer from 128 to 10240."
+      }
+    },
+    "block_746578742d7374617473_timeout_seconds": {
+      "type": "number",
+      "default": 10,
+      "description": "Reviewable timeout_seconds for block_746578742d7374617473; confirm workload requirements.",
+      "validation": {
+        "condition": "${var.block_746578742d7374617473_timeout_seconds >= 1 && var.block_746578742d7374617473_timeout_seconds <= 900 && floor(var.block_746578742d7374617473_timeout_seconds) == var.block_746578742d7374617473_timeout_seconds}",
+        "error_message": "Use an integer from 1 to 900."
+      }
+    },
+    "block_746578742d7374617473_concurrency": {
+      "type": "number",
+      "default": 1,
+      "description": "Reviewable concurrency for block_746578742d7374617473; confirm workload requirements.",
+      "validation": {
+        "condition": "${var.block_746578742d7374617473_concurrency >= 1 && var.block_746578742d7374617473_concurrency <= 1000 && floor(var.block_746578742d7374617473_concurrency) == var.block_746578742d7374617473_concurrency}",
+        "error_message": "Use an integer from 1 to 1000."
+      }
+    },
+    "block_746578742d7374617473_max_input_bytes": {
+      "type": "number",
+      "default": 65536,
+      "description": "Reviewable max_input_bytes for block_746578742d7374617473; confirm workload requirements.",
+      "validation": {
+        "condition": "${var.block_746578742d7374617473_max_input_bytes >= 1 && var.block_746578742d7374617473_max_input_bytes <= 1000000 && floor(var.block_746578742d7374617473_max_input_bytes) == var.block_746578742d7374617473_max_input_bytes}",
+        "error_message": "Use an integer from 1 to 1000000."
+      }
+    },
+    "block_746578742d7374617473_log_retention_days": {
+      "type": "number",
+      "default": 30,
+      "description": "Review log retention against policy; default is not a compliance claim.",
+      "validation": {
+        "condition": "${contains([1,3,5,7,14,30,60,90,120,150,180,365,400,545,731,1096,1827,2192,2557,2922,3288,3653], var.block_746578742d7374617473_log_retention_days)}",
+        "error_message": "Choose a supported finite CloudWatch log retention period."
+      }
+    },
+    "block_746578742d7374617473_release_version": {
+      "type": "string",
+      "default": null,
+      "description": "Null deploys the newly published version. A prior numeric version explicitly rolls the live alias back.",
+      "validation": {
+        "condition": "${var.block_746578742d7374617473_release_version == null ? true : can(regex(\"^[1-9][0-9]*$\", var.block_746578742d7374617473_release_version))}",
+        "error_message": "Use a published numeric version, or null for the current release."
+      }
+    },
+    "aws_region": {
+      "type": "string",
+      "description": "Explicitly choose the reviewed deployment region; no region is assumed."
+    },
+    "aws_account_id": {
+      "type": "string",
+      "description": "Expected AWS account ID; provider refuses a different account.",
+      "validation": {
+        "condition": "${can(regex(\"^[0-9]{12}$\", var.aws_account_id))}",
+        "error_message": "Use a twelve digit AWS account ID."
+      }
+    },
+    "review_approved": {
+      "type": "bool",
+      "default": false,
+      "description": "Set only after reviewing the design, cost, security and generated Terraform."
+    }
+  },
+  "provider": {
+    "aws": {
+      "region": "${var.aws_region}",
+      "allowed_account_ids": [
+        "${var.aws_account_id}"
+      ]
+    }
+  },
+  "locals": {
+    "unfinished_work": []
+  },
+  "resource": {
+    "terraform_data": {
+      "review_gate": {
+        "input": {
+          "design_revision": 2,
+          "environment": "staging"
+        },
+        "lifecycle": {
+          "precondition": [
+            {
+              "condition": "${var.review_approved && length(local.unfinished_work) == 0}",
+              "error_message": "Review this sketch and finish the work listed in resource-schedule.json before a deployment plan can succeed."
+            },
+            {
+              "condition": "${can(regex(format(\"^arn:aws:iam::%s:(role|user)/\", var.aws_account_id), var.principal_block_63616c6c6572_arn))}",
+              "error_message": "The bound IAM principal must belong to the selected AWS account."
+            }
+          ]
+        }
+      }
+    },
+    "aws_iam_role": {
+      "block_746578742d7374617473": {
+        "tags": {
+          "ManagedBy": "AtMem AI Architect",
+          "Environment": "staging",
+          "Component": "block_746578742d7374617473"
+        },
+        "name_prefix": "atmem-block_746578742d73746174-",
+        "assume_role_policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"lambda.amazonaws.com\"},\"Action\":\"sts:AssumeRole\"}]}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_cloudwatch_log_group": {
+      "block_746578742d7374617473": {
+        "tags": {
+          "ManagedBy": "AtMem AI Architect",
+          "Environment": "staging",
+          "Component": "block_746578742d7374617473"
+        },
+        "name": "/aws/lambda/${aws_iam_role.block_746578742d7374617473.name}",
+        "retention_in_days": "${var.block_746578742d7374617473_log_retention_days}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_iam_role_policy": {
+      "block_746578742d7374617473": {
+        "role": "${aws_iam_role.block_746578742d7374617473.id}",
+        "policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"logs:CreateLogStream\",\"logs:PutLogEvents\"],\"Resource\":\"${aws_cloudwatch_log_group.block_746578742d7374617473.arn}:*\"}]}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_lambda_function": {
+      "block_746578742d7374617473": {
+        "tags": {
+          "ManagedBy": "AtMem AI Architect",
+          "Environment": "staging",
+          "Component": "block_746578742d7374617473"
+        },
+        "function_name": "${aws_iam_role.block_746578742d7374617473.name}",
+        "role": "${aws_iam_role.block_746578742d7374617473.arn}",
+        "runtime": "python3.13",
+        "architectures": [
+          "arm64"
+        ],
+        "handler": "block_746578742d7374617473.handler",
+        "filename": "${path.module}/build/block_746578742d7374617473.zip",
+        "source_code_hash": "${filebase64sha256(format(\"%s/build/block_746578742d7374617473.zip\", path.module))}",
+        "memory_size": "${var.block_746578742d7374617473_memory_mb}",
+        "timeout": "${var.block_746578742d7374617473_timeout_seconds}",
+        "reserved_concurrent_executions": "${var.block_746578742d7374617473_concurrency}",
+        "publish": true,
+        "environment": {
+          "variables": {
+            "MAX_INPUT_BYTES": "${tostring(var.block_746578742d7374617473_max_input_bytes)}"
+          }
+        },
+        "depends_on": [
+          "aws_iam_role_policy.block_746578742d7374617473",
+          "aws_cloudwatch_log_group.block_746578742d7374617473",
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_lambda_alias": {
+      "block_746578742d7374617473": {
+        "name": "live",
+        "function_name": "${aws_lambda_function.block_746578742d7374617473.function_name}",
+        "function_version": "${var.block_746578742d7374617473_release_version == null ? aws_lambda_function.block_746578742d7374617473.version : var.block_746578742d7374617473_release_version}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_lambda_permission": {
+      "invoke_63616c6c65722d746578742d7374617473": {
+        "action": "lambda:InvokeFunction",
+        "function_name": "${aws_lambda_function.block_746578742d7374617473.function_name}",
+        "qualifier": "${aws_lambda_alias.block_746578742d7374617473.name}",
+        "principal": "${var.principal_block_63616c6c6572_arn}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    }
+  },
+  "output": {
+    "block_746578742d7374617473": {
+      "value": {
+        "invoke_arn": "${aws_lambda_alias.block_746578742d7374617473.arn}",
+        "published_version": "${aws_lambda_function.block_746578742d7374617473.version}",
+        "log_group": "${aws_cloudwatch_log_group.block_746578742d7374617473.name}"
+      }
+    },
+    "design_revision": {
+      "value": 2
+    },
+    "environment": {
+      "value": "staging"
+    },
+    "implemented_foundations": {
+      "value": 0
+    },
+    "buckets": {
+      "value": {}
+    }
+  }
+}

@@ -1,0 +1,487 @@
+{
+  "message": "I've drawn a cited-answer assistant on AWS for this test. SharePoint and Confluence feed a small keyword-search catalog through the local test servers, staff use a sign-in-protected web app, and Teams is a note for later; Sydney is only a suggested region, not an approved one. The next missing decision is the model: which Amazon Bedrock model ID should we use, and is it already enabled in your account? \"Not sure\" is fine.",
+  "phase": "Architecture",
+  "proposal": {
+    "baseRevision": 1,
+    "title": "AWS bounded keyword RAG knowledge assistant (qualification design)",
+    "body": "Scope: a web app with Cognito sign-in (PKCE and MFA) calls an IAM/JWT-protected HTTP API. The API calls a bounded keyword-RAG Lambda, which reads a DynamoDB catalog and calls an existing Bedrock model to produce cited answers. SharePoint and Confluence are existing external systems, reached only through the approved local normalized source-contract test servers. This does not verify native vendor APIs, real tenants, group expansion or inherited permissions, so production stays blocked. Teams is deferred and shown as a note. Assumptions: keyword retrieval, not vector search; up to 100 small UTF-8 documents. The region is unselected (Sydney ap-southeast-2 is only a candidate), and the model ID, quotas and availability are unverified. Nothing is deployed.",
+    "next": {
+      "version": 1,
+      "revision": 1,
+      "name": "AWS knowledge assistant (SharePoint/Confluence, cited answers)",
+      "provider": "aws",
+      "requirements": "Cited answers from approved SharePoint/Confluence documents through a web app. Preserve permissions, updates and deletes. Include recovery and audit. Teams comes later.",
+      "nodes": [
+        {
+          "id": "user",
+          "type": "resource",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "label": "Staff browser",
+            "kind": "tool",
+            "provider": "tools",
+            "description": "Staff member's browser. This is a client reference, not a provisioned service.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Internal",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "poc": false,
+            "role": "human",
+            "binding": "web-browser"
+          }
+        },
+        {
+          "id": "web",
+          "type": "resource",
+          "position": {
+            "x": 360,
+            "y": 0
+          },
+          "data": {
+            "label": "Web app",
+            "kind": "output",
+            "provider": "aws",
+            "description": "Browser channel (required scope). It owns private S3 assets and CloudFront access control, uses authorization code with PKCE, and shows answers with citations.",
+            "config": {
+              "region": "To be selected (candidate ap-southeast-2 Sydney)",
+              "classification": "Internal",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "poc": true,
+            "role": "app",
+            "service": "Amazon CloudFront",
+            "implementation": "rag-web-app"
+          }
+        },
+        {
+          "id": "cognito",
+          "type": "resource",
+          "position": {
+            "x": 360,
+            "y": 220
+          },
+          "data": {
+            "label": "User sign-in",
+            "kind": "guard",
+            "provider": "aws",
+            "description": "User pool with admin-created users, required software-token MFA, an access-token scope, and catalog-backed identity and employee-region mapping. Users are onboarded with the operator tool.",
+            "config": {
+              "region": "To be selected (candidate ap-southeast-2 Sydney)",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "poc": true,
+            "service": "Amazon Cognito",
+            "implementation": "rag-user-pool"
+          }
+        },
+        {
+          "id": "api",
+          "type": "resource",
+          "position": {
+            "x": 720,
+            "y": 0
+          },
+          "data": {
+            "label": "RAG API",
+            "kind": "tool",
+            "provider": "aws",
+            "description": "Authenticated, bounded HTTP API with a JWT browser route. There is no anonymous access. Access logs support the audit trail.",
+            "config": {
+              "region": "To be selected (candidate ap-southeast-2 Sydney)",
+              "classification": "Internal",
+              "timeout": 30000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "poc": true,
+            "service": "Amazon API Gateway",
+            "implementation": "iam-rag-api"
+          }
+        },
+        {
+          "id": "rag-fn",
+          "type": "resource",
+          "position": {
+            "x": 1080,
+            "y": 0
+          },
+          "data": {
+            "label": "Keyword RAG function",
+            "kind": "agent",
+            "provider": "aws",
+            "description": "Keyword retrieval with ACL and region filtering and revision rechecks, then a cited answer that is returned through the API. It owns its execution role, logs, version and alias. Unknown identities fail closed.",
+            "config": {
+              "region": "To be selected (candidate ap-southeast-2 Sydney)",
+              "classification": "Confidential",
+              "timeout": 30000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "poc": true,
+            "service": "AWS Lambda",
+            "implementation": "bounded-keyword-rag"
+          }
+        },
+        {
+          "id": "catalog",
+          "type": "resource",
+          "position": {
+            "x": 1080,
+            "y": 220
+          },
+          "data": {
+            "label": "Document catalog",
+            "kind": "resource",
+            "provider": "aws",
+            "description": "Holds up to 100 small UTF-8 documents with explicit ACLs, revisions, tombstones for deletes and a sync checkpoint. Writes are conditional.",
+            "config": {
+              "region": "To be selected (candidate ap-southeast-2 Sydney)",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "poc": true,
+            "service": "Amazon DynamoDB",
+            "implementation": "bounded-rag-catalog"
+          }
+        },
+        {
+          "id": "model",
+          "type": "resource",
+          "position": {
+            "x": 1440,
+            "y": 0
+          },
+          "data": {
+            "label": "Foundation model",
+            "kind": "predict",
+            "provider": "aws",
+            "description": "Existing Bedrock direct model, selected by a required model-ID input. Model access, Converse support, quotas and regional availability are not yet verified.",
+            "config": {
+              "region": "To be selected (candidate ap-southeast-2 Sydney)",
+              "classification": "Confidential",
+              "timeout": 30000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "poc": false,
+            "role": "llm",
+            "service": "Amazon Bedrock",
+            "binding": "aws-bedrock-model"
+          }
+        },
+        {
+          "id": "sp-src",
+          "type": "resource",
+          "position": {
+            "x": 720,
+            "y": 400
+          },
+          "data": {
+            "label": "SharePoint (test server)",
+            "kind": "source",
+            "provider": "tools",
+            "description": "Existing SharePoint, represented here by the approved local normalized source-contract test server. It provides snapshots, ACLs, updates and deletes. The native API and real-tenant compatibility are not verified.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "poc": false,
+            "binding": "normalized-source-contract"
+          }
+        },
+        {
+          "id": "cf-src",
+          "type": "resource",
+          "position": {
+            "x": 1440,
+            "y": 400
+          },
+          "data": {
+            "label": "Confluence (test server)",
+            "kind": "source",
+            "provider": "tools",
+            "description": "Existing Confluence, represented here by the approved local normalized source-contract test server. The native API and real-tenant compatibility are not verified.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "poc": false,
+            "binding": "normalized-source-contract"
+          }
+        },
+        {
+          "id": "teams-note",
+          "type": "resource",
+          "position": {
+            "x": 0,
+            "y": 220
+          },
+          "data": {
+            "label": "Later: Microsoft Teams channel",
+            "kind": "note",
+            "provider": "tools",
+            "description": "Teams is a deferred channel for a later phase. It is not part of this deployment.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Internal",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "poc": false
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "e-user-web",
+          "source": "user",
+          "target": "web",
+          "type": "smoothstep",
+          "label": "HTTPS",
+          "integration": "browser-https"
+        },
+        {
+          "id": "e-web-cognito",
+          "source": "web",
+          "target": "cognito",
+          "type": "smoothstep",
+          "label": "sign-in (PKCE + MFA)",
+          "integration": "oauth-pkce"
+        },
+        {
+          "id": "e-cognito-api",
+          "source": "cognito",
+          "target": "api",
+          "type": "smoothstep",
+          "label": "JWT authorizer",
+          "integration": "jwt-authorizer"
+        },
+        {
+          "id": "e-web-api",
+          "source": "web",
+          "target": "api",
+          "type": "smoothstep",
+          "label": "question → cited answer",
+          "integration": "web-rag-api"
+        },
+        {
+          "id": "e-api-fn",
+          "source": "api",
+          "target": "rag-fn",
+          "type": "smoothstep",
+          "label": "invoke",
+          "integration": "http-api-lambda"
+        },
+        {
+          "id": "e-fn-catalog",
+          "source": "rag-fn",
+          "target": "catalog",
+          "type": "smoothstep",
+          "label": "ACL-filtered keyword read",
+          "integration": "lambda-catalog-read"
+        },
+        {
+          "id": "e-fn-model",
+          "source": "rag-fn",
+          "target": "model",
+          "type": "smoothstep",
+          "label": "Converse (grounded prompt)",
+          "integration": "bedrock-converse"
+        },
+        {
+          "id": "e-sp-catalog",
+          "source": "sp-src",
+          "target": "catalog",
+          "type": "smoothstep",
+          "label": "snapshot sync, ACLs, deletes",
+          "integration": "source-catalog-sync"
+        },
+        {
+          "id": "e-cf-catalog",
+          "source": "cf-src",
+          "target": "catalog",
+          "type": "smoothstep",
+          "label": "snapshot sync, ACLs, deletes",
+          "integration": "source-catalog-sync"
+        }
+      ]
+    }
+  },
+  "requirementDrafts": [
+    {
+      "rationale": "Without this, the assistant could reveal restricted content. The test servers do not prove native group expansion or inherited permissions, so production stays blocked until those are verified.",
+      "basis": "User: \"Preserve source permissions, updates and deletes.\"",
+      "id": "ai-permission-trimmed-answers",
+      "statement": "Answers may use only documents the signed-in user is allowed to open, based on explicit ACLs copied from the source snapshot. Unknown identities or missing ACLs fail closed.",
+      "kind": "nonfunctional",
+      "category": "security",
+      "priority": "must",
+      "links": [
+        "catalog",
+        "rag-fn",
+        "sp-src",
+        "cf-src",
+        "cognito"
+      ]
+    },
+    {
+      "rationale": "Stale or deleted documents could otherwise be cited. The checkpoint lets an interrupted sync resume without losing changes.",
+      "basis": "User: \"Preserve source permissions, updates and deletes\" and \"include recovery and audit behavior\".",
+      "id": "ai-source-change-sync",
+      "statement": "Source updates and deletes reach the catalog through conditional writes and a recovery checkpoint, and revisions are rechecked before an answer is returned.",
+      "kind": "functional",
+      "category": "reliability",
+      "priority": "must",
+      "links": [
+        "sp-src",
+        "cf-src",
+        "catalog",
+        "rag-fn"
+      ]
+    },
+    {
+      "rationale": "An audit trail lets us show which sources supported an answer and investigate access questions. The retention period is still unknown.",
+      "basis": "User: \"include recovery and audit behavior\".",
+      "id": "ai-audit-trail",
+      "statement": "Proposed: record who asked, which documents were cited and sync outcomes in logs with a retention period to be agreed.",
+      "kind": "nonfunctional",
+      "category": "compliance",
+      "priority": "should",
+      "links": [
+        "rag-fn",
+        "api",
+        "sp-src",
+        "cf-src"
+      ]
+    }
+  ],
+  "decisionUpdates": [
+    {
+      "subject": "platform.cloud",
+      "value": "aws",
+      "sourceText": "Use AWS for this synthetic qualification design."
+    }
+  ],
+  "contextUsed": {
+    "status": "unavailable",
+    "enabled": true,
+    "engine": "AtMem 2.3.10 core SDK",
+    "recordsUsed": [],
+    "knowledgeRecordIds": [],
+    "skills": [
+      {
+        "id": "architecture",
+        "name": "AI architecture and discovery",
+        "provider": "all",
+        "stages": [
+          "discover",
+          "design",
+          "review"
+        ],
+        "version": "1.0.0",
+        "digest": "9ad2d605f02a4b5ecbc5310b2472f347a8c4301ece89714a0857d8405e075c90",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "devops",
+        "name": "Infrastructure and DevOps handoff",
+        "provider": "all",
+        "stages": [
+          "deploy",
+          "review"
+        ],
+        "version": "1.1.0",
+        "digest": "cd5a428597fbf388a12a863721d93e551c200f4ed30be3469fd8eae78262884c",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "aws",
+        "name": "AWS architecture guidance",
+        "provider": "aws",
+        "stages": [
+          "design",
+          "review",
+          "estimate",
+          "deploy"
+        ],
+        "version": "1.4.0",
+        "digest": "82147cbfe99396d8e659bc7c8d62ce57b0868983bc88c1ace0aaa860ecb9ba29",
+        "source": "https://raw.githubusercontent.com/aws/agent-toolkit-for-aws/fb298e0b6bf2b308a3d2c212b2a09b9bace8e090/plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+        "reference": {
+          "id": "aws",
+          "repository": "aws/agent-toolkit-for-aws",
+          "commit": "fb298e0b6bf2b308a3d2c212b2a09b9bace8e090",
+          "sourcePath": "plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+          "url": "https://raw.githubusercontent.com/aws/agent-toolkit-for-aws/fb298e0b6bf2b308a3d2c212b2a09b9bace8e090/plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+          "sha256": "aa8fef39ef6d64365e48827d9acc90b2b8755023f5c177341cf1c954c1057811",
+          "file": "agent-skills/upstream/aws/SKILL.md",
+          "status": "reference-only",
+          "note": "Imported source reference, not an enabled script/tool package. AtMem AI Architect specialist guidance is reviewed separately; referenced upstream companion files are not bundled.",
+          "integrity": true
+        },
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup",
+          "pricing.lookup"
+        ],
+        "enabled": true
+      }
+    ],
+    "tools": [],
+    "boundary": "AtMem AI Architect → native client",
+    "contextDigest": "ab0e506e4485d361880e54a50fd4c66df2a6177b072138cf8460839d16fc893c",
+    "projectId": "531327b5-b920-467e-9f40-567e74292525"
+  },
+  "priceQuotes": []
+}

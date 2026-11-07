@@ -1,0 +1,352 @@
+{
+  "version": 1,
+  "revision": 2,
+  "name": "An AWS assistant that answers questions…",
+  "provider": "aws",
+  "requirements": "",
+  "nodes": [
+    {
+      "id": "web",
+      "type": "resource",
+      "position": {
+        "x": 50,
+        "y": 190
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Web app",
+        "provider": "aws",
+        "kind": "output",
+        "description": "Browser chat interface. It owns private S3 assets and CloudFront access control, and shows answers with citations or an insufficient-evidence notice.",
+        "config": {
+          "region": "Candidate: ap-southeast-2 (Sydney), not approved",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "implementation": "rag-web-app",
+        "role": "app",
+        "service": "Amazon CloudFront"
+      }
+    },
+    {
+      "id": "cognito",
+      "type": "resource",
+      "position": {
+        "x": 470,
+        "y": 115
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "User sign-in",
+        "provider": "aws",
+        "kind": "guard",
+        "description": "User pool with admin-created users, required software-token MFA, access-token scope and catalog-backed identity/region mappings.",
+        "config": {
+          "region": "Candidate: ap-southeast-2 (Sydney), not approved",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "implementation": "rag-user-pool",
+        "service": "Amazon Cognito"
+      }
+    },
+    {
+      "id": "api",
+      "type": "resource",
+      "position": {
+        "x": 890,
+        "y": 190
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "RAG API",
+        "provider": "aws",
+        "kind": "tool",
+        "description": "Bounded, authenticated HTTP API with a JWT browser route. There is no anonymous access.",
+        "config": {
+          "region": "Candidate: ap-southeast-2 (Sydney), not approved",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "implementation": "iam-rag-api",
+        "role": "app",
+        "service": "Amazon API Gateway"
+      }
+    },
+    {
+      "id": "rag-fn",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 190
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Keyword retrieval + answer",
+        "provider": "aws",
+        "kind": "agent",
+        "description": "Runs ACL- and region-filtered keyword retrieval, rechecks revisions so deleted or updated documents aren't cited, builds a cited answer or returns 'insufficient evidence'. It owns its execution role, logs, version and alias.",
+        "config": {
+          "region": "Candidate: ap-southeast-2 (Sydney), not approved",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "implementation": "bounded-keyword-rag",
+        "service": "AWS Lambda"
+      }
+    },
+    {
+      "id": "catalog",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 50
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Document catalog",
+        "provider": "aws",
+        "kind": "source",
+        "description": "Stores up to 100 small UTF-8 synthetic documents with explicit ACLs and revisions. An operator ingests, updates and deletes documents through the generated management tool. Caller roles cannot write to it.",
+        "config": {
+          "region": "Candidate: ap-southeast-2 (Sydney), not approved",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "implementation": "bounded-rag-catalog",
+        "role": "index",
+        "service": "Amazon DynamoDB"
+      }
+    },
+    {
+      "id": "bedrock",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Foundation model",
+        "provider": "aws",
+        "kind": "predict",
+        "description": "Existing direct foundation model, selected by a required model-ID input. Access, Converse support, quotas and regional availability are unverified.",
+        "config": {
+          "region": "Candidate: ap-southeast-2 (Sydney), not approved",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "poc": true,
+        "binding": "aws-bedrock-model",
+        "role": "llm",
+        "service": "Amazon Bedrock"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-web-cognito",
+      "source": "web",
+      "target": "cognito",
+      "type": "smoothstep",
+      "label": "sign-in (OAuth PKCE)",
+      "integration": "oauth-pkce"
+    },
+    {
+      "id": "e-cognito-api",
+      "source": "cognito",
+      "target": "api",
+      "type": "smoothstep",
+      "label": "JWT authorizer",
+      "integration": "jwt-authorizer"
+    },
+    {
+      "id": "e-web-api",
+      "source": "web",
+      "target": "api",
+      "type": "smoothstep",
+      "label": "question → cited answer",
+      "integration": "web-rag-api"
+    },
+    {
+      "id": "e-api-fn",
+      "source": "api",
+      "target": "rag-fn",
+      "type": "smoothstep",
+      "label": "invoke",
+      "integration": "http-api-lambda"
+    },
+    {
+      "id": "e-fn-catalog",
+      "source": "rag-fn",
+      "target": "catalog",
+      "type": "smoothstep",
+      "label": "keyword lookup (ACL-filtered)",
+      "integration": "lambda-catalog-read"
+    },
+    {
+      "id": "e-fn-bedrock",
+      "source": "rag-fn",
+      "target": "bedrock",
+      "type": "smoothstep",
+      "label": "Converse (grounded prompt)",
+      "integration": "bedrock-converse"
+    }
+  ],
+  "id": "23e2e249-e57e-41b9-8157-6702fc481b01",
+  "brief": {
+    "application": "Build an AWS assistant that answers questions from a small synthetic document collection with source citations. Include ingestion, retrieval/indexing, model generation and an application interface. It must say when evidence is insufficient, and reflect document updates and deletions. For this first end-to-end qualification, use the approved bounded keyword-retrieval mode for at most 100 small documents; managed vector retrieval will be qualified separately. Use AWS for this synthetic qualification design. Propose Sydney as a candidate region, but do not record that as an approved deployment region. Draw the architecture and identify the next missing decision. This is a test design, not an instruction to deploy.",
+    "cloud": "AWS",
+    "data": "Review this same architecture and its generated Terraform. Keep the original scenario scope and preserve valid component IDs and existing systems. Validation findings: [{\"id\":\"application-not-qualified\",\"owner\":\"application\",\"message\":\"No executable application acceptance evidence for this artifact.\"},{\"id\":\"provider-schema-unverified\",\"owner\":\"validation\",\"message\":\"Run provider-schema validation against this exact export.\"},{\"id\":\"requirements-review-unverified\",\"owner\":\"review\",\"message\":\"Review requirements against emitted configuration, including identity, limits, region, costs and cleanup.\"}]. Correct architecture defects through a proposal where supported. For missing native resources, application code or integrations, explain the product implementation gap and next concrete engineering action; do not claim a diagram edit implemented it. Do not remove required components, weaken acceptance checks or clear unfinished-work gates to obtain a pass. Do not claim tests ran or request deployment. Identify what remains unverified."
+  },
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use AWS for this synthetic qualification design.",
+      "options": "",
+      "decision": "aws",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.bounded-keyword-rag-on-aws-qualification-sketch",
+      "title": "Bounded keyword RAG on AWS (qualification sketch)",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: synthetic qualification only, with no deployment. The web app (CloudFront + Cognito with PKCE and MFA) calls an authenticated HTTP API. The API calls a keyword-retrieval Lambda, which reads a DynamoDB catalog (up to 100 documents, with ACLs and revisions) and calls an existing Bedrock model through Converse. An operator loads documents through the generated management tool. Assumptions: Sydney (ap-southeast-2) is a candidate region only and is not approved. Model access, quotas and regional support are unverified. The model ID is still to be selected.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "needs": [
+    {
+      "id": "req-00d9fe34",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Every answer shows its sources",
+      "priority": "should",
+      "status": "open",
+      "source": "user",
+      "links": []
+    },
+    {
+      "id": "ai-insufficient-evidence",
+      "kind": "functional",
+      "category": "reliability",
+      "statement": "When the retrieved documents do not support an answer, the assistant must say the evidence is insufficient instead of answering.",
+      "rationale": "Proposed: stops the assistant from giving unsupported answers.",
+      "basis": "User: \"It must say when evidence is insufficient\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "rag-fn",
+        "bedrock"
+      ]
+    },
+    {
+      "id": "ai-doc-lifecycle",
+      "kind": "functional",
+      "category": "reliability",
+      "statement": "Updated or deleted documents must be reflected in later answers; answers must never cite a deleted or outdated version.",
+      "rationale": "Proposed: stale citations would undermine trust. The update delay is still to be confirmed, so no target is set yet.",
+      "basis": "User: \"reflect document updates and deletions\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "catalog",
+        "rag-fn"
+      ]
+    },
+    {
+      "id": "ai-bounded-scope",
+      "kind": "nonfunctional",
+      "category": "scalability",
+      "statement": "This qualification uses keyword retrieval over at most 100 small UTF-8 documents. Managed vector retrieval is out of scope.",
+      "rationale": "Sets the scope boundary for this test, so it isn't presented as vector search.",
+      "basis": "User: \"bounded keyword-retrieval mode for at most 100 small documents\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "catalog",
+        "rag-fn"
+      ],
+      "measure": {
+        "metric": "documents in collection",
+        "op": "<=",
+        "target": 100,
+        "unit": "documents"
+      }
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "extensions": {
+    "requirementNumbers": {
+      "req-00d9fe34": 1,
+      "drv-data-access": 2,
+      "drv-data-location": 3,
+      "ai-insufficient-evidence": 4,
+      "ai-doc-lifecycle": 5,
+      "ai-bounded-scope": 6
+    },
+    "requirementComments": []
+  },
+  "facts": [
+    {
+      "id": "fact-6415445c",
+      "name": "cloud.preference",
+      "value": "aws",
+      "unit": "provider",
+      "text": "Build an AWS assistant that answers questions from a small synthetic document collection with source citations. Include ingestion, retrieval/indexing, model generation and an application interface. It must say when evidence is insufficient, and reflect document updates and deletions. For this first ",
+      "madeAt": "2026-11-07"
+    }
+  ],
+  "workflow": "document-processing",
+  "asked": [
+    "knowledge-assistant:0"
+  ],
+  "lastAsked": {
+    "id": "document-processing:0",
+    "topic": "data",
+    "question": "What kinds of documents arrive, and how many a month?",
+    "beginner": "For example “invoices, about 3,000 a month, mostly PDF”.",
+    "why": "It shapes the Document extraction design."
+  },
+  "choices": {},
+  "conceptSig": null
+}

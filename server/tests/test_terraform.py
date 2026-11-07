@@ -33,3 +33,17 @@ class TerraformTests(unittest.TestCase):
         with patch.dict('os.environ',{'ATFORMA_TERRAFORM_BIN':'/trusted/terraform'}), patch('server.terraform_routes.shutil.which',return_value='/trusted/node'), patch('server.terraform_routes.subprocess.run',side_effect=replies) as run:
             result=validate(ValidationRequest(project={}))
         self.assertEqual(result['status'],'failed');self.assertEqual(run.call_count,2)
+
+    def test_generated_support_files_and_local_acceptance_checks_are_exercised(self):
+        from pathlib import Path
+        generated={'main.tf.json':'{}','handlers/demo.py':'def handler(event, context): return {}','app-tests/demo_test.py':'# generated test','tests/storage-access.tftest.hcl':'mock_provider "aws" {}'}
+        def invoke(args,**kwargs):
+            if args[-1].endswith('terraform-render.mjs'):return subprocess.CompletedProcess(args,0,json.dumps(generated),'')
+            folder=Path(kwargs.get('cwd') or args[1].removeprefix('-chdir='))
+            self.assertTrue((folder/'handlers/demo.py').exists())
+            self.assertNotIn('AWS_ACCESS_KEY_ID',kwargs['env'])
+            return subprocess.CompletedProcess(args,0,'passed','')
+        with patch.dict('os.environ',{'ATFORMA_TERRAFORM_BIN':'/trusted/terraform','AWS_ACCESS_KEY_ID':'never-pass'}),patch('server.terraform_routes.shutil.which',return_value='/trusted/node'),patch('server.terraform_routes.subprocess.run',side_effect=invoke) as run:
+            result=validate(ValidationRequest(project={}))
+        self.assertEqual(result['status'],'passed');self.assertEqual(len(result['checks']),4)
+        self.assertIn('handlers/demo.py',result['fileDigests']);self.assertEqual(run.call_count,5)

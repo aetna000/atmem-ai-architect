@@ -18,8 +18,8 @@ const tab=async(name)=>{await finished();await page.locator('.modes').getByRole(
 const openMemory=async()=>{await finished();await page.getByRole('button',{name:'More',exact:true}).click();await page.getByRole('menuitem',{name:'AtMem dashboard',exact:true}).click();await page.getByRole('heading',{name:'AtMem dashboard'}).waitFor();await page.getByRole('button',{name:/^Turn memory (off|on)$/}).waitFor();};
 assert.equal((await project()).nodes.length,0,'no default blocks');
 await page.getByRole('region',{name:'Architecture journey',exact:true}).waitFor();
-await page.getByRole('button',{name:'AtMem AI Architect',exact:true}).waitFor();
-assert.equal(await page.locator('.journey-actions .primary').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(95, 208, 214)');
+await page.getByTitle('About AtMem AI Architect',{exact:true}).waitFor();
+assert.equal(await page.locator('.journey-actions .primary').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(31, 119, 124)');
 assert.deepEqual(await page.locator('.modes [role=tab]').allInnerTexts(),['Design'],'later stages are hidden at the start');
 await chat('I want an internal assistant so staff can ask questions about our HR policy documents.');
 assert.equal((await project()).nodes.filter(n=>n.data.kind!=='note').length,3);

@@ -27,12 +27,13 @@ def registry():
         path = ROOT / 'agent-skills/specialists' / ident / 'SKILL.md'
         expected = json.loads((ROOT / 'agent-skills/specialists/manifest.json').read_text())[ident]
         data = path.read_bytes()
-        valid = hashlib.sha256(data).hexdigest() == expected
+        version_match = re.search(r'^version: ([0-9]+\.[0-9]+\.[0-9]+)$', data.decode(), re.MULTILINE)
+        valid = hashlib.sha256(data).hexdigest() == expected and version_match is not None
         reference = by_id.get(ident)
         if reference:
             reference = {**reference, 'integrity': hashlib.sha256((ROOT / reference['file']).read_bytes()).hexdigest() == reference['sha256']}
             valid = valid and reference['integrity']
-        result.append({'id': ident, 'name': name, 'provider': provider, 'stages': stages, 'version': '1.0.0', 'digest': expected,
+        result.append({'id': ident, 'name': name, 'provider': provider, 'stages': stages, 'version': version_match.group(1) if version_match else 'unknown', 'digest': expected,
             'instructions': data.decode(), 'source': reference['url'] if reference else 'AtMem AI Architect reviewed specialist guidance',
             'reference': reference, 'integrity': valid, 'coverage': 'guidance; no cloud execution', 'tools': ['memory.lookup','project.read','skills.lookup'] + (['pricing.lookup'] if ident in {'aws','finops'} else [])})
     return result

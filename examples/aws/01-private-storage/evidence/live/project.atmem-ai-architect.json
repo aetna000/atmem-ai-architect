@@ -1,0 +1,212 @@
+{
+  "format": "atmem.ai-architect.project",
+  "formatVersion": "2.2.0",
+  "meta": {
+    "id": "9087f3bc-e800-4d6b-a2a3-ac6279f8cdd2",
+    "name": "A private place on AWS to store a small…",
+    "createdAt": "2026-11-07T04:39:19.821Z",
+    "updatedAt": "2026-11-07T04:39:19.821Z",
+    "revision": 2,
+    "generator": "atmem-ai-architect 0.2.0"
+  },
+  "design": {
+    "provider": "aws",
+    "nodes": [
+      {
+        "id": "test-operator",
+        "type": "resource",
+        "position": {
+          "x": 0,
+          "y": 100
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Test operator (existing IAM principal)",
+          "provider": "tools",
+          "kind": "tool",
+          "description": "An existing same-account IAM user or role that uploads and reads the synthetic documents. It sits outside the provisioning scope. Its ARN is a required input and has not been verified.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "poc": true,
+          "binding": "aws-iam-principal"
+        }
+      },
+      {
+        "id": "doc-bucket",
+        "type": "resource",
+        "position": {
+          "x": 350,
+          "y": 100
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Private document bucket",
+          "provider": "aws",
+          "kind": "resource",
+          "description": "Stores a small set of synthetic text documents for a deployment test. S3 Block Public Access is on (all four settings), default server-side encryption is enabled (SSE-S3 vs SSE-KMS still to decide), versioning is enabled and bucket-owner-enforced object ownership is set. Access is granted only to the bound operator through a scoped bucket policy. Candidate region: Sydney (ap-southeast-2), not approved.",
+          "config": {
+            "region": "ap-southeast-2 (candidate, not approved)",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "data",
+          "service": "Amazon S3"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e-operator-bucket",
+        "source": "test-operator",
+        "target": "doc-bucket",
+        "type": "smoothstep",
+        "label": "Put/Get synthetic documents (IAM-authenticated)",
+        "access": "s3-read-write"
+      }
+    ]
+  },
+  "discovery": {
+    "problem": "",
+    "brief": {
+      "application": "I need a private place on AWS to store a small set of synthetic text documents for a deployment test. Keep public access blocked and enable encryption and versioning. This first scenario only needs storage; no AI, database or web application. Use AWS for this synthetic qualification design. Propose Sydney as a candidate region, but do not record that as an approved deployment region. Draw the architecture and identify the next missing decision. This is a test design, not an instruction to deploy.",
+      "cloud": "AWS",
+      "data": "Review this same architecture and its generated Terraform. Keep the original scenario scope and preserve valid component IDs and existing systems. Validation findings: [{\"id\":\"provider-schema-unverified\",\"owner\":\"validation\",\"message\":\"Run provider-schema validation against this exact export.\"},{\"id\":\"requirements-review-unverified\",\"owner\":\"review\",\"message\":\"Review requirements against emitted configuration, including identity, limits, region, costs and cleanup.\"}]. Correct architecture defects through a proposal where supported. For missing native resources, application code or integrations, explain the product implementation gap and next concrete engineering action; do not claim a diagram edit implemented it. Do not remove required components, weaken acceptance checks or clear unfinished-work gates to obtain a pass. Do not claim tests ran or request deployment. Identify what remains unverified."
+    },
+    "facts": [
+      {
+        "id": "fact-5ae066bf",
+        "name": "cloud.preference",
+        "value": "aws",
+        "unit": "provider",
+        "text": "I need a private place on AWS to store a small set of synthetic text documents for a deployment test. Keep public access blocked and enable encryption and versioning. This first scenario only needs storage; no AI, database or web application. Use AWS for this synthetic qualification design. Propose ",
+        "madeAt": "2026-11-07"
+      }
+    ],
+    "workflow": "document-processing",
+    "asked": [
+      "general:0"
+    ],
+    "lastAsked": {
+      "id": "document-processing:0",
+      "topic": "data",
+      "question": "What kinds of documents arrive, and how many a month?",
+      "beginner": "For example “invoices, about 3,000 a month, mostly PDF”.",
+      "why": "It shapes the Document extraction design."
+    }
+  },
+  "requirements": [
+    {
+      "id": "ai-private-storage",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Proposed: the document bucket blocks all public access, and only the designated operator principal can read or write objects.",
+      "rationale": "Prevents accidental exposure of test data and proves the access boundary works during qualification.",
+      "basis": "User: \"I need a private place on AWS... Keep public access blocked\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "doc-bucket",
+        "test-operator"
+      ]
+    },
+    {
+      "id": "ai-encrypt-version",
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "statement": "Proposed: the bucket encrypts objects at rest by default and keeps object versions so overwritten or deleted documents can be recovered.",
+      "rationale": "Encryption protects stored data. Versioning allows recovery from accidental overwrites or deletes, but it raises storage use, so a cleanup policy is still undecided.",
+      "basis": "User: \"enable encryption and versioning\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "doc-bucket"
+      ]
+    },
+    {
+      "id": "ai-data-residency",
+      "kind": "nonfunctional",
+      "category": "compliance",
+      "statement": "Proposed: the country where the documents must reside is to be confirmed before a deployment region is chosen. Sydney is only a candidate.",
+      "rationale": "Region placement should follow a stated country requirement. Treating a candidate region as approved could break residency expectations.",
+      "basis": "User: \"Propose Sydney as a candidate region, but do not record that as an approved deployment region.\"",
+      "priority": "should",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "doc-bucket"
+      ]
+    },
+    {
+      "id": "ai-test-cleanup",
+      "kind": "nonfunctional",
+      "category": "maintainability",
+      "statement": "Proposed: the test bucket has a defined retention and teardown approach covering noncurrent object versions, so that the test bucket can be fully emptied and removed after the test.",
+      "rationale": "With versioning on, deleted or overwritten objects are kept as old versions. That leaves stored data and charges behind, and the bucket cannot be removed until every version is gone.",
+      "basis": "User asked for versioning on a deployment-test bucket; the validation finding asks to review cleanup.",
+      "priority": "should",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "doc-bucket"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use AWS for this synthetic qualification design.",
+      "options": "",
+      "decision": "aws",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.private-s3-storage-for-synthetic-test-documents",
+      "title": "Private S3 storage for synthetic test documents",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: storage only, with no AI, database or web application. One proposed Amazon S3 bucket with Block Public Access on, default server-side encryption and versioning enabled. An existing test operator outside the provisioning scope is bound as an IAM principal. Its ARN is supplied later as an input and is not verified here. It has one s3-read-write grant. Assumptions: the documents are synthetic, Sydney (ap-southeast-2) is only a candidate region and not approved, and the encryption key choice (SSE-S3 vs SSE-KMS) is still open. This is a design for review, not a deployment.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "extensions": {
+    "requirementNumbers": {
+      "drv-data-access": 1,
+      "drv-data-location": 2,
+      "ai-private-storage": 3,
+      "ai-encrypt-version": 4,
+      "ai-data-residency": 5,
+      "ai-test-cleanup": 6
+    },
+    "choices": {},
+    "conceptSig": null
+  }
+}

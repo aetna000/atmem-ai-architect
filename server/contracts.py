@@ -13,6 +13,13 @@ class Configuration(Strict):
     region:str=Field(default='To be selected',max_length=100)
     classification:Literal['Public','Internal','Confidential']='Internal'
     timeout:int=Field(default=5000,ge=100,le=60000)
+    memoryMb:StrictInt|None=Field(default=None,ge=128,le=10240)
+    functionTimeoutSeconds:StrictInt|None=Field(default=None,ge=1,le=900)
+    concurrency:StrictInt|None=Field(default=None,ge=1,le=1000)
+    maxInputBytes:StrictInt|None=Field(default=None,ge=1,le=1000000)
+    maxOutputTokens:StrictInt|None=Field(default=None,ge=1,le=4096)
+    modelId:StrictStr|None=Field(default=None,max_length=150,pattern=r'^[a-z0-9][a-z0-9.-]*:[0-9]+$')
+    logRetentionDays:Literal[1,3,5,7,14,30,60,90,120,150,180,365,400,545,731,1096,1827,2192,2557,2922,3288,3653]|None=None
 
 class Measure(Strict):
     label:str=Field(min_length=1,max_length=150)
@@ -39,6 +46,8 @@ class Data(Strict):
     measures:list[Measure]|None=Field(default=None,max_length=10)
     service:str|None=Field(default=None,max_length=150)
     category:str|None=Field(default=None,max_length=150)
+    binding:Literal['aws-iam-principal','aws-bedrock-model','normalized-source-contract','web-browser']|None=None
+    implementation:Literal['rag-web-app','rag-user-pool','bounded-keyword-rag','iam-rag-api','bounded-rag-catalog','text-statistics','bedrock-summary','async-word-count','sqs-standard','sqs-dead-letter','word-count-results']|None=None
 
 class Node(Strict):
     id:str=Field(min_length=1,max_length=100)
@@ -52,6 +61,8 @@ class Edge(Strict):
     target:str=Field(max_length=100)
     type:Literal['smoothstep']='smoothstep'
     label:str=Field(default='data',max_length=150)
+    integration:Literal['browser-https','web-rag-api','oauth-pkce','jwt-authorizer','source-catalog-sync','http-api-lambda','lambda-catalog-read','bedrock-converse','s3-object-created','sqs-lambda','lambda-s3-read','lambda-dynamodb-write','sqs-redrive']|None=None
+    access:Literal['s3-read','s3-read-write','lambda-invoke','api-invoke']|None=None
 
 class Project(Strict):
     version:Literal[1]=1

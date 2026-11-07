@@ -1,0 +1,59 @@
+{
+  "evidenceKind": "local-generated-artifact-check",
+  "cloudOperations": false,
+  "resourceTypes": [
+    "terraform_data",
+    "aws_iam_role",
+    "aws_cloudwatch_log_group",
+    "aws_iam_role_policy",
+    "aws_lambda_function",
+    "aws_lambda_alias",
+    "aws_lambda_permission"
+  ],
+  "deploymentCoverage": "generated_implementation",
+  "unfinishedWork": [],
+  "checks": [
+    {
+      "name": "runtime-build",
+      "status": "passed",
+      "exitCode": 0,
+      "stdout": "Collecting boto3==1.43.123 (from -r <repository>/.local/example-validation/2026-11-07T06-28-35.161Z/04-model-summary/terraform/runtime-requirements.lock (line 1))\n  Using cached boto3-1.43.123-py3-none-any.whl (140 kB)\nCollecting botocore==1.43.123 (from -r <repository>/.local/example-validation/2026-11-07T06-28-35.161Z/04-model-summary/terraform/runtime-requirements.lock (line 2))\n  Using cached botocore-1.43.123-py3-none-any.whl (16.2 MB)\nCollecting s3transfer==0.19.3 (from -r <repository>/.local/example-validation/2026-11-07T06-28-35.161Z/04-model-summary/terraform/runtime-requirements.lock (line 3))\n  Using cached s3transfer-0.19.3-py3-none-any.whl (90 kB)\nCollecting jmespath==1.1.0 (from -r <repository>/.local/example-validation/2026-11-07T06-28-35.161Z/04-model-summary/terraform/runtime-requirements.lock (line 4))\n  Using cached jmespath-1.1.0-py3-none-any.whl (20 kB)\nCollecting python-dateutil==2.9.0.post0 (from -r <repository>/.local/example-validation/2026-11-07T06-28-35.161Z/04-model-summary/terraform/runtime-requirements.lock (line 5))\n  Using cached python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)\nCollecting six==1.17.0 (from -r <repository>/.local/example-validation/2026-11-07T06-28-35.161Z/04-model-summary/terraform/runtime-requirements.lock (line 6))\n  Using cached six-1.17.0-py2.py3-none-any.whl (11 kB)\nCollecting urllib3==2.8.0 (from -r <repository>/.local/example-validation/2026-11-07T06-28-35.161Z/04-model-summary/terraform/runtime-requirements.lock (line 7))\n  Using cached urllib3-2.8.0-py3-none-any.whl (135 kB)\nInstalling collected packages: urllib3, six, jmespath, python-dateutil, botocore, s3transfer, boto3\n\nSuccessfully installed boto3-1.43.123 botocore-1.43.123 jmespath-1.1.0 python-dateutil-2.9.0.post0 s3transfer-0.19.3 six-1.17.0 urllib3-2.8.0\n{\"status\": \"built\", \"artifacts\": [{\"component\": \"block_73756d6d6172792d666e\", \"sha256\": \"636a2c775f9d9f35b808d3e20d4a82bce734b3e8eb03ee2688699c8fc8de3862\", \"sdkPinned\": true}]}\n",
+      "stderr": ""
+    },
+    {
+      "name": "provider-init",
+      "status": "passed",
+      "exitCode": 0,
+      "stdout": "Initializing provider plugins...\n- terraform.io/builtin/terraform is built in to Terraform\n- Finding hashicorp/aws versions matching \"~> 6.0\"...\n- Installing hashicorp/aws v6.72.0...\n- Installed hashicorp/aws v6.72.0 (signed by HashiCorp)\n\nTerraform has created a lock file .terraform.lock.hcl to record the provider\nselections it made above. Include this file in your version control repository\nso that Terraform can guarantee to make the same selections by default when\nyou run \"terraform init\" in the future.\n\nTerraform has been successfully initialized!\n",
+      "stderr": ""
+    },
+    {
+      "name": "configuration-load",
+      "status": "passed",
+      "exitCode": 0,
+      "stdout": "\nProviders required by configuration:\n.\n├── provider[terraform.io/builtin/terraform]\n├── provider[registry.terraform.io/hashicorp/aws] ~> 6.0\n└── test.tests.storage-access\n\n",
+      "stderr": ""
+    },
+    {
+      "name": "provider-schema",
+      "status": "passed",
+      "exitCode": 0,
+      "stdout": "{\n  \"format_version\": \"1.0\",\n  \"valid\": true,\n  \"error_count\": 0,\n  \"warning_count\": 0,\n  \"diagnostics\": []\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "application-tests",
+      "status": "passed",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "test_bounded_request_and_summary (block_73756d6d6172792d666e_test.SummaryTests.test_bounded_request_and_summary) ... ok\ntest_denial_and_throttle_are_sanitized (block_73756d6d6172792d666e_test.SummaryTests.test_denial_and_throttle_are_sanitized) ... ok\ntest_rejects_bad_input_before_model_call (block_73756d6d6172792d666e_test.SummaryTests.test_rejects_bad_input_before_model_call) ... ok\ntest_truncation_and_empty_output (block_73756d6d6172792d666e_test.SummaryTests.test_truncation_and_empty_output) ... ok\n\n----------------------------------------------------------------------\nRan 4 tests in 0.006s\n\nOK\n"
+    },
+    {
+      "name": "mock-plans",
+      "status": "passed",
+      "exitCode": 0,
+      "stdout": "tests/storage-access.tftest.hcl... in progress\n  run \"generated_storage_plan\"... pass\n  run \"unapproved_plan_rejected\"... pass\n  run \"cross_account_binding_rejected\"... pass\n  run \"wildcard_binding_rejected\"... pass\ntests/storage-access.tftest.hcl... tearing down\ntests/storage-access.tftest.hcl... pass\n\nSuccess! 4 passed, 0 failed.\n",
+      "stderr": ""
+    }
+  ]
+}

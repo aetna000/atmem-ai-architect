@@ -1,0 +1,42 @@
+{
+  "status": "blocked",
+  "completed": [
+    "T1 milestone 96e369d and annotated tag pushed before further changes",
+    "T2 corrected connector two prompt rounds passed local artifact checks; stale web-scope test repaired",
+    "T3 all six exact exports passed real-account plans and were blocked by Lambda preflight",
+    "T4 seven loadable examples, exact prompt/response histories, failed connector history, generated Terraform/runtime/tests, runbook and synthetic fixtures archived",
+    "T5 import/hash checks and 172 JavaScript tests passed; all seven UI imports passed",
+    "T5 independent reproduction of all seven archived exports passed runtime builds, provider schema, application tests and mock plans"
+  ],
+  "remaining": [
+    "T6 six live deployments, acceptance and cleanup after actual quota increase"
+  ],
+  "blockers": [
+    "Sydney Lambda request CASE_OPENED; actual concurrency 10, zero additional reservation capacity"
+  ],
+  "evidence": [
+    "examples/aws/manifest.json",
+    "examples/aws/evidence/lambda-quota-status.json",
+    ".local/example-browser/2026-11-07T06-30-13.531Z/results.json",
+    ".local/example-validation/2026-11-07T06-28-35.161Z/validation.json",
+    "examples/aws/evidence/local-artifacts/results.json",
+    "examples/aws/evidence/browser-import/results.json"
+  ],
+  "tests": [
+    "npm test: 172 passed",
+    "node scripts/aws-example-check.mjs: seven imports and hashes passed",
+    "node scripts/aws-example-browser-check.mjs: seven file-menu imports and renders passed",
+    "node scripts/aws-example-check.mjs --artifacts: all seven passed"
+  ],
+  "changedFiles": [
+    "scripts/archive-aws-examples.mjs",
+    "scripts/aws-example-check.mjs",
+    "scripts/aws-example-browser-check.mjs",
+    "tests/aws-examples.test.mjs",
+    "tests/aws-validation.test.mjs",
+    "examples/aws",
+    "README.md",
+    "specs/README.md",
+    "specs/021-aws-example-library"
+  ]
+}

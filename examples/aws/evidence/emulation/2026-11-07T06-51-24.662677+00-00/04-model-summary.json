@@ -1,0 +1,96 @@
+{
+  "version": 1,
+  "kind": "local-aws-emulation",
+  "backend": "moto",
+  "status": "passed",
+  "cloudOperations": false,
+  "terraformApply": "not_run",
+  "modelMode": "scripted-fixture",
+  "checks": [
+    {
+      "name": "Stateful emulator resource setup",
+      "passed": true,
+      "evidence": "stateful-emulation"
+    },
+    {
+      "name": "Generated summary handler, token bounds and simulated model faults",
+      "passed": true,
+      "evidence": "stateful-emulation"
+    }
+  ],
+  "capabilities": [],
+  "limitations": [
+    "Terraform apply and real AWS account prerequisites are not emulated; run provider checks separately.",
+    "IAM enforcement, API Gateway routing/signatures, Cognito sign-in/MFA and CloudFront delivery remain unverified.",
+    "Generated Python handlers execute on this host, not the AWS Lambda ARM64 runtime; event polling is driven by the harness.",
+    "Bedrock responses and authenticated request envelopes are deterministic fixtures, not model-quality or authentication evidence.",
+    "Quotas, billing, latency, service outages and native SharePoint/Confluence APIs require separate qualification."
+  ],
+  "cleanup": "passed",
+  "emulatorPatches": [
+    {
+      "id": "moto-s3-notification-version-id-v1",
+      "motoVersion": "5.2.5",
+      "reason": "Moto drops versionId from S3 notifications although its exact event key retains version_id.",
+      "reference": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/notification-content-structure.html",
+      "scope": "Add only the exact triggering key version; do not look up current/latest objects or alter generated handlers."
+    }
+  ],
+  "backendVersion": "5.2.5",
+  "resourceCoverage": [
+    {
+      "type": "aws_iam_role",
+      "count": 1,
+      "mode": "not-emulated"
+    },
+    {
+      "type": "aws_cloudwatch_log_group",
+      "count": 1,
+      "mode": "not-emulated"
+    },
+    {
+      "type": "aws_iam_role_policy",
+      "count": 1,
+      "mode": "not-emulated"
+    },
+    {
+      "type": "aws_lambda_function",
+      "count": 1,
+      "mode": "host-executed-code"
+    },
+    {
+      "type": "aws_lambda_alias",
+      "count": 1,
+      "mode": "not-emulated"
+    },
+    {
+      "type": "aws_lambda_permission",
+      "count": 1,
+      "mode": "not-emulated"
+    }
+  ],
+  "message": "Supported local emulation checks passed. Review the unverified boundaries before deployment.",
+  "workerDigest": "856e7b02a98b672c8bb7ffdb36d71381e09a27a756533aba29c2a693dd5a9359",
+  "designRevision": 2,
+  "environment": "staging",
+  "artifactDigest": "5f9694f7c9167b5b771d3030fd27ee57b18b1467bde9368c65f8c7a2a0ca74be",
+  "fileDigests": {
+    "preflight-requirements.lock": "17322a01f8cf7f5d85ddb1203853fb1bdc87e716971f4efb2559c0c49fb2ef17",
+    "preflight-aws.py": "4eb9d90ffdc2c8cf2262bf6a87e0231ffd7e71ae0ae86dca202c87ec9ca35231",
+    "PREFLIGHT.md": "00c7b9a27e4d768aa44570a6b5c80685bcfcb7f57fda2c6ee7b6dcd648cf1209",
+    ".gitignore": "bcaa9b020d6c4a5721412085a5024d510f1bd8c9fce03dd8c918881b31e26980",
+    "tests/storage-access.tftest.hcl": "93430f700fcd2a86a102e5ee2b44c5731072928181f6d39a6bcd6caafdbf9e24",
+    "deployment.tfvars.json.example": "c5f5a6e8803a440c92733fe1be51a38189b61e92f2dffa5a0385b9f06a112105",
+    "VALIDATION.md": "556baa226715d9d2633bf9aa637681a1b36a09ab5b1523fbb8e9f3beecb6aeb7",
+    "handlers/block_73756d6d6172792d666e.py": "90a3ef79efb98e67cfe347398f174ad7d8bc3c2a67228790c567a66709971be1",
+    "app-tests/block_73756d6d6172792d666e_test.py": "d6b8508643193cab972afea53b67a2081567f13a9983ccbdc67695d2be5a6cdd",
+    "runtime-requirements.lock": "17322a01f8cf7f5d85ddb1203853fb1bdc87e716971f4efb2559c0c49fb2ef17",
+    "runtime-dependency-sources.json": "b15242b2a094cd53df1a374f0a8aad5b255edf2092cf0494c467725fdf852bc3",
+    "build-runtime.py": "f992614cc746dacceb27645155e830bcbdf49afab19a7b2820772e083a1ca4c8",
+    "BUILD.md": "cb6615260d4289346c16544761daf8f79155af6f77750af07fade17e41d61ed1",
+    "main.tf.json": "2f691f1a77e21d84f8877208cb4022db60ae315417ef03bdeace2d1113bee253",
+    "resource-schedule.json": "d0bf61b68650e186c5f3d04211415ea7805ff92f294d25b226bfbe795a4440e7",
+    "README.md": "39a286452dc5fb3df05b133639c28e814680b8ae177eabf0fb0054d247f7cb88"
+  },
+  "workspaceCleanup": "passed"
+}

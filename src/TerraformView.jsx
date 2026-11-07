@@ -1,4 +1,5 @@
 import React, {useEffect, useMemo, useRef, useState} from 'react';
+import {EmulationPanel} from './EmulationPanel.jsx';
 import {terraformSketch} from './terraform.mjs';
 import {resourcePlan} from './resources.mjs';
 import {toProjectFile} from './project-file.mjs';
@@ -13,7 +14,7 @@ export function TerraformView({project,environment,session,onDownload,onBack}){
   async function test(){
     if(running)return;
     const request=new AbortController();controller.current=request;setRunning(true);setResult(null);
-    const timer=setTimeout(()=>request.abort(),260000);
+    const timer=setTimeout(()=>request.abort(),500000);
     try{
       toProjectFile(project);
       if(!session?.token)throw Error('Connect the local service before running Terraform validation.');
@@ -25,24 +26,25 @@ export function TerraformView({project,environment,session,onDownload,onBack}){
   }
   const gaps=JSON.parse(files['main.tf.json']).locals.unfinished_work;
   return <section className="doc terraform-view" aria-label="Terraform">
-    <header className="doc-head"><h2>Terraform deployment draft</h2><p className="muted">Inspect the resources and generated files, then test this draft. Current native coverage is AWS S3 foundations.</p></header>
+    <header className="doc-head"><h2>Terraform deployment draft</h2><p className="muted">Inspect the resources and generated files, then test this draft. Native coverage includes private S3 storage, scoped existing-principal access, text-statistics Lambda, asynchronous document counts, bounded Bedrock summarization, permission-aware retrieval and authenticated web hosting.</p></header>
     <div className="row"><button className="link" onClick={onBack}>Back to architecture</button><button className="btn" onClick={onDownload}>Download Terraform</button></div>
+    <EmulationPanel project={project} environment={environment} session={session}/>
     <div className="seg" role="tablist" aria-label="Terraform steps"><button role="tab" aria-selected={step==='code'} onClick={()=>setStep('code')}>1. Resources & code</button><button role="tab" aria-selected={step==='test'} onClick={()=>setStep('test')}>2. Test Terraform</button></div>
     {step==='code'?<>
       <h3>Resource coverage</h3>
-      {plan.rows.map(r=><p key={r.id||r.address}><strong>{r.label||r.service}</strong> — {r.foundation?'S3 foundation generated':'Implementation needed'}<br/><small>{r.provider} · {r.region}</small></p>)}
+      {plan.rows.map(r=><p key={r.id||r.address}><strong>{r.label||r.service}</strong> — {r.terraform}<br/><small>{r.provider} · {r.region}</small></p>)}
       {!!plan.gaps.length&&<details><summary>{plan.gaps.length} implementation gaps</summary><ul>{plan.gaps.map((g,i)=><li key={i}>{g}</li>)}</ul></details>}
       <div className="row" aria-label="Terraform files">{Object.keys(files).map(name=><button className="btn" key={name} aria-pressed={file===name} onClick={()=>setFile(name)}>{name}</button>)}</div>
       <pre className="terraform-code" aria-label={file}><code>{files[file]}</code></pre>
       <button className="btn primary" onClick={()=>setStep('test')}>Continue to Test Terraform →</button>
     </>:<>
       <h3>Test this Terraform draft</h3>
-      <p>Checks the generated configuration against Terraform and the provider schema. Provider initialization downloads the official provider if needed; it uses a temporary directory with no cloud credentials or backend.</p>
+      <p>Checks the generated configuration against Terraform and the provider schema, then runs available generated application tests and mock-provider plans. Provider initialization downloads the official provider if needed; it uses a temporary directory with no cloud credentials or backend.</p>
       <p><strong>Resource and integration coverage: {gaps.length?'Incomplete':'No recorded gaps'}</strong>{gaps.length?` — ${gaps.length} unfinished tasks block a deployment plan.`:''}</p>
       <button className="btn primary" disabled={running} onClick={test}>{running?'Testing Terraform…':'Run Terraform checks'}</button>
-      {running&&<p role="status">Initializing the provider and validating the configuration. This may take a few minutes.</p>}
+      {running&&<p role="status">Initializing providers, validating configuration and running generated local tests. This may take a few minutes.</p>}
       {result&&<div role="status"><h3>{result.status==='passed'?'Configuration validated':result.status==='unavailable'?'Terraform validation not run':'Validation failed'}</h3><p>{result.message}</p>{result.checks?.map((c,i)=><details key={i}><summary>{c.passed?'Passed':'Failed'}: {c.name}</summary><pre className="terraform-code">{c.output}</pre></details>)}</div>}
-      <h3>Cloud deployment plan — not run</h3><p>A real plan must verify the selected account, region, permissions and proposed changes. Cloud access is not connected. Passing these checks does not prove deployment or application functionality.</p>
+      <h3>Cloud deployment plan — not run</h3><p>A real plan must verify the selected account, region, permissions and proposed changes. Cloud access is not connected. Passing these checks does not prove a real deployment or live application behavior.</p>
       <button className="btn" disabled>Run cloud plan (under development)</button>
     </>}
   </section>;

@@ -1,0 +1,8 @@
+// Production uses a separately bootstrapped, protected state store. No credentials in config.
+export function productionStateFiles() {
+ return {
+  'backend.hcl.example':'bucket = "REPLACE_WITH_PROTECTED_STATE_BUCKET"\nkey = "REPLACE_WITH_PROJECT/production.tfstate"\nregion = "REPLACE_WITH_STATE_REGION"\nencrypt = true\nuse_lockfile = true\n',
+  'STATE.md':`# Production Terraform state\n\nThis production configuration declares an S3 backend and requires Terraform 1.10+ for native S3 lock files. A state bucket is a separate platform prerequisite, not the application document bucket. Supply backend.hcl from backend.hcl.example, using a private encrypted versioned bucket with TLS-only access and a reviewed recovery/retention policy. Never put credentials in backend.hcl.\n\nThe deployment identity needs ListBucket on the state bucket, GetObject/PutObject on the exact state key, and GetObject/PutObject/DeleteObject on its .tflock object. It does not need DeleteObject on the state itself. Grant only the reviewed project prefix. Terraform state and saved plans can contain sensitive values: restrict readers and retain them according to policy.\n\nRun terraform init -backend-config=backend.hcl before an account plan. Do not migrate existing state without a reviewed backup and migration plan. For local schema/mock testing only, use terraform init -backend=false. Tests do not establish backend access or disaster recovery.\n\nReference: https://developer.hashicorp.com/terraform/language/backend/s3\n`,
+  '.gitignore':'.terraform/\nbuild/\n*.tfstate\n*.tfstate.*\n*.tfplan\nreviewed-plan.json\n.preflight/\n*.tfvars\n*.tfvars.json\nbackend.hcl\n*.zip\n__pycache__/\n# Commit .terraform.lock.hcl after reviewed provider initialization.\n',
+ };
+}

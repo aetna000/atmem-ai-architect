@@ -48,7 +48,7 @@ test('one-off build work is separate and unknown phases never become free',()=>{
 test('detailed prices and work estimates survive project save/open; old 2.1 projects still open',()=>{
  const p=project();p.estimate={details:[detail('a','files')],consulting:{currency:'USD',phases:{build:{lowDays:1,days:2,highDays:4,rate:500,basis:'Build'}}}};
  const file=toProjectFile(p,now),back=fromProjectFile(JSON.parse(JSON.stringify(file))).project;
- assert.equal(file.formatVersion,'2.2.0');assert.deepEqual(back.estimate.details,p.estimate.details);assert.equal(consultingEstimate(back).expected,1000);
+ assert.equal(file.formatVersion,'2.3.0');assert.deepEqual(back.estimate.details,p.estimate.details);assert.equal(consultingEstimate(back).expected,1000);
  assert.equal(fromProjectFile({...file,formatVersion:'2.1.0'}).migrated,true);
 });
 test('resource schedule distinguishes existing systems, cloud choices, and drawn integrations',()=>{
@@ -60,7 +60,7 @@ test('Terraform is a native S3 foundation with an account/review gate and stable
  const p=project();p.nodes.push(block('existing','Amazon S3','aws','source','existing'));
  const files=terraformSketch(p),tf=JSON.parse(files['main.tf.json']);
  assert.equal(Object.keys(tf.resource.aws_s3_bucket).length,1);assert.equal(tf.variable.review_approved.default,false);assert.deepEqual(tf.provider.aws.allowed_account_ids,['${var.aws_account_id}']);
- const [address,bucket]=Object.entries(tf.resource.aws_s3_bucket)[0];assert.equal(bucket.lifecycle.prevent_destroy,true);assert.deepEqual(bucket.depends_on,['terraform_data.review_gate']);assert.equal(tf.locals.unfinished_work.length,1);
+ const [address,bucket]=Object.entries(tf.resource.aws_s3_bucket)[0];assert.equal(bucket.lifecycle.prevent_destroy,true);assert.deepEqual(bucket.depends_on,['terraform_data.review_gate']);assert.equal(tf.locals.unfinished_work.length,2);assert.ok(tf.locals.unfinished_work.some(g=>g.startsWith("access-")));
  p.nodes.reverse();assert.ok(JSON.parse(terraformSketch(p)['main.tf.json']).resource.aws_s3_bucket[address]);
  p.nodes[1].data.label='Amazon S3 ${file("/etc/passwd")}';assert.ok(!terraformSketch(p)['main.tf.json'].includes('/etc/passwd'));
  assert.match(files['README.md'],/not a complete deployable application/);

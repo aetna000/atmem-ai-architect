@@ -1,0 +1,562 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "web",
+      "address": "block_776562",
+      "label": "Web app",
+      "provider": "aws",
+      "service": "Amazon CloudFront",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "Candidate: ap-southeast-2 (Sydney), not approved",
+      "resources": [
+        "aws_cloudfront_distribution"
+      ],
+      "costDrivers": "Requests, transfer and private static assets",
+      "dependencies": [],
+      "terraform": "Private web hosting and Cognito authorization-code/PKCE sign-in generated",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": true
+    },
+    {
+      "id": "cognito",
+      "address": "block_636f676e69746f",
+      "label": "User sign-in",
+      "provider": "aws",
+      "service": "Amazon Cognito",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "Candidate: ap-southeast-2 (Sydney), not approved",
+      "resources": [
+        "aws_cognito_user_pool"
+      ],
+      "costDrivers": "Active users and authentication features",
+      "dependencies": [
+        "web"
+      ],
+      "terraform": "Private web hosting and Cognito authorization-code/PKCE sign-in generated",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": true
+    },
+    {
+      "id": "api",
+      "address": "block_617069",
+      "label": "RAG API",
+      "provider": "aws",
+      "service": "Amazon API Gateway",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "Candidate: ap-southeast-2 (Sydney), not approved",
+      "resources": [
+        "aws_apigatewayv2_api"
+      ],
+      "costDrivers": "API requests, transfer and access logs",
+      "dependencies": [
+        "cognito",
+        "web"
+      ],
+      "terraform": "Bounded IAM-authenticated RAG implementation generated",
+      "foundation": false,
+      "compute": false,
+      "api": true,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": true
+    },
+    {
+      "id": "rag-fn",
+      "address": "block_7261672d666e",
+      "label": "Keyword retrieval + answer",
+      "provider": "aws",
+      "service": "AWS Lambda",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "Candidate: ap-southeast-2 (Sydney), not approved",
+      "resources": [
+        "aws_lambda_function",
+        "aws_iam_role"
+      ],
+      "costDrivers": "Requests, duration, memory and logs",
+      "dependencies": [
+        "api"
+      ],
+      "terraform": "Bounded IAM-authenticated RAG implementation generated",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": true
+    },
+    {
+      "id": "catalog",
+      "address": "block_636174616c6f67",
+      "label": "Document catalog",
+      "provider": "aws",
+      "service": "Amazon DynamoDB",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "Candidate: ap-southeast-2 (Sydney), not approved",
+      "resources": [
+        "aws_dynamodb_table"
+      ],
+      "costDrivers": "Read/write requests, storage and backup",
+      "dependencies": [
+        "rag-fn"
+      ],
+      "terraform": "Bounded IAM-authenticated RAG implementation generated",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": true
+    },
+    {
+      "id": "bedrock",
+      "address": "block_626564726f636b",
+      "label": "Foundation model",
+      "provider": "aws",
+      "service": "Amazon Bedrock",
+      "selection": "Explicit service field; deployment review required",
+      "existing": true,
+      "region": "Candidate: ap-southeast-2 (Sydney), not approved",
+      "resources": [],
+      "costDrivers": "Model-specific input/output tokens; guardrails, embeddings and knowledge bases separately",
+      "dependencies": [
+        "rag-fn"
+      ],
+      "terraform": "Bounded IAM-authenticated RAG implementation generated",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": true
+    }
+  ],
+  "connections": [
+    {
+      "id": "e-web-cognito",
+      "source": "web",
+      "target": "cognito",
+      "data": "sign-in (OAuth PKCE)",
+      "generated": true,
+      "status": "Scoped access policy generated; account and runtime verification required"
+    },
+    {
+      "id": "e-cognito-api",
+      "source": "cognito",
+      "target": "api",
+      "data": "JWT authorizer",
+      "generated": true,
+      "status": "Scoped access policy generated; account and runtime verification required"
+    },
+    {
+      "id": "e-web-api",
+      "source": "web",
+      "target": "api",
+      "data": "question → cited answer",
+      "generated": true,
+      "status": "Scoped access policy generated; account and runtime verification required"
+    },
+    {
+      "id": "e-api-fn",
+      "source": "api",
+      "target": "rag-fn",
+      "data": "invoke",
+      "generated": true,
+      "status": "Scoped access policy generated; account and runtime verification required"
+    },
+    {
+      "id": "e-fn-catalog",
+      "source": "rag-fn",
+      "target": "catalog",
+      "data": "keyword lookup (ACL-filtered)",
+      "generated": true,
+      "status": "Scoped access policy generated; account and runtime verification required"
+    },
+    {
+      "id": "e-fn-bedrock",
+      "source": "rag-fn",
+      "target": "bedrock",
+      "data": "Converse (grounded prompt)",
+      "generated": true,
+      "status": "Scoped access policy generated; account and runtime verification required"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [
+      {
+        "worker": {
+          "id": "rag-fn",
+          "address": "block_7261672d666e",
+          "label": "Keyword retrieval + answer",
+          "provider": "aws",
+          "service": "AWS Lambda",
+          "selection": "Explicit service field; deployment review required",
+          "existing": false,
+          "region": "Candidate: ap-southeast-2 (Sydney), not approved",
+          "resources": [
+            "aws_lambda_function",
+            "aws_iam_role"
+          ],
+          "costDrivers": "Requests, duration, memory and logs",
+          "dependencies": [
+            "api"
+          ],
+          "terraform": "Bounded IAM-authenticated RAG implementation generated",
+          "foundation": false,
+          "compute": false,
+          "api": false,
+          "summary": false,
+          "settings": {},
+          "reference": false,
+          "implemented": true
+        },
+        "api": {
+          "id": "api",
+          "address": "block_617069",
+          "label": "RAG API",
+          "provider": "aws",
+          "service": "Amazon API Gateway",
+          "selection": "Explicit service field; deployment review required",
+          "existing": false,
+          "region": "Candidate: ap-southeast-2 (Sydney), not approved",
+          "resources": [
+            "aws_apigatewayv2_api"
+          ],
+          "costDrivers": "API requests, transfer and access logs",
+          "dependencies": [
+            "cognito",
+            "web"
+          ],
+          "terraform": "Bounded IAM-authenticated RAG implementation generated",
+          "foundation": false,
+          "compute": false,
+          "api": true,
+          "summary": false,
+          "settings": {},
+          "reference": false,
+          "implemented": true
+        },
+        "table": {
+          "id": "catalog",
+          "address": "block_636174616c6f67",
+          "label": "Document catalog",
+          "provider": "aws",
+          "service": "Amazon DynamoDB",
+          "selection": "Explicit service field; deployment review required",
+          "existing": false,
+          "region": "Candidate: ap-southeast-2 (Sydney), not approved",
+          "resources": [
+            "aws_dynamodb_table"
+          ],
+          "costDrivers": "Read/write requests, storage and backup",
+          "dependencies": [
+            "rag-fn"
+          ],
+          "terraform": "Bounded IAM-authenticated RAG implementation generated",
+          "foundation": false,
+          "compute": false,
+          "api": false,
+          "summary": false,
+          "settings": {},
+          "reference": false,
+          "implemented": true
+        },
+        "model": {
+          "id": "bedrock",
+          "address": "block_626564726f636b",
+          "label": "Foundation model",
+          "provider": "aws",
+          "service": "Amazon Bedrock",
+          "selection": "Explicit service field; deployment review required",
+          "existing": true,
+          "region": "Candidate: ap-southeast-2 (Sydney), not approved",
+          "resources": [],
+          "costDrivers": "Model-specific input/output tokens; guardrails, embeddings and knowledge bases separately",
+          "dependencies": [
+            "rag-fn"
+          ],
+          "terraform": "Bounded IAM-authenticated RAG implementation generated",
+          "foundation": false,
+          "compute": false,
+          "api": false,
+          "summary": false,
+          "settings": {},
+          "reference": false,
+          "implemented": true
+        },
+        "edges": [
+          {
+            "id": "e-api-fn",
+            "source": "api",
+            "target": "rag-fn",
+            "type": "smoothstep",
+            "label": "invoke",
+            "integration": "http-api-lambda"
+          },
+          {
+            "id": "e-fn-catalog",
+            "source": "rag-fn",
+            "target": "catalog",
+            "type": "smoothstep",
+            "label": "keyword lookup (ACL-filtered)",
+            "integration": "lambda-catalog-read"
+          },
+          {
+            "id": "e-fn-bedrock",
+            "source": "rag-fn",
+            "target": "bedrock",
+            "type": "smoothstep",
+            "label": "Converse (grounded prompt)",
+            "integration": "bedrock-converse"
+          }
+        ]
+      }
+    ],
+    "componentIds": [
+      "rag-fn",
+      "api",
+      "catalog",
+      "bedrock"
+    ],
+    "edgeIds": [
+      "e-api-fn",
+      "e-fn-catalog",
+      "e-fn-bedrock"
+    ]
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [
+      {
+        "worker": {
+          "id": "rag-fn",
+          "address": "block_7261672d666e",
+          "label": "Keyword retrieval + answer",
+          "provider": "aws",
+          "service": "AWS Lambda",
+          "selection": "Explicit service field; deployment review required",
+          "existing": false,
+          "region": "Candidate: ap-southeast-2 (Sydney), not approved",
+          "resources": [
+            "aws_lambda_function",
+            "aws_iam_role"
+          ],
+          "costDrivers": "Requests, duration, memory and logs",
+          "dependencies": [
+            "api"
+          ],
+          "terraform": "Bounded IAM-authenticated RAG implementation generated",
+          "foundation": false,
+          "compute": false,
+          "api": false,
+          "summary": false,
+          "settings": {},
+          "reference": false,
+          "implemented": true
+        },
+        "api": {
+          "id": "api",
+          "address": "block_617069",
+          "label": "RAG API",
+          "provider": "aws",
+          "service": "Amazon API Gateway",
+          "selection": "Explicit service field; deployment review required",
+          "existing": false,
+          "region": "Candidate: ap-southeast-2 (Sydney), not approved",
+          "resources": [
+            "aws_apigatewayv2_api"
+          ],
+          "costDrivers": "API requests, transfer and access logs",
+          "dependencies": [
+            "cognito",
+            "web"
+          ],
+          "terraform": "Bounded IAM-authenticated RAG implementation generated",
+          "foundation": false,
+          "compute": false,
+          "api": true,
+          "summary": false,
+          "settings": {},
+          "reference": false,
+          "implemented": true
+        },
+        "table": {
+          "id": "catalog",
+          "address": "block_636174616c6f67",
+          "label": "Document catalog",
+          "provider": "aws",
+          "service": "Amazon DynamoDB",
+          "selection": "Explicit service field; deployment review required",
+          "existing": false,
+          "region": "Candidate: ap-southeast-2 (Sydney), not approved",
+          "resources": [
+            "aws_dynamodb_table"
+          ],
+          "costDrivers": "Read/write requests, storage and backup",
+          "dependencies": [
+            "rag-fn"
+          ],
+          "terraform": "Bounded IAM-authenticated RAG implementation generated",
+          "foundation": false,
+          "compute": false,
+          "api": false,
+          "summary": false,
+          "settings": {},
+          "reference": false,
+          "implemented": true
+        },
+        "model": {
+          "id": "bedrock",
+          "address": "block_626564726f636b",
+          "label": "Foundation model",
+          "provider": "aws",
+          "service": "Amazon Bedrock",
+          "selection": "Explicit service field; deployment review required",
+          "existing": true,
+          "region": "Candidate: ap-southeast-2 (Sydney), not approved",
+          "resources": [],
+          "costDrivers": "Model-specific input/output tokens; guardrails, embeddings and knowledge bases separately",
+          "dependencies": [
+            "rag-fn"
+          ],
+          "terraform": "Bounded IAM-authenticated RAG implementation generated",
+          "foundation": false,
+          "compute": false,
+          "api": false,
+          "summary": false,
+          "settings": {},
+          "reference": false,
+          "implemented": true
+        },
+        "edges": [
+          {
+            "id": "e-web-api",
+            "source": "web",
+            "target": "api",
+            "type": "smoothstep",
+            "label": "question → cited answer",
+            "integration": "web-rag-api"
+          },
+          {
+            "id": "e-web-cognito",
+            "source": "web",
+            "target": "cognito",
+            "type": "smoothstep",
+            "label": "sign-in (OAuth PKCE)",
+            "integration": "oauth-pkce"
+          },
+          {
+            "id": "e-cognito-api",
+            "source": "cognito",
+            "target": "api",
+            "type": "smoothstep",
+            "label": "JWT authorizer",
+            "integration": "jwt-authorizer"
+          }
+        ],
+        "web": {
+          "id": "web",
+          "address": "block_776562",
+          "label": "Web app",
+          "provider": "aws",
+          "service": "Amazon CloudFront",
+          "selection": "Explicit service field; deployment review required",
+          "existing": false,
+          "region": "Candidate: ap-southeast-2 (Sydney), not approved",
+          "resources": [
+            "aws_cloudfront_distribution"
+          ],
+          "costDrivers": "Requests, transfer and private static assets",
+          "dependencies": [],
+          "terraform": "Private web hosting and Cognito authorization-code/PKCE sign-in generated",
+          "foundation": false,
+          "compute": false,
+          "api": false,
+          "summary": false,
+          "settings": {},
+          "reference": false,
+          "implemented": true
+        },
+        "identity": {
+          "id": "cognito",
+          "address": "block_636f676e69746f",
+          "label": "User sign-in",
+          "provider": "aws",
+          "service": "Amazon Cognito",
+          "selection": "Explicit service field; deployment review required",
+          "existing": false,
+          "region": "Candidate: ap-southeast-2 (Sydney), not approved",
+          "resources": [
+            "aws_cognito_user_pool"
+          ],
+          "costDrivers": "Active users and authentication features",
+          "dependencies": [
+            "web"
+          ],
+          "terraform": "Private web hosting and Cognito authorization-code/PKCE sign-in generated",
+          "foundation": false,
+          "compute": false,
+          "api": false,
+          "summary": false,
+          "settings": {},
+          "reference": false,
+          "implemented": true
+        }
+      }
+    ],
+    "componentIds": [
+      "web",
+      "cognito"
+    ],
+    "edgeIds": [
+      "e-web-api",
+      "e-web-cognito",
+      "e-cognito-api"
+    ]
+  },
+  "gaps": [],
+  "gapDetails": [],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

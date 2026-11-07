@@ -43,3 +43,13 @@ These block parts of the specs and are marked `[NEEDS CLARIFICATION]` where they
 | OD-3 | Product and umbrella naming. UI now says **AtMem AI Architect** (working name) | Branding only |
 | OD-4 | Project file format and versioning — **implemented as proposed in 002** (`atforma.project` 2.2.0, JSON, `.atforma.json`); confirm or change | 002 sign-off |
 | OD-5 | Deployment permissions and how far release 1 automates execution | 007 |
+
+Engineering handoff quality and repeated scenario checks: [011 Handoff quality](011-handoff-quality/spec.md). Implementation and validation results are recorded in [the review log](../docs/HANDOFF_QUALITY.md).
+
+AWS scenario qualification: [012 AWS scenario validation](012-aws-scenario-validation/spec.md), with [live validation procedure](../docs/AWS_SCENARIO_VALIDATION.md).
+
+Native generation: [013 S3 operator access](013-storage-access/spec.md) and [014 authenticated text statistics](014-text-statistics/spec.md).
+
+Loadable AWS qualification archive: [021 Example library](021-aws-example-library/spec.md), with [examples and runbook](../examples/aws/README.md).
+
+Local AWS simulation and hosted worker boundary: [022 Emulation](022-local-aws-emulation/spec.md), with [operator documentation](../docs/AWS_EMULATION.md).

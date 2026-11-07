@@ -1,0 +1,352 @@
+{
+  "message": "I've drawn the AWS knowledge-assistant test: Alice and Bob are existing IAM callers who reach an IAM-authenticated API, and a bounded keyword-retrieval Lambda checks each caller's document permissions and employee region in the catalog before any evidence goes to an existing Bedrock model. Sydney (ap-southeast-2) is only a candidate region, and nothing here is verified or deployed. One decision is still missing before we can place it: which country must this test data stay in, for example Australia?",
+  "phase": "Architecture",
+  "proposal": {
+    "baseRevision": 1,
+    "title": "Bounded keyword RAG qualification sketch on AWS",
+    "body": "Scope: a synthetic test with two existing IAM callers, Alice and Bob. They call an IAM-authenticated API Gateway, which invokes a bounded keyword-retrieval Lambda. The Lambda reads a DynamoDB catalog that holds documents, explicit ACLs and employee-region mappings, then calls an existing Bedrock model through Converse. Access and region filtering run before the model sees any evidence, so restricted titles, snippets and citations are withheld. Revoked permissions and unknown identities fail closed. Assumptions: Sydney (ap-southeast-2) is a candidate region only and has not been approved. Bedrock model ID, model access and quotas are unverified. This retrieval is keyword-based, not vector search. Excluded: web app, Teams, S3 and live SharePoint/Confluence connectors. This is a design only; nothing gets deployed.",
+    "next": {
+      "version": 1,
+      "revision": 1,
+      "name": "An authenticated AWS knowledge assistant…",
+      "provider": "aws",
+      "requirements": "",
+      "nodes": [
+        {
+          "id": "caller-alice",
+          "type": "resource",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "label": "Alice (synthetic IAM caller)",
+            "kind": "tool",
+            "provider": "tools",
+            "description": "An existing IAM test identity for synthetic user Alice. It sits outside the provisioning scope, has its own document permissions, and is not modified by this design.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Internal",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "poc": true,
+            "binding": "aws-iam-principal"
+          }
+        },
+        {
+          "id": "caller-bob",
+          "type": "resource",
+          "position": {
+            "x": 0,
+            "y": 240
+          },
+          "data": {
+            "label": "Bob (synthetic IAM caller)",
+            "kind": "tool",
+            "provider": "tools",
+            "description": "An existing IAM test identity for synthetic user Bob. His permissions differ from Alice's, and this design does not modify the identity.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Internal",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "poc": true,
+            "binding": "aws-iam-principal"
+          }
+        },
+        {
+          "id": "rag-api",
+          "type": "resource",
+          "position": {
+            "x": 400,
+            "y": 120
+          },
+          "data": {
+            "label": "IAM-authenticated RAG API",
+            "kind": "resource",
+            "provider": "aws",
+            "description": "A bounded HTTP API that uses IAM authentication, with a separate scoped API role per caller and authoritative subject and employee-region inputs. Unknown identities fail closed. Callers cannot invoke the Lambda directly.",
+            "config": {
+              "region": "ap-southeast-2 (candidate, not approved)",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "poc": true,
+            "service": "Amazon API Gateway",
+            "implementation": "iam-rag-api"
+          }
+        },
+        {
+          "id": "rag-lambda",
+          "type": "resource",
+          "position": {
+            "x": 800,
+            "y": 120
+          },
+          "data": {
+            "label": "Bounded keyword RAG",
+            "kind": "agent",
+            "provider": "aws",
+            "description": "Runs keyword retrieval (not vector search) and filters results by ACL and employee region before building the prompt. It rechecks the revision so revoked access is denied, and returns a cited answer that contains only permitted titles, snippets and citations. Owns its execution role, logs, version and alias.",
+            "config": {
+              "region": "ap-southeast-2 (candidate, not approved)",
+              "classification": "Confidential",
+              "timeout": 10000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "poc": true,
+            "service": "AWS Lambda",
+            "implementation": "bounded-keyword-rag"
+          }
+        },
+        {
+          "id": "rag-catalog",
+          "type": "resource",
+          "position": {
+            "x": 1200,
+            "y": 0
+          },
+          "data": {
+            "label": "Document and ACL catalog",
+            "kind": "source",
+            "provider": "aws",
+            "description": "Holds up to 100 small synthetic UTF-8 documents with explicit ACLs and authoritative employee-region mappings. An operator loads them through the generated conditional management tool, and callers cannot write to it.",
+            "config": {
+              "region": "ap-southeast-2 (candidate, not approved)",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "poc": true,
+            "service": "Amazon DynamoDB",
+            "implementation": "bounded-rag-catalog"
+          }
+        },
+        {
+          "id": "bedrock-model",
+          "type": "resource",
+          "position": {
+            "x": 1200,
+            "y": 240
+          },
+          "data": {
+            "label": "Foundation model",
+            "kind": "predict",
+            "provider": "aws",
+            "description": "A reviewed direct foundation model that is chosen through a Terraform model-ID input. Model access, Converse support, quotas and regional availability are unverified. It only receives evidence that has already been filtered.",
+            "config": {
+              "region": "ap-southeast-2 (candidate, not approved)",
+              "classification": "Confidential",
+              "timeout": 10000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "poc": true,
+            "service": "Amazon Bedrock",
+            "binding": "aws-bedrock-model"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "e-alice-api",
+          "source": "caller-alice",
+          "target": "rag-api",
+          "type": "smoothstep",
+          "label": "SigV4 question",
+          "access": "api-invoke"
+        },
+        {
+          "id": "e-bob-api",
+          "source": "caller-bob",
+          "target": "rag-api",
+          "type": "smoothstep",
+          "label": "SigV4 question",
+          "access": "api-invoke"
+        },
+        {
+          "id": "e-api-lambda",
+          "source": "rag-api",
+          "target": "rag-lambda",
+          "type": "smoothstep",
+          "label": "invoke with caller identity",
+          "integration": "http-api-lambda"
+        },
+        {
+          "id": "e-lambda-catalog",
+          "source": "rag-lambda",
+          "target": "rag-catalog",
+          "type": "smoothstep",
+          "label": "read ACL-filtered evidence",
+          "integration": "lambda-catalog-read"
+        },
+        {
+          "id": "e-lambda-model",
+          "source": "rag-lambda",
+          "target": "bedrock-model",
+          "type": "smoothstep",
+          "label": "Converse with permitted evidence",
+          "integration": "bedrock-converse"
+        }
+      ]
+    }
+  },
+  "requirementDrafts": [
+    {
+      "rationale": "If filtering happens after generation, the model could leak restricted content.",
+      "basis": "\"Enforce access and employee region before evidence reaches the model. Restricted titles, snippets and citations must not leak.\"",
+      "id": "ai-access-before-model",
+      "statement": "Proposed: retrieval must filter evidence by the caller's ACL and authoritative employee region before any content reaches the model. Restricted titles, snippets and citations must never appear in responses.",
+      "kind": "nonfunctional",
+      "category": "security",
+      "priority": "must",
+      "links": [
+        "rag-lambda",
+        "rag-catalog",
+        "bedrock-model"
+      ]
+    },
+    {
+      "rationale": "Stale or unmapped identities are a common leak path, so qualification needs explicit denial tests.",
+      "basis": "\"Test revoked permissions and unknown identity; these must fail safely.\"",
+      "id": "ai-fail-closed",
+      "statement": "Proposed: requests from revoked permissions or unknown identities must be denied safely and must return no restricted evidence.",
+      "kind": "nonfunctional",
+      "category": "security",
+      "priority": "must",
+      "links": [
+        "rag-api",
+        "rag-lambda",
+        "caller-alice",
+        "caller-bob"
+      ]
+    },
+    {
+      "rationale": "This is the core acceptance test that shows per-user permissions work.",
+      "basis": "\"synthetic users Alice and Bob with different document permissions\"",
+      "id": "ai-differential-access",
+      "statement": "Proposed: Alice and Bob must each receive cited answers drawn only from the documents they are permitted to see.",
+      "kind": "functional",
+      "category": "security",
+      "priority": "must",
+      "links": [
+        "caller-alice",
+        "caller-bob",
+        "rag-lambda"
+      ]
+    }
+  ],
+  "decisionUpdates": [
+    {
+      "subject": "platform.cloud",
+      "value": "aws",
+      "sourceText": "Use AWS for this synthetic qualification design."
+    }
+  ],
+  "contextUsed": {
+    "status": "unavailable",
+    "enabled": true,
+    "engine": "AtMem 2.3.10 core SDK",
+    "recordsUsed": [],
+    "knowledgeRecordIds": [],
+    "skills": [
+      {
+        "id": "architecture",
+        "name": "AI architecture and discovery",
+        "provider": "all",
+        "stages": [
+          "discover",
+          "design",
+          "review"
+        ],
+        "version": "1.0.0",
+        "digest": "9ad2d605f02a4b5ecbc5310b2472f347a8c4301ece89714a0857d8405e075c90",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "devops",
+        "name": "Infrastructure and DevOps handoff",
+        "provider": "all",
+        "stages": [
+          "deploy",
+          "review"
+        ],
+        "version": "1.1.0",
+        "digest": "cd5a428597fbf388a12a863721d93e551c200f4ed30be3469fd8eae78262884c",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "aws",
+        "name": "AWS architecture guidance",
+        "provider": "aws",
+        "stages": [
+          "design",
+          "review",
+          "estimate",
+          "deploy"
+        ],
+        "version": "1.4.0",
+        "digest": "82147cbfe99396d8e659bc7c8d62ce57b0868983bc88c1ace0aaa860ecb9ba29",
+        "source": "https://raw.githubusercontent.com/aws/agent-toolkit-for-aws/fb298e0b6bf2b308a3d2c212b2a09b9bace8e090/plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+        "reference": {
+          "id": "aws",
+          "repository": "aws/agent-toolkit-for-aws",
+          "commit": "fb298e0b6bf2b308a3d2c212b2a09b9bace8e090",
+          "sourcePath": "plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+          "url": "https://raw.githubusercontent.com/aws/agent-toolkit-for-aws/fb298e0b6bf2b308a3d2c212b2a09b9bace8e090/plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+          "sha256": "aa8fef39ef6d64365e48827d9acc90b2b8755023f5c177341cf1c954c1057811",
+          "file": "agent-skills/upstream/aws/SKILL.md",
+          "status": "reference-only",
+          "note": "Imported source reference, not an enabled script/tool package. AtMem AI Architect specialist guidance is reviewed separately; referenced upstream companion files are not bundled.",
+          "integrity": true
+        },
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup",
+          "pricing.lookup"
+        ],
+        "enabled": true
+      }
+    ],
+    "tools": [],
+    "boundary": "AtMem AI Architect → native client",
+    "contextDigest": "ab0e506e4485d361880e54a50fd4c66df2a6177b072138cf8460839d16fc893c",
+    "projectId": "41ac6245-0c28-4be0-b906-4d6c78aae52b"
+  },
+  "priceQuotes": []
+}

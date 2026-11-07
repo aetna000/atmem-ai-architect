@@ -1,0 +1,24 @@
+{
+  "kind": "read-only-account-preflight",
+  "status": "blocked",
+  "accountSuffix": "0158",
+  "region": "ap-southeast-2",
+  "checks": [
+    {
+      "name": "lambda-reserved-concurrency-capacity",
+      "passed": false,
+      "additionalRequired": 1,
+      "availableForReservation": 0,
+      "accountLimit": 10,
+      "action": "Request and wait for an appropriate regional concurrency quota increase; do not remove the per-function limit to bypass this check."
+    },
+    {
+      "name": "bedrock-control-plane-availability",
+      "modelId": "amazon.nova-micro-v1:0",
+      "passed": true,
+      "runtimeInvocation": "not_tested"
+    }
+  ],
+  "deployment": "not_run",
+  "limitations": "Does not establish apply permissions, model quality, runtime authorization, recovery, billing or production readiness."
+}

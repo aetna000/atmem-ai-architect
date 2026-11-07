@@ -1,3 +1,6 @@
+import {projectIdFromUrl} from './project-links.mjs';
+import { diagramAttention } from "./diagram-attention.mjs";
+import { VoiceDictation } from "./voice-conversation.mjs";
 import { OutputsView } from "./OutputsView.jsx";
 import { outputBundle } from "./output-bundle.mjs";
 import { TerraformView } from "./TerraformView.jsx";
@@ -645,56 +648,53 @@ function App() {
     [agentBusy, setAgentBusy] = useState(false);
   const consultationAttempts = useRef(new Set());
   const agentAbort = useRef(null);
-  const recognition = useRef(null);
-  const dictated = useRef(false);
-  const [listening, setListening] = useState(false);
-  // Voice: on-device recognition where the browser offers it; otherwise ask once before
-  // using the browser's speech service (Chrome sends audio to Google for this).
-  async function startVoice() {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) return notify("Voice input isn't available in this browser. Chrome, Edge and Safari support it.");
-    const rec = new SR();
-    let local = false;
-    try {
-      if (typeof SR.available === "function") local = (await SR.available({ langs: ["en-US"], processLocally: true })) === "available";
-    } catch {}
-    if (local) rec.processLocally = true;
-    else {
-      let ok = false;
-      try {
-        ok = localStorage.getItem("atforma-voice-cloud") === "yes";
-      } catch {}
-      if (!ok) {
-        ok = window.confirm("Voice uses your browser's speech service, which sends the audio to Google (Chrome) or Apple (Safari) to turn it into text. Use it?");
-        if (!ok) return;
-        try {
-          localStorage.setItem("atforma-voice-cloud", "yes");
-        } catch {}
-      }
+  const voice = useRef(null);
+  const [voiceState, setVoiceState] = useState("off");
+  const [voiceError, setVoiceError] = useState("");
+  const voiceActive = !["off", "error"].includes(voiceState);
+  useEffect(() => () => voice.current?.cancel(), []);
+  function startVoice() {
+    if (busy || agentBusy) return notify("Wait for the architect to finish before recording your next message.");
+    if (!session) return notify("Connect the local helper before starting dictation.");
+    let consent = false;
+    try { consent = localStorage.getItem("atmem-local-dictation") === "yes"; } catch {}
+    if (!consent) {
+      consent = window.confirm("Use your microphone for local dictation? Audio is processed on this computer by the local helper and is not saved. Words appear in the message box; only pressing Send posts them to your selected architect.");
+      if (!consent) return;
+      try { localStorage.setItem("atmem-local-dictation", "yes"); } catch {}
     }
-    rec.lang = "en-US";
-    rec.interimResults = true;
-    rec.continuous = true;
-    const base = input.trim() ? `${input.trim()} ` : "";
-    rec.onresult = (e) => {
-      const text = Array.from(e.results).map((r) => r[0].transcript).join(" ");
-      setInput(base + text.trim());
-    };
-    rec.onerror = (e) => {
-      if (e.error === "not-allowed") notify("Microphone access is blocked. Allow it in the browser's site settings.");
-      else if (e.error !== "aborted" && e.error !== "no-speech") notify("Voice stopped. Try again.");
-    };
-    rec.onend = () => setListening(false);
-    recognition.current = rec;
-    dictated.current = true;
-    setListening(true);
-    rec.start();
+    setVoiceError("");voice.current?.cancel();
+    let activeSession = session;
+    voice.current = new VoiceDictation({
+      base: input, onState: setVoiceState, onError: setVoiceError, onDraft: setInput,
+      transcribe: async (audio, signal) => {
+        const request = () => fetch("/api/voice/transcribe", {
+          method: "POST", headers: { "Content-Type": "audio/wav", Authorization: `Bearer ${activeSession.token}` },
+          body: audio, signal,
+        });
+        let response = await request();
+        if (response.status === 401 && !signal.aborted) {
+          const fresh = await refreshSession();
+          if (fresh) { activeSession = fresh; response = await request(); }
+        }
+        const result = await response.json();
+        if (!response.ok) throw Error(result.detail || "Local dictation could not finish. Nothing has been sent.");
+        return result.text;
+      },
+    });
+    void voice.current.start();
   }
-  function stopVoice() {
-    recognition.current?.stop();
-    setListening(false);
+  function stopVoice() { voice.current?.cancel(); }
+  async function postMessage() {
+    if (busy || agentBusy) return;
+    if (voice.current?.running || voice.current?.finishing) {
+      const draft = await voice.current.finish();
+      if (draft !== null) void send(draft);
+    } else void send();
   }
   const { screenToFlowPosition, fitView, zoomIn, zoomOut } = useReactFlow();
+  const [attention, setAttention] = useState(null);
+  const attentionRef = useRef(null);
   const fileRef = useRef();
   const chatEnd = useRef();
   const runToken = useRef(0);
@@ -711,12 +711,27 @@ function App() {
       : 0.25;
   const refit = useCallback(
     // Wait a frame or two so newly drawn blocks are measured before fitting them in.
-    (nodes) => setTimeout(() => fitView({ padding, maxZoom: 1.1, duration: 200, ...(nodes ? { nodes } : {}) }), 180),
+    (nodes) => setTimeout(() => {
+      if (!attentionRef.current) fitView({ padding, maxZoom: 1.1, duration: 200, ...(nodes ? { nodes } : {}) });
+    }, 180),
     [fitView, testing, notesShown],
   );
   useEffect(() => {
     refit();
   }, [testing, notesShown, refit, pending]);
+
+  useEffect(() => {
+    if (!attention) return;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const zoom = setTimeout(() => {
+      if (attention.nodes.length) fitView({ nodes: attention.nodes.map(id => ({ id })), padding: 0.35, maxZoom: 1.4, duration: reduced ? 0 : 550 });
+    }, 180);
+    const clear = setTimeout(() => {
+      attentionRef.current = null;
+      setAttention(null);
+    }, 3200);
+    return () => { clearTimeout(zoom); clearTimeout(clear); };
+  }, [attention, fitView]);
 
   const refreshSession = useCallback(async () => {
     try {
@@ -731,6 +746,12 @@ function App() {
   useEffect(() => {
     refreshSession();
   }, [refreshSession]);
+  useEffect(() => {
+    if (!session?.token) return;
+    const controller = new AbortController();
+    fetch("/api/voice/prepare", { method: "POST", headers: { Authorization: `Bearer ${session.token}` }, signal: controller.signal }).catch(() => {});
+    return () => controller.abort();
+  }, [session?.token]);
   useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => setToast(""), 3500);
@@ -1031,6 +1052,9 @@ function App() {
   }
   // A project file brings its own records; templates and imports keep the current ones.
   function loadDesign(next, { own = false } = {}) {
+    stopVoice();
+    attentionRef.current = null;
+    setAttention(null);
     if (busy) {
       notify("Stop the run before replacing the design.");
       return;
@@ -1063,6 +1087,7 @@ function App() {
 
   async function send(text = input, origin = "chat", destination = null) {
     if (!text.trim() || busy || agentBusy) return;
+    stopVoice();
     const message = text.trim();
     if (origin === "chat") {
       setMessages((m) => [...m, { role: "user", text: message }]);
@@ -1094,16 +1119,13 @@ function App() {
       updateEngagement(heard.project);
       const signals = harnessSignals(was, heard.project);
       // The connected architect draws from the user's idea. No local preset blocks.
-      // Dictated text may contain speech-recognition slips; the model reads past them.
-      const spoken = dictated.current;
-      dictated.current = false;
       const edits = canvasChanges(projectRef.current);
       seen.current = structuredClone(projectRef.current);
       const result = await requestArchitect({
         extra: [{type:"discovery",id:"active-view",text:`The user is working in ${destination ? (destination.mode === "design" ? destination.view : destination.mode) : mode === "design" ? designView : mode}. Focus help on this view using the shared diagram and conversation; ask one useful question and update the relevant working outputs.`}, ...(edits.length ? [{ type: "discovery", id: "canvas-changes", text: `Since your last reply the user ${edits.join("; ")}. Build on these changes.` }] : [])],
         session,
         connection,
-        message: spoken ? `${message}\n\n(Dictated by voice: interpret obvious speech-recognition errors, e.g. "rang" for "RAG".)` : message,
+        message,
         project: projectRef.current,
         history: messages,
         stage: destination?.mode || mode,
@@ -1146,7 +1168,7 @@ function App() {
         else setPending(proposal);
       }
       if (!["document","preview"].includes(origin) && result.requirementDrafts?.length) updateEngagement(applyRequirementDrafts(projectRef.current,result.requirementDrafts));
-      return true;
+      return result.message;
     } catch (error) {
       setMessages((m) => [
         ...m,
@@ -1169,6 +1191,11 @@ function App() {
       setPending(null);
       return;
     }
+    // A newly drawn graph needs room for arrow labels. Preserve user-arranged
+    // positions on refinements and any diagram that retains existing node IDs.
+    if (proposal.next.nodes.length && !proposal.next.nodes.some(n => current.nodes.some(existing => existing.id === n.id))) {
+      proposal = { ...proposal, next: autoLayout(proposal.next) };
+    }
     const decision = {
       ...newDecision(current),
       subject: `design.${slugSubject(proposal.title)}`,
@@ -1178,6 +1205,9 @@ function App() {
       decision: `${live ? "Drawn while talking" : "Applied"} as design revision ${current.revision + 1}.`,
     };
     const change = proposalDiff(current, proposal.next);
+    const emphasis = diagramAttention(current, proposal.next);
+    attentionRef.current = emphasis;
+    setAttention(emphasis);
     // Remember the concept we drew so we can keep evolving it until the user takes over.
     commit({ ...keepEngagement(proposal.next, current), decisions: [...(current.decisions || []), decision], conceptSig: quiet ? conceptSignature(proposal.next) : null });
     seen.current = structuredClone(proposal.next);
@@ -1286,7 +1316,7 @@ function App() {
           ...n,
           type: n.data.kind === "note" ? "note" : n.type,
           measured: measured[n.id],
-          className: previewing ? "preview" : "",
+          className: `${previewing ? "preview" : ""} ${attention?.nodes.includes(n.id) ? "diagram-attention" : ""}`,
           selected: n.id === selected || picked.has(n.id),
           data: { ...n.data, onText: noteText, fresh: n.id === freshNote.current, runState: runStates[n.id], dim: (focusBlocks && !focusBlocks.has(n.id)) || (testing && !n.data.poc && n.data.kind !== "resource" && project.nodes.some((x) => x.data.poc)) },
         }));
@@ -1295,7 +1325,7 @@ function App() {
       ? system.edges.map((e) => ({ ...e, className: wireClass(e.data.sources[0]), markerEnd: { type: "arrowclosed", width: 14, height: 14 } }))
       : shown.edges.map((e) => ({
           ...e,
-          className: `${previewing ? "preview" : ""} ${wireClass(e.source)} ${focusBlocks && !(focusBlocks.has(e.source) || focusBlocks.has(e.target)) ? "dim" : ""}`,
+          className: `${previewing ? "preview" : ""} ${attention?.edges.includes(e.id) ? "diagram-attention" : ""} ${wireClass(e.source)} ${focusBlocks && !(focusBlocks.has(e.source) || focusBlocks.has(e.target)) ? "dim" : ""}`,
           animated: busy && runStates[e.source] === "passed",
           markerEnd: { type: "arrowclosed", width: 14, height: 14 },
         }));
@@ -1412,6 +1442,27 @@ function App() {
       notify(e.message);
     }
   }
+  const linkedProject = useRef(null);
+  useEffect(() => {
+    const id = projectIdFromUrl(window.location.href);
+    if (!session?.token || !id || linkedProject.current === id) return;
+    let active = true;
+    (async () => {
+      try {
+        const { project: opened } = fromProjectFile(await projectStore(session, "get", { id }));
+        if (!active) return;
+        const leaving = projectRef.current;
+        if (leaving.id !== id && !binned.current.has(leaving.id) && (leaving.nodes.length || leaving.brief?.application?.trim())) {
+          await projectStore(session, "save", { id: leaving.id, file: toProjectFile(leaving) });
+        }
+        if (!active) return;
+        linkedProject.current = id;
+        switchTo(opened);
+        setModal(null);
+      } catch (error) { if (active) notify(error.message); }
+    })();
+    return () => { active = false; };
+  }, [session?.token]);
   function newProject() {
     setModal("start-over");
   }
@@ -1975,7 +2026,7 @@ function App() {
           </div>
         )}
 
-        {mode === "design" && designView === "outputs" && <OutputsView project={project} run={run} environment={environment} onDownload={downloadBundle} onBack={()=>setDesignView("board")} />}
+        {mode === "design" && designView === "outputs" && <OutputsView project={project} run={run} environment={environment} session={session} onDownload={downloadBundle} onBack={()=>setDesignView("board")} />}
         {mode === "design" && designView === "terraform" && <TerraformView project={project} environment={environment} session={session} onDownload={exportTerraform} onBack={()=>setDesignView("board")} />}
         {mode === "design" && designView === "options" && (
           <OptionsView project={project} busy={busy||agentBusy||!!pending} onChoose={chooseCloud} onContinue={()=>{setChatOpen(true);setMode("design");setDesignView("board");followJourney();}} onPreview={(provider)=>{setDesignView("board");setLevel("flow");setChatOpen(true);send(`Preview a concrete ${OPTION_NAMES[provider]} implementation of our working scope, using actual named services in data.service and explicit connections. Keep existing systems and comments. Use the known country/residency constraints, or leave region undecided and ask the country question. This is an alternative preview, not a cloud choice or deployment. Return a graph proposal and explain key integration assumptions.`,"preview",{mode:"design",view:"board"});}} onDiscuss={(question) => { setChatOpen(true); send(question, "workflow"); }} />
@@ -2126,7 +2177,7 @@ function App() {
             className="composer"
             onSubmit={(e) => {
               e.preventDefault();
-              send();
+              void postMessage();
             }}
           >
             <textarea
@@ -2134,27 +2185,32 @@ function App() {
               placeholder={brief(project) ? "Reply in your own words…" : "Describe what you want to build…"}
               rows={2}
               value={input}
-              onChange={(e) => setInput(e.target.value)}
+              onChange={(e) => { stopVoice(); setInput(e.target.value); }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey) {
                   e.preventDefault();
-                  send();
+                  void postMessage();
                 }
               }}
             />
             <button
               type="button"
-              className={`mic ${listening ? "on" : ""}`}
-              aria-label={listening ? "Stop dictation" : "Speak"}
-              title={listening ? "Stop" : "Speak — your words appear here"}
-              onClick={listening ? stopVoice : startVoice}
+              className={`mic ${voiceActive ? "on" : ""}`}
+              aria-label={voiceActive ? "Stop dictation" : "Start dictation"}
+              aria-pressed={voiceActive}
+              title={voiceActive ? "Stop dictation and finish the transcript" : "Dictate a message"}
+              disabled={voiceState === "transcribing"}
+              onClick={voiceActive ? () => { void voice.current?.finish(); } : startVoice}
             >
-              {listening ? <Square size={13} /> : <Mic size={15} />}
+              {voiceActive ? <Square size={13} /> : <Mic size={15} />}
             </button>
-            <button type="submit" className="send" aria-label="Send message" disabled={!input.trim() || busy || agentBusy}>
+            <button type="submit" className="send" aria-label="Send message" disabled={(!input.trim() && !voiceActive) || busy || agentBusy || voiceState === "transcribing"}>
               <ArrowUp size={15} />
             </button>
           </form>
+          <div className="voice-status" role="status" aria-live="polite">
+            {voiceError || ({ starting: "Opening microphone…", listening: "Dictating locally — review your words, then press Send.", transcribing: "Finishing your transcript…" }[voiceState] || "")}
+          </div>
         </aside>
       )}
 

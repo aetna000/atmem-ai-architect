@@ -1,0 +1,136 @@
+{
+  "id": "06-permission-rag",
+  "round": 1,
+  "evidenceDirectory": "06-permission-rag/round-1",
+  "provider": "claude-code",
+  "model": "default",
+  "evidenceKind": "real-model-browser-run",
+  "stages": {
+    "prompt": "passed",
+    "architecture": "passed",
+    "export": "passed",
+    "localValidation": "passed",
+    "cloudPlan": "not_run",
+    "deployment": "not_run",
+    "applicationTests": "passed",
+    "cleanup": "not_run"
+  },
+  "checks": [
+    "Alice cannot retrieve Bob-only evidence",
+    "No restricted title/snippet/citation leakage",
+    "Revocation propagates within agreed bound",
+    "Unknown identity/region is denied"
+  ],
+  "blockers": [
+    "Product qualification loop: close implementation gaps and validate this artifact before any account plan or deployment"
+  ],
+  "components": [
+    {
+      "id": "caller-alice",
+      "label": "Alice (synthetic IAM caller)",
+      "origin": "existing"
+    },
+    {
+      "id": "caller-bob",
+      "label": "Bob (synthetic IAM caller)",
+      "origin": "existing"
+    },
+    {
+      "id": "rag-api",
+      "label": "IAM-authenticated RAG API",
+      "service": "Amazon API Gateway",
+      "origin": "proposed"
+    },
+    {
+      "id": "rag-lambda",
+      "label": "Bounded keyword RAG",
+      "service": "AWS Lambda",
+      "origin": "proposed"
+    },
+    {
+      "id": "rag-catalog",
+      "label": "Document and ACL catalog",
+      "service": "Amazon DynamoDB",
+      "origin": "proposed"
+    },
+    {
+      "id": "bedrock-model",
+      "label": "Foundation model",
+      "service": "Amazon Bedrock",
+      "origin": "existing"
+    }
+  ],
+  "architectureAssessment": {
+    "passed": true,
+    "checks": [
+      {
+        "id": "nonempty",
+        "passed": true
+      },
+      {
+        "id": "unique-component-ids",
+        "passed": true
+      },
+      {
+        "id": "valid-edge-endpoints",
+        "passed": true
+      },
+      {
+        "id": "connected-graph",
+        "passed": true
+      },
+      {
+        "id": "aws-proposed-components",
+        "passed": true
+      },
+      {
+        "id": "service-bedrock",
+        "passed": true
+      },
+      {
+        "id": "connected-components",
+        "passed": true
+      },
+      {
+        "id": "retrieval-component",
+        "passed": true
+      },
+      {
+        "id": "identity-or-access-component",
+        "passed": true
+      }
+    ],
+    "limitations": "Structural checks only. Application correctness, security, service availability and deployment require independent evidence."
+  },
+  "artifactSha256": "abd3fbe0cac12ef981670f46f2207641c0c16a6a1fce711ddfc934358f13b801",
+  "resourceTypes": [
+    "aws_iam_role",
+    "aws_cloudwatch_log_group",
+    "aws_iam_role_policy",
+    "aws_lambda_function",
+    "aws_lambda_alias",
+    "aws_dynamodb_table",
+    "aws_apigatewayv2_api",
+    "aws_apigatewayv2_integration",
+    "aws_apigatewayv2_route",
+    "aws_apigatewayv2_stage",
+    "aws_lambda_permission",
+    "aws_dynamodb_table_item"
+  ],
+  "unfinishedWork": [],
+  "deploymentAssessment": {
+    "status": "blocked",
+    "awsResourceCount": 18,
+    "blockers": [
+      {
+        "id": "requirements-review-unverified",
+        "owner": "review",
+        "message": "Review requirements against emitted configuration, including identity, limits, region, costs and cleanup."
+      }
+    ],
+    "cloudPlan": "not_run",
+    "deployment": "not_run",
+    "limitations": "No numerical success probability is justified. Schema validity does not prove complete coverage, runtime behavior or deployability. A ready-for-plan result is not permission to deploy."
+  },
+  "localValidationEvidence": "06-permission-rag/round-1/artifact-validation.json"
+}

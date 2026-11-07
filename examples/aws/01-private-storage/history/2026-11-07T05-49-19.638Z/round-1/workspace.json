@@ -1,0 +1,183 @@
+{
+  "version": 1,
+  "revision": 2,
+  "name": "A private place on AWS to store a small…",
+  "provider": "aws",
+  "requirements": "Storage-only synthetic qualification test. Block public access, encryption and versioning on. No AI, database or web application.",
+  "nodes": [
+    {
+      "id": "operator",
+      "type": "resource",
+      "position": {
+        "x": 50,
+        "y": 50
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Test operator (existing IAM principal)",
+        "provider": "tools",
+        "kind": "tool",
+        "description": "An existing IAM role or user outside the provisioning scope. It uploads and reads the synthetic documents. Its ARN is supplied as a reviewable input and is not verified here.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "binding": "aws-iam-principal"
+      }
+    },
+    {
+      "id": "doc-bucket",
+      "type": "resource",
+      "position": {
+        "x": 470,
+        "y": 50
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Synthetic document bucket",
+        "provider": "aws",
+        "kind": "resource",
+        "description": "A private S3 bucket. All four Block Public Access settings are on, server-side encryption is on, versioning is enabled and a bucket policy grants access only to the bound operator. It holds synthetic text documents only.",
+        "config": {
+          "region": "Candidate: ap-southeast-2 (Sydney), not approved",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "data",
+        "service": "Amazon S3"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "operator-doc-bucket",
+      "source": "operator",
+      "target": "doc-bucket",
+      "type": "smoothstep",
+      "label": "Upload and read documents (S3 read/write)",
+      "access": "s3-read-write"
+    }
+  ],
+  "id": "aaf045de-7a14-4167-a854-189c58350fa8",
+  "brief": {
+    "application": "I need a private place on AWS to store a small set of synthetic text documents for a deployment test. Keep public access blocked and enable encryption and versioning. This first scenario only needs storage; no AI, database or web application. Use AWS for this synthetic qualification design. Propose Sydney as a candidate region, but do not record that as an approved deployment region. Draw the architecture and identify the next missing decision. This is a test design, not an instruction to deploy.",
+    "cloud": "AWS"
+  },
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use AWS for this synthetic qualification design",
+      "options": "",
+      "decision": "aws",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.private-s3-document-store-for-synthetic-deployment-test",
+      "title": "Private S3 document store for synthetic deployment test",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: storage only, with no AI, database or web app. The diagram has one proposed Amazon S3 bucket (all public access blocked, encryption on, versioning on) and the existing IAM operator who reaches it through a typed s3-read-write grant. The principal ARN is a required Terraform input and is not verified. Assumptions: Sydney (ap-southeast-2) is a candidate region only, not approved. The documents are synthetic. Nothing is deployed.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "needs": [
+    {
+      "id": "ai-private-storage",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Proposed: the document bucket blocks all public access, encrypts objects at rest and keeps object versions.",
+      "rationale": "Without these controls, the test documents could be exposed or lost if they are overwritten.",
+      "basis": "User: \"Keep public access blocked and enable encryption and versioning.\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "doc-bucket"
+      ]
+    },
+    {
+      "id": "ai-operator-access",
+      "kind": "functional",
+      "category": "security",
+      "statement": "Proposed: only the named existing operator can store and read documents. Any other identity is denied.",
+      "rationale": "Private storage needs an explicit access contract. Otherwise the bucket is unusable, or access ends up too broad.",
+      "basis": "User: \"a private place on AWS to store a small set of synthetic text documents\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "operator",
+        "doc-bucket"
+      ]
+    },
+    {
+      "id": "ai-data-residency",
+      "kind": "nonfunctional",
+      "category": "compliance",
+      "statement": "Proposed: the test documents stay in a country we agree on. Sydney (ap-southeast-2) is a candidate region only, pending approval.",
+      "rationale": "The country drives where the bucket can be placed. Choosing a region before agreeing the country risks rework.",
+      "basis": "User: \"Propose Sydney as a candidate region, but do not record that as an approved deployment region.\"",
+      "priority": "should",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "doc-bucket"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "extensions": {
+    "requirementNumbers": {
+      "drv-data-access": 1,
+      "drv-data-location": 2,
+      "ai-private-storage": 3,
+      "ai-operator-access": 4,
+      "ai-data-residency": 5
+    }
+  },
+  "facts": [
+    {
+      "id": "fact-fee5f923",
+      "name": "cloud.preference",
+      "value": "aws",
+      "unit": "provider",
+      "text": "I need a private place on AWS to store a small set of synthetic text documents for a deployment test. Keep public access blocked and enable encryption and versioning. This first scenario only needs storage; no AI, database or web application. Use AWS for this synthetic qualification design. Propose ",
+      "madeAt": "2026-11-07"
+    }
+  ],
+  "workflow": "general",
+  "asked": [],
+  "lastAsked": {
+    "id": "general:0",
+    "topic": "data",
+    "question": "What information will it work with, and where does it live?",
+    "beginner": "For example a database, documents, or another system's data.",
+    "why": "It shapes the AI architecture design."
+  },
+  "choices": {},
+  "conceptSig": null
+}

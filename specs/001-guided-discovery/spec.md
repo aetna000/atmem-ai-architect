@@ -77,3 +77,32 @@ The user lists candidate use cases and marks each Pursue, Park or Rule out with 
 
 - The discovery question bank is refined by research task R2; topic list above is the starting set.
 - Offline (no model) discovery uses the deterministic listener; a connected model improves wording, not the stored structure.
+
+## Live dictation correction — 7 November 2026
+
+Owner clarification: one-way voice input, like the ChatGPT/Codex composer. The
+user speaks, sees the transcript appear, then explicitly posts it. The model's
+output belongs on the design and in text; replies must not be read aloud.
+
+- **FR-008**: Starting dictation MUST capture microphone audio and update an editable
+  composer progressively, without calling the architect or submitting a message.
+- **FR-009**: Explicit Stop MUST finalise remaining words. Explicit Send during recording
+  MUST finalise the current transcript and post once through the existing architect
+  path, preserving proposal/undo/approval behaviour. The actual response updates the
+  design; no speech playback or automatic conversational restart is permitted.
+- **FR-010**: Use local transcription rather than the unreachable browser speech service.
+  Show preparation, recording, finishing and actionable errors; cancellation, typed
+  edits and project replacement MUST fence late results and release the microphone.
+- **FR-011**: Disclose local audio processing before first activation. Raw audio MUST
+  remain in memory, never in logs/project files/memory events. Bound clip size and
+  decoding work; require existing loopback Host/Origin/session protections. Model
+  setup is explicit, with no recording-time model download or paid service fallback.
+
+Acceptance: progressive partial words stay in the composer; zero architect calls
+before user Send; latest words are finalised and sent once; returned graph proposal
+updates the canvas. Permission/device/helper errors preserve drafts. Raw audio
+routes reject missing auth, foreign origins, invalid/oversized formats. Actual local
+transcription is tested with generated speech; physical microphone quality remains
+an operator check, not inferred from fixtures.
+
+- **FR-012**: Applied architect diagram proposals draw attention to changed blocks and connections with two gentle pulses and a focused viewport. The cue expires without entering saved project data or undo history. Removed connections focus surviving endpoints. Reduced-motion preferences use a steady outline and instant focus.

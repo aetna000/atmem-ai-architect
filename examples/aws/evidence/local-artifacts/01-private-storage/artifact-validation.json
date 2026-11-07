@@ -1,0 +1,45 @@
+{
+  "evidenceKind": "local-generated-artifact-check",
+  "cloudOperations": false,
+  "resourceTypes": [
+    "terraform_data",
+    "aws_s3_bucket",
+    "aws_s3_bucket_public_access_block",
+    "aws_s3_bucket_server_side_encryption_configuration",
+    "aws_s3_bucket_versioning",
+    "aws_s3_bucket_ownership_controls",
+    "aws_s3_bucket_policy"
+  ],
+  "deploymentCoverage": "generated_implementation",
+  "unfinishedWork": [],
+  "checks": [
+    {
+      "name": "provider-init",
+      "status": "passed",
+      "exitCode": 0,
+      "stdout": "Initializing provider plugins...\n- terraform.io/builtin/terraform is built in to Terraform\n- Finding hashicorp/aws versions matching \"~> 6.0\"...\n- Installing hashicorp/aws v6.72.0...\n- Installed hashicorp/aws v6.72.0 (signed by HashiCorp)\n\nTerraform has created a lock file .terraform.lock.hcl to record the provider\nselections it made above. Include this file in your version control repository\nso that Terraform can guarantee to make the same selections by default when\nyou run \"terraform init\" in the future.\n\nTerraform has been successfully initialized!\n",
+      "stderr": ""
+    },
+    {
+      "name": "configuration-load",
+      "status": "passed",
+      "exitCode": 0,
+      "stdout": "\nProviders required by configuration:\n.\n├── provider[registry.terraform.io/hashicorp/aws] ~> 6.0\n├── provider[terraform.io/builtin/terraform]\n└── test.tests.storage-access\n\n",
+      "stderr": ""
+    },
+    {
+      "name": "provider-schema",
+      "status": "passed",
+      "exitCode": 0,
+      "stdout": "{\n  \"format_version\": \"1.0\",\n  \"valid\": true,\n  \"error_count\": 0,\n  \"warning_count\": 0,\n  \"diagnostics\": []\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "mock-plans",
+      "status": "passed",
+      "exitCode": 0,
+      "stdout": "tests/storage-access.tftest.hcl... in progress\n  run \"generated_storage_plan\"... pass\n  run \"unapproved_plan_rejected\"... pass\n  run \"cross_account_binding_rejected\"... pass\n  run \"wildcard_binding_rejected\"... pass\ntests/storage-access.tftest.hcl... tearing down\ntests/storage-access.tftest.hcl... pass\n\nSuccess! 4 passed, 0 failed.\n",
+      "stderr": ""
+    }
+  ]
+}

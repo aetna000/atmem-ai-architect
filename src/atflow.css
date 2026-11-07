@@ -46,11 +46,11 @@ button:disabled { cursor: not-allowed; opacity: 0.4; }
 /* ---------- Layout ---------- */
 .app {
   display: grid;
-  grid-template-columns: 1fr 360px;
+  grid-template-columns: minmax(0, 1fr) 360px;
   grid-template-rows: 52px 1fr;
   height: 100vh;
 }
-.app.chat-closed { grid-template-columns: 1fr; }
+.app.chat-closed { grid-template-columns: minmax(0, 1fr); }
 .bar { grid-column: 1 / -1; }
 
 /* ---------- Top bar ---------- */
@@ -729,7 +729,7 @@ label.inline input { width: 60px; }
 
 /* ---------- Small screens ---------- */
 @media (max-width: 900px) {
-  .app { grid-template-columns: 1fr; grid-template-rows: auto 60vh auto; height: auto; min-height: 100vh; }
+  .app { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto 60vh auto; height: auto; min-height: 100vh; }
   .bar { flex-wrap: wrap; padding: 8px 12px; gap: 8px; }
   .crumbs { order: 3; flex-basis: 100%; overflow-x: auto; }
   .project-name { width: 14ch; }
@@ -862,6 +862,7 @@ label.inline input { width: 60px; }
 @media(max-width:900px){.brand span{display:inline;}}
 
 .outputs-view { overflow:auto; }
+.outputs-view aside { min-width:0; overflow-wrap:anywhere; }
 .outputs-browser { display:grid; grid-template-columns:220px minmax(0,1fr); gap:20px; align-items:start; margin-top:20px; }
 .outputs-directory { border:1px solid var(--line); border-radius:8px; padding:12px; min-width:0; }
 .outputs-directory details+details { margin-top:16px; }
@@ -908,3 +909,33 @@ h1, h2, h3, .brand, .doc-head h2, .modal h2, .detail-title input, .indicator str
 :root[data-theme="dark"] .atmem-dot { fill: #5FD0D6; }
 .bar .brand { color: var(--color-ink); font-weight: 800; }
 .brand-divider { color: var(--color-muted); font-weight: 500; padding: 0 6px; }
+
+.voice-status{font-size:12px;line-height:1.5;padding:0 16px 10px;color:var(--muted)}
+.voice-status:empty{display:none}
+.voice-status button{display:block;margin-top:6px;text-decoration:underline;background:none;border:0;color:inherit;cursor:pointer;font:inherit}
+
+/* Two gentle pulses, then a steady outline until the change cue expires. */
+.react-flow__node.diagram-attention {
+  outline: 3px solid var(--accent);
+  outline-offset: 7px;
+  border-radius: 14px;
+  animation: diagram-change-pulse 1s ease-in-out 2;
+}
+.react-flow__edge.diagram-attention .react-flow__edge-path {
+  stroke: var(--accent);
+  stroke-width: 4;
+  animation: diagram-edge-pulse 1s ease-in-out 2;
+}
+@keyframes diagram-change-pulse {
+  50% { outline-offset: 13px; box-shadow: 0 0 0 12px var(--accent-soft); }
+}
+@keyframes diagram-edge-pulse { 50% { stroke-width: 7; } }
+@media (prefers-reduced-motion: reduce) {
+  .react-flow__node.diagram-attention,
+  .react-flow__edge.diagram-attention .react-flow__edge-path { animation: none; }
+}
+
+.emulation-panel { margin: 16px 0; padding: 16px; border: 1px solid var(--line); border-radius: 12px; }
+.emulation-panel h3 { margin-top: 0; }
+.emulation-panel li { margin: 6px 0; }
+.emulation-panel details { margin-top: 12px; }

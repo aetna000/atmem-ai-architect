@@ -1,0 +1,267 @@
+{
+  "format": "atmem.ai-architect.project",
+  "formatVersion": "2.3.0",
+  "meta": {
+    "id": "a68438c9-97d6-499c-bc4c-aea29e42fe31",
+    "name": "Authenticated Bedrock text summarizer",
+    "createdAt": "2026-11-07T05:51:41.284Z",
+    "updatedAt": "2026-11-07T05:51:41.284Z",
+    "revision": 2,
+    "generator": "atmem-ai-architect 0.2.0"
+  },
+  "design": {
+    "provider": "aws",
+    "nodes": [
+      {
+        "id": "caller",
+        "type": "resource",
+        "position": {
+          "x": 50,
+          "y": 50
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Existing IAM caller",
+          "provider": "tools",
+          "kind": "tool",
+          "description": "Existing IAM principal (test harness), outside the provisioning scope. It invokes the summary function's live alias with SigV4 and sends {text}. Its identity is not verified.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "binding": "aws-iam-principal"
+        }
+      },
+      {
+        "id": "summary-fn",
+        "type": "resource",
+        "position": {
+          "x": 470,
+          "y": 50
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Summary function",
+          "provider": "aws",
+          "kind": "agent",
+          "description": "Validates the input size, calls Bedrock Converse with bounded output and retries, and returns the summary to the caller. It owns its execution role (bedrock:InvokeModel on the selected model ARN only), a scoped CloudWatch Logs group, a published version and a live alias. Candidate region: ap-southeast-2 (Sydney), not approved.",
+          "config": {
+            "concurrency": 1,
+            "maxInputBytes": 16000,
+            "maxOutputTokens": 512,
+            "logRetentionDays": 30,
+            "region": "ap-southeast-2 (candidate, unapproved)",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "implementation": "bedrock-summary",
+          "role": "app",
+          "service": "AWS Lambda"
+        }
+      },
+      {
+        "id": "bedrock",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 50
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Amazon Bedrock model",
+          "provider": "aws",
+          "kind": "predict",
+          "description": "A direct foundation model selected through a required Terraform model-ID input. No cross-region inference profile is used. Model access, Converse support, quotas and Sydney availability have not been checked yet.",
+          "config": {
+            "region": "ap-southeast-2 (candidate, unapproved)",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "binding": "aws-bedrock-model",
+          "role": "llm",
+          "service": "Amazon Bedrock"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e-caller-fn",
+        "source": "caller",
+        "target": "summary-fn",
+        "type": "smoothstep",
+        "label": "IAM invoke {text} → summary",
+        "access": "lambda-invoke"
+      },
+      {
+        "id": "e-fn-bedrock",
+        "source": "summary-fn",
+        "target": "bedrock",
+        "type": "smoothstep",
+        "label": "Converse (≤512 tokens, 2 attempts)",
+        "integration": "bedrock-converse"
+      }
+    ]
+  },
+  "discovery": {
+    "problem": "",
+    "brief": {
+      "application": "Build an authenticated AWS service that summarizes synthetic text using Amazon Bedrock. Include runtime, model invocation permissions and operational logging. Model selection and region availability must be verified before deployment. Bound request size, output tokens, retries and invocation concurrency. Use AWS for this synthetic qualification design. Propose Sydney as a candidate region, but do not record that as an approved deployment region. Draw the architecture and identify the next missing decision. This is a test design, not an instruction to deploy.",
+      "cloud": "AWS",
+      "data": "Review this same architecture and its generated Terraform. Keep the original scenario scope and preserve valid component IDs and existing systems. Validation findings: [{\"id\":\"application-not-qualified\",\"owner\":\"application\",\"message\":\"No executable application acceptance evidence for this artifact.\"},{\"id\":\"provider-schema-unverified\",\"owner\":\"validation\",\"message\":\"Run provider-schema validation against this exact export.\"},{\"id\":\"requirements-review-unverified\",\"owner\":\"review\",\"message\":\"Review requirements against emitted configuration, including identity, limits, region, costs and cleanup.\"}]. Correct architecture defects through a proposal where supported. For missing native resources, application code or integrations, explain the product implementation gap and next concrete engineering action; do not claim a diagram edit implemented it. Do not remove required components, weaken acceptance checks or clear unfinished-work gates to obtain a pass. Do not claim tests ran or request deployment. Identify what remains unverified."
+    },
+    "facts": [
+      {
+        "id": "fact-8e272a11",
+        "name": "cloud.preference",
+        "value": "aws",
+        "unit": "provider",
+        "text": "Build an authenticated AWS service that summarizes synthetic text using Amazon Bedrock. Include runtime, model invocation permissions and operational logging. Model selection and region availability must be verified before deployment. Bound request size, output tokens, retries and invocation concurr",
+        "madeAt": "2026-11-07"
+      }
+    ],
+    "workflow": "document-processing",
+    "asked": [
+      "general:0"
+    ],
+    "lastAsked": {
+      "id": "document-processing:0",
+      "topic": "data",
+      "question": "What kinds of documents arrive, and how many a month?",
+      "beginner": "For example “invoices, about 3,000 a month, mostly PDF”.",
+      "why": "It shapes the Document extraction design."
+    }
+  },
+  "requirements": [
+    {
+      "id": "ai-summary-auth",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Only authenticated IAM principals that have been explicitly granted access can invoke the summary function. Anonymous access is denied.",
+      "rationale": "Proposed: an open endpoint could expose model spend and misuse.",
+      "basis": "User: \"Build an authenticated AWS service\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "caller",
+        "summary-fn"
+      ]
+    },
+    {
+      "id": "ai-summary-bounds",
+      "kind": "nonfunctional",
+      "category": "cost",
+      "statement": "Proposed bounds: input of at most 16,000 bytes, at most 512 output tokens, at most 2 SDK attempts and concurrency of 1. Inputs that exceed these limits are rejected.",
+      "rationale": "Bounds cap token cost and quota pressure. The values are proposed defaults that still need confirmation.",
+      "basis": "User: \"Bound request size, output tokens, retries and invocation concurrency.\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "summary-fn",
+        "bedrock"
+      ]
+    },
+    {
+      "id": "ai-model-region-verify",
+      "kind": "nonfunctional",
+      "category": "compliance",
+      "statement": "Before deployment, verify the selected model ID, model access, Converse support and quotas in the chosen region (candidate: Sydney).",
+      "rationale": "An unavailable model or region would block deployment.",
+      "basis": "User: \"Model selection and region availability must be verified before deployment.\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "bedrock"
+      ]
+    },
+    {
+      "id": "ai-summary-ops-logging",
+      "kind": "nonfunctional",
+      "category": "maintainability",
+      "statement": "Proposed: the summary function writes operational logs (request size, outcome, retry count, token usage) to its scoped CloudWatch Logs group, kept for 30 days, without logging the text it summarizes.",
+      "rationale": "Operational logging was requested. If it isn't specified, logs could miss failures or capture the content being summarized.",
+      "basis": "User: \"Include runtime, model invocation permissions and operational logging.\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "summary-fn"
+      ]
+    },
+    {
+      "id": "ai-summary-acceptance",
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "statement": "Proposed: before any deployment-readiness claim, record evidence against this exact export for provider-schema validation, a successful call, a denied caller, an oversized input, a retry/throttle failure, an update and cleanup.",
+      "rationale": "These validation findings show the application isn't qualified yet and the schema is unverified. A diagram or export is not proof that it works.",
+      "basis": "Validation findings: application-not-qualified, provider-schema-unverified, requirements-review-unverified.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "caller",
+        "summary-fn",
+        "bedrock"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use AWS for this synthetic qualification design.",
+      "options": "",
+      "decision": "aws",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.authenticated-bedrock-summary-service-synthetic-qualification-sketch",
+      "title": "Authenticated Bedrock summary service (synthetic qualification sketch)",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: an existing IAM caller invokes a bedrock-summary Lambda directly. The Lambda calls an existing Amazon Bedrock foundation model via Converse. The Lambda owns its execution role (InvokeModel only on the selected model ARN), CloudWatch log group, published version and alias. Assumptions: synthetic text only; Sydney (ap-southeast-2) is a candidate region, not approved; model ID, model access, Converse support and quotas are unverified; the bounds are proposed defaults. There is no anonymous endpoint and no deployment.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "extensions": {
+    "requirementNumbers": {
+      "drv-data-access": 1,
+      "drv-data-location": 2,
+      "ai-summary-auth": 3,
+      "ai-summary-bounds": 4,
+      "ai-model-region-verify": 5,
+      "ai-summary-ops-logging": 6,
+      "ai-summary-acceptance": 7
+    },
+    "choices": {},
+    "conceptSig": null
+  }
+}

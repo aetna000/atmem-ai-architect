@@ -1,0 +1,5 @@
+export function asyncProject(){
+ const node=(id,service,implementation)=>({id,position:{x:0,y:0},data:{kind:'resource',label:id,provider:'aws',service,...(implementation?{implementation}:{})}});
+ const edge=(source,target,integration)=>({id:`${source}-${target}`,source,target,integration});
+ return {version:1,revision:1,name:'Async documents',provider:'aws',nodes:[{id:'operator',position:{x:0,y:0},data:{kind:'resource',label:'Operator',provider:'tools',origin:'existing',binding:'aws-iam-principal'}},node('bucket','Amazon S3'),node('queue','Amazon SQS','sqs-standard'),node('dlq','Amazon SQS','sqs-dead-letter'),node('worker','AWS Lambda','async-word-count'),node('results','Amazon DynamoDB','word-count-results')],edges:[{id:'upload',source:'operator',target:'bucket',access:'s3-read-write'},edge('bucket','queue','s3-object-created'),edge('queue','worker','sqs-lambda'),edge('worker','bucket','lambda-s3-read'),edge('worker','results','lambda-dynamodb-write'),edge('queue','dlq','sqs-redrive')]};
+}

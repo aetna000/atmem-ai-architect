@@ -1,0 +1,5 @@
+- [ ] Typed project and proposal contracts
+- [ ] Native policy/input generation and accurate coverage
+- [ ] Guidance and handoff consistency
+- [ ] Regression and mock-provider validation
+- [ ] Real prompt-to-export qualification

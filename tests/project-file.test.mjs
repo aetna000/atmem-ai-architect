@@ -34,7 +34,7 @@ test('workbench v1 files migrate and say so',()=>{
 });
 test('newer major versions are refused, newer minor versions keep unknown fields',()=>{
   const file=toProjectFile(pdmTemplate());
-  assert.throws(()=>fromProjectFile({...file,formatVersion:'3.0.0'}),/format 3.0.0.*reads 2.2.0/);
+  assert.throws(()=>fromProjectFile({...file,formatVersion:'3.0.0'}),/format 3.0.0.*reads 2.3.0/);
   const {project,migrated}=fromProjectFile({...file,formatVersion:'2.9.0',futureSection:{a:1},meta:{...file.meta,colour:'teal'}});
   assert.equal(migrated,true);
   assert.deepEqual(project.extensions.futureSection,{a:1});assert.deepEqual(project.extensions['meta.extra'],{colour:'teal'});
