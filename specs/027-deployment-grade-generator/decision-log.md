@@ -60,3 +60,19 @@ revision. Refresh restores an explicit view choice; new projects default to Comp
 Implemented the shared public-only FAQ catalog, authorized conditional editor CLI, source freshness, citation validation and four provider compositions. Preserve private enterprise/native connector requirements as separate work. New AWS FAQ systems use generated Lambda/HTTP API v2 source with hash-pinned MIT Mangum 0.22.0, not App Runner, which is closed to new customers. The original App Runner candidate and posthoc independent rejection are retained. Native schemas alone cannot establish service lifecycle eligibility.
 
 Stricter Azure mocks exposed and fixed the paired health-check interval omission in both templates; isolated mutation tests prove rejection. Exact original/current FAQ artifacts and private-runtime regressions are locally qualified; model/storage fixtures are not live cloud evidence. Security reports distinguish the exported Lambda ZIP from AWS qualification tooling and retain remaining image findings. See specs/028-convergence-evaluation/evidence/20261110-public-faq/README.md. The 28-project target and medium/hard implementation remain unfinished; no cloud account operations or deployment authorized.
+
+
+## 2026-11-10 — Durable queue and immutable approval core
+
+Selected hash-pinned MIT Procrastinate 3.10.0 after reviewing its external-transaction
+and stalled-worker contracts. Native local PostgreSQL/queue/role/TLS/process tests
+now cover atomic outbox, deduplication, lease fencing, approval, crash recovery and
+uncertain external outcomes. Approval binds a destination contract as well as the
+source/result revision. Revocation cannot reset an uncertain send into a new action.
+Separate migration/API/worker identities and hard processing deadlines are explicit.
+
+51 observed checks and faults are retained in
+specs/028-convergence-evaluation/evidence/20261110-durable-core. This core is not yet
+a registered provider application: PDF/native identity/storage, complete provider
+resources, retention/restore and vendor reconciliation remain implementation work.
+No full project, final 28-case acceptance or cloud deployment is claimed.

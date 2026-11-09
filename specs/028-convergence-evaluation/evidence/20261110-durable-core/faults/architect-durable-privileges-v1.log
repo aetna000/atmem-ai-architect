@@ -1,0 +1,25 @@
+test_api_cannot_prune_worker_jobs_or_escalate_to_the_migration_role (__main__.RuntimeDatabasePrivilegesTests.test_api_cannot_prune_worker_jobs_or_escalate_to_the_migration_role) ... ok
+test_api_submission_approval_and_worker_completion_use_only_their_granted_roles (__main__.RuntimeDatabasePrivilegesTests.test_api_submission_approval_and_worker_completion_use_only_their_granted_roles) ... ERROR
+test_granting_administrator_credentials_to_an_application_is_rejected (__main__.RuntimeDatabasePrivilegesTests.test_granting_administrator_credentials_to_an_application_is_rejected) ... ok
+test_runtime_roles_cannot_edit_membership_or_delete_audit_or_own_the_schema (__main__.RuntimeDatabasePrivilegesTests.test_runtime_roles_cannot_edit_membership_or_delete_audit_or_own_the_schema) ... ok
+
+======================================================================
+ERROR: test_api_submission_approval_and_worker_completion_use_only_their_granted_roles (__main__.RuntimeDatabasePrivilegesTests.test_api_submission_approval_and_worker_completion_use_only_their_granted_roles)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/durable_privileges_acceptance.py", line 34, in test_api_submission_approval_and_worker_completion_use_only_their_granted_roles
+    operation=self.api.submit(self.user,'document','privilege-document',{'sha256':'a'*64});lease=self.worker.claim_extract(operation);self.worker.record_result(operation,str(lease['lease_token']),{'supplier':'Privilege fixture'});self.api.approve(self.reviewer,operation,1);send=self.worker.claim_dispatch(operation);self.worker.record_sent(operation,str(send['lease_token']),{'externalId':'privileged-synthetic-001'});self.assertEqual(self.api.get(self.user,operation)['state'],'sent')
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/durable_workflow.py", line 86, in submit
+    self._actor(conn,actor,{'user','reviewer','supervisor','owner'})
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/durable_workflow.py", line 58, in _actor
+    row=conn.execute('SELECT active,roles FROM workflow.memberships WHERE account_id=%s AND subject=%s FOR SHARE',(actor.account_id,actor.subject)).fetchone()
+        ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/durable-runtime/lib/python3.13/site-packages/psycopg/connection.py", line 304, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.InsufficientPrivilege: permission denied for table memberships
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.171s
+
+FAILED (errors=1)

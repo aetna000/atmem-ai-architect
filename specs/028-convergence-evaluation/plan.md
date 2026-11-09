@@ -45,3 +45,12 @@ a project. Then expand durable job/approval/idempotency and tenant-credit blocks
 none is fulfilled by naming a queue/database or emitting an empty review gate.
 
 Public FAQ increment now has four full-client-brief native conversations, original/current source/provider/Linux qualification, nine local-model semantic probes and eight browser checks; see evidence/20261110-public-faq. New AWS default is Lambda/HTTP API v2 after independent lifecycle review rejected App Runner. Next implement durable transactional job/approval/idempotency primitives, qualify a pinned queue against real local PostgreSQL (including crash/duplicate/stalled recovery), then compose invoice/support workflows and tenant-credit state on every provider. Preserve existing storage/identity/source decisions rather than forcing a universal database or replacing external systems.
+
+
+Durable core now has 51 observed local checks, retained faults and exact-source
+receipts in evidence/20261110-durable-core. It remains unregistered until composed
+with authenticated native private PDF storage, bounded parsing/OCR/model output,
+API/worker/database provider resources, retention and operations. Next qualify those
+boundaries across all four clouds and rerun complete document-intake briefs; then
+expand native enterprise/support and tenant-credit composition. CV-005, full 28-case
+acceptance and held-out evaluation remain unfinished.
