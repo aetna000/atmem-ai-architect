@@ -226,12 +226,12 @@ button:disabled { cursor: not-allowed; opacity: 0.4; }
 /* Block detail (level 3) */
 .detail {
   position: absolute; inset: 0; z-index: 7; background: var(--board);
-  display: grid; grid-template-columns: 1fr minmax(300px, 380px) 1fr; gap: 20px; padding: 28px 28px 28px 80px; overflow: auto;
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 380px) minmax(0, 1fr); gap: 20px; padding: 16px 28px 28px 80px; overflow: auto; align-content: start;
 }
-.detail .back { position: absolute; top: 14px; left: 80px; display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px 6px 10px; border-radius: 20px; background: var(--paper); border: 1px solid var(--line); box-shadow: var(--shadow); font-weight: 600; font-size: 13px; z-index: 2; }
+.detail-navigation { position: sticky; top: 0; grid-column: 1 / -1; align-self: start; z-index: 10; background: var(--board); padding-bottom: 8px; }
+.detail .back { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px 6px 10px; border-radius: 20px; background: var(--paper); border: 1px solid var(--line); box-shadow: var(--shadow); font-weight: 600; font-size: 13px; z-index: 10; }
 .detail .back:hover { border-color: var(--accent); color: var(--accent); }
 .detail .back kbd { font: 11px var(--type-family-mono); color: var(--ink-2); border: 1px solid var(--line); border-radius: 4px; padding: 0 4px; }
-.detail { padding-top: 64px; }
 .detail h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); margin: 0 0 10px; }
 .detail h4 { font-size: 12px; color: var(--ink-2); margin: 16px 0 6px; font-weight: 600; }
 .detail-col { min-width: 0; }
@@ -248,14 +248,19 @@ button:disabled { cursor: not-allowed; opacity: 0.4; }
 .detail-col.probed pre { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
 .detail-core {
   align-self: start; background: var(--paper); border: 2px solid var(--ink); border-radius: 16px;
-  padding: 18px; display: flex; flex-direction: column; gap: 12px;
+  padding: 18px; min-width: 0; overflow-wrap: anywhere; display: flex; flex-direction: column; gap: 12px;
 }
 .detail-core p { margin: 0; }
 .detail-title { display: flex; align-items: center; gap: 10px; }
 .blk-provider { width: 12px; height: 12px; border-radius: 50%; background: var(--provider); flex: none; }
-.detail-title input { flex: 1; font-size: 18px; font-weight: 700; border: 0; background: none; outline: none; padding: 2px 0; border-bottom: 1.5px solid transparent; }
+.detail-title input { flex: 1; min-width: 0; width: 100%; font-size: 18px; font-weight: 700; border: 0; background: none; outline: none; padding: 2px 0; border-bottom: 1.5px solid transparent; }
 .detail-title input:focus { border-bottom-color: var(--accent); }
-.fields { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.fields > label { min-width: 0; }
+.fields .field-wide { grid-column: 1 / -1; }
+.fields input:not([type="checkbox"]), .fields select { min-width: 0; width: 100%; max-width: 100%; }
+.detail .terminal > * { min-width: 0; overflow-wrap: anywhere; }
+@media (max-width: 520px) { .detail .fields { grid-template-columns: minmax(0, 1fr); } }
 .fields label, .dialog-field { display: flex; flex-direction: column; gap: 4px; font-size: 12px; color: var(--ink-2); font-weight: 500; }
 .fields input, .fields select, .dialog-field input, .dialog-field select, .runbar select, .code-input {
   height: 34px; padding: 0 9px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--paper); color: var(--ink); font-size: 13px;
@@ -735,7 +740,7 @@ label.inline input { width: 60px; }
   .project-name { width: 14ch; }
   .chat { border-left: 0; border-top: 1px solid var(--line); min-height: 60vh; }
   .runbar { left: 10px; right: 10px; bottom: 60px; flex-wrap: wrap; }
-  .detail { grid-template-columns: 1fr; padding: 16px 16px 16px 70px; }
+  .detail { grid-template-columns: minmax(0, 1fr); padding: 16px; }
   .palette { width: min(300px, calc(100vw - 90px)); }
   .deploy { left: 70px; right: 10px; width: auto; }
   .menu { right: 12px; }

@@ -438,9 +438,11 @@ function BlockDetail({ project, node, run, probe, busy, onChange, onRemove, onOp
   const p = PROVIDERS[node.data.provider];
   return (
     <section className="detail" aria-label="Block detail">
-      <button className="back" onClick={onBack} aria-label="Back to the board">
-        <ArrowLeft size={15} /> Back <kbd>Esc</kbd>
-      </button>
+      <div className="detail-navigation">
+        <button className="back" onClick={onBack} aria-label="Back to the board">
+          <ArrowLeft size={15} /> Back to board <kbd>Esc</kbd>
+        </button>
+      </div>
       <div className="detail-col">
         <h3>Inputs</h3>
         {inputs.length ? (
@@ -530,7 +532,7 @@ function BlockDetail({ project, node, run, probe, busy, onChange, onRemove, onOp
               <option value="existing">Client's existing system</option>
             </select>
           </label>
-          {node.data.origin === "existing" && <label>
+          {node.data.origin === "existing" && <label className="field-wide">
             Existing system handling
             <select aria-label="Existing system handling" disabled={busy} value={node.data.deploymentMode === "create" ? "create" : node.data.binding === "existing-service" ? "reference" : "contract"} onChange={e => set(e.target.value === "create" ? {deploymentMode:"create",implementation:"container-service",binding:undefined} : {deploymentMode:undefined,binding:e.target.value === "reference" ? "existing-service" : undefined,...(node.data.deploymentMode === "create" ? {implementation:undefined}:{})})}>
               <option value="contract">Typed integration contract</option>
