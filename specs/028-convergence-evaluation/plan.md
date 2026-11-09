@@ -43,3 +43,5 @@ the shared core, each provider's identity/storage/model transport, actual emitte
 source/images, concurrent updates and the complete business brief before counting
 a project. Then expand durable job/approval/idempotency and tenant-credit blocks;
 none is fulfilled by naming a queue/database or emitting an empty review gate.
+
+Public FAQ increment now has four full-client-brief native conversations, original/current source/provider/Linux qualification, nine local-model semantic probes and eight browser checks; see evidence/20261110-public-faq. New AWS default is Lambda/HTTP API v2 after independent lifecycle review rejected App Runner. Next implement durable transactional job/approval/idempotency primitives, qualify a pinned queue against real local PostgreSQL (including crash/duplicate/stalled recovery), then compose invoice/support workflows and tenant-credit state on every provider. Preserve existing storage/identity/source decisions rather than forcing a universal database or replacing external systems.

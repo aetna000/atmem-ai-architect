@@ -58,6 +58,13 @@ def assess(case):
     expected_provider = source.get('provider')
     config = read('terraform/main.tf.json')
     addresses = {f'{kind}.{name}' for kind, bodies in config.get('resource', {}).items() for name in bodies}
+    # Independent verifier consumes reviewed lifecycle evidence, not the compiler's
+    # self-reported quality result. New-client cases contain no account eligibility
+    # attestation; structurally valid resources cannot waive this boundary.
+    lifecycle=json.loads((Path(__file__).resolve().parents[1]/'agent-skills/service-lifecycle.json').read_text())
+    for rule in lifecycle['rules']:
+        if not rule['newCustomerDefaultAllowed'] and any(config.get('resource',{}).get(kind) for kind in rule['resourceTypes']):
+            add('service-eligibility-unverified',rule['id']+': '+rule['requiredEvidence'])
     for kind, bodies in config.get('resource', {}).items():
         if kind != 'terraform_data' and not kind.startswith(PREFIXES.get(expected_provider, 'unsupported_')): add('wrong-provider-resource', kind)
         for name, body in bodies.items():

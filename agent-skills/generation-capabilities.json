@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "providers": [
     "aws",
     "azure",
@@ -290,6 +290,103 @@
         "App ID tenant initially admits no application users. Engineer/admin enrolls staff securely and adds exact subjects. No existing company SSO, MFA, immediate JWT revocation or global logout is implemented. Do not select for an existing-SSO requirement without its separate adapter.",
         "Trusted-profile instance-scoped pm-20 Writer includes broader runtime operations; project collaborator membership is separate. No account-wide Manager/Admin or static API key. Scoped expiring retention review is operator-attested, not a provider approval API.",
         "Local cryptographic/HTTP/SDK/scripted transport tests and provider mocks do not prove live sign-in, IAM exchange, model quality or deployment. Persistence, tenancy, credits and workflows are separate required work."
+      ]
+    },
+    {
+      "id": "aws-public-faq-app",
+      "provider": "aws",
+      "service": "AWS Lambda",
+      "implementation": "public-faq-app",
+      "resources": [
+        "aws_lambda_function",
+        "aws_apigatewayv2_api",
+        "aws_s3_bucket",
+        "aws_iam_role"
+      ],
+      "composition": "Composed public-only browser/API, private regional object-store catalog, separate existing authorized editor and read-only runtime identities, regional model transport. Existing tools browser binding web-browser --browser-https--> module. Internal catalog/model/role resources belong to this module: do not provision duplicates. Choose this for small public UTF-8 help-article websites needing cited answers, abstention, authorized updates/deletions; never use it to imply private enterprise access, tenancy or general workflows. Preserve extra requirements and implementation gaps. If showing the editor as a diagram actor, use existing tools binding public-catalog-editor --public-catalog-edit--> this module. Do not invent an untyped editor edge or give the editor a browser-https visitor link; the operator CLI is a distinct implemented interface. AWS uses the complete generated Lambda Python 3.13 + HTTP API v2 composition with five reserved concurrent executions and deterministic hash-locked ZIP build, not a supplied-image footprint. App Runner is closed to new customers; do not propose it or ask about account eligibility. No ECR or image input is needed for this AWS module.",
+      "configuration": {
+        "outputContract": "Omit: owned nested answer/citations/abstained contract; no client-defined flat outputContract.",
+        "limits": "Built-in maximum 100 public UTF-8 articles, 30000 bytes each; 2000-byte questions, 2 complete retrieved articles, 5 concurrent admitted requests per instance. Omit these config values rather than inventing incompatible limits.",
+        "region": "Reviewed destination region; verify model support and processing geography."
+      },
+      "limitations": [
+        "Local catalog/HTTP/scripted storage checks and native provider schema/mock plans are separate from real cloud permissions, model semantics, exact Lambda ZIP/Linux runtime and deployed-system evidence.",
+        "Only genuinely public files may be published through the operator CLI. No arbitrary URL fetch, private document connector, editor HTTP endpoint or application login is implemented.",
+        "Authorized native editor identity conditionally rewrites the versioned catalog; stale edits conflict and in-flight source changes withhold answers. No cached-source fallback. Exact supporting quotes and source membership do not prove factual entailment.",
+        "Model policy must be verified before inference. AWS JSON is independently postvalidated, not constrained Bedrock grammar. IBM/Google policy approval evidence is operator-attested, not a fabricated provider approval API.",
+        "Build, scan and locally test the emitted hash-locked Lambda ZIP in Python 3.13 Linux. Cloud access/plans/deployment need authorization. Review actual model availability, price evidence, budgets/abuse controls, inherited IAM and operations. Bounds are not an invoice cap."
+      ]
+    },
+    {
+      "id": "azure-public-faq-app",
+      "provider": "azure",
+      "service": "Azure App Service",
+      "implementation": "public-faq-app",
+      "resources": [
+        "azurerm_linux_web_app",
+        "azurerm_storage_account",
+        "azurerm_storage_container"
+      ],
+      "composition": "Composed public-only browser/API, private regional object-store catalog, separate existing authorized editor and read-only runtime identities, regional model transport. Existing tools browser binding web-browser --browser-https--> module. Internal catalog/model/role resources belong to this module: do not provision duplicates. Choose this for small public UTF-8 help-article websites needing cited answers, abstention, authorized updates/deletions; never use it to imply private enterprise access, tenancy or general workflows. Preserve extra requirements and implementation gaps. If showing the editor as a diagram actor, use existing tools binding public-catalog-editor --public-catalog-edit--> this module. Do not invent an untyped editor edge or give the editor a browser-https visitor link; the operator CLI is a distinct implemented interface.",
+      "configuration": {
+        "outputContract": "Omit: owned nested answer/citations/abstained contract; no client-defined flat outputContract.",
+        "limits": "Built-in maximum 100 public UTF-8 articles, 30000 bytes each; 2000-byte questions, 2 complete retrieved articles, 5 concurrent admitted requests per instance. Omit these config values rather than inventing incompatible limits.",
+        "region": "Reviewed destination region; verify model support and processing geography."
+      },
+      "limitations": [
+        "Local catalog/HTTP/scripted storage checks and native provider schema/mock plans are separate from real cloud permissions, model semantics, exact Linux image and deployed-system evidence.",
+        "Only genuinely public files may be published through the operator CLI. No arbitrary URL fetch, private document connector, editor HTTP endpoint or application login is implemented.",
+        "Authorized native editor identity conditionally rewrites the versioned catalog; stale edits conflict and in-flight source changes withhold answers. No cached-source fallback. Exact supporting quotes and source membership do not prove factual entailment.",
+        "Model policy must be verified before inference. AWS JSON is independently postvalidated, not constrained Bedrock grammar. IBM/Google policy approval evidence is operator-attested, not a fabricated provider approval API.",
+        "Build, scan and locally test emitted pinned Python 3.13 image; publication/cloud plans/deployment need authorization. Review actual model availability, price evidence, budgets/abuse controls, inherited IAM and operations. Bounds are not an invoice cap."
+      ]
+    },
+    {
+      "id": "gcp-public-faq-app",
+      "provider": "gcp",
+      "service": "Google Cloud Run",
+      "implementation": "public-faq-app",
+      "resources": [
+        "google_cloud_run_v2_service",
+        "google_storage_bucket",
+        "google_service_account"
+      ],
+      "composition": "Composed public-only browser/API, private regional object-store catalog, separate existing authorized editor and read-only runtime identities, regional model transport. Existing tools browser binding web-browser --browser-https--> module. Internal catalog/model/role resources belong to this module: do not provision duplicates. Choose this for small public UTF-8 help-article websites needing cited answers, abstention, authorized updates/deletions; never use it to imply private enterprise access, tenancy or general workflows. Preserve extra requirements and implementation gaps. If showing the editor as a diagram actor, use existing tools binding public-catalog-editor --public-catalog-edit--> this module. Do not invent an untyped editor edge or give the editor a browser-https visitor link; the operator CLI is a distinct implemented interface.",
+      "configuration": {
+        "outputContract": "Omit: owned nested answer/citations/abstained contract; no client-defined flat outputContract.",
+        "limits": "Built-in maximum 100 public UTF-8 articles, 30000 bytes each; 2000-byte questions, 2 complete retrieved articles, 5 concurrent admitted requests per instance. Omit these config values rather than inventing incompatible limits.",
+        "region": "Reviewed destination region; verify model support and processing geography."
+      },
+      "limitations": [
+        "Local catalog/HTTP/scripted storage checks and native provider schema/mock plans are separate from real cloud permissions, model semantics, exact Linux image and deployed-system evidence.",
+        "Only genuinely public files may be published through the operator CLI. No arbitrary URL fetch, private document connector, editor HTTP endpoint or application login is implemented.",
+        "Authorized native editor identity conditionally rewrites the versioned catalog; stale edits conflict and in-flight source changes withhold answers. No cached-source fallback. Exact supporting quotes and source membership do not prove factual entailment.",
+        "Model policy must be verified before inference. AWS JSON is independently postvalidated, not constrained Bedrock grammar. IBM/Google policy approval evidence is operator-attested, not a fabricated provider approval API.",
+        "Build, scan and locally test emitted pinned Python 3.13 image; publication/cloud plans/deployment need authorization. Review actual model availability, price evidence, budgets/abuse controls, inherited IAM and operations. Bounds are not an invoice cap."
+      ]
+    },
+    {
+      "id": "ibm-public-faq-app",
+      "provider": "ibm",
+      "service": "IBM Code Engine",
+      "implementation": "public-faq-app",
+      "resources": [
+        "ibm_code_engine_app",
+        "ibm_cos_bucket",
+        "ibm_iam_trusted_profile"
+      ],
+      "composition": "Composed public-only browser/API, private regional object-store catalog, separate existing authorized editor and read-only runtime identities, regional model transport. Existing tools browser binding web-browser --browser-https--> module. Internal catalog/model/role resources belong to this module: do not provision duplicates. Choose this for small public UTF-8 help-article websites needing cited answers, abstention, authorized updates/deletions; never use it to imply private enterprise access, tenancy or general workflows. Preserve extra requirements and implementation gaps. If showing the editor as a diagram actor, use existing tools binding public-catalog-editor --public-catalog-edit--> this module. Do not invent an untyped editor edge or give the editor a browser-https visitor link; the operator CLI is a distinct implemented interface.",
+      "configuration": {
+        "outputContract": "Omit: owned nested answer/citations/abstained contract; no client-defined flat outputContract.",
+        "limits": "Built-in maximum 100 public UTF-8 articles, 30000 bytes each; 2000-byte questions, 2 complete retrieved articles, 5 concurrent admitted requests per instance. Omit these config values rather than inventing incompatible limits.",
+        "region": "Reviewed destination region; verify model support and processing geography."
+      },
+      "limitations": [
+        "Local catalog/HTTP/scripted storage checks and native provider schema/mock plans are separate from real cloud permissions, model semantics, exact Linux image and deployed-system evidence.",
+        "Only genuinely public files may be published through the operator CLI. No arbitrary URL fetch, private document connector, editor HTTP endpoint or application login is implemented.",
+        "Authorized native editor identity conditionally rewrites the versioned catalog; stale edits conflict and in-flight source changes withhold answers. No cached-source fallback. Exact supporting quotes and source membership do not prove factual entailment.",
+        "Model policy must be verified before inference. AWS JSON is independently postvalidated, not constrained Bedrock grammar. IBM/Google policy approval evidence is operator-attested, not a fabricated provider approval API.",
+        "Build, scan and locally test emitted pinned Python 3.13 image; publication/cloud plans/deployment need authorization. Review actual model availability, price evidence, budgets/abuse controls, inherited IAM and operations. Bounds are not an invoice cap."
       ]
     }
   ],

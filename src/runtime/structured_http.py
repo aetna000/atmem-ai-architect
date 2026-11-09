@@ -14,7 +14,7 @@ class PolicyUnverified(Exception):
 class AccessDenied(Exception):
     pass
 
-def create_app(config, verify, infer, public_config, static_root=None, token_header=None, protect_assets=False, require_origin=False):
+def create_app(config, verify, infer, public_config, static_root=None, token_header=None, protect_assets=False, require_origin=False, origin_validator=None):
     root = Path(static_root or Path(__file__).parent / "web")
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
     # Small internal apps admit a burst of five model requests per process.
@@ -60,7 +60,8 @@ def create_app(config, verify, infer, public_config, static_root=None, token_hea
     @app.post("/api/ask")
     async def ask(request: Request):
         origin = request.headers.get("origin")
-        if (require_origin and not origin) or (origin and origin != config["PUBLIC_ORIGIN"]):
+        origin_ok=origin_validator(origin,request.headers.get('host','')) if origin_validator else not ((require_origin and not origin) or (origin and origin != config["PUBLIC_ORIGIN"]))
+        if not origin_ok:
             return JSONResponse({"error": "access_denied"}, status_code=403)
         auth = request.headers.get("authorization", "")
         token = request.headers.get(token_header, "") if token_header else auth[7:] if auth.startswith("Bearer ") else ""

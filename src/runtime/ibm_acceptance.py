@@ -76,6 +76,11 @@ class ModelTests(unittest.TestCase):
         prompt=self.session.request.call_args.kwargs['json']['messages'][0]['content']
         self.assertTrue(prompt.startswith(contract['instruction']))
         for field in contract['fields']:self.assertIn(json.dumps(field['name']),prompt)
+    def test_nested_json_operation_reuses_reviewed_profile_transport(self):
+        schema={'type':'object','additionalProperties':False,'required':['citations'],'properties':{'citations':{'type':'array','items':{'type':'string'}}}}
+        raw='{"citations":["public-source"]}';self.session.request.return_value=Response({'choices':[{'finish_reason':'stop','message':{'content':raw}}]})
+        self.assertEqual(self.model.generate('Synthetic public evidence',schema,'Return cited JSON only.'),raw)
+        self.assertIn(json.dumps(schema),self.session.request.call_args.kwargs['json']['messages'][0]['content']);self.auth.authenticate.assert_called_once()
     def test_unknown_expired_or_mismatched_review_never_authenticates_or_sends_input(self):
         original=json.loads(base64.b64decode(self.c['policy_review']))
         for changes in [{'accountId':'b'*32},{'projectId':INSTANCE},{'runtimeInstanceId':PROJECT},{'model':'other/model'},{'region':'us-south'},{'retentionReview':'unknown'},{'approvedBy':''},{'evidenceSha256':'0'*64},{'expiresAt':'2020-01-01T00:00:00+00:00'},{'expiresAt':(datetime.now(timezone.utc)+timedelta(days=32)).isoformat()},{'expiresAt':'not-a-date'}]:

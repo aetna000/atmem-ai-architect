@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+    <html xmlns="http://www.w3.org/1999/xhtml" lang="en-US"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>AWS App Runner availability change - AWS App Runner</title><meta name="viewport" content="width=device-width,initial-scale=1" /><meta name="assets_root" content="/assets" /><meta name="target_state" content="apprunner-availability-change" /><meta name="default_state" content="apprunner-availability-change" /><link rel="icon" type="image/ico" href="/assets/images/favicon.ico" /><link rel="shortcut icon" type="image/ico" href="/assets/images/favicon.ico" /><link rel="canonical" href="https://docs.aws.amazon.com/apprunner/latest/dg/apprunner-availability-change.html" /><link rel="alternate" type="text/markdown" href="https://docs.aws.amazon.com/apprunner/latest/dg/apprunner-availability-change.md" title="Markdown version" /><meta name="description" content="Learn about the AWS App Runner service availability change and how to migrate to Amazon Elastic Container Service Express Mode." /><meta name="deployment_region" content="IAD" /><meta name="product" content="AWS App Runner" /><meta name="guide" content="Developer Guide" /><meta name="abstract" content="Provides a conceptual overview of AWS App Runner, detailed feature descriptions, and instructions on how to use the service and deploy web applications." /><meta name="guide-locale" content="en_us" /><meta name="tocs" content="toc-contents.json" /><link rel="canonical" href="https://docs.aws.amazon.com/apprunner/latest/dg/apprunner-availability-change.html" /><link rel="alternate" href="https://docs.aws.amazon.com/id_id/apprunner/latest/dg/apprunner-availability-change.html" hreflang="id-id" /><link rel="alternate" href="https://docs.aws.amazon.com/id_id/apprunner/latest/dg/apprunner-availability-change.html" hreflang="id" /><link rel="alternate" href="https://docs.aws.amazon.com/de_de/apprunner/latest/dg/apprunner-availability-change.html" hreflang="de-de" /><link rel="alternate" href="https://docs.aws.amazon.com/de_de/apprunner/latest/dg/apprunner-availability-change.html" hreflang="de" /><link rel="alternate" href="https://docs.aws.amazon.com/apprunner/latest/dg/apprunner-availability-change.html" hreflang="en-us" /><link rel="alternate" href="https://docs.aws.amazon.com/apprunner/latest/dg/apprunner-availability-change.html" hreflang="en" /><link rel="alternate" href="https://docs.aws.amazon.com/es_es/apprunner/latest/dg/apprunner-availability-change.html" hreflang="es-es" /><link rel="alternate" href="https://docs.aws.amazon.com/es_es/apprunner/latest/dg/apprunner-availability-change.html" hreflang="es" /><link rel="alternate" href="https://docs.aws.amazon.com/fr_fr/apprunner/latest/dg/apprunner-availability-change.html" hreflang="fr-fr" /><link rel="alternate" href="https://docs.aws.amazon.com/fr_fr/apprunner/latest/dg/apprunner-availability-change.html" hreflang="fr" /><link rel="alternate" href="https://docs.aws.amazon.com/it_it/apprunner/latest/dg/apprunner-availability-change.html" hreflang="it-it" /><link rel="alternate" href="https://docs.aws.amazon.com/it_it/apprunner/latest/dg/apprunner-availability-change.html" hreflang="it" /><link rel="alternate" href="https://docs.aws.amazon.com/ja_jp/apprunner/latest/dg/apprunner-availability-change.html" hreflang="ja-jp" /><link rel="alternate" href="https://docs.aws.amazon.com/ja_jp/apprunner/latest/dg/apprunner-availability-change.html" hreflang="ja" /><link rel="alternate" href="https://docs.aws.amazon.com/ko_kr/apprunner/latest/dg/apprunner-availability-change.html" hreflang="ko-kr" /><link rel="alternate" href="https://docs.aws.amazon.com/ko_kr/apprunner/latest/dg/apprunner-availability-change.html" hreflang="ko" /><link rel="alternate" href="https://docs.aws.amazon.com/pt_br/apprunner/latest/dg/apprunner-availability-change.html" hreflang="pt-br" /><link rel="alternate" href="https://docs.aws.amazon.com/pt_br/apprunner/latest/dg/apprunner-availability-change.html" hreflang="pt" /><link rel="alternate" href="https://docs.aws.amazon.com/zh_cn/apprunner/latest/dg/apprunner-availability-change.html" hreflang="zh-cn" /><link rel="alternate" href="https://docs.aws.amazon.com/zh_tw/apprunner/latest/dg/apprunner-availability-change.html" hreflang="zh-tw" /><link rel="alternate" href="https://docs.aws.amazon.com/apprunner/latest/dg/apprunner-availability-change.html" hreflang="x-default" /><meta name="feedback-item" content="AppRunner" /><meta name="this_doc_product" content="AWS App Runner" /><meta name="this_doc_guide" content="Developer Guide" /><head xmlns="http://www.w3.org/1999/xhtml"> <script defer="" src="/assets/r/awsdocs-doc-page.2.0.0.js"></script><link href="/assets/r/awsdocs-doc-page.2.0.0.css" rel="stylesheet"/></head>
+<script defer="" id="awsc-panorama-bundle" type="text/javascript" src="https://prod.pa.cdn.uis.awsstatic.com/panorama-nav-init.js" data-config="{'appEntity':'aws-documentation','region':'us-east-1','service':'apprunner'}"></script><meta id="panorama-serviceSubSection" value="Developer Guide" /><meta id="panorama-serviceConsolePage" value="AWS App Runner availability change" /></head><body class="awsdocs awsui"><div class="awsdocs-container"><p><a href="apprunner-availability-change.md">View a markdown version of this page</a></p><awsdocs-header></awsdocs-header><awsui-app-layout id="app-layout" class="awsui-util-no-gutters" ng-controller="ContentController as $ctrl" header-selector="awsdocs-header" navigation-hide="false" navigation-width="$ctrl.navWidth" navigation-open="$ctrl.navOpen" navigation-change="$ctrl.onNavChange($event)" tools-hide="$ctrl.hideTools" tools-width="$ctrl.toolsWidth" tools-open="$ctrl.toolsOpen" tools-change="$ctrl.onToolsChange($event)"><div id="guide-toc" dom-region="navigation"><awsdocs-toc></awsdocs-toc></div><div id="main-column" dom-region="content" tabindex="-1"><awsdocs-view class="awsdocs-view"><div id="awsdocs-content"><head><title>AWS App Runner availability change - AWS App Runner</title><meta name="pdf" content="/pdfs/apprunner/latest/dg/apprunner-guide.pdf#apprunner-availability-change" /><meta name="forums" content="https://repost.aws/tags/TAOTV_ls1tRsKZW2MKGf4byg" /><meta name="feedback" content="https://docs.aws.amazon.com/forms/aws-doc-feedback?hidden_service_name=AppRunner&amp;topic_url=https://docs.aws.amazon.com/en_us/apprunner/latest/dg/apprunner-availability-change.html" /><meta name="feedback-yes" content="feedbackyes.html?topic_url=https://docs.aws.amazon.com/en_us/apprunner/latest/dg/apprunner-availability-change.html" /><meta name="feedback-no" content="feedbackno.html?topic_url=https://docs.aws.amazon.com/en_us/apprunner/latest/dg/apprunner-availability-change.html" /><script type="application/ld+json">
+{
+    "@context" : "https://schema.org",
+    "@type" : "BreadcrumbList",
+    "itemListElement" : [
+      {
+        "@type" : "ListItem",
+        "position" : 1,
+        "name" : "AWS",
+        "item" : "https://aws.amazon.com"
+      },
+      {
+        "@type" : "ListItem",
+        "position" : 2,
+        "name" : "App Runner",
+        "item" : "https://docs.aws.amazon.com/apprunner/index.html"
+      },
+      {
+        "@type" : "ListItem",
+        "position" : 3,
+        "name" : "Developer Guide",
+        "item" : "https://docs.aws.amazon.com/apprunner/latest/dg"
+      },
+      {
+        "@type" : "ListItem",
+        "position" : 4,
+        "name" : "AWS App Runner availability change",
+        "item" : "https://docs.aws.amazon.com/apprunner/latest/dg/apprunner-availability-change.html"
+      }
+    ]
+}
+</script></head><body><div id="main"><div style="display: none"><a href="/pdfs/apprunner/latest/dg/apprunner-guide.pdf#apprunner-availability-change" target="_blank" rel="noopener noreferrer" title="Open PDF"></a></div><div id="breadcrumbs" class="breadcrumb"><a href="/index.html">Documentation</a><a href="/apprunner/index.html">App Runner</a><a href="what-is-apprunner.html">Developer Guide</a></div><div id="page-toc-src"><a href="#migration-overview">Migration overview</a><a href="#migration-prerequisites">Prerequisites</a><a href="#migration-before-you-begin">Before you begin</a><a href="#migration-steps">Migration walkthrough</a><a href="#migration-source-based">Migrating source-based deployments</a><a href="#migration-additional-resources">Additional resources</a></div><div id="main-content" class="awsui-util-container"><div id="main-col-body"><awsdocs-language-banner data-service="$ctrl.pageService"></awsdocs-language-banner><awsui-alert class="awsdocs-page-banner awsui-util-mb-l"><p>AWS App Runner is no longer open to new customers. Existing customers can continue to use the service as normal. This guide applies only to existing customers. If you're not an existing customer, AWS recommends Amazon ECS Express Mode. For more information, see
+      <a href="https://docs.aws.amazon.com/apprunner/latest/dg/apprunner-availability-change.html">AWS App Runner availability
+        change</a>.</p></awsui-alert><h1 class="topictitle" id="apprunner-availability-change">AWS App Runner availability change</h1><div class="awsdocs-page-header-container"><awsdocs-page-header></awsdocs-page-header><awsdocs-filter-selector id="awsdocs-filter-selector"></awsdocs-filter-selector></div><p>After careful consideration, we decided to close AWS App Runner to new customers. Existing AWS App Runner
+    customers can continue to use the service as normal, including creating new resources and services. AWS continues to invest
+    in security and availability for AWS App Runner, but we do not plan to introduce new features.</p><p>We recommend that customers explore Amazon Elastic Container Service (Amazon ECS) Express Mode when migrating from AWS App Runner. Amazon ECS Express Mode preserves
+    App Runner's operating simplicity while providing access to the broader Amazon ECS feature set. With a single API call, you provide
+    a container image and two IAM roles, and Amazon ECS provisions a complete application stack in your AWS account, including an
+    ECS service on Fargate, an Application Load Balancer, auto scaling, and networking. There is no additional charge for using
+    Amazon ECS Express Mode. You pay only for the underlying AWS resources created to run your application.</p><p>This guide describes how to migrate an existing App Runner service to ECS Express Mode and gradually shift traffic using
+    DNS routing.</p>
+    <h2 id="migration-overview">Migration overview</h2>
+    <p>This guide uses a blue/green deployment approach with DNS weighted routing to migrate traffic from App Runner to ECS Express
+      Mode. Both services run simultaneously during the migration. You use Amazon Route 53 (or your DNS provider) to gradually shift
+      traffic from the App Runner service to the ECS Express Mode service, starting with a small percentage and increasing over time.
+      This approach minimizes downtime and allows you to roll back by adjusting DNS weights if issues arise.</p>
+    <p>A typical migration includes the following steps:</p>
+    <div class="orderedlist">
+       
+       
+       
+       
+       
+    <ol><li><p>Review the configuration of the existing App Runner service</p></li><li><p>Create an ECS Express Mode service using the same container image</p></li><li><p>Configure the same custom domain for the ECS Express Mode service, if you use a custom domain</p></li><li><p>Shift traffic from App Runner to ECS Express Mode using DNS routing</p></li><li><p>Complete the migration and delete the App Runner service when it is no longer needed</p></li></ol></div>
+   
+    <h2 id="migration-prerequisites">Prerequisites</h2>
+    <p>Before you start, make sure that you have the following:</p>
+    <div class="itemizedlist">
+       
+       
+       
+       
+    <ul class="itemizedlist"><li class="listitem"><p>An AWS account with appropriate AWS Identity and Access Management permissions to create and manage Amazon ECS, AWS App Runner,
+        Amazon Route 53, and Application Load Balancer resources</p></li><li class="listitem"><p>AWS CLI installed and configured with credentials for your AWS account</p></li><li class="listitem"><p>A container image stored in Amazon Elastic Container Registry (or another container registry) to deploy to ECS Express Mode</p></li><li class="listitem"><p>The IAM roles required by ECS Express Mode:
+        <code class="code">ecsTaskExecutionRole</code> for <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_execution_IAM_role.html">Amazon ECS task execution</a> and
+        <code class="code">ecsInfrastructureRoleForExpressServices</code> for <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/express-service-getting-started.html#express-service-create-execution-role">ECS
+          Express Mode infrastructure provisioning</a></p></li></ul></div>
+    <p>If you want to preserve an existing custom domain during migration, you also need:</p>
+    <div class="itemizedlist">
+       
+       
+    <ul class="itemizedlist"><li class="listitem"><p>A registered domain name that you control, such as <code class="code">app.example.com</code>, using either Amazon Route 53
+        or a third-party domain registrar</p></li><li class="listitem"><p>An SSL/TLS certificate in <a href="https://docs.aws.amazon.com/acm/latest/userguide/acm-overview.html">AWS Certificate Manager</a> (ACM) that matches your custom domain. <a href="https://docs.aws.amazon.com/acm/latest/userguide/gs-acm-request-public.html">Request a public ACM certificate</a>
+        in the same AWS Region where you're deploying your resources. Both App Runner and Amazon ECS Express Mode require an ACM
+        certificate to enable HTTPS access with custom domains.</p></li></ul></div>
+   
+    <h2 id="migration-before-you-begin">Before you begin</h2>
+    <div class="itemizedlist">
+       
+       
+    <ul class="itemizedlist"><li class="listitem">
+        <p><b>Container image requirement</b> — ECS Express Mode deploys a container image.
+          If your App Runner service is deployed from source code, first add a build step that creates a container image and pushes it
+          to a registry such as Amazon Elastic Container Registry. Then deploy that image to ECS Express Mode. See <a href="#migration-source-based">Migrating source-based deployments</a> for details on migrating source-based deployments.</p>
+      </li><li class="listitem">
+        <p><b>Domain behavior</b> — If your App Runner service already uses a custom domain, such
+          as <code class="code">app.example.com</code>, you can reuse that same hostname during migration and gradually shift traffic between
+          App Runner and ECS Express Mode by updating DNS.</p>
+        <p>If your App Runner service uses only the default App Runner service URL, the ECS Express Mode service will have a different
+          endpoint. In this case there is no shared hostname that can be used for gradual traffic shifting. You should create and
+          validate the ECS Express Mode service and then update clients or DNS to use the new endpoint.</p>
+      </li></ul></div>
+   
+    <h2 id="migration-steps">Migration walkthrough</h2>
+
+    <p>The following diagram shows how the migration works using Route 53 to shift DNS records between your App Runner service
+      and your ECS Express Mode service.</p>
+    <div class="mediaobject">
+       
+        <img src="/images/apprunner/latest/dg/images/migration-image-based.png" class="aws-docs-img-whiteBg aws-docs-img-padding" alt="Architecture diagram showing migration from App Runner to ECS Express Mode using Route 53 weighted routing for gradual traffic shifting between the two services." style="max-width:80%" />
+       
+       
+    </div>
+
+     
+      <h3 id="migration-step1">Step 1: Review the existing App Runner configuration</h3>
+      <p>In the App Runner console, review your existing service and note the values that you want to carry forward.
+        At a minimum, note the following:</p>
+      <div class="itemizedlist">
+         
+         
+         
+         
+         
+      <ul class="itemizedlist"><li class="listitem"><p>Container image</p></li><li class="listitem"><p>Application port</p></li><li class="listitem"><p>Environment variables</p></li><li class="listitem"><p>Custom domain name, if configured</p></li><li class="listitem"><p>ACM certificate associated with the custom domain, if configured</p></li></ul></div>
+      <p>You can also review any other runtime settings that you want to carry forward into the new service.</p>
+      <p>For custom domain details, see <a href="./manage-custom-domains.html">Managing custom domain names for an App Runner service</a>.</p>
+     
+
+     
+      <h3 id="migration-step2">Step 2: Create the ECS Express Mode service</h3>
+      <p>Create an ECS Express Mode service using the same container image used by your App Runner service. You can create the
+        service using either the <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/express-service-first-run.html">AWS Management Console</a> or the <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/express-service-getting-started.html">AWS CLI</a>.</p>
+      <p><b>Example CLI command:</b></p>
+      <pre class="programlisting"><div class="code-btn-container"><div class="btn-copy-code" title="Copy"><awsui-icon name="copy"></awsui-icon></div></div><!--DEBUG: cli (bash)--><code class="bash ">aws ecs create-express-gateway-service \
+    --execution-role-arn arn:aws:iam::<code class="replaceable">123456789012</code>:role/ecsTaskExecutionRole \
+    --infrastructure-role-arn arn:aws:iam::<code class="replaceable">123456789012</code>:role/ecsInfrastructureRoleForExpressServices \
+    --primary-container '<span>{</span>
+        "image": "<code class="replaceable">123456789012</code>.dkr.ecr.us-east-1.amazonaws.com/<code class="replaceable">my-app</code>:latest",
+        "containerPort": 8080,
+        "environment": [<span>{</span>
+            "name": "<code class="replaceable">ENV_VAR_NAME</code>",
+            "value": "<code class="replaceable">value</code>"
+        }]
+    }' \
+    --service-name "<code class="replaceable">my-application</code>" \
+    --health-check-path "/" \
+    --scaling-target '<span>{</span>"minTaskCount":1,"maxTaskCount":4}' \
+    --monitor-resources</code></pre>
+      <p>Replace the image, port, environment variables, and scaling values with those from your App Runner service.</p>
+      <p>This command provisions a complete application stack in your AWS account, including an ECS service on Fargate,
+        an Application Load Balancer with target groups and health checks, auto-scaling policies, security groups and networking
+        configuration, and a default URL.</p>
+      <p>Provisioning typically takes 3–5 minutes. You can track progress in the Amazon ECS console under the
+        Resources tab.</p>
+      <p>Once complete, test your ECS Express Mode service using the default URL shown in the console. Verify that your
+        application works correctly before proceeding with the traffic shift.</p>
+     
+
+     
+      <h3 id="migration-step3">Step 3: Configure the custom domain for ECS Express Mode</h3>
+      <p>If your App Runner service uses a custom domain, configure the same custom domain for the ECS Express Mode service before
+        shifting traffic. This step configures the Application Load Balancer created for the ECS Express Mode service so that it
+        accepts traffic for your domain and uses the ACM certificate for HTTPS.</p>
+      <div class="itemizedlist">
+         
+         
+      <ul class="itemizedlist"><li class="listitem"><p><b>Add your custom domain as a host header condition</b> in the Application
+          Load Balancer listener rule. Use the same domain name you associated with your App Runner service (for example,
+          <code class="code">app.example.com</code>). This tells the Application Load Balancer to route traffic from your domain to the ECS
+          Express Mode target group.</p></li><li class="listitem"><p><b>Add the SSL certificate</b> to the Application Load Balancer HTTPS
+          listener. Add the ACM certificate noted in Step 1 to the HTTPS listener.</p></li></ul></div>
+      <p>For detailed instructions, see
+        <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/express-custom-domain.html">Adding a custom domain to
+          your service</a> in the <em>Amazon ECS Developer Guide</em>.</p>
+      <p>The following image shows an example of configuring the host header condition in the Application Load Balancer
+        listener rule.</p>
+      <div class="mediaobject">
+         
+          <img src="/images/apprunner/latest/dg/images/migration-alb-host-header.png" class="aws-docs-img-whiteBg aws-docs-img-padding" alt="Console screenshot showing the Application Load Balancer listener rule with host header conditions configured for the ECS Express Mode service endpoint and custom domain." style="max-width:80%" />
+         
+         
+      </div>
+     
+
+     
+      <h3 id="migration-step4">Step 4: Shift traffic using Route 53 weighted routing</h3>
+      <p>If your App Runner service already uses a custom domain, you can gradually shift traffic to the ECS Express Mode service
+        by using <a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy-weighted.html">Route 53 weighted
+        routing</a>. Weighted routing allows you to route traffic for the same hostname to multiple endpoints.
+        Each endpoint is defined as a separate DNS record with its own weight, and Route 53 distributes requests according to those
+        weights.</p>
+      <div class="awsdocs-note"><div class="awsdocs-note-title"><awsui-icon name="status-info" variant="link"></awsui-icon><h6>Note</h6></div><div class="awsdocs-note-text"><p>This guide uses Route 53 as the example. If you use another DNS provider, make equivalent DNS changes using your
+          provider's traffic-management features.</p></div></div>
+      <p><b>Convert the existing App Runner record to a weighted record:</b></p>
+      <div class="orderedlist">
+         
+         
+         
+         
+         
+         
+         
+      <ol><li><p>Open the Route 53 console.</p></li><li><p>Choose <b>Hosted zones</b>, then select the hosted zone for your domain.</p></li><li><p>Locate the existing record for your hostname (for example <code class="code">app.example.com</code>) that currently
+          points to App Runner.</p></li><li><p>Edit the record and change its <b>Routing policy</b> to
+          <b>Weighted</b>.</p></li><li><p>Set <b>Weight</b> to <code class="code">100</code> (this directs all initial traffic to
+          App Runner).</p></li><li><p>Under <b>Record ID</b>, enter a descriptive identifier such as
+          <code class="code">app-runner-service</code>.</p></li><li><p>Choose <b>Save changes</b>.</p></li></ol></div>
+      <p><b>Create a weighted record for ECS Express Mode:</b></p>
+      <div class="orderedlist">
+         
+         
+         
+         
+         
+         
+         
+         
+         
+      <ol><li><p>Create a new record in the same hosted zone.</p></li><li><p>Use the same record name (for example <code class="code">app.example.com</code>).</p></li><li><p>Use the same record type.</p></li><li><p>Set <b>Routing policy</b> to <b>Weighted</b>.</p></li><li><p>Under <b>Route traffic to</b>, choose <b>Alias to Application and Classic Load
+          Balancer</b>.</p></li><li><p>Choose your ECS Express Mode Application Load Balancer from the dropdown.</p></li><li><p>Set <b>Weight</b> to <code class="code">0</code> (no traffic flows to ECS Express Mode until you
+          explicitly increase the weight).</p></li><li><p>Under <b>Record ID</b>, enter a descriptive identifier such as
+          <code class="code">ecs-express-service</code>.</p></li><li><p>Choose <b>Create records</b>.</p></li></ol></div>
+      <p><b>Gradually shift traffic:</b></p>
+      <p>Once the DNS records are configured, begin shifting traffic by increasing the ECS Express Mode weight while
+        proportionally decreasing the App Runner weight. A recommended approach:</p>
+      <div class="itemizedlist">
+         
+         
+         
+         
+         
+         
+      <ul class="itemizedlist"><li class="listitem"><p>Set ECS Express Mode to 10 / App Runner to 90</p></li><li class="listitem"><p>Monitor and validate the service handles requests successfully</p></li><li class="listitem"><p>Increase to 25 / 75</p></li><li class="listitem"><p>Increase to 50 / 50</p></li><li class="listitem"><p>Increase to 75 / 25</p></li><li class="listitem"><p>Complete at 100 / 0</p></li></ul></div>
+      <p>At each step, test the application before shifting additional traffic. If issues occur at any point, roll back by
+        adjusting the weights back to their previous values.</p>
+      <div class="awsdocs-note awsdocs-important"><div class="awsdocs-note-title"><awsui-icon name="status-warning" variant="error"></awsui-icon><h6>Important</h6></div><div class="awsdocs-note-text"><p>Keep your App Runner service running for a validation period (such as 24–48 hours) to confirm DNS changes have
+          propagated globally and to provide a rollback option if needed. If you encounter issues, you can quickly revert the
+          Route 53 weights back to App Runner.</p></div></div>
+     
+
+     
+      <h3 id="migration-step5">Step 5: Complete the migration</h3>
+      <p>After verifying that the ECS Express Mode service handles production traffic correctly and the validation period
+        has passed, complete the migration:</p>
+      <div class="itemizedlist">
+         
+         
+      <ul class="itemizedlist"><li class="listitem"><p>In Route 53, remove the weighted record pointing to App Runner (or set its weight to 0).</p></li><li class="listitem"><p>Remove the custom domain association from the App Runner service.</p></li></ul></div>
+      <p><b>Delete the App Runner service:</b></p>
+      <pre class="programlisting"><div class="code-btn-container"><div class="btn-copy-code" title="Copy"><awsui-icon name="copy"></awsui-icon></div></div><!--DEBUG: cli (bash)--><code class="bash ">aws apprunner delete-service --service-arn <code class="replaceable">your-app-runner-service-arn</code></code></pre>
+      <p>Also consider removing any resources that are no longer needed:</p>
+      <div class="itemizedlist">
+         
+         
+         
+      <ul class="itemizedlist"><li class="listitem"><p>Route 53 weighted routing records for App Runner</p></li><li class="listitem"><p>Unused container images from Amazon Elastic Container Registry</p></li><li class="listitem"><p>IAM roles created specifically for App Runner, if no longer needed</p></li></ul></div>
+      <div class="awsdocs-note"><div class="awsdocs-note-title"><awsui-icon name="status-info" variant="link"></awsui-icon><h6>Note</h6></div><div class="awsdocs-note-text"><p>Do not delete the ECS Express Mode service, its Application Load Balancer, or associated resources if the service
+          is running in production.</p></div></div>
+     
+   
+    <h2 id="migration-source-based">Migrating source-based deployments</h2>
+    <p>If your existing App Runner service is deployed from source code rather than a container image, you need to add a
+      containerization step before deploying to ECS Express Mode. Unlike App Runner, ECS Express Mode requires a container image.
+      However, you can replicate App Runner's automated deployment experience using CI/CD tools such as GitHub Actions with the
+      <a href="https://github.com/aws-actions/amazon-ecs-deploy-express-service" rel="noopener noreferrer" target="_blank"><span>Amazon ECS Deploy Express
+        Service GitHub Action</span><awsui-icon class="awsdocs-link-icon" name="external"></awsui-icon></a>.</p>
+    <p>The migration workflow has three stages:</p>
+    <div class="orderedlist">
+       
+       
+       
+    <ol><li><p>Build the container image using a <a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/create-container-image.html">Dockerfile</a></p></li><li><p>Push the image to a container registry such as <a href="https://docs.aws.amazon.com/AmazonECR/latest/userguide/what-is-ecr.html">Amazon Elastic Container Registry</a></p></li><li><p>Deploy the image to ECS Express Mode</p></li></ol></div>
+
+    <p>The following diagram shows how this workflow works using GitHub Actions:</p>
+    <div class="mediaobject">
+       
+        <img src="/images/apprunner/latest/dg/images/migration-source-based.png" class="aws-docs-img-whiteBg aws-docs-img-padding" alt="Architecture diagram showing migration of a source-based App Runner service to ECS Express Mode using GitHub Actions for building container images, pushing to Amazon Elastic Container Registry, and deploying to ECS Express Mode." style="max-width:80%" />
+       
+       
+    </div>
+
+     
+      <h3 id="migration-source-containerize">Containerize your application</h3>
+      <p>If your application does not already have a Dockerfile, create one in your repository root. The Dockerfile serves
+        as the blueprint for building and packaging your source code into a container image.</p>
+      <p>Your repository structure should include:</p>
+      <pre class="programlisting"><div class="code-btn-container"><div class="btn-copy-code" title="Copy"><awsui-icon name="copy"></awsui-icon></div></div><!--DEBUG: cli ()--><code class="">your-app/
+├── src/                    # Application source code
+├── Dockerfile              # Container build instructions
+├── package.json            # Dependencies and scripts
+└── .github/                # GitHub configuration
+    └── workflows/          # GitHub Actions workflows
+        └── deploy.yml      # ECS Express Mode deployment workflow</code></pre>
+     
+
+     
+      <h3 id="migration-source-github-actions">Set up GitHub Actions for automated deployment</h3>
+      <p>To replicate App Runner's automatic deployment on code push, configure GitHub Actions with the following:</p>
+      <div class="itemizedlist">
+         
+         
+         
+         
+      <ul class="itemizedlist"><li class="listitem"><p>Create an <a href="https://docs.github.com/en/actions/how-tos/secure-your-work/security-harden-deployments/oidc-in-aws" rel="noopener noreferrer" target="_blank"><span>OpenID
+          Connect (OIDC) provider</span><awsui-icon class="awsdocs-link-icon" name="external"></awsui-icon></a> to allow GitHub Actions to assume an IAM role</p></li><li class="listitem"><p>Create an <a href="https://github.com/marketplace/actions/amazon-ecs-deploy-express-service-action-for-github-actions#github-actions-role" rel="noopener noreferrer" target="_blank"><span>IAM
+          role with ECS Express Mode</span><awsui-icon class="awsdocs-link-icon" name="external"></awsui-icon></a> and <a href="https://docs.aws.amazon.com/AmazonECR/latest/userguide/ECR_on_ECS.html">Amazon Elastic Container Registry permissions</a></p></li><li class="listitem"><p>Create the two IAM roles required by ECS Express Mode</p></li><li class="listitem"><p>Create GitHub environment variables for your ECS resources:
+          <code class="code">ECS_SERVICE</code>, <code class="code">ECS_CLUSTER</code>, <code class="code">AWS_REGION</code>, <code class="code">AWS_ACCOUNT_ID</code>,
+          and <code class="code">ECR_REPOSITORY</code></p></li></ul></div>
+      <p><b>Example GitHub Actions workflow</b></p>
+      <p>Create a workflow file at <code class="code">.github/workflows/deploy.yml</code>:</p>
+      <pre class="programlisting"><div class="code-btn-container"><div class="btn-copy-code" title="Copy"><awsui-icon name="copy"></awsui-icon></div></div><!--DEBUG: cli (yaml)--><code class="yaml ">name: Build and Deploy to ECS
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  AWS_REGION: $<span>{</span><span>{</span> vars.AWS_REGION }}
+  AWS_ACCOUNT_ID: $<span>{</span><span>{</span> vars.AWS_ACCOUNT_ID }}
+  ECR_REPOSITORY: $<span>{</span><span>{</span> vars.ECR_REPOSITORY }}
+  ECS_SERVICE: $<span>{</span><span>{</span> vars.ECS_SERVICE }}
+  ECS_CLUSTER: $<span>{</span><span>{</span> vars.ECS_CLUSTER }}
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    environment: production
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v6
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v5
+      with:
+        aws-region: $<span>{</span><span>{</span> env.AWS_REGION }}
+        role-to-assume: arn:aws:iam::$<span>{</span><span>{</span> env.AWS_ACCOUNT_ID }}:role/github-actions-ecs-role
+        role-session-name: GitHubActionsECSDeployment
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Get short commit hash
+      run: echo "IMAGE_TAG=$<span>{</span>GITHUB_SHA:0:7}" &gt;&gt; $GITHUB_ENV
+
+    - name: Build, tag, and push image to Amazon ECR
+      id: build-image
+      env:
+        ECR_REGISTRY: $<span>{</span><span>{</span> steps.login-ecr.outputs.registry }}
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        push: true
+        tags: $<span>{</span><span>{</span> env.ECR_REGISTRY }}/$<span>{</span><span>{</span> env.ECR_REPOSITORY }}:latest,$<span>{</span><span>{</span> env.ECR_REGISTRY }}/$<span>{</span><span>{</span> env.ECR_REPOSITORY }}:$<span>{</span><span>{</span> env.IMAGE_TAG }}
+
+    - name: Deploy to ECS Express Mode
+      uses: aws-actions/amazon-ecs-deploy-express-service@v1
+      env:
+        ECR_REGISTRY: $<span>{</span><span>{</span> steps.login-ecr.outputs.registry }}
+      with:
+        service-name: $<span>{</span><span>{</span> env.ECS_SERVICE }}
+        image: $<span>{</span><span>{</span> env.ECR_REGISTRY }}/$<span>{</span><span>{</span> env.ECR_REPOSITORY }}:$<span>{</span><span>{</span> env.IMAGE_TAG }}
+        execution-role-arn: arn:aws:iam::$<span>{</span><span>{</span> env.AWS_ACCOUNT_ID }}:role/ecsTaskExecutionRole
+        infrastructure-role-arn: arn:aws:iam::$<span>{</span><span>{</span> env.AWS_ACCOUNT_ID }}:role/ecsInfrastructureRoleForExpressServices
+        cluster: $<span>{</span><span>{</span> env.ECS_CLUSTER }}
+        container-port: 8080
+        environment-variables: |
+          [
+            <span>{</span>"name": "ENV", "value": "Prod"}
+          ]
+        cpu: '1024'
+        memory: '2048'
+        health-check-path: /health
+        min-task-count: 1
+        max-task-count: 4
+        auto-scaling-metric: AVERAGE_CPU
+        auto-scaling-target-value: 70</code></pre>
+      <p>When you push code changes to your main branch, GitHub Actions automatically builds a new container image, pushes it
+        to Amazon Elastic Container Registry, and deploys it to your ECS Express Mode service. This replicates the automated deployment experience you
+        had with App Runner.</p>
+      <p>Once the ECS Express Mode service is running, follow Steps 3–5 in the migration walkthrough to configure the
+        custom domain, shift traffic using DNS routing, and complete the migration.</p>
+     
+   
+    <h2 id="migration-additional-resources">Additional resources</h2>
+    <div class="itemizedlist">
+       
+       
+       
+       
+       
+    <ul class="itemizedlist"><li class="listitem"><p><a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/express-getting-started-cli.html">Create
+        your first Express Mode service using the AWS CLI</a></p></li><li class="listitem"><p><a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/express-getting-started-console.html">Create
+        your first Amazon ECS Express Mode service in the console</a></p></li><li class="listitem"><p><a href="https://docs.aws.amazon.com/AmazonECS/latest/developerguide/express-update-resources.html">Updating
+        resources outside of Express Mode</a></p></li><li class="listitem"><p><a href="./manage-custom-domains.html">Managing custom domain names for an App Runner service</a></p></li><li class="listitem"><p><a href="https://docs.aws.amazon.com/Route53/latest/DeveloperGuide/routing-policy-weighted.html">Amazon Route 53
+        weighted routing</a></p></li></ul></div>
+  <awsdocs-copyright class="copyright-print"></awsdocs-copyright><awsdocs-thumb-feedback right-edge="{{$ctrl.thumbFeedbackRightEdge}}"></awsdocs-thumb-feedback></div><noscript><div><div><div><div id="js_error_message"><p><img src="https://d1ge0kk1l5kms0.cloudfront.net/images/G/01/webservices/console/warning.png" alt="Warning" /> <strong>Javascript is disabled or is unavailable in your browser.</strong></p><p>To use the Amazon Web Services Documentation, Javascript must be enabled. Please refer to your browser's Help pages for instructions.</p></div></div></div></div></noscript><div id="main-col-footer" class="awsui-util-font-size-0"><div id="doc-conventions"><a target="_top" href="/general/latest/gr/docconventions.html">Document Conventions</a></div><div class="prev-next"><div id="previous" class="prev-link" accesskey="p" href="./what-is-apprunner.html">What is AWS App Runner?</div><div id="next" class="next-link" accesskey="n" href="./setting-up.html">Setting up</div></div></div><awsdocs-page-utilities></awsdocs-page-utilities></div><div id="quick-feedback-yes" style="display: none;"><div class="title">Did this page help you? - Yes</div><div class="content"><p>Thanks for letting us know we're doing a good job!</p><p>If you've got a moment, please tell us what we did right so we can do more of it.</p><p><awsui-button id="fblink" rel="noopener noreferrer" target="_blank" text="Feedback" click="linkClick($event)" href="https://docs.aws.amazon.com/forms/aws-doc-feedback?hidden_service_name=AppRunner&amp;topic_url=https://docs.aws.amazon.com/en_us/apprunner/latest/dg/apprunner-availability-change.html"></awsui-button></p></div></div><div id="quick-feedback-no" style="display: none;"><div class="title">Did this page help you? - No</div><div class="content"><p>Thanks for letting us know this page needs work. We're sorry we let you down.</p><p>If you've got a moment, please tell us how we can make the documentation better.</p><p><awsui-button id="fblink" rel="noopener noreferrer" target="_blank" text="Feedback" click="linkClick($event)" href="https://docs.aws.amazon.com/forms/aws-doc-feedback?hidden_service_name=AppRunner&amp;topic_url=https://docs.aws.amazon.com/en_us/apprunner/latest/dg/apprunner-availability-change.html"></awsui-button></p></div></div></div></body></div></awsdocs-view><div class="page-loading-indicator" id="page-loading-indicator"><awsui-spinner size="large"></awsui-spinner></div></div><div id="tools-panel" dom-region="tools"><awsdocs-tools-panel id="awsdocs-tools-panel"></awsdocs-tools-panel></div></awsui-app-layout><awsdocs-cookie-banner class="doc-cookie-banner"></awsdocs-cookie-banner></div></body></html>

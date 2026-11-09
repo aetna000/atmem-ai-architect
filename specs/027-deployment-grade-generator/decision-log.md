@@ -53,3 +53,10 @@ the default. The only view switch is now Components / Overview. Auto-arrange mus
 never choose a different view. Overview positions and the selected view are stored as
 per-project browser preferences, independently of component positions and design
 revision. Refresh restores an explicit view choice; new projects default to Components.
+
+
+## 2026-11-10 — Public source lifecycle and independent service eligibility
+
+Implemented the shared public-only FAQ catalog, authorized conditional editor CLI, source freshness, citation validation and four provider compositions. Preserve private enterprise/native connector requirements as separate work. New AWS FAQ systems use generated Lambda/HTTP API v2 source with hash-pinned MIT Mangum 0.22.0, not App Runner, which is closed to new customers. The original App Runner candidate and posthoc independent rejection are retained. Native schemas alone cannot establish service lifecycle eligibility.
+
+Stricter Azure mocks exposed and fixed the paired health-check interval omission in both templates; isolated mutation tests prove rejection. Exact original/current FAQ artifacts and private-runtime regressions are locally qualified; model/storage fixtures are not live cloud evidence. Security reports distinguish the exported Lambda ZIP from AWS qualification tooling and retain remaining image findings. See specs/028-convergence-evaluation/evidence/20261110-public-faq/README.md. The 28-project target and medium/hard implementation remain unfinished; no cloud account operations or deployment authorized.

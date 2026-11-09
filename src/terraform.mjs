@@ -1,3 +1,4 @@
+import {awsPublicFaqTerraform,azurePublicFaqTerraform,gcpPublicFaqTerraform,ibmPublicFaqTerraform} from './public-faq-clouds.mjs';
 import {ibmStructuredTerraform} from './ibm-structured.mjs';
 import {CLOUD_PROVIDER_LOCKS} from './cloud-provider-locks.mjs';
 import {azureStructuredTerraform} from './azure-structured.mjs';
@@ -29,6 +30,7 @@ function compileTerraform(project, environment = "staging") {
   if(hasContainers(project))return containerTerraform(project,resourcePlan(project),environment);
   if(hasCrossCloud(project))return crossCloudTerraform(project,environment);
   const plan = resourcePlan(project);
+  if(plan.publicFaqPlan.entries.length){const provider=generationProviders(project).join(',');const adapter={aws:awsPublicFaqTerraform,azure:azurePublicFaqTerraform,gcp:gcpPublicFaqTerraform,ibm:ibmPublicFaqTerraform}[provider];if(adapter)return adapter(project,plan,environment);}
   if(generationProviders(project).join(',')==='azure'&&plan.azureStructuredPlan.entries.length)return azureStructuredTerraform(project,plan,environment);
   if(generationProviders(project).join(',')==='gcp'&&plan.gcpStructuredPlan.entries.length)return gcpStructuredTerraform(project,plan,environment);
   if(generationProviders(project).join(',')==='ibm'&&plan.ibmStructuredPlan.entries.length)return ibmStructuredTerraform(project,plan,environment);

@@ -34,8 +34,9 @@ def emulate(payload):
     if setting('EMULATION_ENABLED')=='0':
         return {'version':1,'status':'unavailable','checks':[],'message':'Local emulation is disabled on this server.'}
     declared_clouds={n.get('data',{}).get('provider') for n in payload.project.get('nodes',[]) if n.get('data',{}).get('implementation')=='private-object-storage'}
+    declared_faq=any(n.get('data',{}).get('implementation')=='public-faq-app' for n in payload.project.get('nodes',[]))
     declared_structured=any((n.get('data',{}).get('provider'),n.get('data',{}).get('implementation')) in {('azure','azure-structured-app'),('gcp','gcp-structured-app'),('ibm','ibm-structured-app')} for n in payload.project.get('nodes',[]))
-    if not declared_structured and not declared_clouds.intersection({'azure','gcp'}) and importlib.util.find_spec('moto') is None:
+    if not declared_faq and not declared_structured and not declared_clouds.intersection({'azure','gcp'}) and importlib.util.find_spec('moto') is None:
         return {'version':1,'status':'unavailable','checks':[],'message':'The emulation worker is not installed on this server. Ask the server operator to enable the optional Moto backend.'}
     node=shutil.which('node')
     if not node:return {'version':1,'status':'unavailable','checks':[],'message':'The server-side generator is unavailable.'}
@@ -49,16 +50,17 @@ def emulate(payload):
         fingerprint=hashlib.sha256(json.dumps(digests,sort_keys=True,separators=(',',':')).encode()).hexdigest()
         schedule=json.loads(files.get('resource-schedule.json','{}'))
         cloud=schedule.get('provider')
+        faq=bool(schedule.get('publicFaqPlan',{}).get('entries'))
         structured=bool(schedule.get('azureStructuredPlan',{}).get('entries') or schedule.get('gcpStructuredPlan',{}).get('entries') or schedule.get('ibmStructuredPlan',{}).get('entries'))
-        worker='structured_emulation_worker.py' if structured else 'storage_emulation_worker.py' if cloud in ('azure','gcp','ibm') else 'emulation_worker.py'
+        worker='public_faq_emulation_worker.py' if faq else 'structured_emulation_worker.py' if structured else 'storage_emulation_worker.py' if cloud in ('azure','gcp','ibm') else 'emulation_worker.py'
         prerequisites={'azure':('azure.storage.blob',ROOT/'.local/cloud-emulators/node_modules/.bin/azurite-blob'),'gcp':('google.cloud.storage',ROOT/'.local/cloud-emulators/fake-gcs/fake-gcs-server')}
-        dependency='emulation_worker.py' if structured else 'emulation_adapters.py'
+        dependency='emulation_worker.py' if structured or faq else 'emulation_adapters.py'
         worker_digest=hashlib.sha256((ROOT/'server'/worker).read_bytes()+(ROOT/'server'/dependency).read_bytes()).hexdigest()
         metadata={'version':1,'generatedAt':datetime.now(timezone.utc).isoformat(),'workerDigest':worker_digest,'designRevision':payload.project.get('revision'),'environment':payload.environment,'artifactDigest':fingerprint,'fileDigests':digests,'cloudOperations':False,'terraformApply':'not_run'}
         tf=json.loads(files['main.tf.json'])
         if tf.get('locals',{}).get('unfinished_work'):
             return {**metadata,'status':'blocked','checks':[],'message':'Resolve the generated implementation gaps before emulation.','blockers':tf['locals']['unfinished_work']}
-        if not structured and cloud in prerequisites:
+        if not faq and not structured and cloud in prerequisites:
             module,binary=prerequisites[cloud]
             try:installed=importlib.util.find_spec(module) is not None
             except ModuleNotFoundError:installed=False

@@ -1,5 +1,6 @@
 import catalogue from '../agent-skills/generation-capabilities.json' with {type:'json'};
 import skillDigests from '../agent-skills/specialists/manifest.json' with {type:'json'};
+import lifecycle from '../agent-skills/service-lifecycle.json' with {type:'json'};
 import {generationProviders} from './generation-provider.mjs';
 export function generationQuality(project,plan,files){
  const config=JSON.parse(files['main.tf.json']);
@@ -13,6 +14,7 @@ export function generationQuality(project,plan,files){
  if(Object.keys(config.module||{}).length)add('unreviewed-module','Module dependencies require a pinned, reviewed adapter; arbitrary module sources are not admitted.');
  const prefixes={aws:'aws_',azure:'azurerm_',gcp:'google_',ibm:'ibm_'};
  const emitted=Object.entries(config.resource||{}).filter(([type])=>type!=='terraform_data');
+ for(const rule of lifecycle.rules)if(!rule.newCustomerDefaultAllowed&&rule.resourceTypes.some(type=>Object.keys(config.resource?.[type]||{}).length))add('service-eligibility-unverified',`${rule.id}: ${rule.requiredEvidence} Source: ${rule.source.url}`);
  for(const [type] of emitted){const owner=type.startsWith('azuread_')?'azure':Object.keys(prefixes).find(p=>type.startsWith(prefixes[p]));if(!owner||!providers.includes(owner))add('provider-mismatch',`Resource ${type} does not match the requested deployment providers.`);}
  const components=plan.rows.map(row=>{
   const node=project.nodes.find(n=>n.id===row.id),d=node.data;
@@ -27,6 +29,6 @@ export function generationQuality(project,plan,files){
  for(const edge of plan.connections.filter(e=>!e.generated))add('connection-required',`Connection ${edge.id} has no generated integration.`);
  const unfinished=config.locals?.unfinished_work||[];
  const skills=[...new Set([...catalogue.skills,...providers])].filter(id=>skillDigests[id]).map(id=>({id,sha256:skillDigests[id]}));
- const fatalCodes=new Set(['provider-mismatch','missing-resource','unreviewed-provider','embedded-provider-credential','execution-hook','external-execution-or-state','unreviewed-module','unregistered-implementation']);
+ const fatalCodes=new Set(['provider-mismatch','missing-resource','unreviewed-provider','embedded-provider-credential','execution-hook','external-execution-or-state','unreviewed-module','unregistered-implementation','service-eligibility-unverified']);
  return {version:1,fatalFindings:findings.filter(f=>fatalCodes.has(f.code)),designRevision:project.revision,catalogueVersion:catalogue.version,providers,skills,skillUsage:"Referenced reviewed guidance; model execution of skills is not attested by this export.",components,findings,infrastructureComplete:findings.length===0&&unfinished.length===0&&emitted.length>0,validation:{schema:'not_run',runtime:'not_run',cloudPlan:'not_run'},deploymentCandidate:false,evidenceBoundary:catalogue.evidenceBoundary};
 }

@@ -314,6 +314,115 @@
       ],
       "reviewedAt": "2026-11-10",
       "status": "active"
+    },
+    {
+      "id": "aws-public-catalog-runtime-editor-separation",
+      "provider": "aws",
+      "topic": "public-cited-faq-and-authorized-source-lifecycle",
+      "practice": "For small synchronous public assistants, use the generated Python Lambda/HTTP API v2 contract with a hash-pinned reviewed Mangum adapter and deterministic Linux ZIP. App Runner is closed to new customers; do not default to it or make a basic visitor resolve eligibility. Keep runtime S3 catalog.json read/model invocation separate from an existing company editor assumed role with conditional catalog Get/Put. Bound concurrency, fail closed on policy/source/output failures, and test the real Lambda event adapter and exact Linux ZIP.",
+      "source": {
+        "kind": "documentation",
+        "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-develop-integrations-lambda.html",
+        "sha256": "886f0bbce1abbcfd21d682354c59102bb0779f1b5542e3ba9f04d37d7a268124",
+        "retrievedAt": "2026-11-09T22:11:45.139015+00:00",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "localEvidence": [
+        "src/public-faq-clouds.mjs",
+        "src/runtime/public_catalog_store.py",
+        "src/runtime/public_catalog_admin.py",
+        "server/tests/test_public_catalog_store.py",
+        "src/aws-public-faq.mjs"
+      ],
+      "limitations": [
+        "Public-only UTF-8 text catalog; no private enterprise connector or arbitrary source URL fetching.",
+        "Local HTTP/catalog/native transport fixtures and Terraform schemas/mock plans do not establish real cloud IAM or effective inherited access.",
+        "Exact source membership and quotes do not prove factual entailment. Real model answer/citation/abstention, image scanning, destination capacity/cost/abuse controls and deployed behavior need separate evidence."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
+    },
+    {
+      "id": "azure-public-catalog-runtime-editor-separation",
+      "provider": "azure",
+      "topic": "public-cited-faq-and-authorized-source-lifecycle",
+      "practice": "Use managed identity for runtime Blob Data Reader on the dedicated private catalog container and a separate existing editor group for container-scoped edits. Disable anonymous blob access and shared storage keys. Conditional ETags prevent lost edits; source freshness is checked before returning an answer.",
+      "source": {
+        "kind": "documentation",
+        "url": "https://learn.microsoft.com/en-us/azure/storage/blobs/assign-azure-role-data-access",
+        "sha256": "0489122ce32660f826db3f1837dd9d6a30fb361909b64d11e35b7f9d13707ecb",
+        "retrievedAt": "2026-11-09T21:57:15.719569+00:00",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "localEvidence": [
+        "src/public-faq-clouds.mjs",
+        "src/runtime/public_catalog_store.py",
+        "src/runtime/public_catalog_admin.py",
+        "server/tests/test_public_catalog_store.py"
+      ],
+      "limitations": [
+        "Public-only UTF-8 text catalog; no private enterprise connector or arbitrary source URL fetching.",
+        "Local HTTP/catalog/native transport fixtures and Terraform schemas/mock plans do not establish real cloud IAM or effective inherited access.",
+        "Exact source membership and quotes do not prove factual entailment. Real model answer/citation/abstention, image scanning, destination capacity/cost/abuse controls and deployed behavior need separate evidence."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
+    },
+    {
+      "id": "gcp-public-catalog-runtime-editor-separation",
+      "provider": "gcp",
+      "topic": "public-cited-faq-and-authorized-source-lifecycle",
+      "practice": "Use a dedicated keyless workload with bucket-scoped object-get authority and separate existing editor get/create/delete permissions. Bind read operations to the observed object generation and use ifGenerationMatch for conditional catalog publication; zero means create only when absent. Public application access must not make the bucket public.",
+      "source": {
+        "kind": "documentation",
+        "url": "https://docs.cloud.google.com/storage/docs/json_api/v1/objects/insert",
+        "sha256": "a59b37e81ed820ea39e803ba9d8832a53359232890f33e8b7cd6f4496ef6e5f5",
+        "retrievedAt": "2026-11-09T21:57:16.913614+00:00",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "localEvidence": [
+        "src/public-faq-clouds.mjs",
+        "src/runtime/public_catalog_store.py",
+        "src/runtime/public_catalog_admin.py",
+        "server/tests/test_public_catalog_store.py"
+      ],
+      "limitations": [
+        "Public-only UTF-8 text catalog; no private enterprise connector or arbitrary source URL fetching.",
+        "Local HTTP/catalog/native transport fixtures and Terraform schemas/mock plans do not establish real cloud IAM or effective inherited access.",
+        "Exact source membership and quotes do not prove factual entailment. Real model answer/citation/abstention, image scanning, destination capacity/cost/abuse controls and deployed behavior need separate evidence."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
+    },
+    {
+      "id": "ibm-public-catalog-runtime-editor-separation",
+      "provider": "ibm",
+      "topic": "public-cited-faq-and-authorized-source-lifecycle",
+      "practice": "Separate exact Code Engine trusted-profile runtime Object Reader from an existing company editor access group receiving Object Reader/Object Writer on the dedicated bucket. Object Writer is broader than PUT but does not administer or make the bucket public. Preserve explicit resource_type=bucket and resource=bucket-name; inherited instance grants can broaden effective access.",
+      "source": {
+        "kind": "documentation",
+        "url": "https://cloud.ibm.com/docs/cloud-object-storage?topic=cloud-object-storage-iam-bucket-permissions",
+        "sha256": "f76d5abe26cb7156565dbcbe2ad3d082617e8e9fbb20ccd1b2215639fde592a9",
+        "retrievedAt": "2026-11-09T21:57:21.839918+00:00",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "localEvidence": [
+        "src/public-faq-clouds.mjs",
+        "src/runtime/public_catalog_store.py",
+        "src/runtime/public_catalog_admin.py",
+        "server/tests/test_public_catalog_store.py"
+      ],
+      "limitations": [
+        "Public-only UTF-8 text catalog; no private enterprise connector or arbitrary source URL fetching.",
+        "Local HTTP/catalog/native transport fixtures and Terraform schemas/mock plans do not establish real cloud IAM or effective inherited access.",
+        "Exact source membership and quotes do not prove factual entailment. Real model answer/citation/abstention, image scanning, destination capacity/cost/abuse controls and deployed behavior need separate evidence."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
     }
   ]
 }

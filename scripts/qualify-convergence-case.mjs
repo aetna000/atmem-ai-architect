@@ -20,21 +20,23 @@ try{
   const target=path.join(dir,relative);fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,bytes);copied[relative]=digest;
  }
  const project=JSON.parse(fs.readFileSync(path.join(caseDir,'project.json')));if(!['aws','azure','gcp','ibm'].includes(project.provider))throw Error('This runtime qualifier currently supports AWS Python/web and Azure/Google structured application compositions only');
+ const faq=!!JSON.parse(fs.readFileSync(path.join(dir,'resource-schedule.json'))).publicFaqPlan?.entries?.length;
  let auxiliaryProviderLock=false;
- if(project.provider==='aws'){
+ if(project.provider==='aws'&&!faq){
   if(!fs.existsSync(path.join(dir,'.terraform.lock.hcl'))){fs.writeFileSync(path.join(dir,'.terraform.lock.hcl'),CLOUD_PROVIDER_LOCKS.aws);auxiliaryProviderLock=true;}
   if(!execute('build',path.join(root,'.venv/bin/python'),['build-runtime.py']))throw Error('Emitted build failed');
   execute('application-tests',runtimePython,['-m','unittest','discover','-s','app-tests','-p','*_test.py']);
  }else{
-  const sdk=path.resolve(process.env.ATMEM_STRUCTURED_QUALIFICATION_SDK||process.env.ATMEM_AZURE_QUALIFICATION_SDK||'.local/azure-runtime-sdk');
-  if(!fs.existsSync(sdk))throw Error('Install the emitted hash-locked Azure test requirements into the explicit isolated qualification SDK directory first');
-  const acceptance=project.provider+'_acceptance.py';
+  if(faq&&project.provider==='aws'&&!execute('build',path.join(root,'.venv/bin/python'),['build-runtime.py']))throw Error('Emitted public FAQ Lambda ZIP build failed');
+  const sdk=path.resolve(process.env.ATMEM_STRUCTURED_QUALIFICATION_SDK||process.env.ATMEM_AZURE_QUALIFICATION_SDK||({aws:'.local/aws-web-runtime-sdk',azure:'.local/azure-runtime-sdk',gcp:'.local/azure-runtime-sdk',ibm:'.local/ibm-runtime-sdk'}[project.provider]));
+  if(!fs.existsSync(sdk))throw Error('Install the emitted hash-locked provider test requirements into the explicit isolated qualification SDK directory first');
+  const acceptance=(faq?'faq':project.provider)+'_acceptance.py';
   const applications=Object.keys(copied).filter(name=>name.endsWith('/'+acceptance)).map(name=>path.dirname(name));
-  if(!applications.length)throw Error('No generated structured application acceptance suite; a supplied-image footprint does not qualify');
+  if(!applications.length)throw Error('No generated application acceptance suite; a supplied-image footprint does not qualify');
   for(const application of applications){
    if(!execute('dependency-closure-'+path.basename(application),path.join(root,'.venv/bin/python'),[path.join(root,'scripts/check-python-runtime-lock.py'),path.join(dir,application),sdk]))throw Error('Emitted runtime dependency graph is incomplete or incompatible');
-   const app=path.join(dir,application),script=`import sys,json,runpy,socket,importlib.metadata\nfrom pathlib import Path\nsys.path[:0]=[${JSON.stringify(sdk)},${JSON.stringify(app)}]\nroot=Path(${JSON.stringify(app)})\nfor name in ['dependency-sources.json','test-dependency-sources.json']:\n for dependency in json.loads((root/name).read_text()):\n  assert importlib.metadata.version(dependency['name'])==dependency['version'],dependency['name']\ndef denied(*args,**kwargs):raise RuntimeError('Qualification denies external network')\nsocket.socket.connect=denied;socket.socket.connect_ex=denied;socket.getaddrinfo=denied\nsys.argv=[${JSON.stringify(acceptance)},'-v']\nrunpy.run_path(str(root/${JSON.stringify(acceptance)}),run_name='__main__')\n`;
-   if(!execute('application-'+path.basename(application),runtimePython,['-I','-c',script]))throw Error('Emitted structured source tests failed');
+   const app=path.join(dir,application),script=`import sys,json,runpy,socket,importlib.metadata\nsys.dont_write_bytecode=True\nfrom pathlib import Path\nsys.path[:0]=[${JSON.stringify(sdk)},${JSON.stringify(app)}]\nroot=Path(${JSON.stringify(app)})\nfor name in ['dependency-sources.json','test-dependency-sources.json']:\n for dependency in json.loads((root/name).read_text()):\n  assert importlib.metadata.version(dependency['name'])==dependency['version'],dependency['name']\ndef denied(*args,**kwargs):raise RuntimeError('Qualification denies external network')\nsocket.socket.connect=denied;socket.socket.connect_ex=denied;socket.getaddrinfo=denied\nsys.argv=[${JSON.stringify(acceptance)},'-v']\nrunpy.run_path(str(root/${JSON.stringify(acceptance)}),run_name='__main__')\n`;
+   if(!execute('application-'+path.basename(application),runtimePython,['-I','-c',script]))throw Error('Emitted source tests failed');
   }
  }
  if(execute('terraform-init',path.join(root,'.venv/bin/terraform'),['init','-backend=false','-input=false','-no-color','-lockfile=readonly'])){
@@ -43,10 +45,10 @@ try{
  }
  const artifactsFile=path.join(dir,'build/artifact-hashes.json'),artifacts=fs.existsSync(artifactsFile)?JSON.parse(fs.readFileSync(artifactsFile)):[];
  const versions={applicationPython:spawnSync(runtimePython,['--version'],{env,encoding:'utf8'}).stdout.trim(),buildPython:spawnSync(path.join(root,'.venv/bin/python'),['--version'],{env,encoding:'utf8'}).stdout.trim(),terraform:JSON.parse(spawnSync(path.join(root,'.venv/bin/terraform'),['version','-json'],{cwd:dir,env,encoding:'utf8'}).stdout)};
- const expectedChecks=project.provider==='aws'?5:3+2*Object.keys(copied).filter(name=>name.endsWith('/'+project.provider+'_acceptance.py')).length;
- const report={case:caseDir.split(path.sep).at(-1),originalSourceDigests:copied,auxiliaryProviderLock,checks,versions,artifacts,passed:checks.length===expectedChecks&&checks.every(c=>c.passed),containerImageBuild:project.provider!=='aws'?'not_run':'not_applicable',boundary:project.provider!=='aws'?'Exact emitted provider-specific Python source, locked dependency versions, local JWT/ASGI/scripted transport tests with external sockets denied, native provider schema and mock plans. No container image build/startup/scan, real provider authentication/MFA/revocation, model quality, account plan or deployment.':'Exact emitted package build, tests with mocked provider/model services, provider schema and provider mock plans. No live identity/model, semantic acceptance, account plan or deployment.',cloudOperations:false,nearDeploymentQualified:false};
+ const expectedChecks=project.provider==='aws'&&!faq?5:(faq&&project.provider==='aws'?4:3)+2*Object.keys(copied).filter(name=>name.endsWith('/'+(faq?'faq':project.provider)+'_acceptance.py')).length;
+ const report={case:caseDir.split(path.sep).at(-1),originalSourceDigests:copied,auxiliaryProviderLock,checks,versions,artifacts,passed:checks.length===expectedChecks&&checks.every(c=>c.passed),containerImageBuild:faq||project.provider!=='aws'?'not_run':'not_applicable',boundary:faq?'Exact emitted public FAQ source, dependency metadata closure, catalog/editor/ASGI/scripted native storage tests with network denied, provider schema and mock plans. Real workload identity/effective IAM, model semantics, exact Linux image/scan, account plan and deployment are separate.':project.provider!=='aws'?'Exact emitted provider-specific Python source, locked dependency versions, local JWT/ASGI/scripted transport tests with external sockets denied, native provider schema and mock plans. No container image build/startup/scan, real provider authentication/MFA/revocation, model quality, account plan or deployment.':'Exact emitted package build, tests with mocked provider/model services, provider schema and provider mock plans. No live identity/model, semantic acceptance, account plan or deployment.',cloudOperations:false,nearDeploymentQualified:false};
  fs.writeFileSync(path.join(dir,'qualification.json'),JSON.stringify(report,null,2)+'\n');
  // Runtime dependencies are reproducible from the retained hash lock. Avoid 28 SDK copies.
- for(const artifact of artifacts)if(/^block_[0-9a-f]+$/.test(artifact.component)){fs.rmSync(path.join(dir,'build',artifact.component),{recursive:true,force:true});fs.rmSync(path.join(dir,'build',artifact.component+'.zip'),{force:true});}
+ for(const artifact of artifacts)if(/^block_[0-9a-f]+$/.test(artifact.component)){fs.rmSync(path.join(dir,'build',artifact.component),{recursive:true,force:true});if(!faq)fs.rmSync(path.join(dir,'build',artifact.component+'.zip'),{force:true});}
  process.exitCode=report.passed?0:1;
 }finally{fs.rmSync(scratch,{recursive:true,force:true});}

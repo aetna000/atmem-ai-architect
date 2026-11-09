@@ -72,8 +72,8 @@ class Data(Strict):
     topologyGroup:str|None=Field(default=None,max_length=100)
     service:str|None=Field(default=None,max_length=150)
     category:str|None=Field(default=None,max_length=150)
-    binding:Literal['cloud-storage-principal','aws-iam-principal','aws-bedrock-model','normalized-source-contract','web-browser','existing-service']|None=None
-    implementation:Literal['ibm-structured-app','gcp-structured-app','azure-structured-app','container-service','private-object-storage','rag-web-app','rag-user-pool','bounded-keyword-rag','iam-rag-api','bounded-rag-catalog','text-statistics','bedrock-summary','bedrock-structured','structured-api','structured-web-app','structured-user-pool','async-word-count','sqs-standard','sqs-dead-letter','word-count-results']|None=None
+    binding:Literal['public-catalog-editor','cloud-storage-principal','aws-iam-principal','aws-bedrock-model','normalized-source-contract','web-browser','existing-service']|None=None
+    implementation:Literal['public-faq-app','ibm-structured-app','gcp-structured-app','azure-structured-app','container-service','private-object-storage','rag-web-app','rag-user-pool','bounded-keyword-rag','iam-rag-api','bounded-rag-catalog','text-statistics','bedrock-summary','bedrock-structured','structured-api','structured-web-app','structured-user-pool','async-word-count','sqs-standard','sqs-dead-letter','word-count-results']|None=None
 
     @model_validator(mode='after')
     def named_component(self):
@@ -99,7 +99,7 @@ class Edge(Strict):
     target:str=Field(max_length=100)
     type:Literal['smoothstep']='smoothstep'
     label:str=Field(default='data',max_length=150)
-    integration:Literal['browser-https','web-rag-api','oauth-pkce','jwt-authorizer','source-catalog-sync','http-api-lambda','lambda-catalog-read','bedrock-converse','s3-object-created','sqs-lambda','lambda-s3-read','lambda-dynamodb-write','sqs-redrive']|None=None
+    integration:Literal['public-catalog-edit','browser-https','web-rag-api','oauth-pkce','jwt-authorizer','source-catalog-sync','http-api-lambda','lambda-catalog-read','bedrock-converse','s3-object-created','sqs-lambda','lambda-s3-read','lambda-dynamodb-write','sqs-redrive']|None=None
     access:Literal['storage-object-admin','s3-read','s3-read-write','lambda-invoke','api-invoke']|None=None
 
 class Project(Strict):
