@@ -7,7 +7,11 @@
     "Explicit provider dispatch; removed AWS and default-Google substitution",
     "Lossless descriptions up to an explicit 16000-character contract limit",
     "Structured outcome separated from conversation provenance",
-    "Reference-aware guidance and infrastructure coverage"
+    "Reference-aware guidance and infrastructure coverage",
+    "Shared four-cloud capability catalogue used by planner and exporter",
+    "Relevant provider skills selected from component providers",
+    "Exported generation-quality.json includes coverage, skill digests and validation boundaries",
+    "Independent emitted-resource checks catch provider mismatch and missing required resources"
   ],
   "testsRun": [
     {
@@ -25,14 +29,26 @@
     {
       "command": "terraform init -backend=false; terraform validate -json on fresh r13 regeneration",
       "result": "valid; zero errors/warnings; incomplete gate-only artifact remains explicitly nondeployable"
+    },
+    {
+      "command": "npm test",
+      "result": "204 passed"
+    },
+    {
+      "command": "npm run build",
+      "result": "passed"
+    },
+    {
+      "command": "targeted server regression and shared-capability/integrity tests",
+      "result": "6 passed"
     }
   ],
   "remaining": [
-    "Shared capability registry and skill receipts",
     "Ownership separation between existing code and existing cloud deployments",
     "Independent resource/requirement coverage verifier",
     "Concrete Spec Kit interfaces and file-level tasks",
-    "Additional cloud runtime compilers and application implementations"
+    "Additional cloud runtime compilers and application implementations",
+    "Expand independent output verification beyond resource presence into full application/edge semantics"
   ],
   "deployments": []
 }

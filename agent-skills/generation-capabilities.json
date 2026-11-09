@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "providers": ["aws", "azure", "gcp", "ibm"],
+  "skills": ["architecture", "terraform", "security", "devops", "finops"],
+  "contracts": [
+    {"id":"aws-s3","provider":"aws","service":"Amazon S3","implementation":null,"resources":["aws_s3_bucket"]},
+    {"id":"aws-text-statistics","provider":"aws","implementation":"text-statistics","resources":["aws_lambda_function"]},
+    {"id":"aws-async-worker","provider":"aws","implementation":"async-word-count","resources":["aws_lambda_function"]},
+    {"id":"aws-summary","provider":"aws","implementation":"bedrock-summary","resources":["aws_lambda_function"]},
+    {"id":"aws-rag-worker","provider":"aws","implementation":"bounded-keyword-rag","resources":["aws_lambda_function"]},
+    {"id":"aws-rag-api","provider":"aws","implementation":"iam-rag-api","resources":["aws_apigatewayv2_api"]},
+    {"id":"aws-rag-catalog","provider":"aws","implementation":"bounded-rag-catalog","resources":["aws_dynamodb_table"]},
+    {"id":"aws-rag-web","provider":"aws","implementation":"rag-web-app","resources":["aws_cloudfront_distribution"]},
+    {"id":"aws-rag-users","provider":"aws","implementation":"rag-user-pool","resources":["aws_cognito_user_pool"]},
+    {"id":"azure-private-storage","provider":"azure","service":"Azure Blob Storage","implementation":"private-object-storage","resources":["azurerm_storage_account","azurerm_storage_container"]},
+    {"id":"gcp-private-storage","provider":"gcp","service":"Google Cloud Storage","implementation":"private-object-storage","resources":["google_storage_bucket"]},
+    {"id":"ibm-private-storage","provider":"ibm","service":"IBM Cloud Object Storage","implementation":"private-object-storage","resources":["ibm_cos_bucket"]}
+  ],
+  "evidenceBoundary": "A matching contract identifies compiler capability only. Resources, edges, application behavior and destination configuration require independent validation."
+}

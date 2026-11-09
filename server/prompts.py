@@ -68,3 +68,6 @@ SYSTEM_PROMPT=SYSTEM_PROMPT+"\n\n# Skills\n"+skills_prompt()
 
 EXISTING_SERVICE_REFERENCE_GUIDANCE = """An existing website or externally managed service can use origin=existing and binding=existing-service, retaining its provider and service. This is a supported reference-only contract: preserve it without recreating, importing or modifying it. Do not change a proposed component into an existing one to bypass implementation work. Keep all edges; this binding does not implement connections or validate runtime behavior. Existing GCP Firebase Hosting/Firebase App Hosting service selections are also recognized as references when no implementation or other binding is selected."""
 SYSTEM_PROMPT += '\n\n' + EXISTING_SERVICE_REFERENCE_GUIDANCE
+
+from .skills import generation_guidance
+SYSTEM_PROMPT += '\n\n# Shared generator capabilities\n' + generation_guidance()

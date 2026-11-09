@@ -19,6 +19,13 @@ GUIDANCE = [
 ]
 
 
+def generation_guidance():
+    catalogue = json.loads((ROOT / 'agent-skills/generation-capabilities.json').read_text())
+    return ('Compiler capability catalogue v' + str(catalogue['version']) + ': ' +
+            json.dumps(catalogue['contracts'], separators=(',', ':')) + '. ' + catalogue['evidenceBoundary'] +
+            ' Preserve required unsupported scope and identify missing compiler work; never substitute a different provider or present references as generated infrastructure.')
+
+
 def registry():
     refs = json.loads((ROOT / 'agent-skills/upstream/manifest.json').read_text())
     by_id = {r['id']: r for r in refs}
@@ -51,7 +58,7 @@ def catalogue(memory, project):
 def select(memory, project, request, recalled):
     skills = catalogue(memory, project)
     text = request.message.lower()
-    providers = {request.project.provider}
+    providers = {request.project.provider, *(n.data.provider for n in request.project.nodes)}
     if re.search(r'compar|versus|alternative|\bvs\b', text):
         providers.update({'aws','azure','gcp','ibm'})
     for provider, pattern in [('aws',r'\baws\b'),('azure',r'\bazure\b'),('gcp',r'google cloud|\bgcp\b'),('ibm',r'\bibm\b|watsonx')]:
