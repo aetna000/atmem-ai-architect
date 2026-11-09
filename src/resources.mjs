@@ -1,3 +1,4 @@
+import {structuredApiPlan} from './structured-api.mjs';
 import {existingDeployment} from './deployment-ownership.mjs';
 import {hasContainers,containerContract} from './container-contracts.mjs';
 import {existingReference} from './existing-references.mjs';
@@ -69,24 +70,25 @@ export function resourcePlan(project) {
       costDrivers: match?.costs || "Confirm service, capacity and billable dimensions",
       dependencies: project.edges.filter((e) => e.target === n.id && ids.has(e.source)).map((e) => e.source),
       terraform: existing ? "Existing — reference/import plan needed" : foundation ? "S3 foundation generated" : "Implementation needed",
-      foundation, compute, api:!existing&&match?.name==="Amazon API Gateway"&&n.data.implementation==="iam-rag-api", summary:!existing&&n.data.provider==="aws"&&match?.name==="AWS Lambda"&&n.data.implementation==="bedrock-summary", settings: runtimeSettings(n.data.config),
+      foundation, compute, api:!existing&&match?.name==="Amazon API Gateway"&&n.data.implementation==="iam-rag-api", structured:n.data.implementation==="bedrock-structured", summary:!existing&&n.data.provider==="aws"&&match?.name==="AWS Lambda"&&(n.data.implementation==="bedrock-summary"||(n.data.implementation==="bedrock-structured"&&n.data.config?.outputContract)), settings: runtimeSettings(n.data.config),
     };
   });
   const asyncPlan=asyncPipelinePlan(project,rows);
   const modelPlan=summaryPlan(project,rows);
   const retrievalPlan=ragPlan(project,rows);
+  const structuredPlan=structuredApiPlan(project,rows,modelPlan);
   const connectorPlan=sourceContractPlan(project,rows,retrievalPlan);
-  const browserPlan=webPlan(project,rows,retrievalPlan);
+  const browserPlan=webPlan(project,rows,{entries:[...retrievalPlan.entries,...structuredPlan.entries]});
   const accessPlan=storageAccessPlan(project,rows);
   for(const row of rows){
     row.reference=accessPlan.bindings.some(b=>b.id===row.id);
     row.externalReference=row.existing && row.provider==="tools" && nodes.find(n=>n.id===row.id)?.data.binding==="web-browser";
     row.existingServiceReference=existingReference(nodes.find(n=>n.id===row.id));
     row.containerContract=containerContract(nodes.find(n=>n.id===row.id));
-    row.implemented=!!row.containerContract||!!row.existingServiceReference||row.externalReference||row.foundation||row.compute||row.reference||browserPlan.componentIds.includes(row.id)||connectorPlan.sources.some(s=>s.id===row.id)||retrievalPlan.componentIds.includes(row.id)||modelPlan.modelIds.includes(row.id)||modelPlan.entries.some(e=>e.worker.id===row.id)||asyncPlan.componentIds.includes(row.id);
+    row.implemented=(structuredPlan.entries.some(e=>e.api.id===row.id)&&browserPlan.entries.some(e=>e.api.id===row.id))||!!row.containerContract||!!row.existingServiceReference||row.externalReference||row.foundation||row.compute||row.reference||browserPlan.componentIds.includes(row.id)||connectorPlan.sources.some(s=>s.id===row.id)||retrievalPlan.componentIds.includes(row.id)||modelPlan.modelIds.includes(row.id)||modelPlan.entries.some(e=>e.worker.id===row.id)||asyncPlan.componentIds.includes(row.id);
     if(asyncPlan.componentIds.includes(row.id))row.terraform="Typed asynchronous pipeline implementation generated";
     if(modelPlan.modelIds.includes(row.id))row.terraform="Existing regional foundation model — required model ID input generated";
-    if(modelPlan.entries.some(e=>e.worker.id===row.id))row.terraform="Bedrock summary handler, scoped model permission and caller binding generated";
+    if(modelPlan.entries.some(e=>e.worker.id===row.id))row.terraform=row.structured?"Schema-checked structured generation handler, scoped model permission and caller binding generated":"Bedrock summary handler, scoped model permission and caller binding generated";
     if(retrievalPlan.componentIds.includes(row.id))row.terraform="Bounded IAM-authenticated RAG implementation generated";
     if(connectorPlan.sources.some(s=>s.id===row.id))row.terraform="Local source-contract runner generated; native vendor integration unverified";
     if(browserPlan.componentIds.includes(row.id))row.terraform="Private web hosting and Cognito authorization-code/PKCE sign-in generated";
@@ -97,8 +99,8 @@ export function resourcePlan(project) {
     if(row.reference){row.terraform="Existing IAM principal — required ARN input generated";row.service="Existing AWS IAM principal";row.selection="Explicit principal binding";}
   }
   if(hasContainers(project))for(const row of rows)if(!row.existing&&!row.containerContract){row.implemented=false;row.terraform="Container compiler composition does not implement this required component";}
-  const connections = project.edges.filter((e) => ids.has(e.source) && ids.has(e.target)).map((e) => ({ id: e.id, source: e.source, target: e.target, data: e.label || "data", generated: (accessPlan.connections.some(c=>c.id===e.id)||asyncPlan.edgeIds.includes(e.id)||modelPlan.edgeIds.includes(e.id)||retrievalPlan.edgeIds.includes(e.id)||connectorPlan.connections.some(c=>c.id===e.id)||browserPlan.edgeIds.includes(e.id)), status: (accessPlan.connections.some(c=>c.id===e.id)||asyncPlan.edgeIds.includes(e.id)||modelPlan.edgeIds.includes(e.id)||retrievalPlan.edgeIds.includes(e.id)||connectorPlan.connections.some(c=>c.id===e.id)||browserPlan.edgeIds.includes(e.id)) ? "Scoped access policy generated; account and runtime verification required" : "Application integration and permissions not implemented" }));
-  const missingStorageAccess=rows.filter(r=>(r.foundation||r.compute||r.summary||r.api)&&!accessPlan.connections.some(e=>e.target===r.id)&&!browserPlan.entries.some(e=>e.api.id===r.id));
+  const connections = project.edges.filter((e) => ids.has(e.source) && ids.has(e.target)).map((e) => ({ id: e.id, source: e.source, target: e.target, data: e.label || "data", generated: (accessPlan.connections.some(c=>c.id===e.id)||asyncPlan.edgeIds.includes(e.id)||modelPlan.edgeIds.includes(e.id)||retrievalPlan.edgeIds.includes(e.id)||connectorPlan.connections.some(c=>c.id===e.id)||(browserPlan.edgeIds.includes(e.id)||structuredPlan.entries.some(x=>browserPlan.entries.some(w=>w.api.id===x.api.id)&&x.edges.some(y=>y.id===e.id)))), status: (accessPlan.connections.some(c=>c.id===e.id)||asyncPlan.edgeIds.includes(e.id)||modelPlan.edgeIds.includes(e.id)||retrievalPlan.edgeIds.includes(e.id)||connectorPlan.connections.some(c=>c.id===e.id)||(browserPlan.edgeIds.includes(e.id)||structuredPlan.entries.some(x=>browserPlan.entries.some(w=>w.api.id===x.api.id)&&x.edges.some(y=>y.id===e.id)))) ? "Scoped access policy generated; account and runtime verification required" : "Application integration and permissions not implemented" }));
+  const missingStorageAccess=rows.filter(r=>(r.foundation||r.compute||r.summary||r.api)&&!accessPlan.connections.some(e=>e.target===r.id)&&!browserPlan.entries.some(e=>e.api.id===r.id||e.worker.id===r.id));
   const gaps = [
     ...missingStorageAccess.map(r=>`${r.label}: explicit caller access contract is missing.`),
     ...rows.filter((r) => !r.implemented).map((r) => `${r.label}: ${r.terraform}.`),
@@ -112,7 +114,7 @@ export function resourcePlan(project) {
     ...connections.filter(e=>!e.generated).map(e=>({id:`connection-${encode(e.id)}`,edgeIds:[e.id],taskId:`TASK-INTEGRATION-${encode(e.id)}`,message:`Wire ${e.source} → ${e.target}: implement data flow, access policy and acceptance test.`})),
     ...(!rows.length?[{id:'architecture-empty',taskId:'TASK-SCOPE',message:'No resources in the design yet.'}]:[]),
   ];
-  return { revision: project.revision, rows, connections, accessPlan, asyncPlan, summaryPlan:modelPlan, ragPlan:retrievalPlan, sourceContractPlan:connectorPlan, webPlan:browserPlan, gaps, gapDetails, scope: "Diagram-derived resource schedule; service choices and resource types require engineering review.", sources: [
+  return { revision: project.revision, rows, connections, accessPlan, asyncPlan, summaryPlan:modelPlan, structuredApiPlan:structuredPlan, ragPlan:retrievalPlan, sourceContractPlan:connectorPlan, webPlan:browserPlan, gaps, gapDetails, scope: "Diagram-derived resource schedule; service choices and resource types require engineering review.", sources: [
     "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
     "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
     "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",

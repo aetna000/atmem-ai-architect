@@ -39,3 +39,10 @@ test('external client guidance and brief do not invent infrastructure or reuse c
  const p={name:'Example',requirements:'yes\nwhat do we have\naustralia',needs:[{statement:'Preserve the existing website.'}]};
  assert.ok(!implementationOutcome(p).includes('what do we have'));assert.match(implementationOutcome(p),/Preserve the existing website/);
 });
+
+test('a contradictory existing-reference binding cannot accidentally provision replacement storage',()=>{
+ const p=base('aws');p.nodes[0].data.service='Amazon S3';p.nodes[0].data.binding='existing-service';
+ assert.throws(()=>terraformSketch(p),/Reference bindings/);assert.throws(()=>validateImport(p),/Reference bindings/);
+ p.nodes[0].data.origin='existing';p.nodes[0].data.deploymentMode='create';assert.throws(()=>terraformSketch(p),/Reference bindings/);
+ p.nodes[0].data.deploymentMode='reference';assert.doesNotThrow(()=>terraformSketch(p));
+});

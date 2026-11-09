@@ -34,7 +34,8 @@ test('read-only bindings never grant writes; a second bucket receives no implici
  assert.ok(!JSON.stringify(policies).includes('s3:PutObject'));
 });
 test('free text, wrong ownership, wrong target and reversed edges cannot grant access',()=>{
- for(const mutate of [p=>delete p.nodes[0].data.binding,p=>delete p.edges[0].access,p=>p.edges[0].access='s3:*',p=>p.nodes[0].data.origin='proposed',p=>p.nodes[1].data.service='AWS Lambda',p=>[p.edges[0].source,p.edges[0].target]=[p.edges[0].target,p.edges[0].source]]){
+ const invalidOwner=fixture();invalidOwner.nodes[0].data.origin='proposed';assert.throws(()=>tf(invalidOwner),/Reference bindings/);
+ for(const mutate of [p=>delete p.nodes[0].data.binding,p=>delete p.edges[0].access,p=>p.edges[0].access='s3:*',p=>p.nodes[1].data.service='AWS Lambda',p=>[p.edges[0].source,p.edges[0].target]=[p.edges[0].target,p.edges[0].source]]){
   const p=fixture();mutate(p);const t=tf(p);
   assert.ok(t.locals.unfinished_work.length);assert.ok(!JSON.stringify(t.resource.aws_s3_bucket_policy||{}).includes('OperatorObjects'));
  }

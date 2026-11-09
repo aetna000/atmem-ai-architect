@@ -1,0 +1,86 @@
+{
+  "tasks": [
+    {
+      "id": "CV-001",
+      "title": "Own engineering intake and concise test guidance",
+      "dependsOn": [],
+      "status": "done",
+      "evidence": [
+        "src/work-intake.mjs",
+        "src/emulation-guidance.mjs",
+        "scripts/work-intake-check.mjs",
+        "scripts/emulation-guidance-check.mjs"
+      ]
+    },
+    {
+      "id": "CV-002",
+      "title": "Build frozen live-conversation and independent package evaluators",
+      "dependsOn": [
+        "CV-001"
+      ],
+      "status": "done",
+      "evidence": [
+        "benchmarks/convergence/scenarios.json",
+        "scripts/evaluate-convergence.py",
+        "scripts/assess-convergence-package.py",
+        "tests/convergence-harness.test.mjs"
+      ]
+    },
+    {
+      "id": "CV-003",
+      "title": "Complete the original 28-case baseline and review failures",
+      "dependsOn": [
+        "CV-002"
+      ],
+      "status": "done",
+      "evidence": [
+        "specs/028-convergence-evaluation/evidence/20261110-baseline-complete"
+      ]
+    },
+    {
+      "id": "CV-004",
+      "title": "Repair the first shared failure clusters and qualify exact regenerated artifacts",
+      "dependsOn": [
+        "CV-002"
+      ],
+      "status": "in_progress",
+      "evidence": [
+        "src/structured-api.mjs",
+        "server/tests/test_structured_emulation.py",
+        ".local/convergence-runs/iteration-v2-20261110",
+        ".local/convergence-runs/regenerated-v6-20261110"
+      ]
+    },
+    {
+      "id": "CV-005",
+      "title": "Expand and qualify the required connected blocks across all four providers",
+      "dependsOn": [
+        "CV-002"
+      ],
+      "status": "in_progress",
+      "evidence": [
+        "docs/research/convergence-native-blocks-20261110.md"
+      ]
+    },
+    {
+      "id": "CV-006",
+      "title": "Repeat the complete 28-case matrix after structural repairs",
+      "dependsOn": [
+        "CV-003",
+        "CV-005"
+      ],
+      "status": "todo",
+      "evidence": []
+    },
+    {
+      "id": "CV-007",
+      "title": "Qualify held-out variants and the final engineer handoff",
+      "dependsOn": [
+        "CV-006"
+      ],
+      "status": "todo",
+      "evidence": []
+    }
+  ],
+  "boundary": "Done means the named deliverable and its evidence exist. The 28-project outcome, provider parity and near-deployment acceptance remain unfinished. No cloud deployment is authorized."
+}

@@ -8,13 +8,22 @@ try{
  const node=(id,label,x,group)=>({id,type:'resource',position:{x,y:100},data:{label,description:'A clearly described existing component.',kind:'resource',provider:'tools',origin:'existing',topologyGroup:group,config:{region:'External client',classification:'Public'}}});
  const project={id:'canvas-view-regression',version:1,revision:1,name:'Canvas views',provider:'tools',nodes:[node('client','Visitor',0),node('app','Application',330,'Workspace'),node('worker','Worker',660,'Workspace')],edges:[{id:'request',source:'client',target:'app',label:'Use workspace'},{id:'job',source:'app',target:'worker',label:'Run work'}]};
  const load=async p=>page.locator('#project-file-input').setInputFiles({name:'views.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(toProjectFile(p)))});
- const mode=name=>page.getByRole('group',{name:'Canvas view',exact:true}).getByRole('button',{name,exact:true});
  const state=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('atforma-workspace-v3')));
- await page.goto(process.env.ATMEM_ARCHITECT_BROWSER_URL||'http://127.0.0.1:5190');assert.equal(await mode('Components').getAttribute('aria-pressed'),'true');assert.equal(await page.getByRole('group',{name:'Canvas view',exact:true}).getByRole('button').count(),2);
- await load(project);await page.locator('.react-flow__node-resource').first().waitFor();await page.getByRole('button',{name:'Auto-arrange',exact:true}).click();assert.equal(await mode('Components').getAttribute('aria-pressed'),'true');assert.equal(await page.locator('.react-flow__node-resource').count(),3);
- await mode('Overview').click();await page.locator('.react-flow__node-layer').first().waitFor();const before=await state();await page.getByRole('button',{name:'Auto-arrange',exact:true}).click();assert.equal(await mode('Overview').getAttribute('aria-pressed'),'true');assert.equal(await page.locator('.react-flow__node-layer').count(),2);await page.waitForFunction(()=>Object.keys(JSON.parse(localStorage.getItem('atmem-canvas-view-v1:canvas-view-regression'))?.positions||{}).length===2);const after=await state();assert.deepEqual(after.nodes,before.nodes);assert.deepEqual(after.edges,before.edges);assert.equal(after.revision,before.revision);
- const positions=await page.locator('.react-flow__node-layer').evaluateAll(nodes=>nodes.map(n=>[n.dataset.id,n.style.transform]).sort());await page.reload();await page.locator('.react-flow__node-layer').first().waitFor();assert.equal(await mode('Overview').getAttribute('aria-pressed'),'true');assert.deepEqual(await page.locator('.react-flow__node-layer').evaluateAll(nodes=>nodes.map(n=>[n.dataset.id,n.style.transform]).sort()),positions);
- await mode('Components').click();await page.reload();await page.locator('.react-flow__node-resource').first().waitFor();assert.equal(await mode('Components').getAttribute('aria-pressed'),'true');
- await load({...project,id:'other-canvas-project',name:'Another project'});assert.equal(await mode('Components').getAttribute('aria-pressed'),'true');await mode('Overview').click();await load(project);assert.equal(await mode('Components').getAttribute('aria-pressed'),'true');assert.deepEqual(errors,[]);
- if(process.env.ATMEM_ARCHITECT_SCREENSHOT)await page.screenshot({path:process.env.ATMEM_ARCHITECT_SCREENSHOT});console.log('Passed: exactly two view modes; Components default; auto-arrange preserves both modes; overview arrangement preserves component graph/revision; refresh restores view/layout; projects retain separate preferences.');
+ await page.goto(process.env.ATMEM_ARCHITECT_BROWSER_URL||'http://127.0.0.1:5190');
+ await load(project);await page.locator('.react-flow__node-resource').first().waitFor();
+ assert.equal(await page.getByRole('button',{name:'Overview',exact:true}).count(),0);
+ assert.equal(await page.locator('.react-flow__node-layer').count(),0);
+ const before=await state();await page.getByRole('button',{name:'Auto-arrange',exact:true}).click();
+ assert.equal(await page.locator('.react-flow__node-resource').count(),3);
+ const after=await state();assert.deepEqual(after.edges,before.edges);assert.deepEqual(after.nodes.map(n=>n.data),before.nodes.map(n=>n.data));
+ // Escape must not send a novice user into the hidden topology projection.
+ await page.locator('.react-flow__pane').first().click({position:{x:20,y:20}});await page.keyboard.press('Escape');
+ assert.equal(await page.locator('.react-flow__node-resource').count(),3);assert.equal(await page.locator('.react-flow__node-layer').count(),0);
+ // An old saved overview preference must reopen in the component canvas.
+ await page.evaluate(()=>localStorage.setItem('atmem-canvas-view-v1:canvas-view-regression',JSON.stringify({level:'system',positions:{}})));
+ await page.reload();await page.locator('.react-flow__node-resource').first().waitFor();assert.equal(await page.locator('.react-flow__node-resource').count(),3);
+ assert.equal(await page.locator('.react-flow__node-layer').count(),0);
+ await page.getByRole('button',{name:'Component tree',exact:true}).click();assert.equal(await page.getByRole('navigation',{name:'Component tree'}).getByRole('button').count(),4);await page.keyboard.press('Escape');
+ await load({...project,id:'other-canvas-project',name:'Another project'});await page.locator('.react-flow__node-resource').first().waitFor();assert.equal(await page.locator('.react-flow__node-resource').count(),3);assert.deepEqual(errors,[]);
+ if(process.env.ATMEM_ARCHITECT_SCREENSHOT)await page.screenshot({path:process.env.ATMEM_ARCHITECT_SCREENSHOT});console.log('Passed: components only; no topology switch or Escape path; old overview preferences migrate; arrangement preserves component data/connections; component navigation and project switching work.');
 }finally{await browser.close()}

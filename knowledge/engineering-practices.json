@@ -81,6 +81,153 @@
       ],
       "reviewedAt": "2026-11-10",
       "status": "active"
+    },
+    {
+      "id": "aws-structured-output-boundary",
+      "provider": "aws",
+      "topic": "structured-generation",
+      "practice": "Use a supported model with the Converse JSON-schema output contract, then independently validate bounded application input and output. Handle unsupported schema/model responses and model failures; structured output does not establish authorization or task accuracy.",
+      "source": {
+        "kind": "documentation",
+        "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/structured-output.html",
+        "sha256": "cdbf4b796ed8c9e6e3be430a1fa086710916cb9ce2c27b16f9a87ed6ca4b4432",
+        "retrievedAt": "2026-11-09T16:52:14.475436+00:00",
+        "redistribution": "Metadata and original authored summary only; source HTML retained in local review cache.",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "limitations": [
+        "Documentation review only; no account, combined-system or deployed validation.",
+        "Verify actual model/service version, regional support and application behavior."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
+    },
+    {
+      "id": "azure-user-and-workload-identity",
+      "provider": "azure",
+      "topic": "identity-boundaries",
+      "practice": "Federated Container Apps authentication addresses user sign-in. Managed identity addresses application access to services; it is not user or tenant authorization. Configure the app registration, allowed audiences and HTTPS authentication boundary, then enforce application-specific access and test denied requests.",
+      "source": {
+        "kind": "documentation",
+        "url": "https://learn.microsoft.com/en-us/azure/container-apps/authentication",
+        "sha256": "aaa6d9f14ea77f452cf19b1118ba10fba20a7bbfaaa122eca982b8640284bfc0",
+        "retrievedAt": "2026-11-09T16:52:14.475436+00:00",
+        "redistribution": "Metadata and original authored summary only; source HTML retained in local review cache.",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "limitations": [
+        "Documentation review only; no account, combined-system or deployed validation.",
+        "Verify actual model/service version, regional support and application behavior."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
+    },
+    {
+      "id": "gcp-enduser-and-session-boundaries",
+      "provider": "gcp",
+      "topic": "identity-boundaries",
+      "practice": "Choose the end-user authentication path deliberately: verify Identity Platform/Firebase ID tokens in the application, or use the documented internal-user IAP path where appropriate. Cloud Run IAM alone is not browser application authorization. Sessions are not shared across replicas; durable user/project state needs a shared adapter and tenancy tests.",
+      "source": {
+        "kind": "documentation",
+        "url": "https://docs.cloud.google.com/run/docs/authenticating/end-users",
+        "sha256": "c5c9e6fff0172d480483d8aafdb39c316039ead507c2a0c84029888e974f8363",
+        "retrievedAt": "2026-11-09T16:52:14.475436+00:00",
+        "redistribution": "Metadata and original authored summary only; source HTML retained in local review cache.",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "limitations": [
+        "Documentation review only; no account, combined-system or deployed validation.",
+        "Verify actual model/service version, regional support and application behavior."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
+    },
+    {
+      "id": "ibm-workload-identity-boundary",
+      "provider": "ibm",
+      "topic": "identity-boundaries",
+      "practice": "Code Engine trusted profiles provide workload access to IBM services through a compute-resource token and scoped IAM trust. They do not implement end-user sign-in, account/project membership or application authorization. Keep workload and user trust boundaries distinct and verify both.",
+      "source": {
+        "kind": "documentation",
+        "url": "https://cloud.ibm.com/docs/codeengine?topic=codeengine-trusted-profiles-authentication-file",
+        "sha256": "8ff9bba9eae3bf66cb59a0a4ebccc7d1d629397ceb49fe5a99cdc4fa278b2cb4",
+        "retrievedAt": "2026-11-09T16:52:14.475436+00:00",
+        "redistribution": "Metadata and original authored summary only; source HTML retained in local review cache.",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "limitations": [
+        "Documentation review only; no account, combined-system or deployed validation.",
+        "Verify actual model/service version, regional support and application behavior."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
+    },
+    {
+      "id": "aws-model-data-lifecycle",
+      "provider": "aws",
+      "topic": "model-data-lifecycle",
+      "practice": "Do not infer zero provider retention from no application database or no training. Bedrock retention depends on model, API, region and account/project settings. For Runtime, verify regional account mode none; unknown/denied reads fail closed. Account-wide changes can affect existing workloads and require authorization. Read-only checks are not a model-quality or deployment test.",
+      "source": {
+        "kind": "documentation",
+        "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/data-retention.html",
+        "sha256": "6738d9e52297b277a48a34e4b0d7dcc07c684211d43cce21531571b460e13220",
+        "retrievedAt": "2026-11-09T17:30:25.946914+00:00",
+        "redistribution": "Metadata and original authored summary only; source HTML retained in local review cache.",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "limitations": [
+        "Policy documentation review, not account configuration or deployed verification.",
+        "Do not assume all model APIs, features, contracts or regions have identical controls."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
+    },
+    {
+      "id": "azure-model-data-lifecycle",
+      "provider": "azure",
+      "topic": "model-data-lifecycle",
+      "practice": "Application non-retention is distinct from Azure model-service abuse monitoring. Modified abuse monitoring has eligibility and approval requirements. Verify the exact service, model and account arrangement before promising zero retention; do not transfer Microsoft 365 or another product exemption to this application.",
+      "source": {
+        "kind": "documentation",
+        "url": "https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/abuse-monitoring",
+        "sha256": "9226ce47888b5b65c0ca391f17f92cd941b6f754377249ecc506ca92de4842bb",
+        "retrievedAt": "2026-11-09T17:30:26.771762+00:00",
+        "redistribution": "Metadata and original authored summary only; source HTML retained in local review cache.",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "limitations": [
+        "Policy documentation review, not account configuration or deployed verification.",
+        "Do not assume all model APIs, features, contracts or regions have identical controls."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
+    },
+    {
+      "id": "gcp-model-data-lifecycle",
+      "provider": "gcp",
+      "topic": "model-data-lifecycle",
+      "practice": "No-training and no application history do not establish zero retention. Review abuse monitoring, model/features, request-response logging, grounding, interaction state and implicit durable caching. Some grounding features retain data; global endpoints can change processing location. Verify account/project controls and regional scope before claims.",
+      "source": {
+        "kind": "documentation",
+        "url": "https://docs.cloud.google.com/gemini-enterprise-agent-platform/resources/zero-data-retention",
+        "sha256": "2ca5198836380fee0c3335672825b87f88bbd589c30e46b504012634e45586e3",
+        "retrievedAt": "2026-11-09T17:30:26.739440+00:00",
+        "redistribution": "Metadata and original authored summary only; source HTML retained in local review cache.",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "limitations": [
+        "Policy documentation review, not account configuration or deployed verification.",
+        "Do not assume all model APIs, features, contracts or regions have identical controls."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
     }
   ]
 }

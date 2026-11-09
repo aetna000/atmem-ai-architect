@@ -1,6 +1,6 @@
 # Deployment-grade architecture generator
 
-Status: planned, not implemented or validated. Owner request: improve the generator,
+Status: in progress; implemented slices and their evidence are tracked in progress.json. Full provider/scenario coverage remains unfinished. Owner request: improve the generator,
 not individual exported bundles. No cloud deployment is authorized by this plan.
 
 ## Outcome
@@ -212,3 +212,32 @@ the responses still asked questions despite the evaluation requesting none. Keep
 instruction-following limitation visible. These cases cannot establish general expertise
 or qualify application generation. Next implementation work remains concrete connected
 contracts, application behavior and cross-provider runtime evidence under GEN-008/009.
+
+## Component-first interaction refinement (owner instruction, 2026-11-10)
+
+Keep topology reasoning and grouping in the engineering model. Users work with
+plainly named components and their connections in one component canvas, and open
+component details when needed. Architect proposes the necessary components from
+known requirements rather than asking users to assemble or understand a topology.
+Existing ownership, IDs, services, requirements and connections remain authoritative;
+removing the overview control does not change deployment semantics or authorize
+model proposals, cloud deployments or runtime validation claims.
+
+Implemented: overview switch and editable topology grouping removed; old saved
+overview preferences reopen as components; Escape returns from details without
+opening topology. Both server and client guidance now express this interaction.
+Validation: 12 canvas/component unit tests, 5 server abstraction tests, production
+build and both real-browser checks (component canvas and sequential component
+review, including mobile layout) passed. Browser checks use
+synthetic API fixtures and do not establish live-model component selection quality.
+
+
+## Live convergence evaluation and vertical slices
+
+Plan 028 runs the owner-requested 28-project matrix and preserves the original source,
+transcripts and failed exports. Single-unit and connected work proceeds per qualified
+provider/capability slice; this does not mark global GEN-007/GEN-008 complete. The first
+repair adds generic bounded structured output and an AWS authenticated web composition,
+verified through emitted builds, application tests, actual provider schemas/mocks and
+explicitly scripted local emulation. Other providers and complex behavior remain work.
+See ../028-convergence-evaluation/decision-log.md and progress.json.

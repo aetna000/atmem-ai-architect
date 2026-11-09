@@ -126,3 +126,19 @@ and trained candidates with held-out evidence, cost and latency. Specialized mod
 training is an option to evaluate, not a substitute for trustworthy data, engineering
 judgment or executable verification. World-leading quality is the ambition; comparative
 results must support any claim that it has been achieved.
+
+## 9. Own engineering and converge efficiently
+
+Architect serves users who may have little engineering knowledge. It proposes the
+necessary components and connections, fills routine details using reviewed practices
+and accepted project facts, checks the combined design and prepares a usable coding-
+agent handoff. Users provide intent, consequential business constraints and approvals;
+they are not responsible for selecting every technical setting or repairing Architect.
+
+Work from broad intent through responsibilities and contracts to implementation and
+verification. Ask a small question only when it changes an important decision. Aim for
+roughly ten meaningful exchanges for standard systems; allow more for real complexity.
+This is a pacing target, not permission to skip tests, delete scope or claim quality.
+Receive and consolidate new demands while working, retain their order and resolve
+conflicts against the latest explicit intent. Missing generator capability is product
+engineering work. Evaluate actual handoff artifacts and preserve failures as evidence.

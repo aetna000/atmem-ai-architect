@@ -1,6 +1,6 @@
 """Strict contracts for the local agent boundary; no executable config accepted."""
-from typing import Literal
-from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictFloat, StrictInt, StrictStr, field_validator, model_validator
+from typing import Literal, Annotated
+from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, StrictBool, StrictFloat, StrictInt, StrictStr, field_validator, model_validator
 
 class Strict(BaseModel):
     model_config=ConfigDict(extra='forbid')
@@ -9,7 +9,31 @@ class Position(Strict):
     x:float=Field(ge=-100000,le=100000,allow_inf_nan=False)
     y:float=Field(ge=-100000,le=100000,allow_inf_nan=False)
 
+class OutputField(Strict):
+    name:StrictStr=Field(pattern=r'^[a-z][a-zA-Z0-9_]{0,39}$')
+    type:Literal['string','boolean','number']
+    description:StrictStr=Field(min_length=1,max_length=300)
+    values:list[StrictStr]|None=Field(default=None,min_length=1,max_length=30)
+    maxLength:StrictInt|None=Field(default=None,ge=1,le=4096)
+    @model_validator(mode='after')
+    def constraints(self):
+        if not self.description.strip():raise ValueError('Output field description is empty')
+        if self.values is not None and (self.type!='string' or len(set(self.values))!=len(self.values) or any(not v or len(v)>100 for v in self.values)):raise ValueError('Invalid string enumeration')
+        if self.maxLength is not None and self.type!='string':raise ValueError('Only strings have maxLength')
+        if self.values and any(len(v)>(self.maxLength or 4096) for v in self.values):raise ValueError('Enumeration values exceed the field length limit')
+        return self
+
+class OutputContract(Strict):
+    instruction:StrictStr=Field(min_length=1,max_length=2000)
+    fields:list[OutputField]=Field(min_length=1,max_length=24)
+    @model_validator(mode='after')
+    def constraints(self):
+        if not self.instruction.strip():raise ValueError('Instruction is empty')
+        if len({f.name for f in self.fields})!=len(self.fields):raise ValueError('Duplicate output fields')
+        return self
+
 class Configuration(Strict):
+    outputContract:OutputContract|None=None
     region:str=Field(default='To be selected',max_length=100)
     classification:Literal['Public','Internal','Confidential']='Internal'
     timeout:int=Field(default=5000,ge=100,le=60000)
@@ -49,10 +73,12 @@ class Data(Strict):
     service:str|None=Field(default=None,max_length=150)
     category:str|None=Field(default=None,max_length=150)
     binding:Literal['cloud-storage-principal','aws-iam-principal','aws-bedrock-model','normalized-source-contract','web-browser','existing-service']|None=None
-    implementation:Literal['container-service','private-object-storage','rag-web-app','rag-user-pool','bounded-keyword-rag','iam-rag-api','bounded-rag-catalog','text-statistics','bedrock-summary','async-word-count','sqs-standard','sqs-dead-letter','word-count-results']|None=None
+    implementation:Literal['container-service','private-object-storage','rag-web-app','rag-user-pool','bounded-keyword-rag','iam-rag-api','bounded-rag-catalog','text-statistics','bedrock-summary','bedrock-structured','structured-api','structured-web-app','structured-user-pool','async-word-count','sqs-standard','sqs-dead-letter','word-count-results']|None=None
 
     @model_validator(mode='after')
     def named_component(self):
+        if self.deploymentMode=='reference' and self.origin not in {'existing','imported Pulumi state'}:raise ValueError('Reference handling must preserve an existing system')
+        if self.binding and (self.origin not in {'existing','imported Pulumi state'} or self.deploymentMode=='create'):raise ValueError('Reference bindings identify existing systems and cannot provision a replacement')
         if self.origin=='existing' and self.deploymentMode=='create' and (self.implementation!='container-service' or self.binding):
             raise ValueError('Existing application source needs an explicit container-service contract without a reference binding.')
         if self.kind != 'note' and len(self.label)>150:
@@ -101,7 +127,7 @@ class Proposal(Strict):
     next:Project
 
 class ToolRequest(Strict):
-    name:Literal['memory.lookup','project.read','skills.lookup','pricing.lookup','pricing.aws_s3']
+    name:Literal['memory.lookup','knowledge.lookup','project.read','skills.lookup','pricing.lookup','pricing.aws_s3']
     query:str=Field(default='',max_length=500)
 
 class Scores(Strict):
@@ -165,8 +191,34 @@ class FollowUpQuestion(Strict):
     example:str=Field(default='',max_length=400)
     topic:Literal['application','users','data','systems','quality','cloud','budget']|None=None
 
+class NodeFieldUpdate(Strict):
+    id:StrictStr=Field(min_length=1,max_length=100)
+    field:Literal['label','description','kind','provider','service','role','origin','binding','implementation','deploymentMode','topologyGroup','config.region','config.classification','config.maxInputBytes','config.maxOutputTokens','config.memoryMb','config.functionTimeoutSeconds','config.concurrency','config.logRetentionDays','config.modelId','config.outputContract']
+    value:StrictStr|StrictInt|StrictBool|OutputContract|None
+
+class EdgeFieldUpdate(Strict):
+    id:StrictStr=Field(min_length=1,max_length=150)
+    field:Literal['label','source','target','integration','access']
+    value:StrictStr|None
+
+class DesignPatch(Strict):
+    projectName:StrictStr|None=Field(default=None,min_length=1,max_length=200)
+    baseRevision:int=Field(ge=1)
+    title:str=Field(min_length=1,max_length=200)
+    body:str=Field(default='',max_length=4000)
+    addNodes:list[Node]=Field(default_factory=list,max_length=200)
+    nodeUpdates:list[NodeFieldUpdate]=Field(default_factory=list,max_length=600)
+    removeNodeIds:list[Annotated[StrictStr,Field(min_length=1,max_length=100)]]=Field(default_factory=list,max_length=200)
+    addEdges:list[Edge]=Field(default_factory=list,max_length=600)
+    edgeUpdates:list[EdgeFieldUpdate]=Field(default_factory=list,max_length=1200)
+    removeEdgeIds:list[Annotated[StrictStr,Field(min_length=1,max_length=150)]]=Field(default_factory=list,max_length=600)
+
 class ArchitectResponse(Strict):
+    _response_repair_attempts:int=PrivateAttr(default=0)
+    _model_response_encoding:str=PrivateAttr(default="full_response")
+    _model_response_json_bytes:int=PrivateAttr(default=0)
     message:str=Field(min_length=1,max_length=16000)
+    patch:DesignPatch|None=None
     componentReview:ComponentReviewResult|None=None
     followUp:FollowUpQuestion|None=None
     phase:Literal['Discovery','Architecture','Cost Analysis','Architecture Review']='Discovery'
@@ -209,3 +261,14 @@ class ChatRequest(Strict):
     def not_blank(cls,value):
         if not value.strip():raise ValueError('Must not be blank')
         return value
+
+
+def architect_output_schema(allow_tools=True):
+    """Compact model wire protocol; host still returns the established proposal API."""
+    schema=ArchitectResponse.model_json_schema()
+    schema['properties']['proposal']={'type':'null','description':'Full snapshots are host-owned. Use patch for design edits.'}
+    if not allow_tools:schema['properties']['toolRequests']={'type':'null','description':'Evidence lookup budget is exhausted. Return the bounded final response using available evidence.'}
+    else:schema['$defs']['ToolRequest']['properties']['name']['enum']=['memory.lookup','knowledge.lookup','pricing.lookup']
+    schema.get('$defs',{}).pop('Proposal',None)
+    schema.get('$defs',{}).pop('Project',None)
+    return schema

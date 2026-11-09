@@ -1,3 +1,5 @@
+import {restoreQueuedMessages,nextIntakeBatch,restoreIntakePaused} from './work-intake.mjs';
+import {emulationGuidance,guidanceMessage} from './emulation-guidance.mjs';
 import {readCanvasView,saveCanvasView,arrangeOverview} from './canvas-view.mjs';
 import {BlockRequirements} from './BlockRequirements.jsx';
 import {componentReviews,markComponentReviewed,applyComponentReview,editBlockRequirement} from './component-review.mjs';
@@ -485,7 +487,6 @@ function BlockDetail({ project, node, run, probe, busy, reviewItems, onReviewCon
         <BlockRequirements project={project} nodeId={node.id} busy={busy} onSave={onRequirementSave}/>
         <ComponentReview key={node.id} item={reviewItems.find(r=>r.id===node.id)} items={reviewItems} busy={busy} onOpen={onOpen} onConfirm={onReviewConfirm} onDiscuss={onReviewDiscuss} onQuestion={onReviewQuestion} onResolve={onReviewResolve} onDetailAnswer={patch=>onChange({...node,data:{...node.data,...patch,...(patch.config?{config:{...node.data.config,...patch.config}}:{})}})}/>
         <details className="component-settings"><summary>Component settings</summary><div className="fields">
-          <label className="field-wide">Responsibility group<input aria-label="Responsibility group" maxLength={100} disabled={busy} value={node.data.topologyGroup||''} placeholder="For example, Project memory" onChange={e=>set({topologyGroup:e.target.value})}/></label>
           <label>
             Provider
             <select disabled={busy} value={node.data.provider} onChange={(e) => set({ provider: e.target.value })}>
@@ -694,13 +695,33 @@ function App() {
   useEffect(()=>{if(!treeOpen)return;const close=e=>{if(e.type==="keydown"?e.key==="Escape":!e.target.closest(".component-navigator"))setTreeOpen(false);};document.addEventListener("pointerdown",close);document.addEventListener("keydown",close);return()=>{document.removeEventListener("pointerdown",close);document.removeEventListener("keydown",close);};},[treeOpen]);
   const consultationAttempts = useRef(new Set());
   const agentAbort = useRef(null);
+  const intakeRef=useRef(restoreQueuedMessages(messages,project.id));
+  const [intake,setIntake]=useState(intakeRef.current),[intakePaused,setIntakePausedState]=useState(()=>restoreIntakePaused(messages));
+  const intakePausedRef=useRef(intakePaused);
+  function setIntakePaused(value){intakePausedRef.current=value;setIntakePausedState(value);}
+  const carryIntent=useRef(null);
+  function updateIntake(next){intakeRef.current=next;setIntake(next);}
+  function setRequestState(ids,state){setMessages(list=>list.map(m=>ids.includes(m.requestId)?{...m,workState:state}:m));}
+  useEffect(()=>{
+    setIntakePaused(restoreIntakePaused(messages));
+    const restored=restoreQueuedMessages(messages,project.id).filter(q=>!intakeRef.current.some(old=>old.id===q.id));
+    if(restored.length)updateIntake([...intakeRef.current,...restored]);
+  },[project.id]);
+  useEffect(()=>{
+    if(agentBusy||agentAbort.current||busy||pending||intakePausedRef.current||!session||!connection)return;
+    const batch=nextIntakeBatch(intakeRef.current,project.id);if(!batch||batch.blocked)return;
+    updateIntake(intakeRef.current.filter(q=>!batch.ids.includes(q.id)));
+    setRequestState(batch.ids,'processing');
+    const history=carryIntent.current?.projectId===project.id?[{role:'user',text:carryIntent.current.text},...messages.slice(-10)]:messages;
+    void send(batch.message,'chat',null,null,{alreadyLogged:true,requestIds:batch.ids,attachments:batch.attachments,history});
+  },[agentBusy,busy,pending,intakePaused,intake,session,connection,project.id]);
   const voice = useRef(null);
   const [voiceState, setVoiceState] = useState("off");
   const [voiceError, setVoiceError] = useState("");
   const voiceActive = !["off", "error"].includes(voiceState);
   useEffect(() => () => voice.current?.cancel(), []);
   function startVoice() {
-    if (busy || agentBusy) return notify("Wait for the architect to finish before recording your next message.");
+    if (busy) return notify("Wait for the current test to finish before recording.");
     if (!session) return notify("Connect the local helper before starting dictation.");
     let consent = false;
     try { consent = localStorage.getItem("atmem-local-dictation") === "yes"; } catch {}
@@ -732,7 +753,7 @@ function App() {
   }
   function stopVoice() { voice.current?.cancel(); }
   async function postMessage() {
-    if (busy || agentBusy) return;
+    if (busy) return;
     if (voice.current?.running || voice.current?.finishing) {
       const draft = await voice.current.finish();
       if (draft !== null) void send(draft);
@@ -872,13 +893,7 @@ function App() {
   );
   const focusLabel = focus && project.nodes.map(layerOf).find((l) => l.id === focus)?.label;
 
-  // Level navigation: System → Flow (optionally focused on a layer) → Block.
-  function goSystem() {
-    setLevel("system");
-    setFocus(null);
-    setProbe(null);
-    refit();
-  }
+  // Users navigate components and their details; topology stays internal.
   function goFlow(layer = null) {
     setLevel("flow");
     setFocus(layer);
@@ -897,7 +912,7 @@ function App() {
   }
   function goUp() {
     if (level === "block") goFlow(focus);
-    else if (level === "flow") goSystem();
+    else if (focus) goFlow(null);
   }
 
   useEffect(() => {
@@ -1149,7 +1164,7 @@ function App() {
   const emulationMentorKey=JSON.stringify([connection?.provider,connection?.model]);
   useEffect(()=>{
     const report=emulation.result;
-    if(!emulation.coach||emulation.running||!report||!emulationCoachReady(session,connection)||busy||agentBusy||pending||coachedReports.current.get(report)?.has(emulationMentorKey))return;
+    if(intakeRef.current.some(q=>q.projectId===project.id)||!emulation.coach||emulation.running||!report||!emulationCoachReady(session,connection)||busy||agentBusy||pending||coachedReports.current.get(report)?.has(emulationMentorKey))return;
     void discussEmulation(report,'coach');
   },[emulation.result,emulation.running,emulation.coach,session,connection,busy,agentBusy,pending]);
 
@@ -1157,20 +1172,36 @@ function App() {
     if(busy||agentBusy||pending||report!==emulation.result)return;
     coachedReports.current.set(report,new Set([...(coachedReports.current.get(report)||[]),emulationMentorKey]));
     setChatOpen(true);
-    setMessages(m=>[...m,{role:'user',text:intent==='question'?'Ask a focused question about the current emulation results.':'Use the current emulation findings to propose a correction or the next test.'}]);
+    const guidance=emulationGuidance(projectRef.current,report);
+    if(guidance&&!guidance.needsModel){
+      setMessages(m=>[...m,{role:'assistant',text:guidanceMessage(guidance)}]);
+      return;
+    }
+    if(intent!=='coach')setMessages(m=>[...m,{role:'user',text:'Help me with the next test step.'}]);
     await send(emulationPrompt(projectRef.current,report,intent),'emulation',{mode:'design',view:'emulation'});
   }
-  async function send(text = input, origin = "chat", destination = null, reviewTarget = null) {
-    if ((!text.trim() && !(origin === "chat" && attachments.length)) || busy || agentBusy || readingAttachments) return;
+  async function send(text = input, origin = "chat", destination = null, reviewTarget = null, intakeOptions = {}) {
+    if ((!text.trim() && !(origin === "chat" && attachments.length)) || busy || readingAttachments) return;
+    if(origin!=='chat'&&(agentBusy||agentAbort.current))return;
+    if(text.length>8000){notify('Keep each message within 8,000 characters; your draft is unchanged.');return;}
     stopVoice();
     const message = text.trim() || "Please review the attached files and help me use them in this architecture.";
-    const sentAttachments=origin === "chat"?attachments:[];
-    if (origin === "chat" || origin === "block-review") {
-      setMessages((m) => [...m, { role: "user", text: reviewTarget ? `Review ${reviewTarget.label} with me.` : message, attachments:sentAttachments }]);
+    const sentAttachments=intakeOptions.attachments||(origin === "chat"?attachments:[]);
+    const requestIds=intakeOptions.requestIds||(origin==='chat'?[crypto.randomUUID()]:[]);
+    const requestProject=projectRef.current.id;
+    if(origin==='chat'&&!intakeOptions.alreadyLogged&&(agentBusy||agentAbort.current||intakeRef.current.some(q=>q.projectId===requestProject))){
+      const id=requestIds[0];updateIntake([...intakeRef.current,{id,projectId:requestProject,text:message,attachments:sentAttachments}]);
+      setMessages(m=>[...m,{role:'user',text:message,attachments:sentAttachments,requestId:id,workState:'queued'}]);
+      setInput('');setAttachments([]);chatScroll.followLatest();return;
+    }
+    if ((origin === "chat" || origin === "block-review")&&!intakeOptions.alreadyLogged) {
+      setMessages((m) => [...m, { role: "user", text: reviewTarget ? `Review ${reviewTarget.label} with me.` : message, attachments:sentAttachments,...(requestIds.length?{requestId:requestIds[0],workState:'processing'}:{}) }]);
       setInput("");
     }
+    if(origin==='chat'){setPending(null);if(!intakeOptions.alreadyLogged)setAttachments([]);}
     if (origin === "chat") setChatOpen(true);
     if (!connection) {
+      setRequestState(requestIds,'failed');
       setModal("welcome");
       return;
     }
@@ -1179,12 +1210,14 @@ function App() {
       setDesignView("options");
     }
     if (!session) {
+      setRequestState(requestIds,'failed');
       setMessages((m) => [
         ...m,
         { role: "assistant", text: "Looks like we've lost the connection, so that message didn't go out. Let's fix it.", fix: true },
       ]);
       return;
     }
+    if(origin==='chat'&&!intakeOptions.alreadyLogged)setIntakePaused(false);
     const controller = new AbortController();
     agentAbort.current = controller;
     chatScroll.followLatest();
@@ -1199,18 +1232,26 @@ function App() {
       const edits = canvasChanges(projectRef.current);
       seen.current = structuredClone(projectRef.current);
       const result = await requestArchitect({
-        extra: [{type:"discovery",id:"active-view",text:`The user is working in ${destination ? (destination.mode === "design" ? destination.view : destination.mode) : mode === "design" ? designView : mode}. Use the shared diagram and conversation. Prioritise major system decisions over configuration details; ask only when a material user decision is needed. Otherwise improve the working topology.`}, ...(edits.length ? [{ type: "discovery", id: "canvas-changes", text: `Since your last reply the user ${edits.join("; ")}. Build on these changes.` }] : [])],
+        extra: [{type:"discovery",id:"active-view",text:`The user is working in ${destination ? (destination.mode === "design" ? destination.view : destination.mode) : mode === "design" ? designView : mode}. Use the shared diagram and conversation. Prioritise major system decisions over configuration details; ask only when a material user decision is needed. Otherwise add or refine the needed components and their connections. Keep topology reasoning internal; use plain component names and short explanations for the user.`}, ...(edits.length ? [{ type: "discovery", id: "canvas-changes", text: `Since your last reply the user ${edits.join("; ")}. Build on these changes.` }] : [])],
         session,
         connection,
         message,
         attachments:sentAttachments,
         project: projectRef.current,
-        history: messages,
+        history: intakeOptions.history||messages,
         stage: destination?.mode || mode,
         origin,
         signal: controller.signal,
       });
-      if(sentAttachments.length)setAttachments([]);
+      if(projectRef.current.id!==requestProject)return;
+      if(intakeRef.current.some(q=>q.projectId===requestProject)){
+        carryIntent.current={projectId:requestProject,text:carryIntent.current?.projectId===requestProject?carryIntent.current.text:message};
+        setRequestState(requestIds,'superseded');
+        setMessages(m=>[...m,{role:'assistant',text:'I’ve kept your updates. I’m combining them before changing the design.'}]);
+        return;
+      }
+      carryIntent.current=null;
+      setRequestState(requestIds,'complete');
       if (!["document","emulation","block-review"].includes(origin) && result.optionAssessment?.length) {
         const p = projectRef.current, a = p.assessment || defaultAssessment();
         const scores = structuredClone(a.scores), notes = { ...a.notes };
@@ -1247,7 +1288,7 @@ function App() {
         try {updateEngagement(applyComponentReview(projectRef.current,reviewTarget,result.componentReview));signals.push('block review and linked questions recorded');}
         catch(error){notify(error.message);}
       }
-      setMessages((m) => [...m, { role: "assistant", text: origin==="emulation"?groundEmulationMessage(emulation.result,result.message):result.message, live: true, signals, contextUsed: result.contextUsed }]);
+      setMessages((m) => [...m, { role: "assistant", text: origin==="emulation"?groundEmulationMessage(emulation.result,result.message,projectRef.current):result.message, live: true, signals, contextUsed: result.contextUsed }]);
       if (result.proposal && !["document","block-review"].includes(origin)) {
         const proposal = { ...result.proposal, next: validateImport(result.proposal.next), ...(origin==="emulation"?{emulationCorrection:true}:{}) };
         if(origin==="emulation")guardEmulationCorrection(was,proposal.next);
@@ -1258,6 +1299,8 @@ function App() {
       if (!["document","preview","emulation","block-review"].includes(origin) && result.requirementDrafts?.length) updateEngagement(applyRequirementDrafts(projectRef.current,result.requirementDrafts));
       return result.message;
     } catch (error) {
+      if(projectRef.current.id!==requestProject)return;
+      setRequestState(requestIds,'failed');setIntakePaused(true);
       setMessages((m) => [
         ...m,
         error.name === "AbortError"
@@ -1709,7 +1752,7 @@ function App() {
           <button className="icon" title="Start over" aria-label="Start over" disabled={busy || agentBusy} onClick={() => setModal("start-over")}><RotateCcw size={16} /></button>
           <div className="component-navigator"><button className="tree-trigger" aria-label="Component tree" aria-expanded={treeOpen} onClick={()=>setTreeOpen(!treeOpen)} title="Explore the system and its components"><GitBranch size={18}/> Components <span>{project.nodes.filter(n=>n.data.kind!=='note').length}</span><ChevronRight size={15}/></button>
           {treeOpen&&<nav className="component-tree" aria-label="Component tree"><strong>{project.name}</strong><div className="tree-views"><button disabled={!blockReviews.length} onClick={()=>{reviewBlock((blockReviews.find(r=>r.status!=='reviewed')||blockReviews[0]).id);setTreeOpen(false);}}><CheckCheck size={16}/> Review blocks · {blockReviews.filter(r=>r.status==='reviewed').length}/{blockReviews.length}</button></div>{[...new Map(project.nodes.filter(n=>n.data.kind!=='note').map(n=>[layerOf(n).id,layerOf(n)])).values()].map(layer=><details open key={layer.id}><summary>{layer.label}</summary>{project.nodes.filter(n=>n.data.kind!=='note'&&layerOf(n).id===layer.id).map(n=><button key={n.id} aria-current={selected===n.id?'true':undefined} onClick={()=>{setMode('design');setDesignView('board');setFocus(null);setLevel('flow');setSelected(n.id);setTreeOpen(false);setTimeout(()=>fitView({nodes:[{id:n.id}],padding:1,maxZoom:1.2,duration:350}),100);}}><Database size={14}/><span>{n.data.label}<small>{n.data.service||n.data.provider}</small><small className={`tree-review-state ${blockReviews.find(r=>r.id===n.id)?.status}`}>{blockReviews.find(r=>r.id===n.id)?.statusLabel}</small></span></button>)}</details>)}</nav>}</div>
-          <span className="current-view"><Workflow size={14}/>{level==='system'?'System overview':focusLabel||'Component flow'}</span>
+          <span className="current-view"><Workflow size={14}/>{focusLabel||'Components'}</span>
         </nav>
         <div className="modes" role="tablist">
           {MODES.filter(([id])=>guidance.availableModes.includes(id)).map(([id, label]) => (
@@ -1792,7 +1835,6 @@ function App() {
             ))}
           </div>
         )}
-        {mode==='design'&&designView==='board'&&<div className="canvas-view-switch" role="group" aria-label="Canvas view"><button aria-pressed={level!=='system'} onClick={()=>goFlow(null)}><Workflow size={14}/>Components</button><button aria-pressed={level==='system'} onClick={goSystem}><LayoutGrid size={14}/>Overview</button></div>}
         <div className="journey-current"><div><strong>{guidance.title}</strong><p>{guidance.reason}</p><p className="journey-next"><span>Next</span> {guidance.checkpoint?guidance.continueLabel:guidance.action}</p></div>
           <div className="journey-actions">
             <button className="btn primary" disabled={busy||agentBusy||!!pending} aria-label={guidance.checkpoint?guidance.continueLabel+' →':guidance.action} title={guidance.checkpoint?guidance.continueLabel:guidance.action} onClick={()=>guidance.checkpoint?continueJourney():followJourney()}>{agentBusy?<BrainActivity size={26}/>:<BrainCircuit size={20}/>}</button>
@@ -2111,7 +2153,7 @@ function App() {
 
 
 
-        {onBoard&&emulationOpen&&<div className="emulation-dock"><EmulationPanel project={project} session={session} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onClose={()=>setEmulationOpen(false)}/></div>}
+        {onBoard&&emulationOpen&&<div className="emulation-dock"><EmulationPanel project={project} session={session} emulation={emulation} onDiscuss={discussEmulation} onOpenComponent={id=>{reviewBlock(id);setEmulationOpen(false);}} discussionBusy={busy||agentBusy||!!pending} onClose={()=>setEmulationOpen(false)}/></div>}
 
         {mode === "design" && designView === "outputs" && <OutputsView project={project} run={run} environment={environment} session={session} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onDownload={downloadBundle} onBack={()=>setDesignView("board")} />}
         {mode === "design" && designView === "terraform" && <TerraformView project={project} environment={environment} session={session} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onDownload={exportTerraform} onBack={()=>setDesignView("board")} />}
@@ -2197,6 +2239,7 @@ function App() {
             {messages.map((m, i) => (
               <div key={i} className={`msg ${m.role}`}>
                 <ChatMessage text={m.text}/>
+                {(m.workState==='queued'||m.workState==='processing'&&intake.some(q=>q.id===m.requestId))&&<small className="message-work-state">Queued for the next update <button className="link" onClick={()=>{updateIntake(intakeRef.current.filter(q=>q.id!==m.requestId));setRequestState([m.requestId],'cancelled');}}>Remove from queue</button>{m.attachments?.some(a=>!a.data)&&<button className="link" onClick={()=>{updateIntake(intakeRef.current.map(q=>q.id===m.requestId?{...q,attachments:[]}:q));setIntakePaused(false);}}>Continue with text only</button>}</small>}
                 {!!m.attachments?.length&&<div className="sent-attachments">{m.attachments.map(a=><figure key={a.id}>{a.data&&a.mime.startsWith('image/')&&<img src={`data:${a.mime};base64,${a.data}`} alt={a.name}/>}<figcaption><Paperclip size={12}/>{a.name}{a.originalNotSaved && <small>Original file not saved; attach it again to review its contents.</small>}</figcaption></figure>)}</div>}
                 {m.fix && (
                   <button className="btn fix" onClick={() => setModal("connections")}>
@@ -2241,6 +2284,7 @@ function App() {
             )}
             </div>
           </div>
+          {!!intake.filter(q=>q.projectId===project.id).length&&<div className="intake-status" role="status">{intake.filter(q=>q.projectId===project.id).length} update(s) {intakePaused?'saved · paused':'queued · combining next'}{intakePaused&&<button className="link" onClick={()=>setIntakePaused(false)}>Resume</button>}</div>}
           <div className="prompts">
             {mode === "design" && brief(project) && ask && (
               <>
@@ -2283,7 +2327,7 @@ function App() {
               }}
             />
             <div className="composer-actions">
-            <button type="button" className="icon attach-button" aria-label="Attach images or documents" title="Attach images or documents" disabled={readingAttachments||agentBusy} onClick={()=>attachmentInput.current.click()}><Paperclip size={18}/></button>
+            <button type="button" className="icon attach-button" aria-label="Attach images or documents" title="Attach images or documents" disabled={readingAttachments} onClick={()=>attachmentInput.current.click()}><Paperclip size={18}/></button>
             <input id="chat-attachment-input" type="file" ref={attachmentInput} accept={ATTACHMENT_ACCEPT} multiple hidden onChange={e=>{void attachFiles(e.target.files);e.target.value='';}}/>
             <button
               type="button"
@@ -2296,7 +2340,7 @@ function App() {
             >
               {voiceActive ? <Square size={13} /> : <Mic size={15} />}
             </button>
-            <button type="submit" className="send" aria-label="Send message" disabled={(!input.trim() && !voiceActive && !attachments.length) || busy || agentBusy || readingAttachments || voiceState === "transcribing"}>
+            <button type="submit" className="send" aria-label="Send message" disabled={(!input.trim() && !voiceActive && !attachments.length) || busy || readingAttachments || voiceState === "transcribing"}>
               <ArrowUp size={15} />
             </button>
             </div>

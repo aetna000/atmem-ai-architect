@@ -3,7 +3,8 @@ import hashlib
 import json
 from pathlib import Path
 import re
-from datetime import date
+from datetime import date,datetime
+from urllib.parse import urlsplit
 ROOT=Path(__file__).resolve().parent.parent
 
 def records():
@@ -12,8 +13,14 @@ def records():
     for row in data['records']:
         source=row['source']
         if row['status']!='active' or source.get('archived'):continue
-        if not re.fullmatch(r'[0-9a-f]{40}',source['commit']):raise ValueError('Knowledge source requires a pinned commit')
-        if not source['url'].startswith('https://github.com/'+source['repository']+'/'):raise ValueError('Invalid knowledge provenance')
+        if source.get('kind')=='documentation':
+            url=urlsplit(source['url'])
+            if url.scheme!='https' or url.hostname not in {'docs.aws.amazon.com','learn.microsoft.com','docs.cloud.google.com','cloud.ibm.com'}:raise ValueError('Documentation source must be an approved primary origin')
+            if not re.fullmatch(r'[0-9a-f]{64}',source.get('sha256','')):raise ValueError('Documentation requires its observed content digest')
+            if datetime.fromisoformat(source.get('retrievedAt','')).tzinfo is None:raise ValueError('Documentation review time must include timezone')
+        else:
+            if not re.fullmatch(r'[0-9a-f]{40}',source['commit']):raise ValueError('Knowledge source requires a pinned commit')
+            if not source['url'].startswith('https://github.com/'+source['repository']+'/'):raise ValueError('Invalid knowledge provenance')
         result.append(row)
     return result
 
@@ -28,8 +35,10 @@ def eligible(row, providers=None, now=None):
     now=now or date.today()
     try:
         reviewed=date.fromisoformat(row['reviewedAt'])
-        return (row['status']=='active' and not row['source'].get('archived') and
-                0 <= (now-reviewed).days <= 90 and
+        freshness=30 if row['source'].get('kind')=='documentation' else 90
+        checked=datetime.fromisoformat(row['source']['retrievedAt']).date() if row['source'].get('kind')=='documentation' else reviewed
+        return (0 <= (now-checked).days <= freshness and row['status']=='active' and not row['source'].get('archived') and
+                0 <= (now-reviewed).days <= freshness and
                 (not providers or row['provider'] in providers))
     except (KeyError,ValueError,TypeError):
         return False

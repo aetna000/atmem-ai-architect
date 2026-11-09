@@ -231,7 +231,7 @@ export function recommendationDecision(project, option, names) {
 // Proposals and templates replace the design, never the engagement record.
 export function keepEngagement(next, current) {
   const kept = {};
-  for (const key of ["id", "createdAt", "brief", "useCases", "assessment", "decisions", "gate", "needs", "assumptions", "openQuestions", "extensions", "facts", "workflow", "asked", "lastAsked", "sketchOffered", "estimate", "reviewAccepted", "conceptSig", "choices"]) if (current[key] !== undefined) kept[key] = current[key];
+  for (const key of ["id", "createdAt", "requirements", "brief", "useCases", "assessment", "decisions", "gate", "needs", "assumptions", "openQuestions", "extensions", "facts", "workflow", "asked", "lastAsked", "sketchOffered", "estimate", "reviewAccepted", "conceptSig", "choices"]) if (current[key] !== undefined) kept[key] = current[key];
   // The problem statement is the client's, not the design's.
   if (current.requirements?.trim()) kept.requirements = current.requirements;
   return { ...next, ...kept };

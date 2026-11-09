@@ -11,7 +11,8 @@ test('external browser needs no import; application and connection gaps remain',
  assert.ok(plan.gapDetails.some(g=>g.edgeIds?.includes('https')));
 });
 test('proposed browser and untyped existing service cannot evade implementation checks',()=>{
- for(const data of [{...browser.data,origin:'proposed'},{...browser.data,binding:undefined}]){
+ assert.throws(()=>resourcePlan({nodes:[{...browser,data:{...browser.data,origin:'proposed'}}],edges:[]}),/Reference bindings/);
+ for(const data of [{...browser.data,binding:undefined}]){
   const plan=resourcePlan({nodes:[{...browser,data}],edges:[]});assert.ok(plan.gapDetails.some(g=>g.componentIds?.includes('browser')));
  }
 });

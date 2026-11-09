@@ -7,7 +7,8 @@ export function readCanvasView(project,storage){
   storage=storage||globalThis.localStorage;
   const value=JSON.parse(storage.getItem(key(project))||'null');if(!value)return fallback;
   const selected=project.nodes.some(n=>n.id===value.selected)?value.selected:null;
-  const level=value.level==='system'?'system':value.level==='block'&&selected?'block':'flow';
+  // Older overview preferences reopen as components, without changing the graph.
+  const level=value.level==='block'&&selected?'block':'flow';
   const focus=project.nodes.some(n=>layerOf(n).id===value.focus)?value.focus:null;
   const positions=Object.fromEntries(Object.entries(value.positions||{}).filter(([,p])=>Number.isFinite(p?.x)&&Number.isFinite(p?.y)));
   return {level,focus,selected,positions};

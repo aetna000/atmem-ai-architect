@@ -38,9 +38,11 @@ class AttachmentTests(unittest.TestCase):
         asyncio.run(run())
     def test_cli_images_use_native_blocks_and_ephemeral_files(self):
         async def run():
-            async def claude_capture(args,body,cwd,*rest):
+            async def claude_capture(args,body,cwd,*rest,timeout=150):
+                self.assertEqual(timeout,150)
                 self.assertIn('--input-format',args);content=json.loads(body)['message']['content'];self.assertEqual(content[1]['type'],'image');return json.dumps({'structured_output':{'message':'Saw image'}})
-            async def codex_capture(args,body,cwd,*rest):
+            async def codex_capture(args,body,cwd,*rest,timeout=150):
+                self.assertEqual(timeout,150)
                 from pathlib import Path
                 path=Path(args[args.index('--image')+1]);self.assertEqual(path.read_bytes(),png());self.assertEqual(path.stat().st_mode&0o777,0o600);self.image_path=path;return '{"message":"Saw image"}'
             for provider,handler in [('claude-code',claude_capture),('codex',codex_capture)]:

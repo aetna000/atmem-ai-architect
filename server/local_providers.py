@@ -141,7 +141,7 @@ def models(provider):
         return [{'id':'auto','name':'Auto (Copilot picks)','efforts':[],'defaultEffort':None}]
     return []
 
-async def call_cli(provider,model,prompt,system,schema,is_disconnected,effort=None,images=None):
+async def call_cli(provider,model,prompt,system,schema,is_disconnected,effort=None,images=None,timeout=150):
     binary=shutil.which(SIGN_IN[provider][0])
     if not binary:raise RuntimeError(f'Install and sign in with {SIGN_IN[provider][0]} first, or choose an API key.')
     with tempfile.TemporaryDirectory(prefix='atforma-agent-') as cwd:
@@ -154,7 +154,7 @@ async def call_cli(provider,model,prompt,system,schema,is_disconnected,effort=No
                 args+=['--input-format','stream-json']
                 content=[{'type':'text','text':prompt}]+[{'type':'image','source':{'type':'base64','media_type':i['mime'],'data':i['data']}} for i in images]
                 prompt=json.dumps({'type':'user','message':{'role':'user','content':content}})+'\n'
-            result=json.loads(await communicate(args,prompt,cwd,is_disconnected,env))
+            result=json.loads(await communicate(args,prompt,cwd,is_disconnected,env,timeout=timeout))
             if result.get('is_error'):raise RuntimeError(provider_failure(json.dumps(result)))
             return result.get('structured_output') or extract_json(result.get('result',''))
         if provider=='codex':
@@ -166,16 +166,16 @@ async def call_cli(provider,model,prompt,system,schema,is_disconnected,effort=No
                 args+=['--image',str(image_path)]
             if model not in ('default','auto'):args+=['--model',model]
             if effort:args+=['-c',f'model_reasoning_effort="{effort}"']
-            return extract_json(await communicate(args,system+'\n\n'+prompt,cwd,is_disconnected,env))
+            return extract_json(await communicate(args,system+'\n\n'+prompt,cwd,is_disconnected,env,timeout=timeout))
         if provider=='gemini-cli':
             settings=Path(cwd)/'settings.json';settings.write_text(json.dumps({'tools':{'core':[]},'hooksConfig':{'enabled':False},'mcp':{'allowed':['atforma-no-servers']},'telemetry':{'enabled':False},'general':{'enableAutoUpdate':False,'sessionRetention':{'enabled':False}}}))
             env['GEMINI_CLI_SYSTEM_SETTINGS_PATH']=str(settings)
             policy=Path(cwd)/'deny-tools.toml';policy.write_text('[[rule]]\ntoolName = "*"\ndecision = "deny"\npriority = 999\n')
             args=[binary,'--prompt',system,'--output-format','json','--approval-mode','plan','--extensions','none','--allowed-mcp-server-names','atforma-no-servers','--policy',str(policy)]
             if model not in ('default','auto'):args+=['--model',model]
-            result=json.loads(await communicate(args,prompt,cwd,is_disconnected,env))
+            result=json.loads(await communicate(args,prompt,cwd,is_disconnected,env,timeout=timeout))
             if result.get('error'):raise RuntimeError('Gemini request failed. Run gemini to sign in and check your model access.')
             return extract_json(result.get('response',''))
         # Official Copilot SDK provides tool exclusion and permission denial without --allow-all.
         worker=Path(__file__).with_name('copilot_worker.py')
-        return extract_json(await communicate([sys.executable,str(worker)],json.dumps({'prompt':prompt,'system':system,'schema':strict_schema(schema),'model':model,'cwd':cwd,'cli':binary,'images':images or []}),cwd,is_disconnected,env))
+        return extract_json(await communicate([sys.executable,str(worker)],json.dumps({'prompt':prompt,'system':system,'schema':strict_schema(schema),'model':model,'cwd':cwd,'cli':binary,'images':images or []}),cwd,is_disconnected,env,timeout=timeout))

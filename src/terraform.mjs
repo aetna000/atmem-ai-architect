@@ -1,3 +1,5 @@
+import {CLOUD_PROVIDER_LOCKS} from './cloud-provider-locks.mjs';
+import {compileStructuredApi} from './structured-api.mjs';
 import {generationQuality} from './generation-quality.mjs';
 import {hasContainers} from './container-contracts.mjs';
 import {containerTerraform} from './container-terraform.mjs';
@@ -57,11 +59,13 @@ function compileTerraform(project, environment = "staging") {
   const async=compileAsyncDocuments(plan,env);
   const summaries=compileSummaries(plan,env);
   const rag=compileRag(plan,env);
+  const structuredApi=compileStructuredApi(plan,env);
   for(const [type,items]of Object.entries(rag.resources))resources[type]={...(resources[type]||{}),...items};
   for(const [type,items]of Object.entries(summaries.resources))resources[type]={...(resources[type]||{}),...items};
   for(const [type,items]of Object.entries(async.resources))resources[type]={...(resources[type]||{}),...items};
   resources.terraform_data.review_gate.lifecycle.precondition.push(...async.preconditions);
   for(const [type,items]of Object.entries(compute.resources))resources[type]={...(resources[type]||{}),...items};
+  for(const [type,items]of Object.entries(structuredApi.resources))resources[type]={...(resources[type]||{}),...items};
   const web=compileWeb(plan,env,resources);
   // Untrusted diagram text is never interpolated into Terraform expressions or resource names.
   const unfinished = [...(env==='production'?plan.sourceContractPlan.sources.map(s=>`native-vendor-integration-unverified-${s.address}`):[]),...plan.gapDetails.map(g => g.id), ...blockers(review(project)).map((_, i) => `architecture review blocker ${i + 1}`)];
@@ -81,12 +85,13 @@ function compileTerraform(project, environment = "staging") {
   };
   return {
     ...awsPreflightFiles(),
+    '.terraform.lock.hcl':CLOUD_PROVIDER_LOCKS.aws,
     ...existingReferenceFiles(project),
     '.gitignore':'.terraform/\nbuild/\n*.tfstate\n*.tfstate.*\n*.tfplan\nreviewed-plan.json\n.preflight/\n*.tfvars\n*.tfvars.json\n*.zip\n__pycache__/\n',
     ...(env === "production" ? productionStateFiles():{}),
     ...storageTestFiles(plan),
     ...sourceContractFiles(plan),
-    ...compute.files, ...async.files, ...summaries.files, ...rag.files, ...web.files,
+    ...compute.files, ...async.files, ...summaries.files, ...rag.files, ...structuredApi.files, ...web.files,
     ...pythonRuntimeFiles([...plan.rows.filter(r=>r.compute).map(r=>({address:r.address,sdk:false})),...async.builds,...summaries.builds,...rag.builds]),
     "main.tf.json": JSON.stringify(config, null, 2),
     "resource-schedule.json": JSON.stringify(plan, null, 2),
