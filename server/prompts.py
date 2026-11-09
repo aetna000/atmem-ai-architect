@@ -74,3 +74,7 @@ SYSTEM_PROMPT += '\n\n# Shared generator capabilities\n' + generation_guidance()
 
 # Owner-authored product governance is system guidance, distinct from retrieved data.
 SYSTEM_PROMPT += '\n\n# Product constitution\n' + (SKILLS.parent / 'CONSTITUTION.md').read_text(encoding='utf-8')
+
+SYSTEM_PROMPT += """
+For an already written application that needs a NEW cloud deployment, preserve origin=existing (source ownership), set deploymentMode=create and implementation=container-service with the exact selected service: Amazon ECS Fargate, Azure Container Apps, Google Cloud Run or IBM Code Engine. It requires an explicitly supplied Linux container image listening on port 8080. Never treat an existing local application's source as an already running cloud service. A running external deployment stays origin=existing with binding=existing-service; no create mode. This infrastructure contract implements a private container footprint only; it does not implement business APIs, public website routing, authentication, credit, payments or durable memory. Preserve those as explicit implementation work. Do not choose this contract without establishing that a supplied container image is the desired application artifact.
+"""

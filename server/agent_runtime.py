@@ -30,7 +30,9 @@ async def run(architect, payload, disconnected):
         try:
             candidates = await asyncio.to_thread(memory.call,[{'action':'recall','subject':memory.subject('knowledge',project),'query':payload.message+' '+payload.stage+' '+payload.project.provider,'limit':12}])
             from .engineering_knowledge import context as knowledge_evidence
-            knowledge_context=knowledge_evidence(candidates[0])
+            providers={payload.project.provider, *(n.data.provider for n in payload.project.nodes)}
+            if re.search(r'compar|versus|alternative|\bvs\b',payload.message,re.I):providers.update({'aws','azure','gcp','ibm'})
+            knowledge_context=knowledge_evidence(candidates[0],providers)
             knowledge_ids=[r['id'] for r in knowledge_context]
         except Exception:
             knowledge_ids=[]

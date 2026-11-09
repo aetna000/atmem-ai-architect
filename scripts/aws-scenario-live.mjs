@@ -21,7 +21,7 @@ fs.mkdirSync(out,{recursive:true});
 // Freeze the application source for the entire prompt/refinement run. Developer edits
 // must not hot-reload the page and cancel an in-flight model response.
 const source=path.join(out,'source');fs.mkdirSync(source,{recursive:true});
-for(const name of ['src','server','scripts','agent-skills','.specify','public','index.html','vite.config.mjs','vite.config.js','package.json']){
+for(const name of ['CONSTITUTION.md','knowledge','src','server','scripts','agent-skills','.specify','public','index.html','vite.config.mjs','vite.config.js','package.json']){
  const from=path.join(root,name);if(fs.existsSync(from))fs.cpSync(from,path.join(source,name),{recursive:true,filter:p=>!p.split(path.sep).includes('__pycache__')});
 }
 for(const name of ['node_modules','.venv'])fs.symlinkSync(path.join(root,name),path.join(source,name),'dir');

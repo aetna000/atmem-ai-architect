@@ -1,3 +1,5 @@
+import {CONTAINER_SERVICES} from './container-contracts.mjs';
+import {verifiedReceipt} from './validation-receipt.mjs';
 import { conversationMessages, withConversation } from "./conversation.mjs";
 import {ChatMessage} from "./ChatMessage.jsx";
 import {readAttachments,ATTACHMENT_ACCEPT} from "./chat-attachments.mjs";
@@ -486,7 +488,7 @@ function BlockDetail({ project, node, run, probe, busy, onChange, onRemove, onOp
               value={node.data.kind}
               onChange={(e) => set({ kind: e.target.value })}
             >
-              <option value="resource">Reference only</option>
+              <option value="resource">Architecture component</option>
               <option value="source">Source fixture</option>
               <option value="predict">Model fixture</option>
               <option value="agent">Agent fixture</option>
@@ -530,11 +532,12 @@ function BlockDetail({ project, node, run, probe, busy, onChange, onRemove, onOp
           </label>
           {node.data.origin === "existing" && <label>
             Existing system handling
-            <select aria-label="Existing system handling" disabled={busy} value={node.data.binding === "existing-service" ? "reference" : "contract"} onChange={e => set({ binding: e.target.value === "reference" ? "existing-service" : undefined })}>
+            <select aria-label="Existing system handling" disabled={busy} value={node.data.deploymentMode === "create" ? "create" : node.data.binding === "existing-service" ? "reference" : "contract"} onChange={e => set(e.target.value === "create" ? {deploymentMode:"create",implementation:"container-service",binding:undefined} : {deploymentMode:undefined,binding:e.target.value === "reference" ? "existing-service" : undefined,...(node.data.deploymentMode === "create" ? {implementation:undefined}:{})})}>
               <option value="contract">Typed integration contract</option>
               <option value="reference">Reference only — preserve existing service</option>
+              {CONTAINER_SERVICES[node.data.provider]?.service === node.data.service && <option value="create">Existing application — create a new private deployment</option>}
             </select>
-            <small>Does not create or import this service. Its connections still need implementation and testing.</small>
+            <small>{node.data.deploymentMode === "create" ? "Creates a new private container deployment from your supplied image. Application behavior and connections require tests." : "Preserves an existing deployment without creating or importing it. Its connections require tests."}</small>
           </label>}
           <label className="check">
             <input type="checkbox" aria-label="In prototype scope" disabled={busy} checked={!!node.data.poc} onChange={(e) => set({ poc: e.target.checked })} />
@@ -1410,10 +1413,12 @@ function App() {
       downloadBundle(await outputBundle(project,run,environment));
     } catch(e) { notify(e.message); }
   };
-  const exportTerraform = () => {
+  const exportTerraform = async (validation = null) => {
     try {
       toProjectFile(project); // Apply the same credential refusal as every project export.
-      exportFiles(terraformSketch(project, environment), "terraform");
+      const files=terraformSketch(project,environment);
+      const receipt=await verifiedReceipt(files,validation);
+      exportFiles({...files,...(receipt?{'validation-receipt.json':JSON.stringify(receipt,null,2)}:{})}, "terraform");
       notify("Terraform sketch exported with resource coverage and unfinished work.");
     } catch (e) { notify(e.message); }
   };
@@ -1762,7 +1767,7 @@ function App() {
             <button className="btn primary" disabled={busy||agentBusy||!!pending} aria-label={guidance.checkpoint?guidance.continueLabel+' →':guidance.action} title={guidance.checkpoint?guidance.continueLabel:guidance.action} onClick={()=>guidance.checkpoint?continueJourney():followJourney()}>{agentBusy?<BrainActivity size={26}/>:<BrainCircuit size={20}/>}</button>
 
             {project.nodes.length>0&&<><button className="btn primary" disabled={busy||!!pending} aria-label="Emulate & improve" aria-busy={emulationWorking} title={emulation.running?"Emulation running — show progress":emulationWorking?"Architect is reviewing — show progress":"Run local checks and improve this architecture"} onClick={()=>{setMode("design");setDesignView("board");setEmulationOpen(true);if(!emulation.running&&!emulation.result&&!emulation.previous)void emulation.run();}}>{emulationWorking?<BrainActivity size={24}/>:<Play size={20}/>}</button><button className="btn" aria-label="Outputs" title="Inspect and download generated outputs" onClick={()=>{setMode("design");setDesignView("outputs");}}><Package size={20}/></button></>}
-            {["architecture","review","estimate","delivery"].includes(guidance.id)&&<>
+            {(["architecture","review","estimate","delivery"].includes(guidance.id)||project.nodes.some(n=>n.data.kind!=="note"))&&<>
               <button className="btn" aria-label="Terraform" title="Terraform" onClick={()=>{setMode("design");setDesignView("terraform");}}><TerraformIcon/></button>
               <button className="btn" aria-label="Download" onClick={exportPack} title="Download the current architecture, requirements and infrastructure draft as a ZIP"><ArrowDownToLine size={18}/></button>
               <button className="btn" disabled aria-label="Deploy (under development)" title="Cloud deployment is under development"><Rocket size={18}/></button>

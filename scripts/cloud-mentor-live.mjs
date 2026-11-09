@@ -14,7 +14,7 @@ const selected=(process.argv[2]||'aws,azure,gcp,ibm').split(',');
 const storageScenarios=[{id:'aws',prompt:AWS_SCENARIOS[0].prompt+' An existing IAM operator needs upload, read and delete access. Draw the caller and its explicit scoped access contract. Do not deploy.'},...CLOUD_STORAGE_SCENARIOS].filter(s=>selected.includes(s.id));
 const scenarios=process.argv.includes('--ai')?AI_QUALIFICATION_SCENARIOS.filter(s=>selected.includes(s.provider)||selected.includes(s.id)):storageScenarios;
 const source=path.join(out,'source');fs.mkdirSync(source,{recursive:true});
-for(const name of ['src','server','scripts','agent-skills','.specify','public','index.html','vite.config.mjs','package.json'])if(fs.existsSync(path.join(root,name)))fs.cpSync(path.join(root,name),path.join(source,name),{recursive:true,filter:p=>!p.split(path.sep).includes('__pycache__')});
+for(const name of ['CONSTITUTION.md','knowledge','src','server','scripts','agent-skills','.specify','public','index.html','vite.config.mjs','package.json'])if(fs.existsSync(path.join(root,name)))fs.cpSync(path.join(root,name),path.join(source,name),{recursive:true,filter:p=>!p.split(path.sep).includes('__pycache__')});
 for(const name of ['node_modules','.venv','.memory-venv'])if(fs.existsSync(path.join(root,name)))fs.symlinkSync(path.join(root,name),path.join(source,name),'dir');
 fs.mkdirSync(path.join(source,'.local'),{recursive:true});fs.symlinkSync(path.join(root,'.local/cloud-emulators'),path.join(source,'.local/cloud-emulators'),'dir');
 async function port(){const s=createServer();await new Promise(r=>s.listen(0,'127.0.0.1',r));const p=s.address().port;await new Promise(r=>s.close(r));return p;}

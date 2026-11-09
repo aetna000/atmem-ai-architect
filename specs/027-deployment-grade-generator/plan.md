@@ -189,3 +189,26 @@ retrieval and applicability ranking, source/version freshness, conflict handling
 knowledge-use receipts, adversarial retrieval tests and evaluation of complete exports
 against unseen client scenarios. Start locally; shared/cloud hosting follows only after
 identity, tenant isolation and operational requirements have an implemented contract.
+
+
+## Architecture harness implementation checkpoint
+
+Owner clarified that the product builds reusable architecture judgment, not a target
+number of memorized projects. The composition specialist is always considered before
+provider selection. Security guidance is also selected for trust-boundary questions
+before a diagram exists. AtMem retrieval passes bounded, provenance-linked practice
+contents with freshness/provider/tamper checks; full local skill instructions remain
+separate from short knowledge index records.
+
+Existing-source/create ownership, lossless record limits, unsafe-generation admission
+and exact-file export receipts now have regression coverage. See
+`evidence/20261110-harness-qualification-r2/README.md` for the current source/evidence
+snapshot. Previous evidence snapshots remain historical. No deployment is authorized.
+
+Three bounded live reasoning scenarios exercised access boundaries, concurrent credit
+processing and autoscaled durable memory. They are observations, not an independently
+scored benchmark. They exposed missing pre-diagram security selection (now fixed), and
+the responses still asked questions despite the evaluation requesting none. Keep that
+instruction-following limitation visible. These cases cannot establish general expertise
+or qualify application generation. Next implementation work remains concrete connected
+contracts, application behavior and cross-provider runtime evidence under GEN-008/009.

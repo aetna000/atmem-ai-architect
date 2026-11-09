@@ -20,7 +20,7 @@ if(!base){
 }
 try {
  for(let i=0;i<100;i++){try{if((await fetch(base)).ok)break;}catch{}if(i===99)throw Error('Delivery test server did not start');await new Promise(r=>setTimeout(r,100));}
- browser=await chromium.launch({...(fs.existsSync('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome')?{executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'}:{}),headless:true});
+ browser=await chromium.launch({...(process.env.ATMEM_ARCHITECT_BROWSER_BIN?{executablePath:process.env.ATMEM_ARCHITECT_BROWSER_BIN}:fs.existsSync('/Applications/Google Chrome.app/Contents/MacOS/Google Chrome')?{executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'}:{}),headless:true});
 const page=await browser.newPage({viewport:{width:1440,height:1000}});
 const errors=[],external=[];page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>{const u=new URL(r.url());if(['http:','https:'].includes(u.protocol)&&!['127.0.0.1','localhost'].includes(u.hostname))external.push(r.url());});
 await page.addInitScript(()=>{localStorage.clear();localStorage.setItem('atforma-connection-v1',JSON.stringify({provider:'claude-code',model:'default'}));});

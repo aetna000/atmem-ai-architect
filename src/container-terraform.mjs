@@ -20,7 +20,8 @@ export function containerTerraform(project,plan,environment='staging'){
  const nodes=project.nodes.filter(containerContract);
  for(const node of nodes){
   const n=plan.rows.find(r=>r.id===node.id).address;
-  const name=input(n+'_name','Reviewed unique deployment name; application source is supplied separately.','architect-app');
+  const name=input(n+'_name','Reviewed unique deployment name; application source is supplied separately.','architect-app-'+(nodes.indexOf(node)+1));
+  variable[n+'_name'].validation={condition:'${can(regex("^[a-z][a-z0-9-]{4,28}[a-z0-9]$", var.'+n+'_name))}',error_message:'Use a unique lowercase name of 6–30 letters, digits or hyphens, starting with a letter.'};
   const image=input(n+'_image','Reviewed immutable Linux container image digest. No model-generated application code is implied.','registry.example.com/architect@sha256:'+'0'.repeat(64));
   variable[n+'_image'].validation={condition:'${can(regex("@sha256:[0-9a-f]{64}$", var.'+n+'_image))}',error_message:'Pin the reviewed application image with its SHA-256 digest.'};
   if(cloud==='gcp'){

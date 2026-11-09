@@ -47,3 +47,13 @@ class TerraformTests(unittest.TestCase):
             result=validate(ValidationRequest(project={}))
         self.assertEqual(result['status'],'passed');self.assertEqual(len(result['checks']),4)
         self.assertIn('handlers/demo.py',result['fileDigests']);self.assertEqual(run.call_count,5)
+
+    def test_generation_inconsistency_stops_before_provider_execution(self):
+        generated={'main.tf.json':'{}','generation-quality.json':json.dumps({'fatalFindings':[{'code':'execution-hook','message':'Unreviewed provisioner'}]})}
+        reply=subprocess.CompletedProcess([],0,json.dumps(generated),'')
+        with patch.dict('os.environ',{'ATFORMA_TERRAFORM_BIN':'/trusted/terraform'}), patch('server.terraform_routes.shutil.which',return_value='/trusted/node'), patch('server.terraform_routes.subprocess.run',return_value=reply) as run:
+            result=validate(ValidationRequest(project={}))
+        self.assertEqual(result['status'],'failed')
+        self.assertEqual(run.call_count,1)
+        self.assertFalse(result['checks'][0]['passed'])
+        self.assertIn('generation-quality.json',result['fileDigests'])

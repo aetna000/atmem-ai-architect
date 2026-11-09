@@ -32,6 +32,8 @@ def validate(payload):
         return {'status': 'unavailable', 'checks': [], 'message': 'Node is unavailable to the local service.'}
     with tempfile.TemporaryDirectory(prefix='atforma-validate-') as folder:
         env = {'PATH': os.getenv('PATH', ''), 'HOME': folder, 'TMPDIR': folder, 'TF_IN_AUTOMATION': '1', 'CHECKPOINT_DISABLE': '1', 'AWS_EC2_METADATA_DISABLED': 'true'}
+        cache=Path(setting('PROVIDER_CACHE') or ROOT/'.local/provider-cache')
+        if cache.is_dir():env['TF_PLUGIN_CACHE_DIR']=str(cache)
         generated = subprocess.run([node, str(ROOT/'scripts/terraform-render.mjs')], input=json.dumps(payload.model_dump()), capture_output=True, text=True, timeout=20, env=env, cwd=ROOT)
         if generated.returncode:
             raise ValueError('The project could not be converted to the trusted Terraform draft.')
@@ -46,6 +48,12 @@ def validate(payload):
         file_digests={name:hashlib.sha256(content.encode()).hexdigest() for name,content in files.items()}
 
         checks = []
+        quality=json.loads(files['generation-quality.json']) if 'generation-quality.json' in files else None
+        if quality:
+            fatal=quality.get('fatalFindings',[])
+            checks.append({'name':'Independent generation consistency','passed':not fatal,'output':json.dumps(fatal) if fatal else 'No provider, missing-resource or unsafe-generation inconsistencies detected.'})
+            if fatal:return {'status':'failed','checks':checks,'fileDigests':file_digests,'message':'Generation consistency failed; repair the generator before validation.'}
+
         if 'build-runtime.py' in files:
             result=subprocess.run([sys.executable,'-I','build-runtime.py'],cwd=folder,env=env,capture_output=True,text=True,timeout=120)
             checks.append({'name':'Deterministic application build','passed':result.returncode==0,'output':(result.stdout+'\n'+result.stderr)[-16000:]})

@@ -60,7 +60,8 @@ export function snapshotToProject(snapshot) {
         provider: r.provider,
         kind: "resource",
         description: r.type,
-        origin: "imported Pulumi state",
+        origin: "existing",
+        binding: "existing-service",
         service: r.type,
         config: {
           region: "Unknown — not imported",

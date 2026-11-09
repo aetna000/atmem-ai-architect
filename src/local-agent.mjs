@@ -13,7 +13,7 @@ export function toAgentProject(p) {
     name: p.name.slice(0, 200),
     provider: p.provider || "tools",
     ...(p.domain ? { domain: p.domain } : {}),
-    requirements: String(p.requirements || "").slice(0, 8000),
+    requirements: String(p.requirements || ""),
     nodes: p.nodes.map((n) => ({
       id: n.id,
       type: "resource",
@@ -36,6 +36,7 @@ export function toAgentProject(p) {
         },
         inputPosition: n.data.inputPosition || "left",
         outputPosition: n.data.outputPosition || "right",
+        ...(["reference","create"].includes(n.data.deploymentMode)?{deploymentMode:n.data.deploymentMode}:{}),
         origin: String(n.data.origin || "proposed").slice(0, 100),
         ...(n.data.service ? { service: n.data.service } : {}),
         ...(["cloud-storage-principal","aws-iam-principal","aws-bedrock-model","normalized-source-contract","web-browser","existing-service"].includes(n.data.binding) ? { binding: n.data.binding } : {}),

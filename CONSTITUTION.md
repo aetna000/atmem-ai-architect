@@ -111,3 +111,18 @@ at their source. Never describe unfinished work as complete.
 
 Changes to this constitution require an explicit owner instruction and must preserve
 the distinction between the owner's intent, engineering proposals and observed facts.
+
+## 8. Build broad expertise and measure it
+
+The engine must demonstrate architectural judgment: choose suitable blocks, define
+their contracts, reason about their interactions and verify the complete system on
+unseen client requirements. Quality, compositional understanding and adaptability
+are the goals; a fixed corpus size or memorized project count is not. Learn from
+successes, failures and operations, and explain when a familiar pattern does not fit.
+
+Maintain the learning and evaluation programme in
+`docs/architecture/expert-engine-programme.md`. Compare native-model, knowledge-guided
+and trained candidates with held-out evidence, cost and latency. Specialized model
+training is an option to evaluate, not a substitute for trustworthy data, engineering
+judgment or executable verification. World-leading quality is the ambition; comparative
+results must support any claim that it has been achieved.

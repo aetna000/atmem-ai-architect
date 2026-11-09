@@ -1,3 +1,4 @@
+import {existingDeployment} from './deployment-ownership.mjs';
 import {hasContainers,containerContract} from './container-contracts.mjs';
 import {existingReference} from './existing-references.mjs';
 import {hasCrossCloud,crossCloudPlan} from './cross-cloud-storage.mjs';
@@ -56,14 +57,14 @@ export function resourcePlan(project) {
   const ids = new Set(nodes.map((n) => n.id));
   const rows = nodes.map((n) => {
     const match = resolveService(n.data);
-    const existing = n.data.origin === "existing";
+    const existing = existingDeployment(n);
     const foundation = !existing && n.data.provider === "aws" && match?.name === "Amazon S3";
     const compute=!existing && n.data.provider==="aws" && match?.name==="AWS Lambda" && n.data.implementation==="text-statistics";
     // Encode the complete ID: stable on reorder/rename, valid Terraform identifier, no collisions.
     const address = `block_${Array.from(new TextEncoder().encode(n.id), (b) => b.toString(16).padStart(2, "0")).join("")}`;
     return { id: n.id, address, label: n.data.label, provider: n.data.provider,
       service: match?.name || n.data.service || CANDIDATES[roleOf(n)] || "Service to be selected",
-      selection: match?.ambiguous ? "Ambiguous service names" : match?.name ? (match.selected ? "Explicit service field; deployment review required" : "Named in diagram") : "Needs service confirmation", existing,
+      sourceExisting:n.data.origin === "existing", selection: match?.ambiguous ? "Ambiguous service names" : match?.name ? (match.selected ? "Explicit service field; deployment review required" : "Named in diagram") : "Needs service confirmation", existing,
       region: n.data.config?.region || "To be selected", resources: match?.resources || [],
       costDrivers: match?.costs || "Confirm service, capacity and billable dimensions",
       dependencies: project.edges.filter((e) => e.target === n.id && ids.has(e.source)).map((e) => e.source),

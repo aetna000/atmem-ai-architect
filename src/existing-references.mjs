@@ -2,8 +2,8 @@
 // These references never create/import resources or make requests to the endpoint.
 export function existingReference(node) {
  const d=node.data;
- if(d.origin!=='existing'||d.implementation)return null;
- const explicit=d.binding==='existing-service';
+ if(!['existing','imported Pulumi state'].includes(d.origin)||d.implementation)return null;
+ const explicit=d.binding==='existing-service'||d.origin==='imported Pulumi state';
  const firebase=!d.binding&&d.provider==='gcp'&&/^(?:Google )?Firebase (?:App )?Hosting$/i.test(String(d.service||'').trim());
  if(!explicit&&!firebase)return null;
  return {id:node.id,label:d.label,provider:d.provider,service:d.service||d.label,ownership:'external',provision:false,import:false,behaviorValidated:false};

@@ -19,7 +19,13 @@
     "Owner constitution linked from AGENTS.md and loaded into Architect system guidance",
     "Four authored engineering practice records with pinned public source provenance",
     "Practice publication through the existing AtMem knowledge scope with opt-out respected",
-    "Actual bounded recalled engineering contents passed to model runtime instead of IDs alone"
+    "Actual bounded recalled engineering contents passed to model runtime instead of IDs alone",
+    "Composition skill loaded into planning; security guidance selected for trust-boundary questions before a diagram exists",
+    "Existing application source can explicitly create a private deployment; existing and legacy Pulumi deployments remain references",
+    "Lossless notes, requirements and record collections with explicit oversize rejection",
+    "Knowledge freshness, provider applicability and tamper checks before model context",
+    "Unsafe-generation admission checks run before provider CLI execution",
+    "Exact-file validation receipts included in downloaded Terraform ZIP only when hashes and inventory match"
   ],
   "testsRun": [
     {
@@ -73,17 +79,57 @@
     {
       "command": ".venv/bin/python -m unittest server.tests.test_engineering_knowledge server.tests.test_generation_capabilities server.tests.test_memory -v",
       "result": "21 passed, including real AtMem publication and model-context integration"
+    },
+    {
+      "command": "npm test",
+      "result": "222 passed",
+      "evidence": "evidence/20261110-harness-qualification-r2/javascript-tests.log"
+    },
+    {
+      "command": "npm run build",
+      "result": "passed; existing bundle-size advisory remains",
+      "evidence": "evidence/20261110-harness-qualification-r2/build.log"
+    },
+    {
+      "command": "scripts/qualify-generator.mjs",
+      "result": "4 provider schemas and 16 mock-plan tests passed; no account plan or apply",
+      "evidence": "evidence/20261110-harness-qualification-r2/four-cloud-qualification.json"
+    },
+    {
+      "command": "scripts/emulation-browser-check.mjs",
+      "result": "12 browser checks passed with fixture model and real local emulation API",
+      "evidence": "evidence/20261110-harness-qualification-r2/emulation-browser.log"
+    },
+    {
+      "command": "scripts/export-quality-browser.mjs",
+      "result": "Downloaded ZIP includes exact-byte verified receipt replayed from real local validation API",
+      "evidence": "evidence/20261110-harness-qualification-r2/export-browser.log"
+    },
+    {
+      "command": ".venv/bin/python -m unittest discover -s server/tests -v",
+      "result": "123 passed",
+      "evidence": "evidence/20261110-harness-qualification-r2/server-tests.log"
     }
   ],
   "remaining": [
-    "Ownership separation between existing code and existing cloud deployments",
     "Independent resource/requirement coverage verifier",
     "Concrete Spec Kit interfaces and file-level tasks",
     "Additional cloud runtime compilers and application implementations",
     "Expand independent output verification beyond resource presence into full application/edge semantics",
     "Container image runtime, public routing, authorization and application-data integrations require further compiler implementations and qualification",
-    "Knowledge relevance/freshness/conflict qualification and broader reviewed coverage",
+    "Knowledge conflict qualification, retrieval relevance evaluation and broader reviewed coverage",
     "Evaluate complete generated systems against unseen client scenarios"
   ],
-  "deployments": []
+  "deployments": [],
+  "programme": "docs/architecture/expert-engine-programme.md",
+  "notes": [
+    "Owner clarified that compositional architecture skill and demonstrated quality replace quantity targets. No model training or world-leading performance is claimed."
+  ],
+  "competencyTarget": [
+    "Select suitable blocks from requirements",
+    "Specify and implement interfaces and trust boundaries",
+    "Reason about state, concurrency, retries and failure recovery",
+    "Explain trade-offs and adapt to changed constraints",
+    "Verify composed systems on unseen scenarios"
+  ]
 }

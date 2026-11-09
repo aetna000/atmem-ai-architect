@@ -23,7 +23,7 @@ export const GATE = [
   { id: "risks", label: "Residual risk", hint: "Open risks and who accepted them" },
 ];
 
-const text = (value, max = 2000) => String(value ?? "").slice(0, max);
+const text = (value, max = 2000) => {const result=String(value??"");if(result.length>max)throw Error(`A project field exceeds ${max.toLocaleString('en')} characters. Split it into linked requirements; no content was truncated.`);return result;};
 const score = (value) => (Number.isInteger(value) && value >= 1 && value <= 5 ? value : null);
 
 export function defaultAssessment() {
@@ -49,6 +49,7 @@ export function cleanMeasures(list) {
 }
 
 export function cleanEngagement(p) {
+  for(const name of ['needs','assumptions','openQuestions','facts'])if(Array.isArray(p[name])&&p[name].length>300)throw Error(`The project has more than 300 ${name}; no records were truncated.`);
   const out = {};
   if (["maintenance", "churn"].includes(p.domain)) out.domain = p.domain;
   if (typeof p.id === "string" && p.id) out.id = text(p.id, 100);

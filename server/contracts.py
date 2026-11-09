@@ -33,7 +33,7 @@ class Measure(Strict):
         return value
 
 class Data(Strict):
-    label:str=Field(max_length=150)
+    label:str=Field(max_length=16000)
     kind:Literal['source','predict','agent','guard','output','tool','resource','stream','history','features','train','registry','monitor','note']
     provider:Literal['aws','azure','gcp','ibm','tools']
     description:str=Field(default='',max_length=16000)
@@ -41,6 +41,7 @@ class Data(Strict):
     inputPosition:Literal['left','right','top','bottom']='left'
     outputPosition:Literal['left','right','top','bottom']='right'
     origin:str=Field(default='proposed',max_length=100)
+    deploymentMode:Literal['reference','create']|None=None
     poc:bool=False
     role:Literal['data','ingest','index','llm','guard','human','app','output','model','monitor']|None=None
     measures:list[Measure]|None=Field(default=None,max_length=10)
@@ -51,6 +52,10 @@ class Data(Strict):
 
     @model_validator(mode='after')
     def named_component(self):
+        if self.origin=='existing' and self.deploymentMode=='create' and (self.implementation!='container-service' or self.binding):
+            raise ValueError('Existing application source needs an explicit container-service contract without a reference binding.')
+        if self.kind != 'note' and len(self.label)>150:
+            raise ValueError('Architecture component names must have at most 150 characters.')
         if self.kind != 'note' and not self.label.strip():
             raise ValueError('Architecture components need a name; sticky notes may be empty.')
         return self
@@ -76,7 +81,7 @@ class Project(Strict):
     name:str=Field(min_length=1,max_length=200)
     provider:Literal['aws','azure','gcp','ibm','tools']='tools'
     domain:Literal['maintenance','churn']|None=None
-    requirements:str=Field(default='',max_length=8000)
+    requirements:str=Field(default='',max_length=64000)
     nodes:list[Node]=Field(max_length=200)
     edges:list[Edge]=Field(max_length=600)
     @model_validator(mode='after')
