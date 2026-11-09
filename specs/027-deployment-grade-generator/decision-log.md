@@ -20,3 +20,11 @@ Owner reported overflowing fields and a missing Back button. Bound grid tracks a
 form controls to the component card, give existing-system handling its own row, and
 keep a Back to board navigation strip visible while the inspector scrolls. Narrow
 screens stack the form. Verified field bounds and Back navigation at four widths.
+
+## Conversation scrolling
+
+Owner reported the chat jumping after responses. Replace whole-element scrollIntoView
+with message-viewport scrolling, preserve a reader's position above the latest message,
+observe late content/viewport changes, and respect reduced motion. New submissions
+resume following. Mobile chat has a bounded message viewport and stable header/composer.
+Verified smooth/reduced-motion desktop and mobile cases with fixture model responses.

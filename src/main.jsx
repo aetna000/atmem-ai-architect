@@ -1,3 +1,4 @@
+import {useChatScroll} from './useChatScroll.jsx';
 import {CONTAINER_SERVICES} from './container-contracts.mjs';
 import {verifiedReceipt} from './validation-receipt.mjs';
 import { conversationMessages, withConversation } from "./conversation.mjs";
@@ -738,7 +739,7 @@ function App() {
     catch(error){setAttachmentError(error.message);}
     finally{attachmentReadLock.current=false;setReadingAttachments(false);}
   }
-  const chatEnd = useRef();
+  const chatScroll = useChatScroll(project.id,chatOpen);
   const runToken = useRef(0);
   const commitGroup = useRef(false);
   const notify = useCallback((t) => setToast(t), []);
@@ -812,9 +813,6 @@ function App() {
       setStorageError(true);
     }
   }, [project, messages]);
-  useEffect(() => {
-    chatEnd.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages, pending, agentBusy]);
   useEffect(
     () => () => {
       runToken.current++;
@@ -1175,6 +1173,7 @@ function App() {
     }
     const controller = new AbortController();
     agentAbort.current = controller;
+    chatScroll.followLatest();
     setAgentBusy(true);
     try {
       // Keep the discovery record current from the user's words, whatever model replies.
@@ -2153,7 +2152,8 @@ function App() {
               ))}
             </ul>
           )}
-          <div className="messages">
+          <div className="messages" ref={chatScroll.viewport}>
+            <div className="message-list" ref={chatScroll.content}>
             {messages.map((m, i) => (
               <div key={i} className={`msg ${m.role}`}>
                 <ChatMessage text={m.text}/>
@@ -2199,7 +2199,7 @@ function App() {
                 <button className="link" onClick={() => agentAbort.current?.abort()}>Cancel</button>
               </div>
             )}
-            <div ref={chatEnd} />
+            </div>
           </div>
           <div className="prompts">
             {mode === "design" && brief(project) && ask && (
