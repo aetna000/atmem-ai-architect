@@ -1,3 +1,4 @@
+import {existingReferenceFiles} from './existing-references.mjs';
 import {hasCrossCloud,crossCloudTerraform} from './cross-cloud-storage.mjs';
 import {compileWeb} from './rag-web.mjs';
 import {sourceContractFiles} from './source-contracts.mjs';
@@ -73,6 +74,7 @@ export function terraformSketch(project, environment = "staging") {
   };
   return {
     ...awsPreflightFiles(),
+    ...existingReferenceFiles(project),
     '.gitignore':'.terraform/\nbuild/\n*.tfstate\n*.tfstate.*\n*.tfplan\nreviewed-plan.json\n.preflight/\n*.tfvars\n*.tfvars.json\n*.zip\n__pycache__/\n',
     ...(env === "production" ? productionStateFiles():{}),
     ...storageTestFiles(plan),

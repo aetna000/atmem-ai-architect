@@ -38,7 +38,7 @@ export function toAgentProject(p) {
         outputPosition: n.data.outputPosition || "right",
         origin: String(n.data.origin || "proposed").slice(0, 100),
         ...(n.data.service ? { service: n.data.service } : {}),
-        ...(["cloud-storage-principal","aws-iam-principal","aws-bedrock-model","normalized-source-contract","web-browser"].includes(n.data.binding) ? { binding: n.data.binding } : {}),
+        ...(["cloud-storage-principal","aws-iam-principal","aws-bedrock-model","normalized-source-contract","web-browser","existing-service"].includes(n.data.binding) ? { binding: n.data.binding } : {}),
         ...(["private-object-storage","rag-web-app","rag-user-pool","bounded-keyword-rag","iam-rag-api","bounded-rag-catalog","text-statistics","bedrock-summary","async-word-count","sqs-standard","sqs-dead-letter","word-count-results"].includes(n.data.implementation) ? { implementation: n.data.implementation } : {}),
         ...(n.data.category ? { category: n.data.category } : {}),
         ...(n.data.poc ? { poc: true } : {}),

@@ -528,6 +528,14 @@ function BlockDetail({ project, node, run, probe, busy, onChange, onRemove, onOp
               <option value="existing">Client's existing system</option>
             </select>
           </label>
+          {node.data.origin === "existing" && <label>
+            Existing system handling
+            <select aria-label="Existing system handling" disabled={busy} value={node.data.binding === "existing-service" ? "reference" : "contract"} onChange={e => set({ binding: e.target.value === "reference" ? "existing-service" : undefined })}>
+              <option value="contract">Typed integration contract</option>
+              <option value="reference">Reference only — preserve existing service</option>
+            </select>
+            <small>Does not create or import this service. Its connections still need implementation and testing.</small>
+          </label>}
           <label className="check">
             <input type="checkbox" aria-label="In prototype scope" disabled={busy} checked={!!node.data.poc} onChange={(e) => set({ poc: e.target.checked })} />
             In prototype scope
