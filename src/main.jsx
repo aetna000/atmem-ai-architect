@@ -1,3 +1,4 @@
+import {readCanvasView,saveCanvasView,arrangeOverview} from './canvas-view.mjs';
 import {BlockRequirements} from './BlockRequirements.jsx';
 import {componentReviews,markComponentReviewed,applyComponentReview,editBlockRequirement} from './component-review.mjs';
 import {ComponentReview,ReviewBadge} from './ComponentReview.jsx';
@@ -484,7 +485,7 @@ function BlockDetail({ project, node, run, probe, busy, reviewItems, onReviewCon
         <BlockRequirements project={project} nodeId={node.id} busy={busy} onSave={onRequirementSave}/>
         <ComponentReview key={node.id} item={reviewItems.find(r=>r.id===node.id)} items={reviewItems} busy={busy} onOpen={onOpen} onConfirm={onReviewConfirm} onDiscuss={onReviewDiscuss} onQuestion={onReviewQuestion} onResolve={onReviewResolve} onDetailAnswer={patch=>onChange({...node,data:{...node.data,...patch,...(patch.config?{config:{...node.data.config,...patch.config}}:{})}})}/>
         <details className="component-settings"><summary>Component settings</summary><div className="fields">
-          <label className="field-wide">Topology responsibility<input aria-label="Topology responsibility" maxLength={100} disabled={busy} value={node.data.topologyGroup||''} placeholder="For example, Project memory" onChange={e=>set({topologyGroup:e.target.value})}/></label>
+          <label className="field-wide">Responsibility group<input aria-label="Responsibility group" maxLength={100} disabled={busy} value={node.data.topologyGroup||''} placeholder="For example, Project memory" onChange={e=>set({topologyGroup:e.target.value})}/></label>
           <label>
             Provider
             <select disabled={busy} value={node.data.provider} onChange={(e) => set({ provider: e.target.value })}>
@@ -642,6 +643,8 @@ function App() {
   const [project, setProject] = useState(readSaved);
   const projectRef = useRef(project);
   projectRef.current = project;
+  const [initialCanvasView] = useState(()=>readCanvasView(project));
+  const [topologyPositions,setTopologyPositions] = useState(initialCanvasView.positions);
   const [mode, setMode] = useState("design"),
     [peek, setPeek] = useState(null),
     [picked, setPicked] = useState(() => new Set()),
@@ -655,9 +658,9 @@ function App() {
       }
     }),
     [designView, setDesignView] = useState("board"),
-    [level, setLevel] = useState("system"),
-    [focus, setFocus] = useState(null),
-    [selected, setSelected] = useState(null),
+    [level, setLevel] = useState(initialCanvasView.level),
+    [focus, setFocus] = useState(initialCanvasView.focus),
+    [selected, setSelected] = useState(initialCanvasView.selected),
     [messages, setMessages] = useState(() => conversationMessages(projectRef.current, [welcome(projectRef.current)])),
     [reviewView, setReviewView] = useState("findings"),
     [input, setInput] = useState(""),
@@ -684,6 +687,7 @@ function App() {
   const [session, setSession] = useState(null),
     [connection, setConnection] = useState(readConnection),
     [agentBusy, setAgentBusy] = useState(false);
+  useEffect(()=>{saveCanvasView(project,{level,focus,selected,positions:topologyPositions});},[project.id,level,focus,selected,topologyPositions]);
   const emulation=useEmulation(project,environment,session);
   const emulationWorking=emulation.running||(agentBusy&&!!emulation.result);
   const [emulationOpen,setEmulationOpen]=useState(false),[treeOpen,setTreeOpen]=useState(false);
@@ -1135,8 +1139,8 @@ function App() {
     setMode("design");
     setDesignView("board");
     setModal(null);
-    setLevel("flow");
-    setFocus(null);
+    const canvasView=readCanvasView(next);
+    setLevel(canvasView.level);setFocus(canvasView.focus);setSelected(canvasView.selected);setTopologyPositions(canvasView.positions);
     refit();
     if (next.importReport) notify(next.importReport.notice);
   }
@@ -1403,7 +1407,7 @@ function App() {
     `wire ${runStates[source] === "failed" ? "wire-failed" : runStates[source] === "passed" ? "wire-passed" : ""}`;
   const canvasNodes =
     level === "system"
-      ? system.nodes.map((n) => ({ ...n, data:{...n.data,onExplore:()=>n.data.blocks.length===1?reviewBlock(n.data.blocks[0]):goFlow(n.data.layer),onReview:()=>reviewBlock(blockReviews.find(r=>n.data.blocks.includes(r.id)&&r.issues.length)?.id||n.data.blocks[0]),reviewSummary:{reviewed:blockReviews.filter(r=>n.data.blocks.includes(r.id)&&r.status==='reviewed').length,questions:blockReviews.filter(r=>n.data.blocks.includes(r.id)).reduce((sum,r)=>sum+r.issues.length,0)}}, measured: measured[n.id], className: previewing ? "preview" : "" }))
+      ? system.nodes.map((n) => ({ ...n, position:topologyPositions[n.id]||n.position, data:{...n.data,onExplore:()=>n.data.blocks.length===1?reviewBlock(n.data.blocks[0]):goFlow(n.data.layer),onReview:()=>reviewBlock(blockReviews.find(r=>n.data.blocks.includes(r.id)&&r.issues.length)?.id||n.data.blocks[0]),reviewSummary:{reviewed:blockReviews.filter(r=>n.data.blocks.includes(r.id)&&r.status==='reviewed').length,questions:blockReviews.filter(r=>n.data.blocks.includes(r.id)).reduce((sum,r)=>sum+r.issues.length,0)}}, measured: measured[n.id], className: previewing ? "preview" : "" }))
       : shown.nodes.map((n) => ({
           ...n,
           type: n.data.kind === "note" ? "note" : n.type,
@@ -1515,8 +1519,8 @@ function App() {
     setPending(null);
     setSelected(null);
     setPicked(new Set());
-    setLevel("flow");
-    setFocus(null);
+    const canvasView=readCanvasView(next);
+    setLevel(canvasView.level);setFocus(canvasView.focus);setSelected(canvasView.selected);setTopologyPositions(canvasView.positions);
     setMode("design");
     setDesignView("board");
     setPeek(null);
@@ -1704,7 +1708,7 @@ function App() {
           />
           <button className="icon" title="Start over" aria-label="Start over" disabled={busy || agentBusy} onClick={() => setModal("start-over")}><RotateCcw size={16} /></button>
           <div className="component-navigator"><button className="tree-trigger" aria-label="Component tree" aria-expanded={treeOpen} onClick={()=>setTreeOpen(!treeOpen)} title="Explore the system and its components"><GitBranch size={18}/> Components <span>{project.nodes.filter(n=>n.data.kind!=='note').length}</span><ChevronRight size={15}/></button>
-          {treeOpen&&<nav className="component-tree" aria-label="Component tree"><strong>{project.name}</strong><div className="tree-views"><button disabled={!blockReviews.length} onClick={()=>{reviewBlock((blockReviews.find(r=>r.status!=='reviewed')||blockReviews[0]).id);setTreeOpen(false);}}><CheckCheck size={16}/> Review blocks · {blockReviews.filter(r=>r.status==='reviewed').length}/{blockReviews.length}</button><button onClick={()=>{setMode('design');setDesignView('board');goSystem();setTreeOpen(false);}}><LayoutGrid size={16}/> System overview</button><button onClick={()=>{setMode('design');setDesignView('board');goFlow(null);setTreeOpen(false);}}><Workflow size={16}/> Component flow</button></div>{[...new Map(project.nodes.filter(n=>n.data.kind!=='note').map(n=>[layerOf(n).id,layerOf(n)])).values()].map(layer=><details open key={layer.id}><summary>{layer.label}</summary>{project.nodes.filter(n=>n.data.kind!=='note'&&layerOf(n).id===layer.id).map(n=><button key={n.id} aria-current={selected===n.id?'true':undefined} onClick={()=>{setMode('design');setDesignView('board');setFocus(null);setLevel('flow');setSelected(n.id);setTreeOpen(false);setTimeout(()=>fitView({nodes:[{id:n.id}],padding:1,maxZoom:1.2,duration:350}),100);}}><Database size={14}/><span>{n.data.label}<small>{n.data.service||n.data.provider}</small><small className={`tree-review-state ${blockReviews.find(r=>r.id===n.id)?.status}`}>{blockReviews.find(r=>r.id===n.id)?.statusLabel}</small></span></button>)}</details>)}</nav>}</div>
+          {treeOpen&&<nav className="component-tree" aria-label="Component tree"><strong>{project.name}</strong><div className="tree-views"><button disabled={!blockReviews.length} onClick={()=>{reviewBlock((blockReviews.find(r=>r.status!=='reviewed')||blockReviews[0]).id);setTreeOpen(false);}}><CheckCheck size={16}/> Review blocks · {blockReviews.filter(r=>r.status==='reviewed').length}/{blockReviews.length}</button></div>{[...new Map(project.nodes.filter(n=>n.data.kind!=='note').map(n=>[layerOf(n).id,layerOf(n)])).values()].map(layer=><details open key={layer.id}><summary>{layer.label}</summary>{project.nodes.filter(n=>n.data.kind!=='note'&&layerOf(n).id===layer.id).map(n=><button key={n.id} aria-current={selected===n.id?'true':undefined} onClick={()=>{setMode('design');setDesignView('board');setFocus(null);setLevel('flow');setSelected(n.id);setTreeOpen(false);setTimeout(()=>fitView({nodes:[{id:n.id}],padding:1,maxZoom:1.2,duration:350}),100);}}><Database size={14}/><span>{n.data.label}<small>{n.data.service||n.data.provider}</small><small className={`tree-review-state ${blockReviews.find(r=>r.id===n.id)?.status}`}>{blockReviews.find(r=>r.id===n.id)?.statusLabel}</small></span></button>)}</details>)}</nav>}</div>
           <span className="current-view"><Workflow size={14}/>{level==='system'?'System overview':focusLabel||'Component flow'}</span>
         </nav>
         <div className="modes" role="tablist">
@@ -1788,7 +1792,7 @@ function App() {
             ))}
           </div>
         )}
-        {mode==='design'&&designView==='board'&&<div className="canvas-view-switch" role="group" aria-label="Architecture detail level"><button aria-pressed={level==='system'} onClick={goSystem}><LayoutGrid size={14}/>Topology</button><button aria-pressed={level!=='system'} onClick={()=>goFlow(null)}><Workflow size={14}/>Components</button>{level==='system'&&<button className="topology-organise" disabled={busy||agentBusy||!project.nodes.length} onClick={()=>send("Organise our existing architecture into a high-level topology. Assign data.topologyGroup to each block using concise responsibility names, for example User workspace, Access and usage, Project memory, or External systems where those responsibilities actually exist. Preserve every existing component, ID, provider, requirement, connection and position. Do not add services, invent a deployment boundary, choose a cloud or change implementations merely to group the view. Show major responsibilities and flows and explain the single most important unresolved system-level decision. Defer ports, Dockerfiles and instance sizing.","workflow")} title="Group existing components by responsibility">Organise topology</button>}</div>}
+        {mode==='design'&&designView==='board'&&<div className="canvas-view-switch" role="group" aria-label="Canvas view"><button aria-pressed={level!=='system'} onClick={()=>goFlow(null)}><Workflow size={14}/>Components</button><button aria-pressed={level==='system'} onClick={goSystem}><LayoutGrid size={14}/>Overview</button></div>}
         <div className="journey-current"><div><strong>{guidance.title}</strong><p>{guidance.reason}</p><p className="journey-next"><span>Next</span> {guidance.checkpoint?guidance.continueLabel:guidance.action}</p></div>
           <div className="journey-actions">
             <button className="btn primary" disabled={busy||agentBusy||!!pending} aria-label={guidance.checkpoint?guidance.continueLabel+' →':guidance.action} title={guidance.checkpoint?guidance.continueLabel:guidance.action} onClick={()=>guidance.checkpoint?continueJourney():followJourney()}>{agentBusy?<BrainActivity size={26}/>:<BrainCircuit size={20}/>}</button>
@@ -1871,10 +1875,10 @@ function App() {
             className="icon"
             title="Auto-arrange"
             aria-label="Auto-arrange"
-            disabled={busy || !project.nodes.length}
+            disabled={busy || previewing || level==='block' || !project.nodes.length}
             onClick={() => {
-              setLevel("flow");
-              commit(autoLayout(projectRef.current));
+              if(level==='system')setTopologyPositions(arrangeOverview(system,measured));
+              else commit(autoLayout(projectRef.current));
               refit();
             }}
           >

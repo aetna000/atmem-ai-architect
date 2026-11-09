@@ -45,3 +45,11 @@ review panel. Existing answers stay available to later model context.
 The optional follow-up contract records the actual conversational question, preventing
 answers being deliberately bound to an unrelated next checklist topic. Model adherence
 still needs held-out conversational evaluation; contract tests alone do not establish it.
+
+## Two explicit canvas views
+
+Owner found topology/component presentation confusing and requested Components as
+the default. The only view switch is now Components / Overview. Auto-arrange must
+never choose a different view. Overview positions and the selected view are stored as
+per-project browser preferences, independently of component positions and design
+revision. Refresh restores an explicit view choice; new projects default to Components.
