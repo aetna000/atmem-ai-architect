@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "purpose": "Authored engineering summaries; no upstream source code copied into user projects.",
+  "records": [
+    {
+      "id": "aws-container-boundaries",
+      "provider": "aws",
+      "topic": "container-deployment",
+      "practice": "Separate task execution identity from application task identity; scope permissions to the supplied image and workload.",
+      "source": {
+        "repository": "terraform-aws-modules/terraform-aws-ecs",
+        "commit": "135c225c75c7f0044966329c55ad8d647b358a57",
+        "url": "https://github.com/terraform-aws-modules/terraform-aws-ecs/tree/135c225c75c7f0044966329c55ad8d647b358a57",
+        "license": "Apache-2.0",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "limitations": [
+        "Not proof of a user deployment or combined system.",
+        "Verify versions, prerequisites and application behavior separately."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
+    },
+    {
+      "id": "azure-container-boundaries",
+      "provider": "azure",
+      "topic": "container-deployment",
+      "practice": "Specify the existing container environment, application identity, registry authentication, probes and scaling.",
+      "source": {
+        "repository": "Azure/terraform-azurerm-avm-res-app-containerapp",
+        "commit": "0dc4faf510f8eb7ca6d151e1be6a47fb55a0074b",
+        "url": "https://github.com/Azure/terraform-azurerm-avm-res-app-containerapp/tree/0dc4faf510f8eb7ca6d151e1be6a47fb55a0074b",
+        "license": "MIT",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "limitations": [
+        "Not proof of a user deployment or combined system.",
+        "Verify versions, prerequisites and application behavior separately."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
+    },
+    {
+      "id": "gcp-container-boundaries",
+      "provider": "gcp",
+      "topic": "container-deployment",
+      "practice": "Compose explicit service, IAM and network boundaries from provider-specific patterns; verify application connections separately.",
+      "source": {
+        "repository": "GoogleCloudPlatform/cloud-foundation-fabric",
+        "commit": "da9bab1152ff0155e4f59992e518981fda6c9f39",
+        "url": "https://github.com/GoogleCloudPlatform/cloud-foundation-fabric/tree/da9bab1152ff0155e4f59992e518981fda6c9f39",
+        "license": "Apache-2.0",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "limitations": [
+        "Not proof of a user deployment or combined system.",
+        "Verify versions, prerequisites and application behavior separately."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
+    },
+    {
+      "id": "ibm-container-boundaries",
+      "provider": "ibm",
+      "topic": "container-deployment",
+      "practice": "Separate the Code Engine project, application, image secrets, configuration and service bindings; distinguish existing and new projects.",
+      "source": {
+        "repository": "terraform-ibm-modules/terraform-ibm-code-engine",
+        "commit": "1d81e9b7481abbb79c7cce5bb4585dcbdc11073c",
+        "url": "https://github.com/terraform-ibm-modules/terraform-ibm-code-engine/tree/1d81e9b7481abbb79c7cce5bb4585dcbdc11073c",
+        "license": "Apache-2.0",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "limitations": [
+        "Not proof of a user deployment or combined system.",
+        "Verify versions, prerequisites and application behavior separately."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
+    }
+  ]
+}

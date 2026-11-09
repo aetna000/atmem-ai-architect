@@ -172,3 +172,20 @@ Review newly generated minimal exports for all four clouds and the unchanged r13
 fixture before expanding runtime capabilities. Show concrete before/after artifacts
 and passed checks at each batch; do not wait until the most complex scenario to find
 basic generator defects. Do not deploy or modify the user's original exported bundle.
+
+## Governing refinement: knowledge-informed architecture
+
+Read CONSTITUTION.md. The owner clarified that public projects should teach Architect
+reviewed engineering practices; the product should design, build and verify a tailored
+solution rather than copy a public repository into the user's project.
+
+The central pipeline is: client discovery → source-backed practice retrieval through
+AtMem → architecture and trade-off planning → typed generation/composition → independent
+verification and bounded repair → traceable Terraform/application/Spec Kit package.
+Existing compilers and the capability registry support this pipeline.
+
+Next knowledge work: source qualification and review, evidence-level records, semantic
+retrieval and applicability ranking, source/version freshness, conflict handling,
+knowledge-use receipts, adversarial retrieval tests and evaluation of complete exports
+against unseen client scenarios. Start locally; shared/cloud hosting follows only after
+identity, tenant isolation and operational requirements have an implemented contract.

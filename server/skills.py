@@ -83,6 +83,8 @@ def publish(memory, project):
         # Actual source-linked procedure guidance lives in the knowledge scope of AtMem.
         text = f'Skill {skill["id"]} v{skill["version"]}: {skill["instructions"]}\nSource: {skill["source"]}; artifact SHA256: {skill["digest"]}'
         memory.enqueue(project,'knowledge','skill.'+skill['id'],text,event_id='skill-'+skill['digest'],source=skill['source'])
+    from .engineering_knowledge import publish as publish_practices
+    publish_practices(memory,project)
     memory.flush()
 
 

@@ -71,3 +71,6 @@ SYSTEM_PROMPT += '\n\n' + EXISTING_SERVICE_REFERENCE_GUIDANCE
 
 from .skills import generation_guidance
 SYSTEM_PROMPT += '\n\n# Shared generator capabilities\n' + generation_guidance()
+
+# Owner-authored product governance is system guidance, distinct from retrieved data.
+SYSTEM_PROMPT += '\n\n# Product constitution\n' + (SKILLS.parent / 'CONSTITUTION.md').read_text(encoding='utf-8')
