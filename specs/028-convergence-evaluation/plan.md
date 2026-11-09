@@ -24,3 +24,12 @@ interaction burden and package/runtime quality. Do not deploy or claim deploymen
 A coding-agent handoff needs concrete application, infrastructure, contracts, tests
 and operations, not a generic checklist. Target attainment requires evidence, not the
 agent declaring itself happy with the diagrams.
+
+Acceptance audit: the initial reactive-facts driver only disclosed facts matching the
+model's questions. A short dialogue therefore did not necessarily receive every
+business constraint in the corpus. Original baseline/subset evidence remains unchanged
+and unqualified. The stronger `--complete-client-brief` protocol submits all remaining
+business facts as one final client update before export, tests whether the engine
+reconciles them, and labels the protocol in the manifest. It changes no scenario or
+acceptance criterion. Use this protocol for the final 28-case acceptance run; do not
+compare its exchange/time metrics directly to reactive-facts runs without that caveat.

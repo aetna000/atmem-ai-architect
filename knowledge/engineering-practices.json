@@ -257,6 +257,36 @@
       ],
       "reviewedAt": "2026-11-10",
       "status": "active"
+    },
+    {
+      "id": "gcp-structured-application-composition",
+      "provider": "gcp",
+      "topic": "authenticated-structured-ai-application",
+      "practice": "Use Cloud Run IAP and company-group access as the browser authorization boundary; independently verify the ES256 signed IAP header, fixed key origin, issuer, exact service audience and bounded lifetime. Unsigned identity headers or a caller bearer header do not establish IAP access. Separate keyless runtime and image-pulling identities; allow only required model/policy reads. Keep model output behind strict schema checks and human review.",
+      "source": {
+        "kind": "documentation",
+        "url": "https://docs.cloud.google.com/iap/docs/signed-headers-howto",
+        "sha256": "961eeec669b9a5ee1bb7ff504f882482aa88a4fdfb8f5b59a4de26b7794a44b8",
+        "retrievedAt": "2026-11-09T19:31:47.147762+00:00",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "localEvidence": [
+        "src/gcp-structured.mjs",
+        "src/runtime/gcp_structured.py",
+        "src/runtime/gcp_acceptance.py",
+        "scripts/qualify-structured-provider.mjs",
+        "scripts/iap-web-check.mjs",
+        "server/tests/test_gcp_emulation.py"
+      ],
+      "limitations": [
+        "Real local ES256/ASGI tests and scripted transport checks, native Google/Google-beta schemas and mock plans; no live IAP, model or destination proof.",
+        "IAP session/group policy and signed-header expiry are distinct from continuous directory revocation or verified MFA.",
+        "No app persistence does not prove provider zero retention. Destination-owner abuse-policy review is attested; caching/logging/sharing controls are separately read at runtime. No fabricated approval API or project-wide policy write.",
+        "Requires an organization-owned project, existing group and registry, reviewed regional model, built/tested image and account inputs. Image startup/scan, account plans, durable state and workflows remain pending."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
     }
   ]
 }

@@ -14,7 +14,7 @@ test('Azure composition preserves contract, emits real source, immutable packagi
   assert.deepEqual(tf.locals.unfinished_work,[]);
   const root='applications/'+n+'/';
   assert.match(files[root+'azure_structured.py'],/class EntraVerifier/);
-  assert.match(files[root+'Dockerfile'],/python:3\.13-slim-bookworm@sha256:[0-9a-f]{64}/);
+  assert.match(files[root+'Dockerfile'],/python:3\.13-slim-trixie@sha256:[0-9a-f]{64}/);
   assert.match(files[root+'Dockerfile'],/--require-hashes/);assert.match(files[root+'Dockerfile'],/USER 10001:10001/);
   assert.ok(files[root+'azure_acceptance.py']);assert.ok(files[root+'web/app.js']);
   assert.equal(tf.resource.azurerm_cognitive_deployment[n].sku.name,'Standard');

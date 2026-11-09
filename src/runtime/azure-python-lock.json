@@ -8,7 +8,8 @@
       "metadataSha256": "1aab691a5f37dd292e6d93ab53f7da5d839f56ba605345f017022ec75eb643af",
       "wheelHashes": [
         "117bac03a25ede5df5440e855b32d556049ca169ead221505badf432fed4b101"
-      ]
+      ],
+      "requiresDist": []
     },
     {
       "name": "annotated-types",
@@ -17,7 +18,8 @@
       "metadataSha256": "a6e8e5b10c8fd2f596bba53e015cd37f6279fb5cec26ce0c5e9968625be4fefa",
       "wheelHashes": [
         "f072f4d804ea359e4eaf198b1af7a8b0943881a87f31bb764f8bf219bb9419e0"
-      ]
+      ],
+      "requiresDist": []
     },
     {
       "name": "anyio",
@@ -26,6 +28,12 @@
       "metadataSha256": "0ea1314e4706d64fe828b76006f7c790b193979f9fb18c6ce416939a89fca1ff",
       "wheelHashes": [
         "c66ae634e0b8228396b801741beb3294326d4b6102f7bba4041c0dfb58c29026"
+      ],
+      "requiresDist": [
+        "exceptiongroup>=1.0.2; python_version < \"3.11\"",
+        "idna>=2.8",
+        "typing_extensions>=4.16.0; python_version < \"3.15\"",
+        "trio>=0.32.0; extra == \"trio\""
       ]
     },
     {
@@ -35,6 +43,12 @@
       "metadataSha256": "677e897fe754d9e8b13986d64a55115b9a70503e614ea4a92c4aaacc7081b33e",
       "wheelHashes": [
         "522b4011e8180b1a3dcd2024396a4e7fe9ac37fb8597db47163d230b5efe892d"
+      ],
+      "requiresDist": [
+        "requests>=2.21.0",
+        "typing-extensions>=4.6.0",
+        "aiohttp>=3.0; extra == \"aio\"",
+        "opentelemetry-api~=1.26; extra == \"tracing\""
       ]
     },
     {
@@ -44,6 +58,13 @@
       "metadataSha256": "9bfedba1c8f19d0f0ba216c144a890ad2e909c606a2a287464dd4c24faa78e8d",
       "wheelHashes": [
         "92fd2a93c0d2f777dac6c04e5fd7d5734f6643582b983544ef66b4575844e46d"
+      ],
+      "requiresDist": [
+        "azure-core>=1.31.0",
+        "cryptography>=2.5",
+        "msal>=1.39.0",
+        "msal-extensions>=1.2.0",
+        "typing-extensions>=4.0.0"
       ]
     },
     {
@@ -53,7 +74,8 @@
       "metadataSha256": "546ce90e02c152f5ff565baca6bc2a8f43c355855f637756f49a0143e312bdb2",
       "wheelHashes": [
         "e9b54de76e530bb6cf0ccd036787103acb58fd42ba930ea8bf948ddbaa2f61d1"
-      ]
+      ],
+      "requiresDist": []
     },
     {
       "name": "cffi",
@@ -160,6 +182,9 @@
         "f8ec5e643a9a937f64e1999eb9f75d072263751912dc5cd06d3c85f8f44be7c3",
         "fb92203a88b3d3053034db775110081c49d28be6551923805e039924093761e4",
         "fcd22650c908d7b7da162bbfaab594a1227a15d1643a98c68b122ac642fa2264"
+      ],
+      "requiresDist": [
+        "pycparser; implementation_name != \"PyPy\""
       ]
     },
     {
@@ -339,7 +364,8 @@
         "fcff63213e8e6e47770541a4607175404f47cbb3ebea7b6058cc82d524a0e424",
         "fd1fbe0f116b6e55da77aca2c6ddcddcfac2186cbf78bdebf40fc156efca389d",
         "fe9753dfee015c570d73df76f899f18444d41388bffcde097deba51c4fadbb9f"
-      ]
+      ],
+      "requiresDist": []
     },
     {
       "name": "click",
@@ -348,7 +374,8 @@
       "metadataSha256": "d6ec5ff9b41fc09d046eb431973dae2eec594dba3a853d03f369c4e3b2fde9b6",
       "wheelHashes": [
         "8bb5376d2006950386f8c6427613334a2acadc5f559cb80e638d00b4df957e37"
-      ]
+      ],
+      "requiresDist": []
     },
     {
       "name": "cryptography",
@@ -414,6 +441,11 @@
         "f9f6143a8c75945eb960d9eb98905a441394abfa24afaae239d514ffb2586480",
         "fa8f5efb344d6908a1ce62f4a24e2e5780f825d6f53f5f50ec5ffacac72936cb",
         "fdd28f912fccfec1846a94e2e1e8f9b0012f557f0c46fe4f3eb0d7a87afcf90b"
+      ],
+      "requiresDist": [
+        "cffi>=2.0.0 ; platform_python_implementation != 'PyPy'",
+        "typing-extensions>=4.13.2 ; python_full_version < '3.11'",
+        "bcrypt>=3.1.5 ; extra == 'ssh'"
       ]
     },
     {
@@ -423,6 +455,52 @@
       "metadataSha256": "f34e837eb62acad4a1e04df3355be94fe398c195d577bd7267baf4ec845f5aab",
       "wheelHashes": [
         "3785963de305dd09912426cb81f2d230fce98ab3521cdfe97265c8d14983128c"
+      ],
+      "requiresDist": [
+        "starlette>=0.46.0",
+        "pydantic>=2.9.0",
+        "typing-extensions>=4.8.0",
+        "typing-inspection>=0.4.2",
+        "annotated-doc>=0.0.2",
+        "opentelemetry-api>=1.44.0",
+        "opentelemetry-sdk>=1.44.0; extra == \"opentelemetry\"",
+        "opentelemetry-exporter-otlp-proto-http>=1.44.0; extra == \"opentelemetry\"",
+        "opentelemetry-sdk>=1.44.0; extra == \"standard\"",
+        "opentelemetry-exporter-otlp-proto-http>=1.44.0; extra == \"standard\"",
+        "fastapi-cli[standard]>=0.0.32; extra == \"standard\"",
+        "fastar>=0.9.0; extra == \"standard\"",
+        "httpx<1.0.0,>=0.23.0; extra == \"standard\"",
+        "httpx2>=2.0.0; extra == \"standard\"",
+        "jinja2>=3.1.5; extra == \"standard\"",
+        "python-multipart>=0.0.18; extra == \"standard\"",
+        "email-validator>=2.0.0; extra == \"standard\"",
+        "uvicorn[standard]>=0.12.0; extra == \"standard\"",
+        "pydantic-settings>=2.0.0; extra == \"standard\"",
+        "pydantic-extra-types>=2.0.0; extra == \"standard\"",
+        "opentelemetry-sdk>=1.44.0; extra == \"standard-no-fastapi-cloud-cli\"",
+        "opentelemetry-exporter-otlp-proto-http>=1.44.0; extra == \"standard-no-fastapi-cloud-cli\"",
+        "fastapi-cli[standard-no-fastapi-cloud-cli]>=0.0.32; extra == \"standard-no-fastapi-cloud-cli\"",
+        "httpx<1.0.0,>=0.23.0; extra == \"standard-no-fastapi-cloud-cli\"",
+        "httpx2>=2.0.0; extra == \"standard-no-fastapi-cloud-cli\"",
+        "jinja2>=3.1.5; extra == \"standard-no-fastapi-cloud-cli\"",
+        "python-multipart>=0.0.18; extra == \"standard-no-fastapi-cloud-cli\"",
+        "email-validator>=2.0.0; extra == \"standard-no-fastapi-cloud-cli\"",
+        "uvicorn[standard]>=0.12.0; extra == \"standard-no-fastapi-cloud-cli\"",
+        "pydantic-settings>=2.0.0; extra == \"standard-no-fastapi-cloud-cli\"",
+        "pydantic-extra-types>=2.0.0; extra == \"standard-no-fastapi-cloud-cli\"",
+        "opentelemetry-sdk>=1.44.0; extra == \"all\"",
+        "opentelemetry-exporter-otlp-proto-http>=1.44.0; extra == \"all\"",
+        "fastapi-cli[standard]>=0.0.32; extra == \"all\"",
+        "httpx<1.0.0,>=0.23.0; extra == \"all\"",
+        "httpx2>=2.0.0; extra == \"all\"",
+        "jinja2>=3.1.5; extra == \"all\"",
+        "python-multipart>=0.0.18; extra == \"all\"",
+        "itsdangerous>=1.1.0; extra == \"all\"",
+        "pyyaml>=5.3.1; extra == \"all\"",
+        "email-validator>=2.0.0; extra == \"all\"",
+        "uvicorn[standard]>=0.12.0; extra == \"all\"",
+        "pydantic-settings>=2.0.0; extra == \"all\"",
+        "pydantic-extra-types>=2.0.0; extra == \"all\""
       ]
     },
     {
@@ -432,7 +510,8 @@
       "metadataSha256": "97f4efb9cc00826f0408076983adc1a1e48e8f2cabf403aaf250f724e081440d",
       "wheelHashes": [
         "63cf8bbe7522de3bf65932fda1d9c2772064ffb3dae62d55932da54b31cb6c86"
-      ]
+      ],
+      "requiresDist": []
     },
     {
       "name": "idna",
@@ -441,6 +520,14 @@
       "metadataSha256": "e7cbd26e23ce60f6cb3a151d2adf3b1b087bb8f10ac2d9d6db70fdccbf3bb041",
       "wheelHashes": [
         "ab7ae7122974553370f0bdb919e1a960b2cd1bc1ef0276416d896db81c14582c"
+      ],
+      "requiresDist": [
+        "ruff >= 0.16.0 ; extra == \"all\"",
+        "mypy >= 1.11.2 ; extra == \"all\"",
+        "ty >= 0.0.37 ; extra == \"all\"",
+        "pytest >= 8.3.2 ; extra == \"all\"",
+        "hypothesis >= 6.141.1 ; extra == \"all\"",
+        "coverage >= 7.10.0 ; extra == \"all\""
       ]
     },
     {
@@ -450,6 +537,14 @@
       "metadataSha256": "ba45dfedc07a8e0ec5120e6f22fbc43678bd51e1a0c70c7adc29d12742fdad79",
       "wheelHashes": [
         "2d2577886906cd7293850dffa2da29119966c213bfc6ec0cecf8bf7621e1ca77"
+      ],
+      "requiresDist": [
+        "requests <3,>=2.0.0",
+        "PyJWT[crypto] <3,>=1.0.0",
+        "cryptography <51,>=2.5",
+        "pymsalruntime <0.21,>=0.20 ; (python_version >= \"3.9\" and platform_system == \"Darwin\") and extra == 'broker'",
+        "pymsalruntime <0.21,>=0.20 ; (python_version >= \"3.9\" and platform_system == \"Linux\") and extra == 'broker'",
+        "pymsalruntime <0.21,>=0.20 ; (python_version >= \"3.9\" and platform_system == \"Windows\") and extra == 'broker'"
       ]
     },
     {
@@ -459,6 +554,10 @@
       "metadataSha256": "e41bbbd91e185484780d3e809c20c2c888ce154c2c7dd475231fa1973ca3ae57",
       "wheelHashes": [
         "96d3de4d034504e969ac5e85bae8106c8373b5c6568e4c8fa7af2eca9dbe6bca"
+      ],
+      "requiresDist": [
+        "msal<2,>=1.29",
+        "portalocker<4,>=1.4; extra == \"portalocker\""
       ]
     },
     {
@@ -468,6 +567,9 @@
       "metadataSha256": "0b58654ba1b29b21bbbb90f03286d24425e752c219e556b80dae93f839b7e33f",
       "wheelHashes": [
         "2cbd737377e710ee740d261c94e93fa0f08e6d037c18f17513cc0a2d94479a34"
+      ],
+      "requiresDist": [
+        "typing-extensions>=4.5.0"
       ]
     },
     {
@@ -477,7 +579,8 @@
       "metadataSha256": "e919b291615d54a2328a0da6128cd9d95601ad04d27cec48eeb75e0d57c3b6ad",
       "wheelHashes": [
         "a076f3f489b39b43ed13563a1dafe42447445bec2e294154ec5c57fcdda4c85e"
-      ]
+      ],
+      "requiresDist": []
     },
     {
       "name": "pydantic",
@@ -486,6 +589,14 @@
       "metadataSha256": "a3cbc2d0a8c5975247e41f400eee985a9c38851db799f2496f8bb1afae32f9aa",
       "wheelHashes": [
         "3f7b347782ab7e4cf4c798496ae3a82787d9f21ec12676a9c564355eeef8daa8"
+      ],
+      "requiresDist": [
+        "annotated-types>=0.6.0",
+        "pydantic-core==2.50.4",
+        "typing-extensions>=4.16.0",
+        "typing-inspection>=0.4.4",
+        "email-validator>=2.0.0; extra == 'email'",
+        "tzdata; (platform_system == 'Windows') and extra == 'timezone'"
       ]
     },
     {
@@ -633,6 +744,9 @@
         "fb2bb5b557080da398b866408117d98fe9731a12334afd0cdff221b458cdc5dc",
         "fc04affef30be98c1f36f0c422a4061ef618fdc1dde79f5ad5458dd496fecffa",
         "ffb616d8d55965839670301dc3bae3abacff560a7e137a89056058a8a9da4d96"
+      ],
+      "requiresDist": [
+        "typing-extensions>=4.16.0"
       ]
     },
     {
@@ -642,6 +756,10 @@
       "metadataSha256": "f13089db8caff0efbdec85ab5c3fa281a3cc76d5b708c74fab427c98e1f29a0d",
       "wheelHashes": [
         "42d59d631f7768a1028a64c7ff581a9bf7519804daf91fc5b6c56e30eec5e193"
+      ],
+      "requiresDist": [
+        "typing_extensions>=4.0; python_version < \"3.11\"",
+        "cryptography>=3.4.0; extra == \"crypto\""
       ]
     },
     {
@@ -651,6 +769,14 @@
       "metadataSha256": "8622e50ffd295ed759ec793f2a009172a4ed0204bbc5e948de23111bc3d2aeae",
       "wheelHashes": [
         "2a0d60c172f83ac6ab31e4554906c0f3b3588d37b5cb939b1c061f4907e278e0"
+      ],
+      "requiresDist": [
+        "charset_normalizer<4,>=2",
+        "idna<4,>=2.5",
+        "urllib3<3,>=1.26",
+        "certifi>=2023.5.7",
+        "PySocks!=1.5.7,>=1.5.6; extra == \"socks\"",
+        "chardet<8,>=3.0.2; extra == \"use-chardet-on-py3\""
       ]
     },
     {
@@ -660,6 +786,17 @@
       "metadataSha256": "97b97206e2e6e29b5283cd401a9c8d0a75738705f3fbc7f5db1fc487dfafdc9a",
       "wheelHashes": [
         "478c0ab3b4ced6e82719849c118fa406f0278a3499c1a898cd15cd31bdc38ce4"
+      ],
+      "requiresDist": [
+        "anyio<5,>=4.0.0",
+        "typing-extensions>=4.10.0; python_version < '3.13'",
+        "httpx2>=2.0.0; extra == 'full'",
+        "httpx<0.29.0,>=0.27.0; extra == 'full'",
+        "itsdangerous; extra == 'full'",
+        "jinja2; extra == 'full'",
+        "opentelemetry-api; extra == 'full'",
+        "python-multipart>=0.0.18; extra == 'full'",
+        "pyyaml; extra == 'full'"
       ]
     },
     {
@@ -669,6 +806,9 @@
       "metadataSha256": "5143a2b62f3dcf4202e44c2b48d661a1251059f65fc4a996040278adc4a8c5eb",
       "wheelHashes": [
         "bc210535442b39e1bf2805e0c7a17dfd6a4ace760c84c7f7d16245d23a6b1c39"
+      ],
+      "requiresDist": [
+        "typing-extensions>=4.15.0"
       ]
     },
     {
@@ -678,7 +818,8 @@
       "metadataSha256": "2140da00d62dde967f52d0be0ae28444f1d6a3fe603f52c83c23988c32122d5a",
       "wheelHashes": [
         "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8"
-      ]
+      ],
+      "requiresDist": []
     },
     {
       "name": "urllib3",
@@ -687,6 +828,13 @@
       "metadataSha256": "5315e7401db3cacccd0c2ce5daf81f752a9cc3614b18c37f2b79930b7159ce2f",
       "wheelHashes": [
         "0cf3cae568d36aa9576b28dfb35f11328f1cb974ca7647d9475ebb86c75ac6e3"
+      ],
+      "requiresDist": [
+        "brotli>=1.2.0; (platform_python_implementation == 'CPython') and extra == 'brotli'",
+        "brotlicffi>=1.2.0.0; (platform_python_implementation != 'CPython') and extra == 'brotli'",
+        "h2<5,>=4; extra == 'h2'",
+        "pysocks!=1.5.7,<2.0,>=1.5.6; extra == 'socks'",
+        "backports-zstd>=1.0.0; (python_version < '3.14') and extra == 'zstd'"
       ]
     },
     {
@@ -696,6 +844,17 @@
       "metadataSha256": "a308e83961793f6114221aefe9e046ef587da0fc986c4dc50ace1ee43fbe9bcb",
       "wheelHashes": [
         "505bdb0f318731d45f1f712071fc781a8981f6847a31c902c9f5e652d4f67faf"
+      ],
+      "requiresDist": [
+        "click>=7.0",
+        "h11>=0.8",
+        "typing-extensions>=4.0; python_version < '3.11'",
+        "httptools>=0.8.0; extra == 'standard'",
+        "python-dotenv>=0.13; extra == 'standard'",
+        "pyyaml>=5.1; extra == 'standard'",
+        "uvloop>=0.15.1; (sys_platform != 'win32' and (sys_platform != 'cygwin' and platform_python_implementation != 'PyPy')) and extra == 'standard'",
+        "watchfiles>=0.20; extra == 'standard'",
+        "websockets>=13.0; extra == 'standard'"
       ]
     }
   ],

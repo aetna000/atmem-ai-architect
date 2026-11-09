@@ -34,7 +34,7 @@ def emulate(payload):
     if setting('EMULATION_ENABLED')=='0':
         return {'version':1,'status':'unavailable','checks':[],'message':'Local emulation is disabled on this server.'}
     declared_clouds={n.get('data',{}).get('provider') for n in payload.project.get('nodes',[]) if n.get('data',{}).get('implementation')=='private-object-storage'}
-    declared_structured=any(n.get('data',{}).get('provider')=='azure' and n.get('data',{}).get('implementation')=='azure-structured-app' for n in payload.project.get('nodes',[]))
+    declared_structured=any((n.get('data',{}).get('provider'),n.get('data',{}).get('implementation')) in {('azure','azure-structured-app'),('gcp','gcp-structured-app')} for n in payload.project.get('nodes',[]))
     if not declared_structured and not declared_clouds.intersection({'azure','gcp'}) and importlib.util.find_spec('moto') is None:
         return {'version':1,'status':'unavailable','checks':[],'message':'The emulation worker is not installed on this server. Ask the server operator to enable the optional Moto backend.'}
     node=shutil.which('node')
@@ -49,7 +49,7 @@ def emulate(payload):
         fingerprint=hashlib.sha256(json.dumps(digests,sort_keys=True,separators=(',',':')).encode()).hexdigest()
         schedule=json.loads(files.get('resource-schedule.json','{}'))
         cloud=schedule.get('provider')
-        structured=bool(schedule.get('azureStructuredPlan',{}).get('entries'))
+        structured=bool(schedule.get('azureStructuredPlan',{}).get('entries') or schedule.get('gcpStructuredPlan',{}).get('entries'))
         worker='structured_emulation_worker.py' if structured else 'storage_emulation_worker.py' if cloud in ('azure','gcp','ibm') else 'emulation_worker.py'
         prerequisites={'azure':('azure.storage.blob',ROOT/'.local/cloud-emulators/node_modules/.bin/azurite-blob'),'gcp':('google.cloud.storage',ROOT/'.local/cloud-emulators/fake-gcs/fake-gcs-server')}
         dependency='emulation_worker.py' if structured else 'emulation_adapters.py'

@@ -242,6 +242,30 @@
         "Requires an existing company Entra group (P1/P2 group assignment), existing RBAC-mode ACR with ARM audience acceptance, reviewed tenant/subscription and compatible regional model/version/quota. Build emitted source, push an immutable image with authorization, supply its digest.",
         "ContentLogging=false must already be approved for the model account before inference. No policy writes or automatic approvals. JWT role authorization persists until token expiry; immediate user/group revocation, Conditional Access/MFA, private networks, persistence, tenancy, payments and workflows require additional implementation/policy."
       ]
+    },
+    {
+      "id": "gcp-structured-app",
+      "provider": "gcp",
+      "service": "Google Cloud Run",
+      "implementation": "gcp-structured-app",
+      "resources": [
+        "google_cloud_run_v2_service",
+        "google_service_account",
+        "google_project_iam_custom_role",
+        "google_iap_web_cloud_run_service_iam_member"
+      ],
+      "composition": "A composed application module: generated Python 3.13 browser/API, organization IAP with company-group access and real signed-header verification, dedicated keyless runtime identity, narrow model/policy-reader role, regional Gemini transport. Existing browser --browser-https--> module. Internal managed resources belong to this module; do not duplicate them as independently provisioned blocks. Preserve unrelated scope and its implementation gaps.",
+      "configuration": {
+        "outputContract": "Same bounded instruction plus 1\u201324 flat string/number/boolean fields, no automated actions.",
+        "maxInputBytes": "1\u201320000 UTF-8 bytes, default 20000",
+        "maxOutputTokens": "32\u20134096, default 1024"
+      },
+      "limitations": [
+        "Local ES256/ASGI/scripted Google-transport tests and provider schemas/mock plans are separate from live IAP, model, image and destination evidence.",
+        "Requires an organization-owned project, existing company group, existing Artifact Registry Docker repository, built/tested immutable emitted image and compatible reviewed regional Gemini model. Nonorganization or external IdP OAuth configuration is not included.",
+        "Scoped expiring destination-owner abuse-logging review is operator-attested, not a fabricated provider API approval; runtime separately requires disabled project caching and model logging/sharing. No automatic project policy writes.",
+        "IAP headers remain valid until expiry/skew; no independent continuous directory revocation, proven MFA, persistence, tenancy, payments, public anonymous inference or durable workflows is implied. Production state/operations remain gated."
+      ]
     }
   ],
   "evidenceBoundary": "A matching contract identifies compiler capability only. Resources, edges, application behavior and destination configuration require independent validation."

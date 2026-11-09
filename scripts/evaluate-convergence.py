@@ -11,6 +11,12 @@ def validate_case_selection(selected):
     if unknown:raise ValueError('Unknown benchmark case IDs: '+', '.join(sorted(unknown)))
     if selected and len(selected)!=len(set(selected)):raise ValueError('Duplicate benchmark case IDs')
 
+def complete_client_facts(scenario,used):
+    remaining=[key for key in scenario['facts'] if key not in used]
+    if not remaining:return None
+    used.update(remaining)
+    return 'Here are the remaining project facts before we finalize the handoff. Preserve these requirements and update the system as needed. '+ ' '.join(scenario['facts'][key] for key in remaining)
+
 def bridge(payload):
     run=subprocess.run(['node',str(ROOT/'scripts/convergence-bridge.mjs')],input=json.dumps(payload),capture_output=True,text=True,cwd=ROOT,timeout=45)
     if run.returncode:raise RuntimeError('Bridge: '+run.stderr[-2000:])
@@ -41,6 +47,7 @@ async def evaluate(args):
     corpus=json.loads(CORPUS.read_text());out=pathlib.Path(args.output).resolve();out.mkdir(parents=True,exist_ok=True)
     memory=MemoryService(out/'isolated-home');model=AtMemArchitect();results=[]
     manifest={'corpusSha256':hashlib.sha256(CORPUS.read_bytes()).hexdigest(),'baseCommit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'modelProvider':args.provider,'requestedModel':args.model,'effort':args.effort,'maxTurns':args.max_turns,'cloudOperations':False,'selectedCaseIds':args.case,'sourceSnapshot':str(ROOT),'constitutionSha256':hashlib.sha256((ROOT/'CONSTITUTION.md').read_bytes()).hexdigest(),'runnerSha256':hashlib.sha256(pathlib.Path(__file__).read_bytes()).hexdigest(),'bridgeSha256':hashlib.sha256((ROOT/'scripts/convergence-bridge.mjs').read_bytes()).hexdigest(),'sourceHashes':{str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for folder in ['server','src','agent-skills','benchmarks/convergence'] for p in (ROOT/folder).rglob('*') if p.is_file() and '__pycache__' not in p.parts}}
+    manifest['interactionProtocol']='complete-client-brief-before-export-v2' if args.complete_client_brief else 'reactive-facts-v1'
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     cases=[(provider,s) for provider in corpus['providers'] for s in corpus['scenarios']]
     if args.case:cases=[x for x in cases if x[0]+'-'+x[1]['id'] in args.case]
@@ -63,7 +70,11 @@ async def evaluate(args):
                 row={'turn':turn,'question':q,'repeatedQuestion':repeated,'scopePreserved':applied['scopePreserved'],'proposal':bool(response.get('proposal')),'internalResponseRepairs':response.get('contextUsed',{}).get('responseRepairAttempts',0),'modelResponseEncodings':response.get('contextUsed',{}).get('modelResponseEncodings',[]),'modelResponseJsonBytes':response.get('contextUsed',{}).get('modelResponseJsonBytes')}
                 history += [{'role':'user','text':prompt},{'role':'assistant','text':response['message']}];turns.append(row)
                 print(case_id,'turn',turn,'nodes',len(project['nodes']),'question',bool(q),flush=True)
-                if not q:break
+                if not q:
+                    completion=complete_client_facts(scenario,used) if args.complete_client_brief else None
+                    if completion:
+                        row['clientFactCompletionQueued']=True;prompt=completion;continue
+                    break
                 prompt,technical=reply(scenario,q,used);row['technicalQuestion']=technical;technical_questions+=int(technical)
                 if repeated or technical_questions>=2:break
             except Exception as exc:
@@ -76,7 +87,7 @@ async def evaluate(args):
             package_static=bool(project['nodes']) and quality['infrastructureComplete'] and not quality['fatalFindings'] and not export['missingDependencies'] and not wrong
             package={'staticCandidate':package_static,'implementationRequired':len(missing),'connectionGaps':sum(f['code']=='connection-required' for f in quality['findings']),'fatalFindings':quality['fatalFindings'],'wrongProviderNodes':wrong,'files':len(export['files']),'tasks':export['taskCount'],'runtime':'not_yet_qualified','nearDeploymentQualified':False}
         except Exception as exc:package={'nearDeploymentQualified':False,'exportError':{'type':type(exc).__name__,'message':str(exc)[:1000]}}
-        result={'case':case_id,'scenario':scenario['id'],'difficulty':scenario['difficulty'],'provider':provider,'userExchanges':len(turns),'clarificationQuestions':sum(bool(t['question']) for t in turns),'technicalQuestions':technical_questions,'repeatedQuestions':sum(t['repeatedQuestion'] for t in turns),'convergedWithoutQuestion':bool(turns and not turns[-1]['question']),'durationSeconds':round(time.monotonic()-start,2),'turns':turns,'error':error,'package':package,'acceptance':scenario['acceptance'],'status':'requires_independent_review_and_runtime_qualification'}
+        result={'case':case_id,'scenario':scenario['id'],'difficulty':scenario['difficulty'],'provider':provider,'userExchanges':len(turns),'clarificationQuestions':sum(bool(t['question']) for t in turns),'technicalQuestions':technical_questions,'repeatedQuestions':sum(t['repeatedQuestion'] for t in turns),'convergedWithoutQuestion':bool(turns and not turns[-1]['question']),'durationSeconds':round(time.monotonic()-start,2),'clientFactKeysDelivered':sorted(used),'clientBriefComplete':set(used)==set(scenario['facts']),'turns':turns,'error':error,'package':package,'acceptance':scenario['acceptance'],'status':'requires_independent_review_and_runtime_qualification'}
         (folder/'result.json').write_text(json.dumps(result,indent=2)+'\n');results.append(result)
         (out/'results.json').write_text(json.dumps({'cases':len(results),'results':results,'cloudOperations':False},indent=2)+'\n')
         print(case_id,'export',package.get('staticCandidate'),'implementation gaps',package.get('implementationRequired'),flush=True)
@@ -104,7 +115,7 @@ async def replay_turn(args):
     print(json.dumps({k:v for k,v in metrics.items() if k!='observedHostContext'}),flush=True)
 
 if __name__=='__main__':
-    p=argparse.ArgumentParser();p.add_argument('--live',action='store_true',required=True);p.add_argument('--provider',choices=['codex','claude-code'],default='codex');p.add_argument('--model',default='default');p.add_argument('--effort',default='medium');p.add_argument('--max-turns',type=int,default=10);p.add_argument('--case',action='append');p.add_argument('--replay-turn');p.add_argument('--resume',action='store_true');p.add_argument('--output',required=True);p.add_argument('--frozen',action='store_true');args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('--live',action='store_true',required=True);p.add_argument('--provider',choices=['codex','claude-code'],default='codex');p.add_argument('--model',default='default');p.add_argument('--effort',default='medium');p.add_argument('--max-turns',type=int,default=10);p.add_argument('--case',action='append');p.add_argument('--complete-client-brief',action='store_true');p.add_argument('--replay-turn');p.add_argument('--resume',action='store_true');p.add_argument('--output',required=True);p.add_argument('--frozen',action='store_true');args=p.parse_args()
     try:validate_case_selection(args.case)
     except ValueError as error:p.error(str(error))
     if not args.frozen:

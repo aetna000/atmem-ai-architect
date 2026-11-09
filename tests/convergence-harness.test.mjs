@@ -7,6 +7,10 @@ test('invalid benchmark selectors fail before snapshotting or invoking a model',
  const r=spawnSync(path.resolve('.venv/bin/python'),['scripts/evaluate-convergence.py','--live','--case','azure-02-meeting-actions','--output',dir],{encoding:'utf8'});
  assert.notEqual(r.status,0);assert.match(r.stderr,/Unknown benchmark case IDs/);assert.equal(fs.existsSync(dir),false);
 });
+test('the stronger evaluation protocol supplies all remaining business facts once before final export',()=>{
+ const code=`import importlib.util\nspec=importlib.util.spec_from_file_location('driver','scripts/evaluate-convergence.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)\nscenario={'facts':{'location':'Stay in Australia.','users':'Ten staff.','quality':'Return explicit uncertainty.'}};used={'location'}\ntext=m.complete_client_facts(scenario,used)\nassert 'Ten staff.' in text and 'Return explicit uncertainty.' in text and 'Stay in Australia.' not in text\nassert used==set(scenario['facts'])\nassert m.complete_client_facts(scenario,used) is None\n`;
+ const r=spawnSync(path.resolve('.venv/bin/python'),['-c',code],{encoding:'utf8'});assert.equal(r.status,0,r.stderr);
+});
 test('the frozen benchmark contains 28 distinct provider/scenario cases and the requested difficulty distribution',()=>{
  assert.deepEqual(Object.keys(corpus.providers).sort(),['aws','azure','gcp','ibm']);assert.equal(corpus.scenarios.length,7);
  const cases=Object.keys(corpus.providers).flatMap(p=>corpus.scenarios.map(s=>p+'-'+s.id));assert.equal(new Set(cases).size,28);

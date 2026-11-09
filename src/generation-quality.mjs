@@ -5,7 +5,7 @@ export function generationQuality(project,plan,files){
  const config=JSON.parse(files['main.tf.json']);
  const providers=generationProviders(project),findings=[];
  const add=(code,message,componentId)=>findings.push({code,message,...(componentId?{componentId}:{})});
- const sources={aws:'hashicorp/aws',azurerm:'hashicorp/azurerm',azuread:'hashicorp/azuread',google:'hashicorp/google',ibm:'ibm-cloud/ibm'};
+ const sources={aws:'hashicorp/aws',azurerm:'hashicorp/azurerm',azuread:'hashicorp/azuread',google:'hashicorp/google','google-beta':'hashicorp/google-beta',ibm:'ibm-cloud/ibm'};
  for(const [name,body] of Object.entries(config.terraform?.required_providers||{}))if(sources[name]!==String(body.source||'').toLowerCase())add('unreviewed-provider',`Provider ${name} is not the reviewed official provider source.`);
  for(const [name,body] of Object.entries(config.provider||{}))for(const key of ['access_key','secret_key','token','client_secret','credentials','ibmcloud_api_key'])if(body?.[key])add('embedded-provider-credential',`Provider ${name} contains ${key}; use the operator credential chain.`);
  for(const [type,items] of Object.entries(config.resource||{}))for(const [name,body] of Object.entries(items))if(body?.provisioner)add('execution-hook',`${type}.${name} contains an unreviewed provisioner.`);

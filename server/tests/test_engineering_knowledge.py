@@ -8,6 +8,13 @@ class EngineeringKnowledgeTests(unittest.TestCase):
     def test_curated_sources_cover_all_clouds_with_pins_and_evidence_boundaries(self):
         rows=records();self.assertEqual({r['provider'] for r in rows},{'aws','azure','gcp','ibm'})
         for row in rows:self.assertEqual(row['evidenceLevel'],'source-reviewed');self.assertTrue(row['limitations']);self.assertEqual(len(row['source'].get('sha256','')),64) if row['source'].get('kind')=='documentation' else self.assertEqual(len(row['source']['commit']),40)
+    def test_every_authored_practice_fits_the_real_memory_admission_boundary(self):
+        import json
+        from server.memory_service import safe
+        for row in records():
+            text=json.dumps(row,sort_keys=True,ensure_ascii=False)
+            self.assertLessEqual(len(text),1900,row['id'])
+            self.assertTrue(safe(text),row['id'])
     def test_publication_is_scoped_deterministic_and_respects_opt_out(self):
         m=FakeMemory();publish(m,'test-project');self.assertEqual(len(m.values),len(records()))
         for args,kwargs in m.values:self.assertEqual(args[0],'test-project');self.assertEqual(args[1],'knowledge');self.assertTrue(kwargs['source'].startswith('https://'))

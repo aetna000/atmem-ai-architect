@@ -19,25 +19,26 @@ from emulation_worker import deny_network
 def run(folder):
     root=Path(folder).resolve()
     plan=json.loads((root/'resource-schedule.json').read_text())
-    entries=plan.get('azureStructuredPlan',{}).get('entries',[])
+    entries=[(entry,'azure') for entry in plan.get('azureStructuredPlan',{}).get('entries',[])]+[(entry,'gcp') for entry in plan.get('gcpStructuredPlan',{}).get('entries',[])]
     checks=[]
     with deny_network():
-        for entry in entries:
+        for entry,provider in entries:
             address=entry['row']['address']
             if not re.fullmatch(r'block_[0-9a-f]+',address):raise ValueError('Invalid compiler component address')
             app=root/'applications'/address
-            script=app/'azure_acceptance.py'
+            script=app/(provider+'_acceptance.py')
             old=list(sys.path)
             try:
                 sys.path.insert(0,str(app))
-                for name in ['azure_structured','structured_output']:sys.modules.pop(name,None)
+                for name in ['azure_structured','gcp_structured','structured_output','structured_http']:sys.modules.pop(name,None)
                 spec=importlib.util.spec_from_file_location('acceptance_'+address,script)
                 module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
                 log=io.StringIO()
                 result=unittest.TextTestRunner(stream=log,verbosity=1).run(unittest.defaultTestLoader.loadTestsFromModule(module))
-                checks.append({'name':'Generated Azure application JWT, HTTP, output and account-policy boundaries','passed':result.wasSuccessful() and result.testsRun>0,'testsRun':result.testsRun,'componentId':entry['row']['id'],'sourceSha256':hashlib.sha256((app/'azure_structured.py').read_bytes()).hexdigest(),'evidence':'host-runtime-cryptographic-jwt-scripted-azure-transport','output':log.getvalue()[-6000:]})
+                checks.append({'name':'Generated '+provider+' application JWT, HTTP, output and account-policy boundaries','passed':result.wasSuccessful() and result.testsRun>0,'testsRun':result.testsRun,'componentId':entry['row']['id'],'sourceSha256':hashlib.sha256((app/(provider+'_structured.py')).read_bytes()).hexdigest(),'evidence':'host-runtime-cryptographic-jwt-scripted-'+provider+'-transport','output':log.getvalue()[-6000:]})
             finally:sys.path[:]=old
-    return {'version':1,'kind':'local-structured-application-tests','backend':'host-asgi-scripted-azure','status':'passed' if checks and all(c['passed'] for c in checks) else 'failed','checks':checks,'modelMode':'scripted-fixture','cloudOperations':False,'terraformApply':'not_run','limitations':['The generated Python source executes on this host, not an Azure container image.','Ephemeral RSA JWT signatures and local ASGI requests are real; Entra key retrieval, policy and model transports are scripted, with network denied.','Azure sign-in, MFA, group assignment and token revocation, managed-identity exchange, model quality, regional capacity, container startup/scan, account plan and deployment remain unverified.','Role authorization is bounded by token expiry; this module does not implement continuous group/user revocation.']}
+    providers=sorted({provider for _,provider in entries})
+    return {'version':1,'kind':'local-structured-application-tests','backend':'host-asgi-scripted-'+('-'.join(providers)),'status':'passed' if checks and all(c['passed'] for c in checks) else 'failed','checks':checks,'modelMode':'scripted-fixture','cloudOperations':False,'terraformApply':'not_run','limitations':['Generated Python source executes on this host, not a provider container image.','Ephemeral RSA/ES256 JWT signatures and local ASGI requests are real; provider key retrieval, policy and model transports are scripted, with network denied.','Cloud sign-in, MFA, group assignment and token revocation, workload-identity exchange, model quality, regional capacity, container startup/scan, account plan and deployment remain unverified.','Token authorization is bounded by expiry/skew; these modules do not implement independent continuous group/user revocation.']}
 
 
 if __name__=='__main__':

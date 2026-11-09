@@ -86,3 +86,31 @@ the state/operations gate. This is one repaired case, not complete provider pari
 An invalid extra benchmark case selector was ignored by the old CLI while the valid
 case ran. Original evidence is retained and counts exactly one case. Unknown and
 duplicate selectors now fail before snapshotting or model invocation.
+
+## Google application adapter and complete-brief acceptance, 2026-11-10
+
+Added a separately implemented Google Cloud Run/IAP/regional Gemini composition.
+Its keyless runtime, project-scoped prediction/policy-read role, image-pulling
+platform identity, signed-header authorization and browser origin boundary are
+explicit. Google-managed service identities use the pinned official Google-beta
+provider; other resources use the pinned Google provider. The app never writes
+project-wide model privacy controls. An expiring scoped owner review covers
+abuse-monitoring terms that have no invented verification API; runtime separately
+reads cache and model logging/sharing configuration. Review evidence is attested,
+not independent provider proof. Existing project/group/registry are preserved.
+
+Shared HTTP input/output/concurrency/origin handling was extracted and Azure's
+15 emitted source regressions and provider checks rerun. Google has nine local
+cryptographic/ASGI/scripted-transport checks, four browser checks, provider schema
+and three plan-time mock tests. The live Google ticket-triage case converged in two
+exchanges with no technical questions or compiler gaps; its unchanged original
+handoff passed independent static and emitted-source/provider qualification.
+Container images, real IAP/metadata/model behavior and cloud plans are not verified.
+
+The acceptance audit found that reactive-facts runs may end before receiving
+every corpus business constraint. They remain useful engineering regressions and
+are never labeled semantically qualified. Added an explicitly versioned stronger
+protocol that submits all remaining facts as one client update before export.
+The corpus and acceptance criteria remain unchanged; preserve old results and
+avoid direct exchange/time comparisons across protocols. Final matrix acceptance
+must include every business fact and independent semantic/runtime checks.
