@@ -11,7 +11,11 @@
     "Shared four-cloud capability catalogue used by planner and exporter",
     "Relevant provider skills selected from component providers",
     "Exported generation-quality.json includes coverage, skill digests and validation boundaries",
-    "Independent emitted-resource checks catch provider mismatch and missing required resources"
+    "Independent emitted-resource checks catch provider mismatch and missing required resources",
+    "Typed supplied-image private container footprints for AWS Fargate, Azure Container Apps, Google Cloud Run, IBM Code Engine",
+    "Real provider schema validation and 16 generated mock-plan checks across four clouds",
+    "Independent TFLint integration with reduced environment and trusted config",
+    "Spec Kit implementation map and concrete task file links"
   ],
   "testsRun": [
     {
@@ -41,6 +45,26 @@
     {
       "command": "targeted server regression and shared-capability/integrity tests",
       "result": "6 passed"
+    },
+    {
+      "command": "npm test",
+      "result": "214 passed"
+    },
+    {
+      "command": "npm run build",
+      "result": "passed"
+    },
+    {
+      "command": "targeted server lint/capability/Terraform/reference tests",
+      "result": "11 passed"
+    },
+    {
+      "command": "terraform validate and terraform test on generated four-cloud container fixtures",
+      "result": "four schemas valid; 16 mock-plan tests passed; no cloud deployment"
+    },
+    {
+      "command": "TFLint v0.66.0 recommended core rules on four generated fixtures",
+      "result": "zero issues/errors; Azure unused input fixed in generator"
     }
   ],
   "remaining": [
@@ -48,7 +72,8 @@
     "Independent resource/requirement coverage verifier",
     "Concrete Spec Kit interfaces and file-level tasks",
     "Additional cloud runtime compilers and application implementations",
-    "Expand independent output verification beyond resource presence into full application/edge semantics"
+    "Expand independent output verification beyond resource presence into full application/edge semantics",
+    "Container image runtime, public routing, authorization and application-data integrations require further compiler implementations and qualification"
   ],
   "deployments": []
 }

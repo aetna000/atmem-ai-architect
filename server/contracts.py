@@ -47,7 +47,7 @@ class Data(Strict):
     service:str|None=Field(default=None,max_length=150)
     category:str|None=Field(default=None,max_length=150)
     binding:Literal['cloud-storage-principal','aws-iam-principal','aws-bedrock-model','normalized-source-contract','web-browser','existing-service']|None=None
-    implementation:Literal['private-object-storage','rag-web-app','rag-user-pool','bounded-keyword-rag','iam-rag-api','bounded-rag-catalog','text-statistics','bedrock-summary','async-word-count','sqs-standard','sqs-dead-letter','word-count-results']|None=None
+    implementation:Literal['container-service','private-object-storage','rag-web-app','rag-user-pool','bounded-keyword-rag','iam-rag-api','bounded-rag-catalog','text-statistics','bedrock-summary','async-word-count','sqs-standard','sqs-dead-letter','word-count-results']|None=None
 
     @model_validator(mode='after')
     def named_component(self):

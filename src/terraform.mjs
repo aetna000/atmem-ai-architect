@@ -1,3 +1,5 @@
+import {hasContainers} from './container-contracts.mjs';
+import {containerTerraform} from './container-terraform.mjs';
 import {isAwsGeneration} from './generation-provider.mjs';
 import {incompleteTerraform} from './incomplete-terraform.mjs';
 import {existingReferenceFiles} from './existing-references.mjs';
@@ -17,6 +19,7 @@ import { resourcePlan } from "./resources.mjs";
 import { blockers, review } from "./review.mjs";
 
 export function terraformSketch(project, environment = "staging") {
+  if(hasContainers(project))return containerTerraform(project,resourcePlan(project),environment);
   if(hasCrossCloud(project))return crossCloudTerraform(project,environment);
   const plan = resourcePlan(project);
   if(!isAwsGeneration(project))return incompleteTerraform(project,plan,environment);

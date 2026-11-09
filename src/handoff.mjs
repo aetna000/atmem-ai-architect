@@ -70,6 +70,7 @@ const PROFILES = {
  ],
 };
 export function engineeringSteps(row) {
+ if(row.containerContract)return [`Review terraform/main.tf.json resource ${row.containerContract.type}.${row.address} and the associated variables in deployment.tfvars.json.example.`, `Build the supplied application image, pin ${row.address}_image to its SHA-256 digest, and verify it listens on port 8080; infrastructure does not establish application behavior.`, 'Run terraform validate and terraform test using tests/container.tftest.hcl; review private ingress, runtime identity, registry access, platform prerequisites and destination-specific startup/rollback tests before applying.'];
  if(row.externalReference)return ['Preserve the external browser; no resource or import is required.','Define and test its HTTPS/application interactions, including denied access and unavailable service behavior.'];
  if(row.existingServiceReference)return ['Preserve this externally managed service without creating or importing it.','Document its owner, endpoint, identity and integration contract; test actual connections separately.'];
  if(row.reference)return ['Bind the required Terraform ARN input to a reviewed existing same-account IAM role or user; never recreate the identity.','Verify scoped bucket/object permissions, effective boundaries and organization policies, versioned reads and denied access; the generated grant is not account-access evidence.'];

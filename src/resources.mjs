@@ -1,3 +1,4 @@
+import {hasContainers,containerContract} from './container-contracts.mjs';
 import {existingReference} from './existing-references.mjs';
 import {hasCrossCloud,crossCloudPlan} from './cross-cloud-storage.mjs';
 import {webPlan} from './rag-web.mjs';
@@ -80,18 +81,21 @@ export function resourcePlan(project) {
     row.reference=accessPlan.bindings.some(b=>b.id===row.id);
     row.externalReference=row.existing && row.provider==="tools" && nodes.find(n=>n.id===row.id)?.data.binding==="web-browser";
     row.existingServiceReference=existingReference(nodes.find(n=>n.id===row.id));
-    row.implemented=!!row.existingServiceReference||row.externalReference||row.foundation||row.compute||row.reference||browserPlan.componentIds.includes(row.id)||connectorPlan.sources.some(s=>s.id===row.id)||retrievalPlan.componentIds.includes(row.id)||modelPlan.modelIds.includes(row.id)||modelPlan.entries.some(e=>e.worker.id===row.id)||asyncPlan.componentIds.includes(row.id);
+    row.containerContract=containerContract(nodes.find(n=>n.id===row.id));
+    row.implemented=!!row.containerContract||!!row.existingServiceReference||row.externalReference||row.foundation||row.compute||row.reference||browserPlan.componentIds.includes(row.id)||connectorPlan.sources.some(s=>s.id===row.id)||retrievalPlan.componentIds.includes(row.id)||modelPlan.modelIds.includes(row.id)||modelPlan.entries.some(e=>e.worker.id===row.id)||asyncPlan.componentIds.includes(row.id);
     if(asyncPlan.componentIds.includes(row.id))row.terraform="Typed asynchronous pipeline implementation generated";
     if(modelPlan.modelIds.includes(row.id))row.terraform="Existing regional foundation model — required model ID input generated";
     if(modelPlan.entries.some(e=>e.worker.id===row.id))row.terraform="Bedrock summary handler, scoped model permission and caller binding generated";
     if(retrievalPlan.componentIds.includes(row.id))row.terraform="Bounded IAM-authenticated RAG implementation generated";
     if(connectorPlan.sources.some(s=>s.id===row.id))row.terraform="Local source-contract runner generated; native vendor integration unverified";
     if(browserPlan.componentIds.includes(row.id))row.terraform="Private web hosting and Cognito authorization-code/PKCE sign-in generated";
+    if(row.containerContract){row.service=row.containerContract.service;row.resources=[row.containerContract.type];row.terraform="Native private container footprint generated; supplied image and application behavior require validation";}
     if(row.compute){row.terraform="Text-statistics function, execution role, logs, version and alias generated";row.resources=["aws_lambda_function","aws_iam_role","aws_iam_role_policy","aws_cloudwatch_log_group","aws_lambda_alias","aws_lambda_permission"];}
     if(row.externalReference)row.terraform="External browser — no infrastructure to provision; connection behavior still requires validation";
     if(row.existingServiceReference){row.resources=[];row.terraform="Existing service reference — preserved without provisioning or import; behavior and connections remain unverified";}
     if(row.reference){row.terraform="Existing IAM principal — required ARN input generated";row.service="Existing AWS IAM principal";row.selection="Explicit principal binding";}
   }
+  if(hasContainers(project))for(const row of rows)if(!row.existing&&!row.containerContract){row.implemented=false;row.terraform="Container compiler composition does not implement this required component";}
   const connections = project.edges.filter((e) => ids.has(e.source) && ids.has(e.target)).map((e) => ({ id: e.id, source: e.source, target: e.target, data: e.label || "data", generated: (accessPlan.connections.some(c=>c.id===e.id)||asyncPlan.edgeIds.includes(e.id)||modelPlan.edgeIds.includes(e.id)||retrievalPlan.edgeIds.includes(e.id)||connectorPlan.connections.some(c=>c.id===e.id)||browserPlan.edgeIds.includes(e.id)), status: (accessPlan.connections.some(c=>c.id===e.id)||asyncPlan.edgeIds.includes(e.id)||modelPlan.edgeIds.includes(e.id)||retrievalPlan.edgeIds.includes(e.id)||connectorPlan.connections.some(c=>c.id===e.id)||browserPlan.edgeIds.includes(e.id)) ? "Scoped access policy generated; account and runtime verification required" : "Application integration and permissions not implemented" }));
   const missingStorageAccess=rows.filter(r=>(r.foundation||r.compute||r.summary||r.api)&&!accessPlan.connections.some(e=>e.target===r.id)&&!browserPlan.entries.some(e=>e.api.id===r.id));
   const gaps = [

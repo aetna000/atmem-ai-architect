@@ -1,3 +1,4 @@
+from .generation_lint import lint_generated
 from .settings import setting
 """Local schema validation of server-generated Terraform. Never plan/apply or read cloud credentials."""
 import asyncio
@@ -54,6 +55,11 @@ def validate(payload):
             checks.append({'name': name, 'passed': result.returncode == 0, 'output': (result.stdout+'\n'+result.stderr)[-16000:]})
             if result.returncode:
                 return {'status': 'failed', 'checks': checks, 'message': 'Terraform checks failed. Review the diagnostics.'}
+        lint_binary=setting('TFLINT_BIN')
+        if lint_binary:
+            lint=lint_generated(folder,lint_binary)
+            checks.append(lint)
+            if not lint['passed']:return {'status':'failed','checks':checks,'fileDigests':file_digests,'message':'Independent Terraform lint found issues. Regenerate after fixing the compiler.'}
         local_tests=[]
         if any(name.startswith('app-tests/') and name.endswith('_test.py') for name in files):
             local_tests.append(('Generated application acceptance tests',[sys.executable,'-I','-m','unittest','discover','-s','app-tests','-p','*_test.py','-v']))
