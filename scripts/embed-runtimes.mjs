@@ -7,3 +7,5 @@ fs.writeFileSync(new URL('../src/runtime/rag-sources.json',import.meta.url),JSON
 fs.writeFileSync(new URL('../src/runtime/structured-source.json',import.meta.url),JSON.stringify(fs.readFileSync(new URL('../src/runtime/structured_output.py',import.meta.url),'utf8'))+'\n');
 
 fs.writeFileSync(new URL('../src/runtime/structured-web-source.json',import.meta.url),JSON.stringify(fs.readFileSync(new URL('../src/runtime/structured-web-app.js',import.meta.url),'utf8'))+'\n');
+
+fs.writeFileSync(new URL('../src/runtime/azure-sources.json',import.meta.url),JSON.stringify(Object.fromEntries(['azure_structured.py','azure_acceptance.py','structured_output.py'].map(name=>[name,fs.readFileSync(new URL('../src/runtime/'+name,import.meta.url),'utf8')])),null,2)+'\n');

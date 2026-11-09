@@ -228,6 +228,35 @@
       ],
       "reviewedAt": "2026-11-10",
       "status": "active"
+    },
+    {
+      "id": "azure-structured-application-composition",
+      "provider": "azure",
+      "topic": "authenticated-structured-ai-application",
+      "practice": "A composed internal application must implement the API and browser alongside hosting: verify the Entra token signature, issuer/tenant, API audience, authorized browser client, delegated scope and assigned user role; never trust caller-provided identity headers. Use managed workload identity and account-scoped model permissions. Package real source with locked dependencies and exact build/image inputs. Keep authorization outside model text and validate output fields before returning them.",
+      "source": {
+        "kind": "documentation",
+        "url": "https://learn.microsoft.com/en-us/entra/identity-platform/claims-validation",
+        "sha256": "d1abf4203e2a234a5ec2f9467ca6c33a2d7685cff6c38c0fb54e55c4b98dbf87",
+        "retrievedAt": "2026-11-09T19:09:01.198180+00:00",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "localEvidence": [
+        "src/azure-structured.mjs",
+        "src/runtime/azure_structured.py",
+        "src/runtime/azure_acceptance.py",
+        "scripts/qualify-azure-structured.mjs",
+        "server/tests/test_azure_emulation.py"
+      ],
+      "limitations": [
+        "Local RSA/ASGI and scripted model/policy transport tests, plus native AzureRM/AzureAD schemas and mock plans; no deployed identity or model behavior proven.",
+        "JWT roles remain usable until token expiry; no continuous revocation or tenant MFA policy is established.",
+        "Account data handling requires approved ContentLogging=false before inference. Image startup/scan, real Entra flow, managed-identity exchange, model quality, region availability and authorized account plan remain pending.",
+        "Existing company group and RBAC-mode ACR are destination prerequisites; private networks, persistence, tenancy and workflows require more capabilities."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
     }
   ]
 }

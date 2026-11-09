@@ -4,6 +4,13 @@ from unittest.mock import patch
 ROOT=pathlib.Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT))
 CORPUS=ROOT/'benchmarks/convergence/scenarios.json'
 
+def validate_case_selection(selected):
+    corpus=json.loads(CORPUS.read_text())
+    known={provider+'-'+scenario['id'] for provider in corpus['providers'] for scenario in corpus['scenarios']}
+    unknown=set(selected or [])-known
+    if unknown:raise ValueError('Unknown benchmark case IDs: '+', '.join(sorted(unknown)))
+    if selected and len(selected)!=len(set(selected)):raise ValueError('Duplicate benchmark case IDs')
+
 def bridge(payload):
     run=subprocess.run(['node',str(ROOT/'scripts/convergence-bridge.mjs')],input=json.dumps(payload),capture_output=True,text=True,cwd=ROOT,timeout=45)
     if run.returncode:raise RuntimeError('Bridge: '+run.stderr[-2000:])
@@ -98,6 +105,8 @@ async def replay_turn(args):
 
 if __name__=='__main__':
     p=argparse.ArgumentParser();p.add_argument('--live',action='store_true',required=True);p.add_argument('--provider',choices=['codex','claude-code'],default='codex');p.add_argument('--model',default='default');p.add_argument('--effort',default='medium');p.add_argument('--max-turns',type=int,default=10);p.add_argument('--case',action='append');p.add_argument('--replay-turn');p.add_argument('--resume',action='store_true');p.add_argument('--output',required=True);p.add_argument('--frozen',action='store_true');args=p.parse_args()
+    try:validate_case_selection(args.case)
+    except ValueError as error:p.error(str(error))
     if not args.frozen:
         out=pathlib.Path(args.output).resolve();snapshot=out/'source';snapshot.mkdir(parents=True,exist_ok=True)
         if not (snapshot/'scripts/evaluate-convergence.py').exists():

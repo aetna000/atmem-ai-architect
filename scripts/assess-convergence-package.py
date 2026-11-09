@@ -8,7 +8,7 @@ import hashlib
 import json
 from pathlib import Path, PurePosixPath
 
-PREFIXES = {'aws': 'aws_', 'azure': 'azurerm_', 'gcp': 'google_', 'ibm': 'ibm_'}
+PREFIXES = {'aws': 'aws_', 'azure': ('azurerm_', 'azuread_'), 'gcp': 'google_', 'ibm': 'ibm_'}
 
 def assess(case):
     case = Path(case).resolve()

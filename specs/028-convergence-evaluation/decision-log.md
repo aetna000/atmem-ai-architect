@@ -59,3 +59,30 @@ to repair a tool budget or to narrow a complete brief.
 
 Existing-reference contradictions now fail before resource generation, rather than
 allowing a reference binding to create replacement storage or another deployment.
+
+## Azure connected application repair, 2026-11-10
+
+Added an explicit composed `azure-structured-app` capability with emitted Python 3.13
+application/browser source, hash-locked runtime and test dependencies, a pinned official
+container base, native App Service/model resources, managed identity, scoped permissions,
+and single-tenant Entra API/browser registrations. It requires an existing access group
+and reviewed ACR rather than recreating either. Each composed block owns its internal
+resources explicitly; unrelated blocks and untyped integrations remain implementation gaps.
+
+Local source tests exercise real JWT signatures, wrong identity/audience/scope/roles,
+ASGI requests, input/output boundaries and scripted account-policy/model faults. The
+runtime fails before sending input when the approved account data-handling capability
+cannot be verified. It never writes that account-wide policy. Role claims authorize
+until expiry; continuous revocation and destination MFA are not silently promised.
+
+The live Azure ticket-triage case converged in two exchanges with zero technical
+questions, zero compiler gaps and an independently consistent original handoff.
+Its exact exported source, dependency versions, provider schemas and mock plans passed
+local qualification. The current product emulation runs 15 emitted source tests with
+external sockets denied. Container image startup/scan, live Entra/managed identity,
+actual model quality and authorized cloud plans remain unverified. Production retains
+the state/operations gate. This is one repaired case, not complete provider parity.
+
+An invalid extra benchmark case selector was ignored by the old CLI while the valid
+case ran. Original evidence is retained and counts exactly one case. Unknown and
+duplicate selectors now fail before snapshotting or model invocation.

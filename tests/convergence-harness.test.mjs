@@ -2,6 +2,11 @@ import test from 'node:test';import assert from 'node:assert/strict';import fs f
 import {keepEngagement} from '../src/engagement.mjs';import {structuredWebProject} from './fixtures/structured-web-project.mjs';
 const corpus=JSON.parse(fs.readFileSync(new URL('../benchmarks/convergence/scenarios.json',import.meta.url)));
 const bridge=request=>{const r=spawnSync('node',['scripts/convergence-bridge.mjs'],{input:JSON.stringify(request),encoding:'utf8'});assert.equal(r.status,0,r.stderr);return JSON.parse(r.stdout);};
+test('invalid benchmark selectors fail before snapshotting or invoking a model',()=>{
+ const dir=path.join(os.tmpdir(),'atmem-invalid-case-'+Date.now());
+ const r=spawnSync(path.resolve('.venv/bin/python'),['scripts/evaluate-convergence.py','--live','--case','azure-02-meeting-actions','--output',dir],{encoding:'utf8'});
+ assert.notEqual(r.status,0);assert.match(r.stderr,/Unknown benchmark case IDs/);assert.equal(fs.existsSync(dir),false);
+});
 test('the frozen benchmark contains 28 distinct provider/scenario cases and the requested difficulty distribution',()=>{
  assert.deepEqual(Object.keys(corpus.providers).sort(),['aws','azure','gcp','ibm']);assert.equal(corpus.scenarios.length,7);
  const cases=Object.keys(corpus.providers).flatMap(p=>corpus.scenarios.map(s=>p+'-'+s.id));assert.equal(new Set(cases).size,28);

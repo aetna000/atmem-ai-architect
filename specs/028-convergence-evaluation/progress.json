@@ -15,8 +15,8 @@
     "CV-003 full 28-case baseline with original source/transcripts/exports and independent static assessments"
   ],
   "inProgress": [
-    "CV-004 first repair cycle and native reruns",
-    "CV-005 connected provider capability expansion"
+    "CV-004 repeated affected-case repairs; full 28-case acceptance remains pending",
+    "CV-005 Azure connected structured application source and local qualification added; GCP/IBM and shared durable capabilities pending"
   ],
   "evidence": [
     "specs/028-convergence-evaluation/evidence/20261110-first-repair",
@@ -24,13 +24,14 @@
     ".local/convergence-runs/iteration-v2-20261110",
     ".local/convergence-runs/regenerated-v6-20261110",
     ".local/convergence-runs/iteration-v5-enterprise-20261110",
-    "specs/028-convergence-evaluation/evidence/20261110-baseline-complete"
+    "specs/028-convergence-evaluation/evidence/20261110-baseline-complete",
+    "specs/028-convergence-evaluation/evidence/20261110-azure-application"
   ],
   "limitations": [
     "The wider 28-project outcome remains unfinished. No claim of world-leading quality or four-provider connected-application parity.",
     "The AWS simple case now has a generated connected implementation and observed local qualification; real model quality, Cognito and account policy tests were not run.",
     "Unsupported connected applications, durable workflows, tenant/credit systems and complex provider integrations remain generator work.",
-    "Current standalone package runtime qualification supports AWS Python/web only; other provider packages remain failures until actual implementation and qualification."
+    "Connected source/runtime qualification now supports the AWS structured composition and Azure structured App Service module. Azure image startup/scan and live identity/model/account checks remain pending; GCP/IBM connected applications and durable workflows are unfinished."
   ],
   "calibration": {
     "case": "aws-01-ticket-triage",
@@ -41,8 +42,8 @@
   },
   "baselineRun": ".local/convergence-runs/baseline-v1-20261110",
   "foundationValidation": {
-    "javascriptTests": 260,
-    "serverTests": 147,
+    "javascriptTests": 265,
+    "serverTests": 149,
     "build": "passed",
     "workIntakeBrowser": "passed",
     "emulationGuidanceBrowser": "passed",
@@ -53,11 +54,14 @@
     "nativeAwsSimpleBuildProviderSchemaAndMocks": "passed",
     "generatedPythonApplicationTests": "passed using Python 3.13 and vendored SDK",
     "productStructuredEmulation": "passed with scripted identity/policy/model fixtures",
-    "cloudDeployment": false
+    "cloudDeployment": false,
+    "nativeAzureSimpleExportStaticAssessment": "passed",
+    "nativeAzureSimpleSourceProviderSchemaAndMocks": "passed",
+    "azureProductEmulation": "15 generated source tests passed with network denied; not cloud authentication or model evidence"
   },
   "baselineCompletedCases": 28,
   "baselineQualifiedCases": 0,
-  "updatedAt": "2026-11-09T18:40:37.443016+00:00",
+  "updatedAt": "2026-11-09T19:09:01.198180+00:00",
   "baselineErrors": {
     "ValidationError": 4,
     "TimeoutError": 6

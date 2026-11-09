@@ -1,4 +1,6 @@
 import {CLOUD_PROVIDER_LOCKS} from './cloud-provider-locks.mjs';
+import {azureStructuredTerraform} from './azure-structured.mjs';
+import {generationProviders} from './generation-provider.mjs';
 import {compileStructuredApi} from './structured-api.mjs';
 import {generationQuality} from './generation-quality.mjs';
 import {hasContainers} from './container-contracts.mjs';
@@ -25,6 +27,7 @@ function compileTerraform(project, environment = "staging") {
   if(hasContainers(project))return containerTerraform(project,resourcePlan(project),environment);
   if(hasCrossCloud(project))return crossCloudTerraform(project,environment);
   const plan = resourcePlan(project);
+  if(generationProviders(project).join(',')==='azure'&&plan.azureStructuredPlan.entries.length)return azureStructuredTerraform(project,plan,environment);
   if(!isAwsGeneration(project))return incompleteTerraform(project,plan,environment);
   const env = ["production","qualification"].includes(environment) ? environment : "staging";
   const resources = { terraform_data: { review_gate: {

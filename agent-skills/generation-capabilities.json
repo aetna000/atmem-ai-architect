@@ -218,6 +218,30 @@
       "resources": [
         "aws_cognito_user_pool"
       ]
+    },
+    {
+      "id": "azure-structured-app",
+      "provider": "azure",
+      "service": "Azure App Service",
+      "implementation": "azure-structured-app",
+      "resources": [
+        "azurerm_linux_web_app",
+        "azurerm_service_plan",
+        "azurerm_cognitive_account",
+        "azurerm_cognitive_deployment",
+        "azuread_application_registration"
+      ],
+      "composition": "A composed application module: Python 3.13 API and browser, two single-tenant Entra app registrations, delegated API scope and WorkspaceUser role, existing group assignment, user-assigned workload identity, regional Standard Azure OpenAI account/deployment. Existing browser --browser-https--> module. Do not also draw its internal managed services as separately provisioned duplicates. Independent extra blocks and integrations remain required scope.",
+      "configuration": {
+        "outputContract": "Same bounded flat contract as bedrock-structured: instruction and 1\u201324 string/number/boolean fields; no automated actions.",
+        "maxInputBytes": "1\u201320000 UTF-8 bytes, default 20000",
+        "maxOutputTokens": "32\u20134096, default 1024"
+      },
+      "limitations": [
+        "Local cryptographic/ASGI/scripted transport tests and native provider schema/mock plans are separate from destination verification. Container image startup, model quality and Azure account tests not established.",
+        "Requires an existing company Entra group (P1/P2 group assignment), existing RBAC-mode ACR with ARM audience acceptance, reviewed tenant/subscription and compatible regional model/version/quota. Build emitted source, push an immutable image with authorization, supply its digest.",
+        "ContentLogging=false must already be approved for the model account before inference. No policy writes or automatic approvals. JWT role authorization persists until token expiry; immediate user/group revocation, Conditional Access/MFA, private networks, persistence, tenancy, payments and workflows require additional implementation/policy."
+      ]
     }
   ],
   "evidenceBoundary": "A matching contract identifies compiler capability only. Resources, edges, application behavior and destination configuration require independent validation."
