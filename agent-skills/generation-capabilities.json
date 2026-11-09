@@ -239,7 +239,7 @@
       },
       "limitations": [
         "Local cryptographic/ASGI/scripted transport tests and native provider schema/mock plans are separate from destination verification. Container image startup, model quality and Azure account tests not established.",
-        "Requires an existing company Entra group (P1/P2 group assignment), existing RBAC-mode ACR with ARM audience acceptance, reviewed tenant/subscription and compatible regional model/version/quota. Build emitted source, push an immutable image with authorization, supply its digest.",
+        "Requires an existing company Entra group (P1/P2 group assignment), existing RBAC-mode ACR with ARM audience acceptance, reviewed tenant/subscription and structured-output-compatible regional model/version/quota. Build emitted source, push an immutable image with authorization, supply its digest.",
         "ContentLogging=false must already be approved for the model account before inference. No policy writes or automatic approvals. JWT role authorization persists until token expiry; immediate user/group revocation, Conditional Access/MFA, private networks, persistence, tenancy, payments and workflows require additional implementation/policy."
       ]
     },
@@ -265,6 +265,31 @@
         "Requires an organization-owned project, existing company group, existing Artifact Registry Docker repository, built/tested immutable emitted image and compatible reviewed regional Gemini model. Nonorganization or external IdP OAuth configuration is not included.",
         "Scoped expiring destination-owner abuse-logging review is operator-attested, not a fabricated provider API approval; runtime separately requires disabled project caching and model logging/sharing. No automatic project policy writes.",
         "IAP headers remain valid until expiry/skew; no independent continuous directory revocation, proven MFA, persistence, tenancy, payments, public anonymous inference or durable workflows is implied. Production state/operations remain gated."
+      ]
+    },
+    {
+      "id": "ibm-structured-app",
+      "provider": "ibm",
+      "service": "IBM Code Engine",
+      "implementation": "ibm-structured-app",
+      "resources": [
+        "ibm_code_engine_app",
+        "ibm_resource_instance",
+        "ibm_appid_application",
+        "ibm_iam_trusted_profile",
+        "ibm_iam_trusted_profile_link"
+      ],
+      "composition": "Composed Python 3.13 browser/API on Code Engine with NEW owned App ID tenant, admin-enrolled Cloud Directory users, scoped role access, PKCE and signed JWT verification; dedicated trusted profile linked to the exact compute app, regional watsonx Text Chat. Existing browser --browser-https--> module. Do not duplicate internal managed resources; preserve unrelated scope and gaps.",
+      "configuration": {
+        "outputContract": "Instruction and 1\u201324 bounded flat string/number/boolean fields, no automated actions.",
+        "maxInputBytes": "1\u201320000 UTF-8 bytes, default 20000",
+        "maxOutputTokens": "32\u20134096, default 1024"
+      },
+      "limitations": [
+        "Existing Code Engine project, authorized private-registry pull-secret NAME, registry namespace, watsonx data-platform project and runtime instance are prerequisites. Build/test/scan emitted image and publish only with authorization. Verify current regional model/plan/quotas/costs.",
+        "App ID tenant initially admits no application users. Engineer/admin enrolls staff securely and adds exact subjects. No existing company SSO, MFA, immediate JWT revocation or global logout is implemented. Do not select for an existing-SSO requirement without its separate adapter.",
+        "Trusted-profile instance-scoped pm-20 Writer includes broader runtime operations; project collaborator membership is separate. No account-wide Manager/Admin or static API key. Scoped expiring retention review is operator-attested, not a provider approval API.",
+        "Local cryptographic/HTTP/SDK/scripted transport tests and provider mocks do not prove live sign-in, IAM exchange, model quality or deployment. Persistence, tenancy, credits and workflows are separate required work."
       ]
     }
   ],

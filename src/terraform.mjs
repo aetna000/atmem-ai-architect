@@ -1,3 +1,4 @@
+import {ibmStructuredTerraform} from './ibm-structured.mjs';
 import {CLOUD_PROVIDER_LOCKS} from './cloud-provider-locks.mjs';
 import {azureStructuredTerraform} from './azure-structured.mjs';
 import {gcpStructuredTerraform} from './gcp-structured.mjs';
@@ -30,6 +31,7 @@ function compileTerraform(project, environment = "staging") {
   const plan = resourcePlan(project);
   if(generationProviders(project).join(',')==='azure'&&plan.azureStructuredPlan.entries.length)return azureStructuredTerraform(project,plan,environment);
   if(generationProviders(project).join(',')==='gcp'&&plan.gcpStructuredPlan.entries.length)return gcpStructuredTerraform(project,plan,environment);
+  if(generationProviders(project).join(',')==='ibm'&&plan.ibmStructuredPlan.entries.length)return ibmStructuredTerraform(project,plan,environment);
   if(!isAwsGeneration(project))return incompleteTerraform(project,plan,environment);
   const env = ["production","qualification"].includes(environment) ? environment : "staging";
   const resources = { terraform_data: { review_gate: {

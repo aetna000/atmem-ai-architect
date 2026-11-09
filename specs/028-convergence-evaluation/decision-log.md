@@ -114,3 +114,29 @@ protocol that submits all remaining facts as one client update before export.
 The corpus and acceptance criteria remain unchanged; preserve old results and
 avoid direct exchange/time comparisons across protocols. Final matrix acceptance
 must include every business fact and independent semantic/runtime checks.
+
+## IBM composition, isolated SDKs and actual schema qualification, 2026-11-10
+
+Added an explicit IBM Code Engine composition, preserving existing project,
+registry/pull-secret and watsonx project/runtime boundaries. User authorization
+uses a new owned App ID tenant, admin enrollment and process scope; workload
+identity uses an exact compute-resource trusted-profile link and instance-scoped
+Writer access. Project collaborator authorization remains a separate destination
+prerequisite. No static application API key, fabricated approval API, existing
+SSO/MFA, immediate revocation or global-logout behavior is claimed.
+
+IBM's live complete-brief ticket case converged in three exchanges without a
+technical question; its exact source/provider checks and regenerated Linux image
+checks pass. Shared acceptance now exercises five simultaneous requests, failure
+capacity recovery and the actual exported field schema through each model adapter.
+Azure uses documented strict JSON Schema output; compatible model selection and
+independent local result validation remain required. Original/failed exports are
+retained. Shared SDK installation revealed a real dateutil conflict, so IBM gets
+an isolated worker and missing dependencies cannot be reported as passed checks.
+
+Image scanning drove a shared hash-pinned base/package update and removal of
+unneeded installers. The exact latest three images still have 47 unfixed high
+findings each; zero critical/fixable-high findings is not a security completion
+claim. Evidence is in evidence/20261110-ibm-application. The next work remains public
+retrieval with conditional authorized updates/deletes, then native permission-aware
+connectors and durable workflows/tenancy. Full 28-case/held-out acceptance is open.

@@ -19,7 +19,7 @@ try{
   const bytes=fs.readFileSync(path.join(folder,name));if(createHash('sha256').update(bytes).digest('hex')!==digest)throw Error('Original export digest mismatch: '+name);
   const target=path.join(dir,relative);fs.mkdirSync(path.dirname(target),{recursive:true});fs.writeFileSync(target,bytes);copied[relative]=digest;
  }
- const project=JSON.parse(fs.readFileSync(path.join(caseDir,'project.json')));if(!['aws','azure','gcp'].includes(project.provider))throw Error('This runtime qualifier currently supports AWS Python/web and Azure/Google structured application compositions only');
+ const project=JSON.parse(fs.readFileSync(path.join(caseDir,'project.json')));if(!['aws','azure','gcp','ibm'].includes(project.provider))throw Error('This runtime qualifier currently supports AWS Python/web and Azure/Google structured application compositions only');
  let auxiliaryProviderLock=false;
  if(project.provider==='aws'){
   if(!fs.existsSync(path.join(dir,'.terraform.lock.hcl'))){fs.writeFileSync(path.join(dir,'.terraform.lock.hcl'),CLOUD_PROVIDER_LOCKS.aws);auxiliaryProviderLock=true;}

@@ -33,3 +33,13 @@ business facts as one final client update before export, tests whether the engin
 reconciles them, and labels the protocol in the manifest. It changes no scenario or
 acceptance criterion. Use this protocol for the final 28-case acceptance run; do not
 compare its exchange/time metrics directly to reactive-facts runs without that caveat.
+
+Next connected-block increment: a public-only FAQ catalog with native object-store
+read access, authorized conditional editor writes, full 30 KB articles, citations
+and abstention. Read current source versions before retrieval and recheck before
+returning an in-flight answer; updates/deletions must not serve stale results.
+Keep public ingestion separate from private enterprise source permissions. Qualify
+the shared core, each provider's identity/storage/model transport, actual emitted
+source/images, concurrent updates and the complete business brief before counting
+a project. Then expand durable job/approval/idempotency and tenant-credit blocks;
+none is fulfilled by naming a queue/database or emitting an empty review gate.

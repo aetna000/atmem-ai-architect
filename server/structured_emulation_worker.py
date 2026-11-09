@@ -19,7 +19,7 @@ from emulation_worker import deny_network
 def run(folder):
     root=Path(folder).resolve()
     plan=json.loads((root/'resource-schedule.json').read_text())
-    entries=[(entry,'azure') for entry in plan.get('azureStructuredPlan',{}).get('entries',[])]+[(entry,'gcp') for entry in plan.get('gcpStructuredPlan',{}).get('entries',[])]
+    entries=[(entry,'azure') for entry in plan.get('azureStructuredPlan',{}).get('entries',[])]+[(entry,'gcp') for entry in plan.get('gcpStructuredPlan',{}).get('entries',[])]+[(entry,'ibm') for entry in plan.get('ibmStructuredPlan',{}).get('entries',[])]
     checks=[]
     with deny_network():
         for entry,provider in entries:
@@ -30,7 +30,7 @@ def run(folder):
             old=list(sys.path)
             try:
                 sys.path.insert(0,str(app))
-                for name in ['azure_structured','gcp_structured','structured_output','structured_http']:sys.modules.pop(name,None)
+                for name in ['azure_structured','gcp_structured','ibm_structured','policy_review','structured_output','structured_http','http_acceptance','export_contract_acceptance']:sys.modules.pop(name,None)
                 spec=importlib.util.spec_from_file_location('acceptance_'+address,script)
                 module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module)
                 log=io.StringIO()

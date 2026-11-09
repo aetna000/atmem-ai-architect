@@ -5,11 +5,12 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import {spawnSync} from 'node:child_process';
 import {azureStructuredProject} from '../tests/fixtures/azure-structured-project.mjs';
+import {ibmStructuredProject} from '../tests/fixtures/ibm-structured-project.mjs';
 import {gcpStructuredProject} from '../tests/fixtures/gcp-structured-project.mjs';
 import {terraformSketch} from '../src/terraform.mjs';
-const provider=process.argv[2];if(!['azure','gcp'].includes(provider))throw Error('Choose azure or gcp');
+const provider=process.argv[2];if(!['azure','gcp','ibm'].includes(provider))throw Error('Choose azure, gcp or ibm');
 const root=path.resolve('.'),out=path.resolve(process.argv[3]||'.local/'+provider+'-structured-qualification'),tmp=fs.mkdtempSync('/tmp/ast-');
-const files=terraformSketch(provider==='azure'?azureStructuredProject():gcpStructuredProject()),checks=[];
+const files=terraformSketch(provider==='azure'?azureStructuredProject():provider==='gcp'?gcpStructuredProject():ibmStructuredProject()),checks=[];
 fs.mkdirSync(out,{recursive:true});
 for(const [name,body] of Object.entries(files)){const p=path.join(out,name);fs.mkdirSync(path.dirname(p),{recursive:true});fs.writeFileSync(p,body);}
 const env={PATH:process.env.PATH,HOME:tmp,TMPDIR:tmp,TF_IN_AUTOMATION:'1',CHECKPOINT_DISABLE:'1',TF_PLUGIN_CACHE_DIR:path.join(root,'.local/provider-cache'),PYTHONDONTWRITEBYTECODE:'1'};
@@ -28,6 +29,7 @@ try{
  const apps=[...new Set(Object.keys(files).filter(p=>p.endsWith('/'+acceptance)).map(p=>path.dirname(p)))];
  for(const folder of apps){
   const app=path.join(out,folder);
+  run(path.basename(folder)+'-dependency-closure',path.join(root,'.venv/bin/python'),[path.join(root,'scripts/check-python-runtime-lock.py'),app,sdk],app);
   // Block all actual sockets even if a test's scripted boundary is accidentally omitted.
   const wrapper=`import sys,runpy,socket\nsys.path[:0]=[${JSON.stringify(sdk)},${JSON.stringify(app)}]\ndef denied(*args,**kwargs):raise RuntimeError('Qualification forbids external network access')\nsocket.socket.connect=denied;socket.socket.connect_ex=denied;socket.getaddrinfo=denied\nsys.argv=[${JSON.stringify(acceptance)},'-v']\nrunpy.run_path(${JSON.stringify(path.join(app,acceptance))},run_name='__main__')\n`;
   run(path.basename(folder)+'-runtime',python,['-I','-c',wrapper],app);

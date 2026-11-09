@@ -47,7 +47,9 @@ function renderResult(result){
 }
 byId('sign-in').addEventListener('click',()=>signIn().catch(()=>status('Sign-in could not be started. Please retry.')));
 byId('sign-out').addEventListener('click',()=>{
- endSession();const url=endpoint(config.logoutEndpoint,'/logout');url.search=new URLSearchParams({client_id:config.clientId,[config.logoutParameter||'logout_uri']:location.origin+'/'});location.assign(url);
+ endSession();
+ if(config.localLogout===true){status('Workspace cleared. Your identity-provider session may still be active. Close this browser on a shared device.');return;}
+ const url=endpoint(config.logoutEndpoint,'/logout');url.search=new URLSearchParams({client_id:config.clientId,[config.logoutParameter||'logout_uri']:location.origin+'/'});location.assign(url);
 });
 byId('ask').addEventListener('submit',async event=>{
  event.preventDefault();if(pending)return;
@@ -59,7 +61,7 @@ byId('ask').addEventListener('submit',async event=>{
   const response=await fetch('/api/ask',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+token},body:JSON.stringify({text}),signal:controller.signal,cache:'no-store'});
   if(epoch!==sessionEpoch||accessToken!==token)return;
   if(response.status===401){endSession();status('Your session expired. Sign in again.');return;}
-  if(response.status===403)throw Error('Access is unavailable or permissions changed.');
+  if(response.status===403){endSession();status('Access is unavailable or permissions changed. Sign in again or contact the app owner.');return;}
   const result=await response.json();if(epoch!==sessionEpoch||accessToken!==token)return;
   if(!response.ok){if(result.error==='data_retention_unverified')throw Error('This workspace needs its data-handling setup checked by the app owner. Your input was not sent to the AI.');throw Error('The AI result is unavailable or could not be verified. Please try again later.');}
   renderResult(result);

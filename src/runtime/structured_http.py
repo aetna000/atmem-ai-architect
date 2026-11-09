@@ -17,7 +17,10 @@ class AccessDenied(Exception):
 def create_app(config, verify, infer, public_config, static_root=None, token_header=None, protect_assets=False, require_origin=False):
     root = Path(static_root or Path(__file__).parent / "web")
     app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
-    slots = threading.BoundedSemaphore(2)
+    # Small internal apps admit a burst of five model requests per process.
+    # Capacity is bounded; excess callers receive a retryable 429, never a hidden
+    # unbounded queue. Destination quota/latency still needs real qualification.
+    slots = threading.BoundedSemaphore(5)
 
     @app.middleware("http")
     async def headers(request, next_handler):

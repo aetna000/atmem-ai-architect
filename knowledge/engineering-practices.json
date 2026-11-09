@@ -287,6 +287,33 @@
       ],
       "reviewedAt": "2026-11-10",
       "status": "active"
+    },
+    {
+      "id": "ibm-structured-application-composition",
+      "provider": "ibm",
+      "topic": "authenticated-structured-ai-application",
+      "practice": "Separate user authorization from workload authentication. Use the reviewed ContainerAuthenticator with the fixed Code Engine token path and dedicated trusted profile; never embed an application API key. Scope service grants to the reviewed runtime instance and separately verify watsonx project access. Package runnable source and complete hash-locked dependencies. Isolate provider SDK closures that conflict rather than weakening their requirements.",
+      "source": {
+        "kind": "repository",
+        "repository": "IBM/python-sdk-core",
+        "commit": "eca14f9284e8e0f69ec3f73f8ef20066bfe31a30",
+        "url": "https://github.com/IBM/python-sdk-core/blob/eca14f9284e8e0f69ec3f73f8ef20066bfe31a30/ibm_cloud_sdk_core/authenticators/container_authenticator.py",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "localEvidence": [
+        "src/ibm-structured.mjs",
+        "src/runtime/ibm_acceptance.py",
+        "scripts/setup-structured-runtime.py"
+      ],
+      "limitations": [
+        "15 local cryptographic/HTTP/SDK/scripted checks and Linux/schema/mock evidence; no live identity, model-quality or deployment proof.",
+        "New owned App ID tenant only; no existing SSO, MFA, immediate JWT revocation or global logout.",
+        "Instance-scoped Writer is broader than inference; project membership is separate. Policy review is operator attestation, not a provider approval API.",
+        "Verify existing project/registry/pull secret, regional model/plan/quotas/costs. Persistence and workflows need further implementation."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
     }
   ]
 }
