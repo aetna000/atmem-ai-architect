@@ -1,3 +1,4 @@
+import {incompleteTerraform} from './incomplete-terraform.mjs';
 import {existingReference,existingReferenceFiles} from './existing-references.mjs';
 import {CLOUD_PROVIDER_LOCKS} from './cloud-provider-locks.mjs';
 // Narrow native storage contracts; this does not imply general provider coverage.
@@ -54,7 +55,9 @@ def ibm_delete(client,bucket,key,version):
 `;
 
 export function crossCloudTerraform(project,environment='staging'){
- const plan=crossCloudPlan(project),d=definitions[plan.provider],p=d?.provider||'google';
+ const plan=crossCloudPlan(project),d=definitions[plan.provider];
+ if(!d)return incompleteTerraform(project,plan,environment);
+ const p=d.provider;
  const variable={review_approved:{type:'bool',default:false,description:'Explicitly review the real destination, permissions, cost and plan before apply.'},region:{type:'string',description:'Reviewed provider-native region; emulator region does not select a deployment location.'}};
  const resource={terraform_data:{review_gate:{input:{design_revision:project.revision,environment},lifecycle:{precondition:[{condition:'${var.review_approved && length(local.unfinished_work) == 0}',error_message:'Unfinished work or missing review blocks deployment.'}]}}}};
  const add=(type,name,body)=>{(resource[type]||={})[name]={...body,depends_on:['terraform_data.review_gate']};};

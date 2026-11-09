@@ -70,6 +70,8 @@ const PROFILES = {
  ],
 };
 export function engineeringSteps(row) {
+ if(row.externalReference)return ['Preserve the external browser; no resource or import is required.','Define and test its HTTPS/application interactions, including denied access and unavailable service behavior.'];
+ if(row.existingServiceReference)return ['Preserve this externally managed service without creating or importing it.','Document its owner, endpoint, identity and integration contract; test actual connections separately.'];
  if(row.reference)return ['Bind the required Terraform ARN input to a reviewed existing same-account IAM role or user; never recreate the identity.','Verify scoped bucket/object permissions, effective boundaries and organization policies, versioned reads and denied access; the generated grant is not account-access evidence.'];
  if(row.existing)return [
   'Identify system owner, tenant/location, supported APIs and permitted read scopes; document a reference contract instead of recreating the system.',
@@ -126,7 +128,7 @@ export function handoffAssessment(project, now = new Date()) {
  return {
   format:'atmem.handoff-assessment',version:1,designRevision:project.revision,
   status:'engineering_required',
-  stages:{design:findings.some(f=>f.priority===1)?'decisions_required':'review_required',infrastructure:resources.gaps.length===0&&resources.rows.length?'generated_implementation_unverified':resources.rows.some(r=>r.implemented)?'partial_implementation':'not_implemented',localValidation:'not_attached',cloudPlan:'not_run',staging:'not_verified',production:'approval_not_attached'},
+  stages:{design:findings.some(f=>f.priority===1)?'decisions_required':'review_required',infrastructure:resources.gaps.length===0&&resources.rows.length?'generated_implementation_unverified':resources.rows.some(r=>r.implemented&&!r.existing)?'partial_implementation':'not_implemented',localValidation:'not_attached',cloudPlan:'not_run',staging:'not_verified',production:'approval_not_attached'},
   counts:{components:resources.rows.length,generatedFoundations:resources.rows.filter(r=>r.foundation).length,connections:resources.connections.length,priorityDecisions:findings.filter(f=>f.priority===1).length},
   nextAction:findings.find(f=>f.priority===1)?.action||'Review component engineering work and confirm the implementation scope.',
   findings,

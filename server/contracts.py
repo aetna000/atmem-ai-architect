@@ -36,7 +36,7 @@ class Data(Strict):
     label:str=Field(max_length=150)
     kind:Literal['source','predict','agent','guard','output','tool','resource','stream','history','features','train','registry','monitor','note']
     provider:Literal['aws','azure','gcp','ibm','tools']
-    description:str=Field(default='',max_length=1000)
+    description:str=Field(default='',max_length=16000)
     config:Configuration=Field(default_factory=Configuration)
     inputPosition:Literal['left','right','top','bottom']='left'
     outputPosition:Literal['left','right','top','bottom']='right'

@@ -23,7 +23,7 @@ export function toAgentProject(p) {
         label: n.data.kind === "note" && !n.data.label ? " " : n.data.label,
         kind: n.data.kind,
         provider: n.data.provider,
-        description: String(n.data.description || "").slice(0, 1000),
+        description: String(n.data.description || ""),
         config: {
           ...runtimeSettings(n.data.config),
           region: n.data.config?.region || "To be selected",

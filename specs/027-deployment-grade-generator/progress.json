@@ -1,9 +1,38 @@
 {
-  "status": "planned",
-  "completed": [],
-  "testsRun": [],
-  "deployments": [],
-  "notes": [
-    "Plan recorded; runtime implementation milestones have not been completed."
-  ]
+  "status": "in_progress",
+  "completed": [
+    "GEN-001"
+  ],
+  "implemented": [
+    "Explicit provider dispatch; removed AWS and default-Google substitution",
+    "Lossless descriptions up to an explicit 16000-character contract limit",
+    "Structured outcome separated from conversation provenance",
+    "Reference-aware guidance and infrastructure coverage"
+  ],
+  "testsRun": [
+    {
+      "command": "npm test",
+      "result": "201 passed"
+    },
+    {
+      "command": "npm run build",
+      "result": "passed"
+    },
+    {
+      "command": ".venv/bin/python -m unittest server.tests.test_note_contract server.tests.test_existing_references -v",
+      "result": "4 passed; includes generated runtime regression"
+    },
+    {
+      "command": "terraform init -backend=false; terraform validate -json on fresh r13 regeneration",
+      "result": "valid; zero errors/warnings; incomplete gate-only artifact remains explicitly nondeployable"
+    }
+  ],
+  "remaining": [
+    "Shared capability registry and skill receipts",
+    "Ownership separation between existing code and existing cloud deployments",
+    "Independent resource/requirement coverage verifier",
+    "Concrete Spec Kit interfaces and file-level tasks",
+    "Additional cloud runtime compilers and application implementations"
+  ],
+  "deployments": []
 }

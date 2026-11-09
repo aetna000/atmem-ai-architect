@@ -1,3 +1,5 @@
+import {isAwsGeneration} from './generation-provider.mjs';
+import {incompleteTerraform} from './incomplete-terraform.mjs';
 import {existingReferenceFiles} from './existing-references.mjs';
 import {hasCrossCloud,crossCloudTerraform} from './cross-cloud-storage.mjs';
 import {compileWeb} from './rag-web.mjs';
@@ -17,6 +19,7 @@ import { blockers, review } from "./review.mjs";
 export function terraformSketch(project, environment = "staging") {
   if(hasCrossCloud(project))return crossCloudTerraform(project,environment);
   const plan = resourcePlan(project);
+  if(!isAwsGeneration(project))return incompleteTerraform(project,plan,environment);
   const env = ["production","qualification"].includes(environment) ? environment : "staging";
   const resources = { terraform_data: { review_gate: {
     input: { design_revision: project.revision, environment: env },

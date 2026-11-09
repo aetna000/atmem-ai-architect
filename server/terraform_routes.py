@@ -63,7 +63,7 @@ def validate(payload):
             result=subprocess.run(args,cwd=folder,env=env,capture_output=True,text=True,timeout=120)
             checks.append({'name':name,'passed':result.returncode==0,'output':(result.stdout+'\n'+result.stderr)[-16000:]})
             if result.returncode:return {'status':'failed','checks':checks,'fileDigests':file_digests,'message':'Generated acceptance checks failed. No cloud deployment was attempted.'}
-        return {'status': 'passed', 'checks': checks, 'fileDigests':file_digests, 'message': 'Provider schema and available generated local tests passed. Mock plans are not account plans. No AWS deployment was run.'}
+        return {'status': 'passed', 'checks': checks, 'fileDigests':file_digests, 'message': 'Provider schema and available generated local tests passed. Mock plans are not account plans. No cloud deployment was run.'}
 
 
 @router.post('/api/terraform/validate')

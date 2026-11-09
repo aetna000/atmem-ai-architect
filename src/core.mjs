@@ -633,6 +633,7 @@ export function validateImport(p) {
       !Number.isFinite(n.position?.y)
     )
       throw Error("Invalid component in project.");
+    if(String(n.data.description||"").length>16000)throw Error("Component description exceeds 16,000 characters; split it into linked requirements. Nothing was truncated.");
     ids.add(n.id);
   }
   const edgeIds = new Set();
@@ -668,7 +669,7 @@ export function validateImport(p) {
         label: n.data.label.slice(0, 150),
         provider: n.data.provider,
         kind: n.data.kind,
-        description: String(n.data.description || "").slice(0, 500),
+        description: String(n.data.description || ""),
         config: {
           ...runtimeSettings(n.data.config),
           region: String(n.data.config?.region || "To be selected").slice(
