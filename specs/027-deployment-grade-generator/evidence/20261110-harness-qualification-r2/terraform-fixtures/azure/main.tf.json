@@ -1,0 +1,138 @@
+{
+  "terraform": {
+    "required_version": ">= 1.7.0, < 2.0.0",
+    "required_providers": {
+      "azurerm": {
+        "source": "hashicorp/azurerm",
+        "version": "4.81.0"
+      }
+    }
+  },
+  "provider": {
+    "azurerm": {
+      "features": {},
+      "subscription_id": "${var.subscription_id}"
+    }
+  },
+  "variable": {
+    "review_approved": {
+      "type": "bool",
+      "default": false
+    },
+    "subscription_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Reviewed Azure subscription.",
+      "validation": {
+        "condition": "${length(trimspace(var.subscription_id)) > 0}",
+        "error_message": "Supply a reviewed nonempty value."
+      }
+    },
+    "block_736572766963652f6e65772d7632_name": {
+      "type": "string",
+      "nullable": false,
+      "description": "Reviewed unique deployment name; application source is supplied separately.",
+      "validation": {
+        "condition": "${can(regex(\"^[a-z][a-z0-9-]{4,28}[a-z0-9]$\", var.block_736572766963652f6e65772d7632_name))}",
+        "error_message": "Use a unique lowercase name of 6–30 letters, digits or hyphens, starting with a letter."
+      }
+    },
+    "block_736572766963652f6e65772d7632_image": {
+      "type": "string",
+      "nullable": false,
+      "description": "Reviewed immutable Linux container image digest. No model-generated application code is implied.",
+      "validation": {
+        "condition": "${can(regex(\"@sha256:[0-9a-f]{64}$\", var.block_736572766963652f6e65772d7632_image))}",
+        "error_message": "Pin the reviewed application image with its SHA-256 digest."
+      }
+    },
+    "resource_group_name": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing destination resource group.",
+      "validation": {
+        "condition": "${length(trimspace(var.resource_group_name)) > 0}",
+        "error_message": "Supply a reviewed nonempty value."
+      }
+    },
+    "environment_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing reviewed Container Apps environment resource ID.",
+      "validation": {
+        "condition": "${length(trimspace(var.environment_id)) > 0}",
+        "error_message": "Supply a reviewed nonempty value."
+      }
+    }
+  },
+  "locals": {
+    "unfinished_work": []
+  },
+  "resource": {
+    "terraform_data": {
+      "review_gate": {
+        "input": {
+          "design_revision": 2,
+          "environment": "staging"
+        },
+        "lifecycle": {
+          "precondition": [
+            {
+              "condition": "${var.review_approved && length(local.unfinished_work) == 0}",
+              "error_message": "Review inputs and resolve all required implementations before applying."
+            }
+          ]
+        }
+      }
+    },
+    "azurerm_container_app": {
+      "block_736572766963652f6e65772d7632": {
+        "name": "${var.block_736572766963652f6e65772d7632_name}",
+        "resource_group_name": "${var.resource_group_name}",
+        "container_app_environment_id": "${var.environment_id}",
+        "revision_mode": "Single",
+        "identity": {
+          "type": "SystemAssigned"
+        },
+        "template": {
+          "min_replicas": 0,
+          "max_replicas": 2,
+          "container": {
+            "name": "application",
+            "image": "${var.block_736572766963652f6e65772d7632_image}",
+            "cpu": 0.5,
+            "memory": "1Gi",
+            "readiness_probe": {
+              "transport": "TCP",
+              "port": 8080
+            },
+            "liveness_probe": {
+              "transport": "TCP",
+              "port": 8080
+            }
+          }
+        },
+        "ingress": {
+          "external_enabled": false,
+          "target_port": 8080,
+          "transport": "http",
+          "traffic_weight": {
+            "latest_revision": true,
+            "percentage": 100
+          }
+        },
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    }
+  },
+  "output": {
+    "block_736572766963652f6e65772d7632_id": {
+      "value": "${azurerm_container_app.block_736572766963652f6e65772d7632.id}"
+    }
+  }
+}
