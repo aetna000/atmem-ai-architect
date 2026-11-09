@@ -36,6 +36,7 @@ export function toAgentProject(p) {
         },
         inputPosition: n.data.inputPosition || "left",
         outputPosition: n.data.outputPosition || "right",
+        ...(n.data.topologyGroup ? {topologyGroup:String(n.data.topologyGroup)}:{}),
         ...(["reference","create"].includes(n.data.deploymentMode)?{deploymentMode:n.data.deploymentMode}:{}),
         origin: String(n.data.origin || "proposed").slice(0, 100),
         ...(n.data.service ? { service: n.data.service } : {}),
@@ -65,7 +66,7 @@ export function agentContext(p) {
   const next = journey(p);
   const costs = estimate(p), work = consultingEstimate(p), resources = resourcePlan(p), handoff = handoffAssessment(p);
   return [
-    item("discovery","guided-journey",`Current journey step: ${next.id} — ${next.title}. ${next.reason} Next action: ${next.action}. Lead with one useful question and update the board/document from the answer. Later stages remain hidden until the working draft progresses; never direct the user to a hidden tab. Named service mapping is not verified cloud compatibility.`),
+    item("discovery","guided-journey",`Current journey step: ${next.id} — ${next.title}. ${next.reason} Next action: ${next.action}. Improve the topology from known answers. Ask only a material question that unlocks the next design decision; defer packaging details. Later stages remain hidden until the working draft progresses; never direct the user to a hidden tab. Named service mapping is not verified cloud compatibility.`),
     item("discovery", "estimate-summary", `Current estimate stage: ${costs.maturity}. Monthly cloud subtotal ${costs.expected ?? "unknown"} ${costs.currency || "currency unresolved"}; range ${costs.low ?? "?"}–${costs.high ?? "?"}; ${costs.gaps.length} worksheet gaps. One-off consulting/build subtotal ${work.expected ?? "unknown"} ${work.currency}; ${work.complete ? "all phases entered" : "incomplete"}. Values are user inputs, not provider quotes. Later journey stages provide costs and a downloadable delivery draft with a Terraform sketch. Follow guided-journey before directing the user to those stages.`),
     ...costs.gaps.slice(0, 5).map((g, i) => item("question", `cost-gap-${i}`, g)),
     item("discovery", "infrastructure-coverage", `${resources.rows.length} diagram components; ${resources.gaps.length} infrastructure/integration gaps. Native Terraform coverage is AWS S3 foundations, typed text-statistics, asynchronous word counts, Bedrock summaries and explicit existing-IAM-principal access, plus typed private-object-storage with one existing cloud-storage-principal on Azure/GCP/IBM. Other AI application paths must retain their implementation gaps. Deployment is not connected.`),
@@ -73,11 +74,11 @@ export function agentContext(p) {
     ...handoff.findings.filter(f=>f.priority===1).slice(0,5).map(f=>item("question",`handoff-${f.id}`,`${f.message} ${f.action}`)),
     ...(p.needs || []).map((r) => item("requirement", r.id, `${requirementNumber(p,r.id)} — ${r.priority} ${r.kind} ${r.category}: ${r.statement}${measure(r.measure)} (${r.status})`)),
     ...(p.assumptions || []).map((a) => item("assumption", a.id, `${a.statement} (stated ${a.madeAt})`)),
-    ...(p.openQuestions || []).filter((q) => q.status === "open").map((q) => item("question", q.id, q.question)),
+    ...(p.openQuestions || []).filter(q=>q.status==='open'||q.answer?.trim()).map(q=>item('question',q.id,q.status==='answered'?`Answered: ${q.question} User-recorded answer: ${q.answer}`:q.question)),
     ...(p.decisions || [])
       .filter((d) => d.status !== "Superseded")
       .map((d) => item("decision", d.id, `${d.subject} — ${d.title}: ${d.decision} (${d.status}${d.owner ? `, owner ${d.owner}` : ""})`)),
-    ...(p.lastAsked?.question ? [item("discovery", "next-question", `Planner's next question (${p.lastAsked.topic}): ${p.lastAsked.question} Beginner wording: ${p.lastAsked.beginner || ""}`)] : []),
+    ...(p.lastAsked?.question ? [item("discovery", "next-question", `Optional planner candidate (${p.lastAsked.topic}; defer if a larger decision matters more): ${p.lastAsked.question} Beginner wording: ${p.lastAsked.beginner || ""}`)] : []),
     ...Object.entries(p.brief || {})
       .filter(([, v]) => String(v).trim())
       .map(([k, v]) => item("discovery", `brief-${k}`, `${k}: ${v}`)),

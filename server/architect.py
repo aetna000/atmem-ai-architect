@@ -2,6 +2,7 @@
 import asyncio, base64, json, os, shutil, signal, tempfile
 from .contracts import ArchitectResponse, ChatRequest
 from .prompts import SYSTEM_PROMPT
+from .abstraction import consultation_focus
 
 class AtMemArchitect:
     def __init__(self):
@@ -11,7 +12,7 @@ class AtMemArchitect:
 
     @staticmethod
     def context(request:ChatRequest,runtime=None):
-        return json.dumps({'currentProject':request.project.model_dump(exclude_none=True),'baseRevision':request.project.revision,'history':[m.model_dump() for m in request.history],'stage':request.stage,'readOnlyContext':[c.model_dump() for c in request.context],'request':request.message,'runtimeContext':runtime or {},'outputSchema':ArchitectResponse.model_json_schema()},ensure_ascii=False)
+        return json.dumps({'consultationFocus':consultation_focus(request),'origin':request.origin,'currentProject':request.project.model_dump(exclude_none=True),'baseRevision':request.project.revision,'history':[m.model_dump() for m in request.history],'stage':request.stage,'readOnlyContext':[c.model_dump() for c in request.context],'request':request.message,'runtimeContext':runtime or {},'outputSchema':ArchitectResponse.model_json_schema()},ensure_ascii=False)
 
     async def call(self,request:ChatRequest,is_disconnected,runtime=None):
         from .attachments import prepare

@@ -1,3 +1,7 @@
+import {BlockRequirements} from './BlockRequirements.jsx';
+import {componentReviews,markComponentReviewed,applyComponentReview,editBlockRequirement} from './component-review.mjs';
+import {ComponentReview,ReviewBadge} from './ComponentReview.jsx';
+import {newQuestion} from './records.mjs';
 import {useChatScroll} from './useChatScroll.jsx';
 import {CONTAINER_SERVICES} from './container-contracts.mjs';
 import {verifiedReceipt} from './validation-receipt.mjs';
@@ -277,6 +281,7 @@ function BlockNode({ data, selected }) {
             {data.origin === "existing" ? "your system" : p.name}
           </small>
         )}
+        {data.blockReview&&<ReviewBadge item={data.blockReview} onClick={data.onReview}/>}
       </span>
       <span className="blk-state">{STATUS_GLYPH[data.runState]}</span>
       {data.kind !== "output" && (
@@ -298,6 +303,8 @@ function LayerNode({ data, selected }) {
         {data.blocks.length} block{data.blocks.length === 1 ? "" : "s"}
         {data.status !== "idle" && ` · ${data.done}/${data.blocks.length} passed`}
       </small>
+      {data.reviewSummary&&<button className="topology-review-summary nodrag" onClick={e=>{e.stopPropagation();data.onReview?.();}} aria-label={`Open block review for ${data.label}`}>{data.reviewSummary.questions?`${data.reviewSummary.questions} open questions`:`${data.reviewSummary.reviewed}/${data.blocks.length} designs reviewed`}</button>}
+      <button className="topology-drill-hint nodrag" onClick={e=>{e.stopPropagation();data.onExplore?.();}}>Explore components <ChevronRight size={12}/></button>
       <span className="layer-providers">
         {data.providers.map((id) => (
           <span key={id} title={PROVIDERS[id].name} style={{ background: PROVIDERS[id].color }} />
@@ -404,12 +411,12 @@ function Palette({ onAdd, onClose, disabled }) {
   );
 }
 
-function Linked({ project, id }) {
+function Linked({ project, id, hideNeeds = false }) {
   const { needs, assumptions, questions } = linkedTo(project, id);
   if (!needs.length && !assumptions.length && !questions.length) return null;
   return (
     <div className="linked">
-      {needs.map((r) => (
+      {!hideNeeds&&needs.map((r) => (
         <p key={r.id}>
           <strong>Requirement</strong> {r.statement}
           {r.measure && <span className="mono"> · {r.measure.metric} {r.measure.op} {String(r.measure.target)}{r.measure.unit}</span>}
@@ -422,14 +429,14 @@ function Linked({ project, id }) {
       ))}
       {questions.map((q) => (
         <p key={q.id}>
-          <strong>Open question</strong> {q.question}
+          <strong>{q.status==='answered'?'Answered question':'Open question'}</strong> {q.question}{q.status==='answered'&&q.answer&&<span className="recorded-answer">Answer: {q.answer}</span>}
         </p>
       ))}
     </div>
   );
 }
 
-function BlockDetail({ project, node, run, probe, busy, onChange, onRemove, onOpen, onBack }) {
+function BlockDetail({ project, node, run, probe, busy, reviewItems, onReviewConfirm, onReviewDiscuss, onReviewQuestion, onReviewResolve, onRequirementSave, onChange, onRemove, onOpen, onBack }) {
   const trace = run?.steps.find((s) => s.id === node.id);
   const inputs = project.edges.filter((e) => e.target === node.id);
   const outputs = project.edges.filter((e) => e.source === node.id);
@@ -474,7 +481,10 @@ function BlockDetail({ project, node, run, probe, busy, onChange, onRemove, onOp
           />
         </div>
         <p className="muted">{node.data.description || "No description."}</p>
-        <div className="fields">
+        <BlockRequirements project={project} nodeId={node.id} busy={busy} onSave={onRequirementSave}/>
+        <ComponentReview key={node.id} item={reviewItems.find(r=>r.id===node.id)} items={reviewItems} busy={busy} onOpen={onOpen} onConfirm={onReviewConfirm} onDiscuss={onReviewDiscuss} onQuestion={onReviewQuestion} onResolve={onReviewResolve} onDetailAnswer={patch=>onChange({...node,data:{...node.data,...patch,...(patch.config?{config:{...node.data.config,...patch.config}}:{})}})}/>
+        <details className="component-settings"><summary>Component settings</summary><div className="fields">
+          <label className="field-wide">Topology responsibility<input aria-label="Topology responsibility" maxLength={100} disabled={busy} value={node.data.topologyGroup||''} placeholder="For example, Project memory" onChange={e=>set({topologyGroup:e.target.value})}/></label>
           <label>
             Provider
             <select disabled={busy} value={node.data.provider} onChange={(e) => set({ provider: e.target.value })}>
@@ -546,8 +556,8 @@ function BlockDetail({ project, node, run, probe, busy, onChange, onRemove, onOp
             <input type="checkbox" aria-label="In prototype scope" disabled={busy} checked={!!node.data.poc} onChange={(e) => set({ poc: e.target.checked })} />
             In prototype scope
           </label>
-        </div>
-        <Linked project={project} id={node.id} />
+        </div></details>
+        <Linked project={project} id={node.id} hideNeeds/>
         {node.data.kind === "output" && (
           <MeasuresEditor measures={node.data.measures} disabled={busy} onChange={(measures) => set({ measures })} />
         )}
@@ -645,7 +655,7 @@ function App() {
       }
     }),
     [designView, setDesignView] = useState("board"),
-    [level, setLevel] = useState("flow"),
+    [level, setLevel] = useState("system"),
     [focus, setFocus] = useState(null),
     [selected, setSelected] = useState(null),
     [messages, setMessages] = useState(() => conversationMessages(projectRef.current, [welcome(projectRef.current)])),
@@ -1146,13 +1156,13 @@ function App() {
     setMessages(m=>[...m,{role:'user',text:intent==='question'?'Ask a focused question about the current emulation results.':'Use the current emulation findings to propose a correction or the next test.'}]);
     await send(emulationPrompt(projectRef.current,report,intent),'emulation',{mode:'design',view:'emulation'});
   }
-  async function send(text = input, origin = "chat", destination = null) {
+  async function send(text = input, origin = "chat", destination = null, reviewTarget = null) {
     if ((!text.trim() && !(origin === "chat" && attachments.length)) || busy || agentBusy || readingAttachments) return;
     stopVoice();
     const message = text.trim() || "Please review the attached files and help me use them in this architecture.";
     const sentAttachments=origin === "chat"?attachments:[];
-    if (origin === "chat") {
-      setMessages((m) => [...m, { role: "user", text: message, attachments:sentAttachments }]);
+    if (origin === "chat" || origin === "block-review") {
+      setMessages((m) => [...m, { role: "user", text: reviewTarget ? `Review ${reviewTarget.label} with me.` : message, attachments:sentAttachments }]);
       setInput("");
     }
     if (origin === "chat") setChatOpen(true);
@@ -1185,7 +1195,7 @@ function App() {
       const edits = canvasChanges(projectRef.current);
       seen.current = structuredClone(projectRef.current);
       const result = await requestArchitect({
-        extra: [{type:"discovery",id:"active-view",text:`The user is working in ${destination ? (destination.mode === "design" ? destination.view : destination.mode) : mode === "design" ? designView : mode}. Focus help on this view using the shared diagram and conversation; ask one useful question and update the relevant working outputs.`}, ...(edits.length ? [{ type: "discovery", id: "canvas-changes", text: `Since your last reply the user ${edits.join("; ")}. Build on these changes.` }] : [])],
+        extra: [{type:"discovery",id:"active-view",text:`The user is working in ${destination ? (destination.mode === "design" ? destination.view : destination.mode) : mode === "design" ? designView : mode}. Use the shared diagram and conversation. Prioritise major system decisions over configuration details; ask only when a material user decision is needed. Otherwise improve the working topology.`}, ...(edits.length ? [{ type: "discovery", id: "canvas-changes", text: `Since your last reply the user ${edits.join("; ")}. Build on these changes.` }] : [])],
         session,
         connection,
         message,
@@ -1197,7 +1207,7 @@ function App() {
         signal: controller.signal,
       });
       if(sentAttachments.length)setAttachments([]);
-      if (!["document","emulation"].includes(origin) && result.optionAssessment?.length) {
+      if (!["document","emulation","block-review"].includes(origin) && result.optionAssessment?.length) {
         const p = projectRef.current, a = p.assessment || defaultAssessment();
         const scores = structuredClone(a.scores), notes = { ...a.notes };
         for (const option of result.optionAssessment) {
@@ -1207,7 +1217,7 @@ function App() {
         updateEngagement({ ...p, assessment: { ...a, scores, notes } });
         signals.push("cloud comparison updated");
       }
-      if (!["document","emulation"].includes(origin) && result.usageUpdates?.length) {
+      if (!["document","emulation","block-review"].includes(origin) && result.usageUpdates?.length) {
         let next = projectRef.current;
         for (const update of result.usageUpdates) if (message.includes(update.sourceText)) next = setUsage(next, update.key, update.value);
         updateEngagement(next);
@@ -1223,17 +1233,25 @@ function App() {
           extensions: {...p.extensions,requirementComments:(p.extensions?.requirementComments || []).map(c=> applicable.has(c.requirementId) && applicable.get(c.requirementId).sourceText === c.text ? {...c,status:'reviewed',revisedStatement:applicable.get(c.requirementId).statement} : c)} });
         signals.push("requirements refined from your answer");
       }
-      if (!["document","emulation"].includes(origin) && result.decisionUpdates?.length) updateEngagement(applyDecisionUpdates(projectRef.current,result.decisionUpdates,message));
-      if (!["document","emulation"].includes(origin) && result.priceQuotes?.length) updateEngagement(applyPriceQuotes(projectRef.current, result.priceQuotes));
+      if (!["document","emulation","block-review"].includes(origin) && result.decisionUpdates?.length) updateEngagement(applyDecisionUpdates(projectRef.current,result.decisionUpdates,message));
+      if (!["document","emulation","block-review"].includes(origin) && result.priceQuotes?.length) updateEngagement(applyPriceQuotes(projectRef.current, result.priceQuotes));
+      if(['chat','workflow','block-review'].includes(origin)){
+        const p=projectRef.current,q=result.followUp;
+        updateEngagement({...p,lastAsked:q?{id:'architect-question',topic:q.topic||'',question:q.question,why:q.why,beginner:q.example||''}:null,extensions:{...p.extensions,activeConsultation:{hasQuestion:!!q}}});
+      }
+      if(origin==='block-review'&&reviewTarget&&result.componentReview){
+        try {updateEngagement(applyComponentReview(projectRef.current,reviewTarget,result.componentReview));signals.push('block review and linked questions recorded');}
+        catch(error){notify(error.message);}
+      }
       setMessages((m) => [...m, { role: "assistant", text: origin==="emulation"?groundEmulationMessage(emulation.result,result.message):result.message, live: true, signals, contextUsed: result.contextUsed }]);
-      if (result.proposal && origin !== "document") {
+      if (result.proposal && !["document","block-review"].includes(origin)) {
         const proposal = { ...result.proposal, next: validateImport(result.proposal.next), ...(origin==="emulation"?{emulationCorrection:true}:{}) };
         if(origin==="emulation")guardEmulationCorrection(was,proposal.next);
         // "Draw as we talk": the design evolves with the conversation; each step is undoable.
         if (drawLive && origin !== "preview") applyProposal(proposal, { live: true });
         else setPending(proposal);
       }
-      if (!["document","preview","emulation"].includes(origin) && result.requirementDrafts?.length) updateEngagement(applyRequirementDrafts(projectRef.current,result.requirementDrafts));
+      if (!["document","preview","emulation","block-review"].includes(origin) && result.requirementDrafts?.length) updateEngagement(applyRequirementDrafts(projectRef.current,result.requirementDrafts));
       return result.message;
     } catch (error) {
       setMessages((m) => [
@@ -1248,6 +1266,11 @@ function App() {
         agentAbort.current = null;
       }
     }
+  }
+  async function reviewComponent(id){
+    const current=projectRef.current,item=componentReviews(current).find(r=>r.id===id);if(!item)return;
+    setChatOpen(true);
+    return send(`Review this block against its latest requirements: ${item.label} (id: ${id}). Check responsibility, inputs/outputs, ownership, identity, state, failures and dependencies. Prioritise consequential system decisions over ports or packaging. Explain what is sound; ask only material unresolved questions. Preserve all scope and existing systems. Do not claim runtime validation. Current concerns: ${item.issues.map(i=>i.text).join('; ')||'None recorded; inspect for missing decisions.'}. Return componentReview with componentId ${id}, summary and questions. Return followUp only if a user decision is needed; do not return a graph change.`,"block-review",null,item);
   }
   // Applying a proposal is a design decision: it is recorded, and Undo restores the previous design.
   function applyProposal(proposal = pending, { live = false, quiet = false } = {}) {
@@ -1298,7 +1321,7 @@ function App() {
       setMode("design");
       setDesignView("board");
     }
-    setLevel("flow");
+    setLevel(previous=>previous==='block'?'flow':previous);
     setFocus(null);
     refit();
   }
@@ -1373,19 +1396,21 @@ function App() {
   // A pending proposal is drawn on the board straight away, as a preview, until applied or dismissed.
   const shown = pending?.next && mode === "design" ? pending.next : project;
   const previewing = shown !== project;
+  const blockReviews = useMemo(()=>componentReviews(shown),[shown]);
+  const reviewBlock = id => {setMode('design');setDesignView('board');setFocus(null);openBlock(id);};
   const system = useMemo(() => systemView(shown, runStates), [shown, runStates]);
   const wireClass = (source) =>
     `wire ${runStates[source] === "failed" ? "wire-failed" : runStates[source] === "passed" ? "wire-passed" : ""}`;
   const canvasNodes =
     level === "system"
-      ? system.nodes.map((n) => ({ ...n, measured: measured[n.id], className: previewing ? "preview" : "" }))
+      ? system.nodes.map((n) => ({ ...n, data:{...n.data,onExplore:()=>n.data.blocks.length===1?reviewBlock(n.data.blocks[0]):goFlow(n.data.layer),onReview:()=>reviewBlock(blockReviews.find(r=>n.data.blocks.includes(r.id)&&r.issues.length)?.id||n.data.blocks[0]),reviewSummary:{reviewed:blockReviews.filter(r=>n.data.blocks.includes(r.id)&&r.status==='reviewed').length,questions:blockReviews.filter(r=>n.data.blocks.includes(r.id)).reduce((sum,r)=>sum+r.issues.length,0)}}, measured: measured[n.id], className: previewing ? "preview" : "" }))
       : shown.nodes.map((n) => ({
           ...n,
           type: n.data.kind === "note" ? "note" : n.type,
           measured: measured[n.id],
           className: `${previewing ? "preview" : ""} ${attention?.nodes.includes(n.id) ? "diagram-attention" : ""}`,
           selected: n.id === selected || picked.has(n.id),
-          data: { ...n.data, onText: noteText, fresh: n.id === freshNote.current, runState: runStates[n.id], dim: (focusBlocks && !focusBlocks.has(n.id)) || (testing && !n.data.poc && n.data.kind !== "resource" && project.nodes.some((x) => x.data.poc)) },
+          data: { ...n.data, blockReview:blockReviews.find(r=>r.id===n.id), onReview:()=>reviewBlock(n.id), onText: noteText, fresh: n.id === freshNote.current, runState: runStates[n.id], dim: (focusBlocks && !focusBlocks.has(n.id)) || (testing && !n.data.poc && n.data.kind !== "resource" && project.nodes.some((x) => x.data.poc)) },
         }));
   const canvasEdges =
     level === "system"
@@ -1631,7 +1656,7 @@ function App() {
   }, [mode,designView,project.id,session,agentBusy]);
   const topics = progress(project);
   const blockerCount = findings.filter((f) => f.severity === "blocker" && f.status === "open").length;
-  const ask = project.lastAsked?.question ? project.lastAsked : nextQuestion(project);
+  const ask = project.extensions?.activeConsultation ? (project.extensions.activeConsultation.hasQuestion ? project.lastAsked : null) : project.lastAsked?.question ? project.lastAsked : nextQuestion(project);
   function saveProjectFile() {
     try {
       download(JSON.stringify(toProjectFile(withConversation(project, messages)), null, 2), `${slug}.atmem-ai-architect.json`);
@@ -1679,7 +1704,7 @@ function App() {
           />
           <button className="icon" title="Start over" aria-label="Start over" disabled={busy || agentBusy} onClick={() => setModal("start-over")}><RotateCcw size={16} /></button>
           <div className="component-navigator"><button className="tree-trigger" aria-label="Component tree" aria-expanded={treeOpen} onClick={()=>setTreeOpen(!treeOpen)} title="Explore the system and its components"><GitBranch size={18}/> Components <span>{project.nodes.filter(n=>n.data.kind!=='note').length}</span><ChevronRight size={15}/></button>
-          {treeOpen&&<nav className="component-tree" aria-label="Component tree"><strong>{project.name}</strong><div className="tree-views"><button onClick={()=>{setMode('design');setDesignView('board');goSystem();setTreeOpen(false);}}><LayoutGrid size={16}/> System overview</button><button onClick={()=>{setMode('design');setDesignView('board');goFlow(null);setTreeOpen(false);}}><Workflow size={16}/> Component flow</button></div>{[...new Map(project.nodes.filter(n=>n.data.kind!=='note').map(n=>[layerOf(n).id,layerOf(n)])).values()].map(layer=><details open key={layer.id}><summary>{layer.label}</summary>{project.nodes.filter(n=>n.data.kind!=='note'&&layerOf(n).id===layer.id).map(n=><button key={n.id} aria-current={selected===n.id?'true':undefined} onClick={()=>{setMode('design');setDesignView('board');setFocus(null);setLevel('flow');setSelected(n.id);setTreeOpen(false);setTimeout(()=>fitView({nodes:[{id:n.id}],padding:1,maxZoom:1.2,duration:350}),100);}}><Database size={14}/><span>{n.data.label}<small>{n.data.service||n.data.provider}</small></span></button>)}</details>)}</nav>}</div>
+          {treeOpen&&<nav className="component-tree" aria-label="Component tree"><strong>{project.name}</strong><div className="tree-views"><button disabled={!blockReviews.length} onClick={()=>{reviewBlock((blockReviews.find(r=>r.status!=='reviewed')||blockReviews[0]).id);setTreeOpen(false);}}><CheckCheck size={16}/> Review blocks · {blockReviews.filter(r=>r.status==='reviewed').length}/{blockReviews.length}</button><button onClick={()=>{setMode('design');setDesignView('board');goSystem();setTreeOpen(false);}}><LayoutGrid size={16}/> System overview</button><button onClick={()=>{setMode('design');setDesignView('board');goFlow(null);setTreeOpen(false);}}><Workflow size={16}/> Component flow</button></div>{[...new Map(project.nodes.filter(n=>n.data.kind!=='note').map(n=>[layerOf(n).id,layerOf(n)])).values()].map(layer=><details open key={layer.id}><summary>{layer.label}</summary>{project.nodes.filter(n=>n.data.kind!=='note'&&layerOf(n).id===layer.id).map(n=><button key={n.id} aria-current={selected===n.id?'true':undefined} onClick={()=>{setMode('design');setDesignView('board');setFocus(null);setLevel('flow');setSelected(n.id);setTreeOpen(false);setTimeout(()=>fitView({nodes:[{id:n.id}],padding:1,maxZoom:1.2,duration:350}),100);}}><Database size={14}/><span>{n.data.label}<small>{n.data.service||n.data.provider}</small><small className={`tree-review-state ${blockReviews.find(r=>r.id===n.id)?.status}`}>{blockReviews.find(r=>r.id===n.id)?.statusLabel}</small></span></button>)}</details>)}</nav>}</div>
           <span className="current-view"><Workflow size={14}/>{level==='system'?'System overview':focusLabel||'Component flow'}</span>
         </nav>
         <div className="modes" role="tablist">
@@ -1763,6 +1788,7 @@ function App() {
             ))}
           </div>
         )}
+        {mode==='design'&&designView==='board'&&<div className="canvas-view-switch" role="group" aria-label="Architecture detail level"><button aria-pressed={level==='system'} onClick={goSystem}><LayoutGrid size={14}/>Topology</button><button aria-pressed={level!=='system'} onClick={()=>goFlow(null)}><Workflow size={14}/>Components</button>{level==='system'&&<button className="topology-organise" disabled={busy||agentBusy||!project.nodes.length} onClick={()=>send("Organise our existing architecture into a high-level topology. Assign data.topologyGroup to each block using concise responsibility names, for example User workspace, Access and usage, Project memory, or External systems where those responsibilities actually exist. Preserve every existing component, ID, provider, requirement, connection and position. Do not add services, invent a deployment boundary, choose a cloud or change implementations merely to group the view. Show major responsibilities and flows and explain the single most important unresolved system-level decision. Defer ports, Dockerfiles and instance sizing.","workflow")} title="Group existing components by responsibility">Organise topology</button>}</div>}
         <div className="journey-current"><div><strong>{guidance.title}</strong><p>{guidance.reason}</p><p className="journey-next"><span>Next</span> {guidance.checkpoint?guidance.continueLabel:guidance.action}</p></div>
           <div className="journey-actions">
             <button className="btn primary" disabled={busy||agentBusy||!!pending} aria-label={guidance.checkpoint?guidance.continueLabel+' →':guidance.action} title={guidance.checkpoint?guidance.continueLabel:guidance.action} onClick={()=>guidance.checkpoint?continueJourney():followJourney()}>{agentBusy?<BrainActivity size={26}/>:<BrainCircuit size={20}/>}</button>
@@ -1808,7 +1834,7 @@ function App() {
             setSelected(n.id);
             setProbe(null);
           }}
-          onNodeDoubleClick={(_, n) => (level === "system" ? goFlow(n.data.layer) : openBlock(n.id))}
+          onNodeDoubleClick={(_, n) => (level === "system" ? n.data.blocks.length===1?reviewBlock(n.data.blocks[0]):goFlow(n.data.layer) : openBlock(n.id))}
           onEdgeClick={(_, e) => (level === "system" ? goFlow(null) : openBlock(e.source, e))}
           onPaneContextMenu={(e) => {
             e.preventDefault();
@@ -1944,7 +1970,17 @@ function App() {
             node={selectedNode}
             run={run}
             probe={probe}
-            busy={busy}
+            busy={busy||agentBusy||!!pending}
+            reviewItems={componentReviews(project)}
+            onReviewConfirm={()=>{updateEngagement(markComponentReviewed(project,selectedNode.id));notify(`${selectedNode.data.label}: design reviewed.`);}}
+            onReviewDiscuss={()=>reviewComponent(selectedNode.id)}
+            onRequirementSave={async(id,text)=>{
+              updateEngagement(editBlockRequirement(projectRef.current,selectedNode.id,id,text));
+              if(connection&&session)await reviewComponent(selectedNode.id);
+              else notify('Requirement saved. Local checks updated; connect Architect for its review.');
+            }}
+            onReviewQuestion={question=>updateEngagement({...project,openQuestions:[...(project.openQuestions||[]),newQuestion({question,links:[selectedNode.id]})]})}
+            onReviewResolve={(id,answer)=>updateEngagement({...project,openQuestions:project.openQuestions.map(q=>q.id===id?{...q,status:'answered',answer}:q)})}
             onChange={updateNode}
             onRemove={() => removeNode(selectedNode.id)}
             onOpen={(id) => openBlock(id)}

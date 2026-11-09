@@ -637,6 +637,7 @@ export function validateImport(p) {
     )
       throw Error("Invalid component in project.");
     if(String(n.data.description||"").length>16000)throw Error("Component description exceeds 16,000 characters; split it into linked requirements. Nothing was truncated.");
+    if(n.data.topologyGroup!=null&&(typeof n.data.topologyGroup!=="string"||n.data.topologyGroup.length>100))throw Error("Topology responsibility names must have at most 100 characters; no content was truncated.");
     validateDeploymentOwnership(n.data);
     ids.add(n.id);
   }
@@ -685,6 +686,7 @@ export function validateImport(p) {
           ).slice(0, 100),
           timeout: 5000,
         },
+        ...(n.data.topologyGroup ? {topologyGroup:String(n.data.topologyGroup)}:{}),
         ...(["reference","create"].includes(n.data.deploymentMode)?{deploymentMode:n.data.deploymentMode}:{}),
         origin: String(n.data.origin || "proposed").slice(0, 100),
         ...(n.data.poc ? { poc: true } : {}),

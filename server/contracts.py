@@ -45,6 +45,7 @@ class Data(Strict):
     poc:bool=False
     role:Literal['data','ingest','index','llm','guard','human','app','output','model','monitor']|None=None
     measures:list[Measure]|None=Field(default=None,max_length=10)
+    topologyGroup:str|None=Field(default=None,max_length=100)
     service:str|None=Field(default=None,max_length=150)
     category:str|None=Field(default=None,max_length=150)
     binding:Literal['cloud-storage-principal','aws-iam-principal','aws-bedrock-model','normalized-source-contract','web-browser','existing-service']|None=None
@@ -147,8 +148,27 @@ class DecisionUpdate(Strict):
     value:str=Field(min_length=1,max_length=100)
     sourceText:str=Field(min_length=1,max_length=500)
 
+class ComponentReviewResult(Strict):
+    componentId:str=Field(min_length=1,max_length=100)
+    summary:str=Field(min_length=1,max_length=2000)
+    questions:list[str]=Field(default_factory=list,max_length=6)
+    @field_validator('questions')
+    @classmethod
+    def bounded_questions(cls,values):
+        if any(not q.strip() or len(q)>1000 for q in values):
+            raise ValueError('Block questions must contain 1–1000 characters.')
+        return values
+
+class FollowUpQuestion(Strict):
+    question:str=Field(min_length=1,max_length=400)
+    why:str=Field(min_length=1,max_length=400)
+    example:str=Field(default='',max_length=400)
+    topic:Literal['application','users','data','systems','quality','cloud','budget']|None=None
+
 class ArchitectResponse(Strict):
     message:str=Field(min_length=1,max_length=16000)
+    componentReview:ComponentReviewResult|None=None
+    followUp:FollowUpQuestion|None=None
     phase:Literal['Discovery','Architecture','Cost Analysis','Architecture Review']='Discovery'
     proposal:Proposal|None=None
     toolRequests:list[ToolRequest]|None=Field(default=None,max_length=3)
@@ -174,7 +194,7 @@ class Attachment(Strict):
 
 class ChatRequest(Strict):
     attachments:list[Attachment]=Field(default_factory=list,max_length=4)
-    origin:Literal['chat','canvas','workflow','document','preview','emulation']='chat'
+    origin:Literal['chat','canvas','workflow','document','preview','emulation','block-review']='chat'
     projectId:str|None=Field(default=None,pattern=r'^[A-Za-z0-9-]{8,64}$')
     message:str=Field(min_length=1,max_length=8000)
     provider:Literal['claude-code','codex','copilot','gemini-cli','anthropic','openai','gemini-api','xai','bedrock']='claude-code'

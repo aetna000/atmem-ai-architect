@@ -28,3 +28,20 @@ with message-viewport scrolling, preserve a reader's position above the latest m
 observe late content/viewport changes, and respect reduced motion. New submissions
 resume following. Mobile chat has a bounded message viewport and stable header/composer.
 Verified smooth/reduced-motion desktop and mobile cases with fixture model responses.
+
+## Progressive architecture and editable block reviews
+
+Owner requested coarse-to-fine topology, judgment-driven iteration and material
+questions before implementation details such as ports. Added explicit responsibility
+groups over the same graph, persistent Topology/Components controls and a server-owned
+consultation policy. No generic architecture optimizer or quality score is claimed.
+
+Per-block design status remains distinct from runtime validation. AI advice can record
+scoped questions but cannot approve a block or silently mutate the graph. User edits to
+linked requirements preserve previous wording, mark affected reviews stale and request
+re-evaluation of the selected block when connected. Unknown detail is answerable in the
+review panel. Existing answers stay available to later model context.
+
+The optional follow-up contract records the actual conversational question, preventing
+answers being deliberately bound to an unrelated next checklist topic. Model adherence
+still needs held-out conversational evaluation; contract tests alone do not establish it.
