@@ -30,3 +30,5 @@ Next finish Azure/IBM native execution and complete four-provider application,
 operator/artifact/SQL/model/source/Spec Kit hosting and operations. Full private
 client cases, security/performance acceptance, remaining families/final28/held-out
 remain unfinished. No cloud deployment or remote push occurred.
+
+Exact emitted application trees are stored in `application-sources.zip` within each native/source-emission directory. Every member was independently checked against the original emitted hash. `archived-application-sources.json` records the restore paths and hashes. This preserves original source/license bytes without altering them for repository whitespace formatting.
