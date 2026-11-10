@@ -21,11 +21,14 @@ CORE = ['enterprise_identity.py', 'enterprise_sources.py', 'enterprise_knowledge
         'enterprise_auth_store.py', 'enterprise_auth_schema.sql', 'enterprise_oauth.py',
         'enterprise_sessions.py', 'enterprise_http.py', 'enterprise_web.py',
         'enterprise_queries.py', 'enterprise_queries_schema.sql', 'enterprise_query_service.py',
+        'enterprise_audit.py', 'enterprise_audit_schema.sql', 'enterprise_models.py', 'enterprise_secrets.py',
+        'aws_json_model.py', 'azure_structured.py', 'gcp_structured.py', 'ibm_structured.py',
+        'structured_output.py', 'structured_http.py', 'policy_review.py',
         'enterprise_extraction_cache.py', 'enterprise_extraction_schema.sql',
         'enterprise_parser_transport.py', 'enterprise_document_contract.py', 'public_faq.py', 'faq-output-contract.json',
-        'enterprise-web.html', 'enterprise-web-app.js', 'enterprise-web.css', 'enterprise-web-notices.txt']
+        'enterprise-web.html', 'enterprise-web-app.js', 'enterprise-web.css', 'enterprise-web-notices.txt', 'enterprise-web-lock.json']
 SQL = {'enterprise_auth_postgres': 21, 'enterprise_sessions_postgres': 4,
-       'enterprise_queries_postgres': 19, 'enterprise_extraction_cache_postgres': 13}
+       'enterprise_queries_postgres': 19, 'enterprise_extraction_cache_postgres': 13, 'enterprise_audit_postgres': 9}
 
 
 def qualify(args):
@@ -36,12 +39,13 @@ def qualify(args):
         raise ValueError('Use a fresh local evidence directory')
     output.mkdir(parents=True)
     runtime = ROOT / 'src/runtime'
-    lock = json.loads((runtime / 'enterprise-runtime-python-lock.json').read_text())
+    lock_name = 'enterprise-runtime' + ('-' + args.provider if args.provider else '') + '-python-lock.json'
+    lock = json.loads((runtime / lock_name).read_text())
     # Do not silently bless a hand-edited lock or drifted metadata input.
     import importlib.util
     spec = importlib.util.spec_from_file_location('owned_runtime_lock', ROOT / 'scripts/build-enterprise-runtime-lock.py')
     builder = importlib.util.module_from_spec(spec); spec.loader.exec_module(builder)
-    if builder.build() != lock:
+    if builder.build(args.provider) != lock:
         raise ValueError('Runtime lock differs from reviewed dependency closure')
     base_lock = json.loads((runtime / 'python-container-lock.json').read_text())
     dockerfile = (runtime / 'enterprise-runtime.Dockerfile').read_text()
@@ -55,8 +59,9 @@ def qualify(args):
              ROOT / 'tests/runtime/durable_postgres_acceptance.py', ROOT / 'tests/runtime/durable_fixture_tasks.py']
     helper_names = ['durable_workflow.py', 'workflow_contract.py']
     sources = [*[runtime / name for name in CORE + helper_names], *tests,
-               runtime / 'enterprise-runtime-python-lock.json', runtime / 'enterprise-runtime.Dockerfile', runtime / 'python-container-lock.json',
+               runtime / lock_name, runtime / 'enterprise-runtime.Dockerfile', runtime / 'python-container-lock.json',
                ROOT / 'scripts/build-enterprise-runtime-lock.py', Path(__file__).resolve()]
+    sources += [ROOT / name for name in lock['derivedFrom']]
     hashes = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sources}
     checks, image, passed = [], None, False
     # The owned VM shares the workspace, not macOS's private /var/folders tree.
@@ -83,7 +88,7 @@ def qualify(args):
                 shutil.copyfile(runtime / name, context / 'runtime' / name)
             shutil.copyfile(runtime / 'enterprise-runtime.Dockerfile', context / 'Dockerfile')
             (context / 'requirements.lock').write_text(lock['requirements'])
-            tag = 'atmem-private-core:qualification-' + os.urandom(8).hex()
+            tag = 'atmem-private-' + (args.provider or 'core') + ':qualification-' + os.urandom(8).hex()
             run('build', ['build', '--platform', 'linux/amd64', '--tag', tag, str(context)], timeout=600)
             observed = json.loads(run('image', ['image', 'inspect', tag]))[0]
             image = observed['Id']
@@ -95,19 +100,23 @@ def qualify(args):
             preflight = '''import importlib,importlib.metadata,json,os,sys
 sys.path.insert(0,'/app')
 assert sys.version_info[:3]==(3,13,18),sys.version
-modules=['enterprise_http','enterprise_query_service','enterprise_extraction_cache','enterprise_oauth','enterprise_identity','enterprise_web','enterprise_parser_transport']
+modules=['enterprise_http','enterprise_query_service','enterprise_extraction_cache','enterprise_oauth','enterprise_identity','enterprise_web','enterprise_parser_transport','enterprise_audit','enterprise_models','enterprise_secrets']
 for name in modules:
  module=importlib.import_module(name)
  assert module.__file__.startswith('/app/'),module.__file__
 assert 'enterprise_document' not in sys.modules
-expected=json.load(sys.stdin)
+configuration=json.load(sys.stdin);expected=configuration['packages']
+sdk_modules={'aws':['boto3','botocore'],'azure':['azure.identity'],'gcp':[],'ibm':['ibm_cloud_sdk_core.authenticators']}.get(configuration['provider'],[])
+for name in sdk_modules:
+ module=importlib.import_module(name)
+ assert module.__file__.startswith('/usr/local/lib/python3.13/site-packages/'),module.__file__
 actual={d.metadata['Name'].lower().replace('_','-'):d.version for d in importlib.metadata.distributions()}
 assert actual==expected,(actual,expected)
 assert os.getuid()==10001 and not os.path.exists('/workspace/.local')
 assert not any(d in actual for d in ['pip','setuptools','wheel'])
-print(json.dumps({'python':sys.version,'packages':actual,'modules':modules,'uid':os.getuid()}))
+print(json.dumps({'python':sys.version,'packages':actual,'modules':modules,'nativeSdkModules':sdk_modules,'uid':os.getuid()}))
 '''
-            audit = json.dumps({s['name'].lower().replace('_', '-'): s['version'] for s in lock['sources']}).encode()
+            audit = json.dumps({'packages':{s['name'].lower().replace('_', '-'): s['version'] for s in lock['sources']},'provider':args.provider}).encode()
             run('runtime-imports', [*restricted, '--network', 'none', image,
                 'python', '-I', '-c', preflight], data=audit)
             # Only fixture helpers are mounted alongside tests. Application imports
@@ -130,7 +139,7 @@ sys.path.insert(0,'/app')
 '''
             result = run('policy-tests', [*restricted, '--network', 'none', image,
                 'python', '-I', '-c', loader + "import unittest;unittest.main(module=None,argv=['unittest','discover','-s','/tmp/workspace/tests/runtime','-p','enterprise_*_acceptance.py','-v'])"], data=json.dumps(payload).encode())
-            if not re.search(rb'Ran 45 tests in [^\n]+\n\nOK\s*$', result):
+            if not re.search(rb'Ran 60 tests in [^\n]+\n\nOK\s*$', result):
                 raise ValueError('Unexpected private policy test inventory')
             for version in [17, 18]:
                 name = 'atmem-durable-qualification' + ('-pg18' if version == 18 else '')
@@ -170,13 +179,14 @@ print(json.dumps({'postgresVersionNum':version}))
         finally:
             (output / 'receipt.json').write_text(json.dumps({'recordedAt': datetime.now(timezone.utc).isoformat(),
                 'passed': passed, 'imageId': image, 'checks': checks, 'sourceHashes': hashes,
-                'packages': len(lock['sources']), 'policyTests': 45, 'sqlTestsPerVersion': sum(SQL.values()),
+                'provider':args.provider,'packages': len(lock['sources']), 'policyTests': 60, 'sqlTestsPerVersion': sum(SQL.values()),
                 'postgresVersions': [17, 18], 'securityAccepted': False, 'cloudOperations': False,
-                'scope': 'Clean Linux private application core. Actual crypto/SQL/Procrastinate; scripted vendor/model. No API factory/model/audit/cloud isolation or complete-project acceptance.'}, indent=2) + '\n')
+                'scope': 'Clean Linux private application/model/audit dependencies. Actual crypto/SQL/Procrastinate; native model serializers with scripted HTTP. No native cloud identity/account/model quality, configured API factory, per-file cloud isolation or complete-project acceptance.'}, indent=2) + '\n')
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--docker-host', required=True)
     parser.add_argument('--out', type=Path, required=True)
+    parser.add_argument('--provider',choices=['aws','azure','gcp','ibm'])
     qualify(parser.parse_args())

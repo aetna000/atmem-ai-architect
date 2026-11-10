@@ -17,6 +17,7 @@ from enterprise_queries import producer_queries,initialize_query_store,grant_que
 from enterprise_query_service import EnterpriseAnswers,EnterpriseQueryWorker
 from enterprise_sources import SourceUnavailable
 from enterprise_extraction_cache import ExtractionCache,initialize_extraction_cache,grant_extraction_runtime
+from enterprise_audit import KnowledgeAudit,initialize_audit,grant_audit_writer
 
 
 class QueuedHttp(unittest.IsolatedAsyncioTestCase):
@@ -27,6 +28,7 @@ class QueuedHttp(unittest.IsolatedAsyncioTestCase):
         with psycopg.connect(parent.owner_dsn)as conn:
             initialize_query_store(conn);grant_query_runtime(conn,conninfo_to_dict(parent.app_dsn)['user'],worker=True)
             initialize_extraction_cache(conn);grant_extraction_runtime(conn,conninfo_to_dict(parent.app_dsn)['user'])
+            initialize_audit(conn);grant_audit_writer(conn,conninfo_to_dict(parent.app_dsn)['user'])
 
     async def asyncSetUp(self):
         self.f=fixture.CompanyHttpIntegration();await self.f.asyncSetUp()
@@ -37,7 +39,7 @@ class QueuedHttp(unittest.IsolatedAsyncioTestCase):
             def decode(raw,mime):self.parse_calls.append(True);return extract(raw,mime)
             engine.decode=decode;return engine
         cache=ExtractionCache(self.f.store,self.f.account,hashlib.sha256(b'synthetic-utf8-decoder-v1').hexdigest())
-        self.answers=EnterpriseAnswers(self.store,self.f.connections,factory,extraction_cache=cache)
+        self.answers=EnterpriseAnswers(self.store,self.f.connections,factory,extraction_cache=cache,audit=KnowledgeAudit(self.f.store,self.f.account))
         self.f.app=create_app(self.f.identity,self.f.sessions,self.f.connections,self.f.engine_factory,public_origin=fixture.ORIGIN,answers=self.answers)
         await self.f.client.aclose();self.f.client=self.f.new_client();self.f.clients=[self.f.client]
         await self.f.login();await self.f.connect_all()
@@ -48,6 +50,36 @@ class QueuedHttp(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.status_code,202,response.text);return response.json()['id']
     async def status(self,identity,client=None):return await(client or self.f.client).get('/api/queries/'+identity,headers={'X-Workspace-Request':'session'})
     def browser(self):return self.f.sessions.authenticate(self.f.client.cookies.get(fixture.COOKIE))
+
+    async def test_answer_and_release_have_durable_owned_attempt_audit(self):
+        identity=await self.submit();await asyncio.to_thread(self.answers.execute,identity)
+        response=await self.status(identity);self.assertEqual(response.status_code,200);self.assertIn('result',response.json())
+        with psycopg.connect(self.f.owner_dsn)as conn:
+            rows=conn.execute('SELECT account_id,principal_key,query_id,attempt,event,outcome,source_count,document_count FROM enterprise_audit.events WHERE query_id=%s ORDER BY id',(identity,)).fetchall()
+        self.assertEqual([row[4:6]for row in rows],[('knowledge.answer','answered'),('knowledge.release','released')])
+        self.assertTrue(all(row[0]==self.f.account and row[1]==self.f.principal.key and str(row[2])==identity and row[3]==1 for row in rows))
+        self.assertNotIn('ninety',str(rows))
+
+    async def test_audit_write_failure_never_makes_generated_answer_ready(self):
+        from psycopg import sql
+        identity=await self.submit();role=conninfo_to_dict(self.f.app_dsn)['user']
+        try:
+            with psycopg.connect(self.f.owner_dsn)as conn:conn.execute(sql.SQL('REVOKE INSERT ON enterprise_audit.events FROM {}').format(sql.Identifier(role)))
+            await asyncio.to_thread(self.answers.execute,identity)
+            response=await self.status(identity);self.assertNotIn('result',response.json());self.assertEqual(response.json()['status'],'queued')
+            self.assertEqual(len(self.f.model_calls),1)
+        finally:
+            with psycopg.connect(self.f.owner_dsn)as conn:conn.execute(sql.SQL('GRANT INSERT ON enterprise_audit.events TO {}').format(sql.Identifier(role)))
+
+    async def test_audit_failure_during_release_withholds_ready_answer_until_recovery(self):
+        from psycopg import sql
+        identity=await self.submit();await asyncio.to_thread(self.answers.execute,identity);role=conninfo_to_dict(self.f.app_dsn)['user']
+        try:
+            with psycopg.connect(self.f.owner_dsn)as conn:conn.execute(sql.SQL('REVOKE INSERT ON enterprise_audit.events FROM {}').format(sql.Identifier(role)))
+            response=await self.status(identity);self.assertEqual(response.status_code,503);self.assertNotIn('ninety',response.text);self.assertNotIn('company source is unavailable',response.text);self.assertIn('workspace',response.text)
+        finally:
+            with psycopg.connect(self.f.owner_dsn)as conn:conn.execute(sql.SQL('GRANT INSERT ON enterprise_audit.events TO {}').format(sql.Identifier(role)))
+        recovered=await self.status(identity);self.assertEqual(recovered.status_code,200);self.assertIn('result',recovered.json());self.assertEqual(len(self.f.model_calls),1)
 
     async def test_submit_returns_before_model_and_real_queue_worker_completes(self):
         identity=await self.submit();self.assertEqual(self.f.model_calls,[])
@@ -149,7 +181,7 @@ class QueuedHttp(unittest.IsolatedAsyncioTestCase):
         identity=await self.submit();await asyncio.to_thread(self.answers.execute,identity);original=self.answers.make_engine
         def outage(*args):raise SourceUnavailable('source_request_failed')
         self.answers.make_engine=outage
-        response=await self.status(identity);self.assertEqual(response.status_code,503);self.assertNotIn('ninety',response.text)
+        response=await self.status(identity);self.assertEqual(response.status_code,503);self.assertNotIn('ninety',response.text);self.assertNotIn('company source is unavailable',response.text);self.assertIn('workspace',response.text)
         self.answers.make_engine=original
         response=await self.status(identity);self.assertEqual(response.json()['status'],'ready');self.assertEqual(len(self.f.model_calls),1)
 

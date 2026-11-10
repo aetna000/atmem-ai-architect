@@ -56,7 +56,7 @@ async function connectSource(alias){
 $('sign-in').addEventListener('click',async()=>{try{await manager.clearStaleState();await manager.signinRedirect();}catch{say('Company sign-in is unavailable. Please try again shortly.');}});
 $('sign-out').addEventListener('click',async()=>{let confirmed=false;try{await api('/api/session',{method:'DELETE'});confirmed=true;}catch{}finally{clearPrivate();await manager?.removeUser();say(confirmed?'Signed out of this workspace.':'Sign-out could not be confirmed. Reload this page and try again.');}});
 $('new-answer').addEventListener('click',()=>{messages.scrollTop=messages.scrollHeight;$('new-answer').hidden=true;});
-const queryErrors={source:'Reconnect your company sources, then ask again.',setup:'Your workspace owner needs to enable source access for your account.',signin:'Sign in again to continue.',unavailable:'A company source is unavailable. No older private content was used. Please try again shortly.',answer:'The answer could not be verified against your current sources. Please try again.'};
+const queryErrors={source:'Reconnect your company sources, then ask again.',setup:'Your workspace owner needs to enable source access for your account.',signin:'Sign in again to continue.',unavailable:'Your workspace could not finish this answer. Please try again shortly.',answer:'The answer could not be verified against your current sources. Please try again.'};
 async function runQuestion(question,existingId=null){
  const generation=epoch,flow=++querySerial;busy=true;activeQuery=existingId;$('send').disabled=true;$('activity').hidden=false;$('cancel-question').hidden=false;append('user',question);$('question').value='';say('');
  try{

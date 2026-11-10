@@ -122,7 +122,9 @@ async def qualify(args):
         check('withdrawn-consent-cannot-use-warm-derivative',status['status']=='failed'and status['errorCode']=='source'and len(case.f.model_calls)==5 and len(parses)==2)
         with psycopg.connect(case.f.owner_dsn)as conn:
             values=conn.execute('SELECT value_ciphertext FROM enterprise_extractions.documents WHERE account_id=%s',(case.f.account,)).fetchall()
+            audit=conn.execute("SELECT count(*)FILTER(WHERE event='knowledge.answer'AND outcome='answered'),count(*)FILTER(WHERE event='knowledge.release'AND outcome='released'),count(*)FILTER(WHERE query_id IS NULL OR attempt IS NULL)FROM enterprise_audit.events WHERE account_id=%s",(case.f.account,)).fetchone()
         check('derived-text-persists-only-encrypted',len(values)==2 and all('twenty days'not in value[0]and'42.50'not in value[0]for value in values))
+        check('native-office-pdf-answers-and-releases-have-durable-attempt-audit',audit==(5,5,0))
         check('source-bytes-unchanged',all(hashlib.sha256((ROOT/name).read_bytes()).hexdigest()==digest for name,digest in hashes.items()))
         success=True
     finally:

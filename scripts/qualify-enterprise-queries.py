@@ -15,7 +15,8 @@ import argparse
 
 ROOT=Path(__file__).resolve().parents[1]
 SUITES={'enterprise_auth_postgres':21,'enterprise_sessions_postgres':4,'enterprise_http_postgres':14,
-        'enterprise_queries_postgres':19,'enterprise_queries_http_postgres':18,'enterprise_extraction_cache_postgres':13}
+        'enterprise_queries_postgres':19,'enterprise_queries_http_postgres':21,'enterprise_extraction_cache_postgres':13,
+        'enterprise_audit_postgres':9}
 
 
 def qualify(output):

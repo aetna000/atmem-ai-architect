@@ -8,17 +8,20 @@ from enterprise_queries import QueryLeaseLost
 from enterprise_sources import SourceDenied,SourceUnavailable,SourceChanged
 from public_faq import InvalidAnswer
 from enterprise_knowledge import current_engine
+from enterprise_audit import KnowledgeAudit
 
 
 class EnterpriseAnswers:
-    def __init__(self,store,connections,make_engine,*,extraction_cache=None):
+    def __init__(self,store,connections,make_engine,*,extraction_cache=None,audit=None):
         if not isinstance(connections,dict)or not 1<=len(connections)<=20 or not callable(make_engine):raise ValueError('Supply owned native question adapters')
         if any(entry.driver.store is not store.auth for entry in connections.values()):raise ValueError('Question/source stores must use the same owned authority')
         if extraction_cache is not None and(extraction_cache.auth is not store.auth or extraction_cache.account_id!=store.account_id):raise ValueError('Extraction cache must use the same owned company and authority')
-        self.store=store;self.connections=connections;self.make_engine=make_engine;self.extraction_cache=extraction_cache
+        if audit is not None and(not isinstance(audit,KnowledgeAudit)or audit.auth is not store.auth or audit.account_id!=store.account_id):raise ValueError('Question audit must use the same owned company and authority')
+        self.store=store;self.connections=connections;self.make_engine=make_engine;self.extraction_cache=extraction_cache;self.audit=audit
 
-    def engine(self,principal,authorize):
+    def engine(self,principal,authorize,*,query_id=None,attempt=None):
         engine=current_engine(self.store.auth,self.connections,principal,self.make_engine,authorize)
+        if self.audit is not None:engine.audit=self.audit.bind(principal,query_id=query_id,attempt=attempt)
         if self.extraction_cache is not None:
             engine.decode=self.extraction_cache.wrap(engine.decode,lambda:engine.authorize(principal.key))
         return engine
@@ -38,7 +41,7 @@ class EnterpriseAnswers:
         thread=threading.Thread(target=heartbeat,daemon=True);thread.start()
         try:
             authorize(lease.principal.key)
-            engine=self.engine(lease.principal,authorize)
+            engine=self.engine(lease.principal,authorize,query_id=lease.id,attempt=lease.attempt)
             receipt=engine.answer_receipt(lease.question,lease.principal.key)
             authorize(lease.principal.key)
             self.store.complete(lease,receipt)
@@ -62,7 +65,7 @@ class EnterpriseAnswers:
             current=self.store.get(session,identity)
             if current['state']!='ready'or current['attempt']!=row['attempt']:raise QueryLeaseLost('Question changed before release')
         try:
-            engine=self.engine(session.principal,authorize)
+            engine=self.engine(session.principal,authorize,query_id=identity,attempt=row['attempt'])
             answer=engine.release(receipt,session.principal.key)
             self.store.released(session,identity,row['attempt'])
             return {**result,'result':answer}

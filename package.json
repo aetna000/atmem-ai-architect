@@ -24,7 +24,7 @@
     "setup:emulation:clouds": "python3 scripts/setup-cloud-emulators.py",
     "test:emulation:clouds": "node scripts/cloud-storage-check.mjs",
     "test:mentor:live": "node scripts/cloud-mentor-live.mjs",
-    "test:enterprise": ".venv/bin/python -m unittest discover -s tests/runtime -p \"enterprise_*_acceptance.py\" -v",
+    "test:enterprise": ".local/durable-runtime/bin/python -I -m unittest discover -s tests/runtime -p \"enterprise_*_acceptance.py\" -v",
     "test:enterprise:postgres": ".local/durable-runtime/bin/python -I tests/runtime/enterprise_auth_postgres.py -v",
     "test:enterprise:http": ".local/durable-runtime/bin/python -I tests/runtime/enterprise_http_postgres.py -v",
     "test:enterprise:sessions": ".local/durable-runtime/bin/python -I tests/runtime/enterprise_sessions_postgres.py -v",

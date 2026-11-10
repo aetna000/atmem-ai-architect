@@ -67,3 +67,7 @@ source mapping provisioning, provider-specific per-file parser isolation, all fo
 native Terraform/application/Spec Kit exports and actual private-project cases.
 Then finish the other families and final full28/held-out evaluations. No new
 generator capability or completed medium project is advertised by this checkpoint.
+
+The subsequent [native operation, secret and durable audit integration](private-knowledge-native-adapters-audit.md)
+adds provider-specific dependency images and tested adapters. Configured production
+factories/operator lifecycle, native per-file isolation and all4 exports still remain.

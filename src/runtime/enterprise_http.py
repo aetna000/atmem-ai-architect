@@ -28,7 +28,7 @@ class SourceConnection:
 
 
 def problem(code,status):
-    messages={'signin':'Sign in with your company account to continue.','forbidden':'Your account cannot access this workspace. Ask your workspace owner for access.','request':'Check your question or refresh this page and try again.','setup':'Your workspace owner needs to enable a company source for your account.','source':'Connect your company sources before asking a question.','busy':'Your source connection is updating. Try again in a moment.','capacity':'You already have questions processing. Wait for one to finish or cancel it before asking another.','unavailable':'A company source is unavailable. No older private content was used. Please try again shortly.','answer':'This answer could not be verified against your current sources. Please try again.'}
+    messages={'signin':'Sign in with your company account to continue.','forbidden':'Your account cannot access this workspace. Ask your workspace owner for access.','request':'Check your question or refresh this page and try again.','setup':'Your workspace owner needs to enable a company source for your account.','source':'Connect your company sources before asking a question.','busy':'Your source connection is updating. Try again in a moment.','capacity':'You already have questions processing. Wait for one to finish or cancel it before asking another.','unavailable':'Your workspace could not finish this answer. Please try again shortly.','answer':'This answer could not be verified against your current sources. Please try again.'}
     return JSONResponse({'error':{'code':code,'message':messages[code]}},status_code=status)
 
 
