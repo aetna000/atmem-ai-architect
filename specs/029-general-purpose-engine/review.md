@@ -108,3 +108,29 @@ still requires custom implementation; no working package is demonstrated. This
 supports keeping the broad reasoning foundations while repairing shared composition,
 implementation selection and feedback latency, rather than replacing everything or
 claiming the engine is already general.
+
+## Knowledge carriage follow-up
+
+The composition skill (`agent-skills/specialists/composition/SKILL.md`) already teaches
+responsibilities, interfaces, ownership, failure behavior, applicability, alternatives
+and verification. `server/skills.py` loads full, SHA-checked/versioned instructions;
+its short catalogue summaries are separate and can be stale. Selection is rule-based
+with an eight-skill cap, so selection coverage and omission effects need tests.
+
+`server/engineering_knowledge.py` loads the local reviewed catalogue, validates pinned
+source revisions/content digests and local proof receipts, publishes records into
+AtMem and checks retrieved practice equality, provider applicability and freshness.
+These mechanisms carry reviewed knowledge without training model weights. The current
+catalogue contains 20 records, two locally tested and eighteen source-reviewed; those
+counts describe storage, not breadth or demonstrated expertise.
+
+Additional audit risk: context limits content with `[:3000]` and eight records. All
+20 current serialized practice records are below 3,000 characters, so no current
+practice truncation was demonstrated. Future longer records could lose conditions
+or limits after identity checking; replace silent clipping with explicit structured
+summaries/index retrieval or explicit rejection before growing the corpus. Non-practice
+keys are also admitted as untrusted retrieved evidence: trace their producers and
+ensure they cannot impersonate reviewed practices. Provenance checks are useful but
+are not a semantic applicability/contradiction evaluator or proof the planner used a
+practice correctly. Review must cover the full source → memory → context → decision
+→ executable contract → verification chain.

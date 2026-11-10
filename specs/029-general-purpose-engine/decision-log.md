@@ -15,3 +15,12 @@ testing. Define ten dependency-ordered subgoals and candidate versions in plan.m
 Roadmap percentages are not measured quality. 95% quality remains a target requiring
 a frozen rubric, independent evidence and critical-invariant gates. Documentation
 alone is not a release. No remote publication or cloud deployment is authorized here.
+
+## 2026-11-11 — Knowledge is layered, not scenario answers
+
+In response to the owner's skills-versus-hardcode question: reviewed skills/practices
+carry contextual judgment; deterministic contracts and reusable mechanisms enforce
+invariants; provider adapters implement real cloud differences; independent tests
+qualify combinations. Do not encode benchmark answers in production decision logic.
+No model training is claimed. Apply the review's transfer criterion to both knowledge
+and executable implementation, not just the choice of names.
