@@ -33,6 +33,9 @@ class OutputContract(Strict):
         return self
 
 class Configuration(Strict):
+    maxPdfBytes:StrictInt|None=Field(default=None,ge=1,le=20000000)
+    maxPdfPages:StrictInt|None=Field(default=None,ge=1,le=1000)
+    retentionDays:StrictInt|None=Field(default=None,ge=1,le=3653)
     outputContract:OutputContract|None=None
     region:str=Field(default='To be selected',max_length=100)
     classification:Literal['Public','Internal','Confidential']='Internal'
@@ -73,7 +76,7 @@ class Data(Strict):
     service:str|None=Field(default=None,max_length=150)
     category:str|None=Field(default=None,max_length=150)
     binding:Literal['public-catalog-editor','cloud-storage-principal','aws-iam-principal','aws-bedrock-model','normalized-source-contract','web-browser','existing-service']|None=None
-    implementation:Literal['public-faq-app','ibm-structured-app','gcp-structured-app','azure-structured-app','container-service','private-object-storage','rag-web-app','rag-user-pool','bounded-keyword-rag','iam-rag-api','bounded-rag-catalog','text-statistics','bedrock-summary','bedrock-structured','structured-api','structured-web-app','structured-user-pool','async-word-count','sqs-standard','sqs-dead-letter','word-count-results']|None=None
+    implementation:Literal['invoice-workflow','public-faq-app','ibm-structured-app','gcp-structured-app','azure-structured-app','container-service','private-object-storage','rag-web-app','rag-user-pool','bounded-keyword-rag','iam-rag-api','bounded-rag-catalog','text-statistics','bedrock-summary','bedrock-structured','structured-api','structured-web-app','structured-user-pool','async-word-count','sqs-standard','sqs-dead-letter','word-count-results']|None=None
 
     @model_validator(mode='after')
     def named_component(self):
@@ -99,7 +102,7 @@ class Edge(Strict):
     target:str=Field(max_length=100)
     type:Literal['smoothstep']='smoothstep'
     label:str=Field(default='data',max_length=150)
-    integration:Literal['public-catalog-edit','browser-https','web-rag-api','oauth-pkce','jwt-authorizer','source-catalog-sync','http-api-lambda','lambda-catalog-read','bedrock-converse','s3-object-created','sqs-lambda','lambda-s3-read','lambda-dynamodb-write','sqs-redrive']|None=None
+    integration:Literal['approved-accounting-api','public-catalog-edit','browser-https','web-rag-api','oauth-pkce','jwt-authorizer','source-catalog-sync','http-api-lambda','lambda-catalog-read','bedrock-converse','s3-object-created','sqs-lambda','lambda-s3-read','lambda-dynamodb-write','sqs-redrive']|None=None
     access:Literal['storage-object-admin','s3-read','s3-read-write','lambda-invoke','api-invoke']|None=None
 
 class Project(Strict):
@@ -193,7 +196,7 @@ class FollowUpQuestion(Strict):
 
 class NodeFieldUpdate(Strict):
     id:StrictStr=Field(min_length=1,max_length=100)
-    field:Literal['label','description','kind','provider','service','role','origin','binding','implementation','deploymentMode','topologyGroup','config.region','config.classification','config.maxInputBytes','config.maxOutputTokens','config.memoryMb','config.functionTimeoutSeconds','config.concurrency','config.logRetentionDays','config.modelId','config.outputContract']
+    field:Literal['label','description','kind','provider','service','role','origin','binding','implementation','deploymentMode','topologyGroup','config.maxPdfBytes','config.maxPdfPages','config.retentionDays','config.region','config.classification','config.maxInputBytes','config.maxOutputTokens','config.memoryMb','config.functionTimeoutSeconds','config.concurrency','config.logRetentionDays','config.modelId','config.outputContract']
     value:StrictStr|StrictInt|StrictBool|OutputContract|None
 
 class EdgeFieldUpdate(Strict):

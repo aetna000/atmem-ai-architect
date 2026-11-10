@@ -42,7 +42,8 @@
     "specs/028-convergence-evaluation/evidence/20261110-azure-operating-jobs",
     "specs/028-convergence-evaluation/evidence/20261110-google-operating-jobs",
     "specs/028-convergence-evaluation/evidence/20261110-ibm-operating-tasks",
-    "specs/028-convergence-evaluation/evidence/20261110-ibm-operating-jobs"
+    "specs/028-convergence-evaluation/evidence/20261110-ibm-operating-jobs",
+    "specs/028-convergence-evaluation/evidence/20261110-invoice-public-export"
   ],
   "limitations": [
     "The wider 28-project outcome remains unfinished. No claim of world-leading quality or four-provider connected-application parity.",
@@ -90,7 +91,7 @@
   },
   "baselineCompletedCases": 28,
   "baselineQualifiedCases": 0,
-  "updatedAt": "2026-11-10T06:45:55.182602+00:00",
+  "updatedAt": "2026-11-10T07:36:12.814801+00:00",
   "baselineErrors": {
     "ValidationError": 4,
     "TimeoutError": 6
@@ -226,7 +227,7 @@
       "ibmRegistryRegression": "Shared explicit regional mapping repaired for structured/FAQ/invoice exports; Sydney native image-host regressions pass."
     }
   },
-  "currentEvidence": "specs/028-convergence-evaluation/evidence/20261110-ibm-operating-jobs",
+  "currentEvidence": "specs/028-convergence-evaluation/evidence/20261110-invoice-public-export",
   "operatorBootstrapCheckpoint": {
     "status": "in_progress",
     "evidence": "specs/028-convergence-evaluation/evidence/20261110-invoice-operator-core",
@@ -366,6 +367,51 @@
       "Native IBM job execution/SQL credentials/private TLS/model/restore",
       "Actual Knative schedule API acceptance, event delivery, regional logging/alerts/notification behavior",
       "End-to-end generator/business-package acceptance"
+    ]
+  },
+  "invoicePublicExportCheckpoint": {
+    "status": "in_progress",
+    "evidence": "specs/028-convergence-evaluation/evidence/20261110-invoice-public-export",
+    "publicInvoiceExportProviders": [
+      "aws",
+      "azure",
+      "gcp",
+      "ibm"
+    ],
+    "checks": {
+      "nativeMockPlans": {
+        "aws": {
+          "staging": 9,
+          "production": 9
+        },
+        "azure": {
+          "staging": 11,
+          "production": 11
+        },
+        "gcp": {
+          "staging": 10,
+          "production": 10
+        },
+        "ibm": {
+          "staging": 12,
+          "production": 12
+        }
+      },
+      "nativeMockPlansTotal": 84,
+      "completeSyntheticHandoffs": 4,
+      "tasksPerHandoff": 29,
+      "portableIbmEmittedSourceChecksOnFreshPG18": 82,
+      "javascript": 335,
+      "serverExistingSuite": 208,
+      "serverNewFocusedChecks": 4,
+      "build": true
+    },
+    "cloudOperations": false,
+    "completeMediumBusinessCases": 0,
+    "next": [
+      "Frozen live complete invoice conversations on all four providers; independently assess whole exports and runtime/emulation behavior before counting cases.",
+      "Qualify other provider portable packages and actual generated-image/parser/end-to-end compositions, repairing generator causes.",
+      "Remaining medium/hard families, final 28-case pass and held-out variants."
     ]
   }
 }

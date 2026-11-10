@@ -1,0 +1,57 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile.tests
+#1 transferring dockerfile: 1.07kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.13-slim-trixie@sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90
+#2 DONE 0.0s
+
+#3 [ 2/10] ADD --checksum=sha256:8c27c342230503b73dfde629642c3b352e87b554e06d60cf58772f236a305ceb https://deb.debian.org/debian-security/pool/updates/main/z/zlib/zlib1g_1.3.dfsg%2breally1.3.1-1%2bdeb13u1_amd64.deb /tmp/runtime-security.deb
+#3 DONE 0.0s
+
+#4 [internal] load build context
+#4 transferring context: 631.27kB 0.0s done
+#4 DONE 0.0s
+
+#5 [ 1/10] FROM docker.io/library/python:3.13-slim-trixie@sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90
+#5 resolve docker.io/library/python:3.13-slim-trixie@sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90 0.0s done
+#5 DONE 0.0s
+
+#6 [ 4/10] WORKDIR /app
+#6 CACHED
+
+#7 [ 7/10] COPY *.py *.sql invoice-deployment.json invoice-web.* ./
+#7 CACHED
+
+#8 [ 5/10] COPY test-requirements.lock ./
+#8 CACHED
+
+#9 [ 2/10] ADD --checksum=sha256:8c27c342230503b73dfde629642c3b352e87b554e06d60cf58772f236a305ceb https://deb.debian.org/debian-security/pool/updates/main/z/zlib/zlib1g_1.3.dfsg%2breally1.3.1-1%2bdeb13u1_amd64.deb /tmp/runtime-security.deb
+#9 CACHED
+
+#10 [ 3/10] RUN dpkg -i /tmp/runtime-security.deb && rm /tmp/runtime-security.deb
+#10 CACHED
+
+#11 [ 6/10] RUN python -I -m pip --isolated install --no-cache-dir --only-binary=:all: --require-hashes -r test-requirements.lock
+#11 CACHED
+
+#12 [ 8/10] COPY parser/*.py ./parser/
+#12 CACHED
+
+#13 [ 9/10] COPY tests/ ./tests/
+#13 DONE 0.0s
+
+#14 [10/10] COPY test-fixtures/ ./test-fixtures/
+#14 DONE 0.0s
+
+#15 exporting to image
+#15 exporting layers 0.0s done
+#15 exporting manifest sha256:1f4993c8fa546942a28f100a8df03c0cd1da35cb0f218c5aa08f72951eda4afb done
+#15 exporting config sha256:32b2ff548280257ddd5f1301b4ec7cacdfa19c25fc0260b7d3286eeca83cd9c9 done
+#15 exporting attestation manifest sha256:18d4a7eb94aa74365402a0ac134a52ad46514438475db590a6ac0f28ec72c6c2 done
+#15 exporting manifest list sha256:430ce0da690532e3f83f5591ebc6aacd7cd46ccc28a876af03459f84b8ac0bb5 done
+#15 naming to moby-dangling@sha256:430ce0da690532e3f83f5591ebc6aacd7cd46ccc28a876af03459f84b8ac0bb5 done
+#15 DONE 0.1s
+
+View build details: docker-desktop://dashboard/build/default/default/x3hmll0gw9742hh5mjgkwbrnu

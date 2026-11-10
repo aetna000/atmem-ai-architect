@@ -2,6 +2,7 @@ import sources from './runtime/invoice-sources.json' with{type:'json'};
 import {invoiceDependencies}from'./invoice-dependencies.mjs';
 import {pythonContainer}from'./python-container.mjs';
 import base from'./runtime/python-container-lock.json'with{type:'json'};
+import{invoiceTestFiles}from'./invoice-tests.mjs';
 
 // Application emission alone is not a supported/cloud-qualified project. Native
 // provider compilers and independent whole-export checks must admit composition.
@@ -22,7 +23,7 @@ export function invoiceApplicationFiles(provider,address){
  files[parserRoot+'Dockerfile']=sources['invoice-parser.Dockerfile'];
  files[parserRoot+'.dockerignore']='*\n!invoice_document.py\n!invoice_extraction.py\n!structured_output.py\n!invoice_parser_cli.py\n!invoice_parser_service.py\n!invoice_parser_identity.py\n!parser-requirements.lock\n';
  files[root+'BUILD.md']=INVOICE_BUILD;
- return files;
+ return {...files,...invoiceTestFiles(provider,address)};
 }
 
 export const INVOICE_BUILD=`# Invoice application images

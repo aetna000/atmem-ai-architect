@@ -494,3 +494,21 @@ Cached security still has 47 high/no reported fixes: not production approval.
 Whole state/capability/Spec Kit and business conversations now take priority; zero
 medium invoice cases are complete. Remaining families/final28/held-out unfinished.
 Evidence: specs/028-convergence-evaluation/evidence/20261110-ibm-operating-jobs
+
+
+## Register complete invoice export composition and portable local acceptance
+
+Four native invoice compilers are now selected through the strict public model/
+resource/export path. Added exact interfaces, provider-specific protected state
+guidance and phased Spec Kit tasks with real file/resource/input links. Extra
+requirements/flows and invalid placement remain preserved gaps; critical native
+workload omissions fail coverage. No source repository is reclassified as an
+existing deployment. Portable acceptance no longer depends on monorepo SDK paths;
+the observed foreign-Azure-SDK failure is preserved and provider-case selection is
+explicit. The final IBM delivered suite passes 82 checks on its freshly bootstrapped
+owned PG18 fixture; this is not real cloud authentication/model/deployment proof.
+84 public-path native staging/production mock plans, 335 JS, 208 server plus four
+new focused checks and build pass. Complete business-brief handoffs have 29 tasks
+each, all todo. Zero complete medium business conversations are counted. Live
+conversations, whole-runtime/emulation acceptance, remaining families/final28 and
+held-out remain next. No cloud operation or remote publication. Evidence: specs/028-convergence-evaluation/evidence/20261110-invoice-public-export

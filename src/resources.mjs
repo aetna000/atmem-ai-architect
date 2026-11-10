@@ -1,3 +1,4 @@
+import {hasInvoice,invoiceResourcePlan}from'./invoice-plan.mjs';
 import {publicFaqPlan} from './public-faq.mjs';
 import {ibmStructuredPlan} from './ibm-structured.mjs';
 import {structuredApiPlan} from './structured-api.mjs';
@@ -57,6 +58,7 @@ export function resolveService(data) {
 }
 
 export function resourcePlan(project) {
+  if(hasInvoice(project))return invoiceResourcePlan(project);
   if(hasCrossCloud(project))return crossCloudPlan(project);
   const nodes = project.nodes.filter((n) => n.data.kind !== "note");
   const ids = new Set(nodes.map((n) => n.id));

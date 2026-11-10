@@ -97,3 +97,12 @@ bootstrap/scheduled maintenance and monitoring, then complete state/Spec Kit/reg
 wiring and rerun four unchanged full-client-brief invoice projects. Continue the
 other medium/hard families and final full 28-case/held-out reruns. Do not mark CV-005
 or the original goal done from these component/adaptor checks.
+
+
+### Invoice public-export checkpoint
+
+The four-provider invoice composition, explicit interface/state contracts and
+portable acceptance/Spec Kit phases are implemented locally. Current evidence: specs/028-convergence-evaluation/evidence/20261110-invoice-public-export.
+Next qualify actual complete live conversations and exact resulting handoffs/
+runtime, then continue the remaining medium/hard families and full28/held-out.
+Fixture/schema/mock passes do not complete business cases or authorize deployment.

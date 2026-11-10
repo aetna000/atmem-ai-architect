@@ -1,6 +1,7 @@
 import {invoiceApplicationFiles}from'./invoice-application.mjs';
 import {existingReferenceFiles}from'./existing-references.mjs';
 import {INVOICE_OPERATIONS}from'./invoice-operations.mjs';
+import{INVOICE_REGION_PATTERNS,validInvoiceRegion}from'./invoice-region.mjs';
 
 export const v=name=>'${var.'+name+'}';
 export const r=(type,name,attribute)=>'${'+type+'.'+name+'.'+attribute+'}';
@@ -19,7 +20,8 @@ export function invoiceBuilder(project,row,environment='staging'){
   if(variable[name])throw Error('Duplicate invoice input '+name);
   variable[name]={type:'string',nullable:false,description,validation:{condition:pattern?'${can(regex('+JSON.stringify(pattern)+',var.'+name+'))}':'${length(trimspace(var.'+name+')) > 0}',error_message:'Supply the reviewed '+name+' input.'}};examples[name]=example;return v(name);
  };
- const region=input('region','Reviewed single deployment/data region; verify current service/model availability and quotas.',row.region||{aws:'ap-southeast-2',azure:'australiaeast',gcp:'australia-southeast1',ibm:'au-syd'}[row.provider]);
+ if(row.region&&!validInvoiceRegion(row.provider,row.region))throw Error('Preserve and resolve the explicit invoice region as a canonical provider region before compilation.');
+ const region=input('region','Reviewed single deployment/data region; verify current service/model availability and quotas.',row.region||{aws:'ap-southeast-2',azure:'australiaeast',gcp:'australia-southeast1',ibm:'au-syd'}[row.provider],INVOICE_REGION_PATTERNS[row.provider]);
  if(row.region){variable.region.default=row.region;variable.region.validation={condition:'${var.region == '+JSON.stringify(row.region)+'}',error_message:'Placement is bound to this design. Update and regenerate the design before changing region.'};}
  resource.terraform_data={review_gate:{input:{design_revision:project.revision,environment,provider:row.provider},lifecycle:{precondition:[{condition:'${var.review_approved}',error_message:'Review the actual source, placement, identities, existing accounting contract, costs, operations and destination account before any apply.'}]}}};
  const add=(type,name,body)=>((resource[type]||={})[name]={...body,depends_on:['terraform_data.review_gate',...(body.depends_on||[])]});

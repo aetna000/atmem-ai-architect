@@ -35,7 +35,7 @@ test('every emitted invoice application contains its local runtime import closur
   assert.equal(JSON.parse(files[root+'invoice-deployment.json']).provider,provider);
   for(const[name,source]of Object.entries(files))if(name.startsWith(root)&&name.endsWith('.py')){
    const folder=name.slice(0,name.lastIndexOf('/')+1);
-   for(const match of source.matchAll(/^from ([a-z_][a-z_0-9]*) import /gm))if(/^(?:invoice_|workflow_|durable_workflow$|approved_http_destination$|structured_|policy_review$|aws_json_model$|azure_structured$|gcp_structured$|ibm_structured$)/.test(match[1]))assert.ok(files[folder+match[1]+'.py'],'Missing '+match[1]+' imported by '+name);
+   for(const match of source.matchAll(/^from ([a-z_][a-z_0-9]*) import /gm))if(/^(?:invoice_|workflow_|durable_workflow$|approved_http_destination$|structured_|policy_review$|aws_json_model$|azure_structured$|gcp_structured$|ibm_structured$)/.test(match[1]))assert.ok(files[folder+match[1]+'.py']||(name.startsWith(root+'tests/')&&source.includes('sys.path')&&(files[root+match[1]+'.py']||(source.includes("ROOT/'parser'")&&files[root+'parser/'+match[1]+'.py']))),'Missing '+match[1]+' imported by '+name);
   }
   assert.ok(files[root+'workflow_schema.sql']);assert.ok(files[root+'invoice_runtime_secrets.py']);assert.match(files[root+'Dockerfile'],/"--limit-concurrency", "32"/);assert.doesNotMatch(files[root+'Dockerfile'],/COPY web\//);
   assert.ok(files[root+'parser/invoice_parser_service.py']);assert.match(files[root+'parser/Dockerfile'],/USER 10001:10001/);

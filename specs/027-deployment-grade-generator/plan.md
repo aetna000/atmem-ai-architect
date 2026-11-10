@@ -241,3 +241,12 @@ repair adds generic bounded structured output and an AWS authenticated web compo
 verified through emitted builds, application tests, actual provider schemas/mocks and
 explicitly scripted local emulation. Other providers and complex behavior remain work.
 See ../028-convergence-evaluation/decision-log.md and progress.json.
+
+
+### Invoice public-export checkpoint
+
+The four-provider invoice composition, explicit interface/state contracts and
+portable acceptance/Spec Kit phases are implemented locally. Current evidence: specs/028-convergence-evaluation/evidence/20261110-invoice-public-export.
+Next qualify actual complete live conversations and exact resulting handoffs/
+runtime, then continue the remaining medium/hard families and full28/held-out.
+Fixture/schema/mock passes do not complete business cases or authorize deployment.
