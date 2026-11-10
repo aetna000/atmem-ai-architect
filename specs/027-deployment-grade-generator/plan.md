@@ -259,3 +259,12 @@ application tests (333 checks total, real loopback PG18; explicit cloud fixtures
 Evidence: specs/028-convergence-evaluation/evidence/20261110-invoice-live-native-v3. Six artifact admission regressions and 343 JS tests pass.
 Zero complete medium cases counted until composed semantics/recovery/security are
 reconciled. Remaining families and final full28/held-out work remain in progress.
+
+### Composed live-export workflow checkpoint
+
+All four actual live application sources passed 15 composed local checks each with
+real PDF/OCR, local model, restricted PostgreSQL and loopback TLS; identity/storage
+remain explicit fixtures. Exact artifact admission and parser source/lock matching
+precede execution. Evidence: specs/028-convergence-evaluation/evidence/20261110-invoice-live-workflow-v1. 345 JS tests pass.
+Recovery/security/native-cloud boundaries and full project qualification remain open;
+continue remaining families and final full28/held-out evaluation.

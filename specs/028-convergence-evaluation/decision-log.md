@@ -545,3 +545,11 @@ never patch an original handoff. Native provider tests and portable runtime test
 remain distinct from reproduction and from complete-project qualification. Preserve
 new IBM full conversation, four native receipts and four exact Linux test suites in
 specs/028-convergence-evaluation/evidence/20261110-invoice-live-native-v3. No cloud operations or readiness promotion.
+
+### 2026-11-10 — Execute composed checks against live export source
+
+Extend existing workflow probe with paired application-source/native-receipt
+admission. Reject modified application code before imports, match the shared parser
+image sources and lock, preserve exact model operations and scoped local receipts.
+Do not promote synthetic cloud identity/storage or loopback accounting into native
+cloud or deployment evidence. specs/028-convergence-evaluation/evidence/20261110-invoice-live-workflow-v1 records four passing runs.

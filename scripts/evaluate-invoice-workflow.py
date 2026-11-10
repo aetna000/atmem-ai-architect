@@ -20,7 +20,21 @@ import threading
 import uuid
 
 ROOT=Path(__file__).resolve().parents[1]
-sys.path[:0]=[str(ROOT),str(ROOT/'src/runtime'),str(ROOT/'tests/runtime'),str(ROOT/'.local/azure-runtime-sdk')]
+admission=argparse.ArgumentParser(add_help=False);admission.add_argument('--application-source');admission.add_argument('--artifact-receipt');admitted,_=admission.parse_known_args()
+RUNTIME=ROOT/'src/runtime';artifact_receipt_hash=None
+if bool(admitted.application_source)!=bool(admitted.artifact_receipt):raise ValueError('Provide both exact application source and native artifact receipt')
+if admitted.application_source:
+    RUNTIME=Path(admitted.application_source).resolve();receipt_path=Path(admitted.artifact_receipt).resolve()
+    if not RUNTIME.is_relative_to(ROOT/'.local')or not receipt_path.is_relative_to(ROOT/'.local'):raise ValueError('Use local qualification artifacts')
+    qualified=json.loads(receipt_path.read_text());artifact_receipt_hash=hashlib.sha256(receipt_path.read_bytes()).hexdigest()
+    if qualified.get('kind')!='invoice-live-artifact-native-qualification'or not qualified.get('passed'):raise ValueError('Use a passing exact live artifact receipt')
+    prefix='applications/'+RUNTIME.name+'/'
+    expected={name[len(prefix):]:digest for name,digest in qualified['sourceHashes'].items()if name.startswith(prefix)}
+    if not expected:raise ValueError('Application missing from qualified artifact')
+    for name,digest in expected.items():
+        target=(RUNTIME/name).resolve()
+        if not target.is_relative_to(RUNTIME)or hashlib.sha256(target.read_bytes()).hexdigest()!=digest:raise ValueError('Application differs from original live artifact')
+sys.path[:0]=[str(ROOT),str(RUNTIME),str(RUNTIME/'parser'),str(ROOT/'tests/runtime'),str(ROOT/'.local/azure-runtime-sdk')]
 import httpx
 import psycopg
 from durable_privileges_acceptance import create_runtime_roles
@@ -36,9 +50,13 @@ from server.local_providers import call_cli
 
 async def evaluate(args,out):
     owner,_,_,api_dsn,worker_dsn=create_runtime_roles();account=str(uuid.uuid4());namespace='q'+uuid.uuid4().hex[:12];objects=OwnedObjectsFixture();sink=TlsDestinationFixture();model_calls=[];checks={};task=None;parser_runs=[];started=time.monotonic()
-    source_paths=[Path(__file__).resolve(),*[ROOT/'src/runtime'/name for name in ['invoice_http.py','invoice_object_store.py','invoice_extraction.py','invoice_processing.py','invoice_retention.py','invoice_document.py','structured_output.py','workflow_errors.py','invoice_parser_transport.py','invoice_parser_service.py','durable_workflow.py','workflow_worker.py','workflow_schema.sql','workflow_database.py','approved_http_destination.py','workflow_contract.py']],ROOT/'tests/runtime/invoice_http_acceptance.py',ROOT/'tests/runtime/durable_privileges_acceptance.py',ROOT/'tests/runtime/workflow_tls_destination_fixture.py',ROOT/'server/local_providers.py']
+    source_paths=[Path(__file__).resolve(),*[(RUNTIME/name if(RUNTIME/name).is_file()else RUNTIME/'parser'/name)for name in ['invoice_http.py','invoice_object_store.py','invoice_extraction.py','invoice_processing.py','invoice_retention.py','invoice_document.py','structured_output.py','workflow_errors.py','invoice_parser_transport.py','invoice_parser_service.py','durable_workflow.py','workflow_worker.py','workflow_schema.sql','workflow_database.py','approved_http_destination.py','workflow_contract.py']],ROOT/'tests/runtime/invoice_http_acceptance.py',ROOT/'tests/runtime/durable_privileges_acceptance.py',ROOT/'tests/runtime/workflow_tls_destination_fixture.py',ROOT/'server/local_providers.py']
     hashes={str(path.relative_to(ROOT)):hashlib.sha256(path.read_bytes()).hexdigest()for path in source_paths};native=json.loads(Path(args.parser_receipt).read_text())
     if not native.get('passed')or native.get('kind')!='credentialless-linux-invoice-parser':raise ValueError('Use a passing exact parser image receipt')
+    if admitted.application_source:
+        for name in ['invoice_document.py','invoice_parser_cli.py','invoice_parser_service.py','invoice_parser_identity.py','parser-requirements.lock']:
+            actual=RUNTIME/'parser'/name
+            if hashlib.sha256(actual.read_bytes()).hexdigest()!=native['sourceHashes'].get('src/runtime/'+name):raise ValueError('Parser image does not match emitted parser sources: '+name)
     image=native['imageId'];destination=ApprovedHttpDestination(sink.url,lambda:sink.token,destination_scope='synthetic-account',idempotency_verified=True,tls_context=sink.context)
     with psycopg.connect(owner)as conn:
         conn.execute('INSERT INTO workflow.accounts(id)VALUES(%s)',(account,))
@@ -107,10 +125,10 @@ async def evaluate(args,out):
                 except asyncio.CancelledError:pass
             parser_server.shutdown();parser_server.server_close();parser_thread.join(timeout=2);parser_session.close();sink.close()
     (out/'model-operations.json').write_text(json.dumps(model_calls,indent=2)+'\n');(out/'parser-operations.json').write_text(json.dumps(parser_runs,indent=2)+'\n')
-    unchanged=all(hashlib.sha256((ROOT/path).read_bytes()).hexdigest()==digest for path,digest in hashes.items());receipt={'kind':'local-composed-invoice-workflow','recordedAt':datetime.now(timezone.utc).isoformat(),'passed':bool(checks)and all(checks.values())and unchanged,'seconds':round(time.monotonic()-started,3),'checks':checks,'sourceHashes':hashes,'sourceUnchanged':unchanged,'parserImageId':image,'parserReceiptSha256':hashlib.sha256(Path(args.parser_receipt).read_bytes()).hexdigest(),'model':'signed-in-local-codex','requestedModel':args.model,'cloudOperations':False,'fullProjectQualification':False,'boundary':'Actual ASGI upload, restricted PostgreSQL producer/worker roles, Procrastinate jobs, network-disabled locked Linux PDF/OCR, local model, independent field/evidence decoder, server approval and real loopback TLS destination. Identity and object persistence are explicit fixtures. No native cloud model/IdP/storage/database/hosting, production Docker socket design, vendor guarantees, broad corpus or full project qualification.'}
+    unchanged=all(hashlib.sha256((ROOT/path).read_bytes()).hexdigest()==digest for path,digest in hashes.items());receipt={'kind':'local-composed-invoice-workflow','recordedAt':datetime.now(timezone.utc).isoformat(),'passed':bool(checks)and all(checks.values())and unchanged,'seconds':round(time.monotonic()-started,3),'checks':checks,'applicationSource':str(RUNTIME.relative_to(ROOT)),'artifactReceiptSha256':artifact_receipt_hash,'sourceHashes':hashes,'sourceUnchanged':unchanged,'parserImageId':image,'parserReceiptSha256':hashlib.sha256(Path(args.parser_receipt).read_bytes()).hexdigest(),'model':'signed-in-local-codex','requestedModel':args.model,'cloudOperations':False,'fullProjectQualification':False,'boundary':'Actual ASGI upload, restricted PostgreSQL producer/worker roles, Procrastinate jobs, network-disabled locked Linux PDF/OCR, local model, independent field/evidence decoder, server approval and real loopback TLS destination. Identity and object persistence are explicit fixtures. No native cloud model/IdP/storage/database/hosting, production Docker socket design, vendor guarantees, broad corpus or full project qualification.'}
     (out/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n');print(json.dumps({'passed':receipt['passed'],'checks':checks,'receipt':str(out/'receipt.json')}));return receipt['passed']
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('--live',action='store_true',required=True);parser.add_argument('--out',required=True);parser.add_argument('--parser-receipt',required=True);parser.add_argument('--docker-host',required=True);parser.add_argument('--model',default='default');args=parser.parse_args();out=Path(args.out).resolve()
+    parser=argparse.ArgumentParser(parents=[admission]);parser.add_argument('--live',action='store_true',required=True);parser.add_argument('--out',required=True);parser.add_argument('--parser-receipt',required=True);parser.add_argument('--docker-host',required=True);parser.add_argument('--model',default='default');args=parser.parse_args();out=Path(args.out).resolve()
     if not args.docker_host.startswith('unix:///')or not Path(args.docker_host[7:]).is_socket()or not out.is_relative_to(ROOT/'.local')or out.exists():raise ValueError('Use an existing local Docker socket and fresh local evidence directory')
     out.mkdir(parents=True);raise SystemExit(0 if asyncio.run(evaluate(args,out))else 1)

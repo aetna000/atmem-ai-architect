@@ -45,7 +45,8 @@
     "specs/028-convergence-evaluation/evidence/20261110-ibm-operating-jobs",
     "specs/028-convergence-evaluation/evidence/20261110-invoice-public-export",
     "specs/028-convergence-evaluation/evidence/20261110-invoice-live-v2",
-    "specs/028-convergence-evaluation/evidence/20261110-invoice-live-native-v3"
+    "specs/028-convergence-evaluation/evidence/20261110-invoice-live-native-v3",
+    "specs/028-convergence-evaluation/evidence/20261110-invoice-live-workflow-v1"
   ],
   "limitations": [
     "The wider 28-project outcome remains unfinished. No claim of world-leading quality or four-provider connected-application parity.",
@@ -229,7 +230,7 @@
       "ibmRegistryRegression": "Shared explicit regional mapping repaired for structured/FAQ/invoice exports; Sydney native image-host regressions pass."
     }
   },
-  "currentEvidence": "specs/028-convergence-evaluation/evidence/20261110-invoice-live-native-v3",
+  "currentEvidence": "specs/028-convergence-evaluation/evidence/20261110-invoice-live-workflow-v1",
   "operatorBootstrapCheckpoint": {
     "status": "in_progress",
     "evidence": "specs/028-convergence-evaluation/evidence/20261110-invoice-operator-core",
@@ -516,6 +517,56 @@
     "next": [
       "Reconcile composed OCR/model, runtime/recovery and security evidence for exact invoice exports.",
       "Complete remaining medium/hard families; rerun final 28 and held-out cases."
+    ]
+  },
+  "invoiceLiveComposedCheckpoint": {
+    "status": "in_progress",
+    "cloudOperations": false,
+    "fullProjectQualification": false,
+    "completeMediumCasesQualified": 0,
+    "javascriptTests": 345,
+    "cases": [
+      {
+        "provider": "aws",
+        "passed": true,
+        "checks": 14,
+        "sourceUnchanged": true,
+        "actualPdfAndLocalModelOperations": 2,
+        "nativeArtifactReceiptSha256": "c841a74be2aea9ab28b0e70b6abe46d8c4ef4c30f030f86f33224a74951ba3db",
+        "fullProjectQualification": false
+      },
+      {
+        "provider": "azure",
+        "passed": true,
+        "checks": 14,
+        "sourceUnchanged": true,
+        "actualPdfAndLocalModelOperations": 2,
+        "nativeArtifactReceiptSha256": "017ec17d2c1720fb9f51ee37f7a69d465f4c80e83b7499cc310f6ded4f60a2ff",
+        "fullProjectQualification": false
+      },
+      {
+        "provider": "gcp",
+        "passed": true,
+        "checks": 14,
+        "sourceUnchanged": true,
+        "actualPdfAndLocalModelOperations": 2,
+        "nativeArtifactReceiptSha256": "474e9709f9f434cd99e272b3179c24efdcea41aa464ebeefb163ba269120e557",
+        "fullProjectQualification": false
+      },
+      {
+        "provider": "ibm",
+        "passed": true,
+        "checks": 14,
+        "sourceUnchanged": true,
+        "actualPdfAndLocalModelOperations": 2,
+        "nativeArtifactReceiptSha256": "b1aa1a36349ec935f404bb26db5f7cba046769285fe33319f63e8fc30c90a1b2",
+        "fullProjectQualification": false
+      }
+    ],
+    "evidence": "specs/028-convergence-evaluation/evidence/20261110-invoice-live-workflow-v1",
+    "next": [
+      "Exact-package recovery/security and native runtime/image evidence reconciliation.",
+      "Remaining medium/hard implementations, final full28 and held-out variants."
     ]
   }
 }
