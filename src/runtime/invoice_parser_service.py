@@ -79,7 +79,11 @@ def main():
     if mode=='entra-workload':
         from invoice_parser_identity import EntraParserVerifier
         authorize=EntraParserVerifier(*[os.environ[name]for name in ['PARSER_TENANT_ID','PARSER_AUDIENCE','PARSER_WORKER_CLIENT_ID','PARSER_WORKER_PRINCIPAL_ID']])
+    elif mode=='shared-token':
+        from invoice_parser_identity import SharedParserVerifier
+        authorize=SharedParserVerifier(os.environ.pop('PARSER_SHARED_TOKEN',''))
     elif mode!='private-ingress':raise ValueError('Use the owned parser authorization mode')
+    elif 'PARSER_SHARED_TOKEN'in os.environ:raise ValueError('Parser token requires explicit authenticated mode')
     ParserServer(('0.0.0.0',port),PdfDocument(),authorize).serve_forever(poll_interval=.2)
 
 if __name__=='__main__':main()

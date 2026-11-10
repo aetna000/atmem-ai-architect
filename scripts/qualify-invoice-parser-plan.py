@@ -17,7 +17,7 @@ from pathlib import Path
 packet=json.load(sys.stdin)
 for name,digest in packet['files'].items():assert hashlib.sha256((Path('/app')/name).read_bytes()).hexdigest()==digest,name
 env={'PATH':'/usr/local/bin:/usr/bin:/bin','PYTHONDONTWRITEBYTECODE':'1',**packet['environment']}
-assert env['PARSER_AUTH_MODE']=='entra-workload'
+assert env['PARSER_AUTH_MODE']in {'entra-workload','shared-token'}
 process=subprocess.Popen([sys.executable,'-I','/app/invoice_parser_service.py'],env=env,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE)
 try:
  deadline=time.monotonic()+8
@@ -32,6 +32,8 @@ try:
   headers={'Content-Type':'application/pdf'}
   if token:headers['Authorization']='Bearer '+token
   client=http.client.HTTPConnection('127.0.0.1',int(env['PORT']),timeout=2);client.request('POST','/extract',body=b'%PDF-deliberately-not-parsed',headers=headers);response=client.getresponse();assert response.status==403;value=json.loads(response.read());assert value=={'status':'rejected','reason':'access_denied'};client.close()
+ if env['PARSER_AUTH_MODE']=='shared-token':
+  client=http.client.HTTPConnection('127.0.0.1',int(env['PORT']),timeout=4);client.request('POST','/extract',body=b'%PDF-invalid-qualification-fixture',headers={'Content-Type':'application/pdf','Authorization':'Bearer '+env['PARSER_SHARED_TOKEN']});response=client.getresponse();assert response.status==422;value=json.loads(response.read());assert value['reason']!='access_denied';client.close()
  print(json.dumps({'actualParserEntrypoint':'running','nativeTerraformEnvironment':'accepted','missingAndMalformedWorkerCredentials':403,'network':'disabled; no cloud requests'}))
 finally:
  process.terminate()
@@ -45,15 +47,25 @@ if __name__=='__main__':
     if out.exists()or not out.is_relative_to(ROOT/'.local')or not plan_path.is_relative_to(ROOT/'.local')or not parser_path.is_relative_to(ROOT/'.local'):raise ValueError('Use local exact receipts and a fresh output')
     if not args.docker_host.startswith('unix:///')or not Path(args.docker_host[7:]).is_socket():raise ValueError('Use the existing local Docker socket')
     source=json.loads(parser_path.read_text());qualification=json.loads((plan_path.parent/'qualification.json').read_text())
-    if source.get('passed')is not True or qualification.get('passed')is not True or qualification.get('provider')!='azure'or not re.fullmatch(r'sha256:[0-9a-f]{64}',source.get('imageId','')):raise ValueError('Require passing exact parser and native Azure compiler receipts')
+    if source.get('passed')is not True or qualification.get('passed')is not True or qualification.get('provider')not in {'azure','ibm'}or not re.fullmatch(r'sha256:[0-9a-f]{64}',source.get('imageId','')):raise ValueError('Require passing exact parser and native compiler receipts')
     if not any(check.get('name')=='provider-mocks'and check.get('logSha256')==hashlib.sha256(plan_path.read_bytes()).hexdigest()for check in qualification['checks']):raise ValueError('Native plan log changed')
-    plans=[event['test_plan']for line in plan_path.read_text().splitlines()if line.strip()and(event:=json.loads(line)).get('type')=='test_plan'and event.get('@testrun')=='private_data_and_parser']
+    provider=qualification['provider'];run_name='private_data_and_parser'if provider=='azure'else'private_database_and_parser'
+    plans=[event['test_plan']for line in plan_path.read_text().splitlines()if line.strip()and(event:=json.loads(line)).get('type')=='test_plan'and event.get('@testrun')==run_name]
     if len(plans)!=1:raise ValueError('Use one admitted native application plan')
-    tasks=[resource for resource in plans[0]['resource_changes']if resource['type']=='azapi_resource'and resource['address'].endswith('_parser[0]')]
+    tasks=[resource for resource in plans[0]['resource_changes']if resource['type']==('azapi_resource'if provider=='azure'else'ibm_code_engine_app')and resource['address'].endswith('_parser[0]')]
     if len(tasks)!=1:raise ValueError('Expected one private parser workload')
-    task=tasks[0]['change']['after'];settings=task['body']['properties']['configuration'];containers=task['body']['properties']['template']['containers']
-    if len(containers)!=1 or settings['ingress']['external']is not False or len(settings['identitySettings'])!=1 or settings['identitySettings'][0]['lifecycle']!='None':raise ValueError('Native parser ingress/identity separation changed')
-    env={entry['name']:entry['value']for entry in containers[0]['env']}
+    task=tasks[0]['change']['after']
+    if provider=='azure':
+        settings=task['body']['properties']['configuration'];containers=task['body']['properties']['template']['containers']
+        if len(containers)!=1 or settings['ingress']['external']is not False or len(settings['identitySettings'])!=1 or settings['identitySettings'][0]['lifecycle']!='None':raise ValueError('Native parser ingress/identity separation changed')
+        env={entry['name']:entry['value']for entry in containers[0]['env']}
+    else:
+        if task['managed_domain_mappings']!='local_private'or task['run_compute_resource_token_enabled']or task['run_service_account']!='none':raise ValueError('IBM parser must have private TLS and no cloud compute/API identity')
+        entries=task['run_env_variables']
+        if {entry['name']for entry in entries}!={'PARSER_AUTH_MODE','PARSER_SHARED_TOKEN'}:raise ValueError('IBM parser cannot receive database/model/action configuration')
+        secret=next(entry for entry in entries if entry['name']=='PARSER_SHARED_TOKEN')
+        if secret['type']!='secret_key_reference'or secret['key']!='token'or not secret['reference']:raise ValueError('Use only the separately provisioned parser admission token')
+        env={'PORT':'8080','PARSER_AUTH_MODE':next(entry['value']for entry in entries if entry['name']=='PARSER_AUTH_MODE'),'PARSER_SHARED_TOKEN':'a'*64}
     if any(not isinstance(value,str)or(key!='PORT'and not key.startswith('PARSER_'))for key,value in env.items()):raise ValueError('Parser settings contain unrelated/unresolved authority')
     files={name:source['sourceHashes']['src/runtime/'+name]for name in ['invoice_parser_service.py','invoice_parser_identity.py','invoice_document.py','invoice_extraction.py','structured_output.py','parser-requirements.lock']}
     component=tasks[0]['name'].removesuffix('_parser')
@@ -64,5 +76,5 @@ if __name__=='__main__':
     command=['docker','--config',str(ROOT/'.local/qualification-docker-config'),'--host',args.docker_host,'run','--rm','--platform','linux/amd64','--network','none','--read-only','--tmpfs','/tmp:rw,noexec,nosuid,size=64m','--memory','512m','--pids-limit','32','--cap-drop','ALL','--security-opt','no-new-privileges:true','-i',source['imageId'],'python','-I','-c',PROBE]
     result=subprocess.run(command,input=json.dumps({'files':files,'environment':env}).encode(),capture_output=True,timeout=20)
     (out/'stdout.log').write_bytes(result.stdout);(out/'stderr.log').write_bytes(result.stderr)
-    receipt={'kind':'native-plan-parser-entrypoint','recordedAt':datetime.now(timezone.utc).isoformat(),'passed':result.returncode==0,'exitCode':result.returncode,'imageId':source['imageId'],'parserReceiptSha256':hashlib.sha256(parser_path.read_bytes()).hexdigest(),'nativePlanQualificationSha256':hashlib.sha256((plan_path.parent/'qualification.json').read_bytes()).hexdigest(),'planLogSha256':hashlib.sha256(plan_path.read_bytes()).hexdigest(),'sourceHashes':{'scripts/qualify-invoice-parser-plan.py':hashlib.sha256(Path(__file__).read_bytes()).hexdigest()},'imageFiles':files,'cloudOperations':False,'boundary':'Actual nonroot network-disabled Linux parser main accepts public settings resolved from the native Terraform mock plan; health succeeds and missing/malformed caller credentials are denied before parsing. No cloud IAM/ingress or full project qualification.'}
+    receipt={'kind':'native-plan-parser-entrypoint','provider':provider,'recordedAt':datetime.now(timezone.utc).isoformat(),'passed':result.returncode==0,'exitCode':result.returncode,'imageId':source['imageId'],'parserReceiptSha256':hashlib.sha256(parser_path.read_bytes()).hexdigest(),'nativePlanQualificationSha256':hashlib.sha256((plan_path.parent/'qualification.json').read_bytes()).hexdigest(),'planLogSha256':hashlib.sha256(plan_path.read_bytes()).hexdigest(),'sourceHashes':{'scripts/qualify-invoice-parser-plan.py':hashlib.sha256(Path(__file__).read_bytes()).hexdigest()},'imageFiles':files,'cloudOperations':False,'boundary':'Actual nonroot network-disabled Linux parser main accepts settings resolved from the native Terraform mock plan; IBM parser admission token is an explicit synthetic secret fixture; health succeeds and missing/malformed caller credentials are denied before parsing. No cloud IAM/ingress or full project qualification.'}
     (out/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n');print(json.dumps({'passed':receipt['passed'],'receipt':str(out/'receipt.json')}));raise SystemExit(result.returncode)

@@ -5,6 +5,7 @@ Staff/delegated tokens and another application in the same tenant grant no acces
 This module does not claim that a valid token proves a native deployment exists.
 """
 import re
+import hmac
 import jwt
 
 UUID=r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
@@ -27,3 +28,12 @@ class EntraParserVerifier:
                or any(type(claims[name])is not int for name in ['iat','nbf','exp'])or not 0<claims['exp']-claims['iat']<=86700):raise ValueError('Caller is not the owned parser worker')
             return self.worker_principal
         except Exception:raise PermissionError('Authorized parser worker required')from None
+
+class SharedParserVerifier:
+    """Private TLS RPC admission only; this token confers no cloud/data authority."""
+    def __init__(self,token):
+        if not isinstance(token,str)or not re.fullmatch(r'[0-9a-f]{64}',token):raise ValueError('Use a separately provisioned 256-bit parser token')
+        self._token=token
+    def __call__(self,token):
+        if not isinstance(token,str)or not re.fullmatch(r'[0-9a-f]{64}',token)or not hmac.compare_digest(self._token,token):raise PermissionError('Authorized parser worker required')
+        return'owned-worker'

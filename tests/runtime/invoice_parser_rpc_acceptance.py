@@ -19,7 +19,7 @@ ROOT=Path(__file__).resolve().parents[2]
 sys.path[:0]=[str(ROOT/'src/runtime'),str(Path(__file__).resolve().parent),str(ROOT/'.local/azure-runtime-sdk')]
 import requests
 from invoice_parser_service import ParserServer
-from invoice_parser_transport import ParserClient,google_parser_authorization,azure_parser_authorization
+from invoice_parser_transport import ParserClient,google_parser_authorization,azure_parser_authorization,ibm_parser_authorization
 from invoice_document import DocumentError
 from invoice_processing import InvoiceProcessor
 from workflow_errors import TemporaryWork,PermanentWork
@@ -104,5 +104,19 @@ class AzureParserIdentityTests(unittest.TestCase):
             with self.assertRaises(ValueError):azure_parser_authorization(wrong,worker,credential)
         with unittest.mock.patch('azure.identity.ManagedIdentityCredential')as factory:azure_parser_authorization(audience,worker)
         self.assertEqual(factory.call_args.kwargs['client_id'],worker)
+
+class IbmParserIdentityTests(unittest.TestCase):
+    def test_parser_secret_uses_an_owned_private_file_and_refuses_missing_broadened_or_invalid_inputs(self):
+        import tempfile
+        with tempfile.TemporaryDirectory()as folder:
+            path=Path(folder)/'parser-token';path.write_text('a'*64);path.chmod(0o600);read=ibm_parser_authorization(str(path));self.assertEqual(read(),'Bearer '+'a'*64)
+            path.write_text('b'*64);self.assertEqual(read(),'Bearer '+'b'*64)
+            for content,mode in [('b'*64,0o644),('short',0o600),('g'*64,0o600)]:
+                path.write_text(content);path.chmod(mode)
+                with self.assertRaises(TemporaryWork)as error:read()
+                self.assertNotIn(content,str(error.exception))
+            path.unlink()
+            with self.assertRaises(TemporaryWork):read()
+        with self.assertRaises(ValueError):ibm_parser_authorization('relative-token')
 
 if __name__=='__main__':unittest.main(verbosity=2)

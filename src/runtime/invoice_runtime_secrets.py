@@ -7,6 +7,7 @@ The untrusted parser never receives these values or this directory.
 """
 import atexit
 import os
+import re
 from pathlib import Path
 import shutil
 import tempfile
@@ -14,9 +15,11 @@ import tempfile
 def prepare_runtime_environment(provider,environment,role):
     if provider not in {'aws','azure','gcp','ibm'}or role not in {'api','worker'}:raise ValueError('Use the owned native workload and role')
     env=dict(environment)
+    if any(name in env for name in ['PARSER_SHARED_TOKEN','PARSER_SHARED_TOKEN_FILE'])and(provider!='ibm'or role!='worker'):raise ValueError('Only the IBM extraction worker receives parser admission authority')
+    if 'PARSER_SHARED_TOKEN'in env and(not isinstance(env['PARSER_SHARED_TOKEN'],str)or not re.fullmatch(r'[0-9a-f]{64}',env['PARSER_SHARED_TOKEN'])):raise ValueError('Use a separately provisioned 256-bit parser token')
     if role=='api'and any(name in env for name in ['DESTINATION_TOKEN','DESTINATION_TOKEN_FILE']):raise ValueError('Do not inject outbound credentials into the API')
     if provider!='ibm'and'DATABASE_PASSWORD'in env:raise ValueError('IAM database workloads must not receive a SQL password')
-    mapping={'DATABASE_CA_PEM':('DATABASE_CA_FILE','database-ca.pem',256000),'DATABASE_PASSWORD':('DATABASE_PASSWORD_FILE','database-password',500),'DESTINATION_TOKEN':('DESTINATION_TOKEN_FILE','destination-token',16000)}
+    mapping={'PARSER_SHARED_TOKEN':('PARSER_SHARED_TOKEN_FILE','parser-token',64),'DATABASE_CA_PEM':('DATABASE_CA_FILE','database-ca.pem',256000),'DATABASE_PASSWORD':('DATABASE_PASSWORD_FILE','database-password',500),'DESTINATION_TOKEN':('DESTINATION_TOKEN_FILE','destination-token',16000)}
     selected=[]
     for name,(pointer,filename,maximum)in mapping.items():
         if name not in env:continue

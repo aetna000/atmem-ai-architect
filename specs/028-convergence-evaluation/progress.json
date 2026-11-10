@@ -35,7 +35,8 @@
     "specs/028-convergence-evaluation/evidence/20261110-azure-invoice-native",
     "specs/028-convergence-evaluation/evidence/20261110-gcp-invoice-and-queue-recovery",
     "specs/028-convergence-evaluation/evidence/20261110-ibm-operator-bootstrap",
-    "specs/028-convergence-evaluation/evidence/20261110-proxy-binary-applicability"
+    "specs/028-convergence-evaluation/evidence/20261110-proxy-binary-applicability",
+    "specs/028-convergence-evaluation/evidence/20261110-ibm-invoice-native"
   ],
   "limitations": [
     "The wider 28-project outcome remains unfinished. No claim of world-leading quality or four-provider connected-application parity.",
@@ -52,8 +53,8 @@
   },
   "baselineRun": ".local/convergence-runs/baseline-v1-20261110",
   "foundationValidation": {
-    "javascriptTests": 274,
-    "serverTests": 158,
+    "javascriptTests": 305,
+    "serverTests": 208,
     "build": "passed",
     "workIntakeBrowser": "passed",
     "emulationGuidanceBrowser": "passed",
@@ -78,11 +79,12 @@
     "ibmSourceAndProvider": "exact original v13 and regenerated v15 passed dependency closure, emitted Python 3.13 tests, provider schema and 4 mock checks",
     "ibmLinuxContainer": "v15 exact image passed nonroot/read-only/network-disabled startup, actual 4-field schema and 15 emitted source tests",
     "ibmBrowser": "7 local PKCE/DOM/session/late-response/denial checks passed",
-    "sharedBrowser": "6 local PKCE/DOM/session/late-response/denial checks passed"
+    "sharedBrowser": "6 local PKCE/DOM/session/late-response/denial checks passed",
+    "ibmRegistryHostnameRegression": "Both earlier families pass fresh native source/schema/mock checks; explicit regional hostname map, no global fallback."
   },
   "baselineCompletedCases": 28,
   "baselineQualifiedCases": 0,
-  "updatedAt": "2026-11-10T04:27:34.518075+00:00",
+  "updatedAt": "2026-11-10T04:49:45.878931+00:00",
   "baselineErrors": {
     "ValidationError": 4,
     "TimeoutError": 6
@@ -121,10 +123,10 @@
       "queueVersion": "3.10.0",
       "full28CaseAcceptanceComplete": false,
       "remaining": [
-        "Complete IBM native invoice adapter and complete project qualification on every provider",
-        "Native operator bootstrap/maintenance, monitoring and state/Spec Kit/registry integration",
+        "Native operator bootstrap/scheduled maintenance and monitoring on all providers",
+        "Complete state/Spec Kit/registry integration and whole-project qualification",
         "Four-provider complete-business-brief invoice conversation/export qualification",
-        "Remaining medium/hard families, full 28-case and held-out acceptance"
+        "Other medium/hard families, full 28-case and held-out acceptance"
       ],
       "postgresVersions": [
         "17.11",
@@ -134,8 +136,8 @@
       "connectionRecovery": "Real terminated SQL transaction and rotated credential recovery; connection failures retry with a fresh pool and bounded backoff. Schema/permission failures are not retried."
     },
     "invoiceWorkflowRuntime": {
-      "status": "local runtime and isolated AWS/Azure/Google adapters checked; whole-project integration unfinished",
-      "evidence": "specs/028-convergence-evaluation/evidence/20261110-gcp-invoice-and-queue-recovery",
+      "status": "local runtime and isolated four-provider native adapters checked; whole-project integration unfinished",
+      "evidence": "specs/028-convergence-evaluation/evidence/20261110-ibm-invoice-native",
       "nativeConversationBenchmarkProjectsPassed": 0,
       "postgresCoreChecks": 89,
       "linuxParserAndDecoderChecks": 10,
@@ -152,12 +154,12 @@
         "status": "open findings; not clean or production accepted"
       },
       "remaining": [
-        "Complete IBM native invoice adapter and complete project qualification on every provider",
-        "Native operator bootstrap/maintenance, monitoring and state/Spec Kit/registry integration",
+        "Native operator bootstrap/scheduled maintenance and monitoring on all providers",
+        "Complete state/Spec Kit/registry integration and whole-project qualification",
         "Four-provider complete-business-brief invoice conversation/export qualification",
-        "Remaining medium/hard families, full 28-case and held-out acceptance"
+        "Other medium/hard families, full 28-case and held-out acceptance"
       ],
-      "apiIdentityStorageDecoderChecks": 62,
+      "apiIdentityStorageDecoderChecks": 68,
       "browserChecks": 12,
       "pkceBrowserChecks": 5,
       "nativeIdentityBoundary": "Actual local JWT signatures and SQL/API membership checks; scripted JWKS keys, not live IdP or cloud authentication.",
@@ -181,16 +183,18 @@
       "relatedEvidence": [
         "specs/028-convergence-evaluation/evidence/20261110-invoice-worker-delivery",
         "specs/028-convergence-evaluation/evidence/20261110-ibm-operator-bootstrap",
-        "specs/028-convergence-evaluation/evidence/20261110-proxy-binary-applicability"
+        "specs/028-convergence-evaluation/evidence/20261110-proxy-binary-applicability",
+        "specs/028-convergence-evaluation/evidence/20261110-ibm-invoice-native"
       ],
       "nativeAzureTerraformMockRuns": 7,
-      "parserNativeDocumentDecoderIdentityChecks": 15,
+      "parserNativeDocumentDecoderIdentityChecks": 17,
       "newParserSecurityScanPending": false,
       "nativeGcpTerraformMockRuns": 6,
       "nativeTerraformEnvironmentImageStartup": [
         "aws",
         "azure",
-        "gcp"
+        "gcp",
+        "ibm"
       ],
       "environmentIsolation": "Stable physical resource names include staging/production/qualification; unsupported environment names rejected.",
       "latestExactImageSecurity": {
@@ -209,8 +213,12 @@
           "repeatOnImageOrFindingChange": true
         }
       },
-      "ibmOperatorCli": "Password-reader signature repaired; actual local native-profile SQL creation/authentication/grants pass on PG17/18. Native IBM adapter remains unfinished."
+      "ibmOperatorCli": "Password-reader signature repaired; actual local native-profile SQL creation/authentication/grants pass on PG17/18. Native IBM adapter remains unfinished.",
+      "nativeIbmTerraformMockRuns": 7,
+      "ibmPrivateParser": "Native private TLS + separately provisioned 256-bit parser-only token; no parser compute token/Code Engine API identity. Local RPC and exact entrypoint checks pass.",
+      "ibmOrigin": "Documented native app/domain/subdomain/region metadata bound to the emitted service name; no Host/Forwarded-derived origin or Terraform self-cycle.",
+      "ibmRegistryRegression": "Shared explicit regional mapping repaired for structured/FAQ/invoice exports; Sydney native image-host regressions pass."
     }
   },
-  "currentEvidence": "specs/028-convergence-evaluation/evidence/20261110-gcp-invoice-and-queue-recovery"
+  "currentEvidence": "specs/028-convergence-evaluation/evidence/20261110-ibm-invoice-native"
 }

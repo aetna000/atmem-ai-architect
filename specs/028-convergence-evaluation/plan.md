@@ -86,3 +86,14 @@ Then run four complete client-brief invoice conversations and qualify their fres
 exports before counting this medium family. Continue the other medium/hard blocks
 and final 28-case/held-out reruns; existing local component receipts do not satisfy
 those whole-project exits. No cloud deployment is authorized.
+
+### Four-provider invoice adapter checkpoint (2026-11-10)
+
+Isolated native AWS/Azure/Google/IBM adapter checks now have exact local receipts;
+see evidence/20261110-ibm-invoice-native and earlier provider snapshots. Shared IBM
+registry-host derivation was repaired in structured/FAQ exports as well. These
+receipts do not count complete medium conversations. Next implement native operator
+bootstrap/scheduled maintenance and monitoring, then complete state/Spec Kit/registry
+wiring and rerun four unchanged full-client-brief invoice projects. Continue the
+other medium/hard families and final full 28-case/held-out reruns. Do not mark CV-005
+or the original goal done from these component/adaptor checks.

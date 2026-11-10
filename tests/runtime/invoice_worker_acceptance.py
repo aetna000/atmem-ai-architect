@@ -33,6 +33,13 @@ class NativeWorkerConfigurationTests(unittest.TestCase):
                     self.assertEqual(stage.command[0],sys.executable);self.assertNotIn('must-not-enter-children',stage.environment.values());self.assertNotIn('DATABASE_PASSWORD',stage.environment);self.assertNotIn('DATABASE_HOST',stage.environment);self.assertNotIn('API_CLIENT_SECRET',stage.environment)
                 self.assertNotIn('DESTINATION_TOKEN_FILE',runtime.processor.environment);self.assertNotIn('MODEL_ID',runtime.deliver.environment);self.assertNotIn('DOCUMENT_BUCKET',runtime.deliver.environment)
                 self.assertEqual(runtime.processor.timeout_seconds,180);self.assertEqual(runtime.deliver.timeout_seconds,45);self.assertFalse(runtime.idempotent_destination)
+    def test_ibm_parser_token_is_private_to_extraction_and_cannot_enter_api_or_dispatch(self):
+        env={**self.environment(),'PARSER_SHARED_TOKEN':'a'*64};runtime=create_native_worker('ibm',env,connection='explicit-unconnected-local-fixture');path=Path(runtime.processor.environment['PARSER_SHARED_TOKEN_FILE'])
+        self.assertEqual(path.read_text(),'a'*64);self.assertEqual(path.stat().st_mode&0o777,0o600);self.assertNotIn('PARSER_SHARED_TOKEN',runtime.processor.environment);self.assertNotIn('PARSER_SHARED_TOKEN_FILE',runtime.deliver.environment)
+        for provider,role in [('ibm','api'),('gcp','worker'),('azure','worker'),('aws','worker')]:
+            with self.assertRaises(ValueError):prepare_runtime_environment(provider,env,role)
+        for token in ['short','g'*64]:
+            with self.assertRaises(ValueError):prepare_runtime_environment('ibm',{**env,'PARSER_SHARED_TOKEN':token},'worker')
     def test_changed_destination_cannot_reuse_an_approval_or_replay_receipt(self):
         env=self.environment();env['DESTINATION_ENDPOINT']='https://different.example.test/actions'
         with self.assertRaisesRegex(ValueError,'approved integration'):create_native_worker('aws',env,connection='explicit-unconnected-local-fixture')

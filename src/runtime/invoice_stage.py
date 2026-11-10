@@ -6,7 +6,7 @@ import sys
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 from invoice_native import native_objects,owned_deployment,destination_contract,mounted_secret
 from invoice_processing import InvoiceProcessor
-from invoice_parser_transport import ParserClient,google_parser_authorization,azure_parser_authorization
+from invoice_parser_transport import ParserClient,google_parser_authorization,azure_parser_authorization,ibm_parser_authorization
 from approved_http_destination import ApprovedHttpDestination
 from workflow_contract import normalized_contract
 from workflow_errors import TemporaryWork,PermanentWork,ExternalOutcomeUnknown,DestinationNotAttempted,InvalidDispatch
@@ -39,9 +39,9 @@ def native_processor(provider,environment,*,objects=None,parser=None,model=None)
             model=WatsonModel(read_model_config({**env,'ACCOUNT_ID':env['IBM_ACCOUNT_ID']}))
         else:raise ValueError('Unsupported owned model provider')
     if parser is None:
-        authorization=google_parser_authorization(env['PARSER_AUDIENCE'])if provider=='gcp'else azure_parser_authorization(env['PARSER_AUDIENCE'],env['WORKLOAD_IDENTITY_CLIENT_ID'])if provider=='azure'else None
-        # AWS/IBM require private TLS ingress restricted by their owned
-        # network boundary. No arbitrary bearer or public anonymous parser URL
+        authorization=google_parser_authorization(env['PARSER_AUDIENCE'])if provider=='gcp'else azure_parser_authorization(env['PARSER_AUDIENCE'],env['WORKLOAD_IDENTITY_CLIENT_ID'])if provider=='azure'else ibm_parser_authorization(env['PARSER_SHARED_TOKEN_FILE'])if provider=='ibm'else None
+        # AWS uses owned network restrictions; IBM additionally requires a
+        # separately provisioned parser-only token. No public anonymous parser URL
         # is supplied by a browser/model. Infrastructure must prove that wiring.
         parser=ParserClient(env['PARSER_ENDPOINT'],authorization)
     return InvoiceProcessor(objects if objects is not None else native_objects(provider,env),parser,model)

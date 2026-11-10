@@ -34,4 +34,15 @@ class InvoiceBrowserBoundaryTests(unittest.IsolatedAsyncioTestCase):
                 response=await client.get(path,headers={'Origin':'https://attacker.invalid'});self.assertEqual(response.status_code,403)
                 self.assertNotIn('access-control-allow-origin',response.headers)
 
+class CodeEngineOriginTests(unittest.TestCase):
+    def environment(self):return{'PUBLIC_ORIGIN_MODE':'code-engine-default','REGION':'au-syd','CE_REGION':'au-syd','CE_APP':'invoice-api','SERVICE_NAME':'invoice-api','CE_SUBDOMAIN':'project-fixture','CE_DOMAIN':'au-syd.codeengine.appdomain.cloud'}
+    def test_native_origin_is_derived_from_exact_owned_platform_metadata_without_a_terraform_cycle(self):
+        from invoice_native import native_public_origin
+        env=self.environment();origin='https://invoice-api.project-fixture.au-syd.codeengine.appdomain.cloud';self.assertEqual(native_public_origin('ibm',env),origin);self.assertEqual(native_public_origin('ibm',{**env,'PUBLIC_ORIGIN':origin}),origin)
+        self.assertEqual(native_public_origin('aws',{'PUBLIC_ORIGIN':'https://explicit.example.test'}),'https://explicit.example.test')
+    def test_request_headers_foreign_domains_apps_regions_and_conflicting_explicit_origins_are_not_trusted(self):
+        from invoice_native import native_public_origin
+        for changes in [{'CE_APP':'foreign-app'},{'CE_REGION':'us-south'},{'CE_DOMAIN':'au-syd.codeengine.appdomain.cloud.attacker.test'},{'CE_SUBDOMAIN':'invalid/../project'},{'PUBLIC_ORIGIN':'https://attacker.test'},{'CE_DOMAIN':'au-syd.codeengine.dev.appdomain.cloud'}]:
+            with self.subTest(changes=changes),self.assertRaises(ValueError):native_public_origin('ibm',{**self.environment(),**changes})
+
 if __name__=='__main__':unittest.main(verbosity=2)

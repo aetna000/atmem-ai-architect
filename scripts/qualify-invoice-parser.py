@@ -78,7 +78,7 @@ for name,value in json.load(sys.stdin).items():
 sys.path.insert(0,'/app')
 suite=unittest.defaultTestLoader.discover(str(root/'tests/runtime'),pattern='invoice_*acceptance.py')
 result=unittest.TextTestRunner(verbosity=2).run(suite)
-assert result.testsRun==15
+assert result.testsRun==17
 raise SystemExit(0 if result.wasSuccessful()else 1)
 """
             run('native-acceptance',base+['python','-I','-c',wrapper],input=json.dumps(assets).encode())

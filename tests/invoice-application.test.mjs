@@ -7,6 +7,7 @@ import {createHash}from'node:crypto';
 import {awsInvoiceTerraform}from'../src/invoice-aws.mjs';
 import {azureInvoiceTerraform}from'../src/invoice-azure.mjs';
 import {gcpInvoiceTerraform}from'../src/invoice-gcp.mjs';
+import {ibmInvoiceTerraform}from'../src/invoice-ibm.mjs';
 
 test('every emitted invoice application contains its local runtime import closure and private parser source',()=>{
  for(const provider of ['aws','azure','gcp','ibm']){
@@ -92,4 +93,15 @@ test('invoice deployments have stable environment-separated physical identities 
   const seed='https://atmem.ai/workspaces/'+project.id+'/'+address+'/staging';assert.ok(config.locals.name.includes(seed));assert.ok(stage['tests/invoice.tftest.hcl'].includes(seed));assert.equal(config.resource.terraform_data.review_gate.input.environment,'staging');assert.equal(prod.resource.terraform_data.review_gate.input.environment,'production');
   assert.throws(()=>adapter(project,row,'prodution'),/environment/);
  }
+});
+
+test('IBM invoice compiler preserves private SQL and parser isolation, secret references and native ownership',()=>{
+ const n='block_696e766f696365',project={id:'11111111-1111-4111-8111-111111111111',revision:1,nodes:[],edges:[]},row={id:'invoice',address:n,provider:'ibm',region:'au-syd'},files=ibmInvoiceTerraform(project,row),config=JSON.parse(files['main.tf.json']),resources=config.resource;
+ assert.deepEqual(Object.keys(config.terraform.required_providers),['ibm']);assert.equal(config.terraform.required_providers.ibm.version,'2.9.0');assert.ok(Object.keys(resources).every(type=>!/^aws_|^google_|^azurerm_/.test(type)));
+ assert.equal(resources.ibm_database[n].service_endpoints,'private');assert.equal(resources.ibm_database[n].adminpassword,undefined);assert.equal(resources.ibm_database[n].users,undefined);assert.equal(resources.ibm_code_engine_secret,undefined);assert.equal(resources.ibm_resource_key,undefined);
+ const api=resources.ibm_code_engine_app[n+'_api'],worker=resources.ibm_code_engine_app[n+'_worker'],parser=resources.ibm_code_engine_app[n+'_parser'];assert.equal(parser.managed_domain_mappings,'local_private');assert.equal(parser.run_compute_resource_token_enabled,false);assert.equal(parser.run_service_account,'none');
+ assert.deepEqual(parser.run_env_variables.map(entry=>entry.name),['PARSER_AUTH_MODE','PARSER_SHARED_TOKEN']);assert.equal(parser.run_env_variables.find(entry=>entry.name==='PARSER_SHARED_TOKEN').type,'secret_key_reference');
+ assert.ok(api.run_env_variables.every(entry=>!['DESTINATION_TOKEN','PARSER_SHARED_TOKEN','MODEL_ID'].includes(entry.name)));assert.equal(api.run_env_variables.find(entry=>entry.name==='PUBLIC_ORIGIN_MODE').value,'code-engine-default');assert.ok(!api.run_env_variables.some(entry=>entry.name==='PUBLIC_ORIGIN'));
+ assert.deepEqual(worker.run_env_variables.filter(entry=>entry.type==='secret_key_reference').map(entry=>entry.name).sort(),['DATABASE_PASSWORD','DESTINATION_TOKEN','PARSER_SHARED_TOKEN']);assert.equal(worker.scale_min_instances,1);assert.equal(worker.scale_max_instances,1);assert.notEqual(resources.ibm_iam_trusted_profile_policy[n+'_api_documents'].iam_id,resources.ibm_iam_trusted_profile_policy[n+'_worker_documents'].iam_id);
+ assert.ok(api.image_reference==='${var.runtime_image}');assert.match(files['tests/invoice.tftest.hcl'],/au\.icr\.io/);assert.match(files['CODE_ENGINE_INPUTS.md'],/No request/);assert.ok(config.output.operator_deployment);assert.throws(()=>ibmInvoiceTerraform(project,{...row,provider:'gcp'}));
 });

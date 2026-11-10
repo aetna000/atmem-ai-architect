@@ -454,6 +454,36 @@
       ],
       "reviewedAt": "2026-11-10",
       "status": "active"
+    },
+    {
+      "id": "ibm-regional-registry-is-not-code-engine-region",
+      "provider": "ibm",
+      "topic": "provider-specific-endpoints-and-artifact-delivery",
+      "practice": "Use the publisher’s explicit region-to-registry mapping. Sydney Code Engine region au-syd pulls from au.icr.io, not an invented au-syd.icr.io host. Keep accepted placement and reject an implicit global registry fallback. Validate fully resolved native image references in addition to provider schemas and local container startup; those checks catch different defects.",
+      "source": {
+        "kind": "documentation",
+        "url": "https://cloud.ibm.com/docs/Registry?topic=Registry-registry_overview",
+        "sha256": "da5b058a61dc4b1a731f9c5a3f9f3951bceb7fbac4f5e78d1017277374989fa2",
+        "retrievedAt": "2026-11-10T04:47:14.118853+00:00",
+        "archived": false
+      },
+      "evidenceLevel": "locally-tested",
+      "localEvidence": [
+        "src/ibm-registry.mjs",
+        "tests/ibm-registry.test.mjs",
+        "specs/028-convergence-evaluation/evidence/20261110-ibm-invoice-native"
+      ],
+      "limitations": [
+        "Dated endpoint mapping, not proof of registry credentials, quotas, image publication or a destination deployment.",
+        "Regional registry backup locations and artifact residency require separate review; a regional hostname does not prove every replica remains in that region."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active",
+      "localVerification": {
+        "receipt": "specs/028-convergence-evaluation/evidence/20261110-ibm-invoice-native/registry-structured/qualification.json",
+        "sha256": "9ef7fc10c2f17973f670239ffad4d9b19ddb4c42443339d81911d1860e16c4d6",
+        "scope": "Native resolved Sydney image-host mock regression; local SDK/source checks. No registry login, image pull/push or cloud behavior."
+      }
     }
   ]
 }

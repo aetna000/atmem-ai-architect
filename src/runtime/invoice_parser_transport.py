@@ -71,3 +71,19 @@ def azure_parser_authorization(audience,worker_client,credential=None):
         try:return'Bearer '+credential.get_token('api://'+audience+'/.default').token
         except Exception:raise TemporaryWork('Parser workload identity unavailable')from None
     return read
+
+def ibm_parser_authorization(path):
+    from pathlib import Path
+    import os
+    import stat
+    source=Path(path)
+    if not source.is_absolute():raise ValueError('Use the separately mounted owned parser token file')
+    def read():
+        try:
+            metadata=source.stat()
+            if not stat.S_ISREG(metadata.st_mode)or metadata.st_uid!=os.geteuid()or metadata.st_mode&0o077 or metadata.st_size!=64:raise ValueError('Unowned or invalid parser token file')
+            with source.open('rb')as stream:token=stream.read(65).decode('ascii')
+            if not re.fullmatch(r'[0-9a-f]{64}',token):raise ValueError('Invalid parser token')
+            return'Bearer '+token
+        except Exception:raise TemporaryWork('Parser admission credential unavailable')from None
+    return read

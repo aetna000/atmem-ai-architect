@@ -154,3 +154,26 @@ or unknown vulnerabilities. Re-review on changed image/findings. Compiler export
 the bounded review and rejects a mismatched artifact. Fresh Google schema/six mock
 plans, 302 JavaScript tests and build pass. Wider project acceptance stays pending.
 Evidence: specs/028-convergence-evaluation/evidence/20261110-proxy-binary-applicability
+
+## 2026-11-10 — IBM invoice native adapter and shared endpoint repair
+
+Added private Classic PostgreSQL 18, regional versioned documents/90-day lifecycle,
+separate API/worker profiles, staff App ID/PKCE, minimum-one queue worker and a
+private TLS parser with separate 256-bit admission authority. No database/model/
+object/action or Code Engine API authority is given to the parser. Native platform
+origin metadata avoids trusting request headers or a Terraform own-endpoint cycle.
+Seven native mock plans, exact IBM image startup/denial/five restricted queue cases,
+17 parser checks and 68 aggregate API/operator checks pass locally. No actual IBM
+account, private network, model, registry login or deployment is claimed.
+
+Review caught the shared region+'.icr.io' generator error. Sydney uses au.icr.io;
+structured/FAQ/invoice exports now share explicit mapping with no global fallback,
+and independent native resolved-image regressions pass. The observed documentation
+and pinned receipt support a bounded AtMem engineering-practice admission.
+
+305 JavaScript tests and build pass. Exact rebuilt IBM/parser images retain 47/65
+high findings, zero critical or reported fixes; this is not security acceptance.
+Keep medium invoice conversations uncounted until native operator/maintenance,
+monitoring, state/Spec Kit/registry and whole-export qualification are implemented.
+Then continue all remaining medium/hard cases and full 28-case/held-out evaluation.
+Evidence: specs/028-convergence-evaluation/evidence/20261110-ibm-invoice-native

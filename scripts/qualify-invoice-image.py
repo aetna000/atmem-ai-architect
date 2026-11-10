@@ -16,7 +16,7 @@ ROOT=Path(__file__).resolve().parents[1]
 PROBE=r'''
 import hashlib,http.client,importlib.metadata,importlib.util,json,os,socket,sys,threading,time
 from pathlib import Path
-import certifi,uvicorn
+import certifi,uvicorn,re
 sys.path.insert(0,'/app')
 packet=json.load(sys.stdin)
 for name,digest in packet['files'].items():
@@ -32,7 +32,9 @@ if provider=='aws':import boto3
 elif provider=='azure':import azure.identity
 elif provider=='ibm':import ibm_cloud_sdk_core
 env=packet['environment']
-if'DATABASE_CA_FILE'not in env:env['DATABASE_CA_FILE']=certifi.where()
+if'DATABASE_CA_FILE'not in env and'DATABASE_CA_PEM'not in env:env['DATABASE_CA_FILE']=certifi.where()
+for settings in [env,packet.get('workerEnvironment')or{}]:
+ if settings.get('DATABASE_CA_PEM')=='__QUALIFICATION_NATIVE_CA_PEM__':settings['DATABASE_CA_PEM']=re.search(r'-----BEGIN CERTIFICATE-----.*?-----END CERTIFICATE-----',Path(certifi.where()).read_text(),re.S).group(0)
 os.environ.update(env)
 assert invoice_native.owned_deployment()['provider']==provider
 app=invoice_native.app_factory()
@@ -94,7 +96,7 @@ if __name__=='__main__':
     if args.provider=='aws':runtime_environment['DATABASE_CA_FILE']='/app/rds-global-ca.pem'
     if args.terraform_plan_log:
         plan_path=Path(args.terraform_plan_log).resolve()
-        if args.provider not in {'aws','azure','gcp'}or not plan_path.is_relative_to(ROOT/'.local')or plan_path.name!='provider-mocks.log':raise ValueError('Use the exact local qualified native mock plan log')
+        if args.provider not in {'aws','azure','gcp','ibm'}or not plan_path.is_relative_to(ROOT/'.local')or plan_path.name!='provider-mocks.log':raise ValueError('Use the exact local qualified native mock plan log')
         qualification=json.loads((plan_path.parent/'qualification.json').read_text())
         if qualification.get('passed')is not True or qualification.get('provider')!=args.provider:raise ValueError('Native Terraform qualification must pass first')
         if not any(check.get('name')=='provider-mocks'and check.get('logSha256')==hashlib.sha256(plan_path.read_bytes()).hexdigest()for check in qualification['checks']):raise ValueError('Native plan log no longer matches its receipt')
@@ -102,30 +104,42 @@ if __name__=='__main__':
         for name,digest in source_hashes.items():
             if qualification['sourceHashes'].get(relative+name)!=digest:raise ValueError('Image source is not the exact qualified Terraform package')
         events=[json.loads(line)for line in plan_path.read_text().splitlines()if line.strip()]
-        run_name={'aws':'private_database_and_parser','azure':'private_data_and_parser','gcp':'private_database_and_identity'}[args.provider]
+        run_name={'aws':'private_database_and_parser','azure':'private_data_and_parser','gcp':'private_database_and_identity','ibm':'private_database_and_parser'}[args.provider]
         plans=[event['test_plan']for event in events if event.get('type')=='test_plan'and event.get('@testrun')==run_name]
         if len(plans)!=1:raise ValueError('Expected one admitted application-release mock plan')
-        task_type={'aws':'aws_ecs_task_definition','azure':'azapi_resource','gcp':'google_cloud_run_v2_service'}[args.provider]
+        task_type={'aws':'aws_ecs_task_definition','azure':'azapi_resource','gcp':'google_cloud_run_v2_service','ibm':'ibm_code_engine_app'}[args.provider]
         tasks=[resource for resource in plans[0]['resource_changes']if resource.get('type')==task_type and resource['address'].endswith('_api[0]')]
         if len(tasks)!=1:raise ValueError('Expected the exact native API workload')
         def containers(task):
             after=task['change']['after']
             if args.provider=='aws':return json.loads(after['container_definitions'])
             if args.provider=='azure':return after['body']['properties']['template']['containers']
-            return after['template'][0]['containers']
+            if args.provider=='gcp':return after['template'][0]['containers']
+            return[{**after,'native_name':after['name'],'name':after['name'].rsplit('-',1)[-1],'command':after['run_commands'],'env':after['run_env_variables']}]
         apis=[container for container in containers(tasks[0])if container['name']==('application'if args.provider=='gcp'else'api')]
         if len(apis)!=1:raise ValueError('Expected one native API container')
         env_key='environment'if args.provider=='aws'else'env'
-        runtime_environment={entry['name']:entry['value']for entry in apis[0][env_key]}
-        if any(entry.get('value_source')or entry.get('secretRef')for entry in apis[0][env_key]):raise ValueError('API must not receive the outbound action secret')
+        def ibm_environment(container):
+            settings={};allowed={'DATABASE_HOST':'fixture.private.databases.appdomain.cloud','DATABASE_PORT':'30426','DATABASE_CA_PEM':'__QUALIFICATION_NATIVE_CA_PEM__','DATABASE_PASSWORD':'explicit-synthetic-qualification-sql-password-for-ibm','DESTINATION_TOKEN':'explicit-synthetic-qualification-action-token','PARSER_SHARED_TOKEN':'a'*64}
+            for entry in container['env']:
+                name=entry['name'];kind=entry['type']
+                if kind=='literal':settings[name]=entry['value'];continue
+                if kind not in {'config_map_key_reference','secret_key_reference'}or name not in allowed or not entry.get('reference')or not entry.get('key'):raise ValueError('Unexpected Code Engine reference boundary')
+                expected_kind='config_map_key_reference'if name in {'DATABASE_HOST','DATABASE_PORT','DATABASE_CA_PEM'}else'secret_key_reference'
+                expected_key={'DATABASE_HOST':'host','DATABASE_PORT':'port','DATABASE_CA_PEM':'ca_pem','DATABASE_PASSWORD':'password','DESTINATION_TOKEN':'accounting_token','PARSER_SHARED_TOKEN':'token'}[name]
+                if kind!=expected_kind or entry['key']!=expected_key:raise ValueError('Native reference key/type changed')
+                settings[name]=allowed[name]
+            return settings
+        runtime_environment=ibm_environment(apis[0])if args.provider=='ibm'else{entry['name']:entry['value']for entry in apis[0][env_key]}
+        if any(entry.get('value_source')or entry.get('secretRef')or(args.provider=='ibm'and entry['type']=='secret_key_reference'and entry['name']!='DATABASE_PASSWORD')for entry in apis[0][env_key]):raise ValueError('API must not receive the outbound action secret')
         worker_tasks=[resource for resource in plans[0]['resource_changes']if resource.get('type')==task_type and resource['address'].endswith('_worker[0]')]
         if len(worker_tasks)!=1:raise ValueError('Expected the exact native worker workload')
         workers=[container for container in containers(worker_tasks[0])if container['name']==('application'if args.provider=='gcp'else'worker')]
         if len(workers)!=1 or workers[0].get('command')!=['python','-I','/app/invoice_worker.py']:raise ValueError('Native worker command changed')
         worker=workers[0]
-        secrets=[secret['name']for secret in worker.get('secrets',[])]if args.provider=='aws'else[entry['name']for entry in worker['env']if entry.get('secretRef')or entry.get('value_source')]
-        if secrets!=['DESTINATION_TOKEN']:raise ValueError('Native worker secret boundary changed')
-        worker_environment={entry['name']:entry['value']for entry in worker[env_key]if isinstance(entry.get('value'),str)}
+        secrets=[secret['name']for secret in worker.get('secrets',[])]if args.provider=='aws'else[entry['name']for entry in worker['env']if entry.get('secretRef')or entry.get('value_source')or entry.get('type')=='secret_key_reference']
+        if sorted(secrets)!=(['DATABASE_PASSWORD','DESTINATION_TOKEN','PARSER_SHARED_TOKEN']if args.provider=='ibm'else['DESTINATION_TOKEN']):raise ValueError('Native worker secret boundary changed')
+        worker_environment=ibm_environment(worker)if args.provider=='ibm'else{entry['name']:entry['value']for entry in worker[env_key]if isinstance(entry.get('value'),str)}
         if any(not isinstance(value,str)for value in [*runtime_environment.values(),*worker_environment.values()]):raise ValueError('Native workload environment is unresolved')
         if args.provider=='azure':
             for task in [tasks[0],worker_tasks[0]]:
@@ -145,7 +159,20 @@ if __name__=='__main__':
                 app=next(container for container in containers(task)if container['name']=='application')
                 if app['depends_on']!=['cloud-sql-proxy']or app['resources'][0]['cpu_idle']or template['scaling'][0]['min_instance_count']!=1:raise ValueError('SQL startup ordering and background CPU allocation are required')
             if identities[0]==identities[1]:raise ValueError('API and worker identities must remain separate')
-        plan_evidence={'qualificationSha256':hashlib.sha256((plan_path.parent/'qualification.json').read_bytes()).hexdigest(),'planLogSha256':hashlib.sha256(plan_path.read_bytes()).hexdigest(),'taskAddress':tasks[0]['address'],'boundary':'Actual emitted environment resolved by a native provider-mock Terraform plan; native cloud resources/values remain fixtures.'}
+        if args.provider=='ibm':
+            api=apis[0]
+            if api['managed_domain_mappings']!='local_public'or worker['managed_domain_mappings']!='local'or worker['run_service_account']!='none'or not worker['run_compute_resource_token_enabled']:raise ValueError('IBM native workload boundary changed')
+            if runtime_environment['IAM_PROFILE_ID']==worker_environment['IAM_PROFILE_ID']:raise ValueError('API and worker cannot share an IBM profile')
+            # These values are normally platform-injected, not request-derived or
+            # Terraform inputs. Resolve the native mock endpoint consistently.
+            from urllib.parse import urlsplit
+            hostname=urlsplit(api['endpoint']).hostname;suffix='.'+runtime_environment['REGION']+'.codeengine.appdomain.cloud';prefix=api['native_name']+'.'
+            if not hostname.startswith(prefix)or not hostname.endswith(suffix):raise ValueError('Native mock endpoint does not match the owned app/region')
+            subdomain=hostname[len(prefix):-len(suffix)]
+            runtime_environment.update({'CE_APP':api['native_name'],'CE_REGION':runtime_environment['REGION'],'CE_DOMAIN':runtime_environment['REGION']+'.codeengine.appdomain.cloud','CE_SUBDOMAIN':subdomain})
+            api_secret=next(entry['reference']for entry in api['env']if entry['name']=='DATABASE_PASSWORD');worker_secret=next(entry['reference']for entry in worker['env']if entry['name']=='DATABASE_PASSWORD')
+            if api_secret==worker_secret:raise ValueError('Separate SQL secrets are required')
+        plan_evidence={'qualificationSha256':hashlib.sha256((plan_path.parent/'qualification.json').read_bytes()).hexdigest(),'planLogSha256':hashlib.sha256(plan_path.read_bytes()).hexdigest(),'taskAddress':tasks[0]['address'],'boundary':'Actual emitted environment resolved by a native provider-mock Terraform plan. IBM config-map/secret values and platform-injected origin metadata are explicit synthetic fixtures. Native cloud resources/values remain unverified.'}
     with tempfile.TemporaryDirectory(prefix='atmem-invoice-image-check-')as scratch:
         config=Path(scratch)/'docker-config';config.mkdir();(config/'config.json').write_text('{}\n');env={'PATH':os.environ.get('PATH',''),'HOME':scratch,'DOCKER_CONFIG':str(config),'DOCKER_HOST':args.docker_host}
         inspect=subprocess.run(['docker','image','inspect',args.image],env=env,capture_output=True,timeout=15);metadata=json.loads(inspect.stdout)[0]
