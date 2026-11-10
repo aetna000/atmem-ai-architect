@@ -27,8 +27,8 @@ function controls(){
  byId('activity').hidden=!(busy||['pending','processing','approved','dispatching'].includes(selected?.state));
  const editable=selected?.state==='review'&&reviewer();byId('fields').disabled=!editable||busy;
  byId('save').disabled=!editable||!dirty||busy;byId('approve').disabled=!editable||dirty||busy;byId('reload').disabled=!selected||busy;
- byId('recover').hidden=selected?.state!=='dead'||!supervisor();byId('recover').disabled=busy;byId('original').disabled=!selected||busy;byId('upload-submit').disabled=busy;
- byId('progress').textContent=selected?.state==='unknown'?'The destination may already have received this invoice. An operator must check its receipt before another send.':selected?.state==='dead'?'A supervisor can retry extraction. Approved or uncertain deliveries are never replayed here.':selected?.state==='review'?'Compare the suggested values and evidence with the original. Approval sends exactly this saved revision.':'';
+ byId('recover').hidden=selected?.canRetryExtraction!==true||!supervisor();byId('recover').disabled=busy;byId('original').disabled=!selected||busy;byId('upload-submit').disabled=busy;
+ byId('progress').textContent=selected?.needsDeliveryReview?'The destination may already have received this invoice. An operator must check its receipt before another send.':selected?.canRetryExtraction?'A supervisor can retry extraction. Approved or uncertain deliveries are never replayed here.':selected?.state==='review'?'Compare the suggested values and evidence with the original. Approval sends exactly this saved revision.':'';
 }
 function renderList(){
  const fragment=document.createDocumentFragment();for(const row of rows.values()){

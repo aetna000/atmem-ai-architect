@@ -197,6 +197,11 @@ class WorkflowStore:
             if row['approved_hash']!=self._fingerprint(row):raise Conflict('Approved payload no longer matches its immutable snapshot')
             if row['attempts']>=self.max_attempts:
                 conn.execute("UPDATE workflow.operations SET state='dead',lease_token=NULL,lease_until=NULL WHERE id=%s",(row['id'],));self._event(conn,row,'dead','worker',{'reason':'dispatch_attempts_exhausted'});return None
+            if row['state']=='dispatching':
+                # An expired prior send may already have acted. Persist that fact
+                # before another idempotent attempt, even when recovery has not
+                # yet emitted its own interruption event.
+                self._event(conn,row,'outcome_unknown','worker',{'reason':'worker_interrupted'})
             return self._lease(conn,row,'dispatching','dispatch_claimed')
     def record_sent(self,operation_id,token,receipt):
         canonical(receipt,1500)
@@ -246,7 +251,11 @@ class WorkflowStore:
             row=self._row(conn,operation_id)
             if row['state']not in {'processing','dispatching'}:raise LostLease('Operation is not executing')
             self._check_lease(conn,row,token,row['state'])
-            state='unknown'if row['state']=='dispatching'and ambiguous else ('pending'if row['state']=='processing'else'approved')if retryable and row['attempts']<self.max_attempts else'dead'
+            previously_uncertain=row['state']=='dispatching'and conn.execute("SELECT EXISTS(SELECT 1 FROM workflow.events WHERE operation_id=%s AND account_id=%s AND event='outcome_unknown')AS uncertain",(row['id'],row['account_id'])).fetchone()['uncertain']
+            # A new attempt that sent nothing cannot disprove an older attempt's
+            # external effect. Keep uncertainty monotonic until a confirmed
+            # receipt or explicit operator reconciliation exists.
+            state='unknown'if row['state']=='dispatching'and(ambiguous or previously_uncertain)else ('pending'if row['state']=='processing'else'approved')if retryable and row['attempts']<self.max_attempts else'dead'
             updated=conn.execute('UPDATE workflow.operations SET state=%s,lease_token=NULL,lease_until=NULL,updated_at=clock_timestamp() WHERE id=%s RETURNING *',(state,row['id'])).fetchone();self._event(conn,updated,'outcome_unknown'if state=='unknown'else'dead'if state=='dead'else'retry_pending','worker',{'reason':reason});return updated
     def recover_extraction(self,actor,operation_id):
         with self.connect()as conn:

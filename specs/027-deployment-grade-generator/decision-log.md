@@ -94,3 +94,14 @@ verify full reviewed record/key equality; reject tampering and added instruction
 Portable locally-tested lessons now retain their evidence receipt and limitations.
 See specs/028-convergence-evaluation/evidence/20261110-invoice-runtime. Full 28-case
 acceptance, medium/hard provider composition and production qualification remain open.
+
+## 2026-11-10 — Invoice delivery and operator recovery checkpoint
+
+GEN-008 remains in progress. Separate native-SDK delivery images, private parser
+RPC, monotonic uncertain outcomes, scoped ninety-day retention/operator tools and
+an isolated AWS compiler now have concrete local evidence. The current checkpoint
+is ../028-convergence-evaluation/evidence/20261110-invoice-restore-recovery; earlier
+worker/image/model/browser evidence is retained separately. The full 28-project
+objective, other native invoice cloud adapters, native maintenance/bootstrap
+delivery and complete Spec Kit/registry admission are unfinished. No cloud plan,
+deployment, clean-security posture or medium benchmark pass is claimed.

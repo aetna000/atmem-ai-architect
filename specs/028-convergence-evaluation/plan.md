@@ -75,3 +75,14 @@ repair raises workflow checks to 82 on each PG17/18. Prioritize finishing the co
 invoice export (worker bootstrap, native parser boundary and all required provider
 resources/operations) before adding further isolated foundations or application
 families. Then run the unchanged full-client-brief medium cases on all four providers.
+
+### Current invoice integration checkpoint (2026-11-10)
+
+CV-005 remains in progress. Exact worker/image/operations evidence is retained in
+evidence/20261110-invoice-worker-delivery and evidence/20261110-invoice-restore-recovery.
+Next implement Azure, Google and IBM native deployment adapters, native scheduled
+operator bootstrap/retention delivery, and concrete invoice Spec Kit/registry wiring.
+Then run four complete client-brief invoice conversations and qualify their fresh
+exports before counting this medium family. Continue the other medium/hard blocks
+and final 28-case/held-out reruns; existing local component receipts do not satisfy
+those whole-project exits. No cloud deployment is authorized.

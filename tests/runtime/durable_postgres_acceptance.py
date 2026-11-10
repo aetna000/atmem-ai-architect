@@ -53,6 +53,16 @@ class DurableFixture:
         with self.store.connect()as conn:conn.execute("UPDATE workflow.operations SET lease_until=clock_timestamp()-interval '1 second' WHERE id=%s AND account_id=%s",(operation,self.account))
 
 class DurablePostgresTests(DurableFixture,unittest.TestCase):
+    def assert_uncertainty_survives_not_attempted_replay(self,expired):
+        operation=self.approved();first=self.store.claim_dispatch(operation)
+        if expired:self.expire(operation)
+        else:self.store.fail(operation,str(first['lease_token']),'destination_unavailable',retryable=True,ambiguous=True)
+        retry=self.store.claim_dispatch(operation,verified_idempotent_replay=True)
+        self.store.fail(operation,str(retry['lease_token']),'destination_unavailable',retryable=True,ambiguous=False)
+        self.assertEqual(self.store.get(self.user,operation)['state'],'unknown')
+        self.assertIsNone(self.store.claim_dispatch(operation,verified_idempotent_replay=False))
+    def test_a_not_attempted_replay_cannot_erase_an_earlier_unknown_external_effect(self):self.assert_uncertainty_survives_not_attempted_replay(False)
+    def test_a_not_attempted_replay_cannot_erase_an_expired_prior_dispatch_before_recovery(self):self.assert_uncertainty_survives_not_attempted_replay(True)
     def test_twenty_concurrent_duplicate_deliveries_create_one_operation_and_one_real_queue_row(self):
         with ThreadPoolExecutor(max_workers=20)as executor:ids=list(executor.map(lambda _:self.submit(),range(20)))
         self.assertEqual(len(set(ids)),1);self.assertEqual(self.queue_count(self.extract,ids[0]),1);self.assertEqual([e['event']for e in self.store.events(self.user,ids[0])],['submitted'])

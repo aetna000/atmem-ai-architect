@@ -17,13 +17,15 @@ from durable_workflow import Principal,Denied,Missing,Conflict,canonical,identif
 from invoice_object_store import LIMIT,ObjectUnavailable
 from invoice_extraction import review_fields,FIELDS
 from structured_output import _object
+from invoice_retention import current as current_invoice,retained
 
 MESSAGES={'access_denied':'Sign in with an authorized staff account to continue.','not_found':'This invoice is not available to your account.','conflict':'This invoice changed. Reload it before saving or approving.','invalid_request':'Check the supplied fields and try again.','review_required':'Check the supplier, invoice date, decimal total and three-letter currency before approving.','invalid_pdf':'Choose a PDF invoice no larger than 10 MB.','busy':'Uploads are busy. Keep this file selected and try again shortly.','unavailable':'The invoice service is temporarily unavailable. Your existing invoices are preserved.'}
 
 def error(code,status):return JSONResponse({'error':{'code':code,'message':MESSAGES[code]}},status_code=status)
 
 def public_row(row):
-    return {'id':str(row['id']),'state':row['state'],'result':row['result'],'revision':row['result_revision'],'createdAt':row['created_at'].isoformat(),'updatedAt':row['updated_at'].isoformat(),'receipt':row['receipt']}
+    current_invoice(row)
+    return {'id':str(row['id']),'state':row['state'],'result':row['result'],'revision':row['result_revision'],'createdAt':row['created_at'].isoformat(),'updatedAt':row['updated_at'].isoformat(),'receipt':row['receipt'],'canRetryExtraction':row['state']=='dead'and not row['approved_hash'],'needsDeliveryReview':row['state']in {'unknown','dead'}and bool(row['approved_hash'])}
 
 def create_app(verify,store,objects,*,account_id,public_origin,token_header=None,web_config=None,static_root=None):
     identifier(account_id);origin=urlsplit(public_origin)
@@ -60,7 +62,7 @@ def create_app(verify,store,objects,*,account_id,public_origin,token_header=None
     @app.get('/api/invoices')
     async def listing(request:Request,before:str|None=None):
         user=await actor(request);rows=await run_in_threadpool(store.list,user,before=before,limit=25)
-        return{'invoices':[public_row(row)for row in rows],'next':str(rows[-1]['id'])if len(rows)==25 else None}
+        return{'invoices':[public_row(row)for row in rows if retained(row)],'next':str(rows[-1]['id'])if len(rows)==25 else None}
     @app.post('/api/invoices',status_code=202)
     async def upload(request:Request):
         user=await actor(request)
@@ -90,10 +92,10 @@ def create_app(verify,store,objects,*,account_id,public_origin,token_header=None
         user=await actor(request);return{'invoice':public_row(await run_in_threadpool(store.get,user,operation_id))}
     @app.get('/api/invoices/{operation_id}/original')
     async def original(operation_id:str,request:Request):
-        user=await actor(request);row=await run_in_threadpool(store.get,user,operation_id);raw=await run_in_threadpool(objects.load,user.account_id,row['source_ref'])
+        user=await actor(request);row=current_invoice(await run_in_threadpool(store.get,user,operation_id));raw=await run_in_threadpool(objects.load,user.account_id,row['source_ref'])
         current=await actor(request)
         if current!=user:raise Denied('Current identity changed during original read')
-        await run_in_threadpool(store.get,user,operation_id)
+        current_invoice(await run_in_threadpool(store.get,user,operation_id))
         return Response(raw,media_type='application/pdf',headers={'Content-Disposition':'attachment; filename="invoice.pdf"'})
     async def body(request,fields):
         raw=bytearray()
@@ -106,22 +108,22 @@ def create_app(verify,store,objects,*,account_id,public_origin,token_header=None
         return value
     @app.post('/api/invoices/{operation_id}/approve')
     async def approve(operation_id:str,request:Request):
-        user=await actor(request);value=await body(request,['revision']);current=await run_in_threadpool(store.get,user,operation_id)
-        try:review_fields({name:current['result'].get(name)for name in FIELDS}if isinstance(current['result'],dict)else{})
+        user=await actor(request);value=await body(request,['revision']);snapshot=current_invoice(await run_in_threadpool(store.get,user,operation_id))
+        try:review_fields({name:snapshot['result'].get(name)for name in FIELDS}if isinstance(snapshot['result'],dict)else{})
         except ValueError:return error('review_required',400)
         row=await run_in_threadpool(store.approve,user,operation_id,value['revision']);return{'invoice':public_row(row)}
     @app.post('/api/invoices/{operation_id}/review')
     async def review(operation_id:str,request:Request):
         user=await actor(request);value=await body(request,['revision','fields','notes']);fields=review_fields(value['fields'])
         if not isinstance(value['notes'],str)or len(value['notes'])>1000:raise ValueError('Use bounded reviewer notes')
-        current=await run_in_threadpool(store.get,user,operation_id)
-        result={**(current['result']or{}),**fields,'reviewerNotes':value['notes'],'reviewedBy':user.subject,'requiresHumanReview':True}
+        snapshot=current_invoice(await run_in_threadpool(store.get,user,operation_id))
+        result={**(snapshot['result']or{}),**fields,'reviewerNotes':value['notes'],'reviewedBy':user.subject,'requiresHumanReview':True}
         row=await run_in_threadpool(store.edit_result,user,operation_id,value['revision'],result);return{'invoice':public_row(row)}
     @app.get('/api/invoices/{operation_id}/history')
     async def history(operation_id:str,request:Request,after:int=0):
-        user=await actor(request);rows=await run_in_threadpool(store.result_history,user,operation_id,after_revision=after,limit=25)
+        user=await actor(request);current_invoice(await run_in_threadpool(store.get,user,operation_id));rows=await run_in_threadpool(store.result_history,user,operation_id,after_revision=after,limit=25)
         return{'revisions':[{'revision':row['revision'],'result':row['result'],'actor':row['actor'],'createdAt':row['created_at'].isoformat()}for row in rows],'next':rows[-1]['revision']if len(rows)==25 else None}
     @app.post('/api/invoices/{operation_id}/recover')
     async def recover(operation_id:str,request:Request):
-        user=await actor(request);row=await run_in_threadpool(store.recover_extraction,user,operation_id);return{'invoice':public_row(row)}
+        user=await actor(request);current_invoice(await run_in_threadpool(store.get,user,operation_id));row=await run_in_threadpool(store.recover_extraction,user,operation_id);return{'invoice':public_row(row)}
     return app

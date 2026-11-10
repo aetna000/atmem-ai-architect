@@ -45,7 +45,7 @@ class ProcessStageTests(unittest.TestCase):
             with self.assertRaises(ExternalOutcomeUnknown):stage(self.row(),idempotency_key=str(uuid.uuid4()),payload_sha256='a'*64)
             self.assertEqual(marker.read_text(),'accepted')
     def test_invalid_configuration_cannot_pass_model_text_to_a_shell_or_unbounded_deadline(self):
-        for command,timeout in [(['python','-c','pass'],1),([sys.executable],float('nan')),([sys.executable],float('inf')),([sys.executable],121)]:
+        for command,timeout in [(['python','-c','pass'],1),([sys.executable],float('nan')),([sys.executable],float('inf')),([sys.executable],301)]:
             with self.subTest(command=command,timeout=timeout):
                 with self.assertRaises(ValueError):ProcessStage(command,kind='extract',timeout_seconds=timeout)
 

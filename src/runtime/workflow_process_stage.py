@@ -21,7 +21,7 @@ class ProcessStage:
     def __init__(self,command,*,kind,timeout_seconds=60,environment=None,cwd=None,idempotency_verified=False):
         if (not isinstance(command,(tuple,list))or not command or any(not isinstance(v,str)or not v or '\0'in v for v in command)
             or not Path(command[0]).is_absolute()or not Path(command[0]).is_file()):raise ValueError('A trusted absolute executable is required')
-        if kind not in {'extract','dispatch'}or type(timeout_seconds)not in {int,float}or not math.isfinite(timeout_seconds)or not 0<timeout_seconds<=120:raise ValueError('Invalid bounded stage configuration')
+        if kind not in {'extract','dispatch'}or type(timeout_seconds)not in {int,float}or not math.isfinite(timeout_seconds)or not 0<timeout_seconds<=300:raise ValueError('Invalid bounded stage configuration')
         if type(idempotency_verified)is not bool or(kind=='extract'and idempotency_verified):raise ValueError('Invalid stage replay configuration')
         environment={}if environment is None else environment
         if not isinstance(environment,dict)or any(not isinstance(k,str)or not isinstance(v,str)or not k or '='in k or '\0'in k+v for k,v in environment.items()):raise ValueError('Use an explicit trusted child environment')
@@ -33,6 +33,7 @@ class ProcessStage:
         # Deliberately exclude database DSNs, lease tokens and application logins.
         selected={key:row[key]for key in ['kind','source_ref','destination_contract','result','result_revision','approved_by','approved_hash','state']if key in row}
         selected.update({key:str(row[key])for key in ['id','account_id']if key in row})
+        if 'created_at'in row:selected['created_at']=row['created_at'].isoformat()if hasattr(row['created_at'],'isoformat')else row['created_at']
         payload=canonical({'operation':selected,'identity':identity},140000)
         failure=TemporaryWork if self.kind=='extract'else ExternalOutcomeUnknown
         process=None

@@ -46,6 +46,14 @@ class InvoiceHttpTests(DurableFixture,unittest.IsolatedAsyncioTestCase):
             if token not in self.tokens:raise Denied('Unknown signed-in fixture identity')
             return self.tokens[token]
         self.verify=verify;self.app=self.application();self.client=httpx.AsyncClient(transport=httpx.ASGITransport(app=self.app),base_url='https://invoices.example.test')
+    async def test_expired_invoices_are_hidden_and_no_payload_route_remains_accessible(self):
+        operation=await self.reviewed()
+        with psycopg.connect(self.owner_dsn)as conn:conn.execute("UPDATE workflow.operations SET created_at=clock_timestamp()-interval '91 days' WHERE id=%s",(operation,))
+        listing=await self.client.get('/api/invoices',headers=self.headers());self.assertEqual(listing.status_code,200);self.assertEqual(listing.json()['invoices'],[])
+        for suffix in ['', '/original', '/history']:
+            response=await self.client.get('/api/invoices/'+operation+suffix,headers=self.headers());self.assertEqual(response.status_code,404,response.text)
+        for suffix,payload in [('approve',{'revision':1}),('review',{'revision':1,'fields':{'supplier':'New','invoice_date':'2026-11-10','total':'42.50','currency':'AUD'},'notes':''}),('recover',{})]:
+            response=await self.client.post('/api/invoices/'+operation+'/'+suffix,json=payload,headers=self.headers('reviewer'));self.assertEqual(response.status_code,404,response.text)
     def application(self):return create_app(self.verify,self.store,self.objects,account_id=self.account,public_origin='https://invoices.example.test')
     def headers(self,token='staff',**extra):return {'Authorization':'Bearer '+token,'Origin':'https://invoices.example.test',**extra}
     async def upload(self,*,client=None):return await(client or self.client).post('/api/invoices',content=self.raw,headers=self.headers(**{'Content-Type':'application/pdf'}))

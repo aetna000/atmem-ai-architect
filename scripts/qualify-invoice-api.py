@@ -9,9 +9,9 @@ import re
 import subprocess
 import sys
 ROOT=Path(__file__).resolve().parents[1]
-TESTS=['invoice_extraction_acceptance.py','invoice_storage_acceptance.py','invoice_http_acceptance.py','invoice_web_acceptance.py','invoice_identity_acceptance.py']
+TESTS=['invoice_extraction_acceptance.py','invoice_storage_acceptance.py','invoice_http_acceptance.py','invoice_web_acceptance.py','invoice_identity_acceptance.py','invoice_parser_rpc_acceptance.py','invoice_worker_acceptance.py','invoice_operations_acceptance.py','invoice_operator_acceptance.py']
 def source_hashes():
-    files=[Path(__file__),*list((ROOT/'src/runtime').glob('invoice*')),*list((ROOT/'src/runtime').glob('workflow*')),ROOT/'src/runtime/durable_workflow.py',*[ROOT/'src/runtime'/name for name in ['structured_output.py','structured_http.py','azure_structured.py','gcp_structured.py','ibm_structured.py','policy_review.py']],*[ROOT/'tests/runtime'/name for name in [*TESTS,'durable_postgres_acceptance.py','durable_privileges_acceptance.py','durable_fixture_tasks.py']]]
+    files=[Path(__file__),*list((ROOT/'src/runtime').glob('invoice*')),*list((ROOT/'src/runtime').glob('workflow*')),ROOT/'src/runtime/durable_workflow.py',*[ROOT/'src/runtime'/name for name in ['approved_http_destination.py','structured_output.py','structured_http.py','azure_structured.py','gcp_structured.py','ibm_structured.py','policy_review.py']],*[ROOT/'tests/runtime'/name for name in [*TESTS,'durable_postgres_acceptance.py','durable_privileges_acceptance.py','durable_fixture_tasks.py','workflow_tls_destination_fixture.py']]]
     return{str(file.relative_to(ROOT)):hashlib.sha256(file.read_bytes()).hexdigest()for file in sorted(set(files))if file.is_file()}
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--out',required=True);args=parser.parse_args();out=Path(args.out).resolve()

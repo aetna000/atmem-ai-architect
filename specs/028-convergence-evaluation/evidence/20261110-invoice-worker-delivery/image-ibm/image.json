@@ -1,0 +1,84 @@
+{
+  "Id": "sha256:30be2666b3bc0658cd56cf17f96babe193947063a124ab76ec3c5b396de8bcb5",
+  "RepoTags": [
+    "atmem-invoice-ibm:qualification-v4"
+  ],
+  "RepoDigests": [
+    "atmem-invoice-ibm@sha256:30be2666b3bc0658cd56cf17f96babe193947063a124ab76ec3c5b396de8bcb5"
+  ],
+  "Comment": "buildkit.dockerfile.v0",
+  "Created": "2026-11-10T13:43:27.337738485+11:00",
+  "Config": {
+    "User": "10001:10001",
+    "ExposedPorts": {
+      "8080/tcp": {}
+    },
+    "Env": [
+      "PATH=/usr/local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+      "LANG=C.UTF-8",
+      "GPG_KEY=7169605F62C751356D054A26A821E680E5FA6305",
+      "PYTHON_VERSION=3.13.18",
+      "PYTHON_SHA256=abb0102e6d4ae027509bcb82327d9dd85515b44a3ba8ad538cfc5e9847029f68",
+      "PYTHONDONTWRITEBYTECODE=1",
+      "PYTHONUNBUFFERED=1"
+    ],
+    "Cmd": [
+      "python",
+      "-m",
+      "uvicorn",
+      "invoice_native:app_factory",
+      "--factory",
+      "--host",
+      "0.0.0.0",
+      "--port",
+      "8080",
+      "--workers",
+      "1",
+      "--no-access-log",
+      "--no-proxy-headers",
+      "--limit-concurrency",
+      "32"
+    ],
+    "WorkingDir": "/app",
+    "ArgsEscaped": true
+  },
+  "Architecture": "amd64",
+  "Os": "linux",
+  "Size": 64932711,
+  "RootFS": {
+    "Type": "layers",
+    "Layers": [
+      "sha256:dd57f90311a2567b55ff22eeacff1602fd04ad7566e315957731359eab173b90",
+      "sha256:ba2541ec790ab743d0e3ee06e9eb5b3e8343b1fdc09cb65853c7c90803bbff00",
+      "sha256:963bbe74d7fd1230e35556a68a082c3c38f483207d18f981eb8a966fa9868b2f",
+      "sha256:be42025181029a31b54804a781dadf85528fb4d251f42ad239a3b1219740c2b7",
+      "sha256:d97bf9f0b9d800fc1e98da7807260f0a7b49418b325c3251028d7100a737e222",
+      "sha256:d47ad4947f630d63e4687a46d7994f3fd0c1e18c2530ad3c80a32937f20e8865",
+      "sha256:1e52609884c8d858c883feaaa13f32ab3a283620fd9ad7c3f21dae1e059a2f7f",
+      "sha256:8cba1ebd16d9ac3f6df73dd65109083569af7392d7a66b77dbbc05360cb7d389",
+      "sha256:2b6531670e0e29408fb05e72250cdc17e890540834d9e82d34c30fbf30e86cdb",
+      "sha256:608791dd5746a28a5da7f0443819a8b187f3c7661dc85a6d01d94ff699b76b6a",
+      "sha256:e68af6cfc5abf53253f0b9e209ea9e46534e78bbcc0bcce1aa9ed91400f040c7",
+      "sha256:a766930b24fcbd538f0d9c0f30a9b5245c1d464cd657c0f08ee89448e91ffe22"
+    ]
+  },
+  "Metadata": {
+    "LastTagTime": "2026-11-10T02:43:27.583693095Z"
+  },
+  "Descriptor": {
+    "mediaType": "application/vnd.docker.distribution.manifest.v2+json",
+    "digest": "sha256:30be2666b3bc0658cd56cf17f96babe193947063a124ab76ec3c5b396de8bcb5",
+    "size": 2661,
+    "annotations": {
+      "config.digest": "sha256:a4e575fddf760ea14053cb452ba921c1f3866cdf338c9f21a399a84497d9dca5"
+    }
+  },
+  "Identity": {
+    "Build": [
+      {
+        "Ref": "8gfuszzxf19heflenmpvb9mrz",
+        "CreatedAt": "2026-11-10T13:43:27.58922351+11:00"
+      }
+    ]
+  }
+}

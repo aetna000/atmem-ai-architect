@@ -16,6 +16,7 @@ from workflow_connection import aws_database,azure_database,gcp_database,ibm_dat
 from workflow_contract import reviewed_contract
 from workflow_worker import producer_store
 from structured_output import _object
+from invoice_runtime_secrets import prepare_runtime_environment
 
 IDENTITY_KEYS={
  'aws':['REGION','POOL_ID','CLIENT_ID','AUTH_ORIGIN','AUTH_SCOPE'],
@@ -63,20 +64,25 @@ def native_objects(provider,environment):
         return HttpInvoiceObjects('ibm',env['REGION'],env['DOCUMENT_BUCKET'],authorization)
     raise ValueError('Unsupported owned document provider')
 
+def destination_contract(environment):
+    encoded=environment['DESTINATION_CONTRACT_BASE64']
+    if not isinstance(encoded,str)or not 1<=len(encoded)<=8192:raise ValueError('Use the owned nonsecret destination identity')
+    return reviewed_contract(json.loads(base64.b64decode(encoded,validate=True),object_pairs_hook=_object))
+
 def create_native_api(provider,environment,*,connection=None,objects=None,jwks=None):
     if provider not in IDENTITY_KEYS:raise ValueError('Unsupported owned invoice provider')
-    env=environment;identity=native_staff_identity(provider,{key:env[key]for key in IDENTITY_KEYS[provider]},jwks=jwks)
-    encoded=env['DESTINATION_CONTRACT_BASE64']
-    if not isinstance(encoded,str)or not 1<=len(encoded)<=8192:raise ValueError('Use the owned nonsecret destination identity')
-    contract=reviewed_contract(json.loads(base64.b64decode(encoded,validate=True),object_pairs_hook=_object))
+    env=prepare_runtime_environment(provider,environment,'api');identity=native_staff_identity(provider,{key:env[key]for key in IDENTITY_KEYS[provider]},jwks=jwks);contract=destination_contract(env)
     # This factory never reads model configuration or an outbound action secret.
     # Test injection is an internal Python call, not an HTTP or config feature.
     store=producer_store(connection if connection is not None else native_database(provider,env,'api'),destination_contract=contract,namespace=env['WORKFLOW_NAMESPACE'])
     return create_app(identity.verify,store,objects if objects is not None else native_objects(provider,env),account_id=env['ACCOUNT_ID'],public_origin=env['PUBLIC_ORIGIN'],token_header=identity.token_header,web_config=identity.public_configuration)
 
-def app_factory():
+def owned_deployment():
     with(Path(__file__).parent/'invoice-deployment.json').open('rb')as stream:raw=stream.read(1025)
     if len(raw)>1024:raise ValueError('Invalid owned invoice deployment metadata')
     deployment=json.loads(raw,object_pairs_hook=_object)
     if not isinstance(deployment,dict)or set(deployment)!={'format','provider'}or deployment['format']!='invoice-workflow-v1':raise ValueError('Invalid owned invoice deployment metadata')
-    return create_native_api(deployment['provider'],os.environ)
+    if deployment['provider']not in IDENTITY_KEYS:raise ValueError('Unsupported owned invoice provider')
+    return deployment
+
+def app_factory():return create_native_api(owned_deployment()['provider'],os.environ)

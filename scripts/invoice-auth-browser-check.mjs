@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {chromium} from '@playwright/test';
 const root=path.resolve('.'),evidence=path.resolve('.local/invoice-auth-browser',new Date().toISOString().replaceAll(':','-'));fs.mkdirSync(evidence,{recursive:true});
-const files=['src/runtime/invoice-web.js','src/runtime/invoice_web.py','src/runtime/invoice_http.py','scripts/invoice-browser-fixture.py','scripts/invoice-auth-browser-check.mjs'];
+const files=['src/runtime/invoice-web.js','src/runtime/invoice_web.py','src/runtime/invoice_http.py','src/runtime/invoice_retention.py','scripts/invoice-browser-fixture.py','scripts/invoice-auth-browser-check.mjs'];
 const hashes=()=>Object.fromEntries(files.map(name=>[name,crypto.createHash('sha256').update(fs.readFileSync(name)).digest('hex')])),before=hashes();
 const child=spawn(path.join(root,'.local/durable-runtime/bin/python'),['-I',path.join(root,'scripts/invoice-browser-fixture.py'),'--pkce'],{cwd:root,env:{PATH:process.env.PATH,HOME:evidence},stdio:['ignore','pipe','pipe']});
 let stdout='',stderr='',browser;child.stdout.on('data',b=>stdout+=b);child.stderr.on('data',b=>stderr+=b);const checks=[];

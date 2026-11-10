@@ -1,12 +1,13 @@
 """Native credential/transport contracts; no live cloud database authentication."""
 import json
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 import ssl
 import sys
 import time
 from types import SimpleNamespace
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock,patch
 from urllib.parse import urlsplit,parse_qs
 import uuid
 
@@ -17,6 +18,15 @@ from psycopg.conninfo import conninfo_to_dict
 from workflow_connection import DatabaseConnection,DatabaseCredentialUnavailable,aws_database,azure_database,gcp_database,ibm_database,google_metadata_token
 
 class NativeDatabaseConnectionTests(unittest.TestCase):
+    def test_twenty_cold_database_signers_share_an_owned_native_session_and_client(self):
+        session=boto3.Session(aws_access_key_id='synthetic-access',aws_secret_access_key='synthetic-secret');created=[]
+        def create(*args,**kwargs):created.append(True);time.sleep(.02);return session
+        factory=aws_database(host='architect.abcdef.ap-southeast-2.rds.amazonaws.com',region='ap-southeast-2',database='architect',user='architect_worker',ca_file=self.ca)
+        with patch.object(boto3,'DEFAULT_SESSION',None),patch.object(boto3,'Session',side_effect=create):
+            with ThreadPoolExecutor(max_workers=20)as executor:values=list(executor.map(lambda _:conninfo_to_dict(factory()),range(20)))
+        self.assertEqual(len(created),1);self.assertEqual(len(values),20)
+        for value in values:
+            self.assertEqual(value['user'],'architect_worker');self.assertEqual(parse_qs(urlsplit('https://'+value['password']).query)['DBUser'],['architect_worker'])
     @classmethod
     def setUpClass(cls):
         cls.ca=ssl.get_default_verify_paths().cafile

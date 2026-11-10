@@ -8,6 +8,7 @@ TCP fallback. IBM database passwords are distinct from IBM control-plane IAM.
 from pathlib import Path
 import re
 import time
+import threading
 import uuid
 from psycopg.conninfo import make_conninfo
 from workflow_errors import TemporaryWork
@@ -39,12 +40,14 @@ class DatabaseConnection:
 
 def aws_database(*,host,region,database,user,ca_file,role='worker',client=None):
     if not isinstance(region,str)or not re.fullmatch(r'[a-z]{2}-[a-z]+-[0-9]',region)or not isinstance(host,str)or not host.endswith('.'+region+'.rds.amazonaws.com'):raise ValueError('Use the actual regional RDS endpoint, not a custom DNS alias')
-    cached={'client':client}
+    cached={'client':client};client_lock=threading.Lock()
     def password():
         if cached['client']is None:
-            import boto3
-            from botocore.config import Config
-            cached['client']=boto3.client('rds',region_name=region,config=Config(proxies={},connect_timeout=1,read_timeout=2,retries={'total_max_attempts':1}))
+            with client_lock:
+                if cached['client']is None:
+                    import boto3
+                    from botocore.config import Config
+                    cached['client']=boto3.Session().client('rds',region_name=region,config=Config(proxies={},connect_timeout=1,read_timeout=2,retries={'total_max_attempts':1}))
         return cached['client'].generate_db_auth_token(DBHostname=host,Port=5432,DBUsername=user,Region=region)
     return DatabaseConnection('aws',host,5432,database,user,password,ca_file=ca_file,role=role)
 

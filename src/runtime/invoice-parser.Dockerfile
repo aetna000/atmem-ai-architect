@@ -178,6 +178,6 @@ COPY --from=tesseract-build /result/bin/tesseract /usr/local/bin/tesseract
 COPY --from=tesseract-build /tmp/source/LICENSE /usr/share/doc/atmem-tesseract/LICENSE
 RUN mkdir -p /usr/local/share/tessdata && ln -s /usr/share/tesseract-ocr/5/tessdata/eng.traineddata /usr/local/share/tessdata/eng.traineddata
 WORKDIR /app
-COPY invoice_document.py invoice_extraction.py structured_output.py invoice_parser_cli.py ./
+COPY invoice_document.py invoice_extraction.py structured_output.py invoice_parser_cli.py invoice_parser_service.py ./
 USER 10001:10001
 CMD ["python", "-I", "/app/invoice_parser_cli.py"]

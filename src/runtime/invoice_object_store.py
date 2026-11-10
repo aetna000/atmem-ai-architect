@@ -10,6 +10,7 @@ import hashlib
 import json
 import re
 import time
+import threading
 import uuid
 from urllib.parse import quote
 import requests
@@ -121,12 +122,16 @@ class HttpInvoiceObjects(InvoiceObjects):
 class S3InvoiceObjects(InvoiceObjects):
     def __init__(self,bucket,region,owner_account_id,*,client=None):
         if not isinstance(bucket,str)or not re.fullmatch(r'[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]',bucket)or'..'in bucket or not isinstance(region,str)or not re.fullmatch(r'[a-z]{2}-[a-z]+-[0-9]',region)or not isinstance(owner_account_id,str)or not re.fullmatch(r'\d{12}',owner_account_id):raise ValueError('Invalid owned regional S3 invoice destination')
-        self.provider='aws';self.bucket=bucket;self.region=region;self.owner_account_id=owner_account_id;self.client=client
+        self.provider='aws';self.bucket=bucket;self.region=region;self.owner_account_id=owner_account_id;self.client=client;self._client_lock=threading.Lock()
     def _client(self):
         if self.client is None:
-            import boto3
-            from botocore.config import Config
-            self.client=boto3.client('s3',region_name=self.region,endpoint_url='https://s3.'+self.region+'.amazonaws.com',config=Config(proxies={},connect_timeout=2,read_timeout=8,retries={'total_max_attempts':1}))
+            with self._client_lock:
+                if self.client is None:
+                    import boto3
+                    from botocore.config import Config
+                    # A Session/client must not be constructed through boto3's
+                    # shared default Session concurrently by first uploads.
+                    self.client=boto3.Session().client('s3',region_name=self.region,endpoint_url='https://s3.'+self.region+'.amazonaws.com',config=Config(proxies={},connect_timeout=2,read_timeout=8,retries={'total_max_attempts':1}))
         return self.client
     def put(self,account_id,raw):
         digest=digest_pdf(raw);key=object_key(account_id,digest);client=self._client()

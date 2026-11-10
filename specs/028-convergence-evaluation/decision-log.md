@@ -213,3 +213,54 @@ a four-way concurrency regression. All 82 workflow checks pass on PG17 and PG18.
 Evidence and retained faults: evidence/20261110-invoice-workspace. Next complete the
 first medium project export end to end, including worker/parser/native resources
 and operations, then qualify its four providers before expanding further families.
+
+## 2026-11-10 — Separate parser RPC, delivery images and operator recovery
+
+The invoice worker now composes native private objects, separate bounded PDF/OCR
+RPC, provider model transport and the independent evidence decoder. Extraction and
+dispatch run in trusted deadline-bound child processes; neither inherits database
+configuration or the other stage's secrets. Child environment separation is not an
+OS sandbox. Untrusted PDF parsing remains a separate workload with no data/model
+authority. Only the local test fixture owns Docker access.
+
+Four exact native-SDK delivery images pass startup and five restricted PostgreSQL
+queue cases each, including IBM's independently resolved dateutil 3.0 dependency.
+Cold concurrent SDK creation exposed twenty separate S3 clients; lazy S3 and RDS
+client initialization now serializes construction. Recovery preserves historical
+uncertain external outcomes even when a later attempt never obtains a credential.
+
+The isolated AWS compiler emits private Fargate/API/parser/database networking,
+native identities, immutable repositories, TLS/private ingress, versioned storage,
+native secret references and concrete operator outputs. Six native Terraform mock
+runs pass. A real emitted image starts with the actual mock-plan API/worker settings,
+including its now-emitted, pinned AWS database CA bundle. This does not admit the
+complete invoice pattern into the product registry or certify cloud behavior.
+
+Invoice payload access expires after ninety days independently of asynchronous
+physical cleanup. Separate operator authority performs bounded scoped SQL purges,
+staff membership changes, restored-delivery quarantine and exact approval/receipt
+reconciliation. A real local pg_dump/pg_restore drill passes nine checks. Native
+managed PITR, RPO/RTO, object restore and an actual accounting lookup remain outside
+that evidence. Native scheduled operator bootstrap/maintenance delivery is still
+required; the operations guide makes that ownership explicit.
+
+Current evidence: evidence/20261110-invoice-worker-delivery. Local checks: 55
+API/identity/parser/worker/operator checks, 85 workflow checks on each PG17/PG18,
+12 review browser checks, 5 PKCE browser checks and 14 composed real-OCR/local-model
+checks. Application images retain 47 unfixed high findings each; parser retains 65.
+No clean-security, complete medium case, full 28-project or deployment claim is made.
+Continue the other native cloud adapters, whole-export registry/Spec Kit/operations
+integration, complete invoice conversations, then the remaining medium/hard families.
+
+## 2026-11-10 — Fence restored extraction as well as delivery
+
+A further restore audit found that historical extraction leases/native doing jobs
+could block expiry cleanup after restore. The extended regression fails against
+the prior retained source. Restore now fences those leases to pending, removes
+stale notifications in bounded progressing batches, preserves attempt limits and
+reconstructs pending work only through normal recovery after expiry cleanup.
+Delivery remains unknown and cannot be silently resent. Updated logical restore
+drill: ten checks. Four newly rebuilt images pass startup/queue and actual isolated
+operator entrypoint checks. Evidence: evidence/20261110-invoice-restore-recovery.
+The earlier checkpoint is preserved. This repairs a component operating gap; it
+does not complete CV-005, native cloud adapter parity or a medium benchmark case.

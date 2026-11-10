@@ -1,13 +1,15 @@
 """Native SDK shapes and scripted HTTP versions/conditions; not live cloud IAM."""
 from copy import deepcopy
+from concurrent.futures import ThreadPoolExecutor
 import base64
 import hashlib
 import io
 import json
 from pathlib import Path
 import sys
+import time
 import unittest
-from unittest.mock import Mock
+from unittest.mock import Mock,patch
 import uuid
 import boto3
 from botocore.response import StreamingBody
@@ -59,6 +61,15 @@ class NativePrivateHttpObjectsTests(unittest.TestCase):
             session.request.assert_not_called()
 
 class NativeS3InvoiceObjectsTests(unittest.TestCase):
+    def test_twenty_cold_requests_share_one_native_client_without_a_default_session_race(self):
+        session=boto3.Session(aws_access_key_id='synthetic-access',aws_secret_access_key='synthetic-secret');created=[]
+        def create_session(*args,**kwargs):created.append(True);time.sleep(.02);return session
+        objects=S3InvoiceObjects('private-invoices','ap-southeast-2','123456789012')
+        with patch.object(boto3,'DEFAULT_SESSION',None),patch.object(boto3,'Session',side_effect=create_session):
+            with ThreadPoolExecutor(max_workers=20)as executor:clients=list(executor.map(lambda _:objects._client(),range(20)))
+        try:self.assertEqual(len({id(client)for client in clients}),1);self.assertEqual(len(created),1)
+        finally:
+            for client in {id(c):c for c in clients}.values():client.close()
     def setUp(self):
         self.account=str(uuid.uuid4());self.key=object_key(self.account,DIGEST);client=boto3.client('s3',region_name='ap-southeast-2',aws_access_key_id='synthetic',aws_secret_access_key='synthetic');self.stub=Stubber(client);self.stub.activate();self.addCleanup(self.stub.deactivate);self.store=S3InvoiceObjects('private-invoices','ap-southeast-2','123456789012',client=client)
         self.common={'Bucket':'private-invoices','Key':self.key,'ExpectedBucketOwner':'123456789012'};self.put={**self.common,'Body':RAW,'ContentType':'application/pdf','ChecksumSHA256':base64.b64encode(hashlib.sha256(RAW).digest()).decode(),'IfNoneMatch':'*'}

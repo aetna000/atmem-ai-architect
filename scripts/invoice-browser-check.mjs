@@ -5,7 +5,7 @@ import crypto from 'node:crypto';
 import {spawn} from 'node:child_process';
 import {chromium} from '@playwright/test';
 const root=path.resolve('.'),evidence=path.resolve('.local/invoice-browser',new Date().toISOString().replaceAll(':','-'));fs.mkdirSync(evidence,{recursive:true});
-const sourceFiles=['invoice_http.py','invoice_web.py','invoice-web.html','invoice-web.js','invoice-web.css','durable_workflow.py','workflow_worker.py','workflow_database.py'];
+const sourceFiles=['invoice_http.py','invoice_retention.py','invoice_web.py','invoice-web.html','invoice-web.js','invoice-web.css','durable_workflow.py','workflow_worker.py','workflow_database.py'];
 const hashes=()=>Object.fromEntries([...sourceFiles.map(name=>'src/runtime/'+name),'scripts/invoice-browser-check.mjs','scripts/invoice-browser-fixture.py','tests/runtime/invoice_http_acceptance.py'].map(name=>[name,crypto.createHash('sha256').update(fs.readFileSync(path.join(root,name))).digest('hex')]));const before=hashes();
 const child=spawn(path.join(root,'.local/durable-runtime/bin/python'),['-I',path.join(root,'scripts/invoice-browser-fixture.py')],{cwd:root,env:{PATH:process.env.PATH,HOME:evidence},stdio:['ignore','pipe','pipe']});
 let stdout='',stderr='',browser;child.stdout.on('data',b=>stdout+=b);child.stderr.on('data',b=>stderr+=b);const checks=[];
