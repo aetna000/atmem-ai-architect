@@ -1,5 +1,6 @@
 import {CLOUD_PROVIDER_LOCKS} from './cloud-provider-locks.mjs';
 import {googleDocumentJobTests} from './enterprise-google-tests.mjs';
+import {enterpriseApplicationFiles}from'./enterprise-application.mjs';
 
 // Partial compiler building block. Do not register a complete private-assistant
 // capability until application/operator/recovery and the other clouds qualify.
@@ -70,9 +71,11 @@ export function googleDocumentJobTerraform(project,row,environment='staging'){
  add('google_dns_record_set',n+'_private_vip',{project:destination,managed_zone:r('google_dns_managed_zone',n+'_apis','name'),name:'private.googleapis.com.',type:'A',ttl:300,rrdatas:['199.36.153.8','199.36.153.9','199.36.153.10','199.36.153.11']});
  locals.document_job_configuration={format:'enterprise-google-document-job-v1',projectId:destination,region,bucket:r('google_storage_bucket',n,'name'),parserImage:v('parser_image'),transferImage:v('transfer_image'),workerServiceAccount:worker,vmServiceAccount:r('google_service_account',n+'_vm','email'),network:'${format("projects/%s/global/networks/%s",var.project_id,google_compute_network.'+n+'.name)}',subnetwork:'${format("projects/%s/regions/%s/subnetworks/%s",var.project_id,var.region,google_compute_subnetwork.'+n+'.name)}'};
  output.document_job_configuration={value:'${var.images_ready ? local.document_job_configuration : null}',description:'Exact runtime adapter shape; not evidence of worker wiring, crash recovery or account acceptance.',depends_on:Object.entries(resource).flatMap(([type,items])=>Object.keys(items).map(name=>type+'.'+name))};
+ locals.document_executor_configuration={format:'enterprise-document-executor-v1',provider:'gcp',parserRevision:v('parser_revision'),configuration:l('document_job_configuration')};
+ output.document_executor_configuration={value:'${var.images_ready ? local.document_executor_configuration : null}',description:'Owned worker envelope matching the approved parser revision; complete application hosting/export acceptance remains separate.'};
  output.document_job_artifacts={value:{repository:r('google_artifact_registry_repository',n,'repository_id'),parserRevision:v('parser_revision'),parserImage:v('parser_image'),transferImage:v('transfer_image')}};
  const main={terraform:{required_version:'>= 1.17.1, < 2.0.0',required_providers:{google:{source:'hashicorp/google',version:'7.46.2'},'google-beta':{source:'hashicorp/google-beta',version:'7.46.2'}}},provider:{google:{project:destination,region},'google-beta':{project:destination,region}},variable,locals,resource,output};
- return{'main.tf.json':JSON.stringify(main,null,2)+'\n','.terraform.lock.hcl':CLOUD_PROVIDER_LOCKS.gcp+'\n'+CLOUD_PROVIDER_LOCKS.gcpBeta,
+ return{...enterpriseApplicationFiles('gcp',n),'main.tf.json':JSON.stringify(main,null,2)+'\n','.terraform.lock.hcl':CLOUD_PROVIDER_LOCKS.gcp+'\n'+CLOUD_PROVIDER_LOCKS.gcpBeta,
   'deployment.tfvars.json.example':JSON.stringify(examples,null,2)+'\n',
   'tests/document-jobs.tftest.hcl':googleDocumentJobTests(n,seed,row.region),
   'document-job-boundary.json':JSON.stringify({provider:'gcp',component:row.id,address:n,environment,region:row.region,designRevision:project.revision,scope:'Temporary parser substrate only; not the complete private assistant.',existingWorker:'Referenced, not recreated. Other existing IAM memberships are not changed.',crashRecovery:'Unfinished. Lifecycle age=1 is an asynchronous fallback request, not a maximum retention guarantee.',productionQualified:false,cloudOperations:false},null,2)+'\n',

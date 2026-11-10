@@ -17,21 +17,10 @@ import sys
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[1]
-CORE = ['enterprise_identity.py', 'enterprise_sources.py', 'enterprise_knowledge.py',
-        'enterprise_auth_store.py', 'enterprise_auth_schema.sql', 'enterprise_oauth.py',
-        'enterprise_sessions.py', 'enterprise_http.py', 'enterprise_web.py',
-        'enterprise_queries.py', 'enterprise_queries_schema.sql', 'enterprise_query_service.py',
-        'enterprise_audit.py', 'enterprise_audit_schema.sql', 'enterprise_models.py', 'enterprise_secrets.py',
-        'enterprise_configuration.py', 'enterprise_native.py', 'enterprise_operator.py', 'workflow_connection.py', 'workflow_errors.py',
-        'enterprise_google_jobs.py', 'enterprise_google_transfer.py',
-        'enterprise-aws-task-template.json', 'enterprise_aws_jobs.py', 'enterprise_aws_objects.py', 'enterprise_aws_transfer.py',
-        'enterprise_aws_hosts.py', 'enterprise_aws_host_probe.py',
-        'enterprise_document_jobs.py', 'enterprise_document_jobs_schema.sql',
-        'aws_json_model.py', 'azure_structured.py', 'gcp_structured.py', 'ibm_structured.py',
-        'structured_output.py', 'structured_http.py', 'policy_review.py',
-        'enterprise_extraction_cache.py', 'enterprise_extraction_schema.sql',
-        'enterprise_parser_transport.py', 'enterprise_document_contract.py', 'enterprise_document_job.py', 'public_faq.py', 'faq-output-contract.json',
-        'enterprise-web.html', 'enterprise-web-app.js', 'enterprise-web.css', 'enterprise-web-notices.txt', 'enterprise-web-lock.json']
+MANIFEST = json.loads((ROOT/'src/runtime/enterprise-application-manifest.json').read_text())
+if MANIFEST['format']!='enterprise-application-files-v1' or any(not isinstance(name,str)or Path(name).name!=name for name in MANIFEST['files']):
+    raise ValueError('Use the owned flat application source inventory')
+CORE = MANIFEST['files']
 SQL = {'enterprise_auth_postgres': 21, 'enterprise_sessions_postgres': 4,
        'enterprise_queries_postgres': 19, 'enterprise_extraction_cache_postgres': 14, 'enterprise_audit_postgres': 9,
        'enterprise_operator_postgres':11,'enterprise_document_jobs_postgres':10}
@@ -67,7 +56,8 @@ def qualify(args):
     if args.provider=='aws':
         tests += [ROOT/'tests/runtime/enterprise_aws_jobs_contract.py',ROOT/'tests/runtime/enterprise_aws_execution_contract.py',ROOT/'tests/runtime/enterprise_aws_hosts_contract.py']
     helper_names = ['durable_workflow.py', 'workflow_contract.py']
-    sources = [*[runtime / name for name in CORE + helper_names], *tests,
+    core_files=CORE+MANIFEST['providerFiles'].get(args.provider,[])
+    sources = [runtime/'enterprise-application-manifest.json', *[runtime / name for name in core_files + helper_names], *tests,
                runtime / lock_name, runtime / 'enterprise-runtime.Dockerfile', runtime / 'python-container-lock.json',
                ROOT / 'scripts/build-enterprise-runtime-lock.py', Path(__file__).resolve()]
     sources += [ROOT / name for name in lock['derivedFrom']]
@@ -101,7 +91,7 @@ def qualify(args):
 
         try:
             context = folder / 'build'; (context / 'runtime').mkdir(parents=True)
-            for name in CORE:
+            for name in core_files:
                 shutil.copyfile(runtime / name, context / 'runtime' / name)
             shutil.copyfile(runtime / 'enterprise-runtime.Dockerfile', context / 'Dockerfile')
             (context / 'requirements.lock').write_text(lock['requirements'])
@@ -117,7 +107,7 @@ def qualify(args):
             preflight = '''import importlib,importlib.metadata,json,os,sys
 sys.path.insert(0,'/app')
 assert sys.version_info[:3]==(3,13,18),sys.version
-modules=['enterprise_http','enterprise_query_service','enterprise_extraction_cache','enterprise_oauth','enterprise_identity','enterprise_web','enterprise_parser_transport','enterprise_audit','enterprise_models','enterprise_secrets','enterprise_native','enterprise_configuration','enterprise_operator']
+modules=['enterprise_http','enterprise_query_service','enterprise_extraction_cache','enterprise_oauth','enterprise_identity','enterprise_web','enterprise_parser_transport','enterprise_audit','enterprise_models','enterprise_secrets','enterprise_native','enterprise_worker','enterprise_configuration','enterprise_operator']
 for name in modules:
  module=importlib.import_module(name)
  assert module.__file__.startswith('/app/'),module.__file__
@@ -158,7 +148,7 @@ sys.path.insert(0,'/app')
 '''
             result = run('policy-tests', [*restricted, '--network', 'none', image,
                 'python', '-I', '-c', loader + "import unittest;unittest.main(module=None,argv=['unittest','discover','-s','/tmp/workspace/tests/runtime','-p','enterprise_*_acceptance.py','-v'])"], data=json.dumps(payload).encode())
-            if not re.search(rb'Ran 95 tests in [^\n]+\n\nOK\s*$', result):
+            if not re.search(rb'Ran 106 tests in [^\n]+\n\nOK\s*$', result):
                 raise ValueError('Unexpected private policy test inventory')
             if args.provider=='aws':
                 entry='/tmp/workspace/tests/runtime/enterprise_aws_execution_contract.py'
@@ -207,7 +197,7 @@ print(json.dumps({'postgresVersionNum':version}))
         finally:
             (output / 'receipt.json').write_text(json.dumps({'recordedAt': datetime.now(timezone.utc).isoformat(),
                 'passed': passed, 'imageId': image, 'checks': checks, 'sourceHashes': hashes,
-                'provider':args.provider,'packages': len(lock['sources']), 'policyTests': 95, 'sqlTestsPerVersion': sum(SQL.values()),
+                'provider':args.provider,'packages': len(lock['sources']), 'policyTests': 106, 'sqlTestsPerVersion': sum(SQL.values()),
                 'awsDocumentContractTests':30 if args.provider=='aws'else 0,
                 'awsHostContractTests':16 if args.provider=='aws'else 0,
                 'postgresVersions': [17, 18], 'securityAccepted': False, 'cloudOperations': False,

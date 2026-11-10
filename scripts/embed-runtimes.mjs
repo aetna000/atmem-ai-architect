@@ -1,4 +1,11 @@
 import fs from 'node:fs';
+import {createHash}from'node:crypto';
+const enterpriseManifest=JSON.parse(fs.readFileSync(new URL('../src/runtime/enterprise-application-manifest.json',import.meta.url),'utf8'));
+const enterpriseNames=[...enterpriseManifest.files,...enterpriseManifest.parserFiles,...enterpriseManifest.pdfParserFiles,...Object.values(enterpriseManifest.providerFiles).flat(),'enterprise-runtime.Dockerfile','enterprise-application-manifest.json','python-container-lock.json',...['aws','azure','gcp','ibm'].map(provider=>'enterprise-runtime-'+provider+'-python-lock.json')];
+if(enterpriseManifest.format!=='enterprise-application-files-v1'||enterpriseNames.some(name=>!/^[-A-Za-z0-9_.]+$/.test(name)))throw Error('Use the exact flat private application inventory');
+const enterpriseSources=Object.fromEntries(enterpriseNames.map(name=>[name,fs.readFileSync(new URL('../src/runtime/'+name,import.meta.url),'utf8')]));
+const enterpriseHashes=Object.fromEntries(Object.entries(enterpriseSources).map(([name,text])=>[name,createHash('sha256').update(text).digest('hex')]));
+fs.writeFileSync(new URL('../src/runtime/enterprise-application-sources.json',import.meta.url),JSON.stringify({manifest:enterpriseManifest,files:enterpriseSources,hashes:enterpriseHashes},null,2)+'\n');
 fs.writeFileSync(new URL('../src/runtime/enterprise-aws-host-probe-source.json',import.meta.url),JSON.stringify(fs.readFileSync(new URL('../src/runtime/enterprise_aws_host_probe.py',import.meta.url),'utf8'))+'\n');
 fs.writeFileSync(new URL('../src/runtime/enterprise-aws-host-bootstrap-source.json',import.meta.url),JSON.stringify(fs.readFileSync(new URL('../src/runtime/enterprise_aws_host_bootstrap.py',import.meta.url),'utf8'))+'\n');
 const names=['bounded_rag','rag_aws_adapter','rag_acceptance','catalog_admin','connector_sync','connector_cli','web_user_admin'];

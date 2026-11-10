@@ -571,3 +571,31 @@ Next compose the full native API/worker/SQL/model/source/artifact/operator/Spec 
 package and implement equivalent Azure/IBM isolated execution. Qualify unchanged
 full private briefs on all four providers, remaining medium/hard families and the
 final28/held-out matrix. Do not count this substrate as a completed client project.
+
+
+### 2026-11-11 — Owned worker startup and actual application source delivery
+
+Read exact bounded compiler/operator process configuration from one native injection
+or absolute mount. Match provider/parser revision and bind the native destination/
+worker before secrets/SQL. API never loads executor config. Whitelist native
+AWS/Google adapters; do not substitute for unfinished Azure/IBM execution. Attach
+the persistent document ledger/reconciler in the real worker lifecycle.
+
+Use one common source inventory for clean images and four-provider application
+emission. Include exact dependency locks, API/worker/operator entrypoints and
+separate parser/PDF/OCR build recipes. AWS/Google Terraform now emit the worker
+configuration envelope. Full hosting/Spec Kit/capability admission is still pending.
+
+Evidence: `specs/028-convergence-evaluation/evidence/20261111-private-owned-worker-delivery-v1`.
+Four clean images each106 policies/88 SQL per PG17/18;13 native factories per version;
+11 startup contracts;368 JS;42 native plans/four installed native-output consumers;
+four actual emitted builds match the qualified exact Linux platform manifest.
+Record different OCI build-provenance/index identities separately. Preserve the
+original failed index comparison and old qualifier bytes. No new security/account/
+whole-project claim. Local APFS clones preserved old ZIP paths/hashes and write
+isolation; no unique content, image or database was deleted.
+
+Next implement Azure/IBM native execution and complete the four-provider application,
+operator/artifact/source/model/SQL/network/Spec Kit composition, then full client
+briefs, security/performance, remaining families/final28/held-out. The current parser
+revision is an operator/build-record binding, not a fabricated publication proof.

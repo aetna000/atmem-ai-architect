@@ -12,7 +12,7 @@ const literalProbe=process.argv[3]==='--literal-probe';
 if(process.argv[3]&&!literalProbe)throw Error('Unknown local fixture mode');
 if(literalProbe){row.id='${file("literal-evaluation-probe.txt")} %{if true} marker %{endif}';row.address='block_'+Buffer.from(row.id).toString('hex');}
 const files=googleDocumentJobTerraform(project,row,'qualification');
-const sources=['src/enterprise-google-infrastructure.mjs','src/enterprise-google-tests.mjs','src/cloud-provider-locks.mjs','scripts/qualify-enterprise-google-infrastructure.mjs','tests/enterprise-google-infrastructure.test.mjs','src/runtime/enterprise_google_jobs.py'];
+const sources=['src/enterprise-application.mjs','src/runtime/enterprise-application-manifest.json','src/runtime/enterprise-application-sources.json','scripts/embed-runtimes.mjs','src/enterprise-google-infrastructure.mjs','src/enterprise-google-tests.mjs','src/cloud-provider-locks.mjs','scripts/qualify-enterprise-google-infrastructure.mjs','tests/enterprise-google-infrastructure.test.mjs','src/runtime/enterprise_google_jobs.py'];
 const sourceHashes=Object.fromEntries(sources.map(name=>[name,createHash('sha256').update(fs.readFileSync(name)).digest('hex')]));
 const hashes=()=>Object.fromEntries(Object.keys(files).map(name=>[name,createHash('sha256').update(fs.readFileSync(path.join(out,name))).digest('hex')]));
 fs.mkdirSync(out,{recursive:true});

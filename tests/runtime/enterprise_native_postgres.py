@@ -10,6 +10,7 @@ from pathlib import Path
 import secrets
 import sys
 import unittest
+from unittest.mock import patch
 import uuid
 ROOT=Path(__file__).resolve().parents[2]
 sys.path[:0]=[str(ROOT/'src/runtime'),str(ROOT/'.local/azure-runtime-sdk'),str(ROOT/'tests/runtime')]
@@ -48,6 +49,7 @@ class NativeFactories(unittest.IsolatedAsyncioTestCase):
         await self.f.asyncTearDown()
 
     def make(self,provider,role,**changes):
+        configured=changes.pop('configured_worker',False)
         values={**secret_environment(provider),**model_environment(provider),'ENTERPRISE_ENCRYPTION_KEY':self.f.key.decode(),
             'SHAREPOINT_CLIENT_SECRET':'SYNTHETIC-CLIENT-SECRET','CONFLUENCE_CLIENT_SECRET':'SYNTHETIC-CLIENT-SECRET'}
         values.update(changes.pop('environment_updates',{}))
@@ -65,10 +67,17 @@ class NativeFactories(unittest.IsolatedAsyncioTestCase):
                 article=json.loads(payload)['articles'][0]
                 return json.dumps({'answer':'Private policy requires ninety days.','abstained':False,'citations':[{'id':article['id'],'quote':'Private policy requires ninety days.'}]})
             return generate
-        if role=='worker':options.update(executor=DocumentExecutor(REVISION,execute),model_factory=model)
+        if role=='worker':
+            options.update(model_factory=model)
+            if not configured:options['executor']=DocumentExecutor(REVISION,execute)
         options.update(changes)
         owned=options.pop('metadata_override',None)or metadata(self.f.account,provider)
-        runtime=NativeRuntime(owned,values,role,**options);self.runtimes.append(runtime);return runtime
+        if configured:
+            if role!='worker':raise ValueError('Configured native executor belongs only to the worker')
+            from enterprise_worker import worker_runtime
+            runtime=worker_runtime(owned,values,**options)
+        else:runtime=NativeRuntime(owned,values,role,**options)
+        self.runtimes.append(runtime);return runtime
 
     async def browser(self,runtime):
         await self.f.client.aclose();self.f.app=runtime.api();self.f.client=self.f.new_client();self.f.clients.append(self.f.client)
@@ -110,6 +119,39 @@ class NativeFactories(unittest.IsolatedAsyncioTestCase):
         response=await self.status(identity);self.assertEqual(response.json()['status'],'ready',response.text)
         self.assertEqual(response.json()['result']['citations'][0]['quote'],'Private policy requires ninety days.')
         self.assertEqual(http.operation_polls,1);self.assertEqual(sum(method=='DELETE'for method,_,_ in http.calls),3)
+
+    async def test_serialized_aws_worker_configuration_runs_queue_with_owned_cleanup(self):
+        from enterprise_aws_jobs import EcsDocuments
+        from enterprise_aws_execution_contract import Ecs,Objects,verified_hosts
+        from enterprise_aws_jobs_contract import config,AwsDocumentTaskContract
+        AwsDocumentTaskContract.setUpClass();owned=config();objects=Objects();api=Ecs(AwsDocumentTaskContract.model)
+        runner=EcsDocuments(owned,api=api,objects=objects,host_check=verified_hosts,poll_seconds=.01)
+        with psycopg.connect(self.owner_dsn)as conn:activate(conn,metadata(self.f.account,'aws'))
+        await self.browser(self.make('aws','api'))
+        encoded=json.dumps({'format':'enterprise-document-executor-v1','provider':'aws','parserRevision':REVISION,'configuration':owned})
+        with patch('enterprise_aws_jobs.EcsDocuments',return_value=runner):
+            worker=self.make('aws','worker',configured_worker=True,environment_updates={'ENTERPRISE_DOCUMENT_EXECUTOR_JSON':encoded,'AWS_ACCOUNT_ID':owned['accountId'],'WORKER_ROLE_ARN':owned['workerRoleArn']})
+        identity=await self.submit()
+        await worker.worker().run(wait=False,concurrency=1,install_signal_handlers=False,listen_notify=False,fetch_job_polling_interval=.01)
+        response=await self.status(identity);self.assertEqual(response.json()['status'],'ready',response.text)
+        self.assertEqual(response.json()['result']['citations'][0]['quote'],'Private policy requires ninety days.')
+        self.assertEqual(sum(op=='run_task'for op,_ in api.calls),1)
+        self.assertEqual([side for op,_,side in objects.calls if op=='delete'],['input','result'])
+        with psycopg.connect(self.owner_dsn)as conn:self.assertEqual(conn.execute('SELECT count(*)FROM enterprise_document_jobs.jobs WHERE account_id=%s',(self.f.account,)).fetchone()[0],0)
+
+    async def test_serialized_google_worker_configuration_runs_queue_with_owned_cleanup(self):
+        from enterprise_google_jobs import GoogleBatchDocuments,GoogleDocumentApi
+        from enterprise_google_jobs_acceptance import NativeHttp,config
+        http=NativeHttp();http.extracted_text='Private policy requires ninety days.';owned=config()
+        runner=GoogleBatchDocuments(owned,api=GoogleDocumentApi(session=http,credential=lambda:'SYNTHETIC-NATIVE-TOKEN'),poll_seconds=.01)
+        await self.browser(self.make('gcp','api'))
+        encoded=json.dumps({'format':'enterprise-document-executor-v1','provider':'gcp','parserRevision':REVISION,'configuration':owned})
+        with patch('enterprise_google_jobs.GoogleBatchDocuments',return_value=runner):
+            worker=self.make('gcp','worker',configured_worker=True,environment_updates={'ENTERPRISE_DOCUMENT_EXECUTOR_JSON':encoded,'DATABASE_SERVICE_ACCOUNT':owned['workerServiceAccount']})
+        identity=await self.submit()
+        await worker.worker().run(wait=False,concurrency=1,install_signal_handlers=False,listen_notify=False,fetch_job_polling_interval=.01)
+        response=await self.status(identity);self.assertEqual(response.json()['status'],'ready',response.text)
+        self.assertEqual(sum(method=='DELETE'for method,_,_ in http.calls),3)
 
     async def test_question_worker_runs_document_recovery_as_an_independent_background_task(self):
         from enterprise_google_jobs import GoogleBatchDocuments,GoogleDocumentApi

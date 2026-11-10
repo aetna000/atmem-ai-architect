@@ -1,0 +1,23 @@
+{
+  "format": "enterprise-process-configuration-v1",
+  "provider": "azure",
+  "deployment": {
+    "direct": "ENTERPRISE_DEPLOYMENT_JSON",
+    "mountedFile": "ENTERPRISE_DEPLOYMENT_FILE",
+    "defaultFile": "/app/enterprise-deployment.json",
+    "schema": "enterprise-knowledge-v1",
+    "maximumBytes": 32768
+  },
+  "documentExecutor": {
+    "direct": "ENTERPRISE_DOCUMENT_EXECUTOR_JSON",
+    "mountedFile": "ENTERPRISE_DOCUMENT_EXECUTOR_FILE",
+    "defaultFile": "/app/enterprise-document-executor.json",
+    "schema": "enterprise-document-executor-v1",
+    "maximumBytes": 32768,
+    "provider": "azure",
+    "parserRevision": "Must equal the approved deployment/build receipt; not an invented digest.",
+    "nativeConfiguration": "Use the corresponding Terraform document_executor_configuration output."
+  },
+  "suppliedSecrets": "Native platform injection or owned mounted files only; no secret values belong in this source package.",
+  "wholeProjectQualified": false
+}

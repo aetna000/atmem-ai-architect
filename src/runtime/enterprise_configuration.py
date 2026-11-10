@@ -5,6 +5,7 @@ Metadata is packaged by the compiler/operator, never read from a chat request.
 """
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 from urllib.parse import urlsplit
@@ -45,12 +46,29 @@ def deployment(value):
     return json.loads(json.dumps(value, allow_nan=False))
 
 
-def read_deployment(path=None):
-    path = Path(path) if path is not None else Path(__file__).with_name('enterprise-deployment.json')
-    with path.open('rb') as stream: raw = stream.read(32769)
-    if len(raw) > 32768:
-        raise ValueError('Owned private deployment metadata exceeds its boundary')
-    return deployment(json.loads(raw, object_pairs_hook=object_pairs))
+def read_owned_json(filename,direct,pointer,environment,*,path=None):
+    """Compiler/operator metadata only; no chat/request chooses a file or loader."""
+    if (direct in environment and pointer in environment)or(path is not None and any(key in environment for key in [direct,pointer])):
+        raise ValueError('Conflicting owned configuration sources')
+    if direct in environment:
+        value=environment[direct]
+        if not isinstance(value,str):raise ValueError('Use serialized owned configuration')
+        raw=value.encode('utf-8')
+    else:
+        if pointer in environment:
+            value=environment[pointer]
+            if not isinstance(value,str)or not Path(value).is_absolute():raise ValueError('Use an absolute owned configuration mount')
+            path=Path(value)
+        path=Path(path)if path is not None else Path(__file__).with_name(filename)
+        with path.open('rb')as stream:raw=stream.read(32769)
+    if not 0<len(raw)<=32768:raise ValueError('Owned configuration exceeds its byte boundary')
+    def constant(value):raise ValueError('Use finite owned JSON values')
+    return json.loads(raw,object_pairs_hook=object_pairs,parse_constant=constant)
+
+
+def read_deployment(path=None,*,environment=None):
+    environment=os.environ if environment is None else environment
+    return deployment(read_owned_json('enterprise-deployment.json','ENTERPRISE_DEPLOYMENT_JSON','ENTERPRISE_DEPLOYMENT_FILE',environment,path=path))
 
 
 def session_domain(metadata):
