@@ -1,0 +1,33 @@
+{
+  "kind": "pinned-cloud-sql-proxy-local-interface",
+  "recordedAt": "2026-11-10T04:12:32.681185+00:00",
+  "image": "gcr.io/cloud-sql-connectors/cloud-sql-proxy@sha256:7d156a5c466e31596afd6c8ed134f19c207a297418392fdad2686524ca4e7a3c",
+  "platformManifestId": "sha256:adcbb6a16e70236f26902b7d986008df118923558839062f6d26832c5f200078",
+  "passed": true,
+  "checks": [
+    {
+      "argument": "--version",
+      "exitCode": 0,
+      "passed": true
+    },
+    {
+      "argument": "--help",
+      "exitCode": 0,
+      "passed": true
+    },
+    {
+      "check": "actual-linux-amd64-nonroot-platform-manifest",
+      "passed": true
+    },
+    {
+      "check": "locked-version-and-required-private-loopback-flags",
+      "passed": true
+    }
+  ],
+  "sourceHashes": {
+    "scripts/qualify-cloud-sql-proxy.py": "859c09fe1fe9cb90fd220ae87bc6b9a11575440fc1a291f8ce04788b389de6c5",
+    "src/runtime/cloud-sql-proxy-lock.json": "5ddb1b0161d3829445b453cd54d03a8015b7bb6586ad0bccb20eaf1b36518071"
+  },
+  "cloudOperations": false,
+  "boundary": "Actual pinned upstream Linux image version, CLI flags and nonroot default only. No native Cloud SQL/TLS/IAM/private-network connection evidence."
+}

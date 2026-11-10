@@ -1,0 +1,35 @@
+test_native_bounded_retry_recovers_a_temporary_processor_failure (durable_restricted_worker_acceptance.RestrictedWorkerTests.test_native_bounded_retry_recovers_a_temporary_processor_failure) ... ok
+test_native_retry_handles_a_transient_database_failure_before_the_domain_claim (durable_restricted_worker_acceptance.RestrictedWorkerTests.test_native_retry_handles_a_transient_database_failure_before_the_domain_claim) ... ok
+test_real_worker_does_not_retry_an_uncertain_nonidempotent_external_action (durable_restricted_worker_acceptance.RestrictedWorkerTests.test_real_worker_does_not_retry_an_uncertain_nonidempotent_external_action) ... Job q7cdbc0329a66.dispatch[1822](operation_id='100bdb5e-7075-43dd-88fc-34b3f8e18473') ended with status: Error, lasted 0.100 s
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.13/site-packages/procrastinate/worker.py", line 328, in _process_job
+    job_result.result = await middleware.compose(
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^
+        self.worker_middleware, run_job, context, self
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )()
+    ^^^
+  File "/usr/local/lib/python3.13/site-packages/procrastinate/worker.py", line 326, in run_job
+    return await ensure_async()
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/site-packages/procrastinate/worker.py", line 303, in ensure_async
+    task_result = await middleware.compose(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+        middlewares, run_async_task, context, self
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )()
+    ^^^
+  File "/usr/local/lib/python3.13/site-packages/procrastinate/worker.py", line 301, in run_async_task
+    return await task(*job_args, **job.task_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/workflow_worker.py", line 91, in _dispatch
+    raise PermanentWork('External outcome requires reconciliation before another attempt')from None
+workflow_errors.PermanentWork: External outcome requires reconciliation before another attempt
+ok
+test_real_worker_stops_for_human_approval_then_dispatches_once (durable_restricted_worker_acceptance.RestrictedWorkerTests.test_real_worker_stops_for_human_approval_then_dispatches_once) ... ok
+test_verified_idempotent_destination_reuses_the_same_key_after_lost_ack (durable_restricted_worker_acceptance.RestrictedWorkerTests.test_verified_idempotent_destination_reuses_the_same_key_after_lost_ack) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 4.229s
+
+OK

@@ -4,10 +4,25 @@ Task arguments contain an operation UUID only. Callbacks are trusted source wire
 by the compiler/bootstrap, never model-provided paths, tools or Python code.
 """
 import asyncio
+import logging
+import time
 import procrastinate
 import psycopg
 from durable_workflow import WorkflowStore,LostLease
+from workflow_connection import DatabaseCredentialUnavailable
 from workflow_errors import TemporaryWork,PermanentWork,ExternalOutcomeUnknown,DestinationNotAttempted,InvalidDispatch
+
+def _transient_database_error(error,depth=0):
+    # ConnectorException and TaskGroup wrappers retain the native cause. Never
+    # retry a mixed group containing a programming/schema/authorization failure.
+    if depth>12:return False
+    if isinstance(error,BaseExceptionGroup):return bool(error.exceptions)and all(_transient_database_error(child,depth+1)for child in error.exceptions)
+    if isinstance(error,DatabaseCredentialUnavailable):return True
+    if isinstance(error,psycopg.OperationalError):
+        state=error.sqlstate
+        return state is None or state.startswith('08')or state in {'57P01','57P02','57P03'}
+    if error.__cause__ is not None:return _transient_database_error(error.__cause__,depth+1)
+    return False
 
 def _namespace(value):
     if not isinstance(value,str)or not value.isascii()or not value.replace('-','').isalnum()or not 1<=len(value)<=20:raise ValueError('Invalid owned workflow namespace')
@@ -91,13 +106,30 @@ class WorkflowRuntime:
         return list(dict.fromkeys([*expired,*repaired]))
     async def run(self,*,concurrency=2,recovery_interval=30,**options):
         if type(concurrency)is not int or not 1<=concurrency<=10 or type(recovery_interval)is not int or not 5<=recovery_interval<=300:raise ValueError('Invalid bounded worker options')
-        async with self.app.open_async():
-            async def recovery():
-                while True:
-                    await self.recover_once();await asyncio.sleep(recovery_interval)
-            worker_options={'update_heartbeat_interval':10.0,'stalled_worker_timeout':90.0,**options}
-            async with asyncio.TaskGroup()as group:
-                task=group.create_task(recovery())
-                worker=group.create_task(self.app.run_worker_async(queues=[self.extract.queue,self.dispatch.queue],concurrency=concurrency,**worker_options))
-                try:await worker
-                finally:task.cancel()
+        delay=1
+        while True:
+            started=time.monotonic()
+            try:
+                # Close even when the initial pool wait fails: retaining a
+                # partially opened pool would bypass fresh credentials on retry.
+                try:
+                    await self.app.open_async()
+                    async def recovery():
+                        while True:
+                            await self.recover_once();await asyncio.sleep(recovery_interval)
+                    worker_options={'update_heartbeat_interval':10.0,'stalled_worker_timeout':90.0,**options}
+                    async with asyncio.TaskGroup()as group:
+                        task=group.create_task(recovery())
+                        worker=group.create_task(self.app.run_worker_async(queues=[self.extract.queue,self.dispatch.queue],concurrency=concurrency,**worker_options))
+                        try:await worker
+                        finally:task.cancel()
+                finally:await self.app.close_async()
+                return
+            except Exception as error:
+                if not _transient_database_error(error):raise
+                # Domain leases, approval hashes and uncertain-delivery rules
+                # remain authoritative. Reopening a queue pool cannot resend an
+                # external action or reset an operation's attempts/lease.
+                logging.getLogger(__name__).warning('Queue database connection interrupted; reconnecting with fresh workload credentials')
+                if time.monotonic()-started>=30:delay=1
+                await asyncio.sleep(delay);delay=min(delay*2,30)

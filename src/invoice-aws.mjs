@@ -11,7 +11,7 @@ export function awsInvoiceTerraform(project,row,environment='staging'){
  const model=input('model_id','Reviewed direct regional Bedrock foundation model ID. Verify regional availability, quotas, terms and retention-none policy.','anthropic.reviewed-model-v1:0','^[a-z0-9][a-z0-9.-]*:[0-9]+$');
  const endpoint=input('accounting_endpoint','Existing accounting HTTPS adapter endpoint; no vendor or replacement system is provisioned.','https://accounting.example.test/actions','^https://[A-Za-z0-9.-]+(:[0-9]{1,5})?(/[^?#@ ]*)?$');
  const scope=input('accounting_scope','Reviewed opaque destination account/scope, bound into every approval.','owned-account','^[A-Za-z0-9_.:/-]{1,200}$');
- const seed='https://atmem.ai/workspaces/'+encodeURIComponent(project.id)+'/'+row.address;
+ const seed=b.seed;
  for(const key of ['runtime_image','parser_image']){
   input(key,'Published, reviewed immutable image in the emitted ECR repository. Empty during foundation setup.',key==='runtime_image'?'123456789012.dkr.ecr.ap-southeast-2.amazonaws.com/reviewed-runtime@sha256:'+'a'.repeat(64):'123456789012.dkr.ecr.ap-southeast-2.amazonaws.com/reviewed-parser@sha256:'+'b'.repeat(64));
   b.variable[key].default='';b.variable[key].validation={condition:'${!var.applications_enabled || (can(regex("@sha256:[0-9a-f]{64}$",var.'+key+')) && !endswith(var.'+key+',"@sha256:'+ '0'.repeat(64)+'"))}',error_message:'Application release requires a reviewed immutable image digest.'};

@@ -94,7 +94,7 @@ if __name__=='__main__':
     if args.provider=='aws':runtime_environment['DATABASE_CA_FILE']='/app/rds-global-ca.pem'
     if args.terraform_plan_log:
         plan_path=Path(args.terraform_plan_log).resolve()
-        if args.provider not in {'aws','azure'}or not plan_path.is_relative_to(ROOT/'.local')or plan_path.name!='provider-mocks.log':raise ValueError('Use the exact local qualified native mock plan log')
+        if args.provider not in {'aws','azure','gcp'}or not plan_path.is_relative_to(ROOT/'.local')or plan_path.name!='provider-mocks.log':raise ValueError('Use the exact local qualified native mock plan log')
         qualification=json.loads((plan_path.parent/'qualification.json').read_text())
         if qualification.get('passed')is not True or qualification.get('provider')!=args.provider:raise ValueError('Native Terraform qualification must pass first')
         if not any(check.get('name')=='provider-mocks'and check.get('logSha256')==hashlib.sha256(plan_path.read_bytes()).hexdigest()for check in qualification['checks']):raise ValueError('Native plan log no longer matches its receipt')
@@ -102,32 +102,49 @@ if __name__=='__main__':
         for name,digest in source_hashes.items():
             if qualification['sourceHashes'].get(relative+name)!=digest:raise ValueError('Image source is not the exact qualified Terraform package')
         events=[json.loads(line)for line in plan_path.read_text().splitlines()if line.strip()]
-        run_name='private_database_and_parser'if args.provider=='aws'else'private_data_and_parser'
+        run_name={'aws':'private_database_and_parser','azure':'private_data_and_parser','gcp':'private_database_and_identity'}[args.provider]
         plans=[event['test_plan']for event in events if event.get('type')=='test_plan'and event.get('@testrun')==run_name]
         if len(plans)!=1:raise ValueError('Expected one admitted application-release mock plan')
-        task_type='aws_ecs_task_definition'if args.provider=='aws'else'azapi_resource'
+        task_type={'aws':'aws_ecs_task_definition','azure':'azapi_resource','gcp':'google_cloud_run_v2_service'}[args.provider]
         tasks=[resource for resource in plans[0]['resource_changes']if resource.get('type')==task_type and resource['address'].endswith('_api[0]')]
         if len(tasks)!=1:raise ValueError('Expected the exact native API workload')
         def containers(task):
             after=task['change']['after']
-            return json.loads(after['container_definitions'])if args.provider=='aws'else after['body']['properties']['template']['containers']
-        apis=[container for container in containers(tasks[0])if container['name']=='api']
+            if args.provider=='aws':return json.loads(after['container_definitions'])
+            if args.provider=='azure':return after['body']['properties']['template']['containers']
+            return after['template'][0]['containers']
+        apis=[container for container in containers(tasks[0])if container['name']==('application'if args.provider=='gcp'else'api')]
         if len(apis)!=1:raise ValueError('Expected one native API container')
         env_key='environment'if args.provider=='aws'else'env'
         runtime_environment={entry['name']:entry['value']for entry in apis[0][env_key]}
+        if any(entry.get('value_source')or entry.get('secretRef')for entry in apis[0][env_key]):raise ValueError('API must not receive the outbound action secret')
         worker_tasks=[resource for resource in plans[0]['resource_changes']if resource.get('type')==task_type and resource['address'].endswith('_worker[0]')]
         if len(worker_tasks)!=1:raise ValueError('Expected the exact native worker workload')
-        workers=[container for container in containers(worker_tasks[0])if container['name']=='worker']
+        workers=[container for container in containers(worker_tasks[0])if container['name']==('application'if args.provider=='gcp'else'worker')]
         if len(workers)!=1 or workers[0].get('command')!=['python','-I','/app/invoice_worker.py']:raise ValueError('Native worker command changed')
         worker=workers[0]
-        secrets=[secret['name']for secret in worker.get('secrets',[])]if args.provider=='aws'else[entry['name']for entry in worker['env']if'secretRef'in entry]
+        secrets=[secret['name']for secret in worker.get('secrets',[])]if args.provider=='aws'else[entry['name']for entry in worker['env']if entry.get('secretRef')or entry.get('value_source')]
         if secrets!=['DESTINATION_TOKEN']:raise ValueError('Native worker secret boundary changed')
-        worker_environment={entry['name']:entry['value']for entry in worker[env_key]if'value'in entry}
+        worker_environment={entry['name']:entry['value']for entry in worker[env_key]if isinstance(entry.get('value'),str)}
         if any(not isinstance(value,str)for value in [*runtime_environment.values(),*worker_environment.values()]):raise ValueError('Native workload environment is unresolved')
         if args.provider=='azure':
             for task in [tasks[0],worker_tasks[0]]:
                 configuration=task['change']['after']['body']['properties']['configuration'];registries=configuration['registries']
                 if len(registries)!=1 or not all(container['image'].startswith(registries[0]['server']+'/invoice/')for container in containers(task)):raise ValueError('Registry/image wiring disagrees in the emitted plan')
+        if args.provider=='gcp':
+            lock=json.loads((ROOT/'src/runtime/cloud-sql-proxy-lock.json').read_text())
+            identities=[]
+            for task,environment in [(tasks[0],runtime_environment),(worker_tasks[0],worker_environment)]:
+                template=task['change']['after']['template'][0];identities.append(template['service_account'])
+                proxies=[container for container in containers(task)if container['name']=='cloud-sql-proxy']
+                if len(proxies)!=1:raise ValueError('Expected one owned private SQL proxy sidecar')
+                proxy=proxies[0]
+                if proxy['image']!=lock['image']or proxy['args']!=['--private-ip','--address=127.0.0.1','--port=5432','--structured-logs',environment['DATABASE_CONNECTION_NAME']]:raise ValueError('Private SQL proxy wiring changed')
+                if environment.get('DATABASE_TRANSPORT')!='cloudsql-private-proxy'or environment.get('DATABASE_SERVICE_ACCOUNT')!=template['service_account']:raise ValueError('Database identity/transport differs from its owned workload')
+                if not template['vpc_access']or template['vpc_access'][0]['egress']!='PRIVATE_RANGES_ONLY':raise ValueError('Private database requires the explicit VPC connection')
+                app=next(container for container in containers(task)if container['name']=='application')
+                if app['depends_on']!=['cloud-sql-proxy']or app['resources'][0]['cpu_idle']or template['scaling'][0]['min_instance_count']!=1:raise ValueError('SQL startup ordering and background CPU allocation are required')
+            if identities[0]==identities[1]:raise ValueError('API and worker identities must remain separate')
         plan_evidence={'qualificationSha256':hashlib.sha256((plan_path.parent/'qualification.json').read_bytes()).hexdigest(),'planLogSha256':hashlib.sha256(plan_path.read_bytes()).hexdigest(),'taskAddress':tasks[0]['address'],'boundary':'Actual emitted environment resolved by a native provider-mock Terraform plan; native cloud resources/values remain fixtures.'}
     with tempfile.TemporaryDirectory(prefix='atmem-invoice-image-check-')as scratch:
         config=Path(scratch)/'docker-config';config.mkdir();(config/'config.json').write_text('{}\n');env={'PATH':os.environ.get('PATH',''),'HOME':scratch,'DOCKER_CONFIG':str(config),'DOCKER_HOST':args.docker_host}

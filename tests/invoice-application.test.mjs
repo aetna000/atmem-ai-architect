@@ -6,6 +6,7 @@ import {pythonContainer}from'../src/python-container.mjs';
 import {createHash}from'node:crypto';
 import {awsInvoiceTerraform}from'../src/invoice-aws.mjs';
 import {azureInvoiceTerraform}from'../src/invoice-azure.mjs';
+import {gcpInvoiceTerraform}from'../src/invoice-gcp.mjs';
 
 test('every emitted invoice application contains its local runtime import closure and private parser source',()=>{
  for(const provider of ['aws','azure','gcp','ibm']){
@@ -65,4 +66,29 @@ test('Azure invoice compiler isolates parser identity, data and native secrets w
  assert.equal(config.resource.azurerm_postgresql_flexible_server[n].authentication.password_auth_enabled,false);assert.equal(config.resource.azurerm_storage_account[n].public_network_access_enabled,false);assert.equal(config.resource.azuread_application_app_role[n+'_parser'].value,'Parser.Invoke');
  assert.ok(config.resource.terraform_data.review_gate.lifecycle.precondition.every(rule=>!rule.condition.includes('azurerm_container_registry.')),'Review gate must not depend on resources that depend on the review gate');
  assert.throws(()=>azureInvoiceTerraform(project,{...row,provider:'gcp'}));
+});
+
+test('Google invoice compiler binds private SQL proxy, CPU allocation and separate workload authorities',()=>{
+ const n='block_696e766f696365',project={id:'11111111-1111-4111-8111-111111111111',revision:1,nodes:[],edges:[]},row={id:'invoice',address:n,provider:'gcp',region:'australia-southeast1'},files=gcpInvoiceTerraform(project,row),config=JSON.parse(files['main.tf.json']);
+ assert.deepEqual(Object.keys(config.terraform.required_providers).sort(),['google','google-beta']);assert.ok(Object.keys(config.resource).every(type=>!/^aws_|^azurerm_|^ibm_/.test(type)));
+ const services=config.resource.google_cloud_run_v2_service,api=services[n+'_api'],worker=services[n+'_worker'],parser=services[n+'_parser'];
+ assert.equal(api.iap_enabled,true);assert.equal(api.invoker_iam_disabled,false);assert.notEqual(api.template.service_account,worker.template.service_account);assert.notEqual(worker.template.service_account,parser.template.service_account);
+ assert.equal(parser.template.containers.length,1);assert.deepEqual(parser.template.containers[0].env,[]);assert.equal(parser.template.vpc_access,undefined);
+ for(const service of [api,worker]){
+  const [app,proxy]=service.template.containers,env=Object.fromEntries(app.env.map(entry=>[entry.name,entry.value]));
+  assert.equal(env.DATABASE_TRANSPORT,'cloudsql-private-proxy');assert.equal(env.DATABASE_SERVICE_ACCOUNT,service.template.service_account);assert.equal(app.resources.cpu_idle,false);assert.equal(service.template.scaling.min_instance_count,1);assert.deepEqual(app.depends_on,['cloud-sql-proxy']);assert.match(proxy.image,/@sha256:[0-9a-f]{64}$/);assert.deepEqual(proxy.args.slice(0,4),['--private-ip','--address=127.0.0.1','--port=5432','--structured-logs']);
+ }
+ assert.ok(api.template.containers[0].env.every(entry=>!entry.value_source));assert.equal(worker.template.containers[0].env.filter(entry=>entry.value_source).length,1);
+ assert.deepEqual(config.resource.google_sql_user[n+'_api'].database_roles,[]);assert.deepEqual(config.resource.google_sql_user[n+'_worker'].database_roles,[]);assert.deepEqual(config.resource.google_sql_user[n+'_ops'].database_roles,['cloudsqlsuperuser']);assert.equal(config.resource.google_sql_database_instance[n].settings.ip_configuration.ipv4_enabled,false);
+ assert.equal(config.resource.google_cloud_run_v2_service_iam_member[n+'_parser'].member,'serviceAccount:${google_service_account.'+n+'_worker.email}');assert.throws(()=>gcpInvoiceTerraform(project,{...row,provider:'azure'}));
+});
+
+test('invoice deployments have stable environment-separated physical identities and matching image fixtures',()=>{
+ const project={id:'11111111-1111-4111-8111-111111111111',revision:1,nodes:[],edges:[]},address='block_696e766f696365';
+ for(const [provider,adapter,region]of [['aws',awsInvoiceTerraform,'ap-southeast-2'],['azure',azureInvoiceTerraform,'australiaeast'],['gcp',gcpInvoiceTerraform,'australia-southeast1']]){
+  const row={id:'invoice',address,provider,region},stage=adapter(project,row,'staging'),production=adapter(project,row,'production'),config=JSON.parse(stage['main.tf.json']),prod=JSON.parse(production['main.tf.json']);
+  assert.notEqual(config.locals.name,prod.locals.name);assert.notEqual(config.locals.api_db_user,prod.locals.api_db_user);assert.equal(adapter(project,row,'staging')['main.tf.json'],stage['main.tf.json']);
+  const seed='https://atmem.ai/workspaces/'+project.id+'/'+address+'/staging';assert.ok(config.locals.name.includes(seed));assert.ok(stage['tests/invoice.tftest.hcl'].includes(seed));assert.equal(config.resource.terraform_data.review_gate.input.environment,'staging');assert.equal(prod.resource.terraform_data.review_gate.input.environment,'production');
+  assert.throws(()=>adapter(project,row,'prodution'),/environment/);
+ }
 });

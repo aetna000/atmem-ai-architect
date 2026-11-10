@@ -32,7 +32,8 @@
     "specs/028-convergence-evaluation/evidence/20261110-invoice-runtime",
     "specs/028-convergence-evaluation/evidence/20261110-invoice-worker-delivery",
     "specs/028-convergence-evaluation/evidence/20261110-invoice-restore-recovery",
-    "specs/028-convergence-evaluation/evidence/20261110-azure-invoice-native"
+    "specs/028-convergence-evaluation/evidence/20261110-azure-invoice-native",
+    "specs/028-convergence-evaluation/evidence/20261110-gcp-invoice-and-queue-recovery"
   ],
   "limitations": [
     "The wider 28-project outcome remains unfinished. No claim of world-leading quality or four-provider connected-application parity.",
@@ -79,7 +80,7 @@
   },
   "baselineCompletedCases": 28,
   "baselineQualifiedCases": 0,
-  "updatedAt": "2026-11-09T22:25:41.005972+00:00",
+  "updatedAt": "2026-11-10T04:17:14.224840+00:00",
   "baselineErrors": {
     "ValidationError": 4,
     "TimeoutError": 6
@@ -112,8 +113,8 @@
   "capabilityProgress": {
     "durableWorkflowCore": {
       "status": "local core qualified; project integration in_progress",
-      "evidence": "specs/028-convergence-evaluation/evidence/20261110-invoice-restore-recovery",
-      "checksPassed": 85,
+      "evidence": "specs/028-convergence-evaluation/evidence/20261110-gcp-invoice-and-queue-recovery",
+      "checksPassed": 89,
       "postgresVersion": "17.11",
       "queueVersion": "3.10.0",
       "full28CaseAcceptanceComplete": false,
@@ -128,13 +129,14 @@
         "17.11",
         "18.6"
       ],
-      "nativeCredentialBoundary": "Exact local native SDK/SQL/protocol and credential rotation checks; no cloud authentication or account operations."
+      "nativeCredentialBoundary": "Exact local native SDK/SQL/protocol and credential rotation checks; no cloud authentication or account operations.",
+      "connectionRecovery": "Real terminated SQL transaction and rotated credential recovery; connection failures retry with a fresh pool and bounded backoff. Schema/permission failures are not retried."
     },
     "invoiceWorkflowRuntime": {
-      "status": "local runtime and isolated AWS/Azure adapters qualified; whole-project integration unfinished",
-      "evidence": "specs/028-convergence-evaluation/evidence/20261110-azure-invoice-native",
+      "status": "local runtime and isolated AWS/Azure/Google adapters checked; whole-project integration unfinished",
+      "evidence": "specs/028-convergence-evaluation/evidence/20261110-gcp-invoice-and-queue-recovery",
       "nativeConversationBenchmarkProjectsPassed": 0,
-      "postgresCoreChecks": 85,
+      "postgresCoreChecks": 89,
       "linuxParserAndDecoderChecks": 10,
       "nativeStorageContractChecks": 8,
       "httpPostgresChecks": 10,
@@ -149,11 +151,11 @@
         "status": "open findings; not clean or production accepted"
       },
       "remaining": [
-        "Complete Azure, Google and IBM native deployment adapters and qualify the AWS whole package",
-        "Native scheduled operator bootstrap/retention delivery, monitoring and exact Spec Kit/registry admission",
+        "Repair or independently resolve the fixable upstream Cloud SQL proxy dependency findings",
+        "Complete IBM native invoice adapter and complete project qualification on every provider",
+        "Native operator bootstrap/maintenance, monitoring and state/Spec Kit/registry integration",
         "Four-provider complete-business-brief invoice conversation/export qualification",
-        "Native SharePoint/Confluence, support, tenant credits and regulated composition",
-        "Full 28-case and held-out acceptance"
+        "Remaining medium/hard families, full 28-case and held-out acceptance"
       ],
       "apiIdentityStorageDecoderChecks": 61,
       "browserChecks": 12,
@@ -181,8 +183,25 @@
       ],
       "nativeAzureTerraformMockRuns": 7,
       "parserNativeDocumentDecoderIdentityChecks": 15,
-      "newParserSecurityScanPending": true
+      "newParserSecurityScanPending": false,
+      "nativeGcpTerraformMockRuns": 6,
+      "nativeTerraformEnvironmentImageStartup": [
+        "aws",
+        "azure",
+        "gcp"
+      ],
+      "environmentIsolation": "Stable physical resource names include staging/production/qualification; unsupported environment names rejected.",
+      "latestExactImageSecurity": {
+        "applicationHighEach": 47,
+        "parserHigh": 65,
+        "critical": 0,
+        "applicationAndParserWithReportedFix": 0,
+        "proxyFixableHigh": 1,
+        "proxyFixableMedium": 1,
+        "proxyUnknownWithReportedFix": 1,
+        "status": "open findings; proxy not accepted; no production/security approval"
+      }
     }
   },
-  "currentEvidence": "specs/028-convergence-evaluation/evidence/20261110-azure-invoice-native"
+  "currentEvidence": "specs/028-convergence-evaluation/evidence/20261110-gcp-invoice-and-queue-recovery"
 }

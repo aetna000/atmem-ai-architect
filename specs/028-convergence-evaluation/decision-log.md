@@ -276,3 +276,30 @@ recorded source hashes. Full generator integration and the repaired 28-project
 evaluation remain in progress. No remote push or deployment was performed.
 
 Evidence: evidence/20261110-generator-backup-checkpoint.
+
+## 2026-11-10 — Private Google SQL transport and queue reconnection
+
+Added an explicit maintained private-IP Cloud SQL proxy path with separate native
+identities, startup ordering and continuously allocated background CPU. Staging and
+production now have distinct stable physical names; misspelled environments fail.
+A PG17 rerun exposed queue exit during connection termination/credential rotation.
+The deterministic killed-transaction regression fails against the prior worker;
+the corrected supervisor closes/reopens its pool with fresh credentials and bounded
+backoff, preserving domain fencing/approval/uncertain-delivery rules. It does not
+retry schema, permission or programming failures. Both PG17/18 now pass 89 checks.
+
+302 JavaScript tests/build, 61 API/operator checks, native AWS/Azure/Google schemas
+and 6/7/6 mock plans pass. Three exact rebuilt images pass generated-environment
+startup/denial plus five restricted queue cases each. Full medium conversation
+acceptance remains zero; operator/registry/Spec Kit/IBM integration is incomplete.
+
+Application/parser scans retain 47/65 high findings without reported fixes. The
+pinned upstream proxy platform scan reveals one fixable high, one fixable medium
+and an unknown finding. Keep it unaccepted pending repair or independent resolution;
+do not claim a clean scan from a failed Docker multi-architecture export. Failed and
+passing runs, exact source and inventory are preserved in:
+specs/028-convergence-evaluation/evidence/20261110-gcp-invoice-and-queue-recovery
+
+No cloud account operations, deployment or remote pushes occurred. The owner’s
+periodic local Git checkpoint policy remains active. Continue implementation and
+the original full 28-project/held-out evaluation without narrowing the objective.

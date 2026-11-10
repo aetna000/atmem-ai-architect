@@ -9,7 +9,8 @@ export const UUID='^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}
 
 export function invoiceBuilder(project,row,environment='staging'){
  if(!project||typeof project.id!=='string'||!project.id||!row||!/^block_[0-9a-f]+$/.test(row.address)||!['aws','azure','gcp','ibm'].includes(row.provider))throw Error('Use a stable owned invoice project, address and provider');
- const seed='https://atmem.ai/workspaces/'+encodeURIComponent(project.id)+'/'+row.address;
+ if(!['staging','production','qualification'].includes(environment))throw Error('Use an explicit supported invoice environment');
+ const seed='https://atmem.ai/workspaces/'+encodeURIComponent(project.id)+'/'+row.address+'/'+environment;
  const variable={review_approved:{type:'bool',default:false},applications_enabled:{type:'bool',default:false,description:'Enable only after native SQL identity/schema/membership bootstrap, secret population and immutable image publication are reviewed.'}};
  const examples={review_approved:false,applications_enabled:false},resource={},data={},output={},assertions=[],testExpressions={},files=invoiceApplicationFiles(row.provider,row.address);
  files['OPERATIONS.md']=INVOICE_OPERATIONS;
@@ -27,5 +28,5 @@ export function invoiceBuilder(project,row,environment='staging'){
   const config={terraform:{required_version:'>= 1.17.1, < 2.0.0',required_providers:requiredProviders},provider:providerConfig,variable,locals,data,resource,output};
   return{...files,...existingReferenceFiles(project),'.terraform.lock.hcl':lock,'main.tf.json':JSON.stringify(config,null,2)+'\n','deployment.tfvars.json.example':JSON.stringify(examples,null,2)+'\n','.gitignore':'.terraform/\n*.tfstate*\n*.tfplan\n*.tfvars\n*.tfvars.json\n!deployment.tfvars.json.example\n.local/\n.venv/\nbuild/\n__pycache__/\n','tests/invoice.tftest.hcl':mock+'\nvariables {\n'+values+'\n}\n'+assertions.join('\n')+'\nrun "review_required" {\n command = plan\n variables { review_approved = false }\n expect_failures = [terraform_data.review_gate]\n}\n','README.md':guide,'invoice-deployment-boundary.json':JSON.stringify({provider:row.provider,sourceComponent:row.id,namespace:'invoice',accountIdentity:'local.account_uuid',applicationRelease:'Explicit foundation/bootstrap/application phases; no automatic cloud operations.',externalAccounting:'Preserved external dependency with a normalized, independently testable action/receipt contract; actual endpoint/credentials/idempotency acceptance remain destination inputs.',qualification:'Compiler emission alone is not full project acceptance or deployment evidence.'},null,2)+'\n'};
  }
- return{variable,examples,resource,data,locals,output,assertions,testExpressions,files,input,add,finish,region};
+ return{variable,examples,resource,data,locals,output,assertions,testExpressions,files,input,add,finish,region,seed};
 }
