@@ -151,6 +151,81 @@ successful publication is recorded before removing its file volumes. A process
 that dies between upload acknowledgement and state recording remains uncertain
 until controller recovery; the helper does not invent success.
 
+### Cleanup acknowledgements for controller recovery
+
+The host now publishes an exact metadata-only
+`enterprise-azure-document-cleanup-v1` acknowledgement after all per-file native
+containers/volumes have been removed. It contains only format, opaque request ID,
+stable owner fingerprint and `cleaned: true`. It is not a parser-success receipt,
+an architecture validation report, or proof about an offline node that has not
+run cleanup. The controller must still verify the original task, source/company
+guard and complete byte-bound result before accepting an answer.
+
+The standalone root publisher uses the native VM IMDS endpoint with an explicit
+transfer managed-identity client ID, bounded responses and a fixed Blob host/path.
+It forwards no token to IMDS and no document bytes to either service. Blob writes
+are create-only with transport checksum/encryption checks. After a lost write
+acknowledgement, it reads and accepts only the exact existing receipt. Redirects,
+duplicate headers/JSON fields, compression, oversized responses, expiring/wrong-
+audience credentials, retained versions and mismatched owners fail closed.
+
+Root state v2 separates physical cleanup from acknowledged receipt delivery.
+Failed delivery leaves a durable pending flag; the reaper retries even before
+ordinary expiry. Legacy v1 state is ownership-checked, rechecked against the
+Engine, then upgraded and acknowledged. No missing receipt is invented. Ordinary
+worker byte APIs reject receipt creation/deletion; they can fetch and strictly
+validate a bounded encrypted/unversioned receipt, distinguishing missing from
+permission/provider failures. This API separation is not cryptographic isolation
+between trusted VM processes: Microsoft documents managed identity as a VM-level
+security boundary. Only the approved transfer identity belongs on this dedicated
+pool; native IAM/pool verification remains required.
+
+Receipts stay until the generated metadata lifecycle expires them, preserving
+idempotence during acknowledgement loss. That lifecycle and native IAM grants are
+pending infrastructure deliverables. A receipt is not authorization to delete a
+running Batch job blindly. The controller must stop/wait for native work, settle
+uncertain creation and check the cleanup barrier before retiring source/result
+objects and SQL debt.
+
+### Native API and original-job observation
+
+`enterprise_azure_batch_api.py` now implements fixed owned Batch endpoints and
+explicit worker MI authentication. Its typed methods emit the pinned native
+job/task shapes, observe only the owned pool/nodes/jobs/task/release status and
+request termination/deletion without forcing node acknowledgement. It cannot
+mutate pools/nodes, list arbitrary jobs, read task files or follow caller URLs.
+ARM observation checks exact account/subscription/region/endpoint, provisioned
+state, private-only access and AAD-only authentication. No HTTP202 response claims
+termination or deletion completion. Full pool verification and controller
+orchestration are not implemented by this transport.
+
+Native job metadata now retains the original parser, helper and worker bindings,
+allowing recovery even if task creation never completed. `recover_job` reads the
+bounded original native metadata, reconstructs the exact historical job contract,
+checks its full fingerprint/root commands and preserves the current stable
+destination/registry boundary. It never executes native job text or grants
+permission to launch an old artifact. Duplicate/malformed metadata and changed
+destinations are rejected. Only documented name/value array order is normalized;
+boolean/integer aliases cannot weaken control values.
+
+Additional evidence:
+`specs/028-convergence-evaluation/evidence/20261111-private-azure-cleanup-receipts-v1`.
+75 component/regression tests pass:19 host/process death,9 producer/consumer wire,
+6 original-job recovery,7 fixed Batch API,10 job schema,14 Blob,9 transfer and1
+qualifier regression. A fresh21-check native Engine/build run passes with receipt
+delivery represented by an explicit offline sink that checks real native volume
+absence. Root IMDS/Blob wire requests are separately scripted; no cloud identity
+or Batch account was contacted. Both native runs and their exact historical
+source/context bindings are retained. No production runtime image, worker
+admission, security or complete-project status is promoted.
+
+Additional reviewed sources2026-11-11:
+
+- [Native VM token protocol and VM-level security boundary](https://learn.microsoft.com/en-us/entra/identity/managed-identities-azure-resources/how-to-use-vm-token), API2018-02-01 with explicit client ID.
+- [Batch authentication](https://learn.microsoft.com/en-au/azure/batch/batch-aad-auth), explicit `https://batch.core.windows.net/.default` scope.
+- [Batch account observation](https://learn.microsoft.com/en-us/rest/api/batchmanagement/batch-account/get?view=rest-batchmanagement-2025-06-01), ARM2025-06-01.
+- Pinned Batch2026-10-01 schema above: job/task create201, terminate/delete202; the optional `force` flag is not requested. Data-plane pool creation does not contain the identity field exposed by pool observation. The infrastructure compiler must use the management-plane pool/identity contract, rather than copying response properties into a data-plane create request.
+
 Evidence:
 `specs/028-convergence-evaluation/evidence/20261111-private-azure-document-host-v1`.
 Seventeen host/true-process-death checks, one qualifier regression and the previous
@@ -189,6 +264,12 @@ Build the Batch controller, pool/agent/image/identity preflight and durable SQL
 intent/recovery. Add root-policy/helper installation and reaper service/timer to
 the generated dedicated pool. Test release acknowledgement/outcome and native
 deletion/uncertain creation; do not infer cloud erasure from an accepted delete.
+Use a separately bound native pool definition/installation contract so its hash
+does not create a circular dependency through the existing14-field host/job
+configuration. Verify all ready nodes' startup outcome and agent version before
+source upload; preserve original job bindings and cleanup receipts across
+artifact/worker revisions. Never delete Blob data while any root writer remains
+unsettled. Implement metadata lifecycle and replay-tombstone capacity management.
 
 Generate dedicated private pool, native roles/network/storage/artifact/host
 provisioning, and wire the approved native executor into the worker only after the

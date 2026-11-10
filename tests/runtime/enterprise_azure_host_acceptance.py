@@ -100,6 +100,18 @@ class NativeEngine:
         return identifier
 
 
+class ReceiptSink:
+    """Explicit cloud-receipt fixture, checked after every native deletion."""
+    def __init__(self, engine):
+        self.engine, self.receipts, self.fail = engine, [], False
+    def publish(self, value):
+        names = volumes(value['requestId'])
+        assert not any(name in self.engine.volumes for name in names)
+        assert not any(m['Name'] in names for item in self.engine.containers.values() for m in item['Mounts'])
+        if self.fail: raise ValueError('fixture receipt acknowledgement lost')
+        self.receipts.append(dict(value))
+
+
 class AzureHostContract(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
@@ -109,8 +121,9 @@ class AzureHostContract(unittest.TestCase):
         try: self.store = Store(fd, uid=os.geteuid())
         finally: os.close(fd)
         self.engine = NativeEngine(self.store)
+        self.receipts = ReceiptSink(self.engine)
         self.time = 1000
-        self.host = Host(config(), self.store, self.engine, clock=lambda: self.time, sleep=lambda _: None)
+        self.host = Host(config(), self.store, self.engine, receipts=self.receipts, clock=lambda: self.time, sleep=lambda _: None)
 
     def tearDown(self):
         self.store.close(); self.temporary.cleanup()
@@ -135,6 +148,7 @@ class AzureHostContract(unittest.TestCase):
         self.host.release(value(), config()['transferImage'])
         self.assertEqual(self.engine.volumes, {})
         self.assertTrue(self.store.read(IDENTIFIER)['published'])
+        self.assertTrue(self.store.read(IDENTIFIER)['receiptPublished'])
         self.assertEqual(self.store.read(IDENTIFIER)['phase'], 'cleaned')
         calls = len(self.engine.calls)
         self.host.release(value(), config()['transferImage'])
@@ -162,7 +176,7 @@ class AzureHostContract(unittest.TestCase):
     def test_transfer_deadline_cleans_the_still_running_owned_process(self):
         self.engine.failure = 'hang'
         def tick(_): self.time += 10
-        host = Host(config(), self.store, self.engine, clock=lambda: self.time, monotonic=lambda: self.time, sleep=tick)
+        host = Host(config(), self.store, self.engine, receipts=self.receipts, clock=lambda: self.time, monotonic=lambda: self.time, sleep=tick)
         with self.assertRaisesRegex(ValueError, 'deadline'): host.prepare(value())
         self.assertEqual(self.engine.containers, {})
         self.assertEqual(self.engine.volumes, {})
@@ -174,7 +188,7 @@ class AzureHostContract(unittest.TestCase):
         def tick(_):
             elapsed[0] += 10
             self.time -= 100
-        host = Host(config(), self.store, self.engine, clock=lambda: self.time, monotonic=lambda: elapsed[0], sleep=tick)
+        host = Host(config(), self.store, self.engine, receipts=self.receipts, clock=lambda: self.time, monotonic=lambda: elapsed[0], sleep=tick)
         with self.assertRaisesRegex(ValueError, 'deadline'): host.prepare(value())
         self.assertEqual(self.engine.volumes, {})
         self.assertEqual(self.engine.containers, {})
@@ -228,11 +242,11 @@ class AzureHostContract(unittest.TestCase):
         self.engine.parser(self.store.read(IDENTIFIER), running=True)
         revised = {**config(), 'parserImage': 'ownedregistry.azurecr.io/parser@sha256:' + 'f' * 64,
                    'hostHelperSha256': 'a' * 64}
-        host = Host(revised, self.store, self.engine, clock=lambda: 1601)
+        host = Host(revised, self.store, self.engine, receipts=self.receipts, clock=lambda: 1601)
         host.reap()
         self.assertEqual(self.engine.volumes, {})
         state = self.store.read(IDENTIFIER)
-        foreign = Host({**config(), 'container': 'foreign'}, self.store, self.engine, clock=lambda: 1601)
+        foreign = Host({**config(), 'container': 'foreign'}, self.store, self.engine, receipts=self.receipts, clock=lambda: 1601)
         with self.assertRaises(ValueError): foreign.check_state(state)
 
     def test_preflight_rejects_unsafe_engine_before_state_or_resource_creation(self):
@@ -270,7 +284,7 @@ class AzureHostContract(unittest.TestCase):
         self.assertEqual(self.store.read(IDENTIFIER)['phase'], 'preparing')
         engine = NativeEngine(self.store, fixture)
         self.assertEqual(len(engine.volumes), 1)
-        host = Host(config(), self.store, engine, clock=lambda: 1601)
+        host = Host(config(), self.store, engine, receipts=ReceiptSink(engine), clock=lambda: 1601)
         host.reap()
         self.assertEqual(engine.volumes, {})
         self.assertEqual(self.store.read(IDENTIFIER)['phase'], 'cleaned')
@@ -290,12 +304,38 @@ class AzureHostContract(unittest.TestCase):
             if change == 'policy': item['Config']['Labels']['atmem.document.policy'] = 'f' * 64
             with self.assertRaises(ValueError): self.host.container(state, identifier)
 
+    def test_receipt_loss_keeps_debt_and_reaper_retries_after_physical_cleanup(self):
+        self.host.prepare(value())
+        self.receipts.fail = True
+        with self.assertRaises(ValueError): self.host.release(value(), config()['transferImage'])
+        state = self.store.read(IDENTIFIER)
+        self.assertEqual(state['phase'], 'cleaned')
+        self.assertFalse(state['receiptPublished'])
+        self.assertEqual(self.engine.volumes, {})
+        self.receipts.fail = False
+        # Receipt debt is retried even before this job's expiry.
+        self.host.reap()
+        self.assertTrue(self.store.read(IDENTIFIER)['receiptPublished'])
+        self.assertEqual(len(self.receipts.receipts), 1)
+
+    def test_legacy_cleaned_state_is_rechecked_and_acknowledged_by_current_reaper(self):
+        self.host.prepare(value())
+        state = self.store.read(IDENTIFIER)
+        state['format'] = 'enterprise-azure-document-host-v1'
+        del state['receiptPublished']
+        self.store.write(state)
+        self.time = 1601
+        self.host.reap()
+        state = self.store.read(IDENTIFIER)
+        self.assertEqual(state['format'], 'enterprise-azure-document-host-v2')
+        self.assertTrue(state['receiptPublished'])
+
 
 if __name__ == '__main__':
     if len(sys.argv) == 4 and sys.argv[1] == '--crash-fixture':
         fd = os.open(sys.argv[2], os.O_RDONLY | os.O_DIRECTORY)
         store = Store(fd, uid=os.geteuid()); os.close(fd)
         engine = NativeEngine(store, Path(sys.argv[3]), crash=True)
-        Host(config(), store, engine, clock=lambda: 1000).prepare(value())
+        Host(config(), store, engine, receipts=ReceiptSink(engine), clock=lambda: 1000).prepare(value())
         raise SystemExit('Crash fixture failed to terminate')
     unittest.main()

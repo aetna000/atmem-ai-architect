@@ -23,7 +23,7 @@ _UUID = r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
 
 
 def object_key(identifier, side):
-    if not isinstance(identifier, str) or not re.fullmatch('[0-9a-f]{64}', identifier) or side not in {'input', 'result'}:
+    if not isinstance(identifier, str) or not re.fullmatch('[0-9a-f]{64}', identifier) or side not in {'input', 'result', 'cleanup'}:
         raise ValueError('Use the owned per-file object identity')
     return 'document-jobs/' + identifier + '/' + side
 
@@ -72,7 +72,7 @@ class AzureDocumentObjects:
                                             [self.account_id, self.service_id, self.container_id]}:
                 raise ValueError('Use only the fixed owned ARM observations')
         elif not url.startswith(self.base + 'document-jobs/') or not re.fullmatch(
-                re.escape(self.base) + r'document-jobs/[0-9a-f]{64}/(?:input|result)', url):
+                re.escape(self.base) + r'document-jobs/[0-9a-f]{64}/(?:input|result|cleanup)', url):
             raise ValueError('Use only the fixed owned blob object')
         try:
             scope = 'https://management.azure.com/.default' if arm else 'https://storage.azure.com/.default'
@@ -147,6 +147,7 @@ class AzureDocumentObjects:
         return self.base + quote(object_key(identifier, side), safe='/')
 
     def put(self, identifier, side, raw):
+        if side == 'cleanup': raise ValueError('Only the root publisher creates cleanup acknowledgements')
         url = self.url(identifier, side)
         maximum = MAX_INPUT if side == 'input' else MAX_ENVELOPE
         if not isinstance(raw, bytes) or not 0 < len(raw) <= maximum:
@@ -160,11 +161,15 @@ class AzureDocumentObjects:
             raise SourceUnavailable('document_object_unavailable')
         return etag(headers.get('etag'))
 
-    def load(self, identifier, side, condition=None):
+    def load(self, identifier, side, condition=None, *, allow_missing=False):
+        if allow_missing and side != 'cleanup': raise ValueError('Only cleanup receipt lookup is optional')
         url = self.url(identifier, side)
         headers = {} if condition is None else {'If-Match': etag(condition)}
         self.preflight()
-        raw, observed = self._send('GET', url, headers=headers, limit=MAX_INPUT if side == 'input' else MAX_ENVELOPE)
+        maximum = MAX_INPUT if side == 'input' else 1024 if side == 'cleanup' else MAX_ENVELOPE
+        value = self._send('GET', url, headers=headers, limit=maximum, missing=allow_missing)
+        if value is None: return None
+        raw, observed = value
         try:
             if (observed.get('x-ms-server-encrypted') != 'true' or observed.get('x-ms-version-id') is not None or
                     observed.get('x-ms-blob-type') != 'BlockBlob' or
@@ -178,6 +183,7 @@ class AzureDocumentObjects:
             raise SourceUnavailable('document_object_unavailable') from None
 
     def delete(self, identifier, side):
+        if side == 'cleanup': raise ValueError('Cleanup metadata is retired by its dedicated lifecycle policy')
         url = self.url(identifier, side)
         self.preflight()
         try:
@@ -186,6 +192,21 @@ class AzureDocumentObjects:
                 raise ValueError()
         except Exception:
             raise SourceUnavailable('document_cleanup_unavailable') from None
+
+    def cleanup_acknowledged(self, identifier, owner):
+        if not isinstance(owner, str) or not re.fullmatch('[0-9a-f]{64}', owner):
+            raise ValueError('Use the exact owned cleanup destination fingerprint')
+        raw = self.load(identifier, 'cleanup', allow_missing=True)
+        if raw is None: return False
+        try:
+            value = json.loads(raw, object_pairs_hook=unique)
+            if (not isinstance(value, dict) or value.get('cleaned') is not True or value != {
+                    'format': 'enterprise-azure-document-cleanup-v1', 'requestId': identifier,
+                    'owner': owner, 'cleaned': True}):
+                raise ValueError()
+            return True
+        except Exception:
+            raise SourceUnavailable('document_cleanup_receipt_unavailable') from None
 
     def close(self):
         try:

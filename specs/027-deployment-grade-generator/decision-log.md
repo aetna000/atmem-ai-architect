@@ -676,3 +676,39 @@ timer, private pool/IAM/network/storage/artifact composition; install/qualify ac
 production artifacts before enabling Azure. Then complete IBM execution and full
 four-provider application/Spec Kit exports, unchanged complete briefs, security/
 performance, remaining medium/hard families and final28/held-out evaluation.
+
+
+### 2026-11-11 — Azure cleanup acknowledgement and native Batch transport
+
+A terminal Batch job does not prove a failed release stopped every host writer.
+Add a metadata-only root acknowledgement after actual owned containers/volumes
+are removed. Explicit native VM MI/IMDS and create-only Blob publish/readback
+settle lost acknowledgements without source bytes. Root state v2 preserves receipt
+debt and reaper retries, including safely upgraded v1 state. Worker receipt reads
+are bounded/strict; ordinary byte APIs cannot publish/delete acknowledgements.
+Metadata lifecycle remains a required native infrastructure deliverable.
+
+Preserve native job's original parser/helper/worker bindings so lost task-creation
+acknowledgements and revisions can be recovered against the same owned destination.
+Compare original full native shape without executing job text. Normalize only
+name/value array order, reject duplicates and boolean/integer aliases. Typed
+Batch transport now emits pinned job/task shapes with explicit worker MI, exact
+ARM account/AAD/private checks, bounded HTTP/no redirects and no forced termination.
+Accepted202 is not completion. Full native pool/agent/controller/SQL remains pending.
+
+Evidence: `specs/028-convergence-evaluation/evidence/20261111-private-azure-cleanup-receipts-v1`.
+75 component checks (19 host,9 receipts,6 original-job recovery,7 Batch API,10 job,
+14 Blob,9 transfer,1 harness) and21 actual Engine/build checks pass. Native cleanup
+uses an offline receipt sink that verifies actual volume removal; IMDS/Blob/account
+are independently scripted wire tests, not cloud execution. Preserve both native
+runs, original source bytes/context ZIPs and exact hashes. No helper-labelled
+containers/volumes remain. No production image/worker/security/case promotion.
+
+Next compose the controller with a separate exact pool/installation contract,
+ready-node/startup/agent checks and durable SQL ownership/reconciliation. Preserve
+original job and receipt barriers before erasing objects/retiring debt. Native
+2026 data-plane PoolCreate lacks identity despite PoolGet exposing it; generate
+management-plane pool identity instead of copying response properties. Install
+root source/policy/service/timer and metadata lifecycle from actual artifact
+receipts. Then complete IBM and four-provider exports, full private/remaining
+families, security/performance and final28/held-out. Original scope is unchanged.

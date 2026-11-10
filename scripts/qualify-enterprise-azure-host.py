@@ -138,6 +138,17 @@ class FixtureRegistryEngine:
         return value
 
 
+class ReceiptSink:
+    """Offline receipt transport; real Engine must show no remaining writers."""
+    def __init__(self, engine):
+        self.engine, self.receipts = engine, []
+    def publish(self, value):
+        for name in volumes(value['requestId']):
+            if self.engine.call('GET', API + '/volumes/' + name, missing=True) is not None:
+                raise ValueError('Receipt preceded native volume removal')
+        self.receipts.append(dict(value))
+
+
 def open_store(path):
     path.mkdir(mode=0o700, parents=True, exist_ok=True)
     fd = os.open(path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
@@ -165,7 +176,8 @@ def qualify(args):
            'DOCKER_CONFIG': str(ROOT / '.local/qualification-docker-config')}
     sources = [Path(__file__).resolve(), *[ROOT / 'src/runtime' / name for name in [
         'enterprise_azure_host.py', 'enterprise_azure_jobs.py', 'enterprise_azure_objects.py', 'enterprise_azure_transfer.py',
-        'enterprise_document_contract.py', 'enterprise_document_job.py']], ROOT / 'tests/runtime/enterprise_azure_host_acceptance.py']
+        'enterprise_document_contract.py', 'enterprise_document_job.py']], ROOT / 'tests/runtime/enterprise_azure_host_acceptance.py',
+        ROOT / 'tests/runtime/enterprise_azure_cleanup_receipts.py', ROOT / 'tests/runtime/enterprise_azure_job_recovery.py']
     fixtures = [ROOT / 'benchmarks/convergence/fixtures/enterprise-documents/policy.docx',
                 ROOT / 'benchmarks/convergence/fixtures/invoices/invoice-scan.pdf']
     hashes = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in [*sources, *fixtures]}
@@ -221,8 +233,9 @@ def qualify(args):
         mapping = {owned['parserImage']: receipts[1]['imageId'], owned['transferImage']: core_image}
         engine = Engine(args.docker_host[7:])
         facade = FixtureRegistryEngine(engine, mapping)
+        receipts_sink = ReceiptSink(engine)
         store = open_store(out / 'state')
-        host = Host(owned, store, facade)
+        host = Host(owned, store, facade, receipts=receipts_sink)
         try:
             for fixture in fixtures:
                 raw = fixture.read_bytes()
@@ -244,7 +257,7 @@ def qualify(args):
                         raise ValueError('Actual parser did not succeed')
                     host.release(metadata, owned['transferImage'])
                     final = store.read(identifier)
-                    if final['phase'] != 'cleaned' or not final['published']:
+                    if final['phase'] != 'cleaned' or not final['published'] or not final['receiptPublished']:
                         raise ValueError('Host did not publish and clean the byte-bound result')
                     for name in volumes(identifier):
                         if engine.call('GET', API + '/volumes/' + name, missing=True) is not None:
@@ -266,7 +279,7 @@ def qualify(args):
             state = store.read(crash_id)
             if state['phase'] != 'preparing' or engine.call('GET', API + '/volumes/' + volumes(crash_id)[0], missing=True) is None:
                 raise ValueError('Process death did not leave committed ownership and native volume')
-            Host(owned, store, facade, clock=lambda: state['expiresAt'] + 1).reap()
+            Host(owned, store, facade, receipts=receipts_sink, clock=lambda: state['expiresAt'] + 1).reap()
             if store.read(crash_id)['phase'] != 'cleaned' or store.read(crash_id)['published']:
                 raise ValueError('Independent native recovery failed')
             checks.append({'check': 'actual-process-death-native-volume-recovered', 'passed': True, 'exitCode': done.returncode})
@@ -294,7 +307,7 @@ def qualify(args):
                             '--user', '42424:42424', *options, mapping[owned['parserImage']],
                             'python', '-I', '-c', 'import time;time.sleep(300)']).decode().strip()
                         run(scenario + '-start', ['start', name])
-                        recovering = Host(owned, store, facade, clock=lambda: state['expiresAt'] + 1)
+                        recovering = Host(owned, store, facade, receipts=receipts_sink, clock=lambda: state['expiresAt'] + 1)
                         if scenario == 'foreign-consumer':
                             try: recovering.reap()
                             except ValueError: pass
@@ -318,7 +331,7 @@ def qualify(args):
                                 if time.monotonic() >= deadline: raise
                                 time.sleep(.25)  # Native --rm completion can race DELETE.
                         final = store.read(identifier)
-                        if final['phase'] != 'cleaned' or final['published']:
+                        if final['phase'] != 'cleaned' or final['published'] or not final['receiptPublished']:
                             raise ValueError('Expiry cleanup did not finish without publication')
                         if engine.call('GET', API + '/volumes/' + unrelated_name)['Labels'] != unrelated_labels:
                             raise ValueError('Recovery changed the unrelated standalone volume')
@@ -337,6 +350,7 @@ def qualify(args):
                     if unrelated.get('Labels') != unrelated_labels: raise ValueError('Unrelated fixture volume ownership changed')
                     engine.call('DELETE', API + '/volumes/' + unrelated_name, statuses=(204,))
             observations.extend(facade.observations)
+            observations.append({'fixture': 'offline-cleanup-receipts-after-native-deletion', 'receipts': receipts_sink.receipts})
         finally: store.close()
         if any(hashlib.sha256((ROOT / name).read_bytes()).hexdigest() != digest_ for name, digest_ in hashes.items()):
             raise ValueError('Source changed during qualification')
@@ -347,14 +361,15 @@ def qualify(args):
         (out / 'receipt.json').write_text(json.dumps({'recordedAt': datetime.now(timezone.utc).isoformat(),
             'passed': success, 'checks': checks, 'sourceHashes': hashes, 'qualificationImageId': core_image,
             'parserImageId': receipts[1]['imageId'], 'cloudOperations': False,
-            'scope': 'Actual standalone Host/Store/Engine API, durable local state, installed transfer code, real Word/scanned-PDF parser, native volume cleanup and process-death recovery. Root UID/state location, Batch UID/agent, registry identities, offline ARM/Blob/MI and daemon default-log observation are explicit fixtures. Qualification-only image includes synthetic fixtures; not a production artifact, actual Batch/pool/identity, security or whole-project qualification.'}, indent=2) + '\n')
+            'scope': 'Actual standalone Host/Store/Engine API, durable local state, installed transfer code, real Word/scanned-PDF parser, native volume cleanup and process-death recovery. Cleanup receipt transport is an offline sink that verifies actual native volumes are absent before acknowledgement. Root UID/state location, Batch UID/agent, registry identities, offline ARM/Blob/MI and daemon default-log observation are explicit fixtures. Root IMDS/Blob publisher and worker consumer have separate scripted wire tests. Qualification-only image includes synthetic fixtures; not a production artifact, actual Batch/pool/identity, security or whole-project qualification.'}, indent=2) + '\n')
 
 
 if __name__ == '__main__':
     if len(sys.argv) == 4 and sys.argv[1] == '--crash-fixture':
         payload = json.load(sys.stdin)
         store = open_store(Path(sys.argv[2]))
-        Host(payload['config'], store, FixtureRegistryEngine(Engine(sys.argv[3]), payload['mapping'], crash=True), clock=lambda: 1000).prepare(payload['metadata'])
+        engine = Engine(sys.argv[3])
+        Host(payload['config'], store, FixtureRegistryEngine(engine, payload['mapping'], crash=True), receipts=ReceiptSink(engine), clock=lambda: 1000).prepare(payload['metadata'])
         raise SystemExit('Native crash fixture did not terminate')
     parser = argparse.ArgumentParser()
     parser.add_argument('--docker-host', required=True)

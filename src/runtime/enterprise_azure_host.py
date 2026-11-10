@@ -5,6 +5,9 @@ The trusted transfer artifact alone reads Blob/input/result bytes. This helper i
 not a cloud provisioning contract or evidence that a Batch node is configured.
 """
 from contextlib import contextmanager
+import base64
+from datetime import datetime, timezone
+from email.utils import format_datetime
 import fcntl
 import hashlib
 import http.client
@@ -24,7 +27,7 @@ MAX_JSON = 1048576
 HASH = r'[0-9a-f]{64}'
 UUID = r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
 STATE_FIELDS = {'format', 'requestId', 'nonce', 'owner', 'policy', 'helperSha256',
-                'parserImage', 'transferImage', 'transfer', 'createdAt', 'expiresAt', 'phase', 'published'}
+                'parserImage', 'transferImage', 'transfer', 'createdAt', 'expiresAt', 'phase', 'published', 'receiptPublished'}
 
 
 def unique(pairs):
@@ -226,18 +229,106 @@ class Engine:
         finally: connection.close()
 
 
+def cleanup_receipt(state):
+    if state.get('phase') != 'cleaned' or not match(state.get('requestId'), HASH) or not match(state.get('owner'), HASH):
+        raise ValueError('Only a completed owned cleanup can be acknowledged')
+    return {'format': 'enterprise-azure-document-cleanup-v1', 'requestId': state['requestId'],
+            'owner': state['owner'], 'cleaned': True}
+
+
+class RootReceipts:
+    """Only metadata leaves this root process; no document or result reader.
+
+    A create-only receipt remains until the generated store's metadata lifecycle
+    expires it. This makes a lost acknowledgement repeatable without recreating
+    document bytes. VM MI is a node boundary, not a per-process security boundary.
+    """
+    def __init__(self, config, *, connection=None):
+        self.config = policy(config)
+        self.connection = connection
+
+    def send(self, method, host, path, *, headers=None, data=None):
+        connection = (self.connection(method, host, path) if self.connection is not None else
+                      (http.client.HTTPConnection(host, timeout=3) if host == '169.254.169.254' else
+                       http.client.HTTPSConnection(host, timeout=3)))
+        try:
+            connection.request(method, path, body=data, headers={'Accept-Encoding': 'identity', **(headers or {})})
+            response = connection.getresponse()
+            observed = {}
+            for key, value in response.getheaders():
+                if key.lower() in observed: raise ValueError()
+                observed[key.lower()] = value
+            if observed.get('content-encoding') not in {None, 'identity'}: raise ValueError()
+            started = time.monotonic(); raw = bytearray()
+            while True:
+                chunk = response.read(4096)
+                if not chunk: break
+                raw.extend(chunk)
+                if len(raw) > 32768 or time.monotonic() - started > 8: raise ValueError()
+            return response.status, observed, bytes(raw)
+        finally: connection.close()
+
+    def publish(self, receipt):
+        if not isinstance(receipt, dict) or receipt.get('cleaned') is not True:
+            raise ValueError('Use the exact metadata-only owned cleanup receipt')
+        expected = {'format': 'enterprise-azure-document-cleanup-v1', 'requestId': receipt.get('requestId'),
+                    'owner': owner(self.config), 'cleaned': True}
+        if receipt != expected or not match(receipt.get('requestId'), HASH):
+            raise ValueError('Use the exact metadata-only owned cleanup receipt')
+        try:
+            path = '/metadata/identity/oauth2/token?' + urlencode({'api-version': '2018-02-01',
+                'resource': 'https://storage.azure.com/', 'client_id': self.config['transferClientId']})
+            status, _, raw = self.send('GET', '169.254.169.254', path, headers={'Metadata': 'true'})
+            if status != 200: raise ValueError()
+            access = json.loads(raw, object_pairs_hook=unique)
+            token = access.get('access_token')
+            if (access.get('token_type') != 'Bearer' or access.get('resource') != 'https://storage.azure.com/' or
+                    not match(access.get('expires_on'), '[1-9][0-9]{0,11}') or int(access['expires_on']) < time.time() + 30 or
+                    not isinstance(token, str) or not 8 <= len(token) <= 20000 or any(ord(c) < 33 or ord(c) > 126 for c in token)):
+                raise ValueError()
+            host = self.config['storageAccount'] + '.blob.core.windows.net'
+            path = '/' + self.config['container'] + '/document-jobs/' + receipt['requestId'] + '/cleanup'
+            raw = encoded(receipt)
+            common = {'Authorization': 'Bearer ' + token, 'x-ms-version': '2025-05-05',
+                      'x-ms-date': format_datetime(datetime.now(timezone.utc), usegmt=True)}
+            status, headers, _ = self.send('PUT', host, path, data=raw, headers={**common,
+                'If-None-Match': '*', 'x-ms-blob-type': 'BlockBlob', 'Content-Type': 'application/json',
+                'Content-Length': str(len(raw)),
+                'Content-MD5': base64.b64encode(hashlib.md5(raw, usedforsecurity=False).digest()).decode()})
+            if status == 201:
+                if (headers.get('x-ms-request-server-encrypted') != 'true' or headers.get('x-ms-version-id') is not None or
+                        not match(headers.get('etag'), r'"0x[0-9A-Fa-f]{1,32}"')):
+                    raise ValueError()
+                return
+            if status != 412: raise ValueError()
+            # A lost PUT response may have committed the exact acknowledgement.
+            # Never overwrite or adopt a different owner's receipt.
+            status, headers, observed = self.send('GET', host, path, headers=common)
+            if (status != 200 or headers.get('x-ms-server-encrypted') != 'true' or
+                    headers.get('x-ms-blob-type') != 'BlockBlob' or headers.get('x-ms-version-id') is not None or
+                    headers.get('content-length') != str(len(observed)) or observed != raw):
+                raise ValueError()
+        except Exception:
+            raise ValueError('Owned cleanup acknowledgement remains pending') from None
+
+
 class Host:
-    def __init__(self, config, store, engine, *, clock=time.time, monotonic=time.monotonic, sleep=time.sleep):
+    def __init__(self, config, store, engine, *, receipts, clock=time.time, monotonic=time.monotonic, sleep=time.sleep):
         self.config, self.store, self.engine = policy(config), store, engine
         self.clock, self.monotonic, self.sleep = clock, monotonic, sleep
+        if not callable(getattr(receipts, 'publish', None)): raise ValueError('Use an owned cleanup receipt publisher')
+        self.receipts = receipts
         self.owner = owner(self.config)
 
     def check_state(self, state):
-        if (not isinstance(state, dict) or set(state) != STATE_FIELDS or state['format'] != 'enterprise-azure-document-host-v1' or
+        if isinstance(state, dict) and state.get('format') == 'enterprise-azure-document-host-v1' and set(state) == STATE_FIELDS - {'receiptPublished'}:
+            state.update(format='enterprise-azure-document-host-v2', receiptPublished=False)
+        if (not isinstance(state, dict) or set(state) != STATE_FIELDS or state['format'] != 'enterprise-azure-document-host-v2' or
                 not match(state['requestId'], HASH) or not match(state['nonce'], '[0-9a-f]{32}') or
                 state['owner'] != self.owner or not match(state['policy'], HASH) or not match(state['helperSha256'], HASH) or
                 type(state['createdAt']) is not int or type(state['expiresAt']) is not int or
-                state['expiresAt'] - state['createdAt'] != 600 or type(state['published']) is not bool or
+                state['expiresAt'] - state['createdAt'] != 600 or type(state['published']) is not bool or type(state['receiptPublished']) is not bool or
+                (state['receiptPublished'] and state['phase'] != 'cleaned') or
                 state['phase'] not in {'preparing', 'ready', 'releasing', 'cleanup_failed', 'cleaned'}):
             raise ValueError('Unowned or invalid recovery state')
         for key in ['parserImage', 'transferImage']:
@@ -333,6 +424,10 @@ class Host:
                 self.engine.call('DELETE', API + '/volumes/' + quote(found['Name'], safe=''), statuses=(204,), missing=True)
         state['phase'] = 'cleaned'
         self.store.write(state)
+        if not state['receiptPublished']:
+            self.receipts.publish(cleanup_receipt(state))
+            state['receiptPublished'] = True
+            self.store.write(state)
 
     def run_transfer(self, state, stage):
         if stage not in {'download', 'upload'}: raise ValueError('Use a trusted transfer stage')
@@ -372,10 +467,10 @@ class Host:
             if self.store.read(identifier) is not None: raise ValueError('Do not replay an existing per-file job')
             self.preflight()
             now = int(self.clock())
-            state = {'format': 'enterprise-azure-document-host-v1', 'requestId': identifier, 'nonce': uuid.uuid4().hex,
+            state = {'format': 'enterprise-azure-document-host-v2', 'requestId': identifier, 'nonce': uuid.uuid4().hex,
                 'owner': self.owner, 'policy': digest(self.config), 'helperSha256': self.config['hostHelperSha256'],
                 'parserImage': self.config['parserImage'], 'transferImage': self.config['transferImage'], 'transfer': value,
-                'createdAt': now, 'expiresAt': now + 600, 'phase': 'preparing', 'published': False}
+                'createdAt': now, 'expiresAt': now + 600, 'phase': 'preparing', 'published': False, 'receiptPublished': False}
             # Durable intent exists before the first volume/container creation.
             self.store.write(state, create=True)
             try:
@@ -391,7 +486,8 @@ class Host:
             except BaseException:
                 try: self.cleanup(state)
                 except Exception:
-                    state['phase'] = 'cleanup_failed'; self.store.write(state)
+                    if state['phase'] != 'cleaned': state['phase'] = 'cleanup_failed'
+                    self.store.write(state)
                 raise
 
     def release(self, value, transfer_image):
@@ -404,6 +500,7 @@ class Host:
             if state['transfer'] != value or state['transferImage'] != transfer_image:
                 raise ValueError('Release must match the original per-file owner')
             if state['phase'] == 'cleaned':
+                if not state['receiptPublished']: self.cleanup(state)
                 if not state['published']: raise ValueError('Failed job was cleaned without publication')
                 return
             succeeded = False
@@ -418,7 +515,8 @@ class Host:
             finally:
                 try: self.cleanup(state)
                 except Exception:
-                    state['phase'] = 'cleanup_failed'; self.store.write(state)
+                    if state['phase'] != 'cleaned': state['phase'] = 'cleanup_failed'
+                    self.store.write(state)
                     raise
             if not succeeded: raise ValueError('Document publication did not complete')
 
@@ -428,7 +526,9 @@ class Host:
             try:
                 with self.store.lock(identifier):
                     state = self.check_state(self.store.read(identifier))
-                    if state['phase'] != 'cleaned' and state['expiresAt'] <= int(self.clock()): self.cleanup(state)
+                    if ((state['phase'] == 'cleaned' and not state['receiptPublished']) or
+                            state['phase'] != 'cleaned' and state['expiresAt'] <= int(self.clock())):
+                        self.cleanup(state)
             except BlockingIOError:
                 continue  # An active trusted prepare/release holds this lock.
             except Exception:
@@ -447,7 +547,7 @@ def main():
         directory = protected_directory('/var/lib/atmem/document-jobs')
         try: store = Store(directory)
         finally: os.close(directory)
-        host = Host(config, store, Engine())
+        host = Host(config, store, Engine(), receipts=RootReceipts(config))
         mode = sys.argv[1]
         # The root service may invoke reap directly, without the inline Batch
         # bootstrap. Verify this installed standalone helper in both paths.

@@ -5,6 +5,7 @@ and actual node-agent checks must be composed before enabling this provider in
 enterprise_worker. Schema-valid requests alone do not prove a running sandbox.
 """
 import hashlib
+import copy
 import json
 import re
 import shlex
@@ -126,7 +127,10 @@ def job_spec(config, metadata, etag):
                 'userIdentity': {'autoUser': dict(admin['autoUser'])},
                 'environmentSettings': [dict(item) for item in environment],
                 'maxWallClockTime': 'PT1M', 'retentionTime': 'PT0S'},
-            'metadata': [{'name': 'atmem-owner', 'value': fingerprint(owned)}]}
+            'metadata': [{'name': 'atmem-owner', 'value': fingerprint(owned)},
+                {'name': 'atmem-parser-image', 'value': owned['parserImage']},
+                {'name': 'atmem-helper-sha256', 'value': owned['hostHelperSha256']},
+                {'name': 'atmem-worker-client', 'value': owned['workerClientId']}]}
 
 
 def task_spec(config, identifier):
@@ -167,7 +171,7 @@ def cleanup_owner(config):
 def verify_job(config, metadata, etag, reply):
     """Reject unowned/replaced jobs before adopting them during recovery."""
     expected = job_spec(config, metadata, etag)
-    if not isinstance(reply, dict) or any(reply.get(key) != value for key, value in expected.items()):
+    if not isinstance(reply, dict) or not typed_equal(job_observation(expected), job_observation({key: reply.get(key) for key in expected})):
         raise ValueError('Azure document job ownership or execution contract changed')
     if any(key in reply for key in ['jobManagerTask', 'commonEnvironmentSettings', 'networkConfiguration']):
         raise ValueError('Unexpected Azure document job authority')
@@ -176,9 +180,82 @@ def verify_job(config, metadata, etag, reply):
 
 def verify_task(config, identifier, reply):
     expected = task_spec(config, identifier)
-    if not isinstance(reply, dict) or any(reply.get(key) != value for key, value in expected.items()):
+    if not isinstance(reply, dict) or any(not typed_equal(value, reply.get(key)) for key, value in expected.items()):
         raise ValueError('Azure document parser isolation contract changed')
     if any(key in reply for key in ['environmentSettings', 'resourceFiles', 'outputFiles',
                                     'applicationPackageReferences', 'multiInstanceSettings', 'dependsOn']):
         raise ValueError('Unexpected Azure parser input or authority')
     return True
+
+
+def typed_equal(expected, observed):
+    if type(expected) is not type(observed): return False
+    if isinstance(expected, dict):
+        return set(expected) == set(observed) and all(typed_equal(value, observed[key]) for key, value in expected.items())
+    if isinstance(expected, list):
+        return len(expected) == len(observed) and all(typed_equal(left, right) for left, right in zip(expected, observed))
+    return expected == observed
+
+
+def job_observation(value):
+    """Only documented name/value arrays are unordered; no fields are dropped."""
+    value = copy.deepcopy(value)
+    arrays = [value.get('metadata')]
+    for key in ['jobPreparationTask', 'jobReleaseTask']:
+        task = value.get(key)
+        if isinstance(task, dict): arrays.append(task.get('environmentSettings'))
+    for items in arrays:
+        if not isinstance(items, list): raise ValueError('Use exact native name/value settings')
+        names = set()
+        for item in items:
+            if (not isinstance(item, dict) or set(item) != {'name', 'value'} or
+                    not isinstance(item['name'], str) or not isinstance(item['value'], str) or item['name'] in names):
+                raise ValueError('Ambiguous native name/value settings')
+            names.add(item['name'])
+        items.sort(key=lambda entry: entry['name'])
+    return value
+
+
+def recover_job(config, identifier, reply):
+    """Recover only an exact owned historical job, without executing its text.
+
+    The SQL ledger stores opaque IDs, not source metadata or arbitrary cleanup
+    endpoints. The native job supplies its bounded original byte/ETag/artifact
+    binding; the stable destination and full immutable shape are checked here.
+    This result is for observation/cleanup, never permission to launch old code.
+    """
+    current = configuration(config)
+    identity(identifier)
+    if not isinstance(reply, dict) or reply.get('id') != identifier:
+        raise ValueError('Native job identity changed')
+    def settings(value, names):
+        if not isinstance(value, list) or len(value) != len(names):
+            raise ValueError('Use exact original job metadata')
+        result = {}
+        for entry in value:
+            if (not isinstance(entry, dict) or set(entry) != {'name', 'value'} or
+                    not isinstance(entry['name'], str) or entry['name'] not in names or entry['name'] in result or not isinstance(entry['value'], str)):
+                raise ValueError('Ambiguous original job metadata')
+            result[entry['name']] = entry['value']
+        return result
+    metadata = settings(reply.get('metadata'), {'atmem-owner', 'atmem-parser-image',
+                                               'atmem-helper-sha256', 'atmem-worker-client'})
+    prepare = reply.get('jobPreparationTask')
+    if not isinstance(prepare, dict): raise ValueError('Original preparation contract is required')
+    environment = settings(prepare.get('environmentSettings'), {'DOCUMENT_JOB', 'DOCUMENT_TRANSFER_IMAGE'})
+    historical = configuration({**current, 'parserImage': metadata['atmem-parser-image'],
+        'transferImage': environment['DOCUMENT_TRANSFER_IMAGE'], 'hostHelperSha256': metadata['atmem-helper-sha256'],
+        'workerClientId': metadata['atmem-worker-client']})
+    if cleanup_owner(historical) != cleanup_owner(current):
+        raise ValueError('Do not adopt a different cleanup destination or artifact registry')
+    if not 0 < len(environment['DOCUMENT_JOB'].encode()) <= 4096:
+        raise ValueError('Original transfer metadata exceeds the bound')
+    from enterprise_document_job import unique
+    value = json.loads(environment['DOCUMENT_JOB'], object_pairs_hook=unique)
+    if not isinstance(value, dict) or not isinstance(value.get('request'), dict) or value['request'].get('requestId') != identifier:
+        raise ValueError('Original file identity changed')
+    expected = transfer_metadata(historical, value['request'], value.get('inputETag'))
+    if value != expected:
+        raise ValueError('Original transfer destination changed')
+    verify_job(historical, expected['request'], expected['inputETag'], reply)
+    return historical, expected

@@ -1,0 +1,31 @@
+{
+  "scope": "Read-only native owner-label queries, no prune or broad cleanup",
+  "checks": [
+    {
+      "command": [
+        "docker",
+        "ps",
+        "-a",
+        "--filter",
+        "label=atmem.document.owner",
+        "--format",
+        "{{.ID}}"
+      ],
+      "exitCode": 0,
+      "remaining": []
+    },
+    {
+      "command": [
+        "docker",
+        "volume",
+        "ls",
+        "--filter",
+        "label=atmem.document.owner",
+        "--format",
+        "{{.Name}}"
+      ],
+      "exitCode": 0,
+      "remaining": []
+    }
+  ]
+}
