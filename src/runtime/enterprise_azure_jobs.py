@@ -259,3 +259,36 @@ def recover_job(config, identifier, reply):
         raise ValueError('Original transfer destination changed')
     verify_job(historical, expected['request'], expected['inputETag'], reply)
     return historical, expected
+
+
+def terminal_writer_nodes(config, identifier, job, task, status):
+    """Seal the complete native preparation-node set only after job completion.
+
+    A preflight snapshot or one task's current node omits earlier retry nodes.
+    This function observes provider metadata; it does not certify local cleanup
+    or erase storage. Every returned node still requires its own acknowledgement.
+    """
+    historical, transfer = recover_job(config, identifier, job)
+    if job.get('state') != 'completed': raise ValueError('Native work has not completed termination/release')
+    if (not isinstance(status, dict) or status.get('odata.nextLink') or status.get('@odata.nextLink') or
+            not isinstance(status.get('value'), list) or len(status['value']) > 100):
+        raise ValueError('Observe the complete native preparation/release history')
+    nodes = set()
+    for row in status['value']:
+        if (not isinstance(row, dict) or row.get('poolId') != historical['poolId'] or
+                not isinstance(row.get('nodeId'), str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,128}', row['nodeId']) or
+                row['nodeId'] in nodes or not isinstance(row.get('jobPreparationTaskExecutionInfo'), dict) or
+                row['jobPreparationTaskExecutionInfo'].get('state') != 'completed'):
+            raise ValueError('Native preparation history is incomplete or foreign')
+        release = row.get('jobReleaseTaskExecutionInfo')
+        if release is not None and (not isinstance(release, dict) or release.get('state') != 'completed'):
+            raise ValueError('Native release is still active or unknown')
+        nodes.add(row['nodeId'])
+    if task is not None:
+        verify_task(historical, identifier, task)
+        if task.get('state') != 'completed': raise ValueError('Native parser task is not terminal')
+        assigned = task.get('nodeInfo')
+        if assigned is not None and (not isinstance(assigned, dict) or assigned.get('poolId') != historical['poolId'] or
+                                     assigned.get('nodeId') not in nodes):
+            raise ValueError('Native task assignment is missing from complete preparation history')
+    return historical, transfer, frozenset(nodes)

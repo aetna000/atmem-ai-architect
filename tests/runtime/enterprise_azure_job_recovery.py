@@ -8,7 +8,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[2]
 sys.path[:0] = [str(ROOT / 'src/runtime'), str(ROOT / 'tests/runtime')]
 from enterprise_azure_jobs_acceptance import config
-from enterprise_azure_jobs import job_spec, task_spec, recover_job, verify_job, verify_task
+from enterprise_azure_jobs import job_spec, task_spec, recover_job, verify_job, verify_task, terminal_writer_nodes
 from enterprise_document_job import request
 
 
@@ -75,6 +75,27 @@ class AzureJobRecovery(unittest.TestCase):
         changed = task_spec(self.config, self.identifier)
         changed['constraints']['maxTaskRetryCount'] = False
         with self.assertRaises(ValueError): verify_task(self.config, self.identifier, changed)
+
+    def test_terminal_writer_set_includes_prior_retry_nodes_not_just_current_assignment(self):
+        job = {**self.job, 'state': 'completed'}
+        task = {**task_spec(self.config, self.identifier), 'state': 'completed',
+                'nodeInfo': {'poolId': self.config['poolId'], 'nodeId': 'node-two'}}
+        rows = [{'poolId': self.config['poolId'], 'nodeId': node,
+                 'jobPreparationTaskExecutionInfo': {'state': 'completed'},
+                 'jobReleaseTaskExecutionInfo': {'state': 'completed'}} for node in ['node-one', 'node-two']]
+        _, _, writers = terminal_writer_nodes(self.config, self.identifier, job, task, {'value': rows})
+        self.assertEqual(writers, frozenset({'node-one', 'node-two'}))
+        with self.assertRaises(ValueError): terminal_writer_nodes(self.config, self.identifier, job, task, {'value': rows[:1]})
+        with self.assertRaises(ValueError): terminal_writer_nodes(self.config, self.identifier, {**job, 'state': 'terminating'}, task, {'value': rows})
+        with self.assertRaises(ValueError): terminal_writer_nodes(self.config, self.identifier, job, task, {'value': rows, 'odata.nextLink': 'https://foreign'})
+
+    def test_no_writer_proof_is_not_inferred_from_active_or_inconsistent_native_state(self):
+        job = {**self.job, 'state': 'completed'}
+        self.assertEqual(terminal_writer_nodes(self.config, self.identifier, job, None, {'value': []})[2], frozenset())
+        row = {'poolId': self.config['poolId'], 'nodeId': 'node-one', 'jobPreparationTaskExecutionInfo': {'state': 'running'}}
+        with self.assertRaises(ValueError): terminal_writer_nodes(self.config, self.identifier, job, None, {'value': [row]})
+        row['jobPreparationTaskExecutionInfo']['state'] = 'completed'
+        with self.assertRaises(ValueError): terminal_writer_nodes(self.config, self.identifier, job, None, {'value': [row, row]})
 
 
 if __name__ == '__main__': unittest.main()

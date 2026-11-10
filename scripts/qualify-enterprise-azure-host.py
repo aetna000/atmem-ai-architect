@@ -27,6 +27,8 @@ from enterprise_azure_jobs import task_spec, transfer_metadata
 from enterprise_azure_host import Host, Store, Engine, API, volumes
 from enterprise_document_job import request
 
+NODE_ID = 'tvm-fixture-node'
+
 WRAPPER = '''import hashlib,json,os,runpy,sys,types
 from pathlib import Path
 sys.path.insert(0,'/app')
@@ -81,6 +83,7 @@ v=json.load(sys.stdin);config=v['config'];sha=config['hostHelperSha256']
 base=Path('/opt/atmem')/sha;base.mkdir(mode=0o755)
 helper=base/'enterprise_azure_host.py';helper.write_bytes(base64.b64decode(v['source'],validate=True));helper.chmod(0o444)
 policy=Path('/etc/atmem/document-host.json');policy.write_text(json.dumps(config));policy.chmod(0o600)
+node=Path('/etc/atmem/document-host-node.json');node.write_text(json.dumps({'format':'enterprise-azure-document-node-v1','nodeId':'tvm-fixture-node'}));node.chmod(0o600)
 state=Path('/var/lib/atmem/document-jobs');state.mkdir(mode=0o700)
 namespace=runpy.run_path(str(helper),run_name='qualification_host')
 class NoEngineCalls:
@@ -235,7 +238,7 @@ def qualify(args):
         facade = FixtureRegistryEngine(engine, mapping)
         receipts_sink = ReceiptSink(engine)
         store = open_store(out / 'state')
-        host = Host(owned, store, facade, receipts=receipts_sink)
+        host = Host(owned, store, facade, node_id=NODE_ID, receipts=receipts_sink)
         try:
             for fixture in fixtures:
                 raw = fixture.read_bytes()
@@ -279,7 +282,7 @@ def qualify(args):
             state = store.read(crash_id)
             if state['phase'] != 'preparing' or engine.call('GET', API + '/volumes/' + volumes(crash_id)[0], missing=True) is None:
                 raise ValueError('Process death did not leave committed ownership and native volume')
-            Host(owned, store, facade, receipts=receipts_sink, clock=lambda: state['expiresAt'] + 1).reap()
+            Host(owned, store, facade, node_id=NODE_ID, receipts=receipts_sink, clock=lambda: state['expiresAt'] + 1).reap()
             if store.read(crash_id)['phase'] != 'cleaned' or store.read(crash_id)['published']:
                 raise ValueError('Independent native recovery failed')
             checks.append({'check': 'actual-process-death-native-volume-recovered', 'passed': True, 'exitCode': done.returncode})
@@ -307,7 +310,7 @@ def qualify(args):
                             '--user', '42424:42424', *options, mapping[owned['parserImage']],
                             'python', '-I', '-c', 'import time;time.sleep(300)']).decode().strip()
                         run(scenario + '-start', ['start', name])
-                        recovering = Host(owned, store, facade, receipts=receipts_sink, clock=lambda: state['expiresAt'] + 1)
+                        recovering = Host(owned, store, facade, node_id=NODE_ID, receipts=receipts_sink, clock=lambda: state['expiresAt'] + 1)
                         if scenario == 'foreign-consumer':
                             try: recovering.reap()
                             except ValueError: pass
@@ -369,7 +372,7 @@ if __name__ == '__main__':
         payload = json.load(sys.stdin)
         store = open_store(Path(sys.argv[2]))
         engine = Engine(sys.argv[3])
-        Host(payload['config'], store, FixtureRegistryEngine(engine, payload['mapping'], crash=True), receipts=ReceiptSink(engine), clock=lambda: 1000).prepare(payload['metadata'])
+        Host(payload['config'], store, FixtureRegistryEngine(engine, payload['mapping'], crash=True), node_id=NODE_ID, receipts=ReceiptSink(engine), clock=lambda: 1000).prepare(payload['metadata'])
         raise SystemExit('Native crash fixture did not terminate')
     parser = argparse.ArgumentParser()
     parser.add_argument('--docker-host', required=True)

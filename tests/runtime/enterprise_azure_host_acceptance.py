@@ -18,6 +18,7 @@ from enterprise_document_job import request
 from enterprise_azure_host import Host, Store, API, digest, policy, owner, volumes, owned_file
 
 IDENTIFIER = 'd' * 64
+NODE_ID = 'tvm-fixture-node'
 
 
 def value():
@@ -123,7 +124,7 @@ class AzureHostContract(unittest.TestCase):
         self.engine = NativeEngine(self.store)
         self.receipts = ReceiptSink(self.engine)
         self.time = 1000
-        self.host = Host(config(), self.store, self.engine, receipts=self.receipts, clock=lambda: self.time, sleep=lambda _: None)
+        self.host = Host(config(), self.store, self.engine, node_id=NODE_ID, receipts=self.receipts, clock=lambda: self.time, sleep=lambda _: None)
 
     def tearDown(self):
         self.store.close(); self.temporary.cleanup()
@@ -176,7 +177,7 @@ class AzureHostContract(unittest.TestCase):
     def test_transfer_deadline_cleans_the_still_running_owned_process(self):
         self.engine.failure = 'hang'
         def tick(_): self.time += 10
-        host = Host(config(), self.store, self.engine, receipts=self.receipts, clock=lambda: self.time, monotonic=lambda: self.time, sleep=tick)
+        host = Host(config(), self.store, self.engine, node_id=NODE_ID, receipts=self.receipts, clock=lambda: self.time, monotonic=lambda: self.time, sleep=tick)
         with self.assertRaisesRegex(ValueError, 'deadline'): host.prepare(value())
         self.assertEqual(self.engine.containers, {})
         self.assertEqual(self.engine.volumes, {})
@@ -188,7 +189,7 @@ class AzureHostContract(unittest.TestCase):
         def tick(_):
             elapsed[0] += 10
             self.time -= 100
-        host = Host(config(), self.store, self.engine, receipts=self.receipts, clock=lambda: self.time, monotonic=lambda: elapsed[0], sleep=tick)
+        host = Host(config(), self.store, self.engine, node_id=NODE_ID, receipts=self.receipts, clock=lambda: self.time, monotonic=lambda: elapsed[0], sleep=tick)
         with self.assertRaisesRegex(ValueError, 'deadline'): host.prepare(value())
         self.assertEqual(self.engine.volumes, {})
         self.assertEqual(self.engine.containers, {})
@@ -242,11 +243,11 @@ class AzureHostContract(unittest.TestCase):
         self.engine.parser(self.store.read(IDENTIFIER), running=True)
         revised = {**config(), 'parserImage': 'ownedregistry.azurecr.io/parser@sha256:' + 'f' * 64,
                    'hostHelperSha256': 'a' * 64}
-        host = Host(revised, self.store, self.engine, receipts=self.receipts, clock=lambda: 1601)
+        host = Host(revised, self.store, self.engine, node_id=NODE_ID, receipts=self.receipts, clock=lambda: 1601)
         host.reap()
         self.assertEqual(self.engine.volumes, {})
         state = self.store.read(IDENTIFIER)
-        foreign = Host({**config(), 'container': 'foreign'}, self.store, self.engine, receipts=self.receipts, clock=lambda: 1601)
+        foreign = Host({**config(), 'container': 'foreign'}, self.store, self.engine, node_id=NODE_ID, receipts=self.receipts, clock=lambda: 1601)
         with self.assertRaises(ValueError): foreign.check_state(state)
 
     def test_preflight_rejects_unsafe_engine_before_state_or_resource_creation(self):
@@ -284,7 +285,7 @@ class AzureHostContract(unittest.TestCase):
         self.assertEqual(self.store.read(IDENTIFIER)['phase'], 'preparing')
         engine = NativeEngine(self.store, fixture)
         self.assertEqual(len(engine.volumes), 1)
-        host = Host(config(), self.store, engine, receipts=ReceiptSink(engine), clock=lambda: 1601)
+        host = Host(config(), self.store, engine, node_id=NODE_ID, receipts=ReceiptSink(engine), clock=lambda: 1601)
         host.reap()
         self.assertEqual(engine.volumes, {})
         self.assertEqual(self.store.read(IDENTIFIER)['phase'], 'cleaned')
@@ -323,12 +324,30 @@ class AzureHostContract(unittest.TestCase):
         state = self.store.read(IDENTIFIER)
         state['format'] = 'enterprise-azure-document-host-v1'
         del state['receiptPublished']
+        del state['nodeId']
         self.store.write(state)
         self.time = 1601
         self.host.reap()
         state = self.store.read(IDENTIFIER)
-        self.assertEqual(state['format'], 'enterprise-azure-document-host-v2')
+        self.assertEqual(state['format'], 'enterprise-azure-document-host-v3')
         self.assertTrue(state['receiptPublished'])
+
+    def test_other_nodes_state_cannot_be_adopted_on_this_host(self):
+        self.host.prepare(value())
+        state = self.store.read(IDENTIFIER)
+        state['nodeId'] = 'tvm-other-node'
+        with self.assertRaises(ValueError): self.host.check_state(state)
+
+    def test_legacy_global_ack_is_replaced_with_local_node_ack(self):
+        self.host.prepare(value()); self.host.release(value(), config()['transferImage'])
+        state = self.store.read(IDENTIFIER)
+        state['format'] = 'enterprise-azure-document-host-v2'
+        del state['nodeId']
+        self.store.write(state)
+        self.host.reap()
+        self.assertEqual(len(self.receipts.receipts), 2)
+        self.assertEqual(self.receipts.receipts[-1]['nodeId'], NODE_ID)
+        self.assertEqual(self.store.read(IDENTIFIER)['format'], 'enterprise-azure-document-host-v3')
 
 
 if __name__ == '__main__':
@@ -336,6 +355,6 @@ if __name__ == '__main__':
         fd = os.open(sys.argv[2], os.O_RDONLY | os.O_DIRECTORY)
         store = Store(fd, uid=os.geteuid()); os.close(fd)
         engine = NativeEngine(store, Path(sys.argv[3]), crash=True)
-        Host(config(), store, engine, receipts=ReceiptSink(engine), clock=lambda: 1000).prepare(value())
+        Host(config(), store, engine, node_id=NODE_ID, receipts=ReceiptSink(engine), clock=lambda: 1000).prepare(value())
         raise SystemExit('Crash fixture failed to terminate')
     unittest.main()

@@ -27,7 +27,7 @@ MAX_JSON = 1048576
 HASH = r'[0-9a-f]{64}'
 UUID = r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
 STATE_FIELDS = {'format', 'requestId', 'nonce', 'owner', 'policy', 'helperSha256',
-                'parserImage', 'transferImage', 'transfer', 'createdAt', 'expiresAt', 'phase', 'published', 'receiptPublished'}
+                'parserImage', 'transferImage', 'transfer', 'createdAt', 'expiresAt', 'phase', 'published', 'receiptPublished', 'nodeId'}
 
 
 def unique(pairs):
@@ -48,6 +48,11 @@ def digest(value):
 
 def match(value, pattern):
     return isinstance(value, str) and re.fullmatch(pattern, value) is not None
+
+
+def node_identity(value):
+    if not match(value, r'[A-Za-z0-9_-]{1,128}'): raise ValueError('Use the exact native node identity')
+    return value
 
 
 def image(value):
@@ -232,8 +237,8 @@ class Engine:
 def cleanup_receipt(state):
     if state.get('phase') != 'cleaned' or not match(state.get('requestId'), HASH) or not match(state.get('owner'), HASH):
         raise ValueError('Only a completed owned cleanup can be acknowledged')
-    return {'format': 'enterprise-azure-document-cleanup-v1', 'requestId': state['requestId'],
-            'owner': state['owner'], 'cleaned': True}
+    return {'format': 'enterprise-azure-document-cleanup-v2', 'requestId': state['requestId'],
+            'owner': state['owner'], 'nodeId': node_identity(state.get('nodeId')), 'cleaned': True}
 
 
 class RootReceipts:
@@ -243,8 +248,9 @@ class RootReceipts:
     expires it. This makes a lost acknowledgement repeatable without recreating
     document bytes. VM MI is a node boundary, not a per-process security boundary.
     """
-    def __init__(self, config, *, connection=None):
+    def __init__(self, config, node_id, *, connection=None):
         self.config = policy(config)
+        self.node_id = node_identity(node_id)
         self.connection = connection
 
     def send(self, method, host, path, *, headers=None, data=None):
@@ -271,8 +277,8 @@ class RootReceipts:
     def publish(self, receipt):
         if not isinstance(receipt, dict) or receipt.get('cleaned') is not True:
             raise ValueError('Use the exact metadata-only owned cleanup receipt')
-        expected = {'format': 'enterprise-azure-document-cleanup-v1', 'requestId': receipt.get('requestId'),
-                    'owner': owner(self.config), 'cleaned': True}
+        expected = {'format': 'enterprise-azure-document-cleanup-v2', 'requestId': receipt.get('requestId'),
+                    'owner': owner(self.config), 'nodeId': self.node_id, 'cleaned': True}
         if receipt != expected or not match(receipt.get('requestId'), HASH):
             raise ValueError('Use the exact metadata-only owned cleanup receipt')
         try:
@@ -287,7 +293,7 @@ class RootReceipts:
                     not isinstance(token, str) or not 8 <= len(token) <= 20000 or any(ord(c) < 33 or ord(c) > 126 for c in token)):
                 raise ValueError()
             host = self.config['storageAccount'] + '.blob.core.windows.net'
-            path = '/' + self.config['container'] + '/document-jobs/' + receipt['requestId'] + '/cleanup'
+            path = '/' + self.config['container'] + '/document-jobs/' + receipt['requestId'] + '/cleanup/' + self.node_id
             raw = encoded(receipt)
             common = {'Authorization': 'Bearer ' + token, 'x-ms-version': '2025-05-05',
                       'x-ms-date': format_datetime(datetime.now(timezone.utc), usegmt=True)}
@@ -313,17 +319,23 @@ class RootReceipts:
 
 
 class Host:
-    def __init__(self, config, store, engine, *, receipts, clock=time.time, monotonic=time.monotonic, sleep=time.sleep):
+    def __init__(self, config, store, engine, *, node_id, receipts, clock=time.time, monotonic=time.monotonic, sleep=time.sleep):
         self.config, self.store, self.engine = policy(config), store, engine
+        self.node_id = node_identity(node_id)
         self.clock, self.monotonic, self.sleep = clock, monotonic, sleep
         if not callable(getattr(receipts, 'publish', None)): raise ValueError('Use an owned cleanup receipt publisher')
         self.receipts = receipts
         self.owner = owner(self.config)
 
     def check_state(self, state):
-        if isinstance(state, dict) and state.get('format') == 'enterprise-azure-document-host-v1' and set(state) == STATE_FIELDS - {'receiptPublished'}:
+        if isinstance(state, dict) and state.get('format') == 'enterprise-azure-document-host-v1' and set(state) == STATE_FIELDS - {'receiptPublished', 'nodeId'}:
             state.update(format='enterprise-azure-document-host-v2', receiptPublished=False)
-        if (not isinstance(state, dict) or set(state) != STATE_FIELDS or state['format'] != 'enterprise-azure-document-host-v2' or
+        if isinstance(state, dict) and state.get('format') == 'enterprise-azure-document-host-v2' and set(state) == STATE_FIELDS - {'nodeId'}:
+            # A legacy global receipt did not settle every possible retry node.
+            # Reinspect this local node and publish its own scoped receipt.
+            state.update(format='enterprise-azure-document-host-v3', nodeId=self.node_id, receiptPublished=False)
+        if (not isinstance(state, dict) or set(state) != STATE_FIELDS or state['format'] != 'enterprise-azure-document-host-v3' or
+                state['nodeId'] != self.node_id or
                 not match(state['requestId'], HASH) or not match(state['nonce'], '[0-9a-f]{32}') or
                 state['owner'] != self.owner or not match(state['policy'], HASH) or not match(state['helperSha256'], HASH) or
                 type(state['createdAt']) is not int or type(state['expiresAt']) is not int or
@@ -467,7 +479,7 @@ class Host:
             if self.store.read(identifier) is not None: raise ValueError('Do not replay an existing per-file job')
             self.preflight()
             now = int(self.clock())
-            state = {'format': 'enterprise-azure-document-host-v2', 'requestId': identifier, 'nonce': uuid.uuid4().hex,
+            state = {'format': 'enterprise-azure-document-host-v3', 'requestId': identifier, 'nodeId': self.node_id, 'nonce': uuid.uuid4().hex,
                 'owner': self.owner, 'policy': digest(self.config), 'helperSha256': self.config['hostHelperSha256'],
                 'parserImage': self.config['parserImage'], 'transferImage': self.config['transferImage'], 'transfer': value,
                 'createdAt': now, 'expiresAt': now + 600, 'phase': 'preparing', 'published': False, 'receiptPublished': False}
@@ -542,12 +554,17 @@ def main():
         if os.geteuid() != 0 or len(sys.argv) != 2 or sys.argv[1] not in {'prepare', 'release', 'reap'}:
             raise ValueError('Use the fixed root-owned host command')
         directory = protected_directory('/etc/atmem')
-        try: config = policy(json.loads(owned_file(directory, 'document-host.json'), object_pairs_hook=unique))
+        try:
+            config = policy(json.loads(owned_file(directory, 'document-host.json'), object_pairs_hook=unique))
+            node = json.loads(owned_file(directory, 'document-host-node.json'), object_pairs_hook=unique)
+            if not isinstance(node, dict) or set(node) != {'format', 'nodeId'} or node['format'] != 'enterprise-azure-document-node-v1':
+                raise ValueError('Use the protected instance-specific native node identity')
+            node_id = node_identity(node['nodeId'])
         finally: os.close(directory)
         directory = protected_directory('/var/lib/atmem/document-jobs')
         try: store = Store(directory)
         finally: os.close(directory)
-        host = Host(config, store, Engine(), receipts=RootReceipts(config))
+        host = Host(config, store, Engine(), node_id=node_id, receipts=RootReceipts(config, node_id))
         mode = sys.argv[1]
         # The root service may invoke reap directly, without the inline Batch
         # bootstrap. Verify this installed standalone helper in both paths.
@@ -562,7 +579,7 @@ def main():
         value = transfer(json.loads(value, object_pairs_hook=unique), config)
         if (os.environ.get('AZ_BATCH_JOB_ID') != value['request']['requestId'] or
                 os.environ.get('AZ_BATCH_POOL_ID') != config['poolId'] or
-                os.environ.get('AZ_BATCH_ACCOUNT_NAME') != config['batchAccount']):
+                os.environ.get('AZ_BATCH_ACCOUNT_NAME') != config['batchAccount'] or os.environ.get('AZ_BATCH_NODE_ID') != node_id):
             raise ValueError('Native Batch owner changed')
         if mode == 'prepare':
             if os.environ.get('DOCUMENT_TRANSFER_IMAGE') != config['transferImage']:

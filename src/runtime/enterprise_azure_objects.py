@@ -22,9 +22,14 @@ BLOB_VERSION = '2025-05-05'
 _UUID = r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
 
 
-def object_key(identifier, side):
+def object_key(identifier, side, node_id=None):
     if not isinstance(identifier, str) or not re.fullmatch('[0-9a-f]{64}', identifier) or side not in {'input', 'result', 'cleanup'}:
         raise ValueError('Use the owned per-file object identity')
+    if side == 'cleanup':
+        if not isinstance(node_id, str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,128}', node_id):
+            raise ValueError('Use the exact native cleanup node identity')
+        return 'document-jobs/' + identifier + '/cleanup/' + node_id
+    if node_id is not None: raise ValueError('Only cleanup receipts have a node identity')
     return 'document-jobs/' + identifier + '/' + side
 
 
@@ -72,7 +77,7 @@ class AzureDocumentObjects:
                                             [self.account_id, self.service_id, self.container_id]}:
                 raise ValueError('Use only the fixed owned ARM observations')
         elif not url.startswith(self.base + 'document-jobs/') or not re.fullmatch(
-                re.escape(self.base) + r'document-jobs/[0-9a-f]{64}/(?:input|result|cleanup)', url):
+                re.escape(self.base) + r'document-jobs/[0-9a-f]{64}/(?:input|result|cleanup/[A-Za-z0-9_-]{1,128})', url):
             raise ValueError('Use only the fixed owned blob object')
         try:
             scope = 'https://management.azure.com/.default' if arm else 'https://storage.azure.com/.default'
@@ -143,8 +148,8 @@ class AzureDocumentObjects:
         except Exception:
             raise SourceUnavailable('document_object_policy_unavailable') from None
 
-    def url(self, identifier, side):
-        return self.base + quote(object_key(identifier, side), safe='/')
+    def url(self, identifier, side, node_id=None):
+        return self.base + quote(object_key(identifier, side, node_id), safe='/')
 
     def put(self, identifier, side, raw):
         if side == 'cleanup': raise ValueError('Only the root publisher creates cleanup acknowledgements')
@@ -161,9 +166,9 @@ class AzureDocumentObjects:
             raise SourceUnavailable('document_object_unavailable')
         return etag(headers.get('etag'))
 
-    def load(self, identifier, side, condition=None, *, allow_missing=False):
+    def load(self, identifier, side, condition=None, *, allow_missing=False, node_id=None):
         if allow_missing and side != 'cleanup': raise ValueError('Only cleanup receipt lookup is optional')
-        url = self.url(identifier, side)
+        url = self.url(identifier, side, node_id)
         headers = {} if condition is None else {'If-Match': etag(condition)}
         self.preflight()
         maximum = MAX_INPUT if side == 'input' else 1024 if side == 'cleanup' else MAX_ENVELOPE
@@ -193,20 +198,33 @@ class AzureDocumentObjects:
         except Exception:
             raise SourceUnavailable('document_cleanup_unavailable') from None
 
-    def cleanup_acknowledged(self, identifier, owner):
+    def cleanup_acknowledged(self, identifier, owner, node_id):
         if not isinstance(owner, str) or not re.fullmatch('[0-9a-f]{64}', owner):
             raise ValueError('Use the exact owned cleanup destination fingerprint')
-        raw = self.load(identifier, 'cleanup', allow_missing=True)
+        raw = self.load(identifier, 'cleanup', allow_missing=True, node_id=node_id)
         if raw is None: return False
         try:
             value = json.loads(raw, object_pairs_hook=unique)
             if (not isinstance(value, dict) or value.get('cleaned') is not True or value != {
-                    'format': 'enterprise-azure-document-cleanup-v1', 'requestId': identifier,
-                    'owner': owner, 'cleaned': True}):
+                    'format': 'enterprise-azure-document-cleanup-v2', 'requestId': identifier,
+                    'owner': owner, 'nodeId': node_id, 'cleaned': True}):
                 raise ValueError()
             return True
         except Exception:
             raise SourceUnavailable('document_cleanup_receipt_unavailable') from None
+
+    def cleanup_acknowledged_all(self, identifier, owner, node_ids):
+        """Caller must obtain this complete closed set from terminal native work.
+
+        A partial/preflight node list is not a settlement proof. Empty/duplicate
+        sets cannot accidentally certify cleanup; unscheduled jobs require a
+        separate verified no-writer lifecycle in the controller.
+        """
+        if (not isinstance(node_ids, (set, frozenset, list, tuple)) or not 1 <= len(node_ids) <= 100 or
+                any(not isinstance(node, str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,128}', node) for node in node_ids) or
+                len(set(node_ids)) != len(node_ids)):
+            raise ValueError('Use the complete unique native writer-node set')
+        return all(self.cleanup_acknowledged(identifier, owner, node) for node in sorted(node_ids))
 
     def close(self):
         try:
