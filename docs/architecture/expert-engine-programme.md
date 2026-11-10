@@ -124,3 +124,14 @@ Need access to appropriate licensed sources, expert review capacity, isolated te
 runners, a selected base model and an explicit R&D spending/account boundary for paid
 training or cloud qualification. Routine local research and implementation continue
 without waiting for those later access-dependent tasks.
+
+
+## 2026-11-11 — Generic engine and incremental releases
+
+Owner direction: first review the existing implementation for scenario coupling.
+Build reusable architecture capabilities, not 28 bespoke projects. Preserve the
+original matrix as diagnostics; prove transfer with uncoached unfamiliar briefs and
+new combinations. Execution order, review findings and ten runnable release subgoals
+are tracked in `specs/029-general-purpose-engine/plan.md` and `review.md` from the
+repository root. Roadmap completion is distinct from measured quality; no release
+or 95% quality claim follows from planning or component test counts.

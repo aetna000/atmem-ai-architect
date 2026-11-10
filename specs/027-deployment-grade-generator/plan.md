@@ -592,3 +592,14 @@ management-plane pool identity instead of copying response properties. Install
 root source/policy/service/timer and metadata lifecycle from actual artifact
 receipts. Then complete IBM and four-provider exports, full private/remaining
 families, security/performance and final28/held-out. Original scope is unchanged.
+
+
+## 2026-11-11 — Generic engine and incremental releases
+
+Owner direction: first review the existing implementation for scenario coupling.
+Build reusable architecture capabilities, not 28 bespoke projects. Preserve the
+original matrix as diagnostics; prove transfer with uncoached unfamiliar briefs and
+new combinations. Execution order, review findings and ten runnable release subgoals
+are tracked in `specs/029-general-purpose-engine/plan.md` and `review.md` from the
+repository root. Roadmap completion is distinct from measured quality; no release
+or 95% quality claim follows from planning or component test counts.

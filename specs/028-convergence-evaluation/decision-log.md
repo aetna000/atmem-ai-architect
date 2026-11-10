@@ -858,3 +858,13 @@ management-plane pool identity instead of copying response properties. Install
 root source/policy/service/timer and metadata lifecycle from actual artifact
 receipts. Then complete IBM and four-provider exports, full private/remaining
 families, security/performance and final28/held-out. Original scope is unchanged.
+
+
+## 2026-11-11 — Review first; generic engine, ten runnable increments
+
+Owner explicitly prioritizes reusable compositional expertise over completing bespoke
+scenario implementations. Pause specialized Azure expansion at an unqualified local
+checkpoint. Keep the full original 28-case scope; audit production and benchmark
+coupling and fresh uncoached conversations first. Track the review and ten tangible
+local candidate releases in specs/029-general-purpose-engine. Percent increments
+measure programme milestones, not unsupported claims of quality improvement.
