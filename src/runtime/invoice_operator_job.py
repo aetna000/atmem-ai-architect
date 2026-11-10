@@ -7,6 +7,7 @@ values. Execution is explicit; preview makes no SDK, secret-file or SQL calls.
 import argparse
 import base64
 from contextlib import contextmanager
+import http.client
 import json
 import os
 from pathlib import Path
@@ -15,6 +16,7 @@ import shutil
 import signal
 import sys
 import tempfile
+import time
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 import psycopg
 from invoice_operator_core import validate_deployment,initialize_runtime
@@ -61,7 +63,16 @@ def native_connect(provider,env,deployment):
             factory=DatabaseConnection('aws',host,5432,settings['DATABASE_NAME'],settings['DATABASE_USER'],mounted_secret(settings['DATABASE_PASSWORD_FILE']),ca_file=settings['DATABASE_CA_FILE'],role='migration')
         else:factory=native_database(provider,settings,'migration')
         if factory.parameters['user']in {row['name']for row in deployment['bindings'].values()}:raise PermissionError('Do not run an operator job as API or worker')
-        return psycopg.connect(factory())
+        for attempt in range(3):
+            try:return psycopg.connect(factory())
+            except psycopg.OperationalError as error:
+                # Only retry connection establishment before any transaction.
+                # Cold proxy certificate/network setup can be transient; SQL
+                # permission/authentication/schema failures are never repaired
+                # by bypassing TLS, changing identities or replaying statements.
+                state=error.sqlstate
+                if provider!='gcp'or attempt==2 or(state is not None and not(state.startswith('08')or state=='57P03')):raise
+                time.sleep(attempt+1)
     return connect
 
 def runtime_passwords(environment,deployment):
@@ -80,20 +91,54 @@ def run_action(action,connect,deployment,*,passwords=None):
     if action=='monitor':return monitor(connect,deployment)
     raise ValueError('Unsupported operator job action')
 
+@contextmanager
+def private_proxy_job(provider,environment):
+    mode=environment.get('OPERATOR_PROXY_SHUTDOWN')
+    if mode is None:
+        yield;return
+    if provider!='gcp'or mode!='cloudsql-private-proxy'or environment.get('DATABASE_TRANSPORT')!='cloudsql-private-proxy':raise ValueError('Use the emitted Google job proxy lifecycle')
+    try:
+        # Stable GA job containers can start concurrently. Wait for the pinned
+        # proxy's own startup endpoint rather than depending on beta ordering.
+        deadline=time.monotonic()+30
+        while time.monotonic()<deadline:
+            startup=http.client.HTTPConnection('127.0.0.1',9090,timeout=1)
+            try:
+                startup.request('GET','/startup');response=startup.getresponse()
+                if response.status==200 and len(response.read(2049))<=2048:break
+            except (OSError,http.client.HTTPException):pass
+            finally:startup.close()
+            time.sleep(0.2)
+        else:raise TimeoutError('Private SQL proxy did not finish startup')
+        yield
+    finally:
+        # Fixed same-instance loopback endpoint; no configurable URL, redirects,
+        # ambient HTTP proxy or outbound credentials. A failed shutdown must not
+        # produce an ok receipt while the sidecar keeps the job running.
+        connection=http.client.HTTPConnection('127.0.0.1',9091,timeout=2)
+        try:
+            connection.request('POST','/quitquitquit',body=b'')
+            response=connection.getresponse()
+            if response.status!=200 or len(response.read(2049))>2048:raise ValueError('Private SQL proxy did not confirm shutdown')
+        finally:connection.close()
+
 def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('action',choices=['initialize','maintain','monitor']);parser.add_argument('--execute',action='store_true');args=parser.parse_args(argv)
-    provider=owned_deployment()['provider'];deployment=deployment_input(os.environ,provider)
+    provider=owned_deployment()['provider']
     if not args.execute:
+        deployment_input(os.environ,provider)
         print(json.dumps({'format':'invoice-operator-v1','action':args.action,'status':'preview','willWrite':False}));return 0
     def deadline(*_):raise TimeoutError('Operator execution deadline')
-    previous=signal.signal(signal.SIGALRM,deadline);signal.alarm(900)
-    try:
-        with private_environment(provider,os.environ)as env:
-            result=run_action(args.action,native_connect(provider,env,deployment),deployment,passwords=runtime_passwords(env,deployment)if provider=='ibm'else None)
-        print(json.dumps({'format':'invoice-operator-v1','action':args.action,**result}))
-        return 0 if result['status']=='ok'else 2
-    finally:signal.alarm(0);signal.signal(signal.SIGALRM,previous)
+    with private_proxy_job(provider,os.environ):
+        deployment=deployment_input(os.environ,provider)
+        previous=signal.signal(signal.SIGALRM,deadline);signal.alarm(900)
+        try:
+            with private_environment(provider,os.environ)as env:
+                result=run_action(args.action,native_connect(provider,env,deployment),deployment,passwords=runtime_passwords(env,deployment)if provider=='ibm'else None)
+        finally:signal.alarm(0);signal.signal(signal.SIGALRM,previous)
+    print(json.dumps({'format':'invoice-operator-v1','action':args.action,**result}))
+    return 0 if result['status']=='ok'else 2
 
 if __name__=='__main__':
     try:sys.exit(main())

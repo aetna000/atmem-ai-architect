@@ -260,3 +260,39 @@ Google/IBM native operating wrappers, complete state/Spec Kit/registry and mediu
 business conversations/exports remain next. No medium case counted complete; full28,
 held-out and remaining families unfinished. No cloud operation, publication or
 deployment. Evidence: specs/028-convergence-evaluation/evidence/20261110-azure-operating-jobs
+
+
+## 2026-11-10 — Google fixed jobs and actual proxy lifecycle
+
+Implemented GA Cloud Run operator jobs, separate ops SQL identity/private VPC and
+job-scoped Scheduler invoker/OAuth. Bootstrap is unavailable to Scheduler; no extra
+SQL/data/override grant is conferred on product/caller. Paused scheduling and phased
+release precede the application. An exact output-driven CLI helper previews writes
+and waits for completion, without shell interpolation or exposed token arguments.
+
+Stable concurrent container startup is handled by the operator's bounded loopback
+startup wait. It always quits the pinned maintained proxy on success/work/metadata
+failure; cleanup failure cannot produce an ok heartbeat. Local transport connection
+establishment retries three times with fresh credentials, never statement replay
+or authentication/schema bypass. 960-second native task bound covers startup and
+900-second work deadline. No new proxy binary or vulnerability waiver was introduced.
+
+Provider-specific telemetry uses region-scoped owned log metrics, explicit first-
+sample arming and a two-hour heartbeat. Google absence duration cannot cover the
+other providers' 48-hour maintenance check; hourly SQL monitoring checks the existing
+92-day-overdue invariant instead of inventing an unsupported condition. Existing
+channel and organization log custody remain reviewed references. Native scheduling,
+actual IAM/Cloud SQL privileges/TLS, telemetry and delivery require destination proof.
+
+10 native schema/mock plans, 12 actual operator-image checks on each PG17/18, 2
+network-disabled exact proxy lifecycle cases (including actual CLI failure), 5
+emitted-runner/fake-CLI cases, 5 exact-image queue checks, 87 API/operator checks,
+309 JS, 208 server and build pass. Metadata/IAM SQL marker fixtures are synthetic;
+no managed Cloud SQL privileges or authentication are inferred from stock PG/root.
+Exact image retains 47 high, zero critical or reported fixes in cached data; not
+production/security acceptance. Historical AWS/Azure image evidence stays exact;
+shared runtime changes require re-admission for future combined exports.
+
+IBM native operating wrapper, complete state/Spec Kit/registry and medium business
+conversations remain next. Zero medium cases complete; remaining families/full28/
+held-out unfinished. No cloud operation, publication or deployment. Evidence: specs/028-convergence-evaluation/evidence/20261110-google-operating-jobs

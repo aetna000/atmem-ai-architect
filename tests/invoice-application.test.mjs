@@ -118,6 +118,19 @@ test('Google invoice compiler binds private SQL proxy, CPU allocation and separa
  assert.deepEqual(config.resource.google_sql_user[n+'_api'].database_roles,[]);assert.deepEqual(config.resource.google_sql_user[n+'_worker'].database_roles,[]);assert.deepEqual(config.resource.google_sql_user[n+'_ops'].database_roles,['cloudsqlsuperuser']);assert.equal(config.resource.google_sql_database_instance[n].settings.ip_configuration.ipv4_enabled,false);
  assert.equal(config.resource.google_cloud_run_v2_service_iam_member[n+'_parser'].member,'serviceAccount:${google_service_account.'+n+'_worker.email}');assert.throws(()=>gcpInvoiceTerraform(project,{...row,provider:'azure'}));
 });
+test('Google fixed jobs bound proxy lifecycle, scoped OAuth scheduling and arming of monitor telemetry',()=>{
+ const n='block_696e766f696365',files=gcpInvoiceTerraform({id:'11111111-1111-4111-8111-111111111111',revision:1,nodes:[],edges:[]},{id:'invoice',address:n,provider:'gcp',region:'australia-southeast1'}),config=JSON.parse(files['main.tf.json']),resources=config.resource;
+ for(const action of ['initialize','maintain','monitor']){
+  const job=resources.google_cloud_run_v2_job[n+'_operator_'+action],task=job.template.template,[operator,proxy]=task.containers;
+  assert.equal(job.launch_stage,'GA');assert.equal(job.template.task_count,1);assert.equal(job.template.parallelism,1);assert.equal(task.timeout,'960s');assert.equal(task.max_retries,0);assert.equal(task.service_account,'${google_service_account.'+n+'_ops.email}');assert.equal(task.vpc_access.egress,'PRIVATE_RANGES_ONLY');assert.equal(task.containers.length,2);
+  assert.deepEqual(operator.command,['python','-I','/app/invoice_operator_job.py',action,'--execute']);assert.ok(operator.env.every(row=>!row.value_source&&!/^(MODEL_|DESTINATION_|DOCUMENT_)/.test(row.name)));assert.equal(operator.env.find(row=>row.name==='OPERATOR_PROXY_SHUTDOWN').value,'cloudsql-private-proxy');
+  assert.ok(proxy.args.includes('--health-check'));assert.ok(proxy.args.includes('--quitquitquit'));assert.ok(proxy.args.includes('--admin-port=9091'));assert.ok(proxy.args.includes('--http-address=127.0.0.1'));assert.ok(!proxy.args.includes('--debug'));
+ }
+ assert.equal(resources.google_cloud_run_v2_job_iam_member[n+'_operator_initialize'],undefined);
+ for(const action of ['maintain','monitor']){const grant=resources.google_cloud_run_v2_job_iam_member[n+'_operator_'+action],schedule=resources.google_cloud_scheduler_job[n+'_'+action];assert.equal(grant.role,'roles/run.invoker');assert.equal(grant.member,'serviceAccount:${google_service_account.'+n+'_scheduler.email}');assert.equal(schedule.http_target.http_method,'POST');assert.ok(schedule.http_target.oauth_token);assert.equal(schedule.http_target.oidc_token,undefined);assert.equal(schedule.retry_config.retry_count,2);}
+ assert.equal(resources.google_monitoring_alert_policy[n+'_monitor_missing'].conditions[0].condition_absent.duration,'7200s');assert.match(files['OPERATING_JOBS.md'],/never-written metric/);assert.match(files['scripts/run-operator.py'],/--execute/);assert.match(files['scripts/run-operator.py'],/--wait/);
+ for(const metric of Object.values(resources.google_logging_metric))assert.ok(metric.filter.includes('resource.labels.location="${var.region}"'));
+});
 
 test('invoice deployments have stable environment-separated physical identities and matching image fixtures',()=>{
  const project={id:'11111111-1111-4111-8111-111111111111',revision:1,nodes:[],edges:[]},address='block_696e766f696365';

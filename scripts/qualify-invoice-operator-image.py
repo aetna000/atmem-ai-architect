@@ -62,6 +62,38 @@ try:
     transport.assert_not_called()
    checks.append('unavailable-operator-identity-refuses-SQL-connection')
   finally:metadata.shutdown();metadata.server_close();thread.join(2);os.environ.pop('IDENTITY_ENDPOINT',None);os.environ.pop('IDENTITY_HEADER',None)
+ if provider=='gcp':
+  stage='scripted_native_metadata_protocol'
+  import http.server,threading,requests
+  from psycopg.conninfo import conninfo_to_dict
+  from workflow_connection import DatabaseCredentialUnavailable
+  tokens=[];mode={'valid':True};original_session=requests.Session
+  class Metadata(http.server.BaseHTTPRequestHandler):
+   def log_message(self,*_):pass
+   def do_GET(self):
+    assert self.path=='/token'and self.headers.get('Metadata-Flavor')=='Google'
+    token='synthetic-google-token-'+str(len(tokens));tokens.append(token)
+    body=json.dumps({'access_token':token,'expires_in':600,'token_type':'Bearer'}).encode()
+    self.send_response(200);self.send_header('Metadata-Flavor','Google'if mode['valid']else'wrong');self.send_header('Content-Length',str(len(body)));self.end_headers();self.wfile.write(body)
+  metadata=http.server.ThreadingHTTPServer(('127.0.0.1',0),Metadata);thread=threading.Thread(target=metadata.serve_forever,daemon=True);thread.start()
+  class Transport(original_session):
+   def get(self,url,**kwargs):
+    assert url=='http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/token'and self.trust_env is False and kwargs['allow_redirects']is False
+    return super().get('http://127.0.0.1:'+str(metadata.server_port)+'/token',**kwargs)
+  try:
+   with patch('requests.Session',Transport),patch('invoice_operator_job.psycopg.connect')as transport:
+    for _ in range(2):job.native_connect('gcp',env,deployment)(None)
+    settings=[conninfo_to_dict(call.args[0])for call in transport.call_args_list]
+   assert [row['password']for row in settings]==tokens and len(tokens)==2
+   assert all(row['host']=='127.0.0.1'and row['port']=='5432'and row['sslmode']=='disable'and row['user']==env['DATABASE_SERVICE_ACCOUNT'].removesuffix('.gserviceaccount.com')for row in settings)
+   checks.append('actual-bounded-HTTP-metadata-fresh-SQL-credentials-private-proxy-only')
+   mode['valid']=False
+   with patch('requests.Session',Transport),patch('invoice_operator_job.psycopg.connect')as transport:
+    try:job.native_connect('gcp',env,deployment)(None);raise AssertionError('Unverified metadata must fail')
+    except DatabaseCredentialUnavailable:pass
+    transport.assert_not_called()
+   checks.append('unverified-metadata-refuses-SQL-connection')
+  finally:metadata.shutdown();metadata.server_close();thread.join(2)
  c=packet['fixture'];assert c['name']in {'atmem-durable-qualification','atmem-durable-qualification-pg18'}and re.fullmatch(r'architect_qualification_[a-z0-9]{1,32}',c['database'])
  dsn=make_conninfo(host='127.0.0.1',port=c['port'],dbname=c['database'],user=c['user'],password=c['password'],sslmode='disable')
  stage='owned_fixture_guard'
@@ -73,6 +105,12 @@ try:
    if provider=='aws'and owner.execute("SELECT 1 FROM pg_roles WHERE rolname='rds_iam'").fetchone()is None:owner.execute('CREATE ROLE rds_iam NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS')
    for binding in deployment['bindings'].values():
     if owner.execute('SELECT 1 FROM pg_roles WHERE rolname=%s',(binding['name'],)).fetchone()is None:new_roles.append(binding['name'])
+   if provider=='gcp':
+    if owner.execute("SELECT 1 FROM pg_roles WHERE rolname='cloudsqliamserviceaccount'").fetchone()is None:owner.execute('CREATE ROLE cloudsqliamserviceaccount NOLOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS')
+    for binding in deployment['bindings'].values():
+     if binding['name']in new_roles:
+      owner.execute(sql.SQL('CREATE ROLE {} LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION NOBYPASSRLS').format(sql.Identifier(binding['name'])))
+      owner.execute(sql.SQL('GRANT cloudsqliamserviceaccount TO {}').format(sql.Identifier(binding['name'])))
    owner.execute(sql.SQL('CREATE DATABASE {}').format(sql.Identifier(database)));created=True
   class AzureMappingConnection:
    # Only the native Entra mapping protocol is scripted. PostgreSQL CREATE ROLE,
@@ -98,6 +136,7 @@ try:
   assert job.run_action('initialize',connect,deployment)['initialized'];checks.append('owned-schema-and-native-profile-runtime-grants')
   assert job.run_action('initialize',connect,deployment)['initialized'];checks.append('owned-bootstrap-retry')
   if provider=='azure':assert len(mapping)==2;checks.append('scripted-six-column-Entra-mapping-real-SQL-role-admission')
+  if provider=='gcp':checks.append('owned-precreated-IAM-user-native-role-marker-admission')
   assert job.run_action('monitor',connect,deployment)['status']=='ok';checks.append('empty-read-only-monitor')
   stage='expired_and_young_work'
   with connect()as conn:
@@ -127,7 +166,7 @@ except Exception:
 def digest(path):return hashlib.sha256(path.read_bytes()).hexdigest()
 
 if __name__=='__main__':
-    parser=argparse.ArgumentParser();parser.add_argument('--provider',choices=['aws','azure'],default='aws');parser.add_argument('--source',required=True);parser.add_argument('--image',required=True);parser.add_argument('--native',required=True);parser.add_argument('--postgres-config',required=True);parser.add_argument('--docker-host',required=True);parser.add_argument('--out',required=True);args=parser.parse_args()
+    parser=argparse.ArgumentParser();parser.add_argument('--provider',choices=['aws','azure','gcp'],default='aws');parser.add_argument('--source',required=True);parser.add_argument('--image',required=True);parser.add_argument('--native',required=True);parser.add_argument('--postgres-config',required=True);parser.add_argument('--docker-host',required=True);parser.add_argument('--out',required=True);args=parser.parse_args()
     source=Path(args.source).resolve();native=Path(args.native).resolve();out=Path(args.out).resolve();fixture_path=Path(args.postgres_config).resolve()
     if any(not path.is_relative_to(ROOT/'.local')for path in [source,native,out,fixture_path])or out.exists()or not re.fullmatch('sha256:[0-9a-f]{64}',args.image):raise ValueError('Use exact local source/image/native evidence and a fresh local output')
     qualification=json.loads((native/'qualification.json').read_text());assert qualification['passed']and qualification['provider']==args.provider
@@ -135,17 +174,23 @@ if __name__=='__main__':
     source_hashes={str(file.relative_to(source)):digest(file)for file in source.rglob('*')if file.is_file()}
     prefix=source.relative_to(native).as_posix()+'/'
     assert all(qualification['sourceHashes'].get(prefix+name)==sha for name,sha in source_hashes.items())
-    run_name={'aws':'private_database_and_parser','azure':'private_data_and_parser'}[args.provider]
+    run_name={'aws':'private_database_and_parser','azure':'private_data_and_parser','gcp':'private_database_and_identity'}[args.provider]
     plans=[event['test_plan']for line in log.read_text().splitlines()if (event:=json.loads(line)).get('type')=='test_plan'and event.get('@testrun')==run_name];assert len(plans)==1
-    tasks=[resource['change']['after']for resource in plans[0]['resource_changes']if resource['type']==('aws_ecs_task_definition'if args.provider=='aws'else'azapi_resource')and '_operator_'in resource['address']];assert len(tasks)==3
+    tasks=[resource['change']['after']for resource in plans[0]['resource_changes']if resource['type']=={'aws':'aws_ecs_task_definition','azure':'azapi_resource','gcp':'google_cloud_run_v2_job'}[args.provider]and '_operator_'in resource['address']];assert len(tasks)==3
     environment=None;commands=[]
     for task in tasks:
         if args.provider=='aws':
             containers=json.loads(task['container_definitions']);container=next(row for row in containers if row['name']=='operator')
             assert container['readonlyRootFilesystem']and not task['task_role_arn'];assert [secret['name']for secret in container['secrets']]==['DATABASE_PASSWORD'];assert container['secrets'][0]['valueFrom'].endswith(':password::');entries=container['environment']
-        else:
+        elif args.provider=='azure':
             assert task['type']=='Microsoft.App/jobs@2025-07-01';properties=task['body']['properties'];container=properties['template']['containers'][0];configuration=properties['configuration'];assert not configuration.get('secrets')and configuration['replicaTimeout']==900 and configuration['replicaRetryLimit']==0
             assert sorted(row['lifecycle']for row in configuration['identitySettings'])==['Main','None'];entries=container['env'];assert all('secretRef'not in entry for entry in entries)
+        else:
+            properties=task['template'][0]['template'][0];container=properties['containers'][0];proxy=properties['containers'][1]
+            assert properties['max_retries']==0 and properties['timeout']=='960s'and properties['vpc_access'][0]['egress']=='PRIVATE_RANGES_ONLY';entries=container['env'];assert all(not entry.get('value_source')for entry in entries)
+            lock=json.loads((ROOT/'src/runtime/cloud-sql-proxy-lock.json').read_text());assert proxy['image']==lock['image']and len(properties['containers'])==2
+            assert proxy['args'][:-1]==['--private-ip','--address=127.0.0.1','--port=5432','--structured-logs','--lazy-refresh','--health-check','--http-address=127.0.0.1','--http-port=9090','--quitquitquit','--admin-port=9091','--exit-zero-on-sigterm']
+            values={row['name']:row['value']for row in entries};assert properties['service_account']==values['DATABASE_SERVICE_ACCOUNT']and values['OPERATOR_PROXY_SHUTDOWN']=='cloudsql-private-proxy'
         command=container['command'];assert command[:3]==['python','-I','/app/invoice_operator_job.py']and command[-1]=='--execute';commands.append(command[3])
         env={row['name']:row['value']for row in entries};assert len(env)==len(entries)
         if environment is None:environment=env
@@ -160,6 +205,6 @@ if __name__=='__main__':
     (out/'stdout.log').write_bytes(result.stdout);(out/'stderr.log').write_bytes(result.stderr)
     try:probe=json.loads(result.stdout)
     except Exception:probe={'passed':False}
-    passed=result.returncode==0 and probe.get('passed')is True and len(probe.get('checks',[]))==({'aws':9,'azure':12}[args.provider])and tool_hash==digest(Path(__file__))and all(digest(source/name)==sha for name,sha in source_hashes.items())
-    receipt={'kind':'exact-native-operator-image-and-local-sql','provider':args.provider,'passed':passed,'image':args.image,'probe':probe,'sourceHashes':source_hashes,'nativeReceiptSha256':digest(native/'qualification.json'),'nativePlanSha256':digest(log),'qualifierSha256':tool_hash,'cloudOperations':False,'boundary':'Actual immutable Linux image and native mock-plan command/configuration bytes; real owned loopback SQL schema/grants/monitoring/retention. Internal Python connection injection substitutes fixture transport/admin credential. Azure additionally uses actual SDK with scripted loopback metadata responses and scripted six-column native Entra mapping over real SQL role creation. No cloud identity, TLS network, KQL execution, scheduling, alert delivery, account plan, deployment or complete medium-project acceptance.'}
+    passed=result.returncode==0 and probe.get('passed')is True and len(probe.get('checks',[]))==({'aws':9,'azure':12,'gcp':12}[args.provider])and tool_hash==digest(Path(__file__))and all(digest(source/name)==sha for name,sha in source_hashes.items())
+    receipt={'kind':'exact-native-operator-image-and-local-sql','provider':args.provider,'passed':passed,'image':args.image,'probe':probe,'sourceHashes':source_hashes,'nativeReceiptSha256':digest(native/'qualification.json'),'nativePlanSha256':digest(log),'qualifierSha256':tool_hash,'cloudOperations':False,'boundary':'Actual immutable Linux image and native mock-plan command/configuration bytes; real owned loopback SQL schema/grants/monitoring/retention. Internal Python connection injection substitutes fixture transport/admin credential. Azure additionally uses actual SDK with scripted loopback metadata responses and scripted six-column native Entra mapping over real SQL role creation. Google additionally exercises bounded HTTP metadata handling against a scripted loopback transport and precreated local IAM-marker roles. No cloud identity, managed-service privilege, TLS network, KQL execution, scheduling, alert delivery, account plan, deployment or complete medium-project acceptance.'}
     (out/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n');print(json.dumps({'passed':passed,'probe':probe,'receipt':str(out/'receipt.json')}));sys.exit(0 if passed else 1)
