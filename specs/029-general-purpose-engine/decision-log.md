@@ -56,3 +56,11 @@ artifact/evidence contracts and backend-owned authentication. The browser never
 runs a CLI or receives model credentials. Local process transport is development
 infrastructure; qualify a worker-service transport and hosted isolation before cloud
 use. No cloud deployment is requested now.
+
+## 2026-11-11 — One locally runnable and cloud-SaaS product; paywall deferred
+
+Owner confirms both local operation and later cloud SaaS for paying users. Preserve
+one engine/session/worker/artifact contract across deployment modes. Prepare the
+isolation, authentication and usage/evidence boundaries now; defer Architect's own
+paywall, billing and checkout implementation. This does not waive original evaluation
+requirements for generated metered client systems. No hosted deployment is authorized.

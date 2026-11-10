@@ -161,3 +161,18 @@ integration, qualify both local and hosted-worker transport contracts, and avoid
 Codex-only browser protocol. Other capable backends may implement the same contract;
 no automatic lower-quality fallback is permitted. Cloud-hosting architecture is in
 scope for design; actually deploying it is not authorized by this programme.
+
+## Deployment modes and future commercial product
+
+Owner confirmation: the same product must be runnable locally and as a cloud SaaS
+for paying users. Build one engine and worker contract with deployment configuration,
+not separate local/cloud product forks. Local installations can use a local worker;
+a hosted web installation uses backend workers and backend-owned model authentication.
+No end user needs Codex installed to use the hosted product.
+
+Prepare for tenant/project isolation, durable sessions/artifacts, worker scheduling,
+secret injection, cancellation/recovery and model/tool usage evidence. These are
+execution/ownership concerns. Architect's own subscriptions, checkout and paywall are
+explicitly deferred; do not add them to release 1 or treat missing payments as a blocker.
+This does not remove metering/credit requirements in the client projects the engine
+is tasked to generate. Hosting this SaaS remains future work, not a request to deploy.
