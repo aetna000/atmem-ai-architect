@@ -124,3 +124,13 @@ remain explicit fixtures. Exact artifact admission and parser source/lock matchi
 precede execution. Evidence: specs/028-convergence-evaluation/evidence/20261110-invoice-live-workflow-v1. 345 JS tests pass.
 Recovery/security/native-cloud boundaries and full project qualification remain open;
 continue remaining families and final full28/held-out evaluation.
+
+### Exact live invoice recovery/images checkpoint
+
+All4 original live export sources pass actual logical restore (10 checks each),
+native-plan API startup/denial plus restricted queue image checks, and native-plan
+operator checks (9/12/12/12). Evidence: specs/028-convergence-evaluation/evidence/20261110-invoice-live-recovery-images-v1.
+347 JS tests pass. Exact production scans each retain 47 HIGH open findings, zero
+CRITICAL/fixes in cached metadata; no security acceptance or medium-case promotion.
+Continue native source/permission-aware medium implementation and remaining families
+while retaining unresolved security/native-cloud boundaries.

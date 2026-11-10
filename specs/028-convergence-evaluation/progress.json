@@ -46,7 +46,8 @@
     "specs/028-convergence-evaluation/evidence/20261110-invoice-public-export",
     "specs/028-convergence-evaluation/evidence/20261110-invoice-live-v2",
     "specs/028-convergence-evaluation/evidence/20261110-invoice-live-native-v3",
-    "specs/028-convergence-evaluation/evidence/20261110-invoice-live-workflow-v1"
+    "specs/028-convergence-evaluation/evidence/20261110-invoice-live-workflow-v1",
+    "specs/028-convergence-evaluation/evidence/20261110-invoice-live-recovery-images-v1"
   ],
   "limitations": [
     "The wider 28-project outcome remains unfinished. No claim of world-leading quality or four-provider connected-application parity.",
@@ -230,7 +231,7 @@
       "ibmRegistryRegression": "Shared explicit regional mapping repaired for structured/FAQ/invoice exports; Sydney native image-host regressions pass."
     }
   },
-  "currentEvidence": "specs/028-convergence-evaluation/evidence/20261110-invoice-live-workflow-v1",
+  "currentEvidence": "specs/028-convergence-evaluation/evidence/20261110-invoice-live-recovery-images-v1",
   "operatorBootstrapCheckpoint": {
     "status": "in_progress",
     "evidence": "specs/028-convergence-evaluation/evidence/20261110-invoice-operator-core",
@@ -567,6 +568,63 @@
     "next": [
       "Exact-package recovery/security and native runtime/image evidence reconciliation.",
       "Remaining medium/hard implementations, final full28 and held-out variants."
+    ]
+  },
+  "invoiceLiveRecoveryImagesCheckpoint": {
+    "status": "in_progress",
+    "cloudOperations": false,
+    "completeMediumCasesQualified": 0,
+    "javascriptTests": 347,
+    "cases": [
+      {
+        "provider": "aws",
+        "nativeImageStartupAndQueuePassed": true,
+        "operatorChecksPassed": 9,
+        "logicalRestoreChecksPassed": 10,
+        "securityFindings": {
+          "HIGH": 47
+        },
+        "reportedFixedVersions": [],
+        "nearDeploymentQualified": false
+      },
+      {
+        "provider": "azure",
+        "nativeImageStartupAndQueuePassed": true,
+        "operatorChecksPassed": 12,
+        "logicalRestoreChecksPassed": 10,
+        "securityFindings": {
+          "HIGH": 47
+        },
+        "reportedFixedVersions": [],
+        "nearDeploymentQualified": false
+      },
+      {
+        "provider": "gcp",
+        "nativeImageStartupAndQueuePassed": true,
+        "operatorChecksPassed": 12,
+        "logicalRestoreChecksPassed": 10,
+        "securityFindings": {
+          "HIGH": 47
+        },
+        "reportedFixedVersions": [],
+        "nearDeploymentQualified": false
+      },
+      {
+        "provider": "ibm",
+        "nativeImageStartupAndQueuePassed": true,
+        "operatorChecksPassed": 12,
+        "logicalRestoreChecksPassed": 10,
+        "securityFindings": {
+          "HIGH": 47
+        },
+        "reportedFixedVersions": [],
+        "nearDeploymentQualified": false
+      }
+    ],
+    "evidence": "specs/028-convergence-evaluation/evidence/20261110-invoice-live-recovery-images-v1",
+    "next": [
+      "Resolve or explicitly substantiate remaining image-security findings; native cloud boundaries remain unverified.",
+      "Implement native source/permission-aware medium family, then support/tenant/regulated families and full28/held-out."
     ]
   }
 }

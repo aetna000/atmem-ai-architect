@@ -13,11 +13,25 @@ import shutil
 import subprocess
 import sys
 import uuid
+ROOT=Path(__file__).resolve().parents[1]
+admission=argparse.ArgumentParser(add_help=False);admission.add_argument('--application-source');admission.add_argument('--artifact-receipt');admitted,_=admission.parse_known_args()
+RUNTIME=ROOT/'src/runtime';artifact_receipt_hash=None
+if bool(admitted.application_source)!=bool(admitted.artifact_receipt):raise ValueError('Provide both exact application source and native artifact receipt')
+if admitted.application_source:
+    RUNTIME=Path(admitted.application_source).resolve();receipt_path=Path(admitted.artifact_receipt).resolve()
+    if not RUNTIME.is_relative_to(ROOT/'.local')or not receipt_path.is_relative_to(ROOT/'.local'):raise ValueError('Use local qualification artifacts')
+    qualified=json.loads(receipt_path.read_text());artifact_receipt_hash=hashlib.sha256(receipt_path.read_bytes()).hexdigest()
+    if qualified.get('kind')!='invoice-live-artifact-native-qualification'or not qualified.get('passed'):raise ValueError('Use a passing exact live artifact receipt')
+    prefix='applications/'+RUNTIME.name+'/'
+    expected={name[len(prefix):]:digest for name,digest in qualified['sourceHashes'].items()if name.startswith(prefix)}
+    if not expected:raise ValueError('Application missing from qualified artifact')
+    for name,digest in expected.items():
+        target=(RUNTIME/name).resolve()
+        if not target.is_relative_to(RUNTIME)or hashlib.sha256(target.read_bytes()).hexdigest()!=digest:raise ValueError('Application differs from original live artifact')
+sys.path[:0]=[str(RUNTIME),str(ROOT/'tests/runtime')]
 import psycopg
 from psycopg import sql
 from psycopg.conninfo import conninfo_to_dict,make_conninfo
-ROOT=Path(__file__).resolve().parents[1]
-sys.path[:0]=[str(ROOT/'src/runtime'),str(ROOT/'tests/runtime')]
 from durable_postgres_acceptance import fixture_dsn
 from workflow_database import initialize_database
 from workflow_worker import producer_store
@@ -26,7 +40,7 @@ from durable_workflow import Principal
 from invoice_operations import purge_expired,quarantine_restored_deliveries,reconcile_completed,set_membership
 
 def main():
-    parser=argparse.ArgumentParser();parser.add_argument('--docker-host',required=True);parser.add_argument('--out',required=True);args=parser.parse_args()
+    parser=argparse.ArgumentParser(parents=[admission]);parser.add_argument('--docker-host',required=True);parser.add_argument('--out',required=True);args=parser.parse_args()
     out=Path(args.out).resolve()
     if not out.is_relative_to(ROOT/'.local')or out.exists():raise ValueError('Use a fresh local evidence directory')
     if not args.docker_host.startswith('unix:///')or not Path(args.docker_host[7:]).is_socket():raise ValueError('Use the existing owned local Docker socket')
@@ -37,7 +51,8 @@ def main():
     details=json.loads(inspection.stdout)[0]
     if details['Config']['Image']!=config['image']or details['Config'].get('Labels',{}).get('org.atmem.purpose')!='durable-qualification'or not details['State']['Running']:raise ValueError('Owned local fixture identity changed')
     out.mkdir(parents=True);out.chmod(0o700);checks=[]
-    sources={str(path.relative_to(ROOT)):hashlib.sha256(path.read_bytes()).hexdigest()for path in [Path(__file__),ROOT/'src/runtime/invoice_operations.py',ROOT/'src/runtime/workflow_database.py',ROOT/'src/runtime/workflow_schema.sql',ROOT/'src/runtime/durable_workflow.py',ROOT/'src/runtime/workflow_worker.py']}
+    sources={str(path.relative_to(ROOT)):hashlib.sha256(path.read_bytes()).hexdigest()for path in [Path(__file__),RUNTIME/'invoice_operations.py',RUNTIME/'workflow_database.py',RUNTIME/'workflow_schema.sql',RUNTIME/'durable_workflow.py',RUNTIME/'workflow_worker.py']}
+    if admitted.application_source:sources.update({str((RUNTIME/name).relative_to(ROOT)):digest for name,digest in expected.items()})
     def check(name,value):
         checks.append({'name':name,'passed':bool(value)})
         if not value:raise AssertionError(name)
@@ -81,7 +96,8 @@ def main():
     except Exception as error:
         checks.append({'name':'restore-drill','passed':False,'errorType':type(error).__name__});raise
     finally:
-        receipt={'kind':'local-invoice-logical-backup-restore','recordedAt':datetime.now(timezone.utc).isoformat(),'passed':bool(checks)and all(check['passed']for check in checks),'checks':checks,'sourceHashes':sources,'privateDumpRetainedLocally':True,'boundary':'Actual local PostgreSQL native logical dump/restore into fresh synthetic databases, followed by quarantine, expiry purge and synthetic operator receipt reconciliation. No managed backup/PITR, cloud IAM, object restore, external accounting verification or RPO/RTO qualification.','cloudOperations':False,'full28CaseAcceptanceComplete':False}
+        unchanged=all(hashlib.sha256((ROOT/name).read_bytes()).hexdigest()==digest for name,digest in sources.items())
+        receipt={'applicationSource':str(RUNTIME.relative_to(ROOT)),'artifactReceiptSha256':artifact_receipt_hash,'sourceUnchanged':unchanged,'kind':'local-invoice-logical-backup-restore','recordedAt':datetime.now(timezone.utc).isoformat(),'passed':unchanged and bool(checks)and all(check['passed']for check in checks),'checks':checks,'sourceHashes':sources,'privateDumpRetainedLocally':True,'boundary':'Actual local PostgreSQL native logical dump/restore into fresh synthetic databases, followed by quarantine, expiry purge and synthetic operator receipt reconciliation. No managed backup/PITR, cloud IAM, object restore, external accounting verification or RPO/RTO qualification.','cloudOperations':False,'full28CaseAcceptanceComplete':False}
         (out/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n');print(json.dumps({'passed':receipt['passed'],'checks':len(checks),'receipt':str(out/'receipt.json')}))
 
 if __name__=='__main__':main()

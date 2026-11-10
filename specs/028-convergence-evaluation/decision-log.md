@@ -553,3 +553,11 @@ admission. Reject modified application code before imports, match the shared par
 image sources and lock, preserve exact model operations and scoped local receipts.
 Do not promote synthetic cloud identity/storage or loopback accounting into native
 cloud or deployment evidence. specs/028-convergence-evaluation/evidence/20261110-invoice-live-workflow-v1 records four passing runs.
+
+### 2026-11-10 — Exact-package restore and production-image evidence
+
+Extend logical restore probe to original artifact source admission before imports,
+full input hash/unchanged checks, and regressions. Preserve safe receipts/logs only;
+exclude private logical dumps. Native-plan runtime/operator checks and cached exact
+image scans are distinct: passing process checks cannot waive 47 HIGH findings.
+specs/028-convergence-evaluation/evidence/20261110-invoice-live-recovery-images-v1 records the four-provider results.
