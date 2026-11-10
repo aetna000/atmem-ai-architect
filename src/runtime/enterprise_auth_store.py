@@ -4,7 +4,7 @@ DB transport and the encryption key are injected by an owned native deployment.
 No cloud key is generated or persisted here. API credentials are never logged.
 """
 from contextlib import contextmanager
-from dataclasses import dataclass
+from dataclasses import dataclass,field
 import hashlib
 import json
 from pathlib import Path
@@ -46,6 +46,7 @@ class SourceMapping:
     source_id: str
     source_subject: str
     version: int
+    attempt_sha256: str|None = field(default=None,repr=False,compare=False)
 
 
 class EnterpriseAuthStore:
@@ -84,7 +85,7 @@ class EnterpriseAuthStore:
             mapping=self._authorize(cur,principal,source_id)
             cur.execute('SELECT pg_advisory_xact_lock(hashtextextended(%s,0))',('enterprise-oauth-start:'+principal.account_id+':'+principal.key,))
             # Bound abandoned attempts without deleting another person's state.
-            cur.execute('DELETE FROM enterprise_auth.attempts WHERE account_id=%s AND principal_key=%s AND expires_at<clock_timestamp()',(principal.account_id,principal.key))
+            cur.execute("DELETE FROM enterprise_auth.attempts WHERE account_id=%s AND principal_key=%s AND expires_at<clock_timestamp()AND(consumed_at IS NULL OR consumed_at<clock_timestamp()-interval '1 minute')",(principal.account_id,principal.key))
             count=cur.execute('SELECT count(*) AS n FROM enterprise_auth.attempts WHERE account_id=%s AND principal_key=%s AND consumed_at IS NULL',(principal.account_id,principal.key)).fetchone()['n']
             if count>=5:raise SourceUnavailable('oauth_attempt_limit')
             encrypted=self.box.seal(self.context(principal,mapping,'flow')+[digest(state)],flow)
@@ -101,15 +102,20 @@ class EnterpriseAuthStore:
             flow=self.box.open(self.context(principal,mapping,'flow')+[digest(state)],row['flow_ciphertext'])
         # Commit consumption before any network exchange: uncertain code redemption
         # requires a fresh consent flow, never a blind authorization-code replay.
-        return mapping,flow
+        return SourceMapping(mapping.source_id,mapping.source_subject,mapping.version,digest(state)),flow
 
     def save(self,principal,mapping,material):
         if not isinstance(material,dict):raise ValueError('Supply verified native credential material')
         with self.transaction()as cur:
             current=self._authorize(cur,principal,mapping.source_id)
             if current!=mapping:raise SourceDenied('source_mapping_changed')
+            if not isinstance(mapping.attempt_sha256,str)or not re.fullmatch('[0-9a-f]{64}',mapping.attempt_sha256):raise SourceDenied('source_consent_unavailable')
+            self._connection_lock(cur,principal,mapping.source_id)
+            receipt=cur.execute("SELECT state_sha256 FROM enterprise_auth.attempts WHERE state_sha256=%s AND account_id=%s AND principal_key=%s AND source_id=%s AND mapping_version=%s AND consumed_at IS NOT NULL AND consumed_at>clock_timestamp()-interval '1 minute'AND completed_at IS NULL FOR UPDATE",(mapping.attempt_sha256,principal.account_id,principal.key,mapping.source_id,mapping.version)).fetchone()
+            if not receipt:raise SourceDenied('source_connection_changed')
             encrypted=self.box.seal(self.context(principal,mapping,'credential'),material)
             cur.execute("INSERT INTO enterprise_auth.connections(account_id,principal_key,source_id,mapping_version,revision,credential_ciphertext,status)VALUES(%s,%s,%s,%s,1,%s,'connected')ON CONFLICT(account_id,principal_key,source_id)DO UPDATE SET mapping_version=EXCLUDED.mapping_version,revision=enterprise_auth.connections.revision+1,credential_ciphertext=EXCLUDED.credential_ciphertext,status='connected',updated_at=clock_timestamp()",(principal.account_id,principal.key,mapping.source_id,mapping.version,encrypted))
+            cur.execute('UPDATE enterprise_auth.attempts SET completed_at=clock_timestamp()WHERE state_sha256=%s',(mapping.attempt_sha256,))
             self.event(cur,principal,mapping.source_id,'connect_completed')
 
     def _abandon(self,principal,source_id,revision):
@@ -149,9 +155,22 @@ class EnterpriseAuthStore:
             raise SourceDenied('source_reconnection_required')from None
         return access
 
+    def connection_status(self,principal,source_id):
+        with self.transaction()as cur:
+            self._authorize(cur,principal)
+            mapping=cur.execute('SELECT version,active FROM enterprise_auth.source_mappings WHERE account_id=%s AND principal_key=%s AND source_id=%s',(principal.account_id,principal.key,source_id)).fetchone()
+            if not mapping or not mapping['active']:return 'needs_setup'
+            row=cur.execute('SELECT mapping_version,status FROM enterprise_auth.connections WHERE account_id=%s AND principal_key=%s AND source_id=%s',(principal.account_id,principal.key,source_id)).fetchone()
+            if not row or row['mapping_version']!=mapping['version']:return 'needs_reconnect'
+            return row['status']
+
+    def _connection_lock(self,cur,principal,source_id):
+        cur.execute('SELECT pg_advisory_xact_lock(hashtextextended(%s,0))',('enterprise-connection:'+principal.account_id+':'+principal.key+':'+source_id,))
+
     def disconnect(self,principal,source_id):
         with self.transaction()as cur:
             self._authorize(cur,principal,source_id)
+            self._connection_lock(cur,principal,source_id)
             cur.execute("UPDATE enterprise_auth.connections SET credential_ciphertext=NULL,status='revoked',revision=revision+1,updated_at=clock_timestamp()WHERE account_id=%s AND principal_key=%s AND source_id=%s",(principal.account_id,principal.key,source_id))
             cur.execute('DELETE FROM enterprise_auth.attempts WHERE account_id=%s AND principal_key=%s AND source_id=%s',(principal.account_id,principal.key,source_id))
             self.event(cur,principal,source_id,'disconnected')
@@ -175,7 +194,7 @@ def grant_auth_runtime(conn,role):
     name=sql.Identifier(role)
     conn.execute(sql.SQL('GRANT USAGE ON SCHEMA enterprise_auth TO {}').format(name))
     conn.execute(sql.SQL('GRANT SELECT ON enterprise_auth.schema_version,enterprise_auth.memberships,enterprise_auth.source_mappings TO {}').format(name))
-    conn.execute(sql.SQL('GRANT SELECT,INSERT,UPDATE,DELETE ON enterprise_auth.attempts TO {}').format(name))
+    conn.execute(sql.SQL('GRANT SELECT,INSERT,UPDATE,DELETE ON enterprise_auth.attempts,enterprise_auth.sessions TO {}').format(name))
     conn.execute(sql.SQL('GRANT SELECT,INSERT,UPDATE ON enterprise_auth.connections TO {}').format(name))
     conn.execute(sql.SQL('GRANT INSERT ON enterprise_auth.events TO {}').format(name))
     conn.execute(sql.SQL('GRANT USAGE ON ALL SEQUENCES IN SCHEMA enterprise_auth TO {}').format(name))

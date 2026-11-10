@@ -19,7 +19,7 @@ CREATE TABLE enterprise_auth.attempts(
  state_sha256 text PRIMARY KEY CHECK(state_sha256 ~ '^[0-9a-f]{64}$'),
  account_id text NOT NULL,principal_key text NOT NULL,source_id text NOT NULL,
  mapping_version bigint NOT NULL,browser_sha256 text NOT NULL,
- flow_ciphertext text NOT NULL,expires_at timestamptz NOT NULL,consumed_at timestamptz,
+ flow_ciphertext text NOT NULL,expires_at timestamptz NOT NULL,consumed_at timestamptz,completed_at timestamptz,
  FOREIGN KEY(account_id,principal_key,source_id)REFERENCES enterprise_auth.source_mappings
 );
 CREATE INDEX enterprise_auth_attempts_expiry ON enterprise_auth.attempts(expires_at);
@@ -35,8 +35,16 @@ CREATE TABLE enterprise_auth.connections(
 CREATE TABLE enterprise_auth.events(
  id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
  account_id text NOT NULL,principal_key text NOT NULL,source_id text NOT NULL,
- event text NOT NULL CHECK(event IN('connect_started','connect_completed','refresh_completed','needs_reconnect','disconnected')),
+ event text NOT NULL CHECK(event IN('connect_started','connect_completed','refresh_completed','needs_reconnect','disconnected','session_started','session_ended')),
  created_at timestamptz NOT NULL DEFAULT clock_timestamp()
 );
+CREATE TABLE enterprise_auth.sessions(
+ session_sha256 text PRIMARY KEY CHECK(session_sha256 ~ '^[0-9a-f]{64}$'),
+ account_id text NOT NULL,principal_key text NOT NULL,csrf_sha256 text NOT NULL,
+ nonce_ciphertext text NOT NULL,expires_at timestamptz NOT NULL,
+ created_at timestamptz NOT NULL DEFAULT clock_timestamp(),revoked_at timestamptz,
+ FOREIGN KEY(account_id,principal_key)REFERENCES enterprise_auth.memberships
+);
+CREATE INDEX enterprise_auth_sessions_owner ON enterprise_auth.sessions(account_id,principal_key,created_at);
 REVOKE ALL ON ALL TABLES IN SCHEMA enterprise_auth FROM PUBLIC;
 REVOKE ALL ON ALL SEQUENCES IN SCHEMA enterprise_auth FROM PUBLIC;

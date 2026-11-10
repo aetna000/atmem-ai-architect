@@ -156,3 +156,14 @@ pass; JS347/server214 pass. Evidence: specs/028-convergence-evaluation/evidence/
 Browser callbacks/session/CSRF, clean Linux dependency qualification, extraction,
 model/audit and all4 native export wiring remain unfinished. No source/IdP account
 or cloud operation ran; do not advertise the new capability or count a medium case.
+
+### Private browser/API checkpoint
+
+Implement company opaque sessions, CSRF/origin boundaries, fixed source callbacks,
+parallel source credential/retrieval composition and a pinned OIDC/PKCE browser
+workspace. Fix native cross-profile quota deadlock and late initial-consent
+revocation race at their source. Local evidence: specs/028-convergence-evaluation/evidence/20261110-private-browser-api-v1.
+34 policies, 36 SQL/API/session cases per PG17/18, 9 browser checks and JS347/
+server214/build pass. Vendor/model/source HTTP is scripted; no medium/export or
+native cloud claim. Next clean Linux/general-document/model/audit/provisioning and
+all4 native export/Spec Kit wiring, then remaining families and full28/held-out.

@@ -160,6 +160,23 @@ class EnterpriseCredentialTransactions(unittest.TestCase):
         with self.assertRaises(SourceDenied):self.store.credentials(self.principal,'sharepoint:drive',uncertain)
         self.assertEqual(called,[True])
 
+    def test_consent_completion_receipt_is_single_use_and_time_bounded(self):
+        mapping=self.connected()
+        with self.assertRaises(SourceDenied):self.store.save(self.principal,mapping,{'refresh_token':'SYNTHETIC-REPLAYED-CONSENT'})
+        state=self.store.begin(self.principal,'sharepoint:drive',BROWSER,{})
+        mapping,_=self.store.consume(self.principal,'sharepoint:drive',BROWSER,state)
+        with psycopg.connect(self.owner_dsn)as conn:conn.execute("UPDATE enterprise_auth.attempts SET consumed_at=clock_timestamp()-interval '2 minutes'WHERE state_sha256=%s",(mapping.attempt_sha256,))
+        with self.assertRaises(SourceDenied):self.store.save(self.principal,mapping,{'refresh_token':'SYNTHETIC-EXPIRED-CONSENT'})
+        self.assertEqual(self.state()[0],'connected')
+
+    def test_disconnect_during_initial_consent_exchange_cannot_be_undone(self):
+        self.connected()
+        state=self.store.begin(self.principal,'sharepoint:drive',BROWSER,{'flow':'new-consent'})
+        mapping,_=self.store.consume(self.principal,'sharepoint:drive',BROWSER,state)
+        self.store.disconnect(self.principal,'sharepoint:drive')
+        with self.assertRaises(SourceDenied):self.store.save(self.principal,mapping,{'refresh_token':'SYNTHETIC-LATE-CONSENT'})
+        self.assertEqual(self.state(),('revoked',None))
+
     def test_disconnect_during_refresh_cannot_be_undone_by_late_response(self):
         self.connected()
         def refresh(mapping,material):self.store.disconnect(self.principal,'sharepoint:drive');return self.rotated(mapping,material)

@@ -15,7 +15,7 @@ from enterprise_sources import SourceDenied
 def trusted_https(value):
     try:parts=urlsplit(value);port=parts.port
     except (TypeError,ValueError):raise ValueError('Invalid owned identity endpoint')from None
-    if parts.scheme!='https'or not parts.hostname or port not in {None,443}or parts.username or parts.password or parts.query or parts.fragment or any(ord(c)<33 for c in value):raise ValueError('Invalid owned identity endpoint')
+    if parts.scheme!='https'or not parts.hostname or (port is not None and not 1<=port<=65535)or parts.username or parts.password or parts.query or parts.fragment or any(ord(c)<33 for c in value):raise ValueError('Invalid owned identity endpoint')
     return value
 
 

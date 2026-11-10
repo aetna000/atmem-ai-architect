@@ -67,7 +67,7 @@ class GraphConsent:
     def start(self,principal,browser_nonce):
         self.store.authorize(principal)
         try:
-            app=self.app(msal.SerializableTokenCache());flow=app.initiate_auth_code_flow(self.SCOPES,redirect_uri=self.redirect,state=secrets.token_urlsafe(32),response_mode='form_post')
+            app=self.app(msal.SerializableTokenCache());flow=app.initiate_auth_code_flow(self.SCOPES,redirect_uri=self.redirect,state=secrets.token_urlsafe(32),response_mode='form_post',prompt='select_account')
             if not isinstance(flow,dict)or not flow.get('code_verifier')or not flow.get('state')or not flow.get('auth_uri'):raise SourceDenied('source_consent_unavailable')
             checked_url(flow['auth_uri'],{'login.microsoftonline.com'})
             self.store.begin(principal,self.source_id,browser_nonce,{'settings':self.settings,'native':flow},state=flow['state'])

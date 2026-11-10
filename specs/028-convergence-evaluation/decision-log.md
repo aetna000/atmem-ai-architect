@@ -583,3 +583,16 @@ uncertainty instead of blindly replaying a rotating token. Preserve initial real
 SQL privilege and SDK state-format failures and their source fixes. Current evidence
 is specs/028-convergence-evaluation/evidence/20261110-private-native-auth-v1; browser/controller, native cloud
 key transport, clean Linux/runtime and full export qualification remain open.
+
+### 2026-11-10 — Browser sessions and all-producer revocation fences
+
+Use an actual pinned OIDC browser client with in-memory token storage and one-use
+PKCE state, then opaque encrypted-context SQL sessions. Bind API actors to the owned
+company account; keep CSRF/origin enforcement separate from OAuth callback state.
+Lock both affected profile domains in sorted order. Initial consent completion,
+not only token refresh, must carry a single-use server receipt invalidated by
+Disconnect. Preserve the native failures/fixes and synthetic HTTPS browser evidence
+in specs/028-convergence-evaluation/evidence/20261110-private-browser-api-v1. The unreleased fresh schema hash
+changes; no existing database was migrated or adopted. Allow explicitly configured
+HTTPS ports for local TLS/company IdPs without relaxing fixed vendor transports.
+No new generator capability, whole-case acceptance or cloud operation is claimed.

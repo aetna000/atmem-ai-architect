@@ -72,9 +72,9 @@ in the associated evidence, with raw documentation retained locally):
 ## Next implementation dependencies
 
 1. Wire authenticated browser/API routes, company session handling, source consent
-   callbacks and CSRF controls. The identity verifier, native OAuth protocol drivers
-   and encrypted transactional store now exist; their HTTP/browser composition does
-   not. Graph uses MSAL PKCE with `form_post`; callback session/cookie handling must
+   callbacks and CSRF controls. The identity verifier, native OAuth protocol drivers, encrypted store and
+   HTTP/browser composition now exist and have local fixture evidence. Complete
+   native runtime factories, operator provisioning and deployment integration next. Graph uses MSAL PKCE with `form_post`; callback session/cookie handling must
    support that mode. Atlassian Cloud uses its documented confidential-client flow;
    callback access logs, referrers and error bodies must not expose its code.
 2. Connect isolated general-document extraction, actual cloud model transports and
@@ -122,10 +122,10 @@ and requires a fresh source consent. A stale in-progress refresh becomes reconne
 required instead of replaying the old token. This deliberately favors authorization
 and rotation safety over automatic recovery from an uncertain external transaction.
 Fresh consent must be presented as a simple source-connection action, not a technical
-question for the client. API/browser rendering is still to be implemented.
+question for the client. API/browser rendering now has local integration evidence; native deployment qualification remains open.
 
 `npm run test:enterprise:postgres` exercises real owned-loopback SQL with a newly
-created restricted broker role. The final 16 tests pass independently on PostgreSQL
+created restricted broker role. The final 18 credential tests pass independently on PostgreSQL
 17 and 18, including actual MSAL/Confluence protocol drivers connected to the
 transactional store with scripted vendor responses. `npm run test:enterprise` passes
 34 crypto/native-SDK/contract/policy tests. These commands use the existing local
@@ -139,3 +139,59 @@ Additional reviewed references:
 - [MSAL cache serialization](https://learn.microsoft.com/en-us/entra/msal/python/advanced/msal-python-token-cache-serialization)
 - [Fernet 50.0.2](https://cryptography.io/en/50.0.2/fernet/)
 - [PyJWT 2.15.1](https://pyjwt.readthedocs.io/en/2.15.1/usage.html)
+
+## Browser/API composition checkpoint
+
+`enterprise_http.py`, `enterprise_sessions.py` and `enterprise_web.py` now implement
+company-session bootstrap, source connection/status/disconnect, consent callbacks,
+question handling and static assets. Company login uses the pinned `oidc-client-ts`
+3.5.0 authorization-code/PKCE browser client. Tokens are removed from its in-memory
+user store after API bootstrap; only short-lived login flow state uses sessionStorage.
+Answers, questions and raw JWTs are not persisted in browser storage. Apache-2.0/MIT
+notices accompany the owned local bundle, with deterministic build/source hashes.
+
+Opaque Secure/HttpOnly/SameSite=None host cookies support native Graph `form_post`.
+Normal mutations require matching origin and CSRF; callbacks require the one-use
+server state, browser nonce, current company actor and fixed source account. Reads
+of session/CSRF data require a non-simple same-origin header and expose no CORS
+capability. A valid session from another account is rejected by this application.
+The callback never echoes upstream error bodies or leaves codes in the workspace URL.
+
+Company access and source access are distinct gates. Source credentials are acquired
+concurrently; the real retrieval coordinator rechecks permission/version before
+model context and release, and the HTTP layer independently checks the company
+session again before returning an answer. The frontend aborts/clears private content
+on logout or access loss and uses request epochs to prevent a late answer from
+restoring it. Private source titles/quotes render as text, not HTML. Errors tell a
+person to sign in, connect a source, contact their workspace owner, or retry; they do
+not expose validation paths, design revisions or raw technical exceptions.
+
+Two native failures guided source repairs. Opposite profile rotations could deadlock
+against session quotas; affected owner domains are now locked in a deterministic
+order. A late **initial consent** response could undo Disconnect even though refresh
+completion was fenced. Consent completion now requires its still-existing,
+uncompleted, recently consumed server receipt under a connection-domain lock.
+Disconnect removes those receipts; completion is one-use and cannot resurrect a
+revoked grant. No native HTTP call is retried to hide an uncertain external outcome.
+
+Final local checks: 34 contract/crypto/native-SDK policies, 18 credential + 14 HTTP +
+4 session tests on each PostgreSQL 17/18, and nine Chromium integration checks over
+owned loopback HTTPS. Browser checks include real company code/PKCE, cross-site
+source callback cookie behavior, both native OAuth drivers, native document adapter
+calls with scripted HTTP, chat/citations, malicious title rendering, desktop/mobile,
+revocation and sign-out during a delayed answer. Microsoft/Atlassian consent pages,
+JWK/profile/document HTTP and model responses are fixtures. These are not live IdP,
+source-account, source consistency, cloud/model, 10,000-document or deployment tests.
+
+HTTPS configuration accepts explicit valid ports, permitting owned loopback TLS and
+company IdPs using a configured port. Native Microsoft/Atlassian token/document
+transports still restrict their fixed vendor host/443 boundary; issuer/key/token
+configuration never comes from browser claims or question data.
+
+Membership/mapping provisioning, directory synchronization, key backup/rotation,
+clean Linux composition, isolated general-document extraction, native cloud models,
+durable query audit and four-provider Terraform/operator/Spec Kit export wiring
+remain dependencies. In particular, pairwise IdP subjects and stable directory IDs
+must be reconciled by the company identity profile/provisioning implementation; do
+not ask a basic user to invent subject IDs or silently self-activate membership.
+No public generator capability is advertised and no complete medium case is counted.
