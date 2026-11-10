@@ -52,5 +52,3 @@ def document_result(value, raw, declared):
     if not isinstance(text, str) or not text.strip() or len(text.encode('utf-8')) > MAX_TEXT or '\x00' in text:
         raise ExtractionError('invalid_document')
     return value
-
-
