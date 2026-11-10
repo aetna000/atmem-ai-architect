@@ -106,3 +106,12 @@ portable acceptance/Spec Kit phases are implemented locally. Current evidence: s
 Next qualify actual complete live conversations and exact resulting handoffs/
 runtime, then continue the remaining medium/hard families and full28/held-out.
 Fixture/schema/mock passes do not complete business cases or authorize deployment.
+
+### Exact live invoice artifact checkpoint
+
+Fresh IBM rerun and independent static checks passed. Four actual live exports
+passed native schema/mock validation (42 plans) and their delivered portable Linux
+application tests (333 checks total, real loopback PG18; explicit cloud fixtures).
+Evidence: specs/028-convergence-evaluation/evidence/20261110-invoice-live-native-v3. Six artifact admission regressions and 343 JS tests pass.
+Zero complete medium cases counted until composed semantics/recovery/security are
+reconciled. Remaining families and final full28/held-out work remain in progress.

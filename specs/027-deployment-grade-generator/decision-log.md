@@ -365,3 +365,12 @@ Independent assessor updated for official Azure AzAPI with stricter source/scope
 checks; original finding preserved. 337 JS and 214 server pass. Zero complete medium
 cases counted until independent package/runtime/semantic acceptance. Remaining
 families/full28/held-out unfinished. No cloud operation. Evidence: specs/028-convergence-evaluation/evidence/20261110-invoice-live-v2
+
+### 2026-11-10 — Qualify original live export bytes
+
+Add `--case` native qualification using original export digests and exact compiler
+reproduction as execution admission. Copy original bytes to fresh local outputs;
+never patch an original handoff. Native provider tests and portable runtime tests
+remain distinct from reproduction and from complete-project qualification. Preserve
+new IBM full conversation, four native receipts and four exact Linux test suites in
+specs/028-convergence-evaluation/evidence/20261110-invoice-live-native-v3. No cloud operations or readiness promotion.

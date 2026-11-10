@@ -1,0 +1,274 @@
+{
+  "message": "We\u2019ll build an IBM Cloud invoice workflow that extracts the four fields, queues them for review and protects accounting submissions against duplicate retries. I\u2019ve sketched the application and existing accounting connection; accounting compatibility still needs testing.\n\n**Which country must invoice data stay in?** This determines storage and AI processing locations; for example, \u201cAustralia\u201d, \u201cno restriction\u201d or \u201cnot sure\u201d.",
+  "followUp": {
+    "question": "Which country must invoice data stay in?",
+    "why": "This determines storage and AI processing locations, including whether the existing accounting destination fits the residency boundary.",
+    "example": "Australia, no restriction, or not sure.",
+    "topic": "data"
+  },
+  "phase": "Architecture",
+  "proposal": {
+    "baseRevision": 1,
+    "title": "IBM invoice intake, review and approved accounting delivery",
+    "body": "First working design covering PDF upload, extraction, durable review and approved accounting delivery. The invoice-workflow component is a composed delivery unit whose internal resources are owned together. Existing browsers and accounting remain outside provisioning scope. Country, retention and destination compatibility remain unresolved; no deployment or combined-system verification is claimed.",
+    "next": {
+      "version": 1,
+      "revision": 1,
+      "name": "Asynchronous document intake",
+      "provider": "ibm",
+      "requirements": "Users upload PDF invoices. Extract the supplier, invoice date, total and currency into a review queue. Delivery can repeat; retries must not create duplicate invoices. A reviewer approves a result before it is sent to our existing accounting API. Use IBM Cloud. Recommend a coherent system and the engineering choices. Ask only a small material business question when needed; do not make me configure the system.",
+      "nodes": [
+        {
+          "id": "staff-browser",
+          "type": "resource",
+          "position": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "data": {
+            "label": "Staff upload and review",
+            "kind": "tool",
+            "provider": "tools",
+            "description": "Existing staff browsers upload PDF invoices, inspect extracted fields alongside source evidence, correct results and submit approval. Browser controls do not grant reviewer authorization; the application enforces membership and permissions.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "deploymentMode": "reference",
+            "poc": false,
+            "role": "app",
+            "topologyGroup": "Staff access",
+            "service": "Web browser",
+            "binding": "web-browser"
+          }
+        },
+        {
+          "id": "invoice-workflow",
+          "type": "resource",
+          "position": {
+            "x": 480.0,
+            "y": 0.0
+          },
+          "data": {
+            "label": "Invoice intake and approval",
+            "kind": "agent",
+            "provider": "ibm",
+            "description": "Proposed composed invoice-workflow delivery unit on IBM Code Engine. Owns browser/API, background worker, isolated PDF/OCR parser, IBM Cloud Databases for PostgreSQL transactional queue/outbox and review state, private versioned IBM Cloud Object Storage originals, staff sign-in through IBM Cloud App ID, separate workload identities and regional watsonx extraction. Extracts supplier, invoice date, total and currency with source evidence; uncertain or invalid extraction remains in review. Only the parser handles untrusted PDF bytes, without model, database or accounting identity. Server-side reviewer membership gates approval of the exact result revision and destination operation. Durable operation identities and bounded retries protect repeated delivery; uncertain accounting outcomes are held for reconciliation rather than blindly resent. Owns audit history, maintenance, retention cleanup, recovery procedures and monitoring tasks; operating ownership and retention policy remain to be agreed. Proposed initial scope is staff-uploaded invoices and approved accounting submission. Model accuracy, native identity, service availability, private routing, restore, alerts and accounting compatibility require destination acceptance. Country and region remain unresolved.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "deploymentMode": "create",
+            "poc": false,
+            "role": "app",
+            "topologyGroup": "Invoice processing",
+            "service": "IBM Code Engine",
+            "implementation": "invoice-workflow"
+          }
+        },
+        {
+          "id": "existing-accounting",
+          "type": "resource",
+          "position": {
+            "x": 960.0,
+            "y": 0.0
+          },
+          "data": {
+            "label": "Existing accounting API",
+            "kind": "tool",
+            "provider": "tools",
+            "description": "Client-owned existing accounting service, preserved outside provisioning scope. Receives only reviewer-approved invoice fields through the guarded accounting adapter. Its actual API, authorization, idempotency durability and reconciliation behavior are unknown. The destination must implement and independently pass the normalized-action-v1 contract and idempotency acceptance; this diagram does not establish native compatibility. Ambiguous outcomes require reconciliation before another send.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "deploymentMode": "reference",
+            "poc": false,
+            "role": "app",
+            "topologyGroup": "Accounting delivery",
+            "service": "Existing accounting API",
+            "binding": "existing-service"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "staff-to-invoice-workflow",
+          "source": "staff-browser",
+          "target": "invoice-workflow",
+          "type": "smoothstep",
+          "label": "HTTPS: sign in, upload PDF, review fields and approve",
+          "integration": "browser-https"
+        },
+        {
+          "id": "workflow-to-accounting",
+          "source": "invoice-workflow",
+          "target": "existing-accounting",
+          "type": "smoothstep",
+          "label": "HTTPS: approved invoice, stable operation ID and receipt reconciliation",
+          "integration": "approved-accounting-api"
+        }
+      ]
+    }
+  },
+  "requirementDrafts": [
+    {
+      "rationale": "Makes the requested outcome observable and prevents incomplete or uncertain extraction from bypassing review.",
+      "basis": "\u201cUsers upload PDF invoices. Extract the supplier, invoice date, total and currency into a review queue.\u201d Source evidence and handling of uncertain extraction are engineering proposals.",
+      "id": "ai-invoice-extraction",
+      "statement": "The system shall accept PDF invoices and persist supplier, invoice date, total and currency in a review queue, linked to the original document; failed or uncertain extraction shall remain visible for staff resolution.",
+      "kind": "functional",
+      "category": "other",
+      "priority": "must",
+      "links": [
+        "staff-browser",
+        "invoice-workflow"
+      ]
+    },
+    {
+      "rationale": "Prevents model output or unauthorized users from triggering accounting actions, and prevents approval from being reused after the reviewed result changes.",
+      "basis": "\u201cA reviewer approves a result before it is sent to our existing accounting API.\u201d Server-side reviewer authorization and revision-bound approval are proposed controls.",
+      "id": "ai-invoice-approval",
+      "statement": "Accounting submission shall require an authorized reviewer\u2019s recorded approval of the exact result revision and destination operation; changing the result shall require renewed approval, and extraction alone shall never authorize submission.",
+      "kind": "functional",
+      "category": "security",
+      "priority": "must",
+      "links": [
+        "staff-browser",
+        "invoice-workflow",
+        "existing-accounting"
+      ]
+    },
+    {
+      "rationale": "Retries after a crash or lost response can create duplicate financial records; durable identities and destination acceptance are necessary to establish safe delivery.",
+      "basis": "\u201cDelivery can repeat; retries must not create duplicate invoices.\u201d Durable operation identity, uncertain-outcome fencing and reconciliation are proposed engineering mechanisms supported by the supplied durable-approval practice.",
+      "id": "ai-invoice-idempotency",
+      "statement": "Repeated delivery and worker retries shall not create duplicate invoice records or accounting submissions. Persist workflow state and operation identity durably, retry only under a tested destination idempotency contract, and hold ambiguous outcomes for reconciliation before resubmission.",
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "priority": "must",
+      "links": [
+        "invoice-workflow",
+        "existing-accounting"
+      ]
+    }
+  ],
+  "decisionUpdates": [
+    {
+      "subject": "platform.cloud",
+      "value": "ibm",
+      "sourceText": "Use IBM Cloud."
+    }
+  ],
+  "contextUsed": {
+    "status": "ready",
+    "enabled": true,
+    "engine": "AtMem 2.3.10 core SDK",
+    "recordsUsed": [],
+    "knowledgeRecordIds": [
+      "rec_4593ecfca95142ab995cb4cb2061db98",
+      "rec_b25fe81bd0e94108b4bd62876a9c08d2",
+      "rec_8b713190d6d34c7c816a59e988be0e0c",
+      "rec_dc96c5f4f80949d3be6afd509b99149c",
+      "rec_89a025119ff9405792e1a5f97ce114c0",
+      "rec_c461969004434df48da1fba5cb0be08a",
+      "rec_c21edf8732084e819bc257914a501bf9",
+      "rec_4b46d8818fa443fabb8d928c18d819a0"
+    ],
+    "skills": [
+      {
+        "id": "composition",
+        "name": "Architecture composition and engineering judgment",
+        "provider": "all",
+        "stages": [
+          "discover",
+          "design",
+          "review",
+          "deploy"
+        ],
+        "version": "1.0.0",
+        "digest": "df2291a4e0d48a979d4f7c6e99da046bdedfc0e54d41e0b5379b2bc8086b5be6",
+        "summary": "Choose and compose blocks through responsibility, contracts, state, identity, failure modes and trade-offs; verify the complete system.",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "architecture",
+        "name": "AI architecture and discovery",
+        "provider": "all",
+        "stages": [
+          "discover",
+          "design",
+          "review"
+        ],
+        "version": "1.3.0",
+        "digest": "c5cc1056e3ed9a00799882f3a7f4ff2e957e4941fe10e4fd865f5c02ceb01058",
+        "summary": "Clarify outcome, users, existing systems, data ownership and constraints. Evolve the diagram incrementally. Derive functional requirements and propose measurable quality targets as assumptions needing confirmation. Compare clouds against the actual requirements; do not assume an enterprise identity provider or a vendor. Keep proposed and accepted decisions distinct.",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "ibm",
+        "name": "IBM Cloud architecture guidance",
+        "provider": "ibm",
+        "stages": [
+          "design",
+          "review",
+          "estimate",
+          "deploy"
+        ],
+        "version": "1.0.0",
+        "digest": "658048ca51abcef3583e00a3b707691237ba956258ea0151d3f9062cd1cebcb9",
+        "summary": "Match watsonx, data services, identity, application runtime and observability to the same requirements used for other clouds. Check region, data residency, model access and IBM plan before pricing. Use a sourced IBM quote; do not substitute an AWS/Azure rate or claim an unsupported deployment is ready.",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      }
+    ],
+    "tools": [],
+    "boundary": "AtMem AI Architect \u2192 native client",
+    "contextDigest": "4175549bd1b3d236120ebf0b07a5413472e49d62829b378639c0304e0e4df527",
+    "projectId": "evaluation-ibm-03-document-intake",
+    "responseRepairAttempts": 0,
+    "modelResponseEncodings": [
+      "compact_patch"
+    ],
+    "modelResponseJsonBytes": 8755
+  },
+  "priceQuotes": []
+}

@@ -193,7 +193,7 @@
     "Explain trade-offs and adapt to changed constraints",
     "Verify composed systems on unseen scenarios"
   ],
-  "currentEvidence": "specs/028-convergence-evaluation/evidence/20261110-invoice-live-v2",
+  "currentEvidence": "specs/028-convergence-evaluation/evidence/20261110-invoice-live-native-v3",
   "widerGeneratorStatus": "in_progress; two simple four-provider families locally checked, with shared IBM registry repair; invoice runtime and isolated native adapters checked on four providers. Whole-project medium/hard integration and acceptance unfinished.",
   "capabilityProgress": {
     "durableWorkflowCore": {
@@ -316,7 +316,8 @@
     "specs/028-convergence-evaluation/evidence/20261110-ibm-operating-tasks",
     "specs/028-convergence-evaluation/evidence/20261110-ibm-operating-jobs",
     "specs/028-convergence-evaluation/evidence/20261110-invoice-public-export",
-    "specs/028-convergence-evaluation/evidence/20261110-invoice-live-v2"
+    "specs/028-convergence-evaluation/evidence/20261110-invoice-live-v2",
+    "specs/028-convergence-evaluation/evidence/20261110-invoice-live-native-v3"
   ],
   "updatedAt": "2026-11-10T08:17:26.345492+00:00",
   "foundationValidation": {
@@ -552,19 +553,65 @@
         "userExchanges": 3,
         "questions": 1,
         "technicalQuestions": 0,
-        "staticCandidate": false,
+        "staticCandidate": true,
         "nearDeploymentQualified": false
       }
     ],
-    "javascript": 337,
+    "javascript": 343,
     "server": 214,
     "completeMediumCasesQualified": 0,
-    "ibmRegionReplay": "Canonical au-syd, preserved uncertainty, no new question; full fresh rerun pending.",
+    "ibmRegionReplay": "Fresh full IBM rerun passed, canonical region, 3 exchanges / 1 business question / 0 technical questions / 0 internal repairs; independent static assessment passed.",
     "cloudOperations": false,
     "next": [
-      "Fresh complete IBM conversation after producer repair.",
-      "Independently qualify exact live packages and semantic/runtime behavior before counting cases.",
+      "Qualify exact live package composed semantics/recovery/security before counting cases.",
       "Remaining families, repaired full28 and held-out variants."
+    ]
+  },
+  "invoiceLiveNativeCheckpoint": {
+    "status": "in_progress",
+    "cloudOperations": false,
+    "nearDeploymentQualified": false,
+    "completeMediumCasesQualified": 0,
+    "javascriptTests": 343,
+    "serverTestsPreviouslyPassed": 214,
+    "cases": [
+      {
+        "provider": "aws",
+        "nativePassed": true,
+        "mockPlansPassed": 9,
+        "portableChecksPassed": 86,
+        "sourceHashesMatchOriginalExport": true,
+        "nearDeploymentQualified": false
+      },
+      {
+        "provider": "azure",
+        "nativePassed": true,
+        "mockPlansPassed": 11,
+        "portableChecksPassed": 83,
+        "sourceHashesMatchOriginalExport": true,
+        "nearDeploymentQualified": false
+      },
+      {
+        "provider": "gcp",
+        "nativePassed": true,
+        "mockPlansPassed": 10,
+        "portableChecksPassed": 82,
+        "sourceHashesMatchOriginalExport": true,
+        "nearDeploymentQualified": false
+      },
+      {
+        "provider": "ibm",
+        "nativePassed": true,
+        "mockPlansPassed": 12,
+        "portableChecksPassed": 82,
+        "sourceHashesMatchOriginalExport": true,
+        "nearDeploymentQualified": false
+      }
+    ],
+    "evidence": "specs/028-convergence-evaluation/evidence/20261110-invoice-live-native-v3",
+    "next": [
+      "Reconcile composed OCR/model, runtime/recovery and security evidence for exact invoice exports.",
+      "Complete remaining medium/hard families; rerun final 28 and held-out cases."
     ]
   }
 }
