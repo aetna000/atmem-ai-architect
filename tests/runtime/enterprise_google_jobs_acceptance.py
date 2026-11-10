@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import sys
 import tempfile
+import uuid
 import unittest
 from unittest.mock import patch
 ROOT = Path(__file__).resolve().parents[2]
@@ -12,6 +13,27 @@ sys.path[:0] = [str(ROOT / 'src/runtime'), str(ROOT / '.local/azure-runtime-sdk'
 from enterprise_google_jobs import GoogleBatchDocuments, GoogleDocumentApi, configuration, job_spec, transfer_metadata
 from enterprise_document_job import request
 from enterprise_google_transfer import metadata as checked_transfer, download, upload
+from enterprise_document_jobs import FileJobLease
+
+
+class MemoryLedger:
+    """Explicit HTTP-policy fixture only; persistent recovery is tested in SQL."""
+    def __init__(self): self.rows={}
+    def allocate(self, identifier):
+        lease=FileJobLease(identifier,str(uuid.uuid4()));self.rows[identifier]={'owner':lease,'phase':'input_pending','state':'active'};return lease
+    def guard(self, lease):
+        row=self.rows[lease.request_id]
+        if row['owner']!=lease or row['state']!='active':raise SourceUnavailable('document_execution_lease_changed')
+    def advance(self, lease, phase):self.guard(lease);self.rows[lease.request_id]['phase']=phase
+    def claim_owner(self, lease):
+        self.guard(lease);cleanup=FileJobLease(lease.request_id,str(uuid.uuid4()));self.rows[lease.request_id].update(state='cleaning',cleanup=cleanup);return cleanup
+    def completed(self, lease):
+        row=self.rows[lease.request_id]
+        if row['cleanup']!=lease:raise SourceUnavailable('document_cleanup_lease_changed')
+        if row['phase']=='succeeded':del self.rows[lease.request_id];return True
+        row['state']='settling';return False
+    def failed(self, lease):self.rows[lease.request_id]['state']='pending'
+    def claim_due(self):return None
 from enterprise_sources import SourceUnavailable, SourceDenied
 
 
@@ -87,7 +109,7 @@ class NativeHttp:
 class GoogleDocumentJobs(unittest.TestCase):
     def setUp(self):
         self.http = NativeHttp(); self.api = GoogleDocumentApi(session=self.http, credential=lambda: 'SYNTHETIC-NATIVE-TOKEN')
-        self.runner = GoogleBatchDocuments(config(), api=self.api, poll_seconds=.01)
+        self.runner = GoogleBatchDocuments(config(), api=self.api, ledger=MemoryLedger(), poll_seconds=.01)
         self.raw = b'PRIVATE approved policy.'; self.mime = 'text/plain'
 
     def test_job_matches_pinned_independent_official_discovery_schema(self):
@@ -129,6 +151,11 @@ class GoogleDocumentJobs(unittest.TestCase):
         def deny(): raise SourceDenied('source_access_denied')
         with self.assertRaises(SourceDenied): self.runner.from_source(self.raw, self.mime, deny)
         self.assertEqual(self.http.calls, [])
+
+    def test_untracked_live_execution_is_rejected_before_remote_creation(self):
+        runner=GoogleBatchDocuments(config(),api=self.api)
+        with self.assertRaisesRegex(SourceUnavailable,'document_job_recovery_required'):runner.from_source(self.raw,self.mime,lambda:None)
+        self.assertEqual(self.http.calls,[])
 
     def test_revocation_during_job_wait_withholds_result_and_cleans_owned_resources(self):
         checks = []

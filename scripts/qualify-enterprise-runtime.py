@@ -24,6 +24,7 @@ CORE = ['enterprise_identity.py', 'enterprise_sources.py', 'enterprise_knowledge
         'enterprise_audit.py', 'enterprise_audit_schema.sql', 'enterprise_models.py', 'enterprise_secrets.py',
         'enterprise_configuration.py', 'enterprise_native.py', 'enterprise_operator.py', 'workflow_connection.py', 'workflow_errors.py',
         'enterprise_google_jobs.py', 'enterprise_google_transfer.py',
+        'enterprise_document_jobs.py', 'enterprise_document_jobs_schema.sql',
         'aws_json_model.py', 'azure_structured.py', 'gcp_structured.py', 'ibm_structured.py',
         'structured_output.py', 'structured_http.py', 'policy_review.py',
         'enterprise_extraction_cache.py', 'enterprise_extraction_schema.sql',
@@ -31,7 +32,7 @@ CORE = ['enterprise_identity.py', 'enterprise_sources.py', 'enterprise_knowledge
         'enterprise-web.html', 'enterprise-web-app.js', 'enterprise-web.css', 'enterprise-web-notices.txt', 'enterprise-web-lock.json']
 SQL = {'enterprise_auth_postgres': 21, 'enterprise_sessions_postgres': 4,
        'enterprise_queries_postgres': 19, 'enterprise_extraction_cache_postgres': 14, 'enterprise_audit_postgres': 9,
-       'enterprise_operator_postgres':11}
+       'enterprise_operator_postgres':11,'enterprise_document_jobs_postgres':10}
 
 
 def qualify(args):
@@ -148,7 +149,7 @@ sys.path.insert(0,'/app')
 '''
             result = run('policy-tests', [*restricted, '--network', 'none', image,
                 'python', '-I', '-c', loader + "import unittest;unittest.main(module=None,argv=['unittest','discover','-s','/tmp/workspace/tests/runtime','-p','enterprise_*_acceptance.py','-v'])"], data=json.dumps(payload).encode())
-            if not re.search(rb'Ran 94 tests in [^\n]+\n\nOK\s*$', result):
+            if not re.search(rb'Ran 95 tests in [^\n]+\n\nOK\s*$', result):
                 raise ValueError('Unexpected private policy test inventory')
             for version in [17, 18]:
                 name = 'atmem-durable-qualification' + ('-pg18' if version == 18 else '')
@@ -188,7 +189,7 @@ print(json.dumps({'postgresVersionNum':version}))
         finally:
             (output / 'receipt.json').write_text(json.dumps({'recordedAt': datetime.now(timezone.utc).isoformat(),
                 'passed': passed, 'imageId': image, 'checks': checks, 'sourceHashes': hashes,
-                'provider':args.provider,'packages': len(lock['sources']), 'policyTests': 94, 'sqlTestsPerVersion': sum(SQL.values()),
+                'provider':args.provider,'packages': len(lock['sources']), 'policyTests': 95, 'sqlTestsPerVersion': sum(SQL.values()),
                 'postgresVersions': [17, 18], 'securityAccepted': False, 'cloudOperations': False,
                 'scope': 'Clean Linux private application/factory/operator dependencies. Actual crypto/SQL/Procrastinate/bootstrap/enrollment/revocation; native model serializers with scripted HTTP. Assembled HTTP API/worker tests run separately on the host. No native account/model quality, per-file cloud launcher/isolation, complete-project or deployment acceptance.'}, indent=2) + '\n')
 

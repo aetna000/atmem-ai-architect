@@ -111,6 +111,24 @@ class NativeFactories(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.json()['result']['citations'][0]['quote'],'Private policy requires ninety days.')
         self.assertEqual(http.operation_polls,1);self.assertEqual(sum(method=='DELETE'for method,_,_ in http.calls),3)
 
+    async def test_question_worker_runs_document_recovery_as_an_independent_background_task(self):
+        from enterprise_google_jobs import GoogleBatchDocuments,GoogleDocumentApi
+        from enterprise_google_jobs_acceptance import NativeHttp,config
+        http=NativeHttp();http.extracted_text='Private policy requires ninety days.'
+        owned=config();runner=GoogleBatchDocuments(owned,api=GoogleDocumentApi(session=http,credential=lambda:'SYNTHETIC-NATIVE-TOKEN'),poll_seconds=.01)
+        api=self.make('gcp','api');await self.browser(api)
+        worker=self.make('gcp','worker',executor=DocumentExecutor(REVISION,runner),environment_updates={'DATABASE_SERVICE_ACCOUNT':owned['workerServiceAccount']})
+        runner.ledger.allocate('a'*64)
+        with psycopg.connect(self.owner_dsn)as conn:conn.execute("UPDATE enterprise_document_jobs.jobs SET expires_at=clock_timestamp()-interval '1 second'WHERE account_id=%s AND request_id=%s",(self.f.account,'a'*64))
+        identity=await self.submit()
+        await worker.worker().run(wait=False,concurrency=1,install_signal_handlers=False,listen_notify=False,fetch_job_polling_interval=.01)
+        self.assertEqual((await self.status(identity)).json()['status'],'ready')
+        for _ in range(100):
+            with psycopg.connect(self.owner_dsn)as conn:state=conn.execute('SELECT state FROM enterprise_document_jobs.jobs WHERE account_id=%s AND request_id=%s',(self.f.account,'a'*64)).fetchone()[0]
+            if state=='settling':break
+            await asyncio.sleep(.05)
+        self.assertEqual(state,'settling');self.assertGreaterEqual(http.operation_polls,2)
+
     async def test_api_has_no_sync_inference_route_and_cannot_start_worker_or_receive_adapters(self):
         api=self.make('gcp','api');await self.browser(api)
         response=await self.f.client.post('/api/ask',headers=self.f.headers(),json={'question':'What is our retention policy?'})
@@ -131,7 +149,7 @@ class NativeFactories(unittest.IsolatedAsyncioTestCase):
     async def test_api_startup_rejects_worker_database_and_inherited_authority_or_history_writes(self):
         with self.assertRaises(ValueError):self.make('gcp','api',database=lambda:self.worker_dsn)
         role=conninfo_to_dict(self.app_dsn)['user']
-        for table,privilege in [('enterprise_auth.memberships','UPDATE'),('enterprise_audit.events','SELECT')]:
+        for table,privilege in [('enterprise_auth.memberships','UPDATE'),('enterprise_audit.events','SELECT'),('enterprise_document_jobs.jobs','SELECT')]:
             try:
                 with psycopg.connect(self.owner_dsn)as conn:conn.execute(sql.SQL('GRANT '+privilege+' ON '+table+' TO {}').format(sql.Identifier(role)))
                 with self.assertRaises(ValueError):self.make('gcp','api')

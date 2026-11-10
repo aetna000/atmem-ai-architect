@@ -17,6 +17,7 @@ from enterprise_auth_store import initialize_auth_store,grant_auth_runtime
 from enterprise_audit import initialize_audit,grant_audit_writer
 from enterprise_extraction_cache import initialize_extraction_cache,grant_extraction_runtime
 from enterprise_queries import initialize_query_store,grant_query_runtime
+from enterprise_document_jobs import initialize_document_jobs,grant_document_jobs_runtime
 from enterprise_secrets import SecretFiles
 from public_faq import object_pairs
 
@@ -25,12 +26,12 @@ def initialize(conn,api_role,worker_role):
     if conn.autocommit or not isinstance(api_role,str)or not isinstance(worker_role,str)or api_role==worker_role:
         raise ValueError('Use an operator transaction and separate existing API/worker SQL identities')
     with conn.transaction():
-        existing=conn.execute("SELECT count(*)FROM pg_namespace WHERE nspname IN('enterprise_auth','enterprise_queries','enterprise_extractions','enterprise_audit')").fetchone()[0]
+        existing=conn.execute("SELECT count(*)FROM pg_namespace WHERE nspname IN('enterprise_auth','enterprise_queries','enterprise_extractions','enterprise_audit','enterprise_document_jobs')").fetchone()[0]
         if existing:raise ValueError('Private schemas already exist; no adoption or implicit migration is permitted')
-        initialize_auth_store(conn);initialize_query_store(conn);initialize_extraction_cache(conn);initialize_audit(conn)
+        initialize_auth_store(conn);initialize_query_store(conn);initialize_extraction_cache(conn);initialize_audit(conn);initialize_document_jobs(conn)
         grant_auth_runtime(conn,api_role);grant_query_runtime(conn,api_role);grant_audit_writer(conn,api_role)
         grant_auth_runtime(conn,worker_role);grant_query_runtime(conn,worker_role,worker=True)
-        grant_extraction_runtime(conn,worker_role);grant_audit_writer(conn,worker_role)
+        grant_extraction_runtime(conn,worker_role);grant_audit_writer(conn,worker_role);grant_document_jobs_runtime(conn,worker_role)
 
 
 def checked_identity(metadata,subject):

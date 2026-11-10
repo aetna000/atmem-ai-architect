@@ -6,6 +6,7 @@ no FUSE, identity mounts, background listener or shared parser service is used.
 Cloud IAM/network/provisioning remain required parts of the generated composition.
 """
 import json
+import hashlib
 import re
 import time
 import uuid
@@ -16,6 +17,7 @@ from enterprise_document_contract import MAX_INPUT
 from enterprise_document_job import MAX_ENVELOPE, request, result, unique
 from enterprise_sources import SourceUnavailable
 from workflow_connection import google_metadata_token
+from enterprise_document_jobs import DocumentJobLedger
 
 
 def configuration(value):
@@ -160,7 +162,7 @@ class GoogleDocumentObjects:
 
 class GoogleBatchDocuments:
     """Controller lifecycle; successful delete requests alone do not prove exit."""
-    def __init__(self, config, *, api=None, deadline=140, poll_seconds=1):
+    def __init__(self, config, *, api=None, ledger=None, deadline=140, poll_seconds=1):
         self.config = MappingProxyType(configuration(config))
         if type(deadline) is not int or not 1 <= deadline <= 140 or type(poll_seconds) not in {int, float} or not .01 <= poll_seconds <= 2:
             raise ValueError('Use bounded owned document deadlines')
@@ -169,6 +171,8 @@ class GoogleBatchDocuments:
         self.deadline, self.poll_seconds = deadline, poll_seconds
         self.parent = 'projects/' + self.config['projectId'] + '/locations/' + self.config['region']
         self.base = 'https://batch.googleapis.com/v1/' + self.parent
+        self.target = hashlib.sha256(json.dumps({key:self.config[key]for key in ['projectId','region','bucket']},sort_keys=True,separators=(',',':')).encode()).hexdigest()
+        self.ledger = ledger
 
     def __call__(self, raw, mime):
         raise SourceUnavailable('source_validation_required')
@@ -179,6 +183,28 @@ class GoogleBatchDocuments:
             environment.get('DATABASE_SERVICE_ACCOUNT') != self.config['workerServiceAccount']):
             raise ValueError('Document execution must match the selected provider, project, region and worker identity')
 
+    def attach_runtime(self, auth, account_id):
+        if self.ledger is None:self.ledger=DocumentJobLedger(auth,account_id,self.target)
+        elif (not isinstance(self.ledger,DocumentJobLedger)or self.ledger.auth is not auth or
+              self.ledger.account_id!=account_id or self.ledger.target!=self.target):
+            raise ValueError('Use the owned persistent worker cleanup ledger')
+
+    def reconcile(self, *, limit=5):
+        if self.ledger is None:raise SourceUnavailable('document_job_recovery_required')
+        if type(limit)is not int or not 1<=limit<=20:raise ValueError('Use a bounded cleanup batch')
+        counts={'claimed':0,'retired':0,'settling':0,'failed':0}
+        for _ in range(limit):
+            lease=self.ledger.claim_due()
+            if lease is None:break
+            counts['claimed']+=1
+            try:
+                self.cleanup(self.parent+'/jobs/document-'+lease.request_id[:32],lease.request_id)
+            except Exception:
+                self.ledger.failed(lease);counts['failed']+=1
+            else:
+                retired=self.ledger.completed(lease);counts['retired'if retired else'settling']+=1
+        return counts
+
     def from_source(self, raw, mime, guard):
         if not callable(guard): raise ValueError('Supply the current source/company/job check')
         identifier = uuid.uuid4().hex + uuid.uuid4().hex
@@ -186,19 +212,24 @@ class GoogleBatchDocuments:
         name = self.parent + '/jobs/document-' + identifier[:32]
         url = 'https://batch.googleapis.com/v1/' + name
         started = time.monotonic()
-        attempted = False
+        guard()
+        if self.ledger is None:raise SourceUnavailable('document_job_recovery_required')
+        lease=self.ledger.allocate(identifier)
+        def check():
+            self.ledger.guard(lease);guard();self.ledger.guard(lease)
         # Cleanup always inspects this unique owned name, including lost create
         # acknowledgements. It never lists/deletes another project's jobs/files.
         try:
-            guard()
-            attempted = True
+            self.ledger.guard(lease)
             generation = self.objects.put(identifier, 'input', raw)
-            guard()
+            self.ledger.advance(lease,'job_pending')
+            check()
             value = self.api.json('POST', self.base + '/jobs', params={'jobId': name.rsplit('/', 1)[1]},
                 body=job_spec(dict(self.config), metadata, generation))
             if value.get('name') != name: raise SourceUnavailable('document_job_unavailable')
+            self.ledger.advance(lease,'job_running')
             while True:
-                guard()
+                check()
                 if time.monotonic() - started > self.deadline: raise SourceUnavailable('document_job_unavailable')
                 current = self.api.json('GET', url)
                 if current.get('name') != name: raise SourceUnavailable('document_job_unavailable')
@@ -206,13 +237,19 @@ class GoogleBatchDocuments:
                 if state == 'SUCCEEDED': break
                 if state not in {'QUEUED', 'SCHEDULED', 'RUNNING'}: raise SourceUnavailable('document_job_unavailable')
                 time.sleep(self.poll_seconds)
-            guard()
+            self.ledger.advance(lease,'succeeded')
+            check()
             encoded = self.objects.load(identifier, 'result')
             value = result(raw, mime, identifier, encoded)
-            guard()
+            check()
             return value
         finally:
-            if attempted: self.cleanup(name, identifier)
+            cleanup=self.ledger.claim_owner(lease)
+            try:self.cleanup(name,identifier)
+            except BaseException:
+                self.ledger.failed(cleanup)
+                raise
+            else:self.ledger.completed(cleanup)
 
     def cleanup(self, name, identifier):
         failure = False

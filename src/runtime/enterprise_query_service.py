@@ -77,8 +77,10 @@ class EnterpriseAnswers:
 
 
 class EnterpriseQueryWorker:
-    def __init__(self,dsn,service):
+    def __init__(self,dsn,service,*,document_recovery=None):
+        if document_recovery is not None and not callable(document_recovery):raise ValueError('Use the owned document reconciler')
         self.service=service
+        self.document_recovery=document_recovery
         async def refresh():return await asyncio.to_thread(dsn)
         self.app=procrastinate.App(connector=procrastinate.PsycopgConnector(conninfo=refresh if callable(dsn)else dsn,min_size=1,max_size=4,max_lifetime=600,kwargs={'connect_timeout':5,'options':'-c search_path=pg_catalog,enterprise_queries,pg_temp -c statement_timeout=10000 -c lock_timeout=3000'}))
         async def execute(query_id):await asyncio.to_thread(service.execute,query_id)
@@ -93,8 +95,17 @@ class EnterpriseQueryWorker:
                     if self.service.extraction_cache is not None:await asyncio.to_thread(self.service.extraction_cache.purge)
                 except(psycopg.OperationalError,SourceUnavailable):logging.getLogger(__name__).warning('Question recovery is temporarily unavailable')
                 await asyncio.sleep(15)
+        async def documents():
+            # Separate loop: slow native deletion never blocks query lease or
+            # cache recovery. SQL cleanup claims prevent overlapping ownership.
+            while True:
+                try:await asyncio.to_thread(self.document_recovery,limit=1)
+                except(psycopg.Error,SourceUnavailable):logging.getLogger(__name__).warning('Document cleanup is temporarily unavailable')
+                await asyncio.sleep(15)
         async with self.app.open_async():
             async with asyncio.TaskGroup()as group:
                 recovery=group.create_task(recover())
+                cleanup=group.create_task(documents())if self.document_recovery is not None else None
                 await self.app.run_worker_async(queues=[self.task.queue],concurrency=concurrency,**options)
                 recovery.cancel()
+                if cleanup is not None:cleanup.cancel()

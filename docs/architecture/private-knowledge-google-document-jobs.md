@@ -58,10 +58,10 @@ The [native job reference](https://docs.cloud.google.com/batch/docs/reference/re
 documents runnable order, explicit mounts and network blocking. This is contract
 evidence, not evidence that those controls have run in a real destination account.
 
-Fourteen focused tests exercise configuration/schema/isolation fields, exact native
+Sixteen focused tests exercise configuration/schema/isolation fields, exact native
 HTTP shapes, redirects/error bodies/limits, immutable object reads, source changes,
 live revocation, lost acknowledgements, wrong results, deadlines and cleanup errors.
-The clean Google dependency image runs all 93 enterprise policies and 78 actual
+The clean Google dependency image runs all 95 enterprise policies and 88 actual
 SQL/crypto/queue/operator checks on each owned PostgreSQL 17 and 18 fixture.
 
 `qualify-enterprise-google-jobs.py` independently executes the emitted three-stage
@@ -81,10 +81,11 @@ exercise the Batch agent, VM identity, private Google networking or actual GCS.
   application/operator hosting and destination validation of encryption, retention,
   routing/DNS, IAM and artifact provenance. The controller is bound to the selected
   runtime provider/project/region/worker identity; its configuration is immutable.
-- Implement durable orphan tracking/reconciliation for a controller crash, stalled
-  deletion or lost database lease. `finally` is not crash recovery. Establish the
-  maximum raw/result retention and verify that backups/soft deletion do not silently
-  retain these temporary documents beyond that policy.
+- Durable metadata-only orphan tracking, fenced cleanup retries and a separate
+  worker reconciliation loop are now locally tested, including abrupt process
+  death; see `private-knowledge-document-recovery.md`. Complete operator monitoring,
+  old-target draining and strict retention/backup verification. The 24-hour
+  uncertain-creation settlement probes are not a hard raw/result retention SLA.
 - Verify native account semantics when authorized: Batch metadata isolation,
   container flags, transfer identity scope, job/VM termination, startup duration,
   cancellation, quotas and residency. A deletion operation receipt does not by

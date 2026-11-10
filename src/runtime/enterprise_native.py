@@ -103,6 +103,12 @@ class NativeRuntime:
             self.session_domain=session_domain(self.deployment)
             self.auth = EnterpriseAuthStore(lambda: psycopg.connect(self.database(), connect_timeout=5), self.secrets.read('encryption').encode(),company_domain=self.session_domain)
             validate_runtime(self.auth, role,self.deployment['accountId'])
+            self.document_recovery = None
+            if role == 'worker':
+                attach = getattr(executor.run, 'attach_runtime', None)
+                if callable(attach): attach(self.auth, self.deployment['accountId'])
+                recovery = getattr(executor.run, 'reconcile', None)
+                if callable(recovery): self.document_recovery = recovery
             owned = self.deployment['company']
             self.identity = identity or CompanyIdentity(self.deployment['accountId'], owned['issuer'], owned['audience'], owned['jwksUri'], owned['scope'])
             if (not isinstance(self.identity, CompanyIdentity) or
@@ -149,7 +155,7 @@ class NativeRuntime:
 
     def worker(self):
         if self.role != 'worker': raise ValueError('The browser API must not start a question worker')
-        return EnterpriseQueryWorker(self.database, self.answers)
+        return EnterpriseQueryWorker(self.database, self.answers, document_recovery=self.document_recovery)
 
     def close(self): self.secrets.close()
 

@@ -81,7 +81,9 @@ def validate_runtime(auth, role, account_id):
     if role not in {'api', 'worker'}: raise ValueError('Use a runtime database identity')
     schemas = {'enterprise_auth': 'enterprise_auth_schema.sql', 'enterprise_queries': 'enterprise_queries_schema.sql',
                'enterprise_audit': 'enterprise_audit_schema.sql'}
-    if role == 'worker': schemas['enterprise_extractions'] = 'enterprise_extraction_schema.sql'
+    if role == 'worker':
+        schemas['enterprise_extractions'] = 'enterprise_extraction_schema.sql'
+        schemas['enterprise_document_jobs'] = 'enterprise_document_jobs_schema.sql'
     with auth.transaction() as cursor:
         row = cursor.execute('SELECT rolsuper,rolcreatedb,rolcreaterole,rolreplication,rolbypassrls FROM pg_roles WHERE rolname=current_user').fetchone()
         if not row or any(row.values()): raise ValueError('Private runtime must use its nonadministrative database identity')
@@ -104,6 +106,13 @@ def validate_runtime(auth, role, account_id):
             raise ValueError('Runtime must not inherit operator history authority')
         if role == 'api' and cursor.execute("SELECT has_table_privilege(current_user,'enterprise_queries.procrastinate_jobs','UPDATE,DELETE,TRUNCATE') AS allowed").fetchone()['allowed']:
             raise ValueError('API must not inherit worker queue mutation authority')
+        forbidden = 'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER,REFERENCES' if role == 'api' else 'TRUNCATE,TRIGGER,REFERENCES'
+        table = cursor.execute("SELECT c.oid::bigint AS oid FROM pg_catalog.pg_class c JOIN pg_catalog.pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='enterprise_document_jobs'AND c.relname='jobs'AND c.relkind='r'").fetchone()
+        if not table:raise ValueError('Private document cleanup schema is missing')
+        # API deliberately has no schema USAGE. Resolve the object through the
+        # public system catalogue instead of broadening its application grants.
+        if cursor.execute("SELECT has_table_privilege(current_user,%s::oid,%s) AS allowed", (table['oid'],forbidden)).fetchone()['allowed']:
+            raise ValueError('Use only the owned worker cleanup metadata authority')
         from enterprise_sources import SourceDenied
         try:auth.require_company(cursor,account_id)
         except SourceDenied:raise ValueError('Activate the owned company registration with the reviewed operator lifecycle')from None
