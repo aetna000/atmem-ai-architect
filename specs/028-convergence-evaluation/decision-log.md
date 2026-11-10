@@ -477,3 +477,20 @@ no cron subscription resource; scheduling/alerts remain explicit unfinished work
 Nine provider mock plans, eleven actual-helper/fake-CLI cases and 310 JS tests pass.
 No native IBM job execution or cloud operation is inferred. Full wrapper, complete
 medium cases and final28/held-out remain in progress. Evidence: specs/028-convergence-evaluation/evidence/20261110-ibm-operating-tasks
+
+
+## IBM operating composition: tasks, explicit native schedules and Cloud Logs
+
+Implemented fixed SQL jobs plus owned PingSource installer/observer instead of
+inventing an IBM 2.9 Terraform cron resource. Separate maintenance/application
+phases, private CLI/Kubernetes context, UID/resourceVersion ownership, no overrides
+or implicit adoption. Current Cloud Logs thresholds reference existing verified
+same-region logging and notification configuration without rewriting account
+routing. Twelve schema/mock plans, eleven job-launch and eleven schedule-helper
+fake-CLI cases pass; twelve actual image/operator checks pass on each PG17/18,
+plus API image/five queue cases, 311 JS and build. Native secrets/config/TLS are
+scripted or transport-substituted; no managed IBM job execution or cloud proof.
+Cached security still has 47 high/no reported fixes: not production approval.
+Whole state/capability/Spec Kit and business conversations now take priority; zero
+medium invoice cases are complete. Remaining families/final28/held-out unfinished.
+Evidence: specs/028-convergence-evaluation/evidence/20261110-ibm-operating-jobs

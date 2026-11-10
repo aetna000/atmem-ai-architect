@@ -1,0 +1,17 @@
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/invoice-cloud-ibm-v8-operator-schedules-20261110/scripts/run-operator.py", line 131, in <module>
+    if __name__=='__main__':main()
+                            ~~~~^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/invoice-cloud-ibm-v8-operator-schedules-20261110/scripts/run-operator.py", line 127, in main
+    if scheduling:schedules(value,env,args.action=='install-schedules')
+                  ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/invoice-cloud-ibm-v8-operator-schedules-20261110/scripts/run-operator.py", line 96, in schedules
+    job=get_resource(env,'jobdefinitions.codeengine.cloud.ibm.com',value['names'][action],namespace)
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/invoice-cloud-ibm-v8-operator-schedules-20261110/scripts/run-operator.py", line 67, in get_resource
+    raw=kubectl(env,['get',kind,name,'--namespace',namespace,'-o','json',*(['--ignore-not-found']if optional else[])])
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/invoice-cloud-ibm-v8-operator-schedules-20261110/scripts/run-operator.py", line 62, in kubectl
+    result=subprocess.run(['kubectl',*arguments],cwd=ROOT,env=env,check=True,capture_output=True,text=True,input=json.dumps(body)if body is not None else None,timeout=150)
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/subprocess.py", line 578, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['kubectl', 'get', 'jobdefinitions.codeengine.cloud.ibm.com', 'invoice-0123456789ab-maintain', '--namespace', 'fixture-project', '-o', 'json']' returned non-zero exit status 7.

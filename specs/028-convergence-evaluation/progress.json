@@ -41,7 +41,8 @@
     "specs/028-convergence-evaluation/evidence/20261110-invoice-operating-jobs",
     "specs/028-convergence-evaluation/evidence/20261110-azure-operating-jobs",
     "specs/028-convergence-evaluation/evidence/20261110-google-operating-jobs",
-    "specs/028-convergence-evaluation/evidence/20261110-ibm-operating-tasks"
+    "specs/028-convergence-evaluation/evidence/20261110-ibm-operating-tasks",
+    "specs/028-convergence-evaluation/evidence/20261110-ibm-operating-jobs"
   ],
   "limitations": [
     "The wider 28-project outcome remains unfinished. No claim of world-leading quality or four-provider connected-application parity.",
@@ -89,7 +90,7 @@
   },
   "baselineCompletedCases": 28,
   "baselineQualifiedCases": 0,
-  "updatedAt": "2026-11-10T06:31:52.425478+00:00",
+  "updatedAt": "2026-11-10T06:45:55.182602+00:00",
   "baselineErrors": {
     "ValidationError": 4,
     "TimeoutError": 6
@@ -225,7 +226,7 @@
       "ibmRegistryRegression": "Shared explicit regional mapping repaired for structured/FAQ/invoice exports; Sydney native image-host regressions pass."
     }
   },
-  "currentEvidence": "specs/028-convergence-evaluation/evidence/20261110-ibm-operating-tasks",
+  "currentEvidence": "specs/028-convergence-evaluation/evidence/20261110-ibm-operating-jobs",
   "operatorBootstrapCheckpoint": {
     "status": "in_progress",
     "evidence": "specs/028-convergence-evaluation/evidence/20261110-invoice-operator-core",
@@ -334,6 +335,37 @@
       "Cron scheduling and Cloud Logs alert delivery",
       "Complete invoice capability/state/Spec Kit integration and four-provider business conversation exports",
       "Remaining medium/hard families, final 28-case rerun and held-out variants"
+    ]
+  },
+  "ibmOperatingJobsCheckpoint": {
+    "status": "in_progress",
+    "evidence": "specs/028-convergence-evaluation/evidence/20261110-ibm-operating-jobs",
+    "nativeWrappersLocallyQualified": [
+      "aws",
+      "azure",
+      "gcp",
+      "ibm"
+    ],
+    "checks": {
+      "nativeIbmMockPlans": 12,
+      "actualEmittedJobRunnerFakeCliCases": 11,
+      "actualEmittedScheduleRunnerFakeCliCases": 11,
+      "exactOperatorImageChecksEachPG17AndPG18": 12,
+      "restrictedDeliveryImageQueueChecks": 5,
+      "javascript": 311,
+      "build": true
+    },
+    "image": "sha256:e9bede5aaf6040180e81d90a4520282169289ec27e969a986c226ee29fa69928",
+    "security": "47 high, zero critical or reported fixes in cached metadata; open findings, not production acceptance.",
+    "cloudOperations": false,
+    "next": [
+      "Whole invoice state/Spec Kit/capability integration and complete four-provider business conversation exports.",
+      "Remaining medium/hard families, final 28-case rerun and held-out variants."
+    ],
+    "notYetValidated": [
+      "Native IBM job execution/SQL credentials/private TLS/model/restore",
+      "Actual Knative schedule API acceptance, event delivery, regional logging/alerts/notification behavior",
+      "End-to-end generator/business-package acceptance"
     ]
   }
 }

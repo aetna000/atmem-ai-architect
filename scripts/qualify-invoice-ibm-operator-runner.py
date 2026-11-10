@@ -22,7 +22,7 @@ if __name__=='__main__':
     (binary/'ibmcloud').write_text(header+"import os,sys,json\nfrom pathlib import Path\nassert os.environ['IBMCLOUD_HOME']==str(Path(os.environ['QUALIFIED_PACKAGE_ROOT'])/'.local/ibm-operator-cli')\nassert os.environ['IBMCLOUD_TRACE']=='false'\np=Path(os.environ['SYNTHETIC_CALLS']);calls=json.loads(p.read_text())if p.exists()else[];calls.append(sys.argv[1:]);p.write_text(json.dumps(calls))\nif os.environ.get('SYNTHETIC_FAIL_SELECT')and sys.argv[1:3]==['ce','project']:sys.exit(9)\n")
     for file in binary.iterdir():file.chmod(0o700)
     env={'PATH':str(binary)+os.pathsep+os.defpath,'SYNTHETIC_OUTPUT':str(configuration),'SYNTHETIC_CALLS':str(calls),'QUALIFIED_PACKAGE_ROOT':str(native),'IBMCLOUD_TRACE':'true'}
-    value={'account':'a'*32,'region':'au-syd','projectId':'11111111-1111-4111-8111-111111111111','operatorSecret':'invoice-0123456789ab-operator-sql','names':{action:'invoice-0123456789ab-'+action for action in ['initialize','maintain','monitor']}}
+    value={'account':'a'*32,'region':'au-syd','projectId':'11111111-1111-4111-8111-111111111111','maintenanceEnabled':True,'operatorSecret':'invoice-0123456789ab-operator-sql','names':{action:'invoice-0123456789ab-'+action for action in ['initialize','maintain','monitor']}}
     configuration.write_text(json.dumps(value))
     def run(name,arguments,extra=None):
         result=subprocess.run([sys.executable,'-I',str(source),*arguments],env={**env,**(extra or{})},cwd=out,capture_output=True,timeout=10)

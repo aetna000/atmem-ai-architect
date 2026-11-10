@@ -17,7 +17,16 @@ test('IBM fixed SQL tasks isolate bootstrap passwords and do not invent cron res
   assert.deepEqual(env.filter(entry=>entry.type==='secret_key_reference').map(entry=>entry.name).sort(),action==='initialize'?['API_DATABASE_PASSWORD','DATABASE_PASSWORD','WORKER_DATABASE_PASSWORD']:['DATABASE_PASSWORD']);
   assert.ok(env.every(entry=>!/^(DESTINATION_|PARSER_|DOCUMENT_|MODEL_)/.test(entry.name)));assert.equal(env.find(entry=>entry.name==='DATABASE_USER').key,'operator_user');
  }
- assert.equal(config.variable.operations_enabled.default,false);assert.match(config.variable.runtime_image.validation.condition,/operations_enabled/);assert.doesNotMatch(config.variable.parser_image.validation.condition,/operations_enabled/);assert.match(files['OPERATING_JOBS.md'],/does not\nyet deliver scheduled/);assert.match(files['scripts/run-operator.py'],/--wait-timeout/);assert.ok(Object.keys(config.resource).every(type=>!/cron|jobrun/.test(type)));
+ assert.equal(config.variable.operations_enabled.default,false);assert.match(config.variable.runtime_image.validation.condition,/operations_enabled/);assert.doesNotMatch(config.variable.parser_image.validation.condition,/operations_enabled/);assert.match(files['OPERATING_JOBS.md'],/owned cron installer/);assert.match(files['scripts/run-operator.py'],/--wait-timeout/);assert.ok(Object.keys(config.resource).every(type=>!/cron|jobrun/.test(type)));
+});
+
+test('IBM operations bind current log fields, supported heartbeat windows and separate release phases',()=>{
+ const n='block_696e766f696365',files=ibmInvoiceTerraform({id:'11111111-1111-4111-8111-111111111111',revision:1,nodes:[],edges:[]},{id:'invoice',address:n,provider:'ibm',region:'au-syd'}),config=JSON.parse(files['main.tf.json']);
+ for(const[purpose,window,threshold,condition]of [['failed','minutes_5_or_unspecified',0,'more_than_or_unspecified'],['monitor_missing','hours_2',1,'less_than'],['maintenance_missing','hours_36',1,'less_than']]){
+  const alert=config.resource.ibm_logs_alert_definition[n+'_'+purpose];assert.equal(alert.enabled,'${var.maintenance_enabled}');assert.equal(alert.instance_id,'${var.operator_logs_instance_id}');assert.equal(alert.type,'logs_threshold');assert.equal(alert.logs_threshold.condition_type,condition);assert.equal(alert.logs_threshold.rules[0].condition.threshold,threshold);assert.equal(alert.logs_threshold.rules[0].condition.time_window.logs_time_window_specific_value,window);assert.equal(alert.logs_threshold.undetected_values_management.trigger_undetected_values,condition==='less_than');
+  const query=alert.logs_threshold.logs_filter.simple_filter.lucene_query;assert.match(query,/codeengine\.projectGuid/);assert.match(query,/codeengine\.region/);assert.doesNotMatch(query,/label\.(Namespace|Project|Stream)/);assert.deepEqual(alert.logs_threshold.notification_payload_filter,[]);
+ }
+ assert.equal(config.variable.maintenance_enabled.default,false);assert.equal(config.output.operator_jobs.value.maintenanceEnabled,'${var.maintenance_enabled}');assert.match(files['scripts/run-operator.py'],/observedGeneration/);assert.match(files['scripts/run-operator.py'],/resourceVersion/);assert.match(files['OPERATING_JOBS.md'],/does not pause or delete/);
 });
 
 test('every emitted invoice application contains its local runtime import closure and private parser source',()=>{

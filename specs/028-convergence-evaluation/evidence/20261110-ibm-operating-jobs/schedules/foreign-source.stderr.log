@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/invoice-cloud-ibm-v8-operator-schedules-20261110/scripts/run-operator.py", line 131, in <module>
+    if __name__=='__main__':main()
+                            ~~~~^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/invoice-cloud-ibm-v8-operator-schedules-20261110/scripts/run-operator.py", line 127, in main
+    if scheduling:schedules(value,env,args.action=='install-schedules')
+                  ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/invoice-cloud-ibm-v8-operator-schedules-20261110/scripts/run-operator.py", line 100, in schedules
+    if current is not None:ownership(current,job,namespace,prefix,name)
+                           ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/invoice-cloud-ibm-v8-operator-schedules-20261110/scripts/run-operator.py", line 74, in ownership
+    if value.get('apiVersion')!='sources.knative.dev/v1'or value.get('kind')!='PingSource'or metadata.get('namespace')!=namespace or metadata.get('name')!=name or metadata.get('labels',{}).get('atmem.ai/operator-package')!=prefix or expected not in references:raise ValueError('Refuse unrelated cron source ownership')
+                                                                                                                                                                                                                                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: Refuse unrelated cron source ownership
