@@ -11,6 +11,35 @@ test('the stronger evaluation protocol supplies all remaining business facts onc
  const code=`import importlib.util\nspec=importlib.util.spec_from_file_location('driver','scripts/evaluate-convergence.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)\nscenario={'facts':{'location':'Stay in Australia.','users':'Ten staff.','quality':'Return explicit uncertainty.'}};used={'location'}\ntext=m.complete_client_facts(scenario,used)\nassert 'Ten staff.' in text and 'Return explicit uncertainty.' in text and 'Stay in Australia.' not in text\nassert used==set(scenario['facts'])\nassert m.complete_client_facts(scenario,used) is None\n`;
  const r=spawnSync(path.resolve('.venv/bin/python'),['-c',code],{encoding:'utf8'});assert.equal(r.status,0,r.stderr);
 });
+test('frozen evaluation copies pinned knowledge proofs and refuses missing, changed or escaped receipts',()=>{
+ const code=String.raw`import importlib.util,json,hashlib,tempfile
+from pathlib import Path
+spec=importlib.util.spec_from_file_location('driver','scripts/evaluate-convergence.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+with tempfile.TemporaryDirectory()as folder:
+ root=Path(folder)/'root';snapshot=Path(folder)/'snapshot';(root/'knowledge').mkdir(parents=True);(root/'specs/proof').mkdir(parents=True);snapshot.mkdir()
+ receipt=root/'specs/proof/receipt.json';receipt.write_text(json.dumps({'passed':True,'scope':'synthetic-test'}));digest=hashlib.sha256(receipt.read_bytes()).hexdigest()
+ record={'id':'tested','status':'active','source':{'archived':False},'evidenceLevel':'locally-tested','localVerification':{'receipt':'specs/proof/receipt.json','sha256':digest,'scope':'explicit synthetic test'}}
+ catalog=root/'knowledge/engineering-practices.json';catalog.write_text(json.dumps({'records':[record]}))
+ proofs=m.freeze_knowledge_evidence(root,snapshot);assert len(proofs)==1
+ assert (snapshot/'specs/proof/receipt.json').read_bytes()==receipt.read_bytes()and not(snapshot/'specs/proof/receipt.json').is_symlink()
+ receipt.write_text('changed');assert hashlib.sha256((snapshot/'specs/proof/receipt.json').read_bytes()).hexdigest()==digest
+ try:m.freeze_knowledge_evidence(root);raise AssertionError('Changed proof accepted')
+ except ValueError:pass
+ receipt.unlink()
+ try:m.freeze_knowledge_evidence(root);raise AssertionError('Missing proof accepted')
+ except ValueError:pass
+ external=Path(folder)/'outside.json';external.write_text(json.dumps({'passed':True}));receipt.symlink_to(external)
+ record['localVerification']['sha256']=hashlib.sha256(external.read_bytes()).hexdigest();catalog.write_text(json.dumps({'records':[record]}))
+ try:m.freeze_knowledge_evidence(root);raise AssertionError('Escaped proof accepted')
+ except ValueError:pass
+ # Invalid proof must fail before any snapshot copy, not downgrade confidence.
+ empty=Path(folder)/'empty';empty.mkdir()
+ try:m.freeze_knowledge_evidence(root,empty);raise AssertionError('Unsafe snapshot accepted')
+ except ValueError:pass
+ assert not list(empty.iterdir())
+`;
+ const result=spawnSync(path.resolve('.venv/bin/python'),['-c',code],{encoding:'utf8'});assert.equal(result.status,0,result.stderr);
+});
 test('the frozen benchmark contains 28 distinct provider/scenario cases and the requested difficulty distribution',()=>{
  assert.deepEqual(Object.keys(corpus.providers).sort(),['aws','azure','gcp','ibm']);assert.equal(corpus.scenarios.length,7);
  const cases=Object.keys(corpus.providers).flatMap(p=>corpus.scenarios.map(s=>p+'-'+s.id));assert.equal(new Set(cases).size,28);

@@ -341,3 +341,13 @@ new focused checks and build pass. Complete business-brief handoffs have 29 task
 each, all todo. Zero complete medium business conversations are counted. Live
 conversations, whole-runtime/emulation acceptance, remaining families/final28 and
 held-out remain next. No cloud operation or remote publication. Evidence: specs/028-convergence-evaluation/evidence/20261110-invoice-public-export
+
+
+## Freeze pinned knowledge proof receipts with live evaluation source
+
+Initial invoice attempts failed before model replies: snapshot omitted pinned
+local receipts required by the knowledge gate. Preserve all four failures; count
+zero medium cases. Runner now validates/copied immutable proof bytes and records
+provenance without weakening knowledge confidence checks. Six focused harness
+tests cover valid copy plus missing/changed/escaped proof refusal. Fresh frozen
+live conversations remain next. Evidence: specs/028-convergence-evaluation/evidence/20261110-frozen-knowledge-proofs

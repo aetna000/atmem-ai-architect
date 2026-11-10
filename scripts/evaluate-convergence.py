@@ -4,6 +4,25 @@ from unittest.mock import patch
 ROOT=pathlib.Path(__file__).resolve().parents[1];sys.path.insert(0,str(ROOT))
 CORPUS=ROOT/'benchmarks/convergence/scenarios.json'
 
+def freeze_knowledge_evidence(root,snapshot=None):
+    """Copy only active pinned proof receipts, retaining all knowledge gates."""
+    root=pathlib.Path(root).resolve();proofs=[]
+    catalogue=json.loads((root/'knowledge/engineering-practices.json').read_text())
+    for row in catalogue['records']:
+        if row.get('status')!='active'or row.get('source',{}).get('archived')or row.get('evidenceLevel')!='locally-tested':continue
+        proof=row.get('localVerification',{});path=(root/proof.get('receipt','')).resolve()
+        if not path.is_relative_to(root/'specs')or not path.is_file()or hashlib.sha256(path.read_bytes()).hexdigest()!=proof.get('sha256'):raise ValueError('Cannot freeze an absent, escaped or changed knowledge proof receipt')
+        if json.loads(path.read_text()).get('passed')is not True or not proof.get('scope'):raise ValueError('Cannot freeze unqualified local knowledge evidence')
+        proofs.append({'practiceId':row['id'],'receipt':path.relative_to(root).as_posix(),'sha256':proof['sha256'],'scope':proof['scope']})
+    # Validate every source before writing any receipt; never symlink mutable proof.
+    if snapshot is not None:
+        snapshot=pathlib.Path(snapshot).resolve()
+        for proof in proofs:
+            source=root/proof['receipt'];target=snapshot/proof['receipt'];target.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(source,target)
+            if hashlib.sha256(target.read_bytes()).hexdigest()!=proof['sha256']:raise ValueError('Knowledge proof changed while freezing')
+        (snapshot/'knowledge-evidence.json').write_text(json.dumps({'format':'atmem-frozen-knowledge-evidence-v1','proofs':proofs,'boundary':'Pinned existing locally tested scopes only; no new runtime/deployment claim.'},indent=2)+'\n')
+    return proofs
+
 def validate_case_selection(selected):
     corpus=json.loads(CORPUS.read_text())
     known={provider+'-'+scenario['id'] for provider in corpus['providers'] for scenario in corpus['scenarios']}
@@ -48,6 +67,8 @@ async def evaluate(args):
     memory=MemoryService(out/'isolated-home');model=AtMemArchitect();results=[]
     manifest={'corpusSha256':hashlib.sha256(CORPUS.read_bytes()).hexdigest(),'baseCommit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),'modelProvider':args.provider,'requestedModel':args.model,'effort':args.effort,'maxTurns':args.max_turns,'cloudOperations':False,'selectedCaseIds':args.case,'sourceSnapshot':str(ROOT),'constitutionSha256':hashlib.sha256((ROOT/'CONSTITUTION.md').read_bytes()).hexdigest(),'runnerSha256':hashlib.sha256(pathlib.Path(__file__).read_bytes()).hexdigest(),'bridgeSha256':hashlib.sha256((ROOT/'scripts/convergence-bridge.mjs').read_bytes()).hexdigest(),'sourceHashes':{str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest() for folder in ['server','src','agent-skills','benchmarks/convergence'] for p in (ROOT/folder).rglob('*') if p.is_file() and '__pycache__' not in p.parts}}
     manifest['interactionProtocol']='complete-client-brief-before-export-v2' if args.complete_client_brief else 'reactive-facts-v1'
+    manifest['knowledgeEvidence']=freeze_knowledge_evidence(ROOT)
+    manifest['knowledgeCatalogueSha256']=hashlib.sha256((ROOT/'knowledge/engineering-practices.json').read_bytes()).hexdigest()
     (out/'manifest.json').write_text(json.dumps(manifest,indent=2)+'\n')
     cases=[(provider,s) for provider in corpus['providers'] for s in corpus['scenarios']]
     if args.case:cases=[x for x in cases if x[0]+'-'+x[1]['id'] in args.case]
@@ -127,6 +148,7 @@ if __name__=='__main__':
                 elif source.exists():shutil.copyfile(source,snapshot/name)
             for name in ['node_modules','.venv','.memory-venv']:
                 if (ROOT/name).exists() and not (snapshot/name).exists():(snapshot/name).symlink_to(ROOT/name,target_is_directory=True)
+            freeze_knowledge_evidence(ROOT,snapshot)
             (snapshot/'.local').mkdir(exist_ok=True)
             for name in ['cloud-emulators','provider-cache']:
                 if (ROOT/'.local'/name).exists() and not (snapshot/'.local'/name).exists():(snapshot/'.local'/name).symlink_to(ROOT/'.local'/name,target_is_directory=True)
