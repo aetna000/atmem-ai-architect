@@ -43,6 +43,29 @@ class CodexTransportTests(unittest.IsolatedAsyncioTestCase):
         values=[await asyncio.wait_for(self.client.events.get(),1) for _ in range(3)]
         self.assertEqual([m['params']['index'] for m in values],[0,1,2])
 
+    async def test_notification_timeout_does_not_consume_the_next_event(self):
+        with self.assertRaises(asyncio.TimeoutError):
+            await self.client.notification(timeout=.01)
+        await self.client.request('events')
+        event=await self.client.notification(timeout=1)
+        self.assertEqual(event['params']['index'],0)
+
+    async def test_notification_waiter_wakes_when_transport_closes(self):
+        waiter=asyncio.create_task(self.client.notification(timeout=10))
+        await asyncio.sleep(0)
+        await self.client.close()
+        with self.assertRaises(ProtocolError):
+            await asyncio.wait_for(waiter,1)
+
+    async def test_cancelled_notification_wait_does_not_steal_later_progress(self):
+        waiter=asyncio.create_task(self.client.notification(timeout=10))
+        await asyncio.sleep(0)
+        waiter.cancel()
+        with self.assertRaises(asyncio.CancelledError):await waiter
+        await self.client.request('events')
+        event=await self.client.notification(timeout=1)
+        self.assertEqual(event['params']['index'],0)
+
     async def test_server_approval_is_not_automatically_granted(self):
         await self.client.request('approval')
         event=await asyncio.wait_for(self.client.events.get(),1)

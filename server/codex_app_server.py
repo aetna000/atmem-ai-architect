@@ -28,6 +28,7 @@ class CodexAppServer:
         self.pending = {}
         self.serial = 0
         self.failure = None
+        self.closed = asyncio.Event()
         self.reader = self.stderr_reader = None
         self.write_lock = asyncio.Lock()
 
@@ -90,8 +91,30 @@ class CodexAppServer:
         # A timeout/cancel only stops waiting; it does not cancel a Codex turn.
         # Engineering callers must use turn/interrupt and observe its terminal event.
 
+    async def notification(self, *, timeout=30):
+        if not self.events.empty():
+            return self.events.get_nowait()
+        if self.failure:
+            raise ProtocolError(self.failure)
+        received = asyncio.create_task(self.events.get())
+        closed = asyncio.create_task(self.closed.wait())
+        try:
+            done, _ = await asyncio.wait({received, closed}, timeout=timeout,
+                                         return_when=asyncio.FIRST_COMPLETED)
+            if received in done:
+                return received.result()
+            if closed in done:
+                raise ProtocolError(self.failure)
+            raise asyncio.TimeoutError('No Codex event arrived within the observation window')
+        finally:
+            for task in (received, closed):
+                if not task.done():
+                    task.cancel()
+            await asyncio.gather(received, closed, return_exceptions=True)
+
     def _fail(self, reason):
         self.failure = reason
+        self.closed.set()
         for future in self.pending.values():
             if not future.done():
                 future.set_exception(ProtocolError(reason))

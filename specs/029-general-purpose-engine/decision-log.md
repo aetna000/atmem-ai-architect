@@ -64,3 +64,27 @@ one engine/session/worker/artifact contract across deployment modes. Prepare the
 isolation, authentication and usage/evidence boundaries now; defer Architect's own
 paywall, billing and checkout implementation. This does not waive original evaluation
 requirements for generated metered client systems. No hosted deployment is authorized.
+
+## 2026-11-11 — Restore native configuration and reconcile lost completion
+
+Recovered session `01a1b400-4054-71d1-81a9-3af052ce09cf` identifies this source repository
+and generic-engine programme as the authorized target; the old r30 handoff is an
+example, not a new implementation assignment. User enabled repository write access.
+Preserved the interrupted source and continued GE-002 rather than restarting scope.
+
+The installed Codex CLI only provided durable history after an actual turn in these
+probes. Reassert model/effort and sandbox settings on resume instead of inheriting
+worker defaults or weakening acknowledgement checks. Reconcile a recorded running
+turn via bounded, metadata-only history for its exact turn ID; do not replay user
+intent or convert missing evidence into completion. The portable backend interface
+adds `observe`; hosted transports must implement that semantic contract independently.
+
+The real probe intentionally withheld coordinator completion, restarted worker/store,
+recovered terminal status and completed another engineering turn. Failure/negative
+coverage and independent output checks are in the evidence directory. The reservation
+example qualifies session mechanics and transfer to arbitrary local engineering work,
+not business-recipe support, infrastructure quality or general 95% quality.
+
+Empty-thread and lost-start-acknowledgement recovery remain explicit limitations;
+release 1, independent isolation, UI/skills/artifact integration and paired comparison
+remain pending. No cloud operation or public release was performed.

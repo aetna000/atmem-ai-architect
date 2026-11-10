@@ -176,3 +176,18 @@ execution/ownership concerns. Architect's own subscriptions, checkout and paywal
 explicitly deferred; do not add them to release 1 or treat missing payments as a blocker.
 This does not remove metering/credit requirements in the client projects the engine
 is tasked to generate. Hosting this SaaS remains future work, not a request to deploy.
+
+## Recovered native-session implementation — 2026-11-11
+
+Recovered unfinished source after a CLI connection interruption. Project-bound durable
+sessions now have actual two-turn native file/tool execution and restart evidence,
+including completion deliberately withheld from the coordinator and reconciled from
+exact native turn metadata. Resume reasserts and verifies model/effort/execution policy.
+39 local protocol/coordinator/adapter tests pass; captured artifacts pass 9 generated
+and 16 independent behavior checks. Evidence and precise limits:
+`evidence/20261111-portable-sessions/README.md`.
+
+GE-002 remains in progress. Empty-thread and uncertain-start recovery, independent
+isolation, skill/artifact/UI integration and GE-001A's paired Terraform/emulation
+comparison still gate alpha.1. No release, measured quality or hosted deployment is
+claimed by this checkpoint.
