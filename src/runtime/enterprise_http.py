@@ -9,7 +9,6 @@ import html
 import json
 import re
 from urllib.parse import parse_qs,urlsplit
-from concurrent.futures import ThreadPoolExecutor
 from fastapi import FastAPI,Request
 from fastapi.responses import JSONResponse,HTMLResponse,RedirectResponse,Response
 from starlette.concurrency import run_in_threadpool
@@ -165,12 +164,11 @@ def create_app(identity,sessions,connections,make_engine,*,public_origin,web_con
         user=await actor(request,csrf=True);value=await json_body(request)
         if set(value)!={'question'}or not isinstance(value['question'],str)or not value['question'].strip()or len(value['question'])>1000:raise ValueError('Supply only the question')
         def answer():
-            with ThreadPoolExecutor(max_workers=min(4,len(connections)))as executor:
-                keys=list(connections);accesses=list(executor.map(lambda alias:connections[alias].driver.credentials(user.principal),keys))
             def authorize(subject):
                 if subject!=user.principal.key:raise SourceDenied('company_identity_required')
-                auth.authorize(user.principal)
-            engine=make_engine(user.principal,dict(zip(keys,accesses)),authorize)
+                sessions.authenticate(cookie(request))
+            from enterprise_knowledge import current_engine
+            engine=current_engine(auth,connections,user.principal,make_engine,authorize)
             result=engine.answer(value['question'],user.principal.key)
             # Independent final company-session gate, beyond source document gates.
             sessions.authenticate(cookie(request))

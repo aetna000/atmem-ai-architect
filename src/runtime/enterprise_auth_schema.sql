@@ -25,7 +25,7 @@ CREATE TABLE enterprise_auth.attempts(
 CREATE INDEX enterprise_auth_attempts_expiry ON enterprise_auth.attempts(expires_at);
 CREATE TABLE enterprise_auth.connections(
  account_id text NOT NULL,principal_key text NOT NULL,source_id text NOT NULL,
- mapping_version bigint NOT NULL,revision bigint NOT NULL CHECK(revision>0),
+ mapping_version bigint NOT NULL,consent_id uuid NOT NULL,revision bigint NOT NULL CHECK(revision>0),
  credential_ciphertext text,status text NOT NULL CHECK(status IN('connected','refreshing','needs_reconnect','revoked')),
  updated_at timestamptz NOT NULL DEFAULT clock_timestamp(),
  PRIMARY KEY(account_id,principal_key,source_id),

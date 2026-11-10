@@ -1,5 +1,6 @@
 """Actual ASGI/auth/SQL/outbox/worker composition; explicit vendor/model fixtures."""
 import asyncio
+import hashlib
 from contextlib import suppress
 from pathlib import Path
 import sys
@@ -15,6 +16,7 @@ from enterprise_http import create_app
 from enterprise_queries import producer_queries,initialize_query_store,grant_query_runtime
 from enterprise_query_service import EnterpriseAnswers,EnterpriseQueryWorker
 from enterprise_sources import SourceUnavailable
+from enterprise_extraction_cache import ExtractionCache,initialize_extraction_cache,grant_extraction_runtime
 
 
 class QueuedHttp(unittest.IsolatedAsyncioTestCase):
@@ -24,11 +26,18 @@ class QueuedHttp(unittest.IsolatedAsyncioTestCase):
         parent=fixture.CompanyHttpIntegration
         with psycopg.connect(parent.owner_dsn)as conn:
             initialize_query_store(conn);grant_query_runtime(conn,conninfo_to_dict(parent.app_dsn)['user'],worker=True)
+            initialize_extraction_cache(conn);grant_extraction_runtime(conn,conninfo_to_dict(parent.app_dsn)['user'])
 
     async def asyncSetUp(self):
         self.f=fixture.CompanyHttpIntegration();await self.f.asyncSetUp()
         self.store=producer_queries(self.f.store,self.f.app_dsn,self.f.account)
-        self.answers=EnterpriseAnswers(self.store,self.f.connections,self.f.engine_factory)
+        self.parse_calls=[]
+        def factory(*args):
+            engine=self.f.engine_factory(*args);extract=engine.decode
+            def decode(raw,mime):self.parse_calls.append(True);return extract(raw,mime)
+            engine.decode=decode;return engine
+        cache=ExtractionCache(self.f.store,self.f.account,hashlib.sha256(b'synthetic-utf8-decoder-v1').hexdigest())
+        self.answers=EnterpriseAnswers(self.store,self.f.connections,factory,extraction_cache=cache)
         self.f.app=create_app(self.f.identity,self.f.sessions,self.f.connections,self.f.engine_factory,public_origin=fixture.ORIGIN,answers=self.answers)
         await self.f.client.aclose();self.f.client=self.f.new_client();self.f.clients=[self.f.client]
         await self.f.login();await self.f.connect_all()
@@ -76,6 +85,7 @@ class QueuedHttp(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(response.json(),{'id':identity,'status':'queued'})
         await asyncio.to_thread(self.answers.execute,identity)
         response=await self.status(identity);self.assertEqual(response.json()['status'],'ready');self.assertEqual(len(self.f.model_calls),2)
+        self.assertEqual(len(self.parse_calls),1)
 
     async def test_membership_revoked_after_generation_never_releases_saved_answer(self):
         identity=await self.submit();await asyncio.to_thread(self.answers.execute,identity)
@@ -142,6 +152,116 @@ class QueuedHttp(unittest.IsolatedAsyncioTestCase):
         response=await self.status(identity);self.assertEqual(response.status_code,503);self.assertNotIn('ninety',response.text)
         self.answers.make_engine=original
         response=await self.status(identity);self.assertEqual(response.json()['status'],'ready');self.assertEqual(len(self.f.model_calls),1)
+
+    async def test_repeated_question_downloads_current_source_but_reuses_extraction(self):
+        for _ in range(2):
+            identity=await self.submit();await asyncio.to_thread(self.answers.execute,identity)
+            self.assertEqual((await self.status(identity)).json()['status'],'ready')
+        self.assertEqual(self.f.document_downloads,2);self.assertEqual(len(self.parse_calls),1);self.assertEqual(len(self.f.model_calls),2)
+
+    async def test_new_question_during_source_outage_cannot_use_a_warm_derivative(self):
+        first=await self.submit();await asyncio.to_thread(self.answers.execute,first)
+        self.f.source_offline=True;identity=await self.submit();await asyncio.to_thread(self.answers.execute,identity)
+        self.assertEqual(len(self.f.model_calls),1);self.assertEqual(len(self.parse_calls),1)
+        self.assertNotIn('ninety',(await self.status(identity)).text)
+        self.f.source_offline=False;await asyncio.to_thread(self.answers.execute,identity)
+        self.assertEqual((await self.status(identity)).json()['status'],'ready')
+        self.assertEqual(len(self.f.model_calls),2);self.assertEqual(len(self.parse_calls),1)
+
+    async def test_cancel_during_cache_miss_prevents_publication_and_model_context(self):
+        identity=await self.submit();entered=threading.Event();release=threading.Event();original=self.answers.make_engine
+        def factory(*args):
+            engine=original(*args);decode=engine.decode
+            def delayed(*a):entered.set();release.wait(5);return decode(*a)
+            engine.decode=delayed;return engine
+        self.answers.make_engine=factory
+        pending=asyncio.create_task(asyncio.to_thread(self.answers.execute,identity))
+        try:
+            self.assertTrue(await asyncio.to_thread(entered.wait,3))
+            await self.f.client.delete('/api/queries/'+identity,headers=self.f.headers())
+        finally:release.set();await pending
+        self.assertEqual(self.f.model_calls,[])
+        with psycopg.connect(self.f.owner_dsn)as conn:self.assertEqual(conn.execute('SELECT count(*)FROM enterprise_extractions.documents WHERE account_id=%s',(self.f.account,)).fetchone()[0],0)
+
+    async def test_source_edit_during_cache_miss_discards_text_and_retries_current_version(self):
+        identity=await self.submit();original=self.answers.make_engine;changed=[]
+        def factory(*args):
+            engine=original(*args);decode=engine.decode
+            def changing(*a):
+                if not changed:changed.append(True);self.f.source_version='v2'
+                return decode(*a)
+            engine.decode=changing;return engine
+        self.answers.make_engine=factory
+        await asyncio.to_thread(self.answers.execute,identity)
+        self.assertEqual(self.f.model_calls,[])
+        with psycopg.connect(self.f.owner_dsn)as conn:self.assertEqual(conn.execute('SELECT count(*)FROM enterprise_extractions.documents WHERE account_id=%s',(self.f.account,)).fetchone()[0],0)
+        await asyncio.to_thread(self.answers.execute,identity)
+        self.assertEqual((await self.status(identity)).json()['status'],'ready');self.assertEqual(len(self.f.model_calls),1)
+
+    async def test_disconnect_during_extraction_withholds_cache_and_model(self):
+        identity=await self.submit();entered=threading.Event();release=threading.Event();original=self.answers.make_engine
+        def factory(*args):
+            engine=original(*args);decode=engine.decode
+            def delayed(*a):entered.set();release.wait(5);return decode(*a)
+            engine.decode=delayed;return engine
+        self.answers.make_engine=factory
+        pending=asyncio.create_task(asyncio.to_thread(self.answers.execute,identity))
+        try:
+            self.assertTrue(await asyncio.to_thread(entered.wait,3))
+            response=await self.f.client.delete('/api/sources/sharepoint',headers=self.f.headers())
+            self.assertEqual(response.status_code,204)
+        finally:release.set();await pending
+        self.assertEqual(self.f.model_calls,[])
+        with psycopg.connect(self.f.owner_dsn)as conn:self.assertEqual(conn.execute('SELECT count(*)FROM enterprise_extractions.documents WHERE account_id=%s',(self.f.account,)).fetchone()[0],0)
+
+    async def test_reconnect_same_native_account_fences_inflight_old_consent(self):
+        identity=await self.submit();entered=threading.Event();release=threading.Event();original=self.answers.make_engine
+        def factory(*args):
+            engine=original(*args);decode=engine.decode
+            def delayed(*a):entered.set();release.wait(5);return decode(*a)
+            engine.decode=delayed;return engine
+        self.answers.make_engine=factory
+        pending=asyncio.create_task(asyncio.to_thread(self.answers.execute,identity))
+        try:
+            self.assertTrue(await asyncio.to_thread(entered.wait,3))
+            state=await self.f.start_graph();self.assertEqual((await self.f.finish_graph(state)).status_code,303)
+        finally:release.set();await pending
+        self.assertEqual(self.f.model_calls,[])
+        self.answers.make_engine=original;await asyncio.to_thread(self.answers.execute,identity)
+        self.assertEqual((await self.status(identity)).json()['status'],'ready')
+
+    async def test_parallel_question_token_refresh_does_not_invalidate_running_answer(self):
+        first=await self.submit();second=await self.submit();entered=threading.Event();release=threading.Event();original=self.answers.make_engine;held=[]
+        def factory(*args):
+            engine=original(*args);generate=engine.generate
+            def delayed(*a):
+                if not held:held.append(True);entered.set();release.wait(5)
+                return generate(*a)
+            engine.generate=delayed;return engine
+        self.answers.make_engine=factory
+        pending=asyncio.create_task(asyncio.to_thread(self.answers.execute,first))
+        try:
+            self.assertTrue(await asyncio.to_thread(entered.wait,3))
+            await asyncio.to_thread(self.answers.execute,second)
+        finally:release.set();await pending
+        self.assertEqual((await self.status(first)).json()['status'],'ready')
+        self.assertEqual((await self.status(second)).json()['status'],'ready');self.assertEqual(len(self.f.model_calls),2)
+
+    async def test_compatibility_api_also_blocks_disconnect_before_model_context(self):
+        entered=threading.Event();release=threading.Event();original=self.f.engine_factory
+        def factory(*args):
+            engine=original(*args);decode=engine.decode
+            def delayed(*a):entered.set();release.wait(5);return decode(*a)
+            engine.decode=delayed;return engine
+        self.f.app=create_app(self.f.identity,self.f.sessions,self.f.connections,factory,public_origin=fixture.ORIGIN,answers=self.answers)
+        client=self.f.new_client();client.cookies.update(self.f.client.cookies);self.f.clients.append(client)
+        pending=asyncio.create_task(client.post('/api/ask',json={'question':'retention'},headers=self.f.headers()))
+        try:
+            self.assertTrue(await asyncio.to_thread(entered.wait,3))
+            await self.f.client.delete('/api/sources/sharepoint',headers=self.f.headers())
+        finally:release.set()
+        response=await pending;self.assertEqual(response.status_code,409,response.text)
+        self.assertEqual(self.f.model_calls,[]);self.assertNotIn('ninety',response.text)
 
 
 if __name__=='__main__':unittest.main(verbosity=2)

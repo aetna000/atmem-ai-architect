@@ -14,8 +14,8 @@ import subprocess
 import argparse
 
 ROOT=Path(__file__).resolve().parents[1]
-SUITES={'enterprise_auth_postgres':18,'enterprise_sessions_postgres':4,'enterprise_http_postgres':14,
-        'enterprise_queries_postgres':17,'enterprise_queries_http_postgres':10}
+SUITES={'enterprise_auth_postgres':21,'enterprise_sessions_postgres':4,'enterprise_http_postgres':14,
+        'enterprise_queries_postgres':19,'enterprise_queries_http_postgres':18,'enterprise_extraction_cache_postgres':13}
 
 
 def qualify(output):
@@ -57,7 +57,7 @@ print(json.dumps({'postgresVersionNum':version,'python':platform.python_version(
         with ThreadPoolExecutor(max_workers=2)as pool:
             for results in pool.map(run_version,[17,18]):checks.extend(results)
         if any(hashlib.sha256((ROOT/name).read_bytes()).hexdigest()!=digest for name,digest in hashes.items()):raise ValueError('Qualification sources changed during the run')
-        success=len(checks)==10 and all(check['passed']for check in checks)
+        success=len(checks)==2*len(SUITES) and all(check['passed']for check in checks)
         if not success:raise RuntimeError('Native question qualification failed; inspect the preserved logs')
     finally:
         (output/'receipt.json').write_text(json.dumps({'recordedAt':datetime.now(timezone.utc).isoformat(),'passed':success,

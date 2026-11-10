@@ -50,6 +50,32 @@ class EnterpriseCredentialTransactions(unittest.TestCase):
         principal=principal or self.principal
         with psycopg.connect(self.owner_dsn)as conn:return conn.execute('SELECT status,credential_ciphertext FROM enterprise_auth.connections WHERE account_id=%s AND principal_key=%s',(self.account,principal.key)).fetchone()
 
+    def test_consent_witness_survives_refresh_but_not_disconnect(self):
+        self.connected();source='sharepoint:drive';witness=self.store.source_witness(self.principal,source)
+        entered=threading.Event();release=threading.Event()
+        def refresh(mapping,material):entered.set();release.wait(5);return self.rotated(mapping,material)
+        with ThreadPoolExecutor(max_workers=1)as pool:
+            pending=pool.submit(self.store.credentials,self.principal,source,refresh)
+            try:
+                self.assertTrue(entered.wait(2));self.store.check_source_witness(self.principal,witness)
+            finally:release.set()
+            pending.result(timeout=5)
+        self.assertEqual(self.store.source_witness(self.principal,source),witness)
+        self.store.disconnect(self.principal,source)
+        with self.assertRaises(SourceDenied):self.store.check_source_witness(self.principal,witness)
+
+    def test_reconnecting_same_native_account_changes_consent_witness(self):
+        self.connected();source='sharepoint:drive';old=self.store.source_witness(self.principal,source)
+        self.connected();current=self.store.source_witness(self.principal,source)
+        self.assertNotEqual(old,current);self.assertEqual(old.source_subject,current.source_subject)
+        with self.assertRaises(SourceDenied):self.store.check_source_witness(self.principal,old)
+
+    def test_prior_consent_ciphertext_cannot_be_replayed_into_reconnected_row(self):
+        self.connected();old=self.state()[1];self.connected();calls=[]
+        with psycopg.connect(self.owner_dsn)as conn:conn.execute('UPDATE enterprise_auth.connections SET credential_ciphertext=%s WHERE account_id=%s AND principal_key=%s',(old,self.account,self.principal.key))
+        with self.assertRaises(SourceDenied):self.store.credentials(self.principal,'sharepoint:drive',lambda *args:calls.append(True))
+        self.assertEqual(calls,[])
+
     def test_native_msal_consent_cache_and_restart_use_actual_encrypted_sql(self):
         from enterprise_oauth import GraphConsent
         from enterprise_oauth_acceptance import OAuthHttp,Profiles,TENANT,CLIENT

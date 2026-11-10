@@ -335,3 +335,12 @@ restricted Linux document checks and JS347/server214/build pass. Source/model HT
 remains scripted. No capability/medium-case/security promotion. Next encrypted
 parser-versioned extraction cache with live authorization and retention/recovery,
 clean Linux app/model/audit/provisioning, all4 native exports, remaining/full28/held-out.
+
+
+## 2026-11-10: Authorized immutable extraction reuse
+
+Encrypted company/parser/bytes/MIME-bound extraction reuse with fresh native source reads and live consent checks; fixed Disconnect/reconnect in-flight authority and host-clock queue scheduling. 89 native SQL tests per PG17/18, 12 browser, 16 restricted Linux parser, 14 composed checks; 347 JS/214 server pass. No medium case or new capability promoted; native packaging/model/audit/provisioning/per-file isolation/all4 exports/full28 remain.
+
+Use HMAC identities and encrypted derivatives, committed builder leases, absolute expiry and bounded purges. Every question still reads current authorized source bytes; no permission, title, selection or outage fallback is cached. Consent generations fence both queued and legacy APIs, and credential ciphertext is bound to that generation. Normal refresh preserves consent. Immediate jobs use NULL readiness and delayed retries use the database clock. Fresh unreleased schemas only; no existing database migration.
+
+Evidence: specs/028-convergence-evaluation/evidence/20261110-private-extraction-cache-v1. Retained failures show the original withdrawal and clock defects; actual Linux extraction uses fresh restricted containers per file. Long-lived parser RPC does not prove containment across future files. See docs/architecture/private-knowledge-extraction-cache.md.

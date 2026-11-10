@@ -19,6 +19,28 @@ a source or quote. Return only JSON matching the schema. A recommendation cannot
 authorize an action. The server rechecks source access before releasing an answer.'''
 
 
+def current_engine(auth,connections,principal,make_engine,authorize):
+    """Bind source credentials to current consent, independently of token refresh.
+
+    Both queued and compatibility APIs use this path. A stored native access token
+    can outlive a local Disconnect, so live vendor checks alone are insufficient.
+    """
+    authorize(principal.key)
+    keys=list(connections)
+    witnesses={key:auth.source_witness(principal,connections[key].driver.source_id)for key in keys}
+    with ThreadPoolExecutor(max_workers=min(4,len(keys)))as pool:
+        accesses=list(pool.map(lambda key:connections[key].driver.credentials(principal),keys))
+    for key,access in zip(keys,accesses):
+        auth.check_source_witness(principal,witnesses[key])
+        if access.source_subject!=witnesses[key].source_subject:
+            from enterprise_sources import SourceDenied
+            raise SourceDenied('source_identity_mismatch')
+    def current(subject):
+        authorize(subject)
+        for witness in witnesses.values():auth.check_source_witness(principal,witness)
+    return make_engine(principal,dict(zip(keys,accesses)),current)
+
+
 def evidence(document,question):
     # Excerpts intentionally bound model context; they are not a document replica
     # or evidence that the complete source has been indexed locally.

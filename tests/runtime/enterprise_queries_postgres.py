@@ -6,6 +6,8 @@ from pathlib import Path
 import sys
 import unittest
 import uuid
+from datetime import datetime,timezone
+from unittest.mock import patch
 ROOT=Path(__file__).resolve().parents[2]
 sys.path[:0]=[str(ROOT/'src/runtime'),str(ROOT/'.local/azure-runtime-sdk'),str(ROOT/'tests/runtime')]
 import psycopg
@@ -144,6 +146,20 @@ class DurableQuestions(unittest.TestCase):
         self.queries.requeue(self.session,identity,first.attempt);second=self.queries.claim(identity);self.queries.complete(second,self.receipt())
         current=self.queries.get(self.session,identity)
         with self.assertRaises(SourceDenied):self.queries.open_result({**current,'result_ciphertext':old})
+
+    def test_immediate_submission_is_ready_without_a_host_timestamp(self):
+        identity=self.submit()
+        with psycopg.connect(self.owner_dsn)as conn:
+            scheduled=conn.execute("SELECT scheduled_at FROM enterprise_queries.procrastinate_jobs WHERE args->>'query_id'=%s",(identity,)).fetchone()[0]
+        self.assertIsNone(scheduled)
+
+    def test_retry_delay_uses_database_clock_even_if_host_clock_is_wrong(self):
+        identity=self.submit();lease=self.queries.claim(identity)
+        with patch('procrastinate.utils.utcnow',return_value=datetime(2050,1,1,tzinfo=timezone.utc)):
+            self.queries.failed(lease,'unavailable',retry=True)
+        with psycopg.connect(self.owner_dsn)as conn:
+            delay=conn.execute("SELECT extract(epoch FROM scheduled_at-clock_timestamp())FROM enterprise_queries.procrastinate_jobs WHERE args->>'query_id'=%s ORDER BY id DESC LIMIT 1",(identity,)).fetchone()[0]
+        self.assertGreater(delay,0);self.assertLessEqual(delay,5)
 
 
 if __name__=='__main__':unittest.main(verbosity=2)

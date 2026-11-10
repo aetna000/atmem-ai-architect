@@ -12,6 +12,7 @@ import json
 from pathlib import Path
 import re
 import secrets
+import uuid
 from cryptography.fernet import Fernet,InvalidToken
 from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
@@ -59,6 +60,14 @@ class SourceMapping:
     attempt_sha256: str|None = field(default=None,repr=False,compare=False)
 
 
+@dataclass(frozen=True)
+class SourceWitness:
+    source_id: str
+    source_subject: str = field(repr=False)
+    mapping_version: int
+    consent_id: str = field(repr=False)
+
+
 class EnterpriseAuthStore:
     def __init__(self,connect,key):self.connect=connect;self.box=CredentialBox(key)
 
@@ -83,6 +92,19 @@ class EnterpriseAuthStore:
 
     def authorize(self,principal):
         with self.transaction()as cur:self._authorize(cur,principal)
+
+    def source_witness(self,principal,source_id):
+        with self.transaction()as cur:
+            mapping=self._authorize(cur,principal,source_id)
+            row=cur.execute('SELECT mapping_version,consent_id,status FROM enterprise_auth.connections WHERE account_id=%s AND principal_key=%s AND source_id=%s',(principal.account_id,principal.key,source_id)).fetchone()
+            # Refresh can rotate credential material without changing consent.
+            # Native adapters independently check the access token's lifetime and
+            # current source permissions; failed/uncertain reconnection is denied.
+            if not row or row['status']not in {'connected','refreshing'}or row['mapping_version']!=mapping.version:raise SourceDenied('source_consent_required')
+            return SourceWitness(source_id,mapping.source_subject,mapping.version,str(row['consent_id']))
+
+    def check_source_witness(self,principal,witness):
+        if not isinstance(witness,SourceWitness)or self.source_witness(principal,witness.source_id)!=witness:raise SourceDenied('source_connection_changed')
 
     def context(self,principal,mapping,kind):return [kind,principal.account_id,principal.key,mapping.source_id,mapping.version]
     def event(self,cur,principal,source_id,event):cur.execute('INSERT INTO enterprise_auth.events(account_id,principal_key,source_id,event)VALUES(%s,%s,%s,%s)',(principal.account_id,principal.key,source_id,event))
@@ -123,8 +145,9 @@ class EnterpriseAuthStore:
             self._connection_lock(cur,principal,mapping.source_id)
             receipt=cur.execute("SELECT state_sha256 FROM enterprise_auth.attempts WHERE state_sha256=%s AND account_id=%s AND principal_key=%s AND source_id=%s AND mapping_version=%s AND consumed_at IS NOT NULL AND consumed_at>clock_timestamp()-interval '1 minute'AND completed_at IS NULL FOR UPDATE",(mapping.attempt_sha256,principal.account_id,principal.key,mapping.source_id,mapping.version)).fetchone()
             if not receipt:raise SourceDenied('source_connection_changed')
-            encrypted=self.box.seal(self.context(principal,mapping,'credential'),material)
-            cur.execute("INSERT INTO enterprise_auth.connections(account_id,principal_key,source_id,mapping_version,revision,credential_ciphertext,status)VALUES(%s,%s,%s,%s,1,%s,'connected')ON CONFLICT(account_id,principal_key,source_id)DO UPDATE SET mapping_version=EXCLUDED.mapping_version,revision=enterprise_auth.connections.revision+1,credential_ciphertext=EXCLUDED.credential_ciphertext,status='connected',updated_at=clock_timestamp()",(principal.account_id,principal.key,mapping.source_id,mapping.version,encrypted))
+            consent_id=str(uuid.uuid4())
+            encrypted=self.box.seal(self.context(principal,mapping,'credential')+[consent_id],material)
+            cur.execute("INSERT INTO enterprise_auth.connections(account_id,principal_key,source_id,mapping_version,consent_id,revision,credential_ciphertext,status)VALUES(%s,%s,%s,%s,%s,1,%s,'connected')ON CONFLICT(account_id,principal_key,source_id)DO UPDATE SET mapping_version=EXCLUDED.mapping_version,consent_id=EXCLUDED.consent_id,revision=enterprise_auth.connections.revision+1,credential_ciphertext=EXCLUDED.credential_ciphertext,status='connected',updated_at=clock_timestamp()",(principal.account_id,principal.key,mapping.source_id,mapping.version,consent_id,encrypted))
             cur.execute('UPDATE enterprise_auth.attempts SET completed_at=clock_timestamp()WHERE state_sha256=%s',(mapping.attempt_sha256,))
             self.event(cur,principal,mapping.source_id,'connect_completed')
 
@@ -140,14 +163,14 @@ class EnterpriseAuthStore:
         stale=False
         with self.transaction()as cur:
             mapping=self._authorize(cur,principal,source_id)
-            row=cur.execute("SELECT mapping_version,revision,credential_ciphertext,status,updated_at<clock_timestamp()-interval '1 minute' AS stale FROM enterprise_auth.connections WHERE account_id=%s AND principal_key=%s AND source_id=%s FOR UPDATE",(principal.account_id,principal.key,source_id)).fetchone()
+            row=cur.execute("SELECT mapping_version,consent_id,revision,credential_ciphertext,status,updated_at<clock_timestamp()-interval '1 minute' AS stale FROM enterprise_auth.connections WHERE account_id=%s AND principal_key=%s AND source_id=%s FOR UPDATE",(principal.account_id,principal.key,source_id)).fetchone()
             if not row or row['mapping_version']!=mapping.version or row['status']not in {'connected','refreshing'}:raise SourceDenied('source_reconnection_required')
             if row['status']=='refreshing':
                 if not row['stale']:raise SourceUnavailable('source_refresh_in_progress')
                 cur.execute("UPDATE enterprise_auth.connections SET credential_ciphertext=NULL,status='needs_reconnect',updated_at=clock_timestamp()WHERE account_id=%s AND principal_key=%s AND source_id=%s",(principal.account_id,principal.key,source_id))
                 self.event(cur,principal,source_id,'needs_reconnect');stale=True
             else:
-                context=self.context(principal,mapping,'credential');material=self.box.open(context,row['credential_ciphertext']);revision=row['revision']+1
+                context=self.context(principal,mapping,'credential')+[str(row['consent_id'])];material=self.box.open(context,row['credential_ciphertext']);revision=row['revision']+1
                 cur.execute("UPDATE enterprise_auth.connections SET status='refreshing',revision=%s,updated_at=clock_timestamp()WHERE account_id=%s AND principal_key=%s AND source_id=%s",(revision,principal.account_id,principal.key,source_id))
         if stale:raise SourceDenied('source_reconnection_required')
         try:

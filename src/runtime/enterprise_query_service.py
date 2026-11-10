@@ -1,6 +1,5 @@
 """Native credential/engine composition for queued questions and delayed release."""
 import asyncio
-from concurrent.futures import ThreadPoolExecutor
 import threading
 import logging
 import procrastinate
@@ -8,19 +7,21 @@ import psycopg
 from enterprise_queries import QueryLeaseLost
 from enterprise_sources import SourceDenied,SourceUnavailable,SourceChanged
 from public_faq import InvalidAnswer
+from enterprise_knowledge import current_engine
 
 
 class EnterpriseAnswers:
-    def __init__(self,store,connections,make_engine):
+    def __init__(self,store,connections,make_engine,*,extraction_cache=None):
         if not isinstance(connections,dict)or not 1<=len(connections)<=20 or not callable(make_engine):raise ValueError('Supply owned native question adapters')
         if any(entry.driver.store is not store.auth for entry in connections.values()):raise ValueError('Question/source stores must use the same owned authority')
-        self.store=store;self.connections=connections;self.make_engine=make_engine
+        if extraction_cache is not None and(extraction_cache.auth is not store.auth or extraction_cache.account_id!=store.account_id):raise ValueError('Extraction cache must use the same owned company and authority')
+        self.store=store;self.connections=connections;self.make_engine=make_engine;self.extraction_cache=extraction_cache
 
     def engine(self,principal,authorize):
-        keys=list(self.connections)
-        with ThreadPoolExecutor(max_workers=min(4,len(keys)))as pool:
-            accesses=list(pool.map(lambda key:self.connections[key].driver.credentials(principal),keys))
-        return self.make_engine(principal,dict(zip(keys,accesses)),authorize)
+        engine=current_engine(self.store.auth,self.connections,principal,self.make_engine,authorize)
+        if self.extraction_cache is not None:
+            engine.decode=self.extraction_cache.wrap(engine.decode,lambda:engine.authorize(principal.key))
+        return engine
 
     def execute(self,identity):
         lease=self.store.claim(identity)
@@ -84,7 +85,9 @@ class EnterpriseQueryWorker:
         if type(concurrency)is not int or not 1<=concurrency<=4:raise ValueError('Use bounded owned query concurrency')
         async def recover():
             while True:
-                try:await asyncio.to_thread(self.service.store.recover)
+                try:
+                    await asyncio.to_thread(self.service.store.recover)
+                    if self.service.extraction_cache is not None:await asyncio.to_thread(self.service.extraction_cache.purge)
                 except(psycopg.OperationalError,SourceUnavailable):logging.getLogger(__name__).warning('Question recovery is temporarily unavailable')
                 await asyncio.sleep(15)
         async with self.app.open_async():

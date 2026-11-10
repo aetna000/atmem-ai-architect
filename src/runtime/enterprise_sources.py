@@ -167,10 +167,15 @@ class GraphSharePoint:
             checked_url(location,{self.host})
             reply=self.http.get(location,None,hosts={self.host},limit=10000000)
         if reply.status!=200:raise SourceUnavailable('source_download_failed')
-        text=decode(reply.body,before['file'].get('mimeType','application/octet-stream'))
+        def current():
+            value=self.metadata(identity,subject)
+            if value['eTag']!=before['eTag']:raise SourceChanged('source_document_changed')
+            return value
+        source_decoder=getattr(decode,'from_source',None)
+        mime=before['file'].get('mimeType','application/octet-stream')
+        text=source_decoder(reply.body,mime,current)if callable(source_decoder)else decode(reply.body,mime)
         if not isinstance(text,str)or not text.strip()or len(text)>200000:raise SourceUnavailable('source_document_unsupported')
-        after=self.metadata(identity,subject)
-        if after['eTag']!=before['eTag']:raise SourceChanged('source_document_changed')
+        after=current()
         title=after.get('name')
         if not isinstance(title,str)or not title or len(title)>1000:raise SourceUnavailable('invalid_source_response')
         return SourceDocument(self.source,identity,after['eTag'],title,text,after['webUrl'])

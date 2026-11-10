@@ -92,7 +92,10 @@ class EnterpriseQueryStore:
     def _enqueue(self,cur,identity,*,delay=0):
         # No execution lock: domain leases fence duplicate notifications and allow
         # a replacement to recover an expired lease while an old worker winds down.
-        self.task.configure(connection=cur.connection,schedule_in={'seconds':delay}).defer(query_id=str(identity))
+        scheduled=None
+        if delay:
+            scheduled=cur.execute('SELECT clock_timestamp()+make_interval(secs=>%s)AS at',(delay,)).fetchone()['at']
+        self.task.configure(connection=cur.connection,schedule_at=scheduled).defer(query_id=str(identity))
 
     def submit(self,session,question,request_key):
         question=query_text(question);identifier(request_key)

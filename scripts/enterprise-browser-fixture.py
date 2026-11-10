@@ -30,6 +30,7 @@ import enterprise_http_postgres as fixture_module
 from enterprise_http import create_app
 from enterprise_queries import producer_queries,initialize_query_store,grant_query_runtime
 from enterprise_query_service import EnterpriseAnswers,EnterpriseQueryWorker
+from enterprise_extraction_cache import ExtractionCache,initialize_extraction_cache,grant_extraction_runtime
 from psycopg.conninfo import conninfo_to_dict
 
 parser=argparse.ArgumentParser();parser.add_argument('--out',required=True);args=parser.parse_args();out=Path(args.out).resolve()
@@ -43,17 +44,23 @@ certificate=x509.CertificateBuilder().subject_name(name).issuer_name(name).publi
 private=out/'server.key';private.write_bytes(key.private_bytes(serialization.Encoding.PEM,serialization.PrivateFormat.PKCS8,serialization.NoEncryption()));private.chmod(0o600)
 cert=out/'server.crt';cert.write_bytes(certificate.public_bytes(serialization.Encoding.PEM))
 config={'clientId':'public-web-client','authorizationEndpoint':origin+'/fixture/authorize','tokenEndpoint':origin+'/fixture/token','scopes':['openid','profile','knowledge.read']}
-with psycopg.connect(fixture.owner_dsn)as conn:initialize_query_store(conn);grant_query_runtime(conn,conninfo_to_dict(fixture.app_dsn)['user'],worker=True)
+with psycopg.connect(fixture.owner_dsn)as conn:
+    initialize_query_store(conn);grant_query_runtime(conn,conninfo_to_dict(fixture.app_dsn)['user'],worker=True)
+    initialize_extraction_cache(conn);grant_extraction_runtime(conn,conninfo_to_dict(fixture.app_dsn)['user'])
 query_store=producer_queries(fixture.store,fixture.app_dsn,fixture.account)
+extraction_cache=ExtractionCache(fixture.store,fixture.account,hashlib.sha256(b'synthetic-utf8-decoder-v1').hexdigest())
 held=threading.Event();release=threading.Event();model_held=threading.Event();model_release=threading.Event();pause={'answer':False,'model':False}
+decoder_calls=[]
 def make_engine(*args):
-    engine=fixture.engine_factory(*args);original=engine.generate
+    engine=fixture.engine_factory(*args);original=engine.generate;decode=engine.decode
+    def extract(*values):decoder_calls.append(True);return decode(*values)
+    engine.decode=extract
     def generate(*values):
         if pause['model']:
             pause['model']=False;model_held.set();model_release.wait(12)
         return original(*values)
     engine.generate=generate;return engine
-answers=EnterpriseAnswers(query_store,fixture.connections,make_engine)
+answers=EnterpriseAnswers(query_store,fixture.connections,make_engine,extraction_cache=extraction_cache)
 worker=EnterpriseQueryWorker(fixture.app_dsn,answers)
 app=create_app(fixture.identity,fixture.sessions,fixture.connections,make_engine,public_origin=origin,web_config=config,answers=answers)
 @app.middleware('http')
@@ -108,7 +115,7 @@ def control():
             elif command=='release_model':model_release.set();result={'ok':True}
             elif command=='inspect':
                 with psycopg.connect(fixture.owner_dsn)as conn:query_count=conn.execute('SELECT count(*)FROM enterprise_queries.requests WHERE account_id=%s',(fixture.account,)).fetchone()[0]
-                result={'answerHeld':held.is_set(),'modelHeld':model_held.is_set(),'queryRequests':query_count,**counts,'modelCalls':len(fixture.model_calls),'auditEvents':len(fixture.audit),'graphCodeExchanges':sum(c[0]=='POST'for c in fixture.graph_http.calls),'confluenceExchanges':sum(c[0]=='POST'for c in fixture.confluence_http.calls)}
+                result={'answerHeld':held.is_set(),'modelHeld':model_held.is_set(),'queryRequests':query_count,'decoderCalls':len(decoder_calls),'documentDownloads':getattr(fixture,'document_downloads',0),**counts,'modelCalls':len(fixture.model_calls),'auditEvents':len(fixture.audit),'graphCodeExchanges':sum(c[0]=='POST'for c in fixture.graph_http.calls),'confluenceExchanges':sum(c[0]=='POST'for c in fixture.confluence_http.calls)}
             else:raise ValueError('Unknown local fixture command')
             print(json.dumps({'control':packet.get('id'),'result':result}),flush=True)
         except Exception:print(json.dumps({'control':packet.get('id'),'error':'fixture_control_failed'}),flush=True)

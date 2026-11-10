@@ -1,0 +1,25 @@
+test_immediate_submission_is_ready_without_a_host_timestamp (__main__.DurableQuestions.test_immediate_submission_is_ready_without_a_host_timestamp) ... FAIL
+test_retry_delay_uses_database_clock_even_if_host_clock_is_wrong (__main__.DurableQuestions.test_retry_delay_uses_database_clock_even_if_host_clock_is_wrong) ... FAIL
+
+======================================================================
+FAIL: test_immediate_submission_is_ready_without_a_host_timestamp (__main__.DurableQuestions.test_immediate_submission_is_ready_without_a_host_timestamp)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_queries_postgres.py", line 154, in test_immediate_submission_is_ready_without_a_host_timestamp
+    self.assertIsNone(scheduled)
+    ~~~~~~~~~~~~~~~~~^^^^^^^^^^^
+AssertionError: datetime.datetime(2026, 11, 10, 12, 1, 32, 97489, tzinfo=datetime.timezone.utc) is not None
+
+======================================================================
+FAIL: test_retry_delay_uses_database_clock_even_if_host_clock_is_wrong (__main__.DurableQuestions.test_retry_delay_uses_database_clock_even_if_host_clock_is_wrong)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_queries_postgres.py", line 162, in test_retry_delay_uses_database_clock_even_if_host_clock_is_wrong
+    self.assertGreater(delay,0);self.assertLessEqual(delay,5)
+                                ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+AssertionError: Decimal('730295912.860884') not less than or equal to 5
+
+----------------------------------------------------------------------
+Ran 2 tests in 0.231s
+
+FAILED (failures=2)

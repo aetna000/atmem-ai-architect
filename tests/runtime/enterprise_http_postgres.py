@@ -24,7 +24,7 @@ from enterprise_http import create_app,SourceConnection,COOKIE
 from enterprise_oauth import GraphConsent,ConfluenceConsent
 from enterprise_oauth_acceptance import OAuthHttp,Profiles,TENANT,CLIENT,CLOUD
 from enterprise_knowledge import EnterpriseKnowledge
-from enterprise_sources import SourceDocument,SourceDenied,GraphSharePoint,ConfluenceCloud,Reply,checked_url
+from enterprise_sources import SourceDocument,SourceDenied,SourceUnavailable,GraphSharePoint,ConfluenceCloud,Reply,checked_url
 
 ORIGIN='https://app.example'
 class CompanyHttpIntegration(unittest.IsolatedAsyncioTestCase):
@@ -48,10 +48,13 @@ class CompanyHttpIntegration(unittest.IsolatedAsyncioTestCase):
         class Documents:
             def get(self,url,token,*,hosts,limit=2000000):
                 checked_url(url,hosts)
+                if getattr(outer,'source_offline',False):raise SourceUnavailable('source_request_failed')
                 title=getattr(outer,'source_title','Private policy')
                 if '/root/search('in url:value={'value':[{'id':'doc','file':{},'parentReference':{'driveId':'drive'}}]}
-                elif '/items/doc/content'in url:return Reply(200,{},b'Private policy requires ninety days.')
-                elif '/items/doc?'in url:value={'id':'doc','name':title,'eTag':getattr(outer,'source_version','v1'),'file':{'mimeType':'text/plain'},'parentReference':{'driveId':'drive'},'webUrl':'https://tenant.sharepoint.com/policy'}
+                elif '/items/doc/content'in url:
+                    outer.document_downloads=getattr(outer,'document_downloads',0)+1
+                    return Reply(200,{},getattr(outer,'document_bytes',b'Private policy requires ninety days.'))
+                elif '/items/doc?'in url:value={'id':'doc','name':title,'eTag':getattr(outer,'source_version','v1'),'file':{'mimeType':getattr(outer,'document_mime','text/plain')},'parentReference':{'driveId':'drive'},'webUrl':'https://tenant.sharepoint.com/policy'}
                 elif '/wiki/rest/api/search?'in url:value={'results':[{'content':{'id':'100','type':'page'}}]}
                 elif '/wiki/api/v2/pages/100?'in url:value={'id':'100','title':title,'status':'current','spaceId':'42','version':{'number':1},'body':{'storage':{'value':'<p>Private policy requires ninety days.</p>'}}}
                 elif url.startswith('https://graph.microsoft.com/v1.0/me?')or url in {'https://api.atlassian.com/me','https://api.atlassian.com/oauth/token/accessible-resources'}:return outer.profiles.get(url,token,hosts=hosts)
@@ -65,7 +68,8 @@ class CompanyHttpIntegration(unittest.IsolatedAsyncioTestCase):
                 if self.revoke_during_model:
                     with psycopg.connect(self.owner_dsn)as conn:conn.execute('UPDATE enterprise_auth.memberships SET active=false WHERE account_id=%s AND principal_key=%s',(self.account,principal.key))
                 article=json.loads(payload)['articles'][0]
-                return json.dumps({'answer':'Private policy requires ninety days.','abstained':False,'citations':[{'id':article['id'],'quote':'Private policy requires ninety days.'}]})
+                quote=getattr(self,'answer_quote','Private policy requires ninety days.')
+                return json.dumps({'answer':quote,'abstained':False,'citations':[{'id':article['id'],'quote':quote}]})
             sources=[GraphSharePoint('drive','tenant.sharepoint.com',access['sharepoint'],http=Documents()),ConfluenceCloud(CLOUD,'tenant.atlassian.net',{'ENG':'42'},access['confluence'],http=Documents())]
             return EnterpriseKnowledge(sources,generate,lambda raw,mime:raw.decode(),audit=self.audit.append,authorize=authorize)
         self.engine_factory=make_engine;self.connections={'sharepoint':SourceConnection('SharePoint','graph',self.graph),'confluence':SourceConnection('Confluence','confluence',self.confluence)}
