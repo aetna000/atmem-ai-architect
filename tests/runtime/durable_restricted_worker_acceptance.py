@@ -31,6 +31,7 @@ class RestrictedWorkerTests(durable_worker_acceptance.DurableWorkerTests):
         self.tasks.append(task)
         class ApiFacingRuntime:
             store=api
+            worker=runtime
         return ApiFacingRuntime(),task
 
 if __name__=='__main__':

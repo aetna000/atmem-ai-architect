@@ -1,0 +1,23 @@
+setUpClass (__main__.RuntimeDatabasePrivilegesTests) ... ERROR
+
+======================================================================
+ERROR: setUpClass (__main__.RuntimeDatabasePrivilegesTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/durable_privileges_acceptance.py", line 28, in setUpClass
+    def setUpClass(cls):cls.owner_dsn,cls.api_role,cls.worker_role,cls.api_dsn,cls.worker_dsn=create_runtime_roles()
+                                                                                              ~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/durable_privileges_acceptance.py", line 22, in create_runtime_roles
+    grant_runtime_roles(conn,api_role,worker_role)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/workflow_database.py", line 64, in grant_runtime_roles
+    inherited_access=cursor.execute("SELECT has_schema_privilege(%s,'workflow','CREATE') OR EXISTS(SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='workflow'AND c.relkind IN('r','p','v','m','f')AND(has_table_privilege(%s,c.oid,'SELECT,INSERT,UPDATE,DELETE,TRUNCATE,REFERENCES,TRIGGER')OR has_any_column_privilege(%s,c.oid,'SELECT,INSERT,UPDATE,REFERENCES'))) OR EXISTS(SELECT 1 FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='workflow'AND c.relkind='S'AND has_sequence_privilege(%s,c.oid,'SELECT,USAGE,UPDATE'))",(role,role,role,role)).fetchone()[0]
+                     ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/durable-runtime/lib/python3.13/site-packages/psycopg/cursor.py", line 117, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.WrongObjectType: "procrastinate_job_to_defer_v1" is not a sequence
+
+----------------------------------------------------------------------
+Ran 0 tests in 0.132s
+
+FAILED (errors=1)

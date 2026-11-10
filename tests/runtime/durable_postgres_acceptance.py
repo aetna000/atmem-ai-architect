@@ -23,7 +23,7 @@ from durable_fixture_tasks import fixture_tasks,FIXTURE_CONTRACT
 def fixture_dsn():
     path=Path(os.environ.get('ATMEM_WORKFLOW_TEST_CONFIG',ROOT/'.local/durable-postgres/fixture.json'))
     c=json.loads(path.read_text())
-    if c.get('name')!='atmem-durable-qualification' or not isinstance(c.get('database'),str)or not re.fullmatch(r'architect_qualification(?:_[a-z0-9]{1,32})?',c['database']) or not isinstance(c.get('marker'),str)or len(c['marker'])!=64:raise ValueError('Use the owned local qualification fixture')
+    if c.get('name')not in {'atmem-durable-qualification','atmem-durable-qualification-pg18'} or not isinstance(c.get('database'),str)or not re.fullmatch(r'architect_qualification(?:_[a-z0-9]{1,32})?',c['database']) or not isinstance(c.get('marker'),str)or len(c['marker'])!=64:raise ValueError('Use the owned local qualification fixture')
     dsn=make_conninfo(host='127.0.0.1',port=c['port'],dbname=c['database'],user=c['user'],password=c['password'],sslmode='disable')
     with psycopg.connect(dsn,connect_timeout=2)as conn:
         row=conn.execute('SELECT marker FROM workflow.qualification_guard').fetchone()

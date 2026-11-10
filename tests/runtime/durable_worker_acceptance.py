@@ -9,6 +9,7 @@ import sys
 import time
 import unittest
 import uuid
+import psycopg
 
 ROOT=Path(__file__).resolve().parents[2]
 sys.path[:0]=[str(ROOT/'src/runtime'),str(Path(__file__).resolve().parent)]
@@ -56,6 +57,16 @@ class DurableWorkerTests(unittest.IsolatedAsyncioTestCase):
             return {'supplier':'Recovered result'}
         runtime,_=await self.start(processor,lambda row,**identity:{'externalId':'unused'});operation=await asyncio.to_thread(runtime.store.submit,self.user,'document','temporary',{})
         await self.until_state(runtime,operation,'review');self.assertEqual(attempts,[operation,operation]);events=await asyncio.to_thread(runtime.store.events,self.user,operation);self.assertIn('retry_pending',[e['event']for e in events]);self.assertNotIn('PRIVATE_PROCESSOR_PAYLOAD_MUST_NOT_ESCAPE',str(events))
+    async def test_native_retry_handles_a_transient_database_failure_before_the_domain_claim(self):
+        processed=[]
+        runtime,_=await self.start(lambda row:processed.append(str(row['id']))or{'supplier':'After reconnect'},lambda row,**identity:{'externalId':'unused'})
+        worker=getattr(runtime,'worker',runtime);original=worker.store.claim_extract;calls=[]
+        def claim(operation):
+            calls.append(operation)
+            if len(calls)==1:raise psycopg.OperationalError('PRIVATE_DATABASE_CONNECT_DETAIL')
+            return original(operation)
+        worker.store.claim_extract=claim;operation=await asyncio.to_thread(runtime.store.submit,self.user,'document','preclaim-outage',{})
+        await self.until_state(runtime,operation,'review');self.assertEqual(processed,[operation]);self.assertEqual(calls,[operation,operation])
     async def test_real_worker_does_not_retry_an_uncertain_nonidempotent_external_action(self):
         deliveries=[]
         def deliver(row,**identity):deliveries.append(identity);raise ExternalOutcomeUnknown('Synthetic lost acknowledgement')

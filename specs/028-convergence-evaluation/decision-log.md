@@ -181,3 +181,19 @@ verify full reviewed record/key equality; reject tampering and added instruction
 Portable locally-tested lessons now retain their evidence receipt and limitations.
 See specs/028-convergence-evaluation/evidence/20261110-invoice-runtime. Full 28-case
 acceptance, medium/hard provider composition and production qualification remain open.
+
+## 2026-11-10 — Refreshable native database identities and recovery
+
+Added separate native credential factories and operator-only owned role bootstrap.
+AWS uses RDS IAM authentication membership, Azure checks authoritative Entra
+service/OID/tenant mapping, GCP admits the package-created Cloud SQL IAM user, and
+IBM uses a separately managed SQL password and instance CA. No cloud database or
+IAM operations ran. Native mapping protocols remain fixtures until authorized
+destination checks. API/worker roles cannot inherit broader workflow authority.
+
+Local password rotation exposed a pre-claim queue failure path. Retry and bounded
+notification repair now preserve pending/approved business intent without replaying
+uncertain external effects. The same 80-check suite passes on PostgreSQL 17.11 and
+18.6. Retained faults and exact sources are in evidence/20261110-workflow-credentials.
+Continue composing complete invoice resources/UI/bootstrap and operations; CV-005
+and the final full-project matrix remain in progress.

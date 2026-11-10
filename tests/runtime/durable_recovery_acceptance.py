@@ -10,6 +10,16 @@ from durable_fixture_tasks import fixture_tasks,FIXTURE_CONTRACT
 from durable_workflow import WorkflowStore,Missing,LostLease
 
 class DomainRecoveryTests(DurableFixture,unittest.TestCase):
+    def fail_queue(self,task,operation):
+        with self.store.connect()as conn:conn.execute("UPDATE workflow.procrastinate_jobs SET status='failed'WHERE task_name=%s AND args->>'operation_id'=%s",(task.name,operation))
+    def test_failed_notification_before_claim_does_not_strand_pending_or_approved_work(self):
+        first=self.submit();self.fail_queue(self.extract,first)
+        self.assertEqual(self.store.reconcile_notifications(),[first]);self.assertEqual(self.queue_count(self.extract,first),2);self.assertEqual(self.store.reconcile_notifications(),[])
+        second=self.approved();original=self.store.get(self.user,second);self.fail_queue(self.dispatch,second)
+        self.assertEqual(self.store.reconcile_notifications(),[second]);current=self.store.get(self.user,second);self.assertEqual(current['approved_hash'],original['approved_hash']);self.assertEqual(current['destination_contract'],original['destination_contract']);self.assertEqual(self.queue_count(self.dispatch,second),2)
+    def test_notification_repair_never_requeues_an_uncertain_external_outcome(self):
+        operation=self.approved();lease=self.store.claim_dispatch(operation);self.store.fail(operation,str(lease['lease_token']),'destination_unavailable',retryable=True,ambiguous=True);self.fail_queue(self.dispatch,operation)
+        self.assertEqual(self.store.reconcile_notifications(),[]);self.assertEqual(self.store.get(self.user,operation)['state'],'unknown');self.assertEqual(self.queue_count(self.dispatch,operation),1)
     def test_expired_processing_is_requeued_even_after_a_notification_was_acknowledged(self):
         operation=self.submit();lease=self.store.claim_extract(operation)
         # A notification can be acknowledged while an earlier live domain lease

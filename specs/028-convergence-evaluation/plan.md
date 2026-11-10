@@ -63,3 +63,8 @@ four-provider application/UI/bootstrap, native database credentials/roles, parse
 isolation and retention/reconciliation resources. Then qualify exact fresh exports
 and rerun the original complete document-intake briefs; do not count local fixtures
 as native cloud identity/storage or reduce the remaining medium/hard scope.
+
+Native database connection/role contracts and safe notification repair now have
+80 local checks on each of PostgreSQL 17 and 18. See evidence/20261110-workflow-credentials.
+Continue full application/resource composition; these native SDK/SQL/protocol tests
+do not qualify cloud identities, complete medium projects or the final 28-case matrix.

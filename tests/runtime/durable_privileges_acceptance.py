@@ -64,7 +64,8 @@ class RuntimeDatabasePrivilegesTests(unittest.TestCase):
     def test_unreviewed_inherited_roles_and_schema_owners_are_rejected(self):
         name='qa_'+uuid.uuid4().hex[:12];parent=name+'_parent';child=name+'_child'
         with psycopg.connect(self.owner_dsn)as conn:
-            for role in [parent,child]:conn.execute(sql.SQL('CREATE ROLE {} NOLOGIN').format(sql.Identifier(role)))
+            conn.execute(sql.SQL('CREATE ROLE {} NOLOGIN').format(sql.Identifier(parent)))
+            conn.execute(sql.SQL('CREATE ROLE {} LOGIN').format(sql.Identifier(child)))
             conn.execute(sql.SQL('GRANT {} TO {}').format(sql.Identifier(parent),sql.Identifier(child)))
         with self.assertRaises(ValueError):
             with psycopg.connect(self.owner_dsn)as conn:grant_runtime_roles(conn,child,self.worker_role)

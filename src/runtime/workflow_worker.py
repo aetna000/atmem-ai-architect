@@ -5,6 +5,7 @@ by the compiler/bootstrap, never model-provided paths, tools or Python code.
 """
 import asyncio
 import procrastinate
+import psycopg
 from durable_workflow import WorkflowStore,LostLease
 from workflow_errors import TemporaryWork,PermanentWork,ExternalOutcomeUnknown,DestinationNotAttempted,InvalidDispatch
 
@@ -32,7 +33,8 @@ class WorkflowRuntime:
         if destination_contract is None:destination_contract=getattr(deliver,'contract',None)
         elif hasattr(deliver,'contract')and deliver.contract!=destination_contract:raise ValueError('Worker and destination integration identities must match')
         self.processor=processor;self.deliver=deliver;self.idempotent_destination=idempotent_destination
-        self.app=procrastinate.App(connector=procrastinate.PsycopgConnector(conninfo=dsn,min_size=1,max_size=8,kwargs={'connect_timeout':5,'options':'-c search_path=pg_catalog,workflow,pg_temp -c statement_timeout=10000 -c lock_timeout=3000'}))
+        async def refreshed_connection():return await asyncio.to_thread(dsn)
+        self.app=procrastinate.App(connector=procrastinate.PsycopgConnector(conninfo=refreshed_connection if callable(dsn)else dsn,min_size=1,max_size=8,max_lifetime=600,kwargs={'connect_timeout':5,'options':'-c search_path=pg_catalog,workflow,pg_temp -c statement_timeout=10000 -c lock_timeout=3000'}))
         retry=procrastinate.RetryStrategy(max_attempts=5,wait=retry_wait,retry_exceptions=[TemporaryWork])
         self.extract=self.app.task(name=namespace+'.extract',queue=namespace+'-extract',retry=retry)(self._extract)
         self.dispatch=self.app.task(name=namespace+'.dispatch',queue=namespace+'-dispatch',retry=retry)(self._dispatch)
@@ -44,7 +46,8 @@ class WorkflowRuntime:
         try:await asyncio.to_thread(self.store.fail,str(row['id']),str(row['lease_token']),reason,retryable=retryable,ambiguous=ambiguous)
         except LostLease:return
     async def _extract(self,operation_id):
-        row=await asyncio.to_thread(self.store.claim_extract,operation_id)
+        try:row=await asyncio.to_thread(self.store.claim_extract,operation_id)
+        except psycopg.OperationalError:raise TemporaryWork('Database connection temporarily unavailable before processing')from None
         if row is None:return
         try:
             result=await asyncio.to_thread(self.processor,row)
@@ -56,7 +59,8 @@ class WorkflowRuntime:
             if isinstance(error,asyncio.CancelledError):raise
             await self._fail(row,'invalid_result');raise PermanentWork('Processing requires review or recovery')from None
     async def _dispatch(self,operation_id):
-        row=await asyncio.to_thread(self.store.claim_dispatch,operation_id,verified_idempotent_replay=self.idempotent_destination)
+        try:row=await asyncio.to_thread(self.store.claim_dispatch,operation_id,verified_idempotent_replay=self.idempotent_destination)
+        except psycopg.OperationalError:raise TemporaryWork('Database connection temporarily unavailable before dispatch')from None
         if row is None:return
         try:
             receipt=await asyncio.to_thread(self.deliver,row,idempotency_key=str(row['id']),payload_sha256=row['approved_hash'])
@@ -82,7 +86,9 @@ class WorkflowRuntime:
         for owned_task in [self.extract,self.dispatch]:
             stalled=await self.app.job_manager.get_stalled_jobs(task_name=owned_task.name,seconds_since_heartbeat=60)
             for job in stalled:await self.app.job_manager.retry_job(job)
-        return await asyncio.to_thread(self.store.recover_expired)
+        expired=await asyncio.to_thread(self.store.recover_expired)
+        repaired=await asyncio.to_thread(self.store.reconcile_notifications)
+        return list(dict.fromkeys([*expired,*repaired]))
     async def run(self,*,concurrency=2,recovery_interval=30,**options):
         if type(concurrency)is not int or not 1<=concurrency<=10 or type(recovery_interval)is not int or not 5<=recovery_interval<=300:raise ValueError('Invalid bounded worker options')
         async with self.app.open_async():

@@ -37,7 +37,8 @@ class DurableCrashTests(unittest.IsolatedAsyncioTestCase):
         return await asyncio.to_thread(self.runtime.store.submit,self.user,'document','crash-document',{'sha256':'a'*64})
     def child(self,mode,*,idempotent):
         marker=self.root/'held.json';config=self.root/'child.json';config.write_text(json.dumps({'mode':mode,'marker':str(marker),'namespace':self.namespace,'destination':self.sink.url,'caFile':str(self.sink.ca_file),'idempotent':idempotent}));config.chmod(0o600)
-        log=(self.root/'child.log').open('ab');process=subprocess.Popen([sys.executable,'-I',str(ROOT/'tests/runtime/durable_worker_process.py'),str(config)],cwd=ROOT,env={'PATH':os.getenv('PATH',''),'HOME':str(self.root),'PYTHONDONTWRITEBYTECODE':'1'},stdout=log,stderr=subprocess.STDOUT,start_new_session=True);log.close();self.children.append(process);return process,marker
+        child_env={'PATH':os.getenv('PATH',''),'HOME':str(self.root),'PYTHONDONTWRITEBYTECODE':'1','ATMEM_WORKFLOW_TEST_CONFIG':os.environ.get('ATMEM_WORKFLOW_TEST_CONFIG',str(ROOT/'.local/durable-postgres/fixture.json'))}
+        log=(self.root/'child.log').open('ab');process=subprocess.Popen([sys.executable,'-I',str(ROOT/'tests/runtime/durable_worker_process.py'),str(config)],cwd=ROOT,env=child_env,stdout=log,stderr=subprocess.STDOUT,start_new_session=True);log.close();self.children.append(process);return process,marker
     async def until(self,predicate,description):
         deadline=time.monotonic()+12
         while time.monotonic()<deadline:

@@ -23,11 +23,11 @@ sys.path.insert(0,str(ROOT/'src/runtime'))
 from workflow_database import initialize_database
 
 def main():
-    parser=argparse.ArgumentParser();parser.add_argument('--docker-host',required=True,help='unix:///absolute/path/to/local/docker.sock');args=parser.parse_args()
+    parser=argparse.ArgumentParser();parser.add_argument('--docker-host',required=True,help='unix:///absolute/path/to/local/docker.sock');parser.add_argument('--major',choices=['17','18'],default='17');args=parser.parse_args()
     if not args.docker_host.startswith('unix:///')or not Path(args.docker_host[7:]).is_socket():raise ValueError('Supply an existing local Unix Docker socket')
     docker=shutil.which('docker')
     if not docker:raise ValueError('Install Docker CLI first')
-    folder=ROOT/'.local/durable-postgres';folder.mkdir(parents=True,exist_ok=True);folder.chmod(0o700);config_path=folder/'fixture.json';docker_config=folder/'docker-config';docker_config.mkdir(exist_ok=True);docker_config.chmod(0o700)
+    folder=ROOT/'.local/durable-postgres';folder.mkdir(parents=True,exist_ok=True);folder.chmod(0o700);config_path=folder/('fixture-pg18.json'if args.major=='18'else'fixture.json');docker_config=folder/'docker-config';docker_config.mkdir(exist_ok=True);docker_config.chmod(0o700)
     if not(docker_config/'config.json').exists():(docker_config/'config.json').write_text('{}\n')
     def run(*parts,required=True):
         result=subprocess.run([docker,'--config',str(docker_config),'--host',args.docker_host,*parts],capture_output=True,text=True)
@@ -36,8 +36,9 @@ def main():
     arch=json.loads(run('info','--format','{{json .Architecture}}').stdout)
     platform={'aarch64':'linux/arm64','arm64':'linux/arm64','x86_64':'linux/amd64','amd64':'linux/amd64'}.get(arch)
     lock=json.loads((ROOT/'src/runtime/postgres-qualification-lock.json').read_text())
+    if args.major!='17':lock=lock['variants'][args.major]
     if platform not in lock['manifests']:raise ValueError('Local Docker architecture is outside the reviewed fixture lock')
-    image=lock['image']+'@'+lock['manifests'][platform];name='atmem-durable-qualification';inspection=run('container','inspect',name,required=False)
+    image=lock['image']+'@'+lock['manifests'][platform];name='atmem-durable-qualification'+('-pg18'if args.major=='18'else'');inspection=run('container','inspect',name,required=False)
     if inspection.returncode==0:
         details=json.loads(inspection.stdout)[0]
         if details['Config'].get('Labels',{}).get('org.atmem.purpose')!='durable-qualification'or details['Config']['Image']!=image or not config_path.is_file():raise ValueError('Refusing to adopt an existing or unrecorded container')

@@ -44,7 +44,7 @@ class Principal:
 class WorkflowStore:
     def __init__(self,dsn,extract_task,dispatch_task,*,destination_contract,max_attempts=5,lease_seconds=600):
         self.destination_contract=reviewed_contract(destination_contract)
-        if not isinstance(dsn,str) or not dsn:raise ValueError('Supply an operator-managed PostgreSQL connection')
+        if not callable(dsn)and(not isinstance(dsn,str) or not dsn):raise ValueError('Supply an operator-managed PostgreSQL connection or trusted credential factory')
         if type(max_attempts)is not int or not 1<=max_attempts<=10 or type(lease_seconds)is not int or not 10<=lease_seconds<=1800:raise ValueError('Invalid owned workflow limits')
         for task in [extract_task,dispatch_task]:
             queue=getattr(task,'queue',None)
@@ -54,7 +54,9 @@ class WorkflowStore:
         if not isinstance(self.workflow_key,str) or not 1<=len(self.workflow_key.encode())<=128:raise ValueError('Invalid owned workflow identity')
         self.dsn=dsn;self.tasks={'extract':extract_task,'dispatch':dispatch_task};self.max_attempts=max_attempts;self.lease_seconds=lease_seconds
     def connect(self):
-        return psycopg.connect(self.dsn,connect_timeout=5,row_factory=dict_row,options='-c search_path=pg_catalog,workflow,pg_temp -c statement_timeout=10000 -c lock_timeout=3000')
+        value=self.dsn()if callable(self.dsn)else self.dsn
+        if not isinstance(value,str)or not value:raise ValueError('Database credential factory did not return an owned connection')
+        return psycopg.connect(value,connect_timeout=5,row_factory=dict_row,options='-c search_path=pg_catalog,workflow,pg_temp -c statement_timeout=10000 -c lock_timeout=3000')
     def _actor(self,conn,actor,roles):
         if not isinstance(actor,Principal):raise Denied('Verified application identity required')
         row=conn.execute('SELECT active,roles FROM workflow.memberships WHERE account_id=%s AND subject=%s FOR SHARE',(actor.account_id,actor.subject)).fetchone()
@@ -218,6 +220,25 @@ class WorkflowStore:
                 conn.execute('UPDATE workflow.operations SET state=%s,execution_epoch=execution_epoch+1,lease_token=NULL,lease_until=NULL,queue_job_id=%s,updated_at=clock_timestamp() WHERE id=%s',(state,job,row['id']))
                 self._event(conn,row,'outcome_unknown'if state=='unknown'else'dead'if state=='dead'else'retry_pending','recovery',{'reason':'worker_interrupted'});recovered.append(str(row['id']))
         return recovered
+    def reconcile_notifications(self,*,limit=50):
+        """Resume a safe pre-execution state whose queue notification was lost.
+
+        A queue failure before a domain lease must not strand a pending invoice.
+        Unknown external outcomes are deliberately excluded. This does not reset
+        business attempt limits, approval identity, payload or destination.
+        """
+        if type(limit)is not int or not 1<=limit<=100:raise ValueError('Invalid reconciliation batch')
+        repaired=[]
+        with self.connect()as conn:
+            rows=conn.execute("SELECT o.* FROM workflow.operations o WHERE workflow_key=%s AND state IN ('pending','approved') AND NOT EXISTS(SELECT 1 FROM workflow.procrastinate_jobs j WHERE j.task_name=CASE WHEN o.state='pending' THEN %s ELSE %s END AND j.args->>'operation_id'=o.id::text AND j.status IN ('todo','doing')) ORDER BY updated_at FOR UPDATE OF o SKIP LOCKED LIMIT %s",(self.workflow_key,self.tasks['extract'].name,self.tasks['dispatch'].name,limit)).fetchall()
+            for row in rows:
+                kind='extract'if row['state']=='pending'else'dispatch';task=self.tasks[kind]
+                # Recheck after the row lock: another reconciler may have committed
+                # a notification after the selecting statement's MVCC snapshot.
+                active=conn.execute("SELECT 1 FROM workflow.procrastinate_jobs WHERE task_name=%s AND args->>'operation_id'=%s AND status IN ('todo','doing') LIMIT 1",(task.name,str(row['id']))).fetchone()
+                if active:continue
+                job=self._enqueue(conn,kind,row['id']);conn.execute('UPDATE workflow.operations SET queue_job_id=%s,updated_at=clock_timestamp()WHERE id=%s',(job,row['id']));self._event(conn,row,'retry_pending','recovery',{'reason':'queue_notification_interrupted'});repaired.append(str(row['id']))
+        return repaired
     def fail(self,operation_id,token,reason,*,retryable=False,ambiguous=True):
         if type(retryable)is not bool or type(ambiguous)is not bool:raise ValueError('Explicit worker failure decisions are required')
         if reason not in {'source_unavailable','invalid_result','model_unavailable','destination_unavailable','destination_rejected','worker_interrupted'}:raise ValueError('Use an owned error category, never raw provider/input text')
