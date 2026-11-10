@@ -197,3 +197,19 @@ uncertain external effects. The same 80-check suite passes on PostgreSQL 17.11 a
 18.6. Retained faults and exact sources are in evidence/20261110-workflow-credentials.
 Continue composing complete invoice resources/UI/bootstrap and operations; CV-005
 and the final full-project matrix remain in progress.
+
+## 2026-11-10 — Native invoice API and review workspace
+
+Implemented native staff login bindings, private storage/database producer bootstrap,
+pink upload/review/history browser, PKCE and proxy-session handling. Cryptographic
+claims and live database membership are independent boundaries; the API receives no
+model or dispatch credential. Local qualification: 31 API/identity/storage/decoder
+checks, 12 review browser checks and 5 PKCE browser checks. Cloud/JWKS/object/model
+fixtures remain explicitly distinguished from real managed-service behavior.
+
+Concurrent browser startup exposed shared SQL ACL catalog collisions. Owned grant
+admission now holds a transaction-scoped advisory lock, refuses autocommit, and has
+a four-way concurrency regression. All 82 workflow checks pass on PG17 and PG18.
+Evidence and retained faults: evidence/20261110-invoice-workspace. Next complete the
+first medium project export end to end, including worker/parser/native resources
+and operations, then qualify its four providers before expanding further families.

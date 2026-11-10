@@ -1,5 +1,6 @@
 """Use distinct nonadministrative DB logins, not owner-powered grant mocks."""
 from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor
 import secrets
 import sys
 import unittest
@@ -35,6 +36,17 @@ class RuntimeDatabasePrivilegesTests(unittest.TestCase):
             for actor,roles in [(self.user,['user']),(self.reviewer,['reviewer'])]:conn.execute('INSERT INTO workflow.memberships(account_id,subject,roles) VALUES(%s,%s,%s)',(actor.account_id,actor.subject,roles))
     def test_api_submission_approval_and_worker_completion_use_only_their_granted_roles(self):
         operation=self.api.submit(self.user,'document','privilege-document',{'sha256':'a'*64});lease=self.worker.claim_extract(operation);self.worker.record_result(operation,str(lease['lease_token']),{'supplier':'Privilege fixture'});self.api.approve(self.reviewer,operation,1);send=self.worker.claim_dispatch(operation);self.worker.record_sent(operation,str(send['lease_token']),{'externalId':'privileged-synthetic-001'});self.assertEqual(self.api.get(self.user,operation)['state'],'sent')
+    def test_concurrent_owned_role_grants_serialize_shared_catalog_updates(self):
+        with ThreadPoolExecutor(max_workers=4)as executor:created=list(executor.map(lambda _:create_runtime_roles(),range(4)))
+        self.assertEqual(len({row[1]for row in created}),4)
+        for _,api,worker,api_dsn,worker_dsn in created:
+            for role,dsn in [(api,api_dsn),(worker,worker_dsn)]:
+                with psycopg.connect(dsn)as conn:
+                    self.assertEqual(conn.execute('SELECT current_user').fetchone()[0],role)
+                    with self.assertRaises(psycopg.errors.InsufficientPrivilege):conn.execute('DELETE FROM workflow.events')
+    def test_grants_require_a_transaction_that_holds_the_catalog_lock(self):
+        with psycopg.connect(self.owner_dsn,autocommit=True)as conn:
+            with self.assertRaisesRegex(ValueError,'one operator transaction'):grant_runtime_roles(conn,self.api_role,self.worker_role)
     def test_runtime_roles_cannot_edit_membership_or_delete_audit_or_own_the_schema(self):
         for dsn in [self.api_dsn,self.worker_dsn]:
             for statement,args in [("UPDATE workflow.memberships SET roles=ARRAY['owner'] WHERE account_id=%s",(self.account,)),('UPDATE workflow.memberships SET active=false WHERE account_id=%s',(self.account,)),('DELETE FROM workflow.events WHERE account_id=%s',(self.account,)),('CREATE TABLE workflow.forbidden_ddl(id integer)',())]:

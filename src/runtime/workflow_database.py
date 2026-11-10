@@ -30,6 +30,11 @@ def initialize_database(conn):
     conn.execute('REVOKE ALL ON ALL FUNCTIONS IN SCHEMA workflow FROM PUBLIC')
 
 def grant_runtime_roles(conn,api_role,worker_role,*,native_provider=None):
+    if conn.autocommit:raise ValueError('Use one operator transaction for runtime grant admission')
+    # Grants for distinct logins still update the same pg_namespace/pg_class ACL
+    # tuples. Serialize this owned bootstrap across deployments in this database;
+    # unrelated schema/client changes remain outside this lock and are not adopted.
+    conn.execute("SELECT pg_advisory_xact_lock(hashtextextended('atmem-workflow-runtime-grants-v1',0))")
     authentication_roles={None:set(),'aws':{'rds_iam'},'azure':set(),'gcp':{'cloudsqliamuser','cloudsqliamserviceaccount'},'ibm':set()}
     if native_provider not in authentication_roles:raise ValueError('Use an explicitly reviewed native database grant profile')
     expected=hashlib.sha256((Path(__file__).parent/'workflow_schema.sql').read_bytes()).hexdigest()

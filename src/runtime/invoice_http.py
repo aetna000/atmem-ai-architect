@@ -25,10 +25,14 @@ def error(code,status):return JSONResponse({'error':{'code':code,'message':MESSA
 def public_row(row):
     return {'id':str(row['id']),'state':row['state'],'result':row['result'],'revision':row['result_revision'],'createdAt':row['created_at'].isoformat(),'updatedAt':row['updated_at'].isoformat(),'receipt':row['receipt']}
 
-def create_app(verify,store,objects,*,account_id,public_origin,token_header=None):
+def create_app(verify,store,objects,*,account_id,public_origin,token_header=None,web_config=None,static_root=None):
     identifier(account_id);origin=urlsplit(public_origin)
     if origin.scheme not in {'https','http'}or not origin.netloc or origin.path not in {'','/'}or origin.query or origin.fragment or origin.username or(origin.scheme=='http'and origin.hostname not in {'localhost','127.0.0.1','::1'}):raise ValueError('Supply the owned HTTPS origin or explicit loopback fixture')
     app=FastAPI(docs_url=None,redoc_url=None,openapi_url=None);uploads=threading.BoundedSemaphore(20)
+    csp="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
+    if web_config is not None:
+        from invoice_web import install_web
+        csp=install_web(app,web_config,static_root)
     async def actor(request):
         supplied=request.headers.get('authorization','')
         token=request.headers.get(token_header,'')if token_header else supplied[7:]if supplied.startswith('Bearer ')else''
@@ -46,7 +50,7 @@ def create_app(verify,store,objects,*,account_id,public_origin,token_header=None
         except Conflict:response=error('conflict',409)
         except(ValueError,UnicodeError,RecursionError):response=error('invalid_request',400)
         except Exception:response=error('unavailable',503)
-        response.headers.update({'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Content-Security-Policy':"default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",'Strict-Transport-Security':'max-age=31536000'})
+        response.headers.update({'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','Content-Security-Policy':csp,'Strict-Transport-Security':'max-age=31536000'})
         return response
     @app.get('/healthz')
     def health():return{'status':'running'}

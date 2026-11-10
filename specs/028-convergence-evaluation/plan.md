@@ -68,3 +68,10 @@ Native database connection/role contracts and safe notification repair now have
 80 local checks on each of PostgreSQL 17 and 18. See evidence/20261110-workflow-credentials.
 Continue full application/resource composition; these native SDK/SQL/protocol tests
 do not qualify cloud identities, complete medium projects or the final 28-case matrix.
+
+Invoice workspace/native API now has local browser, JWT/SQL membership and aggregate
+source receipts in evidence/20261110-invoice-workspace. The shared-ACL concurrency
+repair raises workflow checks to 82 on each PG17/18. Prioritize finishing the complete
+invoice export (worker bootstrap, native parser boundary and all required provider
+resources/operations) before adding further isolated foundations or application
+families. Then run the unchanged full-client-brief medium cases on all four providers.
