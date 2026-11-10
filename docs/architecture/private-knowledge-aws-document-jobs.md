@@ -3,8 +3,9 @@
 `enterprise_aws_jobs.py` now implements the task-definition contract and native
 ECS controller. `enterprise_aws_objects.py` and `enterprise_aws_transfer.py` supply
 conditional storage operations and trusted transfer stages. These are **not a
-complete production composition**: host-pool provisioning, remaining Terraform and
-generated private export wiring remain unfinished. No cloud account was accessed
+complete production composition**: private host-pool Terraform is now locally
+qualified in `private-knowledge-aws-infrastructure.md`; full native application,
+operator/artifact and generated private export wiring remain unfinished. No cloud account was accessed
 in qualification and no new capability/default worker is enabled.
 
 The design uses Linux EC2/ECS for this parser workload. Fargate requires `awsvpc`
@@ -111,8 +112,8 @@ foreign cluster/attribute ownership, preserves unrelated ECS/daemon configuratio
 atomically writes private root-owned files and enforces local daemon/bridge/seccomp
 settings before inserting first-position IPv4/IPv6 metadata blocks. It never
 flushes unrelated rules. Twelve local contracts use real filesystem operations and
-explicit daemon/firewall fixtures. Cloud-init/systemd wiring and actual AMI
-qualification remain unfinished; this helper alone does not qualify a host pool.
+explicit daemon/firewall fixtures. Cloud-init/systemd wiring now comes from the private AWS compiler, with local
+native unit verification; actual AMI/host qualification remains unfinished.
 
 The probe compares firewall options semantically, preserving exact destination,
 interface, action and first-rule constraints. A real owned Linux check uses only
@@ -120,8 +121,9 @@ new temporary unlinked chains in both families, verifies normal native option
 ordering and rejects an earlier ACCEPT, then removes those new chains. It does
 not modify existing forwarding or Docker chains, or prove metadata reachability.
 
-Provisioning must still restrict host identity, IMDS, image pulls, storage, placement,
-retention and recovery; never expose application/source/model credentials to the
+The emitted substrate now restricts host identity, IMDS, image pulls, storage and
+placement; native qualification must still verify those boundaries, retention and
+recovery; never expose application/source/model credentials to the
 parser host. Agent cleanup timing is not a strict deletion guarantee. Shared-kernel
 EC2 containers are not a VM security boundary; the
 [AWS IAM-role guidance](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task-iam-roles.html)

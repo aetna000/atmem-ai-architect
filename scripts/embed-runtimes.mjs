@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 fs.writeFileSync(new URL('../src/runtime/enterprise-aws-host-probe-source.json',import.meta.url),JSON.stringify(fs.readFileSync(new URL('../src/runtime/enterprise_aws_host_probe.py',import.meta.url),'utf8'))+'\n');
+fs.writeFileSync(new URL('../src/runtime/enterprise-aws-host-bootstrap-source.json',import.meta.url),JSON.stringify(fs.readFileSync(new URL('../src/runtime/enterprise_aws_host_bootstrap.py',import.meta.url),'utf8'))+'\n');
 const names=['bounded_rag','rag_aws_adapter','rag_acceptance','catalog_admin','connector_sync','connector_cli','web_user_admin'];
 const sources=Object.fromEntries(names.map(name=>[`${name}.py`,fs.readFileSync(new URL(`../src/runtime/${name}.py`,import.meta.url),'utf8')]));
 sources['connector_acceptance.py']=fs.readFileSync(new URL('../server/tests/test_connector_contract.py',import.meta.url),'utf8').replace("parents[2]/'src/runtime'","parents[1]/'connectors'");

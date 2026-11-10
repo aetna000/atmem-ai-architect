@@ -429,3 +429,25 @@ Continue with complete AWS pool/network/storage/roles/static task Terraform, the
 full worker/application/Spec Kit composition and equivalent Azure/IBM launchers.
 Do not promote a private case, capability, security status or final28 from these
 component results; the original full project requirements remain unchanged.
+
+
+### 2026-11-11 — New private AWS execution substrate
+
+Compose the owned fixed verifier as a child module and emit the dedicated private
+network, temporary store, separate identities/repositories, guarded host bootstrap,
+optional bounded EC2 pool and static Terraform task owner. Existing worker full-ARN
+ownership is checked before additive policies. Images/hosts default off, actual AMI
+and digests must be supplied, runtime config stays null until enabled. No invented
+artifact or AMI approval. Standing endpoint/host costs need destination review.
+
+Evidence: `specs/028-convergence-evaluation/evidence/20261111-private-aws-infrastructure-v1`.
+Twenty normal/hostile native mock plans, independent actual-output/native IAM/task/
+command/bootstrap checks, two installed-image consumers, native systemd syntax with
+explicit platform stubs, five independent IAM regressions and364 JS tests pass.
+Retain initial invalid indexing and escaping/native-fixture failures. No cloud
+account, actual AMI boot, IAM simulation, security acceptance or whole-case claim.
+
+Next compose the full native API/worker/SQL/model/source/artifact/operator/Spec Kit
+package and implement equivalent Azure/IBM isolated execution. Qualify unchanged
+full private briefs on all four providers, remaining medium/hard families and the
+final28/held-out matrix. Do not count this substrate as a completed client project.

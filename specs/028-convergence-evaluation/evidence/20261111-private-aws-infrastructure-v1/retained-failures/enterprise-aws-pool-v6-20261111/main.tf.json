@@ -1,0 +1,1433 @@
+{
+  "terraform": {
+    "required_version": ">= 1.17.1, < 2.0.0",
+    "required_providers": {
+      "aws": {
+        "source": "hashicorp/aws",
+        "version": "6.72.0"
+      }
+    }
+  },
+  "provider": {
+    "aws": {
+      "region": "${var.region}",
+      "allowed_account_ids": [
+        "${var.account_id}"
+      ]
+    }
+  },
+  "variable": {
+    "account_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing destination account, never inferred from a source node.",
+      "validation": {
+        "condition": "${can(regex(\"^[0-9]{12}$\",var.account_id))}",
+        "error_message": "Supply the reviewed account_id input."
+      }
+    },
+    "region": {
+      "type": "string",
+      "nullable": false,
+      "description": "Keep the selected architecture region; regenerate to change.",
+      "validation": {
+        "condition": "${can(regex(\"^ap-southeast-2$\",var.region))}",
+        "error_message": "Supply the reviewed region input."
+      },
+      "default": "ap-southeast-2"
+    },
+    "worker_role_arn": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing question-worker IAM role; append one named policy without replacing its other policies.",
+      "validation": {
+        "condition": "${can(regex(\"^arn:aws:iam::[0-9]{12}:role/[A-Za-z0-9_+=,.@/-]{1,128}$\",var.worker_role_arn))}",
+        "error_message": "Supply the reviewed worker_role_arn input."
+      }
+    },
+    "review_approved": {
+      "type": "bool",
+      "default": false,
+      "nullable": false,
+      "description": "Review destination, ownership, endpoint/host costs, data retention and operating responsibilities before apply."
+    },
+    "images_ready": {
+      "type": "bool",
+      "default": false,
+      "nullable": false,
+      "description": "Create the task revision only after both real immutable owned artifacts pass their checks."
+    },
+    "hosts_enabled": {
+      "type": "bool",
+      "default": false,
+      "nullable": false,
+      "description": "Launch new dedicated instances only after the actual AMI and bootstrap have been reviewed."
+    },
+    "host_count": {
+      "type": "number",
+      "default": 2,
+      "nullable": false,
+      "description": "Standing capacity proposal, not autoscaling or a throughput guarantee. Review costs and load evidence.",
+      "validation": {
+        "condition": "${var.host_count == floor(var.host_count) && var.host_count >= 1 && var.host_count <= 4}",
+        "error_message": "Use one to four reviewed dedicated hosts."
+      }
+    },
+    "availability_zones": {
+      "type": "list(string)",
+      "nullable": false,
+      "description": "Two distinct destination availability zones in the selected region.",
+      "validation": {
+        "condition": "${length(var.availability_zones) == 2 && length(distinct(var.availability_zones)) == 2 && alltrue([for zone in var.availability_zones : can(regex(\"^ap-southeast-2[a-z]$\",zone))])}",
+        "error_message": "Supply two distinct availability zones in the selected region."
+      }
+    },
+    "host_ami_id": {
+      "type": "string",
+      "default": "",
+      "nullable": false,
+      "description": "Pin the reviewed actual Amazon ECS-optimized AL2023 x86_64 AMI. Recommended metadata is discovery, not approval.",
+      "validation": {
+        "condition": "${!var.hosts_enabled || can(regex(\"^ami-[0-9a-f]{17}$\",var.host_ami_id))}",
+        "error_message": "Pin the actual reviewed AMI before launching hosts."
+      }
+    },
+    "parser_revision": {
+      "type": "string",
+      "default": "",
+      "nullable": false,
+      "description": "Actual independently qualified parser artifact revision.",
+      "validation": {
+        "condition": "${!var.images_ready || can(regex(\"^[0-9a-f]{64}$\",var.parser_revision))}",
+        "error_message": "Supply the actual qualified parser revision."
+      }
+    },
+    "parser_image": {
+      "type": "string",
+      "default": "",
+      "nullable": false,
+      "description": "Actual owned regional ECR parser image pinned by SHA256.",
+      "validation": {
+        "condition": "${!var.images_ready || can(regex(\"^[a-z0-9./_-]+@sha256:[0-9a-f]{64}$\",var.parser_image))}",
+        "error_message": "Use the actual immutable parser image."
+      }
+    },
+    "transfer_image": {
+      "type": "string",
+      "default": "",
+      "nullable": false,
+      "description": "Actual owned regional ECR transfer image pinned by SHA256.",
+      "validation": {
+        "condition": "${!var.images_ready || can(regex(\"^[a-z0-9./_-]+@sha256:[0-9a-f]{64}$\",var.transfer_image))}",
+        "error_message": "Use the actual immutable transfer image."
+      }
+    }
+  },
+  "locals": {
+    "name": "${format(\"doc-%s\",substr(sha256(\"https://atmem.ai/workspaces/private-knowledge-qualification/block_6b6e6f776c65646765/qualification\"),0,12))}",
+    "cluster_arn": "${aws_ecs_cluster.block_6b6e6f776c65646765.arn}",
+    "host_policy": "${module.host_verification.host_verification.hostPolicySha256}",
+    "expected": {
+      "format": "enterprise-aws-host-policy-v1",
+      "clusterArn": "${local.cluster_arn}",
+      "policySha256": "${local.host_policy}"
+    },
+    "bucket_policy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "RequireTLS",
+          "Effect": "Deny",
+          "Principal": "*",
+          "Action": "s3:*",
+          "Resource": [
+            "${aws_s3_bucket.block_6b6e6f776c65646765.arn}",
+            "${format(\"%s/*\",aws_s3_bucket.block_6b6e6f776c65646765.arn)}"
+          ],
+          "Condition": {
+            "Bool": {
+              "aws:SecureTransport": "false"
+            }
+          }
+        },
+        {
+          "Sid": "RequireExplicitEncryption",
+          "Effect": "Deny",
+          "Principal": "*",
+          "Action": "s3:PutObject",
+          "Resource": "${format(\"%s/document-jobs/*\",aws_s3_bucket.block_6b6e6f776c65646765.arn)}",
+          "Condition": {
+            "StringNotEquals": {
+              "s3:x-amz-server-side-encryption": "AES256"
+            }
+          }
+        },
+        {
+          "Sid": "RequireCreateOnly",
+          "Effect": "Deny",
+          "Principal": "*",
+          "Action": "s3:PutObject",
+          "Resource": "${format(\"%s/document-jobs/*\",aws_s3_bucket.block_6b6e6f776c65646765.arn)}",
+          "Condition": {
+            "StringNotEquals": {
+              "s3:if-none-match": "*"
+            }
+          }
+        }
+      ]
+    },
+    "transfer_policy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "TemporaryBytesOnly",
+          "Effect": "Allow",
+          "Action": [
+            "s3:GetObject",
+            "s3:PutObject"
+          ],
+          "Resource": "${format(\"%s/document-jobs/*\",aws_s3_bucket.block_6b6e6f776c65646765.arn)}"
+        },
+        {
+          "Sid": "CheckOwnedStore",
+          "Effect": "Allow",
+          "Action": [
+            "s3:GetBucketLocation",
+            "s3:GetBucketVersioning"
+          ],
+          "Resource": "${aws_s3_bucket.block_6b6e6f776c65646765.arn}"
+        }
+      ]
+    },
+    "execution_policy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "EcrLogin",
+          "Effect": "Allow",
+          "Action": [
+            "ecr:GetAuthorizationToken"
+          ],
+          "Resource": "*"
+        },
+        {
+          "Sid": "OwnedImagesOnly",
+          "Effect": "Allow",
+          "Action": [
+            "ecr:BatchGetImage",
+            "ecr:GetDownloadUrlForLayer",
+            "ecr:BatchCheckLayerAvailability"
+          ],
+          "Resource": [
+            "${aws_ecr_repository.block_6b6e6f776c65646765_parser.arn}",
+            "${aws_ecr_repository.block_6b6e6f776c65646765_transfer.arn}"
+          ]
+        }
+      ]
+    },
+    "host_policy_document": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "RegisterInOwnedCluster",
+          "Effect": "Allow",
+          "Action": [
+            "ecs:RegisterContainerInstance",
+            "ecs:DeregisterContainerInstance",
+            "ecs:SubmitAttachmentStateChanges",
+            "ecs:SubmitContainerStateChange",
+            "ecs:SubmitTaskStateChange"
+          ],
+          "Resource": "${local.cluster_arn}"
+        },
+        {
+          "Sid": "OwnedAgentLifecycle",
+          "Effect": "Allow",
+          "Action": [
+            "ecs:Poll",
+            "ecs:StartTelemetrySession",
+            "ecs:UpdateContainerInstancesState"
+          ],
+          "Resource": "${format(\"arn:aws:ecs:%s:%s:container-instance/%s/*\",var.region,var.account_id,local.name)}",
+          "Condition": {
+            "ArnEquals": {
+              "ecs:cluster": "${local.cluster_arn}"
+            }
+          }
+        },
+        {
+          "Sid": "DiscoverAgentEndpoint",
+          "Effect": "Allow",
+          "Action": [
+            "ecs:DiscoverPollEndpoint"
+          ],
+          "Resource": "*"
+        },
+        {
+          "Sid": "OwnedAgentTags",
+          "Effect": "Allow",
+          "Action": [
+            "ecs:ListTagsForResource"
+          ],
+          "Resource": [
+            "${format(\"arn:aws:ecs:%s:%s:container-instance/%s/*\",var.region,var.account_id,local.name)}",
+            "${format(\"arn:aws:ecs:%s:%s:task/%s/*\",var.region,var.account_id,local.name)}"
+          ]
+        },
+        {
+          "Sid": "AgentRegistrationTags",
+          "Effect": "Allow",
+          "Action": [
+            "ecs:TagResource"
+          ],
+          "Resource": "${format(\"arn:aws:ecs:%s:%s:container-instance/%s/*\",var.region,var.account_id,local.name)}",
+          "Condition": {
+            "StringEquals": {
+              "ecs:CreateAction": "RegisterContainerInstance"
+            }
+          }
+        },
+        {
+          "Sid": "SsmTransport",
+          "Effect": "Allow",
+          "Action": [
+            "ssm:UpdateInstanceInformation",
+            "ssmmessages:CreateControlChannel",
+            "ssmmessages:CreateDataChannel",
+            "ssmmessages:OpenControlChannel",
+            "ssmmessages:OpenDataChannel"
+          ],
+          "Resource": "*"
+        },
+        {
+          "Sid": "FixedSsmDocument",
+          "Effect": "Allow",
+          "Action": [
+            "ssm:GetDocument",
+            "ssm:DescribeDocument"
+          ],
+          "Resource": "${module.host_verification.host_verification.hostDocumentArn}"
+        }
+      ]
+    },
+    "task_definition": {
+      "family": "${format(\"document-%s-parser\",local.name)}",
+      "networkMode": "bridge",
+      "requiresCompatibilities": [
+        "EC2"
+      ],
+      "runtimePlatform": {
+        "cpuArchitecture": "X86_64",
+        "operatingSystemFamily": "LINUX"
+      },
+      "placementConstraints": [
+        {
+          "type": "memberOf",
+          "expression": "attribute:atmem-document-policy == ${local.host_policy}"
+        }
+      ],
+      "taskRoleArn": "${aws_iam_role.block_6b6e6f776c65646765_transfer.arn}",
+      "executionRoleArn": "${aws_iam_role.block_6b6e6f776c65646765_execution.arn}",
+      "containerDefinitions": [
+        {
+          "name": "download",
+          "image": "${var.transfer_image}",
+          "user": "0:0",
+          "essential": false,
+          "cpu": 128,
+          "memory": 256,
+          "readonlyRootFilesystem": true,
+          "privileged": false,
+          "dockerSecurityOptions": [
+            "no-new-privileges"
+          ],
+          "linuxParameters": {
+            "capabilities": {
+              "drop": [
+                "ALL"
+              ],
+              "add": [
+                "CHOWN"
+              ]
+            },
+            "initProcessEnabled": true,
+            "maxSwap": 0
+          },
+          "stopTimeout": 5,
+          "ulimits": [
+            {
+              "name": "nofile",
+              "softLimit": 256,
+              "hardLimit": 256
+            }
+          ],
+          "entryPoint": [
+            "python"
+          ],
+          "command": [
+            "-I",
+            "/app/enterprise_aws_transfer.py",
+            "download"
+          ],
+          "environment": [
+            {
+              "name": "DOCUMENT_JOB",
+              "value": ""
+            }
+          ],
+          "mountPoints": [
+            {
+              "sourceVolume": "input",
+              "containerPath": "/work/input",
+              "readOnly": false
+            },
+            {
+              "sourceVolume": "output",
+              "containerPath": "/work/output",
+              "readOnly": false
+            }
+          ]
+        },
+        {
+          "name": "parser",
+          "image": "${var.parser_image}",
+          "user": "10001:10001",
+          "essential": false,
+          "cpu": 1792,
+          "memory": 2048,
+          "readonlyRootFilesystem": true,
+          "privileged": false,
+          "dockerSecurityOptions": [
+            "no-new-privileges"
+          ],
+          "linuxParameters": {
+            "capabilities": {
+              "drop": [
+                "ALL"
+              ]
+            },
+            "initProcessEnabled": true,
+            "maxSwap": 0,
+            "tmpfs": [
+              {
+                "containerPath": "/tmp",
+                "size": 128,
+                "mountOptions": [
+                  "rw",
+                  "noexec",
+                  "nosuid",
+                  "nodev"
+                ]
+              }
+            ]
+          },
+          "stopTimeout": 5,
+          "ulimits": [
+            {
+              "name": "nofile",
+              "softLimit": 256,
+              "hardLimit": 256
+            }
+          ],
+          "disableNetworking": true,
+          "entryPoint": [
+            "python"
+          ],
+          "command": [
+            "-I",
+            "/app/enterprise_document_cli.py",
+            "--job"
+          ],
+          "dependsOn": [
+            {
+              "containerName": "download",
+              "condition": "SUCCESS"
+            }
+          ],
+          "startTimeout": 60,
+          "mountPoints": [
+            {
+              "sourceVolume": "input",
+              "containerPath": "/input",
+              "readOnly": true
+            },
+            {
+              "sourceVolume": "output",
+              "containerPath": "/output",
+              "readOnly": false
+            }
+          ]
+        },
+        {
+          "name": "upload",
+          "image": "${var.transfer_image}",
+          "user": "10001:10001",
+          "essential": true,
+          "cpu": 128,
+          "memory": 256,
+          "readonlyRootFilesystem": true,
+          "privileged": false,
+          "dockerSecurityOptions": [
+            "no-new-privileges"
+          ],
+          "linuxParameters": {
+            "capabilities": {
+              "drop": [
+                "ALL"
+              ]
+            },
+            "initProcessEnabled": true,
+            "maxSwap": 0
+          },
+          "stopTimeout": 5,
+          "ulimits": [
+            {
+              "name": "nofile",
+              "softLimit": 256,
+              "hardLimit": 256
+            }
+          ],
+          "entryPoint": [
+            "python"
+          ],
+          "command": [
+            "-I",
+            "/app/enterprise_aws_transfer.py",
+            "upload"
+          ],
+          "environment": [
+            {
+              "name": "DOCUMENT_JOB",
+              "value": ""
+            }
+          ],
+          "mountPoints": [
+            {
+              "sourceVolume": "input",
+              "containerPath": "/work/input",
+              "readOnly": true
+            },
+            {
+              "sourceVolume": "output",
+              "containerPath": "/work/output",
+              "readOnly": true
+            }
+          ],
+          "dependsOn": [
+            {
+              "containerName": "parser",
+              "condition": "SUCCESS"
+            }
+          ],
+          "startTimeout": 120
+        }
+      ],
+      "volumes": [
+        {
+          "name": "input",
+          "dockerVolumeConfiguration": {
+            "scope": "task",
+            "driver": "local"
+          }
+        },
+        {
+          "name": "output",
+          "dockerVolumeConfiguration": {
+            "scope": "task",
+            "driver": "local"
+          }
+        }
+      ],
+      "tags": [
+        {
+          "key": "atmem-workload",
+          "value": "document-parser"
+        }
+      ]
+    },
+    "worker_policy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "InspectDefinition",
+          "Effect": "Allow",
+          "Action": [
+            "ecs:DescribeTaskDefinition"
+          ],
+          "Resource": "*"
+        },
+        {
+          "Sid": "RunPinnedDefinition",
+          "Effect": "Allow",
+          "Action": [
+            "ecs:RunTask"
+          ],
+          "Resource": "${var.images_ready ? aws_ecs_task_definition.block_6b6e6f776c65646765[0].arn : null}",
+          "Condition": {
+            "ArnEquals": {
+              "ecs:cluster": "${local.cluster_arn}"
+            },
+            "Bool": {
+              "ecs:enable-execute-command": "false"
+            }
+          }
+        },
+        {
+          "Sid": "OwnedTaskLifecycle",
+          "Effect": "Allow",
+          "Action": [
+            "ecs:DescribeTasks",
+            "ecs:StopTask"
+          ],
+          "Resource": "${format(\"arn:aws:ecs:%s:%s:task/%s/*\",var.region,var.account_id,local.name)}",
+          "Condition": {
+            "ArnEquals": {
+              "ecs:cluster": "${local.cluster_arn}"
+            }
+          }
+        },
+        {
+          "Sid": "DiscoverOwnedRuns",
+          "Effect": "Allow",
+          "Action": [
+            "ecs:ListTasks"
+          ],
+          "Resource": "${format(\"arn:aws:ecs:%s:%s:container-instance/%s/*\",var.region,var.account_id,local.name)}",
+          "Condition": {
+            "ArnEquals": {
+              "ecs:cluster": "${local.cluster_arn}"
+            }
+          }
+        },
+        {
+          "Sid": "PassOnlyTransferAndPull",
+          "Effect": "Allow",
+          "Action": [
+            "iam:PassRole"
+          ],
+          "Resource": [
+            "${aws_iam_role.block_6b6e6f776c65646765_transfer.arn}",
+            "${aws_iam_role.block_6b6e6f776c65646765_execution.arn}"
+          ],
+          "Condition": {
+            "StringEquals": {
+              "iam:PassedToService": "ecs-tasks.amazonaws.com"
+            }
+          }
+        },
+        {
+          "Sid": "OwnedTemporaryBytes",
+          "Effect": "Allow",
+          "Action": [
+            "s3:GetObject",
+            "s3:PutObject",
+            "s3:DeleteObject"
+          ],
+          "Resource": "${format(\"%s/document-jobs/*\",aws_s3_bucket.block_6b6e6f776c65646765.arn)}"
+        },
+        {
+          "Sid": "CheckOwnedStore",
+          "Effect": "Allow",
+          "Action": [
+            "s3:GetBucketLocation",
+            "s3:GetBucketVersioning"
+          ],
+          "Resource": "${aws_s3_bucket.block_6b6e6f776c65646765.arn}"
+        }
+      ]
+    },
+    "enabled_worker_policy": "${var.images_ready ? jsonencode(local.worker_policy) : null}",
+    "expected_b64": "${base64encode(jsonencode(local.expected))}",
+    "cloud_init": {
+      "package_update": false,
+      "package_upgrade": false,
+      "bootcmd": [
+        [
+          "systemctl",
+          "mask",
+          "--runtime",
+          "--now",
+          "ecs.service"
+        ]
+      ],
+      "write_files": [
+        {
+          "path": "/opt/atmem/enterprise_aws_host_probe.py",
+          "owner": "root:root",
+          "permissions": "0600",
+          "encoding": "b64",
+          "content": "IiIiRml4ZWQgU1NNIGhvc3QgaW5zcGVjdGlvbi4gU3RhbmRhcmQgbGlicmFyeSBvbmx5OyBubyBkb2N1bWVudCBvciBzZWNyZXQgaW5wdXQuIiIiCmltcG9ydCBiYXNlNjQKaW1wb3J0IGpzb24KaW1wb3J0IGlwYWRkcmVzcwpmcm9tIHBhdGhsaWIgaW1wb3J0IFBhdGgKaW1wb3J0IHJlCmltcG9ydCBzdWJwcm9jZXNzCmltcG9ydCBzaGxleAppbXBvcnQgc3lzCgoKZGVmIHJ1bihhcmd2KToKICAgIGlmIGFyZ3YgYW5kIGFyZ3ZbMF09PScvdXNyL2Jpbi9kb2NrZXInOgogICAgICAgICMgQW4gb3BlcmF0b3IncyBzYXZlZCBEb2NrZXIgY29udGV4dCBtdXN0IG5ldmVyIHJlZGlyZWN0IHRoaXMgbmF0aXZlCiAgICAgICAgIyBob3N0IGluc3BlY3Rpb24gdG8gYW5vdGhlciBkYWVtb24sIGV2ZW4gd2l0aCBhIHNjcnViYmVkIGVudmlyb25tZW50LgogICAgICAgIGFyZ3Y9W2FyZ3ZbMF0sJy0taG9zdCcsJ3VuaXg6Ly8vdmFyL3J1bi9kb2NrZXIuc29jaycsKmFyZ3ZbMTpdXQogICAgdmFsdWU9c3VicHJvY2Vzcy5ydW4oYXJndixzdGRpbj1zdWJwcm9jZXNzLkRFVk5VTEwsc3Rkb3V0PXN1YnByb2Nlc3MuUElQRSxzdGRlcnI9c3VicHJvY2Vzcy5ERVZOVUxMLAogICAgICAgICAgICAgICAgICAgICAgICAgdGltZW91dD00LGNoZWNrPVRydWUsZW52PXsnUEFUSCc6Jy91c3Ivc2JpbjovdXNyL2Jpbjovc2JpbjovYmluJywnTEFORyc6J0MnfSkKICAgIGlmIGxlbih2YWx1ZS5zdGRvdXQpPjMyNzY4OnJhaXNlIFZhbHVlRXJyb3IoJ0ludmFsaWQgaG9zdCBvYnNlcnZhdGlvbicpCiAgICByZXR1cm4gdmFsdWUuc3Rkb3V0LmRlY29kZSgpLnN0cmlwKCkKCgpkZWYgZXhwZWN0ZWRfcG9saWN5KGV4cGVjdGVkKToKICAgIGlmIChub3QgaXNpbnN0YW5jZShleHBlY3RlZCxkaWN0KW9yIHNldChleHBlY3RlZCkhPXsnZm9ybWF0JywnY2x1c3RlckFybicsJ3BvbGljeVNoYTI1Nid9b3IKICAgICAgICBleHBlY3RlZFsnZm9ybWF0J10hPSdlbnRlcnByaXNlLWF3cy1ob3N0LXBvbGljeS12MSdvcgogICAgICAgIG5vdCBpc2luc3RhbmNlKGV4cGVjdGVkWydwb2xpY3lTaGEyNTYnXSxzdHIpb3Igbm90IHJlLmZ1bGxtYXRjaCgnWzAtOWEtZl17NjR9JyxleHBlY3RlZFsncG9saWN5U2hhMjU2J10pb3IKICAgICAgICBub3QgaXNpbnN0YW5jZShleHBlY3RlZFsnY2x1c3RlckFybiddLHN0cilvciBub3QgcmUuZnVsbG1hdGNoKHInYXJuOmF3czplY3M6W2Etel17Mn0tW2Etel0rLVsxLTldOlswLTldezEyfTpjbHVzdGVyL1tBLVphLXowLTlfLV17MSwyNTV9JyxleHBlY3RlZFsnY2x1c3RlckFybiddKSk6CiAgICAgICAgcmFpc2UgVmFsdWVFcnJvcignVXNlIHRoZSBleGFjdCBvd25lZCBob3N0IHBvbGljeScpCiAgICByZXR1cm4gZGljdChleHBlY3RlZCkKCgpkZWYgZmlyc3RfcnVsZV9tYXRjaGVzKGxpbmVzLGNoYWluLHBhaXJzKToKICAgIGFjdGl2ZT1bdmFsdWUgZm9yIHZhbHVlIGluIGxpbmVzLnNwbGl0bGluZXMoKWlmIHZhbHVlLnN0YXJ0c3dpdGgoJy1BICcpXQogICAgaWYgbm90IGFjdGl2ZTpyZXR1cm4gRmFsc2UKICAgIGZpZWxkcz1zaGxleC5zcGxpdChhY3RpdmVbMF0pCiAgICBpZiBmaWVsZHNbOjJdIT1bJy1BJyxjaGFpbl1vciBsZW4oZmllbGRzKSE9MisyKmxlbihwYWlycyk6cmV0dXJuIEZhbHNlCiAgICBhY3R1YWw9e30KICAgIGZvciBpbmRleCBpbiByYW5nZSgyLGxlbihmaWVsZHMpLDIpOgogICAgICAgIGtleSx2YWx1ZT1maWVsZHNbaW5kZXg6aW5kZXgrMl0KICAgICAgICBpZiBrZXkgaW4gYWN0dWFsOnJldHVybiBGYWxzZQogICAgICAgIGlmIGtleT09Jy1kJzoKICAgICAgICAgICAgdHJ5OnZhbHVlPXN0cihpcGFkZHJlc3MuaXBfbmV0d29yayh2YWx1ZSxzdHJpY3Q9VHJ1ZSkpCiAgICAgICAgICAgIGV4Y2VwdCBWYWx1ZUVycm9yOnJldHVybiBGYWxzZQogICAgICAgIGFjdHVhbFtrZXldPXZhbHVlCiAgICByZXR1cm4gYWN0dWFsPT1wYWlycwoKCmRlZiBpbnNwZWN0X2hvc3QoZXhwZWN0ZWQsKixyZWFkPWxhbWJkYSBuYW1lOlBhdGgobmFtZSkucmVhZF90ZXh0KCksY29tbWFuZD1ydW4pOgogICAgZXhwZWN0ZWQ9ZXhwZWN0ZWRfcG9saWN5KGV4cGVjdGVkKQogICAgIyBQYXJzZSB2YWx1ZXMgYXMgaW5lcnQgdGV4dC4gTmV2ZXIgc291cmNlIGEgaG9zdCBjb25maWcgaW50byBhIHNoZWxsLgogICAgdmFsdWVzPXt9CiAgICBmb3IgbGluZSBpbiByZWFkKCcvZXRjL2Vjcy9lY3MuY29uZmlnJykuc3BsaXRsaW5lcygpOgogICAgICAgIGlmIG5vdCBsaW5lLnN0cmlwKClvciBsaW5lLmxzdHJpcCgpLnN0YXJ0c3dpdGgoJyMnKTpjb250aW51ZQogICAgICAgIGtleSxzZXBhcmF0b3IsdmFsdWU9bGluZS5wYXJ0aXRpb24oJz0nKQogICAgICAgIGlmIG5vdCBzZXBhcmF0b3Igb3Iga2V5IGluIHZhbHVlczpyYWlzZSBWYWx1ZUVycm9yKCdBbWJpZ3VvdXMgRUNTIGNvbmZpZ3VyYXRpb24nKQogICAgICAgIHZhbHVlc1trZXldPXZhbHVlCiAgICBpZiAodmFsdWVzLmdldCgnRUNTX0NMVVNURVInKSE9ZXhwZWN0ZWRbJ2NsdXN0ZXJBcm4nXW9yCiAgICAgICAgdmFsdWVzLmdldCgnRUNTX0VOQUJMRV9UQVNLX0lBTV9ST0xFJykhPSd0cnVlJ29yCiAgICAgICAgdmFsdWVzLmdldCgnRUNTX0VOR0lORV9UQVNLX0NMRUFOVVBfV0FJVF9EVVJBVElPTicpIT0nMXMnb3IKICAgICAgICB2YWx1ZXMuZ2V0KCdFQ1NfRU5BQkxFX1RBU0tfSUFNX1JPTEVfTkVUV09SS19IT1NUJykhPSdmYWxzZScpOgogICAgICAgIHJhaXNlIFZhbHVlRXJyb3IoJ0VDUyBob3N0IHBvbGljeSBjaGFuZ2VkJykKICAgIGF0dHJpYnV0ZXM9anNvbi5sb2Fkcyh2YWx1ZXMuZ2V0KCdFQ1NfSU5TVEFOQ0VfQVRUUklCVVRFUycsJ3t9JykpCiAgICBpZiBhdHRyaWJ1dGVzIT17J2F0bWVtLWRvY3VtZW50LXBvbGljeSc6ZXhwZWN0ZWRbJ3BvbGljeVNoYTI1NiddfTpyYWlzZSBWYWx1ZUVycm9yKCdIb3N0IHBvbGljeSBzZWxlY3Rpb24gY2hhbmdlZCcpCiAgICBkYWVtb249anNvbi5sb2FkcyhyZWFkKCcvZXRjL2RvY2tlci9kYWVtb24uanNvbicpKQogICAgaWYgKGRhZW1vbi5nZXQoJ2xvZy1kcml2ZXInKSE9J25vbmUnb3IgZGFlbW9uLmdldCgnbGl2ZS1yZXN0b3JlJyxGYWxzZSlpcyBub3QgRmFsc2Ugb3IgZGFlbW9uLmdldCgnYnJpZGdlJywnZG9ja2VyMCcpIT0nZG9ja2VyMCcpOgogICAgICAgIHJhaXNlIFZhbHVlRXJyb3IoJ1Vuc2FmZSBkYWVtb24gbG9nZ2luZywgbmV0d29yayBvciB0YXNrIHBlcnNpc3RlbmNlJykKICAgIGlmIGpzb24ubG9hZHMoY29tbWFuZChbJy91c3IvYmluL2RvY2tlcicsJ2luZm8nLCctLWZvcm1hdCcsJ3t7anNvbiAuTG9nZ2luZ0RyaXZlcn19J10pKSE9J25vbmUnOnJhaXNlIFZhbHVlRXJyb3IoJ0FjdHVhbCBkYWVtb24gbG9nZ2luZyBjaGFuZ2VkJykKICAgIGlmIGpzb24ubG9hZHMoY29tbWFuZChbJy91c3IvYmluL2RvY2tlcicsJ2luZm8nLCctLWZvcm1hdCcsJ3t7anNvbiAuTGl2ZVJlc3RvcmVFbmFibGVkfX0nXSkpaXMgbm90IEZhbHNlOnJhaXNlIFZhbHVlRXJyb3IoJ05hdGl2ZSBsaXZlIHJlc3RvcmUgaXMgYWN0aXZlJykKICAgIG9wdGlvbnM9anNvbi5sb2Fkcyhjb21tYW5kKFsnL3Vzci9iaW4vZG9ja2VyJywnaW5mbycsJy0tZm9ybWF0Jywne3tqc29uIC5TZWN1cml0eU9wdGlvbnN9fSddKSkKICAgIGlmIG5vdCBpc2luc3RhbmNlKG9wdGlvbnMsbGlzdClvciAnbmFtZT1zZWNjb21wLHByb2ZpbGU9YnVpbHRpbidub3QgaW4gb3B0aW9uczoKICAgICAgICByYWlzZSBWYWx1ZUVycm9yKCdOYXRpdmUgc2VjY29tcCBpcyBub3QgYWN0aXZlJykKICAgIGJyaWRnZT1qc29uLmxvYWRzKGNvbW1hbmQoWycvdXNyL2Jpbi9kb2NrZXInLCduZXR3b3JrJywnaW5zcGVjdCcsJ2JyaWRnZScsJy0tZm9ybWF0Jywne3tqc29uIC5PcHRpb25zfX0nXSkpCiAgICBpZiBicmlkZ2UuZ2V0KCdjb20uZG9ja2VyLm5ldHdvcmsuYnJpZGdlLm5hbWUnKSE9J2RvY2tlcjAnOnJhaXNlIFZhbHVlRXJyb3IoJ0FjdHVhbCBkZWZhdWx0IGJyaWRnZSBjaGFuZ2VkJykKICAgIG5hdGl2ZV9lbnY9anNvbi5sb2Fkcyhjb21tYW5kKFsnL3Vzci9iaW4vZG9ja2VyJywnaW5zcGVjdCcsJ2Vjcy1hZ2VudCcsJy0tZm9ybWF0Jywne3tqc29uIC5Db25maWcuRW52fX0nXSkpCiAgICBpZiBub3QgaXNpbnN0YW5jZShuYXRpdmVfZW52LGxpc3Qpb3IgYW55KG5vdCBpc2luc3RhbmNlKHYsc3RyKWZvciB2IGluIG5hdGl2ZV9lbnYpOnJhaXNlIFZhbHVlRXJyb3IoJ05hdGl2ZSBFQ1MgYWdlbnQgY29uZmlndXJhdGlvbiB1bmF2YWlsYWJsZScpCiAgICBuYXRpdmU9e30KICAgIGZvciBlbnRyeSBpbiBuYXRpdmVfZW52OgogICAgICAgIGtleSxzZXBhcmF0b3IsdmFsdWU9ZW50cnkucGFydGl0aW9uKCc9JykKICAgICAgICBpZiBub3Qgc2VwYXJhdG9yIG9yIGtleSBpbiBuYXRpdmU6cmFpc2UgVmFsdWVFcnJvcignQW1iaWd1b3VzIG5hdGl2ZSBFQ1MgZW52aXJvbm1lbnQnKQogICAgICAgIG5hdGl2ZVtrZXldPXZhbHVlCiAgICBmb3Iga2V5IGluIFsnRUNTX0NMVVNURVInLCdFQ1NfRU5BQkxFX1RBU0tfSUFNX1JPTEUnLCdFQ1NfRU5HSU5FX1RBU0tfQ0xFQU5VUF9XQUlUX0RVUkFUSU9OJywnRUNTX0VOQUJMRV9UQVNLX0lBTV9ST0xFX05FVFdPUktfSE9TVCcsJ0VDU19JTlNUQU5DRV9BVFRSSUJVVEVTJ106CiAgICAgICAgaWYgbmF0aXZlLmdldChrZXkpIT12YWx1ZXNba2V5XTpyYWlzZSBWYWx1ZUVycm9yKCdSdW5uaW5nIEVDUyBhZ2VudCBkaWZmZXJzIGZyb20gaG9zdCBwb2xpY3knKQogICAgIyBCb3RoIHBhdGhzIGFyZSBmaXhlZCwgcmVhZC1vbmx5IHByb2Jlcy4gQSBwbGFpbiBUQ1AgYnJpZGdlIG11c3Qgbm90IGV4cG9zZQogICAgIyBpbnN0YW5jZS1wcm9maWxlIGNyZWRlbnRpYWxzIHRvIHRoZSB0cmFuc2ZlciBjb250YWluZXJzLgogICAgZm9yIGRlc3RpbmF0aW9uIGluIFsnMTY5LjI1NC4xNjkuMjU0LzMyJywnZmQwMDplYzI6OjI1NC8xMjgnXToKICAgICAgICB0b29sPScvdXNyL3NiaW4vaXB0YWJsZXMnaWYgJzonbm90IGluIGRlc3RpbmF0aW9uIGVsc2UnL3Vzci9zYmluL2lwNnRhYmxlcycKICAgICAgICBydWxlcz1jb21tYW5kKFt0b29sLCctdycsJzInLCctUycsJ0RPQ0tFUi1VU0VSJ10pCiAgICAgICAgaWYgbm90IGZpcnN0X3J1bGVfbWF0Y2hlcyhydWxlcywnRE9DS0VSLVVTRVInLHsnLWknOidkb2NrZXIwJywnLWQnOmRlc3RpbmF0aW9uLCctaic6J0RST1AnfSk6cmFpc2UgVmFsdWVFcnJvcignSU1EUyBydWxlIGlzIG1pc3Npbmcgb3Igc2hhZG93ZWQnKQogICAgICAgIGZvcndhcmQ9Y29tbWFuZChbdG9vbCwnLXcnLCcyJywnLVMnLCdGT1JXQVJEJ10pCiAgICAgICAgaWYgbm90IGZpcnN0X3J1bGVfbWF0Y2hlcyhmb3J3YXJkLCdGT1JXQVJEJyx7Jy1qJzonRE9DS0VSLVVTRVInfSk6cmFpc2UgVmFsdWVFcnJvcignSU1EUyBjaGFpbiBpcyBub3QgdGhlIGZpcnN0IGZvcndhcmRpbmcgaG9vaycpCiAgICBib290PXJlYWQoJy9wcm9jL3N5cy9rZXJuZWwvcmFuZG9tL2Jvb3RfaWQnKS5zdHJpcCgpCiAgICBpZiBub3QgcmUuZnVsbG1hdGNoKCdbMC05YS1mXXs4fS1bMC05YS1mXXs0fS1bMC05YS1mXXs0fS1bMC05YS1mXXs0fS1bMC05YS1mXXsxMn0nLGJvb3QpOnJhaXNlIFZhbHVlRXJyb3IoJ0ludmFsaWQgbmF0aXZlIGJvb3QgaWRlbnRpdHknKQogICAgcmV0dXJuIHsnZm9ybWF0JzonZW50ZXJwcmlzZS1hd3MtaG9zdC1vYnNlcnZhdGlvbi12MScsJ3BvbGljeVNoYTI1Nic6ZXhwZWN0ZWRbJ3BvbGljeVNoYTI1NiddLAogICAgICAgICAgICAnY2x1c3RlckFybic6ZXhwZWN0ZWRbJ2NsdXN0ZXJBcm4nXSwnYm9vdElkJzpib290fQoKCmRlZiBtYWluKCk6CiAgICB0cnk6CiAgICAgICAgaWYgbGVuKHN5cy5hcmd2KSE9MiBvciBsZW4oc3lzLmFyZ3ZbMV0pPjQwOTY6cmFpc2UgVmFsdWVFcnJvcigpCiAgICAgICAgZXhwZWN0ZWQ9anNvbi5sb2FkcyhiYXNlNjQuYjY0ZGVjb2RlKHN5cy5hcmd2WzFdLHZhbGlkYXRlPVRydWUpKQogICAgICAgIHByaW50KGpzb24uZHVtcHMoaW5zcGVjdF9ob3N0KGV4cGVjdGVkKSxzZXBhcmF0b3JzPSgnLCcsJzonKSkpCiAgICBleGNlcHQgRXhjZXB0aW9uOnJhaXNlIFN5c3RlbUV4aXQoMilmcm9tIE5vbmUKCgppZiBfX25hbWVfXz09J19fbWFpbl9fJzptYWluKCkK"
+        },
+        {
+          "path": "/opt/atmem/enterprise_aws_host_bootstrap.py",
+          "owner": "root:root",
+          "permissions": "0600",
+          "encoding": "b64",
+          "content": "IiIiTmV3IGRlZGljYXRlZCBFQ1MgaG9zdCBwcmVwYXJhdGlvbjsgbm8gY2xpZW50IGNvbnRlbnQgb3IgY3JlZGVudGlhbHMgYWNjZXB0ZWQuIiIiCmltcG9ydCBiYXNlNjQKaW1wb3J0IGpzb24KaW1wb3J0IG9zCmZyb20gcGF0aGxpYiBpbXBvcnQgUGF0aAppbXBvcnQgcmUKaW1wb3J0IHN0YXQKaW1wb3J0IHN1YnByb2Nlc3MKaW1wb3J0IHN5cwppbXBvcnQgdXVpZApzeXMucGF0aC5pbnNlcnQoMCxzdHIoUGF0aChfX2ZpbGVfXykucmVzb2x2ZSgpLnBhcmVudCkpCmZyb20gZW50ZXJwcmlzZV9hd3NfaG9zdF9wcm9iZSBpbXBvcnQgZXhwZWN0ZWRfcG9saWN5LGZpcnN0X3J1bGVfbWF0Y2hlcwoKCmRlZiB1bmlxdWUocGFpcnMpOgogICAgcmVzdWx0PXt9CiAgICBmb3Iga2V5LHZhbHVlIGluIHBhaXJzOgogICAgICAgIGlmIGtleSBpbiByZXN1bHQ6cmFpc2UgVmFsdWVFcnJvcignQW1iaWd1b3VzIGhvc3QgY29uZmlndXJhdGlvbicpCiAgICAgICAgcmVzdWx0W2tleV09dmFsdWUKICAgIHJldHVybiByZXN1bHQKCgpkZWYgZW52aXJvbm1lbnQocmF3KToKICAgIHZhbHVlcz17fQogICAgZm9yIGxpbmUgaW4gcmF3LnNwbGl0bGluZXMoKToKICAgICAgICBpZiBub3QgbGluZS5zdHJpcCgpb3IgbGluZS5sc3RyaXAoKS5zdGFydHN3aXRoKCcjJyk6Y29udGludWUKICAgICAgICBrZXksc2VwYXJhdG9yLHZhbHVlPWxpbmUucGFydGl0aW9uKCc9JykKICAgICAgICBpZiBub3Qgc2VwYXJhdG9yIG9yIG5vdCByZS5mdWxsbWF0Y2goJ1tBLVpdW0EtWjAtOV9dKicsa2V5KW9yIGtleSBpbiB2YWx1ZXM6cmFpc2UgVmFsdWVFcnJvcignSW52YWxpZCBFQ1MgZW52aXJvbm1lbnQnKQogICAgICAgIHZhbHVlc1trZXldPXZhbHVlCiAgICByZXR1cm4gdmFsdWVzCgoKZGVmIHJlcXVpcmVkKGV4cGVjdGVkKToKICAgIGV4cGVjdGVkPWV4cGVjdGVkX3BvbGljeShleHBlY3RlZCkKICAgIHJldHVybiB7J0VDU19DTFVTVEVSJzpleHBlY3RlZFsnY2x1c3RlckFybiddLCdFQ1NfRU5BQkxFX1RBU0tfSUFNX1JPTEUnOid0cnVlJywnRUNTX0VOQUJMRV9UQVNLX0lBTV9ST0xFX05FVFdPUktfSE9TVCc6J2ZhbHNlJywKICAgICAgICAgICAgJ0VDU19FTkdJTkVfVEFTS19DTEVBTlVQX1dBSVRfRFVSQVRJT04nOicxcycsJ0VDU19JTlNUQU5DRV9BVFRSSUJVVEVTJzpqc29uLmR1bXBzKHsnYXRtZW0tZG9jdW1lbnQtcG9saWN5JzpleHBlY3RlZFsncG9saWN5U2hhMjU2J119LHNvcnRfa2V5cz1UcnVlLHNlcGFyYXRvcnM9KCcsJywnOicpKX0KCgpkZWYgcmVhZF9vcHRpb25hbChwYXRoKToKICAgIHRyeTpyZXR1cm4gUGF0aChwYXRoKS5yZWFkX3RleHQoKQogICAgZXhjZXB0IEZpbGVOb3RGb3VuZEVycm9yOnJldHVybiAnJwoKCmRlZiBhdG9taWMocGF0aCx0ZXh0KToKICAgIHBhdGg9UGF0aChwYXRoKTtwYXRoLnBhcmVudC5ta2Rpcihtb2RlPTBvNzU1LHBhcmVudHM9VHJ1ZSxleGlzdF9vaz1UcnVlKQogICAgcGFyZW50PW9zLm9wZW4ocGF0aC5wYXJlbnQsb3MuT19SRE9OTFl8b3MuT19ESVJFQ1RPUll8b3MuT19OT0ZPTExPVyk7dGVtcG9yYXJ5PScuYXRtZW0tJyt1dWlkLnV1aWQ0KCkuaGV4CiAgICB0cnk6CiAgICAgICAgaW5mbz1vcy5mc3RhdChwYXJlbnQpCiAgICAgICAgaWYgaW5mby5zdF91aWQhPW9zLmdldGV1aWQoKW9yIHN0YXQuU19JTU9ERShpbmZvLnN0X21vZGUpJjBvMDIyOnJhaXNlIFZhbHVlRXJyb3IoJ1Vuc2FmZSBob3N0IGNvbmZpZ3VyYXRpb24gZGlyZWN0b3J5JykKICAgICAgICB0cnk6CiAgICAgICAgICAgIGluZm89b3Muc3RhdChwYXRoLm5hbWUsZGlyX2ZkPXBhcmVudCxmb2xsb3dfc3ltbGlua3M9RmFsc2UpCiAgICAgICAgICAgIGlmIG5vdCBzdGF0LlNfSVNSRUcoaW5mby5zdF9tb2RlKW9yIGluZm8uc3RfdWlkIT1vcy5nZXRldWlkKCk6cmFpc2UgVmFsdWVFcnJvcignUmVmdXNlIHVub3duZWQgaG9zdCBjb25maWd1cmF0aW9uJykKICAgICAgICBleGNlcHQgRmlsZU5vdEZvdW5kRXJyb3I6cGFzcwogICAgICAgIGZkPW9zLm9wZW4odGVtcG9yYXJ5LG9zLk9fV1JPTkxZfG9zLk9fQ1JFQVR8b3MuT19FWENMfG9zLk9fTk9GT0xMT1csMG82MDAsZGlyX2ZkPXBhcmVudCkKICAgICAgICB3aXRoIG9zLmZkb3BlbihmZCwndycpYXMgc3RyZWFtOnN0cmVhbS53cml0ZSh0ZXh0KTtzdHJlYW0uZmx1c2goKTtvcy5mc3luYyhzdHJlYW0uZmlsZW5vKCkpCiAgICAgICAgb3MucmVwbGFjZSh0ZW1wb3JhcnkscGF0aC5uYW1lLHNyY19kaXJfZmQ9cGFyZW50LGRzdF9kaXJfZmQ9cGFyZW50KTtvcy5mc3luYyhwYXJlbnQpCiAgICBmaW5hbGx5OgogICAgICAgIHRyeTpvcy51bmxpbmsodGVtcG9yYXJ5LGRpcl9mZD1wYXJlbnQpCiAgICAgICAgZXhjZXB0IEZpbGVOb3RGb3VuZEVycm9yOnBhc3MKICAgICAgICBvcy5jbG9zZShwYXJlbnQpCgoKZGVmIHByZXBhcmUoZXhwZWN0ZWQsKixyZWFkPXJlYWRfb3B0aW9uYWwsd3JpdGU9YXRvbWljKToKICAgIHVwZGF0ZXM9cmVxdWlyZWQoZXhwZWN0ZWQpO3Jhdz1yZWFkKCcvZXRjL2Vjcy9lY3MuY29uZmlnJyk7ZXhpc3Rpbmc9ZW52aXJvbm1lbnQocmF3KQogICAgaWYgZXhpc3RpbmcuZ2V0KCdFQ1NfQ0xVU1RFUicpbm90IGluIHtOb25lLCcnLCdkZWZhdWx0Jyx1cGRhdGVzWydFQ1NfQ0xVU1RFUiddfTpyYWlzZSBWYWx1ZUVycm9yKCdEbyBub3QgYWRvcHQgYW4gZXhpc3RpbmcgRUNTIGhvc3QnKQogICAgYXR0cmlidXRlcz1qc29uLmxvYWRzKGV4aXN0aW5nLmdldCgnRUNTX0lOU1RBTkNFX0FUVFJJQlVURVMnLCd7fScpLG9iamVjdF9wYWlyc19ob29rPXVuaXF1ZSkKICAgIGlmIGF0dHJpYnV0ZXMgbm90IGluIFt7fSx7J2F0bWVtLWRvY3VtZW50LXBvbGljeSc6ZXhwZWN0ZWRbJ3BvbGljeVNoYTI1NiddfV06cmFpc2UgVmFsdWVFcnJvcignRG8gbm90IHJlcGxhY2UgZXhpc3RpbmcgaG9zdCBvd25lcnNoaXAnKQogICAgZGFlbW9uPWpzb24ubG9hZHMocmVhZCgnL2V0Yy9kb2NrZXIvZGFlbW9uLmpzb24nKW9yJ3t9JyxvYmplY3RfcGFpcnNfaG9vaz11bmlxdWUpCiAgICBpZiBub3QgaXNpbnN0YW5jZShkYWVtb24sZGljdCk6cmFpc2UgVmFsdWVFcnJvcignSW52YWxpZCBuYXRpdmUgZGFlbW9uIGNvbmZpZ3VyYXRpb24nKQogICAgZGFlbW9uLnVwZGF0ZSh7J2xvZy1kcml2ZXInOidub25lJywnbGl2ZS1yZXN0b3JlJzpGYWxzZX0pO2RhZW1vbi5wb3AoJ2xvZy1vcHRzJyxOb25lKQogICAgbGluZXM9W107c2Vlbj1zZXQoKQogICAgZm9yIGxpbmUgaW4gcmF3LnNwbGl0bGluZXMoKToKICAgICAgICBrZXk9bGluZS5wYXJ0aXRpb24oJz0nKVswXQogICAgICAgIGlmIGtleSBpbiB1cGRhdGVzOmxpbmVzLmFwcGVuZChrZXkrJz0nK3VwZGF0ZXNba2V5XSk7c2Vlbi5hZGQoa2V5KQogICAgICAgIGVsc2U6bGluZXMuYXBwZW5kKGxpbmUpCiAgICBsaW5lcyArPSBba2V5Kyc9Jyt2YWx1ZSBmb3Iga2V5LHZhbHVlIGluIHVwZGF0ZXMuaXRlbXMoKWlmIGtleSBub3QgaW4gc2Vlbl0KICAgIHdyaXRlKCcvZXRjL2RvY2tlci9kYWVtb24uanNvbicsanNvbi5kdW1wcyhkYWVtb24sc29ydF9rZXlzPVRydWUsc2VwYXJhdG9ycz0oJywnLCc6JykpKydcbicpCiAgICB3cml0ZSgnL2V0Yy9lY3MvZWNzLmNvbmZpZycsJ1xuJy5qb2luKGxpbmVzKSsnXG4nKQoKCmRlZiBjb21tYW5kKGFyZ3YsKixhYnNlbnQ9RmFsc2UpOgogICAgaWYgYXJndlswXT09Jy91c3IvYmluL2RvY2tlcic6YXJndj1bYXJndlswXSwnLS1ob3N0JywndW5peDovLy92YXIvcnVuL2RvY2tlci5zb2NrJywqYXJndlsxOl1dCiAgICByZXN1bHQ9c3VicHJvY2Vzcy5ydW4oYXJndixzdGRpbj1zdWJwcm9jZXNzLkRFVk5VTEwsc3Rkb3V0PXN1YnByb2Nlc3MuUElQRSxzdGRlcnI9c3VicHJvY2Vzcy5ERVZOVUxMLHRpbWVvdXQ9NCwKICAgICAgICBlbnY9eydQQVRIJzonL3Vzci9zYmluOi91c3IvYmluOi9zYmluOi9iaW4nLCdMQU5HJzonQyd9KQogICAgaWYgYWJzZW50IGFuZCByZXN1bHQucmV0dXJuY29kZT09MTpyZXR1cm4gTm9uZQogICAgaWYgcmVzdWx0LnJldHVybmNvZGUgb3IgbGVuKHJlc3VsdC5zdGRvdXQpPjMyNzY4OnJhaXNlIFZhbHVlRXJyb3IoJ05hdGl2ZSBob3N0IHByZXBhcmF0aW9uIGZhaWxlZCcpCiAgICByZXR1cm4gcmVzdWx0LnN0ZG91dC5kZWNvZGUoKS5zdHJpcCgpCgoKZGVmIGd1YXJkKGV4cGVjdGVkLCoscmVhZD1yZWFkX29wdGlvbmFsLHJ1bj1jb21tYW5kKToKICAgIHVwZGF0ZXM9cmVxdWlyZWQoZXhwZWN0ZWQpO3ZhbHVlcz1lbnZpcm9ubWVudChyZWFkKCcvZXRjL2Vjcy9lY3MuY29uZmlnJykpCiAgICBpZiBhbnkodmFsdWVzLmdldChrZXkpIT12YWx1ZSBmb3Iga2V5LHZhbHVlIGluIHVwZGF0ZXMuaXRlbXMoKSk6cmFpc2UgVmFsdWVFcnJvcignRUNTIGNvbmZpZ3VyYXRpb24gbm90IHByZXBhcmVkJykKICAgIGRhZW1vbj1qc29uLmxvYWRzKHJlYWQoJy9ldGMvZG9ja2VyL2RhZW1vbi5qc29uJyksb2JqZWN0X3BhaXJzX2hvb2s9dW5pcXVlKQogICAgaWYgZGFlbW9uLmdldCgnbG9nLWRyaXZlcicpIT0nbm9uZSdvciBkYWVtb24uZ2V0KCdsaXZlLXJlc3RvcmUnLEZhbHNlKWlzIG5vdCBGYWxzZSBvciBkYWVtb24uZ2V0KCdicmlkZ2UnLCdkb2NrZXIwJykhPSdkb2NrZXIwJzpyYWlzZSBWYWx1ZUVycm9yKCdVbnNhZmUgcHJlcGFyZWQgZGFlbW9uJykKICAgIGZvciBmaWVsZCx2YWx1ZSBpbiBbKCdMb2dnaW5nRHJpdmVyJywnbm9uZScpLCgnTGl2ZVJlc3RvcmVFbmFibGVkJyxGYWxzZSldOgogICAgICAgIGlmIGpzb24ubG9hZHMocnVuKFsnL3Vzci9iaW4vZG9ja2VyJywnaW5mbycsJy0tZm9ybWF0Jywne3tqc29uIC4nK2ZpZWxkKyd9fSddKSkhPXZhbHVlOnJhaXNlIFZhbHVlRXJyb3IoJ1J1bm5pbmcgZGFlbW9uIGRpZmZlcnMgZnJvbSBwcmVwYXJlZCBwb2xpY3knKQogICAgb3B0aW9ucz1qc29uLmxvYWRzKHJ1bihbJy91c3IvYmluL2RvY2tlcicsJ2luZm8nLCctLWZvcm1hdCcsJ3t7anNvbiAuU2VjdXJpdHlPcHRpb25zfX0nXSkpCiAgICBpZiAnbmFtZT1zZWNjb21wLHByb2ZpbGU9YnVpbHRpbidub3QgaW4gb3B0aW9uczpyYWlzZSBWYWx1ZUVycm9yKCdOYXRpdmUgc2VjY29tcCBpcyBub3QgYWN0aXZlJykKICAgIGJyaWRnZT1qc29uLmxvYWRzKHJ1bihbJy91c3IvYmluL2RvY2tlcicsJ25ldHdvcmsnLCdpbnNwZWN0JywnYnJpZGdlJywnLS1mb3JtYXQnLCd7e2pzb24gLk9wdGlvbnN9fSddKSkKICAgIGlmIGJyaWRnZS5nZXQoJ2NvbS5kb2NrZXIubmV0d29yay5icmlkZ2UubmFtZScpIT0nZG9ja2VyMCc6cmFpc2UgVmFsdWVFcnJvcignRGVmYXVsdCBicmlkZ2UgY2hhbmdlZCcpCiAgICBmb3IgdG9vbCxkZXN0aW5hdGlvbiBpbiBbKCcvdXNyL3NiaW4vaXB0YWJsZXMnLCcxNjkuMjU0LjE2OS4yNTQvMzInKSwoJy91c3Ivc2Jpbi9pcDZ0YWJsZXMnLCdmZDAwOmVjMjo6MjU0LzEyOCcpXToKICAgICAgICBpZiBydW4oW3Rvb2wsJy13JywnMicsJy1TJywnRE9DS0VSLVVTRVInXSxhYnNlbnQ9VHJ1ZSlpcyBOb25lOnJ1bihbdG9vbCwnLXcnLCcyJywnLU4nLCdET0NLRVItVVNFUiddKQogICAgICAgIGZvciBjaGFpbixydWxlIGluIFsoJ0RPQ0tFUi1VU0VSJyxbJy1pJywnZG9ja2VyMCcsJy1kJyxkZXN0aW5hdGlvbiwnLWonLCdEUk9QJ10pLCgnRk9SV0FSRCcsWyctaicsJ0RPQ0tFUi1VU0VSJ10pXToKICAgICAgICAgICAgZm9yIF8gaW4gcmFuZ2UoNCk6CiAgICAgICAgICAgICAgICBpZiBydW4oW3Rvb2wsJy13JywnMicsJy1EJyxjaGFpbiwqcnVsZV0sYWJzZW50PVRydWUpaXMgTm9uZTpicmVhawogICAgICAgICAgICBydW4oW3Rvb2wsJy13JywnMicsJy1JJyxjaGFpbiwnMScsKnJ1bGVdKQogICAgICAgIGlmIG5vdCBmaXJzdF9ydWxlX21hdGNoZXMocnVuKFt0b29sLCctdycsJzInLCctUycsJ0RPQ0tFUi1VU0VSJ10pLCdET0NLRVItVVNFUicseyctaSc6J2RvY2tlcjAnLCctZCc6ZGVzdGluYXRpb24sJy1qJzonRFJPUCd9KTpyYWlzZSBWYWx1ZUVycm9yKCdNZXRhZGF0YSBydWxlIGluc3RhbGxhdGlvbiBmYWlsZWQnKQogICAgICAgIGlmIG5vdCBmaXJzdF9ydWxlX21hdGNoZXMocnVuKFt0b29sLCctdycsJzInLCctUycsJ0ZPUldBUkQnXSksJ0ZPUldBUkQnLHsnLWonOidET0NLRVItVVNFUid9KTpyYWlzZSBWYWx1ZUVycm9yKCdNZXRhZGF0YSBmb3J3YXJkaW5nIGhvb2sgaW5zdGFsbGF0aW9uIGZhaWxlZCcpCgoKZGVmIG1haW4oKToKICAgIHRyeToKICAgICAgICBpZiBvcy5nZXRldWlkKCkhPTAgb3IgbGVuKHN5cy5hcmd2KSE9MyBvciBzeXMuYXJndlsxXW5vdCBpbiB7J3ByZXBhcmUnLCdndWFyZCd9b3IgbGVuKHN5cy5hcmd2WzJdKT40MDk2OnJhaXNlIFZhbHVlRXJyb3IoKQogICAgICAgIGV4cGVjdGVkPWpzb24ubG9hZHMoYmFzZTY0LmI2NGRlY29kZShzeXMuYXJndlsyXSx2YWxpZGF0ZT1UcnVlKSxvYmplY3RfcGFpcnNfaG9vaz11bmlxdWUpCiAgICAgICAgKHByZXBhcmUgaWYgc3lzLmFyZ3ZbMV09PSdwcmVwYXJlJ2Vsc2UgZ3VhcmQpKGV4cGVjdGVkKQogICAgICAgIHByaW50KGpzb24uZHVtcHMoeydzdGF0dXMnOidvaycsJ3BoYXNlJzpzeXMuYXJndlsxXX0pKQogICAgZXhjZXB0IEV4Y2VwdGlvbjpyYWlzZSBTeXN0ZW1FeGl0KDIpZnJvbSBOb25lCgoKaWYgX19uYW1lX189PSdfX21haW5fXyc6bWFpbigpCg=="
+        },
+        {
+          "path": "/etc/systemd/system/atmem-document-guard.service",
+          "owner": "root:root",
+          "permissions": "0644",
+          "content": "[Unit]\nDescription=AtMem private parser host guard\nRequires=docker.service\nAfter=docker.service\nBindsTo=docker.service\nPartOf=docker.service\n\n[Service]\nType=oneshot\nRemainAfterExit=yes\nTimeoutStartSec=60\nExecStart=/usr/bin/python3 -I /opt/atmem/enterprise_aws_host_bootstrap.py guard ${local.expected_b64}\n"
+        },
+        {
+          "path": "/etc/systemd/system/ecs.service.d/atmem-document.conf",
+          "owner": "root:root",
+          "permissions": "0644",
+          "content": "[Unit]\nRequires=atmem-document-guard.service\nAfter=atmem-document-guard.service\nBindsTo=atmem-document-guard.service\nPartOf=docker.service\n"
+        }
+      ],
+      "runcmd": [
+        [
+          "/bin/bash",
+          "-euo",
+          "pipefail",
+          "-c",
+          "/usr/bin/python3 -I /opt/atmem/enterprise_aws_host_bootstrap.py prepare ${local.expected_b64}\n/usr/bin/systemctl daemon-reload\n/usr/bin/systemctl restart docker.service\n/usr/bin/systemctl start atmem-document-guard.service\n/usr/bin/systemctl unmask --runtime ecs.service\n/usr/bin/systemctl enable --now --no-block ecs.service"
+        ]
+      ]
+    },
+    "document_job_configuration": {
+      "format": "enterprise-aws-document-job-v2",
+      "accountId": "${var.account_id}",
+      "region": "${var.region}",
+      "bucket": "${aws_s3_bucket.block_6b6e6f776c65646765.id}",
+      "clusterArn": "${local.cluster_arn}",
+      "hostPolicySha256": "${local.host_policy}",
+      "hostDocumentArn": "${module.host_verification.host_verification.hostDocumentArn}",
+      "hostDocumentHash": "${module.host_verification.host_verification.hostDocumentHash}",
+      "hostDocumentVersion": "${module.host_verification.host_verification.hostDocumentVersion}",
+      "workerRoleArn": "${var.worker_role_arn}",
+      "transferRoleArn": "${aws_iam_role.block_6b6e6f776c65646765_transfer.arn}",
+      "executionRoleArn": "${aws_iam_role.block_6b6e6f776c65646765_execution.arn}",
+      "parserImage": "${var.parser_image}",
+      "transferImage": "${var.transfer_image}",
+      "taskDefinitionArn": "${var.images_ready ? aws_ecs_task_definition.block_6b6e6f776c65646765[0].arn : null}"
+    }
+  },
+  "data": {
+    "aws_iam_role": {
+      "block_6b6e6f776c65646765_worker": {
+        "name": "${basename(var.worker_role_arn)}"
+      }
+    },
+    "aws_ssm_parameter": {
+      "block_6b6e6f776c65646765_recommended_ami": {
+        "name": "/aws/service/ecs/optimized-ami/amazon-linux-2023/recommended/image_id",
+        "with_decryption": false
+      }
+    },
+    "aws_ami": {
+      "block_6b6e6f776c65646765_host": {
+        "count": "${var.hosts_enabled ? 1 : 0}",
+        "owners": [
+          "amazon"
+        ],
+        "filter": [
+          {
+            "name": "image-id",
+            "values": [
+              "${var.host_ami_id}"
+            ]
+          },
+          {
+            "name": "architecture",
+            "values": [
+              "x86_64"
+            ]
+          },
+          {
+            "name": "virtualization-type",
+            "values": [
+              "hvm"
+            ]
+          },
+          {
+            "name": "root-device-type",
+            "values": [
+              "ebs"
+            ]
+          },
+          {
+            "name": "name",
+            "values": [
+              "al2023-ami-ecs-hvm-2023.*-x86_64"
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "module": {
+    "host_verification": {
+      "source": "./modules/host-verification",
+      "providers": {
+        "aws": "aws"
+      },
+      "account_id": "${var.account_id}",
+      "region": "${var.region}",
+      "review_approved": "${var.review_approved}",
+      "cluster_arn": "${local.cluster_arn}",
+      "worker_role_arn": "${var.worker_role_arn}"
+    }
+  },
+  "resource": {
+    "terraform_data": {
+      "block_6b6e6f776c65646765_review": {
+        "input": {
+          "source_component": "knowledge",
+          "design_revision": 7,
+          "environment": "qualification",
+          "requested_worker_arn": "${var.worker_role_arn}",
+          "resolved_worker_arn": "${data.aws_iam_role.block_6b6e6f776c65646765_worker.arn}"
+        },
+        "lifecycle": {
+          "precondition": [
+            {
+              "condition": "${var.review_approved}",
+              "error_message": "Review this concrete component plan, destination and costs before apply."
+            },
+            {
+              "condition": "${startswith(var.worker_role_arn,format(\"arn:aws:iam::%s:role/\",var.account_id)) && data.aws_iam_role.block_6b6e6f776c65646765_worker.arn == var.worker_role_arn}",
+              "error_message": "The existing worker must match the full same-account ARN, including its path."
+            },
+            {
+              "condition": "${!var.images_ready || startswith(var.parser_image,format(\"%s.dkr.ecr.%s.amazonaws.com/%s/parser@sha256:\",var.account_id,var.region,local.name))}",
+              "error_message": "Keep parser in its owned regional repository."
+            },
+            {
+              "condition": "${!var.images_ready || startswith(var.transfer_image,format(\"%s.dkr.ecr.%s.amazonaws.com/%s/transfer@sha256:\",var.account_id,var.region,local.name))}",
+              "error_message": "Keep transfer in its owned regional repository."
+            }
+          ]
+        }
+      }
+    },
+    "aws_ecs_cluster": {
+      "block_6b6e6f776c65646765": {
+        "name": "${local.name}",
+        "setting": [
+          {
+            "name": "containerInsights",
+            "value": "disabled"
+          }
+        ],
+        "configuration": {
+          "execute_command_configuration": {
+            "logging": "NONE"
+          }
+        },
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      }
+    },
+    "aws_vpc": {
+      "block_6b6e6f776c65646765": {
+        "cidr_block": "10.88.0.0/16",
+        "enable_dns_support": true,
+        "enable_dns_hostnames": true,
+        "tags": {
+          "Name": "${local.name}"
+        },
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      }
+    },
+    "aws_subnet": {
+      "block_6b6e6f776c65646765_0": {
+        "vpc_id": "${aws_vpc.block_6b6e6f776c65646765.id}",
+        "cidr_block": "10.88.0.0/24",
+        "availability_zone": "${var.availability_zones[0]}",
+        "map_public_ip_on_launch": false,
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      },
+      "block_6b6e6f776c65646765_1": {
+        "vpc_id": "${aws_vpc.block_6b6e6f776c65646765.id}",
+        "cidr_block": "10.88.1.0/24",
+        "availability_zone": "${var.availability_zones[1]}",
+        "map_public_ip_on_launch": false,
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      }
+    },
+    "aws_route_table": {
+      "block_6b6e6f776c65646765_0": {
+        "vpc_id": "${aws_vpc.block_6b6e6f776c65646765.id}",
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      },
+      "block_6b6e6f776c65646765_1": {
+        "vpc_id": "${aws_vpc.block_6b6e6f776c65646765.id}",
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      }
+    },
+    "aws_route_table_association": {
+      "block_6b6e6f776c65646765_0": {
+        "subnet_id": "${aws_subnet.block_6b6e6f776c65646765_0.id}",
+        "route_table_id": "${aws_route_table.block_6b6e6f776c65646765_0.id}",
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      },
+      "block_6b6e6f776c65646765_1": {
+        "subnet_id": "${aws_subnet.block_6b6e6f776c65646765_1.id}",
+        "route_table_id": "${aws_route_table.block_6b6e6f776c65646765_1.id}",
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      }
+    },
+    "aws_security_group": {
+      "block_6b6e6f776c65646765_host": {
+        "name": "${local.name}-host",
+        "description": "Private document host boundary; rules managed separately",
+        "vpc_id": "${aws_vpc.block_6b6e6f776c65646765.id}",
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      },
+      "block_6b6e6f776c65646765_endpoint": {
+        "name": "${local.name}-endpoint",
+        "description": "Private document endpoint boundary; rules managed separately",
+        "vpc_id": "${aws_vpc.block_6b6e6f776c65646765.id}",
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      }
+    },
+    "aws_vpc_security_group_ingress_rule": {
+      "block_6b6e6f776c65646765_endpoint": {
+        "security_group_id": "${aws_security_group.block_6b6e6f776c65646765_endpoint.id}",
+        "referenced_security_group_id": "${aws_security_group.block_6b6e6f776c65646765_host.id}",
+        "ip_protocol": "tcp",
+        "from_port": 443,
+        "to_port": 443,
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      }
+    },
+    "aws_vpc_security_group_egress_rule": {
+      "block_6b6e6f776c65646765_api": {
+        "security_group_id": "${aws_security_group.block_6b6e6f776c65646765_host.id}",
+        "referenced_security_group_id": "${aws_security_group.block_6b6e6f776c65646765_endpoint.id}",
+        "ip_protocol": "tcp",
+        "from_port": 443,
+        "to_port": 443,
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      },
+      "block_6b6e6f776c65646765_s3": {
+        "security_group_id": "${aws_security_group.block_6b6e6f776c65646765_host.id}",
+        "prefix_list_id": "${aws_vpc_endpoint.block_6b6e6f776c65646765_s3.prefix_list_id}",
+        "ip_protocol": "tcp",
+        "from_port": 443,
+        "to_port": 443,
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      }
+    },
+    "aws_vpc_endpoint": {
+      "block_6b6e6f776c65646765_ecs": {
+        "vpc_id": "${aws_vpc.block_6b6e6f776c65646765.id}",
+        "service_name": "${format(\"com.amazonaws.%s.ecs\",var.region)}",
+        "vpc_endpoint_type": "Interface",
+        "private_dns_enabled": true,
+        "subnet_ids": [
+          "${aws_subnet.block_6b6e6f776c65646765_0.id}",
+          "${aws_subnet.block_6b6e6f776c65646765_1.id}"
+        ],
+        "security_group_ids": [
+          "${aws_security_group.block_6b6e6f776c65646765_endpoint.id}"
+        ],
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      },
+      "block_6b6e6f776c65646765_ecs_agent": {
+        "vpc_id": "${aws_vpc.block_6b6e6f776c65646765.id}",
+        "service_name": "${format(\"com.amazonaws.%s.ecs-agent\",var.region)}",
+        "vpc_endpoint_type": "Interface",
+        "private_dns_enabled": true,
+        "subnet_ids": [
+          "${aws_subnet.block_6b6e6f776c65646765_0.id}",
+          "${aws_subnet.block_6b6e6f776c65646765_1.id}"
+        ],
+        "security_group_ids": [
+          "${aws_security_group.block_6b6e6f776c65646765_endpoint.id}"
+        ],
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      },
+      "block_6b6e6f776c65646765_ecs_telemetry": {
+        "vpc_id": "${aws_vpc.block_6b6e6f776c65646765.id}",
+        "service_name": "${format(\"com.amazonaws.%s.ecs-telemetry\",var.region)}",
+        "vpc_endpoint_type": "Interface",
+        "private_dns_enabled": true,
+        "subnet_ids": [
+          "${aws_subnet.block_6b6e6f776c65646765_0.id}",
+          "${aws_subnet.block_6b6e6f776c65646765_1.id}"
+        ],
+        "security_group_ids": [
+          "${aws_security_group.block_6b6e6f776c65646765_endpoint.id}"
+        ],
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      },
+      "block_6b6e6f776c65646765_ecr_api": {
+        "vpc_id": "${aws_vpc.block_6b6e6f776c65646765.id}",
+        "service_name": "${format(\"com.amazonaws.%s.ecr.api\",var.region)}",
+        "vpc_endpoint_type": "Interface",
+        "private_dns_enabled": true,
+        "subnet_ids": [
+          "${aws_subnet.block_6b6e6f776c65646765_0.id}",
+          "${aws_subnet.block_6b6e6f776c65646765_1.id}"
+        ],
+        "security_group_ids": [
+          "${aws_security_group.block_6b6e6f776c65646765_endpoint.id}"
+        ],
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      },
+      "block_6b6e6f776c65646765_ecr_dkr": {
+        "vpc_id": "${aws_vpc.block_6b6e6f776c65646765.id}",
+        "service_name": "${format(\"com.amazonaws.%s.ecr.dkr\",var.region)}",
+        "vpc_endpoint_type": "Interface",
+        "private_dns_enabled": true,
+        "subnet_ids": [
+          "${aws_subnet.block_6b6e6f776c65646765_0.id}",
+          "${aws_subnet.block_6b6e6f776c65646765_1.id}"
+        ],
+        "security_group_ids": [
+          "${aws_security_group.block_6b6e6f776c65646765_endpoint.id}"
+        ],
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      },
+      "block_6b6e6f776c65646765_ssm": {
+        "vpc_id": "${aws_vpc.block_6b6e6f776c65646765.id}",
+        "service_name": "${format(\"com.amazonaws.%s.ssm\",var.region)}",
+        "vpc_endpoint_type": "Interface",
+        "private_dns_enabled": true,
+        "subnet_ids": [
+          "${aws_subnet.block_6b6e6f776c65646765_0.id}",
+          "${aws_subnet.block_6b6e6f776c65646765_1.id}"
+        ],
+        "security_group_ids": [
+          "${aws_security_group.block_6b6e6f776c65646765_endpoint.id}"
+        ],
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      },
+      "block_6b6e6f776c65646765_ssmmessages": {
+        "vpc_id": "${aws_vpc.block_6b6e6f776c65646765.id}",
+        "service_name": "${format(\"com.amazonaws.%s.ssmmessages\",var.region)}",
+        "vpc_endpoint_type": "Interface",
+        "private_dns_enabled": true,
+        "subnet_ids": [
+          "${aws_subnet.block_6b6e6f776c65646765_0.id}",
+          "${aws_subnet.block_6b6e6f776c65646765_1.id}"
+        ],
+        "security_group_ids": [
+          "${aws_security_group.block_6b6e6f776c65646765_endpoint.id}"
+        ],
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      },
+      "block_6b6e6f776c65646765_s3": {
+        "vpc_id": "${aws_vpc.block_6b6e6f776c65646765.id}",
+        "service_name": "${format(\"com.amazonaws.%s.s3\",var.region)}",
+        "vpc_endpoint_type": "Gateway",
+        "route_table_ids": [
+          "${aws_route_table.block_6b6e6f776c65646765_0.id}",
+          "${aws_route_table.block_6b6e6f776c65646765_1.id}"
+        ],
+        "policy": "${jsonencode({Version=\"2012-10-17\",Statement=[{Effect=\"Allow\",Principal=\"*\",Action=[\"s3:GetObject\",\"s3:PutObject\",\"s3:GetBucketLocation\",\"s3:GetBucketVersioning\"],Resource=[aws_s3_bucket.block_6b6e6f776c65646765.arn,format(\"%s/document-jobs/*\",aws_s3_bucket.block_6b6e6f776c65646765.arn),format(\"arn:aws:s3:::prod-%s-starport-layer-bucket/*\",var.region)]}]})}",
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      }
+    },
+    "aws_s3_bucket": {
+      "block_6b6e6f776c65646765": {
+        "bucket": "${format(\"atmem-doc-%s\",substr(sha256(format(\"%s:%s\",var.account_id,local.name)),0,20))}",
+        "force_destroy": false,
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      }
+    },
+    "aws_s3_bucket_public_access_block": {
+      "block_6b6e6f776c65646765": {
+        "bucket": "${aws_s3_bucket.block_6b6e6f776c65646765.id}",
+        "block_public_acls": true,
+        "block_public_policy": true,
+        "ignore_public_acls": true,
+        "restrict_public_buckets": true,
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      }
+    },
+    "aws_s3_bucket_ownership_controls": {
+      "block_6b6e6f776c65646765": {
+        "bucket": "${aws_s3_bucket.block_6b6e6f776c65646765.id}",
+        "rule": {
+          "object_ownership": "BucketOwnerEnforced"
+        },
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      }
+    },
+    "aws_s3_bucket_server_side_encryption_configuration": {
+      "block_6b6e6f776c65646765": {
+        "bucket": "${aws_s3_bucket.block_6b6e6f776c65646765.id}",
+        "rule": {
+          "apply_server_side_encryption_by_default": {
+            "sse_algorithm": "AES256"
+          }
+        },
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      }
+    },
+    "aws_s3_bucket_versioning": {
+      "block_6b6e6f776c65646765": {
+        "bucket": "${aws_s3_bucket.block_6b6e6f776c65646765.id}",
+        "versioning_configuration": {
+          "status": "Disabled"
+        },
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      }
+    },
+    "aws_s3_bucket_lifecycle_configuration": {
+      "block_6b6e6f776c65646765": {
+        "bucket": "${aws_s3_bucket.block_6b6e6f776c65646765.id}",
+        "rule": [
+          {
+            "id": "orphan-fallback",
+            "status": "Enabled",
+            "filter": {
+              "prefix": "document-jobs/"
+            },
+            "expiration": {
+              "days": 1
+            },
+            "abort_incomplete_multipart_upload": {
+              "days_after_initiation": 1
+            }
+          }
+        ],
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      }
+    },
+    "aws_s3_bucket_policy": {
+      "block_6b6e6f776c65646765": {
+        "bucket": "${aws_s3_bucket.block_6b6e6f776c65646765.id}",
+        "policy": "${jsonencode(local.bucket_policy)}",
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review",
+          "aws_s3_bucket_public_access_block.block_6b6e6f776c65646765"
+        ]
+      }
+    },
+    "aws_ecr_repository": {
+      "block_6b6e6f776c65646765_parser": {
+        "name": "${local.name}/parser",
+        "image_tag_mutability": "IMMUTABLE",
+        "force_delete": false,
+        "encryption_configuration": {
+          "encryption_type": "AES256"
+        },
+        "image_scanning_configuration": {
+          "scan_on_push": true
+        },
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      },
+      "block_6b6e6f776c65646765_transfer": {
+        "name": "${local.name}/transfer",
+        "image_tag_mutability": "IMMUTABLE",
+        "force_delete": false,
+        "encryption_configuration": {
+          "encryption_type": "AES256"
+        },
+        "image_scanning_configuration": {
+          "scan_on_push": true
+        },
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      }
+    },
+    "aws_iam_role": {
+      "block_6b6e6f776c65646765_host": {
+        "name": "${local.name}-host",
+        "assume_role_policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"ec2.amazonaws.com\"},\"Action\":\"sts:AssumeRole\"}]}",
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      },
+      "block_6b6e6f776c65646765_execution": {
+        "name": "${local.name}-execution",
+        "assume_role_policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"ecs-tasks.amazonaws.com\"},\"Action\":\"sts:AssumeRole\"}]}",
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      },
+      "block_6b6e6f776c65646765_transfer": {
+        "name": "${local.name}-transfer",
+        "assume_role_policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"ecs-tasks.amazonaws.com\"},\"Action\":\"sts:AssumeRole\"}]}",
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      }
+    },
+    "aws_iam_role_policy": {
+      "block_6b6e6f776c65646765_transfer": {
+        "name": "${local.name}-transfer",
+        "role": "${aws_iam_role.block_6b6e6f776c65646765_transfer.name}",
+        "policy": "${jsonencode(local.transfer_policy)}",
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      },
+      "block_6b6e6f776c65646765_execution": {
+        "name": "${local.name}-execution",
+        "role": "${aws_iam_role.block_6b6e6f776c65646765_execution.name}",
+        "policy": "${jsonencode(local.execution_policy)}",
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      },
+      "block_6b6e6f776c65646765_host": {
+        "name": "${local.name}-host",
+        "role": "${aws_iam_role.block_6b6e6f776c65646765_host.name}",
+        "policy": "${jsonencode(local.host_policy_document)}",
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      },
+      "block_6b6e6f776c65646765_worker": {
+        "count": "${var.images_ready ? 1 : 0}",
+        "name": "${local.name}-worker",
+        "role": "${data.aws_iam_role.block_6b6e6f776c65646765_worker.name}",
+        "policy": "${local.enabled_worker_policy}",
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      }
+    },
+    "aws_iam_instance_profile": {
+      "block_6b6e6f776c65646765": {
+        "name": "${local.name}-host",
+        "role": "${aws_iam_role.block_6b6e6f776c65646765_host.name}",
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      }
+    },
+    "aws_ecs_task_definition": {
+      "block_6b6e6f776c65646765": {
+        "count": "${var.images_ready ? 1 : 0}",
+        "family": "${local.task_definition.family}",
+        "network_mode": "bridge",
+        "requires_compatibilities": [
+          "EC2"
+        ],
+        "task_role_arn": "${aws_iam_role.block_6b6e6f776c65646765_transfer.arn}",
+        "execution_role_arn": "${aws_iam_role.block_6b6e6f776c65646765_execution.arn}",
+        "container_definitions": "${jsonencode(local.task_definition.containerDefinitions)}",
+        "runtime_platform": {
+          "cpu_architecture": "X86_64",
+          "operating_system_family": "LINUX"
+        },
+        "placement_constraints": [
+          {
+            "type": "memberOf",
+            "expression": "${local.task_definition.placementConstraints[0].expression}"
+          }
+        ],
+        "volume": [
+          {
+            "name": "input",
+            "docker_volume_configuration": {
+              "scope": "task",
+              "driver": "local"
+            }
+          },
+          {
+            "name": "output",
+            "docker_volume_configuration": {
+              "scope": "task",
+              "driver": "local"
+            }
+          }
+        ],
+        "tags": {
+          "atmem-workload": "document-parser"
+        },
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      }
+    },
+    "aws_launch_template": {
+      "block_6b6e6f776c65646765": {
+        "count": "${var.hosts_enabled ? 1 : 0}",
+        "name_prefix": "${local.name}-",
+        "image_id": "${data.aws_ami.block_6b6e6f776c65646765_host[0].id}",
+        "instance_type": "m6i.large",
+        "update_default_version": false,
+        "iam_instance_profile": {
+          "arn": "${aws_iam_instance_profile.block_6b6e6f776c65646765.arn}"
+        },
+        "network_interfaces": [
+          {
+            "associate_public_ip_address": false,
+            "security_groups": [
+              "${aws_security_group.block_6b6e6f776c65646765_host.id}"
+            ]
+          }
+        ],
+        "metadata_options": {
+          "http_endpoint": "enabled",
+          "http_tokens": "required",
+          "http_put_response_hop_limit": 1,
+          "http_protocol_ipv6": "disabled",
+          "instance_metadata_tags": "disabled"
+        },
+        "block_device_mappings": [
+          {
+            "device_name": "${data.aws_ami.block_6b6e6f776c65646765_host[0].root_device_name}",
+            "ebs": {
+              "encrypted": true,
+              "delete_on_termination": true,
+              "volume_size": 40,
+              "volume_type": "gp3"
+            }
+          }
+        ],
+        "user_data": "${base64encode(format(\"#cloud-config\\n%s\",jsonencode(local.cloud_init)))}",
+        "tag_specifications": [
+          {
+            "resource_type": "instance",
+            "tags": {
+              "atmem-document-policy": "${local.host_policy}",
+              "Name": "${local.name}"
+            }
+          },
+          {
+            "resource_type": "volume",
+            "tags": {
+              "Name": "${local.name}"
+            }
+          }
+        ],
+        "lifecycle": {
+          "create_before_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      }
+    },
+    "aws_autoscaling_group": {
+      "block_6b6e6f776c65646765": {
+        "count": "${var.hosts_enabled ? 1 : 0}",
+        "name": "${local.name}",
+        "min_size": "${var.host_count}",
+        "max_size": "${var.host_count}",
+        "desired_capacity": "${var.host_count}",
+        "vpc_zone_identifier": [
+          "${aws_subnet.block_6b6e6f776c65646765_0.id}",
+          "${aws_subnet.block_6b6e6f776c65646765_1.id}"
+        ],
+        "health_check_type": "EC2",
+        "launch_template": {
+          "id": "${aws_launch_template.block_6b6e6f776c65646765[0].id}",
+          "version": "${tostring(aws_launch_template.block_6b6e6f776c65646765[0].latest_version)}"
+        },
+        "tag": [
+          {
+            "key": "atmem-document-policy",
+            "value": "${local.host_policy}",
+            "propagate_at_launch": true
+          }
+        ],
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review",
+          "aws_iam_role_policy.block_6b6e6f776c65646765_host",
+          "aws_vpc_endpoint.block_6b6e6f776c65646765_ecs",
+          "aws_vpc_endpoint.block_6b6e6f776c65646765_ecs_agent",
+          "aws_vpc_endpoint.block_6b6e6f776c65646765_ecs_telemetry",
+          "aws_vpc_endpoint.block_6b6e6f776c65646765_ecr_api",
+          "aws_vpc_endpoint.block_6b6e6f776c65646765_ecr_dkr",
+          "aws_vpc_endpoint.block_6b6e6f776c65646765_ssm",
+          "aws_vpc_endpoint.block_6b6e6f776c65646765_ssmmessages",
+          "aws_vpc_endpoint.block_6b6e6f776c65646765_s3",
+          "aws_vpc_security_group_egress_rule.block_6b6e6f776c65646765_api",
+          "aws_vpc_security_group_egress_rule.block_6b6e6f776c65646765_s3"
+        ]
+      }
+    }
+  },
+  "output": {
+    "document_job_configuration": {
+      "value": "${var.images_ready && var.hosts_enabled ? local.document_job_configuration : null}",
+      "description": "Runtime config only; requires complete worker/export and destination checks.",
+      "depends_on": [
+        "aws_autoscaling_group.block_6b6e6f776c65646765",
+        "aws_iam_role_policy.block_6b6e6f776c65646765_worker"
+      ]
+    },
+    "artifacts": {
+      "value": {
+        "parserRepository": "${aws_ecr_repository.block_6b6e6f776c65646765_parser.repository_url}",
+        "transferRepository": "${aws_ecr_repository.block_6b6e6f776c65646765_transfer.repository_url}",
+        "parserRevision": "${var.parser_revision}",
+        "recommendedAmi": "${nonsensitive(data.aws_ssm_parameter.block_6b6e6f776c65646765_recommended_ami.value)}",
+        "hostAmi": "${var.host_ami_id}"
+      }
+    },
+    "host_verification": {
+      "value": "${module.host_verification.host_verification}"
+    }
+  }
+}
