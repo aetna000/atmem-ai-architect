@@ -26,4 +26,3 @@ export function invoiceTerraform(project,plan,environment='staging'){
  files['README.md']+='\n## Whole-project scope and state\n\nRead invoice-contract.json, resource-schedule.json, OPERATING_JOBS.md and STATE.md.\nAdditional requested components/flows/configuration remain visible and block the\nreview gate until implemented. No diagram requirement is removed by this module.\nProduction uses its reviewed provider-specific protected state/locking backend; no\nstate store is deployed or silently borrowed from another cloud. Destination\nstate residency, access, locking and recovery acceptance precede account planning.\n';
  return files;
 }
-
