@@ -9,6 +9,17 @@ import {azureInvoiceTerraform}from'../src/invoice-azure.mjs';
 import {gcpInvoiceTerraform}from'../src/invoice-gcp.mjs';
 import {ibmInvoiceTerraform}from'../src/invoice-ibm.mjs';
 
+test('IBM fixed SQL tasks isolate bootstrap passwords and do not invent cron resources',()=>{
+ const n='block_696e766f696365',files=ibmInvoiceTerraform({id:'11111111-1111-4111-8111-111111111111',revision:1,nodes:[],edges:[]},{id:'invoice',address:n,provider:'ibm',region:'au-syd'}),config=JSON.parse(files['main.tf.json']);
+ for(const action of ['initialize','maintain','monitor']){
+  const job=config.resource.ibm_code_engine_job[n+'_operator_'+action],env=job.run_env_variables;
+  assert.equal(job.run_mode,'task');assert.equal(job.run_service_account,'none');assert.equal(job.run_compute_resource_token_enabled,false);assert.equal(job.scale_max_execution_time,960);assert.equal(job.scale_retry_limit,0);assert.equal(job.scale_array_spec,'0');assert.deepEqual(job.run_arguments,[action,'--execute']);
+  assert.deepEqual(env.filter(entry=>entry.type==='secret_key_reference').map(entry=>entry.name).sort(),action==='initialize'?['API_DATABASE_PASSWORD','DATABASE_PASSWORD','WORKER_DATABASE_PASSWORD']:['DATABASE_PASSWORD']);
+  assert.ok(env.every(entry=>!/^(DESTINATION_|PARSER_|DOCUMENT_|MODEL_)/.test(entry.name)));assert.equal(env.find(entry=>entry.name==='DATABASE_USER').key,'operator_user');
+ }
+ assert.equal(config.variable.operations_enabled.default,false);assert.match(config.variable.runtime_image.validation.condition,/operations_enabled/);assert.doesNotMatch(config.variable.parser_image.validation.condition,/operations_enabled/);assert.match(files['OPERATING_JOBS.md'],/does not\nyet deliver scheduled/);assert.match(files['scripts/run-operator.py'],/--wait-timeout/);assert.ok(Object.keys(config.resource).every(type=>!/cron|jobrun/.test(type)));
+});
+
 test('every emitted invoice application contains its local runtime import closure and private parser source',()=>{
  for(const provider of ['aws','azure','gcp','ibm']){
   const root='applications/block_696e766f696365/',files=invoiceApplicationFiles(provider,'block_696e766f696365');

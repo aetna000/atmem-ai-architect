@@ -467,3 +467,13 @@ shared runtime changes require re-admission for future combined exports.
 IBM native operating wrapper, complete state/Spec Kit/registry and medium business
 conversations remain next. Zero medium cases complete; remaining families/full28/
 held-out unfinished. No cloud operation, publication or deployment. Evidence: specs/028-convergence-evaluation/evidence/20261110-google-operating-jobs
+
+
+## IBM fixed operating tasks, separate from scheduling acceptance
+
+Added separate SQL operating job definitions and a package-owned isolated CLI
+launcher with explicit destination selection and no task overrides. IBM 2.9 has
+no cron subscription resource; scheduling/alerts remain explicit unfinished work.
+Nine provider mock plans, eleven actual-helper/fake-CLI cases and 310 JS tests pass.
+No native IBM job execution or cloud operation is inferred. Full wrapper, complete
+medium cases and final28/held-out remain in progress. Evidence: specs/028-convergence-evaluation/evidence/20261110-ibm-operating-tasks
