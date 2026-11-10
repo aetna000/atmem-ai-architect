@@ -13,10 +13,8 @@ import stat
 import sys
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 import psycopg
-from psycopg.conninfo import make_conninfo
-from workflow_database import initialize_database,grant_runtime_roles
-from workflow_role_bootstrap import bootstrap_runtime_roles
-from invoice_operations import owned_scope,purge_expired,quarantine_restored_deliveries,reconcile_completed,set_membership
+from invoice_operator_core import validate_deployment,initialize_runtime
+from invoice_operations import purge_expired,quarantine_restored_deliveries,reconcile_completed,set_membership
 from structured_output import _object
 
 def private_json(path):
@@ -45,30 +43,21 @@ def main(argv=None):
     parser.add_argument('--connection-file',required=True);parser.add_argument('--deployment-file',required=True);parser.add_argument('--input-file');parser.add_argument('--execute',action='store_true');parser.add_argument('--confirm-workloads-stopped',action='store_true')
     args=parser.parse_args(argv)
     deployment=private_json(args.deployment_file)
-    if set(deployment)!={'provider','deploymentId','accountId','namespace','bindings','tenantId'}:raise ValueError('Use the exact documented deployment identity')
-    scope={'account_id':deployment['accountId'],'namespace':deployment['namespace']}
+    scope=validate_deployment(deployment)
     payload=private_json(args.input_file)if args.input_file else{}
     if not args.execute:
         print(json.dumps({'action':args.action,'willWrite':False,'next':'Review the destination, private inputs and authorization, then pass --execute. No database connection was made.'}));return
     settings=connection_settings(args.connection_file)
     if args.action=='initialize':
-        # Azure's documented identity mappings run in postgres, then schema and
-        # application grants run in the separate destination application database.
-        with psycopg.connect(**{**settings,**({'dbname':'postgres'}if deployment['provider']=='azure'else{})})as conn:
-            def passwords(purpose,principal):
-                if purpose not in deployment['bindings']or principal!=deployment['bindings'][purpose]['principal']:raise ValueError('Use the exact owned native password binding')
-                field=payload.get(purpose+'PasswordFile')
-                if not isinstance(field,str):raise ValueError('Supply a private separate IBM role password file')
-                path=Path(field);metadata=path.stat()
-                if not path.is_absolute()or metadata.st_uid!=os.geteuid()or metadata.st_mode&0o077 or not 20<=metadata.st_size<=20000:raise ValueError('Use an owned private strong runtime password file')
-                return path.read_text()
-            bootstrap_runtime_roles(conn,provider=deployment['provider'],deployment_id=deployment['deploymentId'],bindings=deployment['bindings'],tenant_id=deployment['tenantId'],passwords=passwords if deployment['provider']=='ibm'else None)
-        with psycopg.connect(**settings)as conn:
-            if conn.execute("SELECT to_regnamespace('workflow')").fetchone()[0]is None:initialize_database(conn)
-            owned_scope(conn,**scope)
-            grant_runtime_roles(conn,deployment['bindings']['api']['name'],deployment['bindings']['worker']['name'],native_provider=deployment['provider'])
-            conn.execute('INSERT INTO workflow.accounts(id)VALUES(%s)ON CONFLICT DO NOTHING',(scope['account_id'],))
-        receipt={'initialized':True,'schemaVersion':1,'nativeIdentity':'Requires destination-native authentication checks; local CLI success alone is insufficient.'}
+        def passwords(purpose,principal):
+            if purpose not in deployment['bindings']or principal!=deployment['bindings'][purpose]['principal']:raise ValueError('Use the exact owned native password binding')
+            field=payload.get(purpose+'PasswordFile')
+            if not isinstance(field,str):raise ValueError('Supply a private separate IBM role password file')
+            path=Path(field);metadata=path.stat()
+            if not path.is_absolute()or metadata.st_uid!=os.geteuid()or metadata.st_mode&0o077 or not stat.S_ISREG(metadata.st_mode)or not 24<=metadata.st_size<=500:raise ValueError('Use an owned private strong runtime password file')
+            return path.read_text()
+        def connect(database=None):return psycopg.connect(**{**settings,**({'dbname':database}if database else{})})
+        receipt=initialize_runtime(connect,deployment,passwords=passwords if deployment['provider']=='ibm'else None)
     else:
         if args.action in {'purge-expired','quarantine-restore','reconcile-completed'}and not args.confirm_workloads_stopped:raise ValueError('Pause workloads and explicitly confirm the maintenance boundary')
         with psycopg.connect(**settings)as conn:

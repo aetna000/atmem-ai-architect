@@ -308,7 +308,8 @@
     "specs/028-convergence-evaluation/evidence/20261110-gcp-invoice-and-queue-recovery",
     "specs/028-convergence-evaluation/evidence/20261110-ibm-operator-bootstrap",
     "specs/028-convergence-evaluation/evidence/20261110-proxy-binary-applicability",
-    "specs/028-convergence-evaluation/evidence/20261110-ibm-invoice-native"
+    "specs/028-convergence-evaluation/evidence/20261110-ibm-invoice-native",
+    "specs/028-convergence-evaluation/evidence/20261110-invoice-operator-core"
   ],
   "updatedAt": "2026-11-10T04:49:45.876388+00:00",
   "foundationValidation": {
@@ -316,5 +317,19 @@
     "serverTests": 208,
     "build": "passed",
     "ibmRegistryHostnameRegression": "Both earlier families pass fresh native source/schema/mock checks; explicit regional hostname map, no global fallback."
+  },
+  "operatorBootstrapCheckpoint": {
+    "status": "in_progress",
+    "evidence": "specs/028-convergence-evaluation/evidence/20261110-invoice-operator-core",
+    "sharedInitialization": "Complete binding/scope validation before connections; transactional schema bootstrap serialized; owned retries preserve passwords.",
+    "localChecks": {
+      "apiAndOperatorPG17": 71,
+      "operatorPG18": 7,
+      "javascript": 305,
+      "server": 208,
+      "build": true
+    },
+    "next": "Native fixed operator jobs, scheduled maintenance and monitoring; then whole state/Spec Kit/registry and complete project conversation/export qualification.",
+    "deploymentEvidence": false
   }
 }

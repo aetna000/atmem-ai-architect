@@ -177,3 +177,21 @@ Keep medium invoice conversations uncounted until native operator/maintenance,
 monitoring, state/Spec Kit/registry and whole-export qualification are implemented.
 Then continue all remaining medium/hard cases and full 28-case/held-out evaluation.
 Evidence: specs/028-convergence-evaluation/evidence/20261110-ibm-invoice-native
+
+
+## 2026-11-10 — Serialized reusable operator bootstrap checkpoint
+
+Extracted complete deployment/binding validation and shared operator initialization
+for the CLI and upcoming fixed native jobs. All scope validation precedes connection
+and native role creation. Azure postgres identity mapping remains separate from app
+schema admission. A shared database-local advisory lock protects initial schema
+check/create; autocommit is rejected before native DDL. Owned retries preserve SQL
+passwords and do not adopt unrelated roles. No requirements or ownership changed.
+
+Actual simultaneous bootstrap into a fresh synthetic database, native-profile SQL
+login/grant checks and repeat initialization pass on local PostgreSQL 17 and 18.
+71 API/operator checks, 7 PG18 operator checks, 305 JS checks, 208 server checks and
+build pass. Evidence does not qualify newly rebuilt images or cloud jobs/identities.
+Native operator/scheduled retention/monitoring, full state/Spec Kit/registry wiring
+and complete medium conversations remain next. Full 28 and held-out pending.
+Evidence: specs/028-convergence-evaluation/evidence/20261110-invoice-operator-core

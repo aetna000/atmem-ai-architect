@@ -40,7 +40,7 @@ test('shared container helper keeps existing defaults and rejects path/capacity 
 test('AWS invoice export contains the exact trusted database CA and functional operator source',()=>{
  const root='applications/block_696e766f696365/',files=invoiceApplicationFiles('aws','block_696e766f696365'),receipt=JSON.parse(files[root+'rds-ca-source.json']);
  assert.equal(createHash('sha256').update(files[root+'rds-global-ca.pem']).digest('hex'),receipt.sha256);assert.equal((files[root+'rds-global-ca.pem'].match(/BEGIN CERTIFICATE/g)||[]).length,receipt.certificates);
- assert.match(files[root+'Dockerfile'],/COPY .*rds-global-ca.pem/);assert.ok(files[root+'invoice_operator.py']);assert.ok(files[root+'invoice_operations.py']);assert.ok(files[root+'invoice_retention.py']);
+ assert.match(files[root+'Dockerfile'],/COPY .*rds-global-ca.pem/);assert.ok(files[root+'invoice_operator.py']);assert.ok(files[root+'invoice_operator_core.py']);assert.match(files[root+'Dockerfile'],/invoice_operator_core\.py/);assert.ok(files[root+'invoice_operations.py']);assert.ok(files[root+'invoice_retention.py']);
  for(const provider of['azure','gcp','ibm'])assert.equal(invoiceApplicationFiles(provider,'block_696e766f696365')[root+'rds-global-ca.pem'],undefined);
 });
 test('AWS infrastructure keeps parser authority, workload identities, immutable releases and existing DNS separate',()=>{

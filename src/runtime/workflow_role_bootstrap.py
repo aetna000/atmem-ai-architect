@@ -24,13 +24,11 @@ def azure_principal(conn,name):
     with conn.cursor(row_factory=tuple_row)as cursor:
         return cursor.execute('SELECT role_name::text,principal_type,object_id,tenant_id,mfa,admin FROM pg_catalog.pgaadauth_list_principals(false) AS mapped(role_name,principal_type,object_id,tenant_id,mfa,admin) WHERE role_name=%s',(name,)).fetchone()
 
-def bootstrap_runtime_roles(conn,*,provider,deployment_id,bindings,passwords=None,tenant_id=None):
+def validate_runtime_bindings(*,provider,deployment_id,bindings,tenant_id=None):
     canonical_uuid(deployment_id)
     if provider not in {'aws','azure','gcp','ibm'}or not isinstance(bindings,dict)or set(bindings)!={'api','worker'}:raise ValueError('Use the complete owned native role bindings')
     if provider=='azure':
         canonical_uuid(tenant_id)
-        if conn.info.dbname!='postgres':raise ValueError('Azure principal mapping must run on the native postgres database before application schema bootstrap')
-    if provider=='ibm'and not callable(passwords):raise ValueError('Use the separate owned secret-store password reader')
     names=[]
     for purpose,binding in bindings.items():
         fields={'name','principal','created_by_package'}if provider=='gcp'else{'name','principal'}
@@ -43,6 +41,12 @@ def bootstrap_runtime_roles(conn,*,provider,deployment_id,bindings,passwords=Non
             if(binding['created_by_package']is not True or not isinstance(principal,str)or not re.fullmatch(r'[a-z][a-z0-9-]{4,29}@[a-z][a-z0-9-]{4,28}[a-z0-9]\.iam\.gserviceaccount\.com',principal)or binding['name']!=principal.removesuffix('.gserviceaccount.com')):raise ValueError('Only the package-created service account IAM user may be admitted here')
         names.append(binding['name'])
     if len(set(names))!=2:raise ValueError('API and worker logins must be separate')
+    return bindings
+
+def bootstrap_runtime_roles(conn,*,provider,deployment_id,bindings,passwords=None,tenant_id=None):
+    validate_runtime_bindings(provider=provider,deployment_id=deployment_id,bindings=bindings,tenant_id=tenant_id)
+    if provider=='azure'and conn.info.dbname!='postgres':raise ValueError('Azure principal mapping must run on the native postgres database before application schema bootstrap')
+    if provider=='ibm'and not callable(passwords):raise ValueError('Use the separate owned secret-store password reader')
     # Serialize bootstrap for one deployment, including retries after a partial
     # operator run. This lock does not confer ownership over an unrelated role.
     conn.execute('SELECT pg_advisory_xact_lock(hashtextextended(%s,0))',('atmem-native-role-bootstrap:'+deployment_id,))
