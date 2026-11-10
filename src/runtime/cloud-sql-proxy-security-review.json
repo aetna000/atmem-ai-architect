@@ -1,0 +1,30 @@
+{
+  "format": "atmem-exact-dependency-review-v1",
+  "status": "reviewed-not-affected-by-listed-findings",
+  "reviewedAt": "2026-11-10",
+  "imageIndex": "gcr.io/cloud-sql-connectors/cloud-sql-proxy@sha256:7d156a5c466e31596afd6c8ed134f19c207a297418392fdad2686524ca4e7a3c",
+  "platformManifest": "sha256:adcbb6a16e70236f26902b7d986008df118923558839062f6d26832c5f200078",
+  "platform": "linux/amd64",
+  "binarySha256": "7b04024b125e0b3908fc3f0a18bc6e7fa54a27078228ef5f30885e63a4f1f5d3",
+  "scanner": "govulncheck v1.9.0; binary symbol mode",
+  "findings": [
+    {
+      "id": "GO-2026-5932",
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_present"
+    },
+    {
+      "id": "GO-2026-6860",
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_present"
+    },
+    {
+      "id": "GO-2026-6866",
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_present"
+    }
+  ],
+  "evidence": "specs/028-convergence-evaluation/evidence/20261110-proxy-binary-applicability",
+  "positiveControl": "Same affected Go modules deliberately compiled into an unexecuted Linux binary; all listed issues detected at package and symbol level.",
+  "boundary": "Applies only to the listed findings and exact AMD64 artifact. Module-version inventory remains true. No blanket clean-security, native database/TLS/IAM or deployment claim. Repeat independent review for changed image or new findings."
+}

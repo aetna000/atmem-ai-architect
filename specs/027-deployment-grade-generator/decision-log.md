@@ -141,3 +141,16 @@ retain the failing CLI regression. Actual SQL login creation, SCRAM authenticati
 and restricted grants pass on PG17/18. API aggregate: 62 checks. Native IBM cloud
 resources and the complete invoice export are not qualified by this local proof.
 Evidence: specs/028-convergence-evaluation/evidence/20261110-ibm-operator-bootstrap
+
+## 2026-11-10 — Resolve exact upstream proxy finding applicability
+
+Retain the original module-version vulnerability inventory. Independent official
+govulncheck binary analysis finds none of the affected HTML/OpenPGP packages in the
+exact upstream AMD64 binary. An intentionally affected compiled Linux control must
+report all three issues at symbol level; it passes that positive detection check.
+Keep raw scanner/OpenVEX data and a derived record bound to image/platform/binary.
+This resolves these three findings for this artifact, not arbitrary future images
+or unknown vulnerabilities. Re-review on changed image/findings. Compiler exports
+the bounded review and rejects a mismatched artifact. Fresh Google schema/six mock
+plans, 302 JavaScript tests and build pass. Wider project acceptance stays pending.
+Evidence: specs/028-convergence-evaluation/evidence/20261110-proxy-binary-applicability
