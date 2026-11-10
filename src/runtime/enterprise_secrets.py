@@ -37,7 +37,7 @@ def decode(name, raw):
 
 class SecretFiles:
     def __init__(self, provider, environment, role):
-        if provider not in {'aws', 'azure', 'gcp', 'ibm'} or role not in {'api', 'worker'}:
+        if provider not in {'aws', 'azure', 'gcp', 'ibm'} or role not in {'api', 'worker', 'operator'}:
             raise ValueError('Supply the owned private workload provider and role')
         # Read-only assistants have no action credentials. Native workload
         # identities must not silently fall back to inherited developer keys.
@@ -45,10 +45,11 @@ class SecretFiles:
                      'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'AWS_SESSION_TOKEN', 'AZURE_CLIENT_SECRET',
                      'GOOGLE_APPLICATION_CREDENTIALS', 'IBMCLOUD_API_KEY', 'OPENAI_API_KEY']
         if provider != 'ibm': forbidden += ['DATABASE_PASSWORD', 'DATABASE_PASSWORD_FILE']
+        if role == 'operator': forbidden += [value for name in ['encryption', 'graph', 'confluence'] for value in FIELDS[name][:2]]
         if any(key in environment for key in forbidden):
             raise ValueError('Unexpected static cloud, parser or action authority in the private workload')
         self.env, self.directory, self.closed = dict(environment), None, False
-        required = ['encryption', 'graph', 'confluence']
+        required = ['encryption', 'graph', 'confluence'] if role != 'operator' else []
         if provider != 'gcp': required.append('database_ca')
         if provider == 'ibm': required.append('database_password')
         selected = []

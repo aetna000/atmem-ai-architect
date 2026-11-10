@@ -173,7 +173,7 @@ def grant_extraction_runtime(conn, role):
     flags = conn.execute('SELECT rolsuper,rolcreatedb,rolcreaterole,rolreplication,rolbypassrls,rolcanlogin FROM pg_roles WHERE rolname=%s', (role,)).fetchone()
     if not flags or any(flags[:5]) or not flags[5] or conn.execute("SELECT has_schema_privilege(%s,'enterprise_extractions','CREATE')", (role,)).fetchone()[0]:
         raise ValueError('Use a nonadministrative role that does not own the cache schema')
-    for table in ['memberships', 'source_mappings', 'schema_version']:
+    for table in ['memberships', 'source_mappings', 'company_bindings', 'schema_version']:
         if conn.execute('SELECT has_table_privilege(%s,%s,%s)', (role, 'enterprise_auth.' + table, 'INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER,REFERENCES')).fetchone()[0]:
             raise ValueError('Cache runtime must not inherit authority-table write privileges')
     target = sql.Identifier(role)

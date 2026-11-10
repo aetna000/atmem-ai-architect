@@ -79,12 +79,13 @@ def grant_audit_writer(conn, role):
     flags = conn.execute('SELECT rolsuper,rolcreatedb,rolcreaterole,rolreplication,rolbypassrls,rolcanlogin FROM pg_roles WHERE rolname=%s', (role,)).fetchone()
     if not flags or any(flags[:5]) or not flags[5] or conn.execute("SELECT has_schema_privilege(%s,'enterprise_audit','CREATE')", (role,)).fetchone()[0]:
         raise ValueError('Use a nonadministrative role that does not own the audit schema')
-    for table in ['memberships', 'source_mappings', 'schema_version']:
+    for table in ['memberships', 'source_mappings', 'company_bindings', 'schema_version']:
         if conn.execute('SELECT has_table_privilege(%s,%s,%s)', (role, 'enterprise_auth.' + table, 'INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER,REFERENCES')).fetchone()[0]:
             raise ValueError('Audit runtime must not inherit authority-table write privileges')
     if conn.execute("SELECT has_table_privilege(%s,'enterprise_audit.events','SELECT,UPDATE,DELETE,TRUNCATE,TRIGGER,REFERENCES')", (role,)).fetchone()[0]:
         raise ValueError('Audit writer must not inherit history read/change permissions')
     target = sql.Identifier(role)
     conn.execute(sql.SQL('GRANT USAGE ON SCHEMA enterprise_audit TO {}').format(target))
+    conn.execute(sql.SQL('GRANT SELECT ON enterprise_audit.schema_version TO {}').format(target))
     conn.execute(sql.SQL('GRANT INSERT ON enterprise_audit.events TO {}').format(target))
     conn.execute(sql.SQL('GRANT USAGE ON SEQUENCE enterprise_audit.events_id_seq TO {}').format(target))

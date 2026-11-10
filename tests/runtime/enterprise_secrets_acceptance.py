@@ -22,6 +22,18 @@ def environment(provider):
 
 
 class NativePrivateSecrets(unittest.TestCase):
+    def test_operator_requires_only_native_database_secret_material(self):
+        for provider in ['aws','azure','gcp','ibm']:
+            values={key:value for key,value in environment(provider).items()if key in {'DATABASE_PASSWORD','DATABASE_CA_PEM'}}
+            with SecretFiles(provider,values,'operator')as secrets:
+                with self.assertRaises(SourceUnavailable):secrets.read('encryption')
+                if provider=='ibm':self.assertEqual(secrets.read('database_password'),'SYNTHETIC-DATABASE-PASSWORD')
+                else:self.assertNotIn('DATABASE_PASSWORD_FILE',secrets.env)
+
+    def test_operator_rejects_application_encryption_and_delegated_credentials(self):
+        for name in ['ENTERPRISE_ENCRYPTION_KEY','ENTERPRISE_ENCRYPTION_KEY_FILE','SHAREPOINT_CLIENT_SECRET','CONFLUENCE_CLIENT_SECRET_FILE']:
+            with self.assertRaises(ValueError):SecretFiles('gcp',{name:'SYNTHETIC-UNNEEDED-AUTHORITY'},'operator')
+
     def test_all_four_native_injections_become_private_files_without_export_values(self):
         old = os.umask(0)
         try:

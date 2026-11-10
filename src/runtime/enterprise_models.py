@@ -11,25 +11,39 @@ from enterprise_sources import SourceUnavailable, query_text
 from public_faq import answer_schema, object_pairs
 
 
-def native_generator(provider, environment):
+def model_configuration(provider, environment):
     if provider not in {'aws', 'azure', 'gcp', 'ibm'}:
         raise ValueError('Supply the owned model provider')
     env = dict(environment)
+    if provider == 'aws':
+        from aws_json_model import read_model_config
+    elif provider == 'azure':
+        from azure_structured import read_model_config
+    elif provider == 'gcp':
+        from gcp_structured import read_model_config
+    else:
+        from ibm_structured import read_model_config
+        # Workspace account IDs are not IBM cloud account IDs.
+        env = {**env, 'ACCOUNT_ID': env['IBM_ACCOUNT_ID']}
+    return read_model_config(env)
+
+
+def native_generator(provider, environment):
+    config = model_configuration(provider, environment)
     # Reuse the same account policy, identity, regional endpoints, response bounds
     # and no-tool checks already implemented for generated structured operations.
     if provider == 'aws':
-        from aws_json_model import BedrockJsonModel, read_model_config
-        model = BedrockJsonModel(read_model_config(env))
+        from aws_json_model import BedrockJsonModel
+        model = BedrockJsonModel(config)
     elif provider == 'azure':
-        from azure_structured import AzureModel, read_model_config
-        model = AzureModel(read_model_config(env))
+        from azure_structured import AzureModel
+        model = AzureModel(config)
     elif provider == 'gcp':
-        from gcp_structured import VertexModel, read_model_config
-        model = VertexModel(read_model_config(env))
+        from gcp_structured import VertexModel
+        model = VertexModel(config)
     else:
-        from ibm_structured import WatsonModel, read_model_config
-        # Workspace account IDs are not IBM cloud account IDs.
-        model = WatsonModel(read_model_config({**env, 'ACCOUNT_ID': env['IBM_ACCOUNT_ID']}))
+        from ibm_structured import WatsonModel
+        model = WatsonModel(config)
 
     def generate(payload, schema, instruction):
         if schema != answer_schema() or instruction != INSTRUCTION:
@@ -59,3 +73,22 @@ def native_generator(provider, environment):
             # The queue owns bounded retries; no hidden transport fallback.
             raise SourceUnavailable('knowledge_model_unavailable') from None
     return generate
+
+
+def validate_configured_review(provider, config):
+    """Fail worker startup for missing scoped offline policy evidence.
+
+    Native transports still recheck their account policy on every generation.
+    AWS/Azure use native account reads, so no approval is fabricated here.
+    """
+    try:
+        if provider == 'gcp':
+            from gcp_structured import verify_operator_review
+            verify_operator_review(config)
+        elif provider == 'ibm':
+            from policy_review import verify_policy_review
+            verify_policy_review(config['policy_review'], {'accountId': config['ACCOUNT_ID'],
+                'projectId': config['WATSONX_PROJECT_ID'], 'runtimeInstanceId': config['RUNTIME_INSTANCE_ID'],
+                'region': config['MODEL_REGION'], 'model': config['MODEL_ID'], 'retentionReview': 'reviewed-no-prompt-retention'})
+    except Exception:
+        raise ValueError('Supply the current scoped ' + provider + ' model retention review before starting the worker') from None

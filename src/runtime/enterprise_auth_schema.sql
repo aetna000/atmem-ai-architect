@@ -3,6 +3,11 @@
 CREATE SCHEMA enterprise_auth;
 REVOKE ALL ON SCHEMA enterprise_auth FROM PUBLIC;
 CREATE TABLE enterprise_auth.schema_version(version integer PRIMARY KEY CHECK(version=1),source_sha256 text NOT NULL);
+CREATE TABLE enterprise_auth.company_bindings(
+ account_id text PRIMARY KEY,session_domain text NOT NULL CHECK(session_domain ~ '^[0-9a-f]{64}$'),
+ version bigint NOT NULL CHECK(version>0),actor text NOT NULL DEFAULT current_user,
+ updated_at timestamptz NOT NULL DEFAULT clock_timestamp()
+);
 CREATE TABLE enterprise_auth.memberships(
  account_id text NOT NULL,principal_key text NOT NULL CHECK(principal_key ~ '^[0-9a-f]{64}$'),
  issuer text NOT NULL,subject text NOT NULL,active boolean NOT NULL DEFAULT false,
@@ -37,6 +42,18 @@ CREATE TABLE enterprise_auth.events(
  account_id text NOT NULL,principal_key text NOT NULL,source_id text NOT NULL,
  event text NOT NULL CHECK(event IN('connect_started','connect_completed','refresh_completed','needs_reconnect','disconnected','session_started','session_ended')),
  created_at timestamptz NOT NULL DEFAULT clock_timestamp()
+);
+CREATE TABLE enterprise_auth.administration_events(
+ id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+ account_id text NOT NULL,principal_key text CHECK(principal_key IS NULL OR principal_key ~ '^[0-9a-f]{64}$'),
+ actor text NOT NULL DEFAULT current_user,
+ action text NOT NULL CHECK(action IN('membership_enabled','membership_disabled','mapping_updated','company_registration_updated')),
+ source_alias text CHECK(source_alias IN('sharepoint','confluence')),
+ mapping_version bigint,registration_version bigint,registration_domain text CHECK(registration_domain IS NULL OR registration_domain ~ '^[0-9a-f]{64}$'),active boolean NOT NULL,
+ created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+ CHECK((action='mapping_updated')=(source_alias IS NOT NULL AND mapping_version IS NOT NULL)),
+ CHECK((action='company_registration_updated')=(principal_key IS NULL)),
+ CHECK((action='company_registration_updated')=(registration_version IS NOT NULL AND registration_domain IS NOT NULL))
 );
 CREATE TABLE enterprise_auth.sessions(
  session_sha256 text PRIMARY KEY CHECK(session_sha256 ~ '^[0-9a-f]{64}$'),

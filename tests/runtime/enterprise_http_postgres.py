@@ -60,6 +60,7 @@ class CompanyHttpIntegration(unittest.IsolatedAsyncioTestCase):
                 elif url.startswith('https://graph.microsoft.com/v1.0/me?')or url in {'https://api.atlassian.com/me','https://api.atlassian.com/oauth/token/accessible-resources'}:return outer.profiles.get(url,token,hosts=hosts)
                 else:raise AssertionError('Unexpected native document request')
                 return Reply(200,{},json.dumps(value).encode())
+        self.document_http=Documents()
         def make_engine(principal,access,authorize):
             self.factory_calls.append((principal.key,set(access)))
             def generate(payload,schema,instruction):
@@ -70,7 +71,7 @@ class CompanyHttpIntegration(unittest.IsolatedAsyncioTestCase):
                 article=json.loads(payload)['articles'][0]
                 quote=getattr(self,'answer_quote','Private policy requires ninety days.')
                 return json.dumps({'answer':quote,'abstained':False,'citations':[{'id':article['id'],'quote':quote}]})
-            sources=[GraphSharePoint('drive','tenant.sharepoint.com',access['sharepoint'],http=Documents()),ConfluenceCloud(CLOUD,'tenant.atlassian.net',{'ENG':'42'},access['confluence'],http=Documents())]
+            sources=[GraphSharePoint('drive','tenant.sharepoint.com',access['sharepoint'],http=self.document_http),ConfluenceCloud(CLOUD,'tenant.atlassian.net',{'ENG':'42'},access['confluence'],http=self.document_http)]
             return EnterpriseKnowledge(sources,generate,lambda raw,mime:raw.decode(),audit=self.audit.append,authorize=authorize)
         self.engine_factory=make_engine;self.connections={'sharepoint':SourceConnection('SharePoint','graph',self.graph),'confluence':SourceConnection('Confluence','confluence',self.confluence)}
         self.app=create_app(self.identity,self.sessions,self.connections,make_engine,public_origin=ORIGIN)

@@ -3,6 +3,7 @@ from dataclasses import dataclass,field
 import hmac
 import secrets
 import time
+import re
 from enterprise_auth_store import digest,secret_binding
 from enterprise_identity import CompanyPrincipal
 from enterprise_sources import SourceDenied
@@ -29,8 +30,23 @@ class CreatedSession:
 
 
 class CompanySessions:
-    def __init__(self,auth):self.auth=auth
-    def context(self,account,key,session):return ['browser-session',account,key,session]
+    def __init__(self,auth,*,domain=None):
+        if domain is not None and(not isinstance(domain,str)or not re.fullmatch('[0-9a-f]{64}',domain)):raise ValueError('Use the owned company session domain')
+        if getattr(auth,'company_domain',None)!=domain:raise ValueError('Session and authority company registrations must match')
+        self.auth=auth;self.domain=domain
+    def context(self,account,key,session):
+        result=['browser-session',account,key,session]
+        if self.domain is not None:result+=['company-registration',self.domain]
+        return result
+
+    def private(self,row,identity):
+        try:
+            private=self.auth.box.open(self.context(row['account_id'],row['principal_key'],identity),row['nonce_ciphertext'])
+            if set(private)!={'browser_nonce','csrf'}:raise ValueError()
+            secret_binding(private['browser_nonce']);secret_binding(private['csrf'])
+            if not hmac.compare_digest(digest(private['csrf']),row['csrf_sha256']):raise ValueError()
+            return private
+        except Exception:raise SourceDenied('company_identity_required')from None
 
     def create(self,principal,previous=None):
         if previous:
@@ -46,10 +62,11 @@ class CompanySessions:
             # person's quota. Lock both owner domains in one deterministic order.
             for owner in sorted(owners):cur.execute('SELECT pg_advisory_xact_lock(hashtextextended(%s,0))',('enterprise-session:'+principal.account_id+':'+owner,))
             if previous_owner and previous_owner['account_id']==principal.account_id:
-                row=cur.execute('SELECT account_id,principal_key,nonce_ciphertext,revoked_at,expires_at>clock_timestamp()AS current FROM enterprise_auth.sessions WHERE session_sha256=%s FOR UPDATE',(digest(previous),)).fetchone()
+                row=cur.execute('SELECT account_id,principal_key,nonce_ciphertext,csrf_sha256,revoked_at,expires_at>clock_timestamp()AS current FROM enterprise_auth.sessions WHERE session_sha256=%s FOR UPDATE',(digest(previous),)).fetchone()
                 if row and row['account_id']==principal.account_id:
                     if row['principal_key']==principal.key and row['current']and row['revoked_at']is None:
-                        nonce=self.auth.box.open(self.context(principal.account_id,principal.key,digest(previous)),row['nonce_ciphertext'])['browser_nonce'];secret_binding(nonce)
+                        try:nonce=self.private(row,digest(previous))['browser_nonce']
+                        except SourceDenied:pass # New verified login gets a fresh nonce; never inherit an invalid/old-domain one.
                     cur.execute('UPDATE enterprise_auth.sessions SET revoked_at=clock_timestamp()WHERE session_sha256=%s',(digest(previous),))
             cur.execute("DELETE FROM enterprise_auth.sessions WHERE account_id=%s AND principal_key=%s AND expires_at<clock_timestamp()-interval '1 day'",(principal.account_id,principal.key))
             cur.execute('UPDATE enterprise_auth.sessions SET revoked_at=clock_timestamp()WHERE session_sha256 IN(SELECT session_sha256 FROM enterprise_auth.sessions WHERE account_id=%s AND principal_key=%s AND revoked_at IS NULL ORDER BY created_at DESC OFFSET 9)',(principal.account_id,principal.key))
@@ -68,8 +85,7 @@ class CompanySessions:
             principal=CompanyPrincipal(row['account_id'],row['issuer'],row['subject'],row['expires_at'])
             if principal.key!=row['principal_key']:raise SourceDenied('company_identity_required')
             self.auth._authorize(cur,principal)
-            private=self.auth.box.open(self.context(principal.account_id,principal.key,identity),row['nonce_ciphertext']);nonce=private['browser_nonce'];csrf=private['csrf'];secret_binding(nonce);secret_binding(csrf)
-            if not hmac.compare_digest(digest(csrf),row['csrf_sha256']):raise SourceDenied('browser_request_denied')
+            private=self.private(row,identity);nonce=private['browser_nonce'];csrf=private['csrf']
         return BrowserSession(principal,identity,nonce,row['csrf_sha256'],csrf)
 
     def revoke(self,session):

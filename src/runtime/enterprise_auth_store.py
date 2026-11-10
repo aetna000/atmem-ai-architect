@@ -69,7 +69,9 @@ class SourceWitness:
 
 
 class EnterpriseAuthStore:
-    def __init__(self,connect,key):self.connect=connect;self.box=CredentialBox(key)
+    def __init__(self,connect,key,*,company_domain=None):
+        if company_domain is not None and(not isinstance(company_domain,str)or not re.fullmatch('[0-9a-f]{64}',company_domain)):raise ValueError('Use the owned company authority domain')
+        self.connect=connect;self.box=CredentialBox(key);self.company_domain=company_domain
 
     @contextmanager
     def transaction(self):
@@ -79,9 +81,15 @@ class EnterpriseAuthStore:
                 cur.execute("SET LOCAL search_path=pg_catalog,enterprise_auth,pg_temp");cur.execute("SET LOCAL lock_timeout='3s'");cur.execute("SET LOCAL statement_timeout='10s'")
                 yield cur
 
+    def require_company(self,cur,account_id):
+        if self.company_domain is not None:
+            row=cur.execute('SELECT session_domain FROM enterprise_auth.company_bindings WHERE account_id=%s',(account_id,)).fetchone()
+            if not row or row['session_domain']!=self.company_domain:raise SourceDenied('company_registration_changed')
+
     def _authorize(self,cur,principal,source_id=None):
         if not isinstance(principal,CompanyPrincipal):raise SourceDenied('company_identity_required')
         principal.require()
+        self.require_company(cur,principal.account_id)
         membership=cur.execute('SELECT issuer,subject,active FROM enterprise_auth.memberships WHERE account_id=%s AND principal_key=%s',(principal.account_id,principal.key)).fetchone()
         if not membership or not membership['active']or membership['issuer']!=principal.issuer or membership['subject']!=principal.subject:raise SourceDenied('company_membership_required')
         if source_id is None:return None
@@ -222,11 +230,11 @@ def grant_auth_runtime(conn,role):
     flags=conn.execute('SELECT rolsuper,rolcreatedb,rolcreaterole,rolreplication,rolbypassrls,rolcanlogin FROM pg_roles WHERE rolname=%s',(role,)).fetchone()
     if not flags or any(flags[:5])or not flags[5]:raise ValueError('Use an existing nonadministrative broker login')
     if conn.execute('SELECT has_schema_privilege(%s,%s,%s)',(role,'enterprise_auth','CREATE')).fetchone()[0]:raise ValueError('Broker must not own or create authentication schema objects')
-    for table in ['memberships','source_mappings','schema_version']:
+    for table in ['memberships','source_mappings','company_bindings','schema_version']:
         if conn.execute('SELECT has_table_privilege(%s,%s,%s)',(role,'enterprise_auth.'+table,'INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER,REFERENCES')).fetchone()[0]:raise ValueError('Broker must not inherit authority-table write privileges')
     name=sql.Identifier(role)
     conn.execute(sql.SQL('GRANT USAGE ON SCHEMA enterprise_auth TO {}').format(name))
-    conn.execute(sql.SQL('GRANT SELECT ON enterprise_auth.schema_version,enterprise_auth.memberships,enterprise_auth.source_mappings TO {}').format(name))
+    conn.execute(sql.SQL('GRANT SELECT ON enterprise_auth.schema_version,enterprise_auth.memberships,enterprise_auth.source_mappings,enterprise_auth.company_bindings TO {}').format(name))
     conn.execute(sql.SQL('GRANT SELECT,INSERT,UPDATE,DELETE ON enterprise_auth.attempts,enterprise_auth.sessions TO {}').format(name))
     conn.execute(sql.SQL('GRANT SELECT,INSERT,UPDATE ON enterprise_auth.connections TO {}').format(name))
     conn.execute(sql.SQL('GRANT INSERT ON enterprise_auth.events TO {}').format(name))

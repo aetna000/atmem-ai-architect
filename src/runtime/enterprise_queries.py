@@ -15,6 +15,7 @@ import procrastinate
 from procrastinate.schema import SchemaManager
 from psycopg import sql
 from enterprise_identity import CompanyPrincipal
+from enterprise_sessions import CompanySessions
 from enterprise_sources import query_text,SourceDenied,SourceUnavailable
 
 TASK='enterprise.answer.v1'
@@ -47,11 +48,11 @@ class QueryLease:
 
 
 class EnterpriseQueryStore:
-    def __init__(self,auth,task,account_id,*,lease_seconds=120,ttl_seconds=900):
+    def __init__(self,auth,task,account_id,*,lease_seconds=120,ttl_seconds=900,session_domain=None):
         name,queue=task_identity(account_id)
         if task.name!=name or task.queue!=queue or getattr(task,'queueing_lock',None)is not None:raise ValueError('Use the owned query task without a queueing lock')
         if type(lease_seconds)is not int or not 15<=lease_seconds<=600 or type(ttl_seconds)is not int or not lease_seconds<=ttl_seconds<=3600:raise ValueError('Invalid owned query deadlines')
-        self.auth=auth;self.task=task;self.account_id=account_id;self.lease_seconds=lease_seconds;self.ttl_seconds=ttl_seconds
+        self.auth=auth;self.task=task;self.account_id=account_id;self.lease_seconds=lease_seconds;self.ttl_seconds=ttl_seconds;self.sessions=CompanySessions(auth,domain=session_domain)
 
     @contextmanager
     def transaction(self):
@@ -66,11 +67,12 @@ class EnterpriseQueryStore:
 
     def _principal(self,cur,session_id):
         if not isinstance(session_id,str)or not re.fullmatch('[0-9a-f]{64}',session_id):raise SourceDenied('company_identity_required')
-        row=cur.execute('SELECT s.account_id,s.principal_key,extract(epoch FROM s.expires_at)::bigint AS expires_at,m.issuer,m.subject FROM enterprise_auth.sessions s JOIN enterprise_auth.memberships m USING(account_id,principal_key)WHERE s.session_sha256=%s AND s.revoked_at IS NULL AND s.expires_at>clock_timestamp()',(session_id,)).fetchone()
+        row=cur.execute('SELECT s.account_id,s.principal_key,s.nonce_ciphertext,s.csrf_sha256,extract(epoch FROM s.expires_at)::bigint AS expires_at,m.issuer,m.subject FROM enterprise_auth.sessions s JOIN enterprise_auth.memberships m USING(account_id,principal_key)WHERE s.session_sha256=%s AND s.revoked_at IS NULL AND s.expires_at>clock_timestamp()',(session_id,)).fetchone()
         if not row:raise SourceDenied('company_identity_required')
         principal=CompanyPrincipal(row['account_id'],row['issuer'],row['subject'],row['expires_at'])
         if principal.key!=row['principal_key']or principal.account_id!=self.account_id:raise SourceDenied('company_identity_required')
         self.auth._authorize(cur,principal)
+        self.sessions.private(row,session_id)
         return principal
 
     def _owner(self,cur,session):
@@ -214,12 +216,12 @@ class EnterpriseQueryStore:
             return len(rows)
 
 
-def producer_queries(auth,dsn,account_id):
+def producer_queries(auth,dsn,account_id,*,session_domain=None):
     app=procrastinate.App(connector=procrastinate.SyncPsycopgConnector(conninfo=dsn,kwargs={'connect_timeout':5,'options':'-c search_path=pg_catalog,enterprise_queries,pg_temp'}))
     def worker_only(query_id):raise RuntimeError('Run the owned dedicated query worker')
     name,queue=task_identity(account_id)
     task=app.task(name=name,queue=queue)(worker_only)
-    return EnterpriseQueryStore(auth,task,account_id)
+    return EnterpriseQueryStore(auth,task,account_id,session_domain=session_domain)
 
 
 def initialize_query_store(conn):
@@ -238,7 +240,7 @@ def grant_query_runtime(conn,role,*,worker=False):
     if conn.execute('SELECT version,source_sha256,queue_version FROM enterprise_queries.schema_version').fetchone()!=(1,expected,'3.10.0'):raise ValueError('Review the exact fresh query schema before granting access')
     flags=conn.execute('SELECT rolsuper,rolcreatedb,rolcreaterole,rolreplication,rolbypassrls,rolcanlogin FROM pg_roles WHERE rolname=%s',(role,)).fetchone()
     if not flags or any(flags[:5])or not flags[5]or conn.execute("SELECT has_schema_privilege(%s,'enterprise_queries','CREATE')",(role,)).fetchone()[0]:raise ValueError('Use a nonadministrative role that does not own the query schema')
-    for table in ['memberships','source_mappings','schema_version']:
+    for table in ['memberships','source_mappings','company_bindings','schema_version']:
         if conn.execute('SELECT has_table_privilege(%s,%s,%s)',(role,'enterprise_auth.'+table,'INSERT,UPDATE,DELETE,TRUNCATE,TRIGGER,REFERENCES')).fetchone()[0]:raise ValueError('Question runtime must not inherit authority-table write privileges')
     target=sql.Identifier(role)
     conn.execute(sql.SQL('GRANT USAGE ON SCHEMA enterprise_queries TO {}').format(target))

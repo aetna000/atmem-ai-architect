@@ -22,13 +22,15 @@ CORE = ['enterprise_identity.py', 'enterprise_sources.py', 'enterprise_knowledge
         'enterprise_sessions.py', 'enterprise_http.py', 'enterprise_web.py',
         'enterprise_queries.py', 'enterprise_queries_schema.sql', 'enterprise_query_service.py',
         'enterprise_audit.py', 'enterprise_audit_schema.sql', 'enterprise_models.py', 'enterprise_secrets.py',
+        'enterprise_configuration.py', 'enterprise_native.py', 'enterprise_operator.py', 'workflow_connection.py', 'workflow_errors.py',
         'aws_json_model.py', 'azure_structured.py', 'gcp_structured.py', 'ibm_structured.py',
         'structured_output.py', 'structured_http.py', 'policy_review.py',
         'enterprise_extraction_cache.py', 'enterprise_extraction_schema.sql',
         'enterprise_parser_transport.py', 'enterprise_document_contract.py', 'public_faq.py', 'faq-output-contract.json',
         'enterprise-web.html', 'enterprise-web-app.js', 'enterprise-web.css', 'enterprise-web-notices.txt', 'enterprise-web-lock.json']
 SQL = {'enterprise_auth_postgres': 21, 'enterprise_sessions_postgres': 4,
-       'enterprise_queries_postgres': 19, 'enterprise_extraction_cache_postgres': 13, 'enterprise_audit_postgres': 9}
+       'enterprise_queries_postgres': 19, 'enterprise_extraction_cache_postgres': 13, 'enterprise_audit_postgres': 9,
+       'enterprise_operator_postgres':11}
 
 
 def qualify(args):
@@ -57,6 +59,7 @@ def qualify(args):
     tests = [*sorted((ROOT / 'tests/runtime').glob('enterprise_*_acceptance.py')),
              *[ROOT / 'tests/runtime' / (name + '.py') for name in SQL],
              ROOT / 'tests/runtime/durable_postgres_acceptance.py', ROOT / 'tests/runtime/durable_fixture_tasks.py']
+    tests += [ROOT / 'tests/runtime/enterprise_deployment_fixture.py']
     helper_names = ['durable_workflow.py', 'workflow_contract.py']
     sources = [*[runtime / name for name in CORE + helper_names], *tests,
                runtime / lock_name, runtime / 'enterprise-runtime.Dockerfile', runtime / 'python-container-lock.json',
@@ -100,7 +103,7 @@ def qualify(args):
             preflight = '''import importlib,importlib.metadata,json,os,sys
 sys.path.insert(0,'/app')
 assert sys.version_info[:3]==(3,13,18),sys.version
-modules=['enterprise_http','enterprise_query_service','enterprise_extraction_cache','enterprise_oauth','enterprise_identity','enterprise_web','enterprise_parser_transport','enterprise_audit','enterprise_models','enterprise_secrets']
+modules=['enterprise_http','enterprise_query_service','enterprise_extraction_cache','enterprise_oauth','enterprise_identity','enterprise_web','enterprise_parser_transport','enterprise_audit','enterprise_models','enterprise_secrets','enterprise_native','enterprise_configuration','enterprise_operator']
 for name in modules:
  module=importlib.import_module(name)
  assert module.__file__.startswith('/app/'),module.__file__
@@ -139,7 +142,7 @@ sys.path.insert(0,'/app')
 '''
             result = run('policy-tests', [*restricted, '--network', 'none', image,
                 'python', '-I', '-c', loader + "import unittest;unittest.main(module=None,argv=['unittest','discover','-s','/tmp/workspace/tests/runtime','-p','enterprise_*_acceptance.py','-v'])"], data=json.dumps(payload).encode())
-            if not re.search(rb'Ran 60 tests in [^\n]+\n\nOK\s*$', result):
+            if not re.search(rb'Ran 67 tests in [^\n]+\n\nOK\s*$', result):
                 raise ValueError('Unexpected private policy test inventory')
             for version in [17, 18]:
                 name = 'atmem-durable-qualification' + ('-pg18' if version == 18 else '')
@@ -179,9 +182,9 @@ print(json.dumps({'postgresVersionNum':version}))
         finally:
             (output / 'receipt.json').write_text(json.dumps({'recordedAt': datetime.now(timezone.utc).isoformat(),
                 'passed': passed, 'imageId': image, 'checks': checks, 'sourceHashes': hashes,
-                'provider':args.provider,'packages': len(lock['sources']), 'policyTests': 60, 'sqlTestsPerVersion': sum(SQL.values()),
+                'provider':args.provider,'packages': len(lock['sources']), 'policyTests': 67, 'sqlTestsPerVersion': sum(SQL.values()),
                 'postgresVersions': [17, 18], 'securityAccepted': False, 'cloudOperations': False,
-                'scope': 'Clean Linux private application/model/audit dependencies. Actual crypto/SQL/Procrastinate; native model serializers with scripted HTTP. No native cloud identity/account/model quality, configured API factory, per-file cloud isolation or complete-project acceptance.'}, indent=2) + '\n')
+                'scope': 'Clean Linux private application/factory/operator dependencies. Actual crypto/SQL/Procrastinate/bootstrap/enrollment/revocation; native model serializers with scripted HTTP. Assembled HTTP API/worker tests run separately on the host. No native account/model quality, per-file cloud launcher/isolation, complete-project or deployment acceptance.'}, indent=2) + '\n')
 
 
 if __name__ == '__main__':

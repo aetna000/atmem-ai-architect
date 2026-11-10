@@ -1,5 +1,5 @@
 # The staging context supplies only reviewed runtime files and the emitted hash lock.
-# This core image deliberately has no deployable factory until native adapters exist.
+# The compiled package must also supply its owned enterprise-deployment.json.
 FROM docker.io/library/python:3.13-slim-trixie@sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20 AS wheels
 COPY requirements.lock /build/requirements.lock
 RUN python -I -m pip --isolated download --only-binary=:all: --require-hashes --dest /wheels -r /build/requirements.lock
@@ -12,4 +12,4 @@ COPY requirements.lock /app/requirements.lock
 RUN --mount=type=bind,from=wheels,source=/wheels,target=/wheels,readonly python -I -m pip --isolated install --no-index --find-links=/wheels --only-binary=:all: --no-cache-dir --require-hashes -r /app/requirements.lock && python -I -m pip --isolated check && python -I -m pip --isolated uninstall --yes pip && rm -rf /usr/local/lib/python3.13/ensurepip
 COPY runtime/ /app/
 USER 10001:10001
-CMD ["python", "-I", "-c", "raise SystemExit('Supply the reviewed native company application factory; this image is an implementation core, not a configured service')"]
+CMD ["python", "-I", "/app/enterprise_native.py", "api"]

@@ -37,7 +37,8 @@ def callback_notice(label):
     return HTMLResponse('<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+html.escape(title)+'</title><main><h1>'+html.escape(title)+'</h1><p>Return to your workspace, sign in if needed, and choose Connect again.</p><a href="/">Return to your workspace</a></main></html>',status_code=400)
 
 
-def create_app(identity,sessions,connections,make_engine,*,public_origin,web_config=None,static_root=None,answers=None):
+def create_app(identity,sessions,connections,make_engine,*,public_origin,web_config=None,static_root=None,answers=None,allow_synchronous=True):
+    if type(allow_synchronous)is not bool:raise ValueError('Use the owned question transport mode')
     trusted_https(public_origin);origin=urlsplit(public_origin)
     if origin.path not in {'','/'}or public_origin.endswith('/'):raise ValueError('Use the canonical owned HTTPS origin without a trailing slash')
     if not isinstance(connections,dict)or not 1<=len(connections)<=20 or not callable(make_engine):raise ValueError('Supply owned native source and application adapters')
@@ -161,6 +162,7 @@ def create_app(identity,sessions,connections,make_engine,*,public_origin,web_con
         except Exception:return callback_notice(entry.label)
     @app.post('/api/ask')
     async def ask(request:Request):
+        if not allow_synchronous:return JSONResponse({'error':{'code':'request','message':'Use the workspace to submit your question.'}},status_code=410)
         user=await actor(request,csrf=True);value=await json_body(request)
         if set(value)!={'question'}or not isinstance(value['question'],str)or not value['question'].strip()or len(value['question'])>1000:raise ValueError('Supply only the question')
         def answer():
