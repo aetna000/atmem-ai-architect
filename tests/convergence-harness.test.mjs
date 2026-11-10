@@ -1,5 +1,6 @@
 import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import path from 'node:path';import os from 'node:os';import {spawnSync} from 'node:child_process';
 import {keepEngagement} from '../src/engagement.mjs';import {structuredWebProject} from './fixtures/structured-web-project.mjs';
+import{invoiceProject}from'./fixtures/invoice-project.mjs';
 const corpus=JSON.parse(fs.readFileSync(new URL('../benchmarks/convergence/scenarios.json',import.meta.url)));
 const bridge=request=>{const r=spawnSync('node',['scripts/convergence-bridge.mjs'],{input:JSON.stringify(request),encoding:'utf8'});assert.equal(r.status,0,r.stderr);return JSON.parse(r.stdout);};
 test('invalid benchmark selectors fail before snapshotting or invoking a model',()=>{
@@ -45,6 +46,17 @@ test('the frozen benchmark contains 28 distinct provider/scenario cases and the 
  const cases=Object.keys(corpus.providers).flatMap(p=>corpus.scenarios.map(s=>p+'-'+s.id));assert.equal(new Set(cases).size,28);
  assert.deepEqual(corpus.scenarios.reduce((a,s)=>(a[s.difficulty]=(a[s.difficulty]||0)+1,a),{}),{simple:2,medium:3,hard:2});
  for(const s of corpus.scenarios){assert.ok(s.intent);assert.ok(s.acceptance.length>=3);assert.ok(Object.keys(s.facts).length>=4);}
+});
+test('independent assessment accepts official Azure AzAPI and rejects unreviewed or wrong-cloud sources',()=>{
+ const dir=fs.mkdtempSync(path.join(os.tmpdir(),'atmem-azapi-assessor-'));
+ try{
+  const project=invoiceProject('azure'),receipt=bridge({action:'export',project,output:path.join(dir,'handoff')});
+  fs.writeFileSync(path.join(dir,'project.json'),JSON.stringify(project));fs.writeFileSync(path.join(dir,'export-assessment.json'),JSON.stringify(receipt));
+  const inspect=()=>{const r=spawnSync(path.resolve('.venv/bin/python'),['scripts/assess-convergence-package.py',dir],{encoding:'utf8'});assert.equal(r.status,0,r.stderr);return JSON.parse(r.stdout);};
+  assert.equal(inspect().staticChecksPassed,true);
+  const file=path.join(dir,'handoff/terraform/main.tf.json'),config=JSON.parse(fs.readFileSync(file));config.terraform.required_providers.azapi.source='unreviewed/azapi';fs.writeFileSync(file,JSON.stringify(config));assert.ok(inspect().findings.some(f=>f.code==='unreviewed-provider-source'&&f.detail==='azapi'));
+  config.terraform.required_providers.azapi.source='azure/azapi';config.terraform.required_providers.aws={source:'hashicorp/aws',version:'6.72.0'};fs.writeFileSync(file,JSON.stringify(config));assert.ok(inspect().findings.some(f=>f.code==='wrong-provider-source'&&f.detail==='aws'));
+ }finally{fs.rmSync(dir,{recursive:true,force:true});}
 });
 test('model proposals cannot overwrite the original brief at the engagement boundary',()=>{
  const old={requirements:'Keep the existing website and payment boundary',needs:[{id:'privacy',statement:'Protect private data'}]},next={requirements:'A smaller demo',nodes:[],edges:[]};

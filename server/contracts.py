@@ -1,5 +1,6 @@
 """Strict contracts for the local agent boundary; no executable config accepted."""
 from typing import Literal, Annotated
+import re
 from pydantic import BaseModel, ConfigDict, Field, PrivateAttr, StrictBool, StrictFloat, StrictInt, StrictStr, field_validator, model_validator
 
 class Strict(BaseModel):
@@ -37,7 +38,7 @@ class Configuration(Strict):
     maxPdfPages:StrictInt|None=Field(default=None,ge=1,le=1000)
     retentionDays:StrictInt|None=Field(default=None,ge=1,le=3653)
     outputContract:OutputContract|None=None
-    region:str=Field(default='To be selected',max_length=100)
+    region:str=Field(default='To be selected',max_length=100,description='For a proposed cloud deployment, use only its canonical region code, such as ap-southeast-2, australiaeast, australia-southeast1 or au-syd. Put city names, proposed status and unverified availability in description/assumptions, never appended to this machine field. Use To be selected when genuinely unresolved.')
     classification:Literal['Public','Internal','Confidential']='Internal'
     timeout:int=Field(default=5000,ge=100,le=60000)
     memoryMb:StrictInt|None=Field(default=None,ge=128,le=10240)
@@ -122,6 +123,14 @@ class Project(Strict):
         if len(wires)!=len(set(wires)):raise ValueError('Duplicate wire IDs')
         if any(e.source not in ids or e.target not in ids or e.source==e.target for e in self.edges):raise ValueError('Invalid wire endpoint')
         return self
+
+def validate_proposed_regions(project:Project):
+    """Repair producer output without rejecting historical incoming designs."""
+    patterns={'aws':r'[a-z]{2}-[a-z]+-[0-9]{1,2}','azure':r'[a-z][a-z0-9]{1,39}','gcp':r'[a-z]+-[a-z]+[0-9]{1,2}','ibm':r'[a-z]{2}-[a-z]+'}
+    for node in project.nodes:
+        data=node.data
+        if data.implementation!='invoice-workflow'or data.origin in {'existing','imported Pulumi state'}or data.config.region=='To be selected':continue
+        if data.provider not in patterns or not re.fullmatch(patterns[data.provider],data.config.region):raise ValueError('Invoice config.region must be the canonical provider region code only (for example au-syd for IBM). Preserve proposed placement and unverified availability in description/assumptions; do not ask the user to repair this machine field.')
 
 class Proposal(Strict):
     baseRevision:int=Field(ge=1)

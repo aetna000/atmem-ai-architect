@@ -1,0 +1,12 @@
+FROM docker.io/library/python:3.13-slim-trixie@sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+ADD --checksum=sha256:8c27c342230503b73dfde629642c3b352e87b554e06d60cf58772f236a305ceb https://deb.debian.org/debian-security/pool/updates/main/z/zlib/zlib1g_1.3.dfsg%2breally1.3.1-1%2bdeb13u1_amd64.deb /tmp/runtime-security.deb
+RUN dpkg -i /tmp/runtime-security.deb && rm /tmp/runtime-security.deb
+WORKDIR /app
+COPY test-requirements.lock ./
+RUN python -I -m pip --isolated install --no-cache-dir --only-binary=:all: --require-hashes -r test-requirements.lock
+COPY *.py *.sql invoice-deployment.json invoice-web.* ./
+COPY parser/*.py ./parser/
+COPY tests/ ./tests/
+COPY test-fixtures/ ./test-fixtures/
+ENTRYPOINT ["python", "-I", "tests/run.py"]

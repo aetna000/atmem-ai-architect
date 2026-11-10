@@ -1,0 +1,285 @@
+{
+  "message": "We\u2019re designing an AWS invoice workflow that extracts four fields, queues them for review and sends only approved results to your existing accounting API without duplicate invoices. Let\u2019s use one composed application with durable processing and recovery; accounting compatibility still needs testing.\n\n**Which country must invoice data stay in?** This determines where we propose storage and AI processing; for example, \u201cAustralia\u201d, \u201cno restriction\u201d or \u201cnot sure\u201d.",
+  "followUp": {
+    "question": "Which country must invoice data stay in?",
+    "why": "This determines where we propose invoice storage and AI processing, including review of the existing accounting destination.",
+    "example": "Australia; no restriction; or not sure.",
+    "topic": "quality"
+  },
+  "phase": "Architecture",
+  "proposal": {
+    "baseRevision": 1,
+    "title": "Sketch the human-approved AWS invoice workflow",
+    "body": "Scope: PDF upload, supplier/date/total/currency extraction, durable review queue, reviewer approval and retry-safe delivery to the existing accounting API. Propose authenticated staff access and the composed invoice-workflow implementation. Internal infrastructure belongs to this module rather than duplicate canvas resources. Country and region remain undecided. Accounting normalized-action-v1 compatibility, destination idempotency, model quality, native permissions and recovery require independent acceptance evidence; this sketch is not deployment evidence.",
+    "next": {
+      "version": 1,
+      "revision": 1,
+      "name": "Asynchronous document intake",
+      "provider": "aws",
+      "requirements": "Users upload PDF invoices. Extract the supplier, invoice date, total and currency into a review queue. Delivery can repeat; retries must not create duplicate invoices. A reviewer approves a result before it is sent to our existing accounting API. Use AWS. Recommend a coherent system and the engineering choices. Ask only a small material business question when needed; do not make me configure the system.",
+      "nodes": [
+        {
+          "id": "staff-browser",
+          "type": "resource",
+          "position": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "data": {
+            "label": "Invoice upload and review",
+            "kind": "source",
+            "provider": "tools",
+            "description": "Existing staff browser outside provisioning scope. Staff upload PDF invoices, inspect extracted fields alongside source evidence and approve a specific result revision. Propose authenticated staff access with separately authorized reviewer membership.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "deploymentMode": "reference",
+            "poc": true,
+            "role": "human",
+            "topologyGroup": "Staff access",
+            "service": "Web browser",
+            "binding": "web-browser"
+          }
+        },
+        {
+          "id": "invoice-workflow",
+          "type": "resource",
+          "position": {
+            "x": 480.0,
+            "y": 0.0
+          },
+          "data": {
+            "label": "Invoice processing and approval",
+            "kind": "resource",
+            "provider": "aws",
+            "description": "Composed invoice-workflow deployment unit on Amazon ECS. Owns browser/API, background worker, isolated PDF/OCR parser, private versioned Amazon S3 originals, durable PostgreSQL queue/outbox on Amazon RDS, staff sign-in, SQL user/reviewer membership, regional model integration, separate workload identities and operating tasks/monitoring. Extracts supplier, invoice date, total and currency with source evidence into a durable review queue. Approval binds the exact result revision, source and destination contract; model output cannot authorize delivery. Transactional job creation, fenced worker leases and bounded retries preserve processing across failures. Accounting sends use a stable operation ID and payload identity; uncertain outcomes are fenced for reconciliation rather than blindly resent. Destination must independently pass normalized-action-v1 and idempotency acceptance. Propose reviewable module defaults of 10 MB/100-page PDFs and 90-day retention eligibility, subject to retention and backup review. Regional service/model support, processing policy, build/scan evidence, restore and alert delivery remain unverified.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "deploymentMode": "create",
+            "poc": true,
+            "role": "app",
+            "topologyGroup": "Invoice workflow",
+            "service": "Amazon ECS",
+            "implementation": "invoice-workflow"
+          }
+        },
+        {
+          "id": "accounting-api",
+          "type": "resource",
+          "position": {
+            "x": 960.0,
+            "y": 0.0
+          },
+          "data": {
+            "label": "Existing accounting API",
+            "kind": "tool",
+            "provider": "tools",
+            "description": "Client-owned existing accounting service, referenced without recreation or modification. Receives only approved invoice results. Vendor, hosting location and authentication are unknown. Its adapter must pass normalized-action-v1 acceptance, including durable idempotency for repeated operation IDs and reconciliation after ambiguous responses; compatibility is not established by this diagram.",
+            "config": {
+              "region": "Existing location \u2014 unconfirmed",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "deploymentMode": "reference",
+            "poc": true,
+            "role": "app",
+            "topologyGroup": "Existing accounting",
+            "service": "Existing accounting API",
+            "binding": "existing-service"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "staff-to-invoice-workflow",
+          "source": "staff-browser",
+          "target": "invoice-workflow",
+          "type": "smoothstep",
+          "label": "HTTPS: upload PDFs, review evidence, approve; receive status",
+          "integration": "browser-https"
+        },
+        {
+          "id": "approved-invoice-to-accounting",
+          "source": "invoice-workflow",
+          "target": "accounting-api",
+          "type": "smoothstep",
+          "label": "Approved invoice API: stable operation ID, receipt and reconciliation",
+          "integration": "approved-accounting-api"
+        }
+      ]
+    }
+  },
+  "requirementDrafts": [
+    {
+      "rationale": "Makes extraction observable and reviewable before incorrect financial information reaches accounting.",
+      "basis": "\u201cUsers upload PDF invoices. Extract the supplier, invoice date, total and currency into a review queue.\u201d Source evidence is a proposed safeguard.",
+      "id": "ai-invoice-extraction",
+      "statement": "Accept PDF invoice uploads and durably present supplier, invoice date, total and currency in a review queue. Proposed safeguard: show supporting source evidence and keep failed or uncertain extraction visible for review rather than automatically delivering it.",
+      "kind": "functional",
+      "category": "other",
+      "priority": "must",
+      "links": [
+        "staff-browser",
+        "invoice-workflow"
+      ]
+    },
+    {
+      "rationale": "Prevents model output or subsequent edits from bypassing the required human approval.",
+      "basis": "\u201cA reviewer approves a result before it is sent to our existing accounting API.\u201d Revision-bound approval and reviewer authorization are proposed controls.",
+      "id": "ai-invoice-approval",
+      "statement": "Send an invoice result to the existing accounting API only after an authorized reviewer approves that exact result revision. Proposed controls bind approval to the source and destination contract, invalidate approval when the result changes and retain an attributable approval/delivery history.",
+      "kind": "functional",
+      "category": "security",
+      "priority": "must",
+      "links": [
+        "staff-browser",
+        "invoice-workflow",
+        "accounting-api"
+      ]
+    },
+    {
+      "rationale": "A timeout can hide a successful accounting write; blindly retrying could create a second invoice.",
+      "basis": "\u201cDelivery can repeat; retries must not create duplicate invoices.\u201d Durable operation identity, uncertain-outcome fencing and destination acceptance tests are proposed engineering controls.",
+      "id": "ai-invoice-idempotency",
+      "statement": "Repeated delivery and retries for the same invoice operation must not create duplicate accounting invoices. Preserve durable operation and payload identity across recovery; reconcile ambiguous external outcomes before resending unless destination idempotency is independently established. Acceptance must cover duplicate delivery, worker interruption and an accounting write followed by a lost response.",
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "priority": "must",
+      "links": [
+        "invoice-workflow",
+        "accounting-api"
+      ]
+    }
+  ],
+  "decisionUpdates": [
+    {
+      "subject": "platform.cloud",
+      "value": "aws",
+      "sourceText": "Use AWS."
+    }
+  ],
+  "contextUsed": {
+    "status": "ready",
+    "enabled": true,
+    "engine": "AtMem 2.3.10 core SDK",
+    "recordsUsed": [],
+    "knowledgeRecordIds": [
+      "rec_646317615895417a8b59e704b491681f",
+      "rec_021cc8786038458598db3b17443fbfef",
+      "rec_aa826b5fbd514988af8aaf13e5030b6f",
+      "rec_059f62c23648461b922c52d529ab0564",
+      "rec_4b6eebe375ca4f65b20a0f96e5cb6b48",
+      "rec_a12b36987dd14c52af0acfd9f2fb22e8",
+      "rec_ad6ece2064114a1995d52353c394c6ff"
+    ],
+    "skills": [
+      {
+        "id": "composition",
+        "name": "Architecture composition and engineering judgment",
+        "provider": "all",
+        "stages": [
+          "discover",
+          "design",
+          "review",
+          "deploy"
+        ],
+        "version": "1.0.0",
+        "digest": "df2291a4e0d48a979d4f7c6e99da046bdedfc0e54d41e0b5379b2bc8086b5be6",
+        "summary": "Choose and compose blocks through responsibility, contracts, state, identity, failure modes and trade-offs; verify the complete system.",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "architecture",
+        "name": "AI architecture and discovery",
+        "provider": "all",
+        "stages": [
+          "discover",
+          "design",
+          "review"
+        ],
+        "version": "1.3.0",
+        "digest": "c5cc1056e3ed9a00799882f3a7f4ff2e957e4941fe10e4fd865f5c02ceb01058",
+        "summary": "Clarify outcome, users, existing systems, data ownership and constraints. Evolve the diagram incrementally. Derive functional requirements and propose measurable quality targets as assumptions needing confirmation. Compare clouds against the actual requirements; do not assume an enterprise identity provider or a vendor. Keep proposed and accepted decisions distinct.",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "aws",
+        "name": "AWS architecture guidance",
+        "provider": "aws",
+        "stages": [
+          "design",
+          "review",
+          "estimate",
+          "deploy"
+        ],
+        "version": "1.4.0",
+        "digest": "82147cbfe99396d8e659bc7c8d62ce57b0868983bc88c1ace0aaa860ecb9ba29",
+        "summary": "Apply AWS Well-Architected concerns to the drawn workload with evidence. Distinguish Bedrock on-demand model access, knowledge-base/vector storage, guardrails and IAM; they are separate concerns. S3 storage, requests and transfer are separate cost dimensions. A diagram is not a complete Well-Architected review. Native generation currently covers only S3 foundations.",
+        "source": "https://raw.githubusercontent.com/aws/agent-toolkit-for-aws/fb298e0b6bf2b308a3d2c212b2a09b9bace8e090/plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+        "reference": {
+          "id": "aws",
+          "repository": "aws/agent-toolkit-for-aws",
+          "commit": "fb298e0b6bf2b308a3d2c212b2a09b9bace8e090",
+          "sourcePath": "plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+          "url": "https://raw.githubusercontent.com/aws/agent-toolkit-for-aws/fb298e0b6bf2b308a3d2c212b2a09b9bace8e090/plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+          "sha256": "aa8fef39ef6d64365e48827d9acc90b2b8755023f5c177341cf1c954c1057811",
+          "file": "agent-skills/upstream/aws/SKILL.md",
+          "status": "reference-only",
+          "note": "Imported source reference, not an enabled script/tool package. AtMem AI Architect specialist guidance is reviewed separately; referenced upstream companion files are not bundled.",
+          "integrity": true
+        },
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup",
+          "pricing.lookup"
+        ],
+        "enabled": true
+      }
+    ],
+    "tools": [],
+    "boundary": "AtMem AI Architect \u2192 native client",
+    "contextDigest": "f045c9e811cc2d1092ca6f5be5ef6cd47a6b2fb0cc3bc6edd4946e9b1bae0413",
+    "projectId": "evaluation-aws-03-document-intake",
+    "responseRepairAttempts": 0,
+    "modelResponseEncodings": [
+      "compact_patch"
+    ],
+    "modelResponseJsonBytes": 8711
+  },
+  "priceQuotes": []
+}

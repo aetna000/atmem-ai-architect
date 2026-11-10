@@ -1,0 +1,238 @@
+{
+  "attachments": [],
+  "origin": "chat",
+  "projectId": "evaluation-aws-03-document-intake",
+  "message": "PDF invoices up to 10 MB, around 500 per day; they may contain personal data. Keep originals and extraction audit history for 90 days. Keep documents and extracted data in Australia; flag unverified service availability.",
+  "provider": "codex",
+  "model": "default",
+  "effort": "medium",
+  "project": {
+    "version": 1,
+    "revision": 2,
+    "name": "Asynchronous document intake",
+    "provider": "aws",
+    "requirements": "Users upload PDF invoices. Extract the supplier, invoice date, total and currency into a review queue. Delivery can repeat; retries must not create duplicate invoices. A reviewer approves a result before it is sent to our existing accounting API. Use AWS. Recommend a coherent system and the engineering choices. Ask only a small material business question when needed; do not make me configure the system.",
+    "nodes": [
+      {
+        "id": "staff-browser",
+        "type": "resource",
+        "position": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "data": {
+          "label": "Invoice upload and review",
+          "kind": "source",
+          "provider": "tools",
+          "description": "Existing staff browser outside provisioning scope. Staff upload PDF invoices, inspect extracted fields alongside source evidence and approve a specific result revision. Propose authenticated staff access with separately authorized reviewer membership.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "origin": "existing",
+          "deploymentMode": "reference",
+          "poc": true,
+          "role": "human",
+          "topologyGroup": "Staff access",
+          "service": "Web browser",
+          "binding": "web-browser"
+        }
+      },
+      {
+        "id": "invoice-workflow",
+        "type": "resource",
+        "position": {
+          "x": 480.0,
+          "y": 0.0
+        },
+        "data": {
+          "label": "Invoice processing and approval",
+          "kind": "resource",
+          "provider": "aws",
+          "description": "Composed invoice-workflow deployment unit on Amazon ECS. Owns browser/API, background worker, isolated PDF/OCR parser, private versioned Amazon S3 originals, durable PostgreSQL queue/outbox on Amazon RDS, staff sign-in, SQL user/reviewer membership, regional model integration, separate workload identities and operating tasks/monitoring. Extracts supplier, invoice date, total and currency with source evidence into a durable review queue. Approval binds the exact result revision, source and destination contract; model output cannot authorize delivery. Transactional job creation, fenced worker leases and bounded retries preserve processing across failures. Accounting sends use a stable operation ID and payload identity; uncertain outcomes are fenced for reconciliation rather than blindly resent. Destination must independently pass normalized-action-v1 and idempotency acceptance. Propose reviewable module defaults of 10 MB/100-page PDFs and 90-day retention eligibility, subject to retention and backup review. Regional service/model support, processing policy, build/scan evidence, restore and alert delivery remain unverified.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "origin": "proposed",
+          "deploymentMode": "create",
+          "poc": true,
+          "role": "app",
+          "topologyGroup": "Invoice workflow",
+          "service": "Amazon ECS",
+          "implementation": "invoice-workflow"
+        }
+      },
+      {
+        "id": "accounting-api",
+        "type": "resource",
+        "position": {
+          "x": 960.0,
+          "y": 0.0
+        },
+        "data": {
+          "label": "Existing accounting API",
+          "kind": "tool",
+          "provider": "tools",
+          "description": "Client-owned existing accounting service, referenced without recreation or modification. Receives only approved invoice results. Vendor, hosting location and authentication are unknown. Its adapter must pass normalized-action-v1 acceptance, including durable idempotency for repeated operation IDs and reconciliation after ambiguous responses; compatibility is not established by this diagram.",
+          "config": {
+            "region": "Existing location \u2014 unconfirmed",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "origin": "existing",
+          "deploymentMode": "reference",
+          "poc": true,
+          "role": "app",
+          "topologyGroup": "Existing accounting",
+          "service": "Existing accounting API",
+          "binding": "existing-service"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "staff-to-invoice-workflow",
+        "source": "staff-browser",
+        "target": "invoice-workflow",
+        "type": "smoothstep",
+        "label": "HTTPS: upload PDFs, review evidence, approve; receive status",
+        "integration": "browser-https"
+      },
+      {
+        "id": "approved-invoice-to-accounting",
+        "source": "invoice-workflow",
+        "target": "accounting-api",
+        "type": "smoothstep",
+        "label": "Approved invoice API: stable operation ID, receipt and reconciliation",
+        "integration": "approved-accounting-api"
+      }
+    ]
+  },
+  "stage": "design",
+  "context": [
+    {
+      "type": "discovery",
+      "id": "guided-journey",
+      "text": "Current journey step: scope \u2014 Sketch and document. We have a first design. Let\u2019s check that the document captures what you want before choosing cloud services. Next action: Work through this design. Add or refine the needed components and their connections from known answers. Keep topology reasoning internal and explain components in plain language. Ask only a material question that unlocks the next design decision; defer packaging details. Later stages remain hidden until the working draft progresses; never direct the user to a hidden tab. Named service mapping is not verified cloud compatibility."
+    },
+    {
+      "type": "discovery",
+      "id": "estimate-summary",
+      "text": "Current estimate stage: Not estimated. Monthly cloud subtotal unknown currency unresolved; range ?\u2013?; 3 worksheet gaps. One-off consulting/build subtotal unknown USD; incomplete. Values are user inputs, not provider quotes. Later journey stages provide costs and a downloadable delivery draft with a Terraform sketch. Follow guided-journey before directing the user to those stages."
+    },
+    {
+      "type": "discovery",
+      "id": "cost-gap-0",
+      "text": "Invoice upload and review: no cost lines; add charges or an explicit zero-cost line with a reason."
+    },
+    {
+      "type": "discovery",
+      "id": "cost-gap-1",
+      "text": "Invoice processing and approval: no cost lines; add charges or an explicit zero-cost line with a reason."
+    },
+    {
+      "type": "discovery",
+      "id": "cost-gap-2",
+      "text": "Existing accounting API: no cost lines; add charges or an explicit zero-cost line with a reason."
+    },
+    {
+      "type": "discovery",
+      "id": "infrastructure-coverage",
+      "text": "3 diagram components; 0 infrastructure/integration gaps. Use the server-supplied current compiler capability catalogue and actual selected contracts. Named services and supplied-image footprints do not establish application implementation. Preserve unsupported scope and treat missing implementation as engineering work; never replace a required system with a smaller demo or ask users to repair compiler gaps."
+    },
+    {
+      "type": "discovery",
+      "id": "handoff-readiness",
+      "text": "Handoff: engineering_required; 6 priority decisions. Next: Record included and excluded use cases before sizing or implementation. Preserve accepted design decisions, distinguish country from deployment region, and advance connected workstreams together; ask only a consequential business decision while owning routine engineering choices. Do not equate schema validation with deployed behavior."
+    },
+    {
+      "type": "question",
+      "id": "handoff-scope-boundary",
+      "text": "No explicit scope boundary is recorded. Record included and excluded use cases before sizing or implementation."
+    },
+    {
+      "type": "question",
+      "id": "handoff-decision-cloud.region",
+      "text": "The deployment region is not independently confirmed. Record an explicit cloud.region decision. Proposed diagram placement is not approval."
+    },
+    {
+      "type": "question",
+      "id": "handoff-decision-data.country",
+      "text": "The data country and processing boundary is not independently confirmed. Record an explicit data.country decision. Proposed diagram placement is not approval."
+    },
+    {
+      "type": "question",
+      "id": "handoff-requirement-proposed-61692d696e766f6963652d617070726",
+      "text": "REQ-002 remains proposed. Confirm, revise or explicitly defer this requirement; do not promote it through generation."
+    },
+    {
+      "type": "question",
+      "id": "handoff-requirement-proposed-61692d696e766f6963652d657874726",
+      "text": "REQ-001 remains proposed. Confirm, revise or explicitly defer this requirement; do not promote it through generation."
+    },
+    {
+      "type": "requirement",
+      "id": "ai-invoice-extraction",
+      "text": "REQ-001 \u2014 must functional other: Accept PDF invoice uploads and durably present supplier, invoice date, total and currency in a review queue. Proposed safeguard: show supporting source evidence and keep failed or uncertain extraction visible for review rather than automatically delivering it. (open)"
+    },
+    {
+      "type": "requirement",
+      "id": "ai-invoice-approval",
+      "text": "REQ-002 \u2014 must functional security: Send an invoice result to the existing accounting API only after an authorized reviewer approves that exact result revision. Proposed controls bind approval to the source and destination contract, invalidate approval when the result changes and retain an attributable approval/delivery history. (open)"
+    },
+    {
+      "type": "requirement",
+      "id": "ai-invoice-idempotency",
+      "text": "REQ-003 \u2014 must nonfunctional reliability: Repeated delivery and retries for the same invoice operation must not create duplicate accounting invoices. Preserve durable operation and payload identity across recovery; reconcile ambiguous external outcomes before resending unless destination idempotency is independently established. Acceptance must cover duplicate delivery, worker interruption and an accounting write followed by a lost response. (open)"
+    },
+    {
+      "type": "decision",
+      "id": "adr-001",
+      "text": "platform.cloud \u2014 platform.cloud: aws (Accepted)"
+    },
+    {
+      "type": "discovery",
+      "id": "next-question",
+      "text": "Optional planner candidate (data; defer if a larger decision matters more): What kinds of documents arrive, and how many a month? Beginner wording: For example \u201cinvoices, about 3,000 a month, mostly PDF\u201d."
+    },
+    {
+      "type": "discovery",
+      "id": "brief-application",
+      "text": "application: Users upload PDF invoices. Extract the supplier, invoice date, total and currency into a review queue. Delivery can repeat; retries must not create duplicate invoices. A reviewer approves a result before it is sent to our existing accounting API. Use AWS. Recommend a coherent system and the engineering choices. Ask only a small material business question when needed; do not make me configure the system."
+    },
+    {
+      "type": "discovery",
+      "id": "brief-quality",
+      "text": "quality: PDF invoices up to 10 MB, around 500 per day; they may contain personal data. Keep originals and extraction audit history for 90 days. Keep documents and extracted data in Australia; flag unverified service availability."
+    },
+    {
+      "type": "discovery",
+      "id": "brief-cloud",
+      "text": "cloud: AWS"
+    },
+    {
+      "type": "discovery",
+      "id": "workflow",
+      "text": "Detected workflow: document-processing"
+    }
+  ],
+  "history": [
+    {
+      "role": "user",
+      "text": "Users upload PDF invoices. Extract the supplier, invoice date, total and currency into a review queue. Delivery can repeat; retries must not create duplicate invoices. A reviewer approves a result before it is sent to our existing accounting API. Use AWS. Recommend a coherent system and the engineering choices. Ask only a small material business question when needed; do not make me configure the system."
+    },
+    {
+      "role": "assistant",
+      "text": "We\u2019re designing an AWS invoice workflow that extracts four fields, queues them for review and sends only approved results to your existing accounting API without duplicate invoices. Let\u2019s use one composed application with durable processing and recovery; accounting compatibility still needs testing.\n\n**Which country must invoice data stay in?** This determines where we propose storage and AI processing; for example, \u201cAustralia\u201d, \u201cno restriction\u201d or \u201cnot sure\u201d."
+    }
+  ]
+}

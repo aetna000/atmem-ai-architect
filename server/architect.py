@@ -1,6 +1,6 @@
 """Local adaptation of the AWS sample's composed agent, with upstream retry/limiter reuse."""
 import asyncio, base64, json, os, shutil, signal, tempfile, inspect
-from .contracts import ArchitectResponse, ChatRequest, architect_output_schema
+from .contracts import ArchitectResponse, ChatRequest, architect_output_schema, validate_proposed_regions
 from pydantic import ValidationError
 from .prompts import SYSTEM_PROMPT
 from .abstraction import consultation_focus, response_budget_seconds
@@ -47,6 +47,7 @@ class AtMemArchitect:
                     result=result.model_copy(update={'proposal':apply_design_patch(request.project,result.patch),'patch':None})
                 if result.proposal and result.proposal.baseRevision!=request.project.revision:
                     raise ValueError('Architect returned a proposal for the wrong revision.')
+                if result.proposal:validate_proposed_regions(result.proposal.next)
                 result._response_repair_attempts=attempt
                 result._model_response_encoding=encoding
                 result._model_response_json_bytes=len(json.dumps(raw,ensure_ascii=True,separators=(",",":")).encode("ascii"))

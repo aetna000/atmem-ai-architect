@@ -522,3 +522,17 @@ zero medium cases. Runner now validates/copied immutable proof bytes and records
 provenance without weakening knowledge confidence checks. Six focused harness
 tests cover valid copy plus missing/changed/escaped proof refusal. Fresh frozen
 live conversations remain next. Evidence: specs/028-convergence-evaluation/evidence/20261110-frozen-knowledge-proofs
+
+
+## Actual invoice conversations: low question burden and retained failures
+
+All four frozen live conversations completed in three/four exchanges with one/two
+business questions and zero infrastructure questions. AWS/Azure/Google have complete
+structural exports; IBM correctly blocked annotated text in its region field. Fixed
+the producer/output repair, not the export or gate. Historical incoming projects
+remain readable. Exact IBM request replay now gives canonical au-syd with placement
+uncertainty preserved and no new question; fresh full rerun remains pending.
+Independent assessor updated for official Azure AzAPI with stricter source/scope
+checks; original finding preserved. 337 JS and 214 server pass. Zero complete medium
+cases counted until independent package/runtime/semantic acceptance. Remaining
+families/full28/held-out unfinished. No cloud operation. Evidence: specs/028-convergence-evaluation/evidence/20261110-invoice-live-v2

@@ -43,7 +43,8 @@
     "specs/028-convergence-evaluation/evidence/20261110-google-operating-jobs",
     "specs/028-convergence-evaluation/evidence/20261110-ibm-operating-tasks",
     "specs/028-convergence-evaluation/evidence/20261110-ibm-operating-jobs",
-    "specs/028-convergence-evaluation/evidence/20261110-invoice-public-export"
+    "specs/028-convergence-evaluation/evidence/20261110-invoice-public-export",
+    "specs/028-convergence-evaluation/evidence/20261110-invoice-live-v2"
   ],
   "limitations": [
     "The wider 28-project outcome remains unfinished. No claim of world-leading quality or four-provider connected-application parity.",
@@ -91,7 +92,7 @@
   },
   "baselineCompletedCases": 28,
   "baselineQualifiedCases": 0,
-  "updatedAt": "2026-11-10T07:44:25.410484+00:00",
+  "updatedAt": "2026-11-10T08:17:26.345492+00:00",
   "baselineErrors": {
     "ValidationError": 4,
     "TimeoutError": 6
@@ -227,7 +228,7 @@
       "ibmRegistryRegression": "Shared explicit regional mapping repaired for structured/FAQ/invoice exports; Sydney native image-host regressions pass."
     }
   },
-  "currentEvidence": "specs/028-convergence-evaluation/evidence/20261110-invoice-public-export",
+  "currentEvidence": "specs/028-convergence-evaluation/evidence/20261110-invoice-live-v2",
   "operatorBootstrapCheckpoint": {
     "status": "in_progress",
     "evidence": "specs/028-convergence-evaluation/evidence/20261110-invoice-operator-core",
@@ -421,5 +422,53 @@
       "firstAttempt": "Failed before model responses; zero completed cases.",
       "next": "Fresh frozen four-provider invoice conversations."
     }
+  },
+  "invoiceLiveConversationCheckpoint": {
+    "status": "in_progress",
+    "evidence": "specs/028-convergence-evaluation/evidence/20261110-invoice-live-v2",
+    "cases": [
+      {
+        "provider": "aws",
+        "userExchanges": 4,
+        "questions": 2,
+        "technicalQuestions": 0,
+        "staticCandidate": true,
+        "nearDeploymentQualified": false
+      },
+      {
+        "provider": "azure",
+        "userExchanges": 3,
+        "questions": 1,
+        "technicalQuestions": 0,
+        "staticCandidate": true,
+        "nearDeploymentQualified": false
+      },
+      {
+        "provider": "gcp",
+        "userExchanges": 4,
+        "questions": 2,
+        "technicalQuestions": 0,
+        "staticCandidate": true,
+        "nearDeploymentQualified": false
+      },
+      {
+        "provider": "ibm",
+        "userExchanges": 3,
+        "questions": 1,
+        "technicalQuestions": 0,
+        "staticCandidate": false,
+        "nearDeploymentQualified": false
+      }
+    ],
+    "javascript": 337,
+    "server": 214,
+    "completeMediumCasesQualified": 0,
+    "ibmRegionReplay": "Canonical au-syd, preserved uncertainty, no new question; full fresh rerun pending.",
+    "cloudOperations": false,
+    "next": [
+      "Fresh complete IBM conversation after producer repair.",
+      "Independently qualify exact live packages and semantic/runtime behavior before counting cases.",
+      "Remaining families, repaired full28 and held-out variants."
+    ]
   }
 }

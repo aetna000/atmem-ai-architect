@@ -1,0 +1,6 @@
+flowchart LR
+  n0["Invoice upload and review<br/>Tools & data"]
+  n1["Invoice processing and approval<br/>AWS"]
+  n2["Existing accounting API<br/>Tools & data"]
+  n0 -->|Authenticated HTTPS: upload → durable job/status; review evidence; reviewer-only| n1
+  n1 -->|Approved accounting API: stable operation/payload identity, receipt and uncertai| n2

@@ -1,6 +1,9 @@
 import unittest
+import asyncio,copy,json
+from unittest.mock import AsyncMock,patch
 from pydantic import ValidationError
-from server.contracts import Project,Configuration,NodeFieldUpdate
+from server.contracts import Project,Configuration,NodeFieldUpdate,ChatRequest,validate_proposed_regions
+from server.architect import AtMemArchitect
 
 class InvoiceDesignContractTests(unittest.TestCase):
     def project(self):
@@ -29,5 +32,24 @@ class InvoiceDesignContractTests(unittest.TestCase):
     def test_invoice_reference_cannot_be_used_to_create_an_existing_accounting_replacement(self):
         value=self.project();value['nodes'][1]['data']['deploymentMode']='create'
         with self.assertRaises(ValidationError):Project.model_validate(value)
+
+    def test_proposed_region_annotation_requires_internal_format_repair_while_references_keep_their_description(self):
+        value=self.project();value['nodes'][0]['data']['config']['region']='Sydney (au-syd) proposed; model availability unverified'
+        historical=Project.model_validate(value)
+        self.assertEqual(historical.nodes[0].data.config.region,value['nodes'][0]['data']['config']['region'])
+        with self.assertRaisesRegex(ValueError,'canonical provider region'):validate_proposed_regions(historical)
+        value['nodes'][0]['data']['config']['region']='au-syd';value['nodes'][0]['data']['description']='Sydney proposed; model availability unverified';value['nodes'][1]['data']['config']={'region':'Existing placement; unconfirmed'}
+        result=Project.model_validate(value);self.assertEqual(result.nodes[0].data.config.region,'au-syd');self.assertIn('unverified',result.nodes[0].data.description);self.assertEqual(result.nodes[1].data.config.region,'Existing placement; unconfirmed')
+
+    def test_region_format_failure_uses_bounded_model_repair_without_another_user_question(self):
+        project=self.project();request=ChatRequest(projectId='invoice-repair',message='Keep invoice data in Australia.',provider='codex',model='default',project=project)
+        invalid=copy.deepcopy(project);invalid['nodes'][0]['data']['config']['region']='Sydney (au-syd) proposed; service and model availability unverified'
+        valid=copy.deepcopy(project);valid['nodes'][0]['data']['description']='Sydney proposed; service and model availability unverified'
+        def response(next):return {'message':'Propose the regional workflow.','proposal':{'baseRevision':1,'title':'Invoice workflow','body':'Preserve existing accounting and residency.','next':next}}
+        cli=AsyncMock(side_effect=[response(invalid),response(valid)])
+        with patch('server.local_providers.call_cli',cli):result=asyncio.run(AtMemArchitect().call(request,AsyncMock(return_value=False),{'toolBudget':{'canRequestTools':False}}))
+        self.assertEqual(cli.await_count,2);self.assertEqual(result._response_repair_attempts,1);self.assertIsNone(result.followUp)
+        self.assertEqual(result.proposal.next.nodes[0].data.config.region,'au-syd');self.assertIn('unverified',result.proposal.next.nodes[0].data.description)
+        diagnostic=json.loads(cli.await_args_list[1].args[2])['runtimeContext']['responseRepair'];self.assertIn('Do not ask the user',diagnostic['instruction']);self.assertIn('canonical provider region',json.dumps(diagnostic))
 
 if __name__=='__main__':unittest.main()

@@ -1,0 +1,261 @@
+{
+  "attachments": [],
+  "origin": "chat",
+  "projectId": "evaluation-gcp-03-document-intake",
+  "message": "Twenty signed-in staff and three reviewers; ordinary uploaders cannot approve. PDF invoices up to 10 MB, around 500 per day; they may contain personal data. Keep originals and extraction audit history for 90 days.",
+  "provider": "codex",
+  "model": "default",
+  "effort": "medium",
+  "project": {
+    "version": 1,
+    "revision": 3,
+    "name": "Asynchronous document intake",
+    "provider": "gcp",
+    "requirements": "Users upload PDF invoices. Extract the supplier, invoice date, total and currency into a review queue. Delivery can repeat; retries must not create duplicate invoices. A reviewer approves a result before it is sent to our existing accounting API. Use Google Cloud. Recommend a coherent system and the engineering choices. Ask only a small material business question when needed; do not make me configure the system.",
+    "nodes": [
+      {
+        "id": "staff-browser",
+        "type": "resource",
+        "position": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "data": {
+          "label": "Staff uploaders and reviewers",
+          "kind": "tool",
+          "provider": "tools",
+          "description": "Existing staff using browsers to upload invoices, inspect extracted fields and source evidence, and approve the exact reviewed revision. Client reference outside provisioning scope; staff sign-in and reviewer authorization are enforced by the application.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "origin": "existing",
+          "deploymentMode": "reference",
+          "poc": true,
+          "role": "human",
+          "topologyGroup": "Staff access",
+          "service": "Web browser",
+          "binding": "web-browser"
+        }
+      },
+      {
+        "id": "invoice-workflow",
+        "type": "resource",
+        "position": {
+          "x": 440.0,
+          "y": 0.0
+        },
+        "data": {
+          "label": "Invoice intake, review and approved delivery",
+          "kind": "resource",
+          "provider": "gcp",
+          "description": "Proposed composed delivery unit on Google Cloud Run: browser/API, background worker and isolated PDF/OCR parser. Owns Cloud SQL for PostgreSQL transactional queue/outbox and review state, private versioned Google Cloud Storage originals, regional Vertex AI extraction, staff sign-in, SQL user/reviewer membership and separate keyless workload identities. Returns supplier, invoice date, total, currency, source evidence and processing status in the review UI. Parser alone sees untrusted PDF bytes and has no database, model or accounting identity. Persist intake identity and results; commit state and queued work atomically, fence worker leases and recover stalled work. Bind approval to the exact source/result revision and destination contract; edits invalidate approval. Send only approved payloads using a durable operation ID and stable payload identity. Retry only within a verified accounting idempotency contract; uncertain outcomes pause for reconciliation rather than creating a new send. Owns bounded retries, audit events, monitoring, alerts, retention and restore/reconciliation operating tasks. Proposed defaults: PDFs up to 10 MB/100 pages and 90-day retention eligibility, subject to backup/version-window review. Required boundary: documents and extracted data remain stored and processed in Australia, including temporary parser data, model requests/results, sensitive logs, database backups, object versions and recovery copies. Sydney (australia-southeast1) is proposed, not accepted or verified. Verify Cloud Run, Cloud SQL, storage, selected Vertex AI model, private networking, quotas, processing geography and zonal recovery before implementation approval. Do not silently use global model endpoints, overseas replication or overseas failover. Model retention/caching/logging policy, staff identity/access geography and accounting residency/adapter acceptance remain unresolved. This capability is not evidence of deployment or combined-system validation.",
+          "config": {
+            "region": "australia-southeast1",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "origin": "proposed",
+          "deploymentMode": "create",
+          "poc": true,
+          "role": "app",
+          "topologyGroup": "Invoice processing",
+          "service": "Google Cloud Run",
+          "implementation": "invoice-workflow"
+        }
+      },
+      {
+        "id": "existing-accounting",
+        "type": "resource",
+        "position": {
+          "x": 880.0,
+          "y": 0.0
+        },
+        "data": {
+          "label": "Existing accounting API",
+          "kind": "tool",
+          "provider": "tools",
+          "description": "Client-owned existing accounting service; reference only, never recreated or modified by this design. Receives only reviewer-approved invoice payloads. Its adapter must independently pass normalized-action-v1 acceptance for authentication, schema, durable idempotency, stable operation/payload identity and outcome reconciliation. Native vendor compatibility and deployment location are unknown. Australian storage and processing of submitted invoice data must be established before enabling delivery; do not assume the existing service satisfies the residency boundary.",
+          "config": {
+            "region": "Existing location unknown",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "origin": "existing",
+          "deploymentMode": "reference",
+          "poc": true,
+          "role": "app",
+          "topologyGroup": "Accounting integration",
+          "service": "Existing accounting API",
+          "binding": "existing-service"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "staff-to-invoice-workflow",
+        "source": "staff-browser",
+        "target": "invoice-workflow",
+        "type": "smoothstep",
+        "label": "HTTPS: upload PDF, review fields/status, approve revision",
+        "integration": "browser-https"
+      },
+      {
+        "id": "approved-invoices-to-accounting",
+        "source": "invoice-workflow",
+        "target": "existing-accounting",
+        "type": "smoothstep",
+        "label": "HTTPS: approved invoice + stable operation ID; receipt/reconciliation",
+        "integration": "approved-accounting-api"
+      }
+    ]
+  },
+  "stage": "design",
+  "context": [
+    {
+      "type": "discovery",
+      "id": "guided-journey",
+      "text": "Current journey step: scope \u2014 Sketch and document. We have a first design. Let\u2019s check that the document captures what you want before choosing cloud services. Next action: Work through this design. Add or refine the needed components and their connections from known answers. Keep topology reasoning internal and explain components in plain language. Ask only a material question that unlocks the next design decision; defer packaging details. Later stages remain hidden until the working draft progresses; never direct the user to a hidden tab. Named service mapping is not verified cloud compatibility."
+    },
+    {
+      "type": "discovery",
+      "id": "estimate-summary",
+      "text": "Current estimate stage: Not estimated. Monthly cloud subtotal unknown currency unresolved; range ?\u2013?; 3 worksheet gaps. One-off consulting/build subtotal unknown USD; incomplete. Values are user inputs, not provider quotes. Later journey stages provide costs and a downloadable delivery draft with a Terraform sketch. Follow guided-journey before directing the user to those stages."
+    },
+    {
+      "type": "discovery",
+      "id": "cost-gap-0",
+      "text": "Staff uploaders and reviewers: no cost lines; add charges or an explicit zero-cost line with a reason."
+    },
+    {
+      "type": "discovery",
+      "id": "cost-gap-1",
+      "text": "Invoice intake, review and approved delivery: no cost lines; add charges or an explicit zero-cost line with a reason."
+    },
+    {
+      "type": "discovery",
+      "id": "cost-gap-2",
+      "text": "Existing accounting API: no cost lines; add charges or an explicit zero-cost line with a reason."
+    },
+    {
+      "type": "discovery",
+      "id": "infrastructure-coverage",
+      "text": "3 diagram components; 0 infrastructure/integration gaps. Use the server-supplied current compiler capability catalogue and actual selected contracts. Named services and supplied-image footprints do not establish application implementation. Preserve unsupported scope and treat missing implementation as engineering work; never replace a required system with a smaller demo or ask users to repair compiler gaps."
+    },
+    {
+      "type": "discovery",
+      "id": "handoff-readiness",
+      "text": "Handoff: engineering_required; 6 priority decisions. Next: Record included and excluded use cases before sizing or implementation. Preserve accepted design decisions, distinguish country from deployment region, and advance connected workstreams together; ask only a consequential business decision while owning routine engineering choices. Do not equate schema validation with deployed behavior."
+    },
+    {
+      "type": "question",
+      "id": "handoff-scope-boundary",
+      "text": "No explicit scope boundary is recorded. Record included and excluded use cases before sizing or implementation."
+    },
+    {
+      "type": "question",
+      "id": "handoff-decision-cloud.region",
+      "text": "The deployment region is not independently confirmed. Record an explicit cloud.region decision. Proposed diagram placement is not approval."
+    },
+    {
+      "type": "question",
+      "id": "handoff-requirement-proposed-61692d696e766f6963652d617070726",
+      "text": "REQ-002 remains proposed. Confirm, revise or explicitly defer this requirement; do not promote it through generation."
+    },
+    {
+      "type": "question",
+      "id": "handoff-requirement-proposed-61692d696e766f6963652d657874726",
+      "text": "REQ-001 remains proposed. Confirm, revise or explicitly defer this requirement; do not promote it through generation."
+    },
+    {
+      "type": "question",
+      "id": "handoff-requirement-proposed-61692d696e766f6963652d6964656d7",
+      "text": "REQ-003 remains proposed. Confirm, revise or explicitly defer this requirement; do not promote it through generation."
+    },
+    {
+      "type": "requirement",
+      "id": "ai-invoice-extraction",
+      "text": "REQ-001 \u2014 must functional other: Uploaded PDF invoices shall be processed asynchronously into a durable review queue containing supplier, invoice date, total and currency; proposed source evidence and explicit failure states shall support reviewer inspection. (open)"
+    },
+    {
+      "type": "requirement",
+      "id": "ai-invoice-approval",
+      "text": "REQ-002 \u2014 must functional security: Only an authorized reviewer's approval of the exact invoice result revision shall permit accounting submission; proposed revision binding shall invalidate approval after changes and record the reviewer and approved payload. (open)"
+    },
+    {
+      "type": "requirement",
+      "id": "ai-invoice-idempotency",
+      "text": "REQ-003 \u2014 must nonfunctional reliability: Repeated delivery and retries shall not create duplicate invoices. Proposed durable intake identity, transactional state/outbox and stable accounting operation/payload identity shall preserve this invariant; uncertain external outcomes shall pause for reconciliation unless the destination's verified idempotency contract permits safe replay. (open)"
+    },
+    {
+      "type": "requirement",
+      "id": "ai-invoice-residency",
+      "text": "REQ-004 \u2014 must nonfunctional compliance: Invoice documents and extracted data shall remain stored and processed in Australia across application, parser, model, database, object versions, sensitive logs, backups, recovery and accounting delivery. Regional service/model availability and processing policies shall remain explicitly unverified until supported by destination-specific evidence; overseas routing or fallback shall not be enabled. (open)"
+    },
+    {
+      "type": "decision",
+      "id": "adr-001",
+      "text": "platform.cloud \u2014 platform.cloud: gcp (Accepted)"
+    },
+    {
+      "type": "decision",
+      "id": "adr-002",
+      "text": "data.country \u2014 data.country: Australia (Accepted)"
+    },
+    {
+      "type": "discovery",
+      "id": "next-question",
+      "text": "Optional planner candidate (data; defer if a larger decision matters more): What kinds of documents arrive, and how many a month? Beginner wording: For example \u201cinvoices, about 3,000 a month, mostly PDF\u201d."
+    },
+    {
+      "type": "discovery",
+      "id": "brief-application",
+      "text": "application: Users upload PDF invoices. Extract the supplier, invoice date, total and currency into a review queue. Delivery can repeat; retries must not create duplicate invoices. A reviewer approves a result before it is sent to our existing accounting API. Use Google Cloud. Recommend a coherent system and the engineering choices. Ask only a small material business question when needed; do not make me configure the system."
+    },
+    {
+      "type": "discovery",
+      "id": "brief-data",
+      "text": "data: Keep documents and extracted data in Australia; flag unverified service availability."
+    },
+    {
+      "type": "discovery",
+      "id": "brief-systems",
+      "text": "systems: Twenty signed-in staff and three reviewers; ordinary uploaders cannot approve. PDF invoices up to 10 MB, around 500 per day; they may contain personal data. Keep originals and extraction audit history for 90 days."
+    },
+    {
+      "type": "discovery",
+      "id": "brief-cloud",
+      "text": "cloud: Google Cloud"
+    },
+    {
+      "type": "discovery",
+      "id": "workflow",
+      "text": "Detected workflow: document-processing"
+    }
+  ],
+  "history": [
+    {
+      "role": "user",
+      "text": "Users upload PDF invoices. Extract the supplier, invoice date, total and currency into a review queue. Delivery can repeat; retries must not create duplicate invoices. A reviewer approves a result before it is sent to our existing accounting API. Use Google Cloud. Recommend a coherent system and the engineering choices. Ask only a small material business question when needed; do not make me configure the system."
+    },
+    {
+      "role": "assistant",
+      "text": "We\u2019ll build a Google Cloud invoice workflow that extracts the four fields, queues human review and prevents duplicate accounting submissions during retries. I\u2019ve sketched one delivery unit with durable processing and isolated PDF parsing; accounting compatibility still needs testing.\n\n**Which country should store and process the invoices?** This determines regional placement\u2014for example, \u201cAustralia only\u201d or \u201cnot sure\u201d."
+    },
+    {
+      "role": "user",
+      "text": "Keep documents and extracted data in Australia; flag unverified service availability."
+    },
+    {
+      "role": "assistant",
+      "text": "We\u2019ll keep invoice documents and extracted data in Australia, including processing, backups and sensitive logs. Let\u2019s propose Sydney (australia-southeast1); service/model availability and residency remain unverified, with no overseas failover proposed.\n\n**Does your existing accounting API also store and process invoice data only in Australia?** This determines whether approved delivery meets that boundary; for example, \u201cyes, Australia only\u201d or \u201cnot sure\u201d."
+    }
+  ]
+}

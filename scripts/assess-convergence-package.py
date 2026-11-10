@@ -8,7 +8,8 @@ import hashlib
 import json
 from pathlib import Path, PurePosixPath
 
-PREFIXES = {'aws': 'aws_', 'azure': ('azurerm_', 'azuread_'), 'gcp': 'google_', 'ibm': 'ibm_'}
+PREFIXES = {'aws': 'aws_', 'azure': ('azurerm_', 'azuread_', 'azapi_'), 'gcp': 'google_', 'ibm': 'ibm_'}
+PROVIDER_SOURCES={'aws':('aws','hashicorp/aws'),'azurerm':('azure','hashicorp/azurerm'),'azuread':('azure','hashicorp/azuread'),'azapi':('azure','azure/azapi'),'google':('gcp','hashicorp/google'),'google-beta':('gcp','hashicorp/google-beta'),'ibm':('ibm','ibm-cloud/ibm')}
 
 def assess(case):
     case = Path(case).resolve()
@@ -57,6 +58,10 @@ def assess(case):
     if design.get('nodes') != source.get('nodes'): add('changed-design', 'Exported components differ from evaluated project')
     expected_provider = source.get('provider')
     config = read('terraform/main.tf.json')
+    for name,body in config.get('terraform',{}).get('required_providers',{}).items():
+        expected=PROVIDER_SOURCES.get(name)
+        if not expected or not isinstance(body,dict)or str(body.get('source','')).lower()!=expected[1]:add('unreviewed-provider-source',name)
+        elif expected[0]!=expected_provider:add('wrong-provider-source',name)
     addresses = {f'{kind}.{name}' for kind, bodies in config.get('resource', {}).items() for name in bodies}
     # Independent verifier consumes reviewed lifecycle evidence, not the compiler's
     # self-reported quality result. New-client cases contain no account eligibility

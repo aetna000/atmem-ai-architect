@@ -1,0 +1,267 @@
+{
+  "message": "We\u2019ll keep invoice documents and extracted data in Australia, including model processing and retained copies. Let\u2019s propose IBM Sydney (au-syd), with service/model availability, backup locations and the accounting API\u2019s processing location explicitly unverified.",
+  "phase": "Architecture",
+  "proposal": {
+    "baseRevision": 2,
+    "title": "Apply Australian residency and propose Sydney placement",
+    "body": "Preserve the complete invoice workflow, existing systems and connections. Propose Sydney (au-syd), without recording regional approval or claiming availability. Independently verify Code Engine, PostgreSQL, Object Storage, watsonx model processing, identity, logging, backups and recovery locations. No overseas inference or recovery fallback is authorized. Accounting delivery remains blocked until the existing destination's processing and retention meet the Australian boundary.",
+    "next": {
+      "version": 1,
+      "revision": 2,
+      "name": "Asynchronous document intake",
+      "provider": "ibm",
+      "requirements": "Users upload PDF invoices. Extract the supplier, invoice date, total and currency into a review queue. Delivery can repeat; retries must not create duplicate invoices. A reviewer approves a result before it is sent to our existing accounting API. Use IBM Cloud. Recommend a coherent system and the engineering choices. Ask only a small material business question when needed; do not make me configure the system.",
+      "nodes": [
+        {
+          "id": "invoice-staff",
+          "type": "resource",
+          "position": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "data": {
+            "label": "Invoice uploaders and reviewers",
+            "kind": "tool",
+            "provider": "tools",
+            "description": "Existing people using a browser, outside provisioning scope. Upload PDF invoices, inspect extracted fields and source evidence, correct results and approve an exact result revision. Proposed application permissions distinguish upload and reviewer access; actual staff enrollment remains a destination input.",
+            "config": {
+              "region": "Existing users; location unconfirmed",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "deploymentMode": "reference",
+            "poc": true,
+            "role": "human",
+            "topologyGroup": "Staff access",
+            "service": "Web browser",
+            "binding": "web-browser"
+          }
+        },
+        {
+          "id": "invoice-workflow",
+          "type": "resource",
+          "position": {
+            "x": 480.0,
+            "y": 0.0
+          },
+          "data": {
+            "label": "Invoice intake and approval",
+            "kind": "resource",
+            "provider": "ibm",
+            "description": "Proposed composed IBM Code Engine deployment owns browser/API, background worker, isolated PDF/OCR parser and operating tasks. Internal managed resources include IBM Cloud Databases for PostgreSQL for transactional work queue, review state, approval records and delivery outbox; private versioned IBM Cloud Object Storage for originals; staff sign-in and reviewer membership; and regional watsonx extraction of supplier, invoice date, total, currency and source evidence. Parser receives untrusted PDF bytes without database, accounting or model credentials. Separate workload identities and server-side authorization protect each responsibility. Durable intake identity and source fingerprints handle repeated delivery. Approval binds the exact result revision and destination contract; edits invalidate approval. Accounting submissions retain one operation ID and payload identity across bounded retries. Uncertain outcomes are held for reconciliation rather than blindly resent. Owns retention, monitoring, audit and restore procedures. Proposed defaults remain 10 MB PDFs, 100 pages and 90-day retention eligibility, subject to backup/version review. Documents and extracted data must remain in Australia throughout processing, model inference, storage, logs containing invoice data, backups and recovery. Sydney (au-syd) is proposed, not an accepted regional decision. Availability and processing geography of Code Engine, PostgreSQL, Object Storage, watsonx models and supporting services remain unverified; no overseas fallback is authorized. Regional registry naming does not establish artifact replica residency. Australian recovery placement and availability assumptions require review. This module owns its internal services; no duplicate nodes are required. Staff identity configuration, model policy, accounting compatibility and combined runtime behavior remain unverified.",
+            "config": {
+              "maxPdfBytes": 10000000,
+              "maxPdfPages": 100,
+              "retentionDays": 90,
+              "region": "Sydney (au-syd) proposed; service and model availability unverified",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "deploymentMode": "create",
+            "poc": true,
+            "role": "app",
+            "topologyGroup": "Invoice processing",
+            "service": "IBM Code Engine",
+            "implementation": "invoice-workflow"
+          }
+        },
+        {
+          "id": "accounting-api",
+          "type": "resource",
+          "position": {
+            "x": 960.0,
+            "y": 0.0
+          },
+          "data": {
+            "label": "Existing accounting API",
+            "kind": "tool",
+            "provider": "tools",
+            "description": "Client-owned existing accounting service, referenced without recreation or modification. Receives only approved invoice revisions through the guarded accounting adapter. Native API compatibility is not established: an adapter must independently pass normalized-action-v1 and durable idempotency acceptance, including timeout reconciliation. Endpoint, authorization and actual processing, storage and backup locations remain unverified. Accounting delivery must remain blocked until its handling of extracted invoice data is demonstrated to meet the Australian residency requirement. No credentials are stored in the diagram.",
+            "config": {
+              "region": "Existing placement; unconfirmed",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "deploymentMode": "reference",
+            "poc": true,
+            "role": "app",
+            "topologyGroup": "Accounting integration",
+            "service": "Existing accounting API",
+            "binding": "existing-service"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "staff-invoice-browser",
+          "source": "invoice-staff",
+          "target": "invoice-workflow",
+          "type": "smoothstep",
+          "label": "HTTPS: upload PDF, review evidence, approve; receive status",
+          "integration": "browser-https"
+        },
+        {
+          "id": "approved-invoice-accounting",
+          "source": "invoice-workflow",
+          "target": "accounting-api",
+          "type": "smoothstep",
+          "label": "HTTPS: approved invoice with stable operation ID; receipt or reconciliation",
+          "integration": "approved-accounting-api"
+        }
+      ]
+    }
+  },
+  "requirementDrafts": [
+    {
+      "rationale": "Prevents invoice content from leaving Australia through inference, retained copies or the existing accounting destination. Regional labels alone do not establish compliance; destination evidence is required.",
+      "basis": "User: \u201cKeep documents and extracted data in Australia; flag unverified service availability.\u201d Applies to invoice-workflow and accounting-api.",
+      "id": "ai-invoice-residency",
+      "statement": "Keep invoice documents and extracted data within Australia during processing, model inference, storage, backups, recovery and accounting delivery, including logs containing invoice data. Explicitly flag unverified service/model availability and processing geography; require evidence before enabling affected paths, with no automatic overseas fallback.",
+      "kind": "nonfunctional",
+      "category": "compliance",
+      "priority": "must",
+      "links": [
+        "invoice-workflow",
+        "accounting-api"
+      ]
+    }
+  ],
+  "decisionUpdates": [
+    {
+      "subject": "data.country",
+      "value": "Australia",
+      "sourceText": "Keep documents and extracted data in Australia; flag unverified service availability."
+    }
+  ],
+  "contextUsed": {
+    "status": "ready",
+    "enabled": true,
+    "engine": "AtMem 2.3.10 core SDK",
+    "recordsUsed": [],
+    "knowledgeRecordIds": [
+      "rec_5d0326d5db5a4247ae4c9798a2d7077f",
+      "rec_7970bbdbaa0d4ccbaf19716dabb6697b",
+      "rec_4977498a0f0e42f6b5f236ec24898508",
+      "rec_5967435fd62046dca9a7ca1e7a09d42f",
+      "rec_aa826b5fbd514988af8aaf13e5030b6f",
+      "rec_46528125d4fc4dc0bb8e91fb0a2fac0d",
+      "rec_eb281750c22149b189d9bc1e9fac4175",
+      "rec_c538e1ae5bce4ef98edbe0f01eb80c19"
+    ],
+    "skills": [
+      {
+        "id": "composition",
+        "name": "Architecture composition and engineering judgment",
+        "provider": "all",
+        "stages": [
+          "discover",
+          "design",
+          "review",
+          "deploy"
+        ],
+        "version": "1.0.0",
+        "digest": "df2291a4e0d48a979d4f7c6e99da046bdedfc0e54d41e0b5379b2bc8086b5be6",
+        "summary": "Choose and compose blocks through responsibility, contracts, state, identity, failure modes and trade-offs; verify the complete system.",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "architecture",
+        "name": "AI architecture and discovery",
+        "provider": "all",
+        "stages": [
+          "discover",
+          "design",
+          "review"
+        ],
+        "version": "1.3.0",
+        "digest": "c5cc1056e3ed9a00799882f3a7f4ff2e957e4941fe10e4fd865f5c02ceb01058",
+        "summary": "Clarify outcome, users, existing systems, data ownership and constraints. Evolve the diagram incrementally. Derive functional requirements and propose measurable quality targets as assumptions needing confirmation. Compare clouds against the actual requirements; do not assume an enterprise identity provider or a vendor. Keep proposed and accepted decisions distinct.",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "security",
+        "name": "Security and reliability",
+        "provider": "all",
+        "stages": [
+          "design",
+          "review",
+          "deploy"
+        ],
+        "version": "1.0.0",
+        "digest": "c75cf46b29eb786b27d88d36604f521d6d287182d47df7d5c03845585d64f914",
+        "summary": "Check data classification, residency, access boundaries, encryption choices, approval of automated actions, reliability and recovery. A drawn control is not enforcement evidence. Explain missing controls and tests. Propose requirements from the components and paths; mark default targets as suggestions, never existing company policy.",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "ibm",
+        "name": "IBM Cloud architecture guidance",
+        "provider": "ibm",
+        "stages": [
+          "design",
+          "review",
+          "estimate",
+          "deploy"
+        ],
+        "version": "1.0.0",
+        "digest": "658048ca51abcef3583e00a3b707691237ba956258ea0151d3f9062cd1cebcb9",
+        "summary": "Match watsonx, data services, identity, application runtime and observability to the same requirements used for other clouds. Check region, data residency, model access and IBM plan before pricing. Use a sourced IBM quote; do not substitute an AWS/Azure rate or claim an unsupported deployment is ready.",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      }
+    ],
+    "tools": [],
+    "boundary": "AtMem AI Architect \u2192 native client",
+    "contextDigest": "09218a2b822cdfec2a45cd316e9dc8f75612d6218810ea1fd08ad7004e5ef1fd",
+    "projectId": "evaluation-ibm-03-document-intake",
+    "responseRepairAttempts": 0,
+    "modelResponseEncodings": [
+      "compact_patch"
+    ],
+    "modelResponseJsonBytes": 5013
+  },
+  "priceQuotes": []
+}

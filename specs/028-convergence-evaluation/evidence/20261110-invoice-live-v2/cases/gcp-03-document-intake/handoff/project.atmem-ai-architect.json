@@ -1,0 +1,359 @@
+{
+  "format": "atmem.ai-architect.project",
+  "formatVersion": "2.3.0",
+  "meta": {
+    "id": "evaluation-gcp-03-document-intake",
+    "name": "Asynchronous document intake",
+    "createdAt": "2026-11-10T07:53:46.129Z",
+    "updatedAt": "2026-11-10T07:53:46.129Z",
+    "revision": 5,
+    "generator": "atmem-ai-architect 0.2.0"
+  },
+  "design": {
+    "provider": "gcp",
+    "nodes": [
+      {
+        "id": "staff-browser",
+        "type": "resource",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Staff uploaders and reviewers",
+          "provider": "tools",
+          "kind": "tool",
+          "description": "Existing browsers used by 20 signed-in staff, with three reviewers identified; whether reviewers are included in the 20 is unspecified. Staff upload PDFs and inspect permitted processing results. Only authorized reviewers may approve the exact reviewed revision; ordinary uploaders cannot approve. The server enforces membership and permissions on every relevant request. Client reference outside provisioning scope; staff identity provider and access geography remain unresolved.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "topologyGroup": "Staff access",
+          "deploymentMode": "reference",
+          "origin": "existing",
+          "poc": true,
+          "binding": "web-browser",
+          "role": "human",
+          "service": "Web browser"
+        }
+      },
+      {
+        "id": "invoice-workflow",
+        "type": "resource",
+        "position": {
+          "x": 440,
+          "y": 0
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Invoice intake, review and approved delivery",
+          "provider": "gcp",
+          "kind": "resource",
+          "description": "Proposed composed delivery unit on Google Cloud Run: browser/API, background worker and isolated PDF/OCR parser. Owns Cloud SQL for PostgreSQL transactional durable job queue/outbox and review state, private versioned Google Cloud Storage originals, regional Vertex AI extraction, staff sign-in, SQL user/reviewer membership and separate keyless workload identities. Supports 20 signed-in staff and three reviewers; whether reviewers are included in the 20 remains unspecified. Ordinary uploaders cannot approve; the server enforces membership and permissions on every relevant request. Staff identity provider and access geography remain unresolved. Scope includes PDF intake, extraction of supplier/invoice date/total/currency with source evidence, durable review, authorized approval and approved accounting delivery. Planning workload is 500 uploads daily with bursts of twenty, PDFs up to 10,000,000 bytes and jobs that may take several minutes; this is not a completion-time guarantee. Proposed parser bound remains 100 pages. Accept uploads durably and return a stable job ID/status without holding the browser request open for extraction. Repeated delivery of the same intake identity resolves to the same invoice/job; independently submitted business duplicates require a separately agreed matching policy. Persist exact source object-version identity, invoice/job identity and processing results. Commit business state and queued work in one PostgreSQL transaction. Propose leased PostgreSQL workers with fencing, heartbeats, bounded processing deadlines, bounded exponential-backoff retries and stalled/orphaned-job recovery. Exhausted or permanent failures enter durable dead-letter/quarantine records with failure reason, attempts and audit history; authorized recovery reuses the original identity and cannot bypass approval or accounting outcome fences. Queue admission and worker concurrency are independently bounded so bursts need not start twenty extraction workers. Validate burst intake, several-minute execution, duplicate delivery, worker termination, retry exhaustion and controlled recovery against emitted artifacts before claiming capacity or reliability. Documents may contain personal data: restrict originals, extracted fields and audit access to authorized staff, exclude document contents from operational logs and clean up temporary parser data. Parser alone sees untrusted PDF bytes and has no database, model or accounting identity. Return extracted fields, source evidence and processing/review/delivery status through the review UI. Bind approval to the exact source/result revision and destination contract; edits invalidate approval. Only an authorized reviewer can approve. Send only approved payloads through the external accounting adapter with a durable operation ID and stable payload identity. Persist delivery intent and receipt/outcome. Retry only under a verified destination idempotency contract using the same operation and payload identity; uncertain outcomes pause for reconciliation, never a fresh send identity or automatic reapproval. Administrator supplies the existing accounting endpoint and credentials through reviewed destination configuration and secret handling, outside the diagram; do not provision or modify the accounting service. Own audit events, monitoring, alerts, retention and restore/reconciliation operating tasks. Retain originals and extraction audit history for 90 days; propose intake time as retention clock pending lifecycle confirmation. Cleanup covers processing state, object versions, database records, backups and restored copies; backup/version windows and deletion timing require destination review, with no exact universal erasure deadline claimed. Required boundary: documents and extracted data remain stored and processed in Australia, including temporary parser data, model requests/results, sensitive logs, database backups, object versions and recovery copies. Sydney (australia-southeast1) remains proposed, not accepted or verified. Verify Cloud Run, Cloud SQL, storage, selected Vertex AI model, private networking, quotas, processing geography and zonal recovery before implementation approval. No silent global model endpoints, overseas replication or overseas failover. Model retention/caching/logging policy, staff identity/access geography and accounting residency/adapter acceptance remain unresolved. Compiler capability and reviewed practices do not establish deployment or combined-system validation.",
+          "config": {
+            "maxPdfBytes": 10000000,
+            "retentionDays": 90,
+            "region": "australia-southeast1",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "topologyGroup": "Invoice processing",
+          "deploymentMode": "create",
+          "origin": "proposed",
+          "poc": true,
+          "implementation": "invoice-workflow",
+          "role": "app",
+          "service": "Google Cloud Run"
+        }
+      },
+      {
+        "id": "existing-accounting",
+        "type": "resource",
+        "position": {
+          "x": 880,
+          "y": 0
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Existing accounting API",
+          "provider": "tools",
+          "kind": "tool",
+          "description": "Client-owned existing accounting service; external reference only, outside provisioning scope and never recreated or modified by this design. An administrator will supply its endpoint and credentials through reviewed destination inputs and secret handling, never in the diagram or chat. Receives only reviewer-approved invoice payloads tied to the exact approved revision. The workflow-owned adapter must independently pass normalized-action-v1 acceptance for authentication, schema, durable idempotency, stable operation/payload identity, receipts and outcome reconciliation. Repeated outbound attempts must retain the same operation and payload identity. Uncertain delivery outcomes pause for reconciliation unless verified destination behavior permits safe replay. Supplying an endpoint and credentials does not prove compatibility or idempotency. Vendor compatibility and deployment location remain unknown. Australian storage and processing of submitted invoice data must be established before enabling delivery; do not assume the existing service satisfies the residency boundary.",
+          "config": {
+            "region": "Existing location unknown",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "topologyGroup": "Accounting integration",
+          "deploymentMode": "reference",
+          "origin": "existing",
+          "poc": true,
+          "binding": "existing-service",
+          "role": "app",
+          "service": "Existing accounting API"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "staff-to-invoice-workflow",
+        "source": "staff-browser",
+        "target": "invoice-workflow",
+        "type": "smoothstep",
+        "label": "HTTPS: upload → durable job ID; status/review; authorized revision approval",
+        "integration": "browser-https"
+      },
+      {
+        "id": "approved-invoices-to-accounting",
+        "source": "invoice-workflow",
+        "target": "existing-accounting",
+        "type": "smoothstep",
+        "label": "HTTPS: approved payload + stable operation ID; idempotent replay, receipt/reconc",
+        "integration": "approved-accounting-api"
+      }
+    ]
+  },
+  "discovery": {
+    "problem": "Users upload PDF invoices. Extract the supplier, invoice date, total and currency into a review queue. Delivery can repeat; retries must not create duplicate invoices. A reviewer approves a result before it is sent to our existing accounting API. Use Google Cloud. Recommend a coherent system and the engineering choices. Ask only a small material business question when needed; do not make me configure the system.",
+    "brief": {
+      "application": "Users upload PDF invoices. Extract the supplier, invoice date, total and currency into a review queue. Delivery can repeat; retries must not create duplicate invoices. A reviewer approves a result before it is sent to our existing accounting API. Use Google Cloud. Recommend a coherent system and the engineering choices. Ask only a small material business question when needed; do not make me configure the system.",
+      "data": "Keep documents and extracted data in Australia; flag unverified service availability.",
+      "users": "Here are the remaining project facts before we finalize the handoff. Preserve these requirements and update the system as needed. 500 uploads per day, bursts of twenty. Jobs may take several minutes. The accounting system already exists. An administrator will supply its endpoint and credentials; treat it as external, not a new system to provision. Use a durable job queue, stable invoice/job identity, bounded retries, a dead-letter/recovery path, approval checks and an idempotent outbound operation.",
+      "systems": "Twenty signed-in staff and three reviewers; ordinary uploaders cannot approve. PDF invoices up to 10 MB, around 500 per day; they may contain personal data. Keep originals and extraction audit history for 90 days.",
+      "quality": "",
+      "cloud": "Google Cloud",
+      "budget": ""
+    },
+    "facts": [
+      {
+        "id": "fact-f259ee8d",
+        "name": "cloud.preference",
+        "value": "gcp",
+        "unit": "provider",
+        "text": "Users upload PDF invoices. Extract the supplier, invoice date, total and currency into a review queue. Delivery can repeat; retries must not create duplicate invoices. A reviewer approves a result before it is sent to our existing accounting API. Use Google Cloud. Recommend a coherent system and the",
+        "madeAt": "2026-11-10"
+      },
+      {
+        "id": "fact-b678ddc3",
+        "name": "data.gb",
+        "value": 0.01,
+        "unit": "GB",
+        "text": "Twenty signed-in staff and three reviewers; ordinary uploaders cannot approve. PDF invoices up to 10 MB, around 500 per day; they may contain personal data. Keep originals and extraction audit history for 90 days.",
+        "madeAt": "2026-11-10"
+      },
+      {
+        "id": "fact-e40b3e4c",
+        "name": "data.sensitive",
+        "value": true,
+        "unit": "flag",
+        "text": "Twenty signed-in staff and three reviewers; ordinary uploaders cannot approve. PDF invoices up to 10 MB, around 500 per day; they may contain personal data. Keep originals and extraction audit history for 90 days.",
+        "madeAt": "2026-11-10"
+      }
+    ],
+    "workflow": "document-processing",
+    "asked": [
+      "architect-question",
+      "architect-question"
+    ]
+  },
+  "requirements": [
+    {
+      "id": "ai-invoice-extraction",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Uploaded PDF invoices shall be processed asynchronously into a durable review queue containing supplier, invoice date, total and currency; proposed source evidence and explicit failure states shall support reviewer inspection.",
+      "rationale": "Makes extraction inspectable and prevents incomplete or unsupported model results from silently becoming accounting records.",
+      "basis": "“Users upload PDF invoices. Extract the supplier, invoice date, total and currency into a review queue.”",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "staff-browser",
+        "invoice-workflow"
+      ]
+    },
+    {
+      "id": "ai-invoice-approval",
+      "kind": "functional",
+      "category": "security",
+      "statement": "Only an authorized reviewer's approval of the exact invoice result revision shall permit accounting submission; proposed revision binding shall invalidate approval after changes and record the reviewer and approved payload.",
+      "rationale": "Prevents an automated or stale result from authorizing an accounting action.",
+      "basis": "“A reviewer approves a result before it is sent to our existing accounting API.”",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "staff-browser",
+        "invoice-workflow",
+        "existing-accounting"
+      ]
+    },
+    {
+      "id": "ai-invoice-idempotency",
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "statement": "Repeated delivery and retries shall not create duplicate invoices. Proposed durable intake identity, transactional state/outbox and stable accounting operation/payload identity shall preserve this invariant; uncertain external outcomes shall pause for reconciliation unless the destination's verified idempotency contract permits safe replay.",
+      "rationale": "A lost receipt can otherwise cause duplicate accounting entries; destination idempotency and reconciliation must be proven rather than assumed.",
+      "basis": "“Delivery can repeat; retries must not create duplicate invoices.”",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "invoice-workflow",
+        "existing-accounting"
+      ]
+    },
+    {
+      "id": "ai-invoice-residency",
+      "kind": "nonfunctional",
+      "category": "compliance",
+      "statement": "Invoice documents and extracted data shall remain stored and processed in Australia across application, parser, model, database, object versions, sensitive logs, backups, recovery and accounting delivery. Regional service/model availability and processing policies shall remain explicitly unverified until supported by destination-specific evidence; overseas routing or fallback shall not be enabled.",
+      "rationale": "Prevents an Australian application placement from concealing overseas model processing, backups, logging or accounting delivery. Availability and destination-policy evidence are still required.",
+      "basis": "“Keep documents and extracted data in Australia; flag unverified service availability.” The invoice-workflow processes and stores invoices and sends approved fields to existing-accounting.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "invoice-workflow",
+        "existing-accounting"
+      ]
+    },
+    {
+      "id": "ai-invoice-intake-limits",
+      "kind": "functional",
+      "category": "scalability",
+      "statement": "The workflow shall accept PDF invoices up to 10 MB and reject oversized uploads before extraction. Capacity planning shall use approximately 500 invoices daily; peak-load and completion-time acceptance targets remain open.",
+      "rationale": "Makes the stated upload boundary enforceable and records the workload without inventing a peak rate or processing deadline.",
+      "basis": "“PDF invoices up to 10 MB, around 500 per day”",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "invoice-workflow"
+      ]
+    },
+    {
+      "id": "ai-invoice-retention",
+      "kind": "nonfunctional",
+      "category": "compliance",
+      "statement": "Original invoices and extraction audit history shall be retained for 90 days. Proposed lifecycle controls shall cover primary records, object versions and recovery copies; retention-clock semantics, backup windows and deletion completion shall be documented and tested before production.",
+      "rationale": "Preserves originals and extraction evidence for review while requiring lifecycle rules to address versions, backups and recovery copies.",
+      "basis": "“Keep originals and extraction audit history for 90 days.”",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "invoice-workflow"
+      ],
+      "measure": {
+        "metric": "Original and extraction audit retention period",
+        "op": "==",
+        "target": 90,
+        "unit": "days"
+      }
+    },
+    {
+      "id": "ai-invoice-personal-data",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Proposed controls shall restrict access to invoice originals, extracted personal data and audit history to authorized staff, exclude document contents from operational logs, and clean up temporary parser data. Authorization-denial and cleanup tests shall demonstrate these boundaries before production.",
+      "rationale": "Personal data can leak through document access, temporary parser files and diagnostic logging; these are proposed controls requiring implementation evidence.",
+      "basis": "“they may contain personal data” and the invoice-workflow document, parser and audit responsibilities.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "staff-browser",
+        "invoice-workflow"
+      ]
+    },
+    {
+      "id": "ai-invoice-job-recovery",
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "statement": "Processing shall use durable queued jobs, stable invoice/job identities and bounded retries. Proposed fenced leases and stalled-job recovery shall prevent obsolete workers committing results. Exhausted or permanent failures shall enter durable dead-letter records with reason and attempt history; authorized recovery shall preserve identity, approval and uncertain-outcome safeguards. Acceptance shall cover worker termination, duplicate delivery, retry exhaustion and recovery without lost jobs or duplicate accounting effects.",
+      "rationale": "A crashed worker or exhausted retry must leave recoverable work rather than lose an invoice or restart an unsafe accounting submission. The proposed PostgreSQL dead-letter path stays inside the composed workflow.",
+      "basis": "User: “Use a durable job queue, stable invoice/job identity, bounded retries, a dead-letter/recovery path, approval checks and an idempotent outbound operation.”",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "invoice-workflow",
+        "existing-accounting"
+      ]
+    },
+    {
+      "id": "ai-invoice-accounting-boundary",
+      "kind": "functional",
+      "category": "security",
+      "statement": "The accounting system shall remain an externally owned reference outside provisioning scope. An administrator shall supply its endpoint and credentials through secure destination configuration. Proposed adapter acceptance shall establish authentication, payload compatibility, durable idempotency and reconciliation before delivery is enabled; endpoint availability alone shall not establish compatibility or Australian residency.",
+      "rationale": "The accounting system already exists; treating it as a provisioning target would change ownership and scope. Secure destination configuration and contract tests are necessary before enabling delivery.",
+      "basis": "User: “An administrator will supply its endpoint and credentials; treat it as external, not a new system to provision.”",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "invoice-workflow",
+        "existing-accounting"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-10",
+      "context": "User statement: Use Google Cloud.",
+      "options": "",
+      "decision": "gcp",
+      "consequences": "",
+      "revision": 2,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "data.country",
+      "title": "data.country",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-10",
+      "context": "User statement: Keep documents and extracted data in Australia; flag unverified service availability.",
+      "options": "",
+      "decision": "Australia",
+      "consequences": "",
+      "revision": 3,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    }
+  ],
+  "extensions": {
+    "requirementNumbers": {
+      "ai-invoice-extraction": 1,
+      "ai-invoice-approval": 2,
+      "ai-invoice-idempotency": 3,
+      "ai-invoice-residency": 4,
+      "ai-invoice-intake-limits": 5,
+      "ai-invoice-retention": 6,
+      "ai-invoice-personal-data": 7,
+      "ai-invoice-job-recovery": 8,
+      "ai-invoice-accounting-boundary": 9
+    },
+    "activeConsultation": {
+      "hasQuestion": false
+    },
+    "choices": {}
+  }
+}
