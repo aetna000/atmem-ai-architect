@@ -1,0 +1,31 @@
+{
+  "scope": "Read-only native Engine queries for this helper label namespace; no cleanup/prune performed",
+  "checks": [
+    {
+      "command": [
+        "docker",
+        "ps",
+        "-a",
+        "--filter",
+        "label=atmem.document.owner",
+        "--format",
+        "{{.ID}}"
+      ],
+      "exitCode": 0,
+      "remaining": []
+    },
+    {
+      "command": [
+        "docker",
+        "volume",
+        "ls",
+        "--filter",
+        "label=atmem.document.owner",
+        "--format",
+        "{{.Name}}"
+      ],
+      "exitCode": 0,
+      "remaining": []
+    }
+  ]
+}

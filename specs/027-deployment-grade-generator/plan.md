@@ -523,3 +523,36 @@ type failure. No application inventory/native worker admission or lock changed.
 Continue with protected host preparation/release/reaper, controller/pool/preflight,
 durable recovery and private IaC, then IBM execution, full four-provider exports,
 unchanged complete briefs/security/performance and final28/held-out evaluation.
+
+
+### 2026-11-11 — Azure protected host lifecycle and real Engine recovery
+
+Implement standalone standard-library root helper, protected policy/self/ancestor
+checks, private locked/fsynced per-file intent before mutation, exact nonce/owner/
+policy volume labels and immutable prefetched images. The emitted native parser
+now carries matching labels. Engine cleanup validates every consumer before any
+removal; foreign consumers/volumes are never adopted. Monotonic transfer deadlines
+and independent expiry recovery preserve uncertain failures and publication state.
+Stable ownership excludes artifact revision but binds the native destination and
+registry, so current recovery can remove old owned resources safely. No raw
+document bytes enter root host state/logs. Tombstone compaction/capacity and native
+clock/offline-node behavior remain operating work, not an invented erasure SLA.
+
+Evidence: `specs/028-convergence-evaluation/evidence/20261111-private-azure-document-host-v1`.
+51 component/regression checks (17 host/process death,1 qualifier,10 job,14 Blob,9
+transfer) pass.21 real Engine/build checks include six Linux root filesystem/CLI
+subchecks, installed qualification transfer source hashes, actual Word/scanned-PDF
+OCR/byte-bound upload, true death after creating a native volume, hung-parser
+expiry and preserved foreign consumer/volumes. Native owner-label queries show no
+remaining helper resources. Qualification-only image contains synthetic fixtures;
+registry identity/daemon default-log/ARM/MI/Batch UID/agent and Engine-state UID are
+explicit fixtures. No production image/security/capability/whole-case promotion.
+Retain failed qualifier list-vs-inspect run, original bytes, precise regression and
+label-bound recovery; preserve intermediate exact sources/context ZIPs and hashes.
+
+Next implement Batch native controller/pool/agent/identity preflight and persistent
+worker SQL intent/reconciliation. Generate protected root policy/helper/service/
+timer, private pool/IAM/network/storage/artifact composition; install/qualify actual
+production artifacts before enabling Azure. Then complete IBM execution and full
+four-provider application/Spec Kit exports, unchanged complete briefs, security/
+performance, remaining medium/hard families and final28/held-out evaluation.

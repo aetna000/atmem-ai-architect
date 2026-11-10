@@ -31,8 +31,9 @@ Preparation/release commands are fixed isolated Python bootstrap commands. They
 verify an exact SHA256-bound root-owned, non-group/world-writable helper file under
 `/opt/atmem/document-host/<sha256>/enterprise_azure_host.py`. There is no helper
 download, shell expansion, arbitrary command field or mutable package default.
-The helper and protected ancestor provisioning are **not implemented yet**. No
-export, readiness or installed-runtime receipt claims that this helper exists.
+The standalone helper is now implemented and locally tested. Its native pool
+installation, protected ancestor provisioning and reaper service are still
+pending. No export or readiness receipt claims it is installed on a Batch node.
 
 ## Reviewed primary sources
 
@@ -60,7 +61,7 @@ Evidence: `specs/028-convergence-evaluation/evidence/20261111-private-azure-docu
   rejects unsupported canonical MIME before scheduling; octet-stream remains an
   allowed detection input under the shared parser contract.
 
-## Required next implementation
+## Temporary storage and transfer
 
 The native temporary-Blob adapter and trusted transfer CLI are now implemented.
 They are not installed in an emitted image or enabled in the worker yet.
@@ -110,11 +111,84 @@ Additional primary references, reviewed2026-11-11:
 - [Container holds and access, ARM2025-06-01](https://learn.microsoft.com/en-us/rest/api/storagerp/blob-containers/get?view=rest-storagerp-2025-06-01).
 - [Blob2025-05-05 version](https://learn.microsoft.com/en-us/rest/api/storageservices/version-2025-05-05), [Put Blob](https://learn.microsoft.com/en-us/rest/api/storageservices/put-blob), [Get Blob](https://learn.microsoft.com/en-us/rest/api/storageservices/get-blob), [Delete Blob](https://learn.microsoft.com/en-us/rest/api/storageservices/delete-blob).
 
-Next implement trusted host preparation/release and
-independent label/deadline cleanup after interrupted preparation or node reboot.
+## Standalone host ownership and recovery
+
+`enterprise_azure_host.py` now implements preparation, release and independent
+expiry recovery using the standard library and Docker Engine API1.43 over a local
+Unix socket. It does not download scripts or artifacts, parse documents, accept
+shell commands or inherit Docker contexts/proxies. Preparation requires the
+approved immutable images already present and observes a dedicated Linux Engine
+with builtin seccomp, no live restore and no default log driver. Only the trusted
+transfer stages use host networking, with an explicit transfer MI in metadata;
+the parser remains network-disabled and receives no source/model/SQL credentials.
+Native pool IAM/network restrictions remain required and unqualified.
+
+The root entrypoint walks protected path ancestors without following symlinks,
+checks ownership/modes/link counts/bounds, reads an exact protected policy and
+verifies its installed source hash. It checks Batch account/pool/job bindings.
+The file-state directory must be0700. A locked, fsynced, metadata-only intent is
+committed before creating any native volume. Each volume has exact owner/request/
+policy/side labels and a fresh nonce. Existing volumes or replayed job IDs are
+not adopted. Root tombstones prevent replay; long-running metadata compaction
+and capacity qualification are pending. A parser cannot mount these state files.
+
+The worker/task compiler now emits parser labels that match this ownership model.
+Cleanup validates every consumer and both volumes before deleting any resource.
+A foreign consumer blocks cleanup and remains untouched. Lost create responses
+are reconciled by known per-file volumes; timeout/still-running jobs can be
+stopped only after matching artifact, user, mount, isolation and ownership checks.
+Transfer polls use monotonic time; durable expiry uses the node wall clock and
+is an operational fallback, not a strict retention SLA or offline-node erasure
+claim. The helper does not erase cloud Blob bytes; the controller/SQL ledger must
+settle remote writers before removing those objects.
+
+The stable cleanup owner excludes artifact revisions but includes the native
+destination and registry. Root-owned state retains each original policy/artifact
+binding, allowing a current reaper to remove an old artifact's owned resources
+without adopting a different destination. Release requires its original transfer
+metadata/image/helper binding. Failed staging/upload never promotes publication;
+successful publication is recorded before removing its file volumes. A process
+that dies between upload acknowledgement and state recording remains uncertain
+until controller recovery; the helper does not invent success.
+
+Evidence:
+`specs/028-convergence-evaluation/evidence/20261111-private-azure-document-host-v1`.
+Seventeen host/true-process-death checks, one qualifier regression and the previous
+ten job/fourteen Blob/nine transfer tests pass (51 tests). Twenty-one native
+Engine/build checks pass, including six protected root CLI/filesystem checks in
+Linux, installed transfer-source hashes, real Word/scanned-PDF OCR, byte-bound
+upload, actual process death after native volume creation, stuck-parser expiry
+and preserved unrelated consumers/volumes. Final native owner-label queries found
+no remaining containers or volumes from this helper namespace.
+
+The native test uses a qualification-only image containing the installed current
+transfer modules, an offline HTTP wrapper and synthetic fixtures. It is not a
+production artifact. ACR identities, Batch agent/UID, ARM/MI responses and the
+daemon default-log observation are explicit fixtures. The Engine sandbox fields,
+containers, volumes and process-death cleanup are real. Root filesystem checks use
+actual UID0/protected Linux paths with an explicit no-Engine fixture; the Engine
+integration uses a local-user state-directory fixture. These do not prove the
+native pool image/agent, root service installation, cloud permissions, security
+or whole-project behavior.
+
+The first native run exposed a list-versus-inspect bug in the qualifier. Preserve
+its failed receipt and original source, the precise repair regression and the
+label-bound recovery of its leftover owned job. Successful intermediate runs are
+retained with original qualifier/host/test bytes when their hashes changed. The
+final receipt binds the current sources. Context ZIPs preserve exact build inputs
+and hashes without changing upstream bytes.
+
+Primary references, reviewed2026-11-11:
+
+- [Docker Engine API1.43](https://docs.docker.com/reference/api/engine/version/v1.43/) for local container, image, volume and inspection operations; actual owned Engine29.5.2 exercised the compatibility API.
+- [Batch runtime environment bindings](https://learn.microsoft.com/en-us/azure/batch/batch-compute-node-environment-variables); native paths are implementation details, so no Batch data path is constructed or remounted.
+
+## Required next implementation
+
 Build the Batch controller, pool/agent/image/identity preflight and durable SQL
-intent/recovery. Cleanup must verify release outcome, not infer erasure from an
-accepted delete request. Preserve cleanup ownership across artifact revisions.
+intent/recovery. Add root-policy/helper installation and reaper service/timer to
+the generated dedicated pool. Test release acknowledgement/outcome and native
+deletion/uncertain creation; do not infer cloud erasure from an accepted delete.
 
 Generate dedicated private pool, native roles/network/storage/artifact/host
 provisioning, and wire the approved native executor into the worker only after the

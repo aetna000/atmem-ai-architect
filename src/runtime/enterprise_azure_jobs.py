@@ -22,7 +22,7 @@ def configuration(value):
     if not isinstance(value, dict) or set(value) != fields or value['format'] != FORMAT:
         raise ValueError('Use the exact owned Azure document-job configuration')
     patterns = {'subscriptionId': _UUID, 'region': r'[a-z][a-z0-9]{1,30}',
-                'resourceGroup': r'[A-Za-z0-9_()-][A-Za-z0-9_().()-]{0,88}[A-Za-z0-9_()-]',
+                'resourceGroup': r'[A-Za-z0-9_()-](?:[A-Za-z0-9_().-]{0,88}[A-Za-z0-9_()-])?',
                 'batchAccount': r'[a-z0-9]{3,24}', 'poolId': r'document-[a-z0-9-]{1,54}',
                 'storageAccount': r'[a-z0-9]{3,24}',
                 'container': r'[a-z0-9]+(?:-[a-z0-9]+)*',
@@ -135,6 +135,10 @@ def task_spec(config, identifier):
     options = ['--rm', '--network=none', '--read-only', '--cap-drop=ALL',
                '--security-opt=no-new-privileges:true', '--pids-limit=128',
                '--memory=2g', '--memory-swap=2g', '--cpus=2', '--log-driver=none',
+               '--label=atmem.document.owner=' + cleanup_owner(owned),
+               '--label=atmem.document.request=' + identity(identifier),
+               '--label=atmem.document.policy=' + fingerprint(owned),
+               '--label=atmem.document.stage=parser',
                '--tmpfs=/tmp:rw,noexec,nosuid,nodev,size=128m',
                '--mount=type=volume,source=' + source + ',target=/input,readonly',
                '--mount=type=volume,source=' + target + ',target=/output']
@@ -150,6 +154,14 @@ def task_spec(config, identifier):
 
 def fingerprint(config):
     return hashlib.sha256(json.dumps(configuration(config), sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+
+
+def cleanup_owner(config):
+    checked = configuration(config)
+    keys = ['subscriptionId', 'region', 'resourceGroup', 'batchAccount', 'poolId',
+            'storageAccount', 'container', 'transferClientId']
+    return hashlib.sha256(json.dumps({**{key: checked[key] for key in keys},
+        'registry': checked['parserImage'].split('/')[0]}, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
 
 
 def verify_job(config, metadata, etag, reply):
