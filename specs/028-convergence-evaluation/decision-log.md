@@ -398,3 +398,36 @@ no reported fix, zero critical in cached metadata; no production acceptance.
 Other three native operating wrappers and full state/Spec Kit/registry composition
 remain next. Complete medium conversations, other families and full28/held-out remain
 unfinished. No account operation, publication or deployment. Evidence: specs/028-convergence-evaluation/evidence/20261110-invoice-operating-jobs
+
+
+## 2026-11-10 — Azure fixed operating jobs and current log routing
+
+Implemented native manual bootstrap and phased daily/hourly jobs with a separate
+PostgreSQL Entra administrator identity, main-only availability and pull-only None
+identity. Native start can override template/image/command, so its authority remains
+trusted destination operator access; it is never assigned to product/worker/model.
+No application secrets/model/object authority is supplied to the operator job.
+Exact start URLs/runbook are emitted instead of requiring guessed resource names.
+
+Current Azure Monitor destination plus both dedicated diagnostic categories and
+regional 30-day workspace are emitted. Count-only success/failure and native system
+warnings are queried against documented current tables, not legacy _CL schemas.
+Manual bootstrap materializes/verifies logs; scheduled/application release requires
+native query validation. Existing Action Group delivery is an explicit reviewed
+reference, never adopted/modified. Ingestion, KQL and alerts remain destination
+acceptance; local provider schemas are not evidence they worked in Azure.
+
+11 native mock plans and schema validation pass. Exact image checks (12 each PG17/18)
+exercise actual Azure SDK against scripted local metadata, wrong-identity refusal,
+scripted six-column Entra mapping over real SQL role/schema/grants, bootstrap/retry,
+monitor/maintenance and runtime denials. No native cloud authentication is claimed.
+82 API/operator checks, 5 exact-image restricted queue checks, 308 JS, 208 server and
+build pass. Generalized qualifier retains AWS historical-image compatibility (9).
+Exact Azure image retains 47 high, zero critical or reported fixes in cached data;
+not production/security acceptance. Removed one shared-module EOF blank line while
+thawed; exact new image hashes qualify it, historical source receipts are preserved.
+
+Google/IBM native operating wrappers, complete state/Spec Kit/registry and medium
+business conversations/exports remain next. No medium case counted complete; full28,
+held-out and remaining families unfinished. No cloud operation, publication or
+deployment. Evidence: specs/028-convergence-evaluation/evidence/20261110-azure-operating-jobs

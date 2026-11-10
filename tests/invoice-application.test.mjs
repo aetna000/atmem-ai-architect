@@ -88,6 +88,20 @@ test('AWS operating examples follow the selected region instead of retaining Syd
  const files=awsInvoiceTerraform({id:'11111111-1111-4111-8111-111111111111',revision:1,nodes:[],edges:[]},{id:'invoice',address:'block_696e766f696365',provider:'aws',region:'us-west-2'}),examples=JSON.parse(files['deployment.tfvars.json.example']);
  assert.equal(examples.region,'us-west-2');assert.ok(examples.operator_alert_topic_arn.startsWith('arn:aws:sns:us-west-2:'));
 });
+test('Azure operating jobs separate administrator identity and use explicit current diagnostic routing',()=>{
+ const n='block_696e766f696365',files=azureInvoiceTerraform({id:'11111111-1111-4111-8111-111111111111',revision:1,nodes:[],edges:[]},{id:'invoice',address:n,provider:'azure',region:'australiaeast'}),config=JSON.parse(files['main.tf.json']),resources=config.resource;
+ assert.equal(resources.azurerm_container_app_environment[n].logs_destination,'azure-monitor');const diagnostic=resources.azurerm_monitor_diagnostic_setting[n+'_environment'];assert.equal(diagnostic.log_analytics_destination_type,'Dedicated');assert.deepEqual(diagnostic.enabled_log.map(row=>row.category).sort(),['ContainerAppConsoleLogs','ContainerAppSystemLogs']);
+ for(const action of ['initialize','maintain','monitor']){
+  const job=resources.azapi_resource[n+'_operator_'+action],container=job.body.properties.template.containers[0];assert.equal(job.type,'Microsoft.App/jobs@2025-07-01');assert.deepEqual(job.identity.identity_ids,['${azurerm_user_assigned_identity.'+n+'_pull.id}','${azurerm_user_assigned_identity.'+n+'_operator.id}']);assert.deepEqual(container.command,['python','-I','/app/invoice_operator_job.py',action,'--execute']);
+  assert.ok(container.env.every(row=>!row.secretRef&&!row.name.startsWith('MODEL_')&&!row.name.startsWith('DESTINATION_')&&!row.name.startsWith('DOCUMENT_')));
+  assert.equal(container.env.find(row=>row.name==='WORKLOAD_IDENTITY_CLIENT_ID').value,'${azurerm_user_assigned_identity.'+n+'_operator.client_id}');assert.equal(job.body.properties.configuration.secrets,undefined);
+ }
+ assert.deepEqual(resources.azapi_resource[n+'_operator_initialize'].body.properties.configuration.identitySettings,[{identity:'${azurerm_user_assigned_identity.'+n+'_pull.id}',lifecycle:'None'},{identity:'${azurerm_user_assigned_identity.'+n+'_operator.id}',lifecycle:'Main'}]);
+ assert.ok(Object.values(resources.azurerm_role_assignment).every(row=>!String(row.role_definition_name).includes('Container Apps')));
+ for(const name of ['monitor-missing','maintain-missing','initialize-failed']){assert.ok(files['monitoring/'+name+'.kql'].includes('ContainerAppConsoleLogs'));assert.ok(!files['monitoring/'+name+'.kql'].includes('_CL'));}
+ assert.match(files['monitoring/initialize-failed.kql'],/ContainerAppSystemLogs/);assert.match(files['OPERATING_JOBS.md'],/override image\/command\/env/);assert.match(files['tests/invoice.tftest.hcl'],/scheduled_jobs_and_log_validation/);
+ assert.ok(config.output.operator_bootstrap_url.value.endsWith('-initialize/start?api-version=2025-07-01'));assert.ok(files['OPERATING_JOBS.md'].includes('terraform output -raw operator_bootstrap_url'));
+});
 
 test('Google invoice compiler binds private SQL proxy, CPU allocation and separate workload authorities',()=>{
  const n='block_696e766f696365',project={id:'11111111-1111-4111-8111-111111111111',revision:1,nodes:[],edges:[]},row={id:'invoice',address:n,provider:'gcp',region:'australia-southeast1'},files=gcpInvoiceTerraform(project,row),config=JSON.parse(files['main.tf.json']);

@@ -36,4 +36,3 @@ def owned_deployment():
     if not isinstance(deployment,dict)or set(deployment)!={'format','provider'}or deployment['format']!='invoice-workflow-v1':raise ValueError('Invalid owned invoice deployment metadata')
     if deployment['provider']not in {'aws','azure','gcp','ibm'}:raise ValueError('Unsupported owned invoice provider')
     return deployment
-

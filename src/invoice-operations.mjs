@@ -67,7 +67,7 @@ lifecycles remove original objects separately; version/noncurrent deletion and n
 provider deletion are asynchronous. Backups may retain expired data for the stated
 backup window. This is not an exact physical-deletion deadline or legal-retention SLA.
 
-AWS emits fixed operating jobs and schedules in OPERATING_JOBS.md. Other native
+AWS and Azure emit fixed operating jobs and schedules in OPERATING_JOBS.md. Other native
 operator job adapters remain under qualification; do not assume those schedules
 exist. The shared job entrypoint supports preview (without --execute), initialize,
 maintain and monitor using the emitted owned metadata and separate operator identity.
