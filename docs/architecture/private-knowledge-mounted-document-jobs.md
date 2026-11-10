@@ -96,3 +96,39 @@ existing provider choices and deployment units. Then qualify the complete privat
 assistant and proceed to the remaining project families and final 28-project and
 held-out evaluations. No cloud access or deployment is authorized by these local
 checks.
+
+
+### Follow-up provider findings (2026-11-11)
+
+The benchmark is 200 employees, 10,000 documents and about 3,000 daily questions,
+with Australian processing and live source permissions. It has no accepted latency
+SLO or monthly budget. Do not invent either or treat a demonstration job as a cost
+or latency estimate.
+
+[Azure Container Apps identity availability](https://learn.microsoft.com/en-us/azure/container-apps/managed-identity)
+can exclude an attached identity from application containers while retaining it
+for platform functions. The [jobs REST schema](https://learn.microsoft.com/en-us/rest/api/resource-manager/containerapps/jobs/get?view=rest-resource-manager-containerapps-2026-01-01)
+also documents this lifecycle setting. Review this path before introducing ACI;
+identity exclusion alone does not implement private file transport or containment.
+
+Google Cloud Run [job secret injection](https://docs.cloud.google.com/run/docs/configuring/jobs/secrets)
+requires the job service identity to have secret access. A shared parser identity
+with access to all per-file secrets would not establish cross-file containment.
+Creating a new service account synchronously for every file has another limitation:
+[service-account creation documentation](https://docs.cloud.google.com/iam/docs/service-accounts-create)
+warns of eventual visibility, potentially a minute or more. Deleted accounts
+[do not consume the active account quota](https://docs.cloud.google.com/iam/docs/service-accounts-delete-undelete),
+but that does not remove propagation, request-quota or lifecycle concerns. Do not
+assume either unlimited accounts or a fixed universal quota.
+
+A Google Batch candidate is trusted download, a network-blocked credentialless
+parser over private local mounts, then trusted bounded result upload. Specify all
+container mounts explicitly, one file/task per job and no concurrent trusted
+listener. The host service account, VM/job reuse, transfer-container cleanup,
+metadata reachability, job startup and file/log retention require concrete SDK,
+Terraform and runtime checks before selecting this architecture. Direct object
+FUSE cannot substitute for the current local POSIX result-publication contract.
+A managed Kubernetes per-file job is another candidate; its extra cluster/IAM/
+network/operations footprint must be justified, not silently substituted for the
+existing application platform. No final native execution mechanism is selected by
+these research notes.
