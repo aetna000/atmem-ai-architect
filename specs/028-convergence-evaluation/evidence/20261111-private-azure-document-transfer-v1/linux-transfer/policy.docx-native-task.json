@@ -1,0 +1,21 @@
+{
+  "id": "document",
+  "commandLine": "python -I /app/enterprise_document_cli.py --job",
+  "containerSettings": {
+    "imageName": "ownedregistry.azurecr.io/parser@sha256:0e6089395cc36c96986ef500026af794dd07f2a8c97196e7c0df726fbe465c82",
+    "containerRunOptions": "--rm --network=none --read-only --cap-drop=ALL --security-opt=no-new-privileges:true --pids-limit=128 --memory=2g --memory-swap=2g --cpus=2 --log-driver=none --tmpfs=/tmp:rw,noexec,nosuid,nodev,size=128m --mount=type=volume,source=atmem-document-1d1499bd85994412a400edbc133942eac4e29ec34a344a1d95fbe6a91368fc24-input,target=/input,readonly --mount=type=volume,source=atmem-document-1d1499bd85994412a400edbc133942eac4e29ec34a344a1d95fbe6a91368fc24-output,target=/output",
+    "containerHostBatchBindMounts": [],
+    "workingDirectory": "containerImageDefault"
+  },
+  "userIdentity": {
+    "autoUser": {
+      "scope": "task",
+      "elevationLevel": "nonadmin"
+    }
+  },
+  "constraints": {
+    "maxWallClockTime": "PT2M",
+    "maxTaskRetryCount": 0,
+    "retentionTime": "PT0S"
+  }
+}

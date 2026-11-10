@@ -1,7 +1,8 @@
 """Run emitted Azure parser options in owned Linux, with a synthetic Batch UID.
 
 This is not an Azure node-agent, identity, networking or cloud-lifecycle test.
-Trusted staging is an explicit local fixture until the native host helper lands.
+Current transfer sources are injected into an existing qualified core image;
+native ARM/Blob responses and identity are explicit offline fixtures.
 """
 import argparse
 import base64
@@ -17,8 +18,9 @@ import uuid
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT / 'src/runtime'), str(ROOT / 'tests/runtime')]
-from enterprise_azure_jobs import task_spec, volume_names
+from enterprise_azure_jobs import task_spec, volume_names, transfer_metadata
 from enterprise_azure_jobs_acceptance import config, shape
+from enterprise_azure_objects_acceptance import objects, policy
 from enterprise_document_job import request, result
 
 
@@ -31,18 +33,26 @@ def qualify(args):
     receipt_path = args.parser_receipt.resolve()
     if not receipt_path.is_relative_to(ROOT / '.local'):
         raise ValueError('Use the owned parser qualification receipt')
+    core_path = args.core_receipt.resolve()
+    if not core_path.is_relative_to(ROOT / '.local'):
+        raise ValueError('Use the owned core image receipt')
     receipt = json.loads(receipt_path.read_text())
-    if not receipt.get('allChecksPassed', receipt.get('passed')):
-        raise ValueError('Parser image qualification did not pass')
-    for name, digest in receipt['sourceHashes'].items():
-        if hashlib.sha256((ROOT / name).read_bytes()).hexdigest() != digest:
-            raise ValueError('Parser source qualification drift: ' + name)
+    core = json.loads(core_path.read_text())
+    for role, value in [('parser', receipt), ('core', core)]:
+        if not value.get('allChecksPassed', value.get('passed')):
+            raise ValueError(role + ' image qualification did not pass')
+        for name, digest in value['sourceHashes'].items():
+            if hashlib.sha256((ROOT / name).read_bytes()).hexdigest() != digest:
+                raise ValueError(role + ' source qualification drift: ' + name)
     out.mkdir(parents=True)
     env = {'PATH': os.environ.get('PATH', ''), 'HOME': str(out), 'DOCKER_HOST': args.docker_host,
            'DOCKER_CONFIG': str(ROOT / '.local/qualification-docker-config')}
     paths = [Path(__file__).resolve(), ROOT / 'src/runtime/enterprise_azure_jobs.py',
              ROOT / 'src/runtime/enterprise_document_job.py', ROOT / 'src/runtime/enterprise_document_contract.py',
              ROOT / 'tests/runtime/enterprise_azure_jobs_acceptance.py',
+             ROOT / 'tests/runtime/enterprise_azure_objects_acceptance.py',
+             ROOT / 'tests/runtime/enterprise_azure_transfer_acceptance.py',
+             ROOT / 'src/runtime/enterprise_azure_objects.py', ROOT / 'src/runtime/enterprise_azure_transfer.py',
              ROOT / 'tests/fixtures/providers/azure-batch-2026-10-01-20261111.json',
              ROOT / 'tests/fixtures/providers/azure-batch-2026-10-01-20261111.provenance.json']
     hashes = {str(path.relative_to(ROOT)): hashlib.sha256(path.read_bytes()).hexdigest() for path in paths}
@@ -62,11 +72,66 @@ def qualify(args):
 
     try:
         image = receipt['imageId']
+        core_image = core['imageId']
         info = json.loads(run('image', ['image', 'inspect', image]))[0]
         if info['Architecture'] != 'amd64' or info['Os'] != 'linux' or info['Config']['User'] != '10001:10001':
             raise ValueError('Unexpected parser image identity')
+        core_info = json.loads(run('core-image', ['image', 'inspect', core_image]))[0]
+        if core_info['Architecture'] != 'amd64' or core_info['Os'] != 'linux' or core_info['Config']['User'] != '10001:10001':
+            raise ValueError('Unexpected core image identity')
         owned = config()
         owned['parserImage'] = owned['parserImage'].split('@')[0] + '@' + image
+        owned['transferImage'] = owned['transferImage'].split('@')[0] + '@' + core_image
+        modules = {name: base64.b64encode((ROOT / 'src/runtime' / (name + '.py')).read_bytes()).decode()
+                   for name in ['enterprise_azure_objects', 'enterprise_azure_transfer']}
+        owner = objects()
+        policies = {value['id']: value for value in policy(owner)}
+        owner.close()
+        wrapper = '''import base64,hashlib,json,sys,types
+sys.path.insert(0,'/app')
+fixture=json.load(sys.stdin)
+for name,encoded in fixture['modules'].items():
+ module=types.ModuleType(name);module.__file__='/app/'+name+'.py';sys.modules[name]=module
+ exec(compile(base64.b64decode(encoded,validate=True),module.__file__,'exec'),module.__dict__)
+import enterprise_azure_objects as native
+import enterprise_azure_transfer as transfer
+uploaded=None
+class Credential:
+ def get_token(self,scope):
+  assert scope in {'https://management.azure.com/.default','https://storage.azure.com/.default'}
+  return types.SimpleNamespace(token='SYNTHETIC-NATIVE-TOKEN')
+ def close(self):pass
+class Response:
+ def __init__(self,raw,status=200,headers=None):self.raw=raw;self.status_code=status;self.headers=headers or {}
+ def __enter__(self):return self
+ def __exit__(self,*args):pass
+ def iter_content(self,size):
+  for offset in range(0,len(self.raw),size):yield self.raw[offset:offset+size]
+class Session:
+ def close(self):pass
+ def request(self,method,url,**options):
+  global uploaded
+  assert self.trust_env is False and options['allow_redirects'] is False and options['stream'] is True
+  assert options['headers']['Authorization']=='Bearer SYNTHETIC-NATIVE-TOKEN'
+  if url.startswith('https://management.azure.com'):
+   assert method=='GET' and options['params']=={'api-version':'2025-06-01'}
+   return Response(json.dumps(fixture['policies'][url.removeprefix('https://management.azure.com')]).encode())
+  assert url.startswith('https://ownedtemporary.blob.core.windows.net/documents/document-jobs/')
+  if method=='GET':
+   assert url.endswith('/input') and options['headers']['If-Match']=='"0x8DA123ABCDEF"'
+   raw=base64.b64decode(fixture['raw'],validate=True)
+   return Response(raw,headers={'ETag':'"0x8DA123ABCDEF"','Content-Length':str(len(raw)),'x-ms-blob-type':'BlockBlob','x-ms-server-encrypted':'true'})
+  assert method=='PUT' and url.endswith('/result') and options['headers']['If-None-Match']=='*'
+  raw=options['data'];uploaded={'uploadedSha256':hashlib.sha256(raw).hexdigest(),'uploadedBytes':len(raw)}
+  return Response(b'',201,{'ETag':'"0x8DA123ABCDEF"','x-ms-request-server-encrypted':'true'})
+native.requests.Session=Session
+native.AzureDocumentObjects._credential=lambda self:Credential()
+sys.argv=['enterprise_azure_transfer.py',fixture['mode']]
+transfer.main()
+if fixture['mode']=='upload':
+ assert uploaded is not None
+ print(json.dumps(uploaded))
+'''
         schemas = json.loads((ROOT / 'tests/fixtures/providers/azure-batch-2026-10-01-20261111.json').read_text())['definitions']
         for filename, mime, expected in [
                 ('policy.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'twenty days'),
@@ -88,17 +153,14 @@ def qualify(args):
                     created.append(volume)
                 mounts = ['--mount', 'type=volume,source=' + volumes[0] + ',target=/input',
                           '--mount', 'type=volume,source=' + volumes[1] + ',target=/output']
-                setup = '''import base64,json,os,sys
-v=json.load(sys.stdin)
-for name,b in [('document',base64.b64decode(v['raw'],validate=True)),('request.json',json.dumps(v['metadata']).encode())]:
- fd=os.open('/input/'+name,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o444)
- with os.fdopen(fd,'wb') as f:f.write(b);f.flush();os.fsync(f.fileno());os.fchmod(f.fileno(),0o444)
-os.chmod('/input',0o555);os.chmod('/output',0o777)
-'''
-                run(filename + '-synthetic-host-prepare', ['run', '--rm', '--platform', 'linux/amd64',
+                envelope = json.dumps(transfer_metadata(owned, metadata, '"0x8DA123ABCDEF"'), separators=(',', ':'))
+                def stage(mode):
+                    return json.dumps({'mode': mode, 'raw': base64.b64encode(raw).decode(),
+                                       'modules': modules, 'policies': policies}).encode()
+                run(filename + '-native-transfer-download', ['run', '--rm', '--platform', 'linux/amd64',
                     '--network=none', '--read-only', '--log-driver=none', '--user=0:0', '--cap-drop=ALL',
-                    '--security-opt=no-new-privileges:true', *mounts, '-i', image, 'python', '-I', '-c', setup],
-                    data=json.dumps({'raw': base64.b64encode(raw).decode(), 'metadata': metadata}).encode())
+                    '--security-opt=no-new-privileges:true', '--env', 'DOCUMENT_JOB=' + envelope,
+                    *mounts, '-i', core_image, 'python', '-I', '-c', wrapper], data=stage('download'))
                 options = shlex.split(spec['containerSettings']['containerRunOptions'])
                 # Explicit node-agent UID fixture: deliberately differs from the
                 # image's UID. No claim that Batch itself selected this UID.
@@ -136,6 +198,11 @@ print(json.dumps({'nonImageUid':True,'readOnlyInput':True,'readOnlyRoot':True,'n
                 if json.loads(logged) != {'status': 'ok'}:
                     raise ValueError('Parser failed or logged more than bounded status')
                 containers.remove(container)  # --rm performed native removal.
+                upload_mounts = [value + ',readonly' if value.startswith('type=volume,') else value for value in mounts]
+                uploaded = json.loads(run(filename + '-native-transfer-upload', ['run', '--rm', '--platform', 'linux/amd64',
+                    '--network=none', '--read-only', '--log-driver=none', '--user=0:0', '--cap-drop=ALL',
+                    '--cap-add=DAC_READ_SEARCH', '--security-opt=no-new-privileges:true', '--env', 'DOCUMENT_JOB=' + envelope,
+                    *upload_mounts, '-i', core_image, 'python', '-I', '-c', wrapper], data=stage('upload')))
                 collect = "import os,sys;sys.path.insert(0,'/app');from enterprise_document_job import read_file,MAX_ENVELOPE;fd=os.open('/output',os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW);sys.stdout.buffer.write(read_file(fd,'result.json',MAX_ENVELOPE));os.close(fd)"
                 encoded = run(filename + '-synthetic-host-collect', ['run', '--rm', '--platform', 'linux/amd64',
                     '--network=none', '--read-only', '--log-driver=none', '--user=0:0', '--cap-drop=ALL',
@@ -143,7 +210,8 @@ print(json.dumps({'nonImageUid':True,'readOnlyInput':True,'readOnlyRoot':True,'n
                     '--mount', 'type=volume,source=' + volumes[1] + ',target=/output,readonly',
                     image, 'python', '-I', '-c', collect], private=True)
                 document = result(raw, mime, identifier, encoded)
-                if expected not in document['text']:
+                if (expected not in document['text'] or uploaded != {
+                        'uploadedSha256': hashlib.sha256(encoded).hexdigest(), 'uploadedBytes': len(encoded)}):
                     raise ValueError('Actual Office/OCR result missed expected fixture content')
                 checks.append({'check': filename + '-byte-bound-result-nonimage-uid', 'passed': True})
             finally:
@@ -159,7 +227,8 @@ print(json.dumps({'nonImageUid':True,'readOnlyInput':True,'readOnlyRoot':True,'n
         (out / 'receipt.json').write_text(json.dumps({'recordedAt': datetime.now(timezone.utc).isoformat(),
             'passed': passed, 'checks': checks, 'sourceHashes': hashes,
             'parserImageId': receipt['imageId'], 'parserReceiptSha256': hashlib.sha256(receipt_path.read_bytes()).hexdigest(),
-            'scope': 'Actual emitted Azure Docker parser options, Linux isolation, non-image UID and byte-bound Office/OCR result. Host staging/collection and UID are explicit local fixtures. Not Azure node-agent/default-mount behavior, host helper, Blob/MI, recovery, account/cloud, security or whole-project qualification.',
+            'coreImageId': core['imageId'], 'coreReceiptSha256': hashlib.sha256(core_path.read_bytes()).hexdigest(),
+            'scope': 'Actual emitted Azure Docker parser options, Linux isolation, non-image UID and byte-bound Office/OCR result through native transfer CLI/ARM/Blob adapter. Transfer sources injected into existing qualified core image; native HTTP/MI and Batch UID are explicit offline fixtures. Not an installed transfer artifact, Azure node-agent/default-mount behavior, host helper, cloud Blob/MI, recovery, account, security or whole-project qualification.',
             'cloudOperations': False}, indent=2) + '\n')
 
 
@@ -168,4 +237,5 @@ if __name__ == '__main__':
     parser.add_argument('--docker-host', required=True)
     parser.add_argument('--out', type=Path, required=True)
     parser.add_argument('--parser-receipt', type=Path, required=True)
+    parser.add_argument('--core-receipt', type=Path, required=True)
     qualify(parser.parse_args())

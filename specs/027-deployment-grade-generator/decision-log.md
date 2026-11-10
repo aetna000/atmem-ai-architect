@@ -620,3 +620,26 @@ MIME failure; fixed canonical-supported check before scheduling. No cloud/node-a
 security, capability, complete-export or full-project promotion. Continue with
 Azure Blob/host/controller/recovery/IaC, equivalent IBM execution and full native
 application/Spec Kit composition, unchanged private briefs and final28/held-out.
+
+
+### 2026-11-11 — Azure temporary Blob and actual transfer composition
+
+Implement native explicit-MI ARM/Blob adapter and trusted byte-transfer CLI. Observe
+exact subscription/account/container and regional private encrypted no-history
+policy before data; reject missing flags, foreign identity, redirects, compression,
+retained versions and oversized/truncated responses. Create-only native-MD5 uploads
+retain SHA256 request/result identity. Stage only fresh per-file directories with
+input0444/0555 and output0777 for Batch's non-image UID; collector reads0600 result
+with only DAC_READ_SEARCH. No inherited source/model/SQL authority.
+
+Evidence: `specs/028-convergence-evaluation/evidence/20261111-private-azure-document-transfer-v1`.
+14 scripted wire,9 filesystem,10 job regressions and26 actual Linux checks pass.
+Actual new CLI/adapter sources are injected into existing qualified Azure core;
+HTTP/MI/Batch UID are explicit fixtures, real Word/scanned-PDF parser and byte-bound
+transfer/volume cleanup execute. This is not an installed transfer artifact or
+cloud/agent/security/full-project claim. Retain corrected metadata-ETag exception
+type failure. No application inventory/native worker admission or lock changed.
+
+Continue with protected host preparation/release/reaper, controller/pool/preflight,
+durable recovery and private IaC, then IBM execution, full four-provider exports,
+unchanged complete briefs/security/performance and final28/held-out evaluation.

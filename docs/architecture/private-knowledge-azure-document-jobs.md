@@ -62,9 +62,55 @@ Evidence: `specs/028-convergence-evaluation/evidence/20261111-private-azure-docu
 
 ## Required next implementation
 
-Implement temporary Blob storage with native managed identity, conditional reads
-and create-only writes, bounded responses, no redirects and ARM-verified placement
-and disabled retained history. Implement trusted host preparation/release and
+The native temporary-Blob adapter and trusted transfer CLI are now implemented.
+They are not installed in an emitted image or enabled in the worker yet.
+`enterprise_azure_objects.py` selects one explicit managed identity client ID;
+there is no default developer credential chain, SAS or storage account key.
+ARM2025-06-01 observations bind the exact subscription/resource group/account/
+container, same-region LRS/ZRS storage, private-only/HTTPS/TLS access, encryption,
+disabled public/shared-key access, versioning, blob/container soft deletion,
+restore/change feed and absent legal/immutability holds. Missing history flags
+fail closed. Account policy changes are not transactionally locked by a preflight;
+the generated dedicated account and role policy must restrict administrative
+changes. Native cloud responses remain untested.
+
+Blob2025-05-05 operations use fixed constructed HTTPS endpoints with redirects,
+environment proxies and automatic content encodings disabled. Uploads use
+`If-None-Match: *` and a native Content-MD5 transport checksum; this checksum is
+not a security/content identity. The existing SHA256 request and consumer protocol
+remains authoritative. Downloads use the acknowledged ETag as an opaque If-Match
+token, enforce encrypted BlockBlob/no-version headers and bound actual length.
+Delete includes snapshots only within the owned opaque per-file path; policy
+preflight rejects retained history. A successful request alone is not proof of
+cloud erasure or termination of every writer.
+
+`enterprise_azure_transfer.py` validates a bounded metadata envelope, stages only
+matching bytes into fresh separate directories, applies native-UID-compatible
+permissions and validates both input and result before create-only upload. It
+rejects aliases, symlinks, FIFOs, stale output and forged inner/outer byte bindings.
+CLI failures contain a fixed message without document/provider-error contents.
+
+Additional evidence:
+`specs/028-convergence-evaluation/evidence/20261111-private-azure-document-transfer-v1`.
+Fourteen scripted ARM/Blob checks, nine actual filesystem/transfer checks and ten
+job-contract regressions pass. Twenty-six Linux checks execute the actual new
+transfer CLI/adapter around Word and scanned-PDF/OCR parsing with UID42424 and
+DAC_READ_SEARCH only in the trusted collector. The transfer sources are explicitly
+injected into an existing qualified Azure core image; token/ARM/Blob responses
+are offline fixtures. This is not an installed artifact, MSI or cloud test.
+The earlier23-check parser receipt remains historical, bound to its original
+qualifier hash; the new receipt binds the extended qualifier and current sources.
+An initial metadata-ETag exception-type mismatch is retained and corrected at the
+metadata boundary. No client export or runtime dependency lock was modified.
+
+Additional primary references, reviewed2026-11-11:
+
+- [Storage account observation, ARM2025-06-01](https://learn.microsoft.com/en-us/rest/api/storagerp/storage-accounts/get-properties?view=rest-storagerp-2025-06-01).
+- [Blob service history properties, ARM2025-06-01](https://learn.microsoft.com/en-us/rest/api/storagerp/blob-services/get-service-properties?view=rest-storagerp-2025-06-01).
+- [Container holds and access, ARM2025-06-01](https://learn.microsoft.com/en-us/rest/api/storagerp/blob-containers/get?view=rest-storagerp-2025-06-01).
+- [Blob2025-05-05 version](https://learn.microsoft.com/en-us/rest/api/storageservices/version-2025-05-05), [Put Blob](https://learn.microsoft.com/en-us/rest/api/storageservices/put-blob), [Get Blob](https://learn.microsoft.com/en-us/rest/api/storageservices/get-blob), [Delete Blob](https://learn.microsoft.com/en-us/rest/api/storageservices/delete-blob).
+
+Next implement trusted host preparation/release and
 independent label/deadline cleanup after interrupted preparation or node reboot.
 Build the Batch controller, pool/agent/image/identity preflight and durable SQL
 intent/recovery. Cleanup must verify release outcome, not infer erasure from an
@@ -76,3 +122,9 @@ composition is tested. Complete the four-provider application/Spec Kit exports,
 whole private cases, security/performance qualification and final 28/held-out
 evaluation. No cloud operation, Azure agent test, complete export, security
 acceptance or whole-project qualification has occurred here.
+
+Final hardening also rejects unsupported HTTP methods before token acquisition,
+closes the credential if session cleanup fails and sanitizes CLI cleanup failures.
+The earlier successful run is retained with all four drifted source files restored
+byte-for-byte against its recorded hashes in `initial-qualified-sources/`. The
+`linux-transfer-hardened/receipt.json` binds the final current sources;26 checks pass.
