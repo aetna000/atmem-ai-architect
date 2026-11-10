@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+    <html xmlns="http://www.w3.org/1999/xhtml" lang="en-US"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Notifying users on alarm changes - Amazon CloudWatch</title><meta name="viewport" content="width=device-width,initial-scale=1" /><meta name="assets_root" content="/assets" /><meta name="target_state" content="Notify_Users_Alarm_Changes" /><meta name="default_state" content="Notify_Users_Alarm_Changes" /><link rel="icon" type="image/ico" href="/assets/images/favicon.ico" /><link rel="shortcut icon" type="image/ico" href="/assets/images/favicon.ico" /><link rel="canonical" href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html" /><link rel="alternate" type="text/markdown" href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.md" title="Markdown version" /><meta name="description" content="Explains how CloudWatch can notify users when alarms change state or change configuration." /><meta name="deployment_region" content="IAD" /><meta name="product" content="Amazon CloudWatch" /><meta name="guide" content="User Guide" /><meta name="abstract" content="Monitor your AWS services, collect and track metrics from AWS services and your own applications, and set alarms based on data from those metrics." /><meta name="guide-locale" content="en_us" /><meta name="tocs" content="toc-contents.json" /><link rel="canonical" href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html" /><link rel="alternate" href="https://docs.aws.amazon.com/id_id/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html" hreflang="id-id" /><link rel="alternate" href="https://docs.aws.amazon.com/id_id/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html" hreflang="id" /><link rel="alternate" href="https://docs.aws.amazon.com/de_de/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html" hreflang="de-de" /><link rel="alternate" href="https://docs.aws.amazon.com/de_de/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html" hreflang="de" /><link rel="alternate" href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html" hreflang="en-us" /><link rel="alternate" href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html" hreflang="en" /><link rel="alternate" href="https://docs.aws.amazon.com/es_es/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html" hreflang="es-es" /><link rel="alternate" href="https://docs.aws.amazon.com/es_es/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html" hreflang="es" /><link rel="alternate" href="https://docs.aws.amazon.com/fr_fr/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html" hreflang="fr-fr" /><link rel="alternate" href="https://docs.aws.amazon.com/fr_fr/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html" hreflang="fr" /><link rel="alternate" href="https://docs.aws.amazon.com/it_it/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html" hreflang="it-it" /><link rel="alternate" href="https://docs.aws.amazon.com/it_it/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html" hreflang="it" /><link rel="alternate" href="https://docs.aws.amazon.com/ja_jp/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html" hreflang="ja-jp" /><link rel="alternate" href="https://docs.aws.amazon.com/ja_jp/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html" hreflang="ja" /><link rel="alternate" href="https://docs.aws.amazon.com/ko_kr/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html" hreflang="ko-kr" /><link rel="alternate" href="https://docs.aws.amazon.com/ko_kr/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html" hreflang="ko" /><link rel="alternate" href="https://docs.aws.amazon.com/pt_br/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html" hreflang="pt-br" /><link rel="alternate" href="https://docs.aws.amazon.com/pt_br/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html" hreflang="pt" /><link rel="alternate" href="https://docs.aws.amazon.com/zh_cn/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html" hreflang="zh-cn" /><link rel="alternate" href="https://docs.aws.amazon.com/zh_tw/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html" hreflang="zh-tw" /><link rel="alternate" href="https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html" hreflang="x-default" /><meta name="feedback-item" content="CloudWatch" /><meta name="this_doc_product" content="Amazon CloudWatch" /><meta name="this_doc_guide" content="User Guide" /><head xmlns="http://www.w3.org/1999/xhtml"> <script defer="" src="/assets/r/awsdocs-doc-page.2.0.0.js"></script><link href="/assets/r/awsdocs-doc-page.2.0.0.css" rel="stylesheet"/></head>
+<script defer="" id="awsc-panorama-bundle" type="text/javascript" src="https://prod.pa.cdn.uis.awsstatic.com/panorama-nav-init.js" data-config="{'appEntity':'aws-documentation','region':'us-east-1','service':'cloudwatch'}"></script><meta id="panorama-serviceSubSection" value="User Guide" /><meta id="panorama-serviceConsolePage" value="Notifying users on alarm changes" /></head><body class="awsdocs awsui"><div class="awsdocs-container"><p><a href="Notify_Users_Alarm_Changes.md">View a markdown version of this page</a></p><awsdocs-header></awsdocs-header><awsui-app-layout id="app-layout" class="awsui-util-no-gutters" ng-controller="ContentController as $ctrl" header-selector="awsdocs-header" navigation-hide="false" navigation-width="$ctrl.navWidth" navigation-open="$ctrl.navOpen" navigation-change="$ctrl.onNavChange($event)" tools-hide="$ctrl.hideTools" tools-width="$ctrl.toolsWidth" tools-open="$ctrl.toolsOpen" tools-change="$ctrl.onToolsChange($event)"><div id="guide-toc" dom-region="navigation"><awsdocs-toc></awsdocs-toc></div><div id="main-column" dom-region="content" tabindex="-1"><awsdocs-view class="awsdocs-view"><div id="awsdocs-content"><head><title>Notifying users on alarm changes - Amazon CloudWatch</title><meta name="pdf" content="/pdfs/AmazonCloudWatch/latest/monitoring/acw-ug.pdf#Notify_Users_Alarm_Changes" /><meta name="rss" content="amazon-cloudwatch-document-history.rss" /><meta name="forums" content="https://repost.aws/tags/TArz36ydKETWeIc1aO7QuRFw" /><meta name="feedback" content="https://docs.aws.amazon.com/forms/aws-doc-feedback?hidden_service_name=CloudWatch&amp;topic_url=https://docs.aws.amazon.com/en_us/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html" /><meta name="feedback-yes" content="feedbackyes.html?topic_url=https://docs.aws.amazon.com/en_us/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html" /><meta name="feedback-no" content="feedbackno.html?topic_url=https://docs.aws.amazon.com/en_us/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html" /><script type="application/ld+json">
+{
+    "@context" : "https://schema.org",
+    "@type" : "BreadcrumbList",
+    "itemListElement" : [
+      {
+        "@type" : "ListItem",
+        "position" : 1,
+        "name" : "AWS",
+        "item" : "https://aws.amazon.com"
+      },
+      {
+        "@type" : "ListItem",
+        "position" : 2,
+        "name" : "Amazon CloudWatch",
+        "item" : "https://docs.aws.amazon.com/cloudwatch/index.html"
+      },
+      {
+        "@type" : "ListItem",
+        "position" : 3,
+        "name" : "User Guide",
+        "item" : "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring"
+      },
+      {
+        "@type" : "ListItem",
+        "position" : 4,
+        "name" : "Using Amazon CloudWatch alarms",
+        "item" : "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Alarms.html"
+      },
+      {
+        "@type" : "ListItem",
+        "position" : 5,
+        "name" : "Getting started",
+        "item" : "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/alarm-getting-started.html"
+      },
+      {
+        "@type" : "ListItem",
+        "position" : 6,
+        "name" : "Acting on alarm changes",
+        "item" : "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Acting_Alarm_Changes.html"
+      },
+      {
+        "@type" : "ListItem",
+        "position" : 7,
+        "name" : "Notifying users on alarm changes",
+        "item" : "https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/Acting_Alarm_Changes.html"
+      }
+    ]
+}
+</script></head><body><div id="main"><div style="display: none"><a href="/pdfs/AmazonCloudWatch/latest/monitoring/acw-ug.pdf#Notify_Users_Alarm_Changes" target="_blank" rel="noopener noreferrer" title="Open PDF"></a></div><div id="breadcrumbs" class="breadcrumb"><a href="/index.html">Documentation</a><a href="/cloudwatch/index.html">Amazon CloudWatch</a><a href="WhatIsCloudWatch.html">User Guide</a></div><div id="page-toc-src"><a href="#Alarm_User_Notifications">Setting up AWS User Notifications</a><a href="#US_SetupSNS">Setting up an SNS topic</a><a href="#alarm-sns-schema">Schema of Amazon SNS notifications when alarms change state</a></div><div id="main-content" class="awsui-util-container"><div id="main-col-body"><awsdocs-language-banner data-service="$ctrl.pageService"></awsdocs-language-banner><h1 class="topictitle" id="Notify_Users_Alarm_Changes">Notifying users on alarm changes</h1><div class="awsdocs-page-header-container"><awsdocs-page-header></awsdocs-page-header><awsdocs-filter-selector id="awsdocs-filter-selector"></awsdocs-filter-selector></div><p>This section explains how you can use AWS User Notifications or Amazon Simple Notification Service to have
+        users be notified of alarm changes.</p>
+        <h2 id="Alarm_User_Notifications">Setting up AWS User Notifications</h2>
+
+        <p>You can use <a href="https://docs.aws.amazon.com/notifications/latest/userguide/what-is-service.html">AWS User
+            Notifications</a> to set up delivery channels to get notified about CloudWatch alarm state
+          change and configuration change events. You receive a notification when an event matches a
+          rule that you specify. You can receive notifications for events through multiple channels,
+          including email, <a href="https://docs.aws.amazon.com/chatbot/latest/adminguide/what-is.html">AWS Chatbot</a> chat notifications, or <a href="https://docs.aws.amazon.com/consolemobileapp/latest/userguide/managing-notifications.html">AWS Console
+            Mobile Application push notifications</a>. You can also see notifications in the at
+            <a href="https://console.aws.amazon.com/notifications" rel="noopener noreferrer" target="_blank"><span>Console Notifications Center</span><awsui-icon class="awsdocs-link-icon" name="external"></awsui-icon></a>. User
+          Notifications supports aggregation, which can reduce the number of notifications you
+          receive during specific events.</p>
+        <p>The notification configurations you create with AWS User Notifications do not count
+          towards the limit on the number of actions you can configure per target alarm state. As
+          AWS User Notifications matches the events emitted to Amazon EventBridge, it sends notifications
+          for all the alarms in your account and selected Regions, unless you specify an advanced
+          filter to allowlist or denylist specific alarms or patterns.</p>
+        <p>The following example of an advanced filter matches an alarm state change from OK to
+          ALARM on the alarm named <code class="code">ServerCpuTooHigh</code>. </p>
+        <pre class="programlisting"><div class="code-btn-container"><div class="btn-copy-code" title="Copy"><awsui-icon name="copy"></awsui-icon></div></div><!--DEBUG: cli (json)--><code class="json "><span>{</span>
+"detail": <span>{</span>
+    "alarmName": ["ServerCpuTooHigh"],
+    "previousState": <span>{</span> "value": ["OK"] },
+    "state": <span>{</span> "value": ["ALARM"] }
+  }
+}</code></pre>
+
+        <p>You can use any of the properties published by an alarm in EventBridge events to create a
+          filter. For more information, see <a href="./cloudwatch-and-eventbridge.html">Alarm events and EventBridge</a>.</p>
+
+       
+        <h2 id="US_SetupSNS">Setting up Amazon SNS notifications</h2>
+
+
+        <p>You can use Amazon Simple Notification Service to send both application-to-application (A2A) messaging and
+          application-to-person (A2P) messaging, including mobile text messaging (SMS) and email
+          messages. For more information, see <a href="https://docs.aws.amazon.com/sns/latest/dg/sns-event-destinations.html"> Amazon SNS event
+          destinations</a>.</p>
+
+
+        <p>For every state that an alarm can take, you can configure the alarm to send a message
+          to an SNS topic. Every Amazon SNS topic you configure for a state on a given alarm counts
+          towards the limit on the number of actions you can configure for that alarm and state. You
+          can send messages to the same Amazon SNS topic from any alarms in your account, and use the
+          same Amazon SNS topic for both application (A2A) and person (A2P) consumers. Because this
+          configuration is done at the alarm level, only the alarms you have configured send
+          messages to the selected Amazon SNS topic.</p>
+        <p>First, create a topic, then subscribe to it. You can optionally publish a test message
+          to the topic. For an example, see <a href="#set-up-sns-topic-console">Setting up an Amazon SNS topic using the AWS Management Console</a>. Or for more information, see <a href="https://docs.aws.amazon.com/sns/latest/dg/sns-getting-started.html"> Getting started with
+            Amazon SNS</a>.</p>
+        <p>Alternatively, if you plan to use the AWS Management Console to create your CloudWatch alarm, you can
+          skip this procedure because you can create the topic when you create the alarm.</p>
+        <p> When you create a CloudWatch alarm, you can add actions for any target state the alarm
+          enters. Add an Amazon SNS notification for the state you want to be notified about, and select
+          the Amazon SNS topic you created in the previous step to send an email notification when the
+          alarm enters the selected state. </p>
+
+        <div class="awsdocs-note"><div class="awsdocs-note-title"><awsui-icon name="status-info" variant="link"></awsui-icon><h6>Note</h6></div><div class="awsdocs-note-text"><p>When you create an Amazon SNS topic, you choose to make it a <em>standard
+              topic</em> or a <em>FIFO topic</em>. CloudWatch guarantees the publication
+            of all alarm notifications to both types of topics. However, even if you use a FIFO
+            topic, in rare cases CloudWatch sends the notifications to the topic out of order. If you use
+            a FIFO topic, the alarm sets the message group ID of the alarm notifications to be a
+            hash of the ARN of the alarm.</p></div></div>
+
+        <div class="highlights" id="inline-topiclist"><h6>Topics</h6><ul><li><p><a href="#SNS_Confused_Deputy">Preventing confused deputy security issues</a></p></li><li><p><a href="#set-up-sns-topic-console">Setting up an Amazon SNS topic using the AWS Management Console</a></p></li><li><p><a href="#set-up-sns-topic-cli">Setting up an SNS topic using the AWS CLI</a></p></li></ul></div>
+
+         
+          <h3 id="SNS_Confused_Deputy">Preventing confused deputy security issues</h3>
+
+
+          <p>The confused deputy problem is a security issue where an entity that doesn't have
+            permission to perform an action can coerce a more-privileged entity to perform the
+            action. In AWS, cross-service impersonation can result in the confused deputy problem.
+            Cross-service impersonation can occur when one service (the <em>calling
+              service</em>) calls another service (the <em>called service</em>).
+            The calling service can be manipulated to use its permissions to act on another
+            customer's resources in a way it should not otherwise have permission to access. To
+            prevent this, AWS provides tools that help you protect your data for all services with
+            service principals that have been given access to resources in your account. </p>
+          <p>We recommend using the <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html#condition-keys-sourcearn"><code class="code">aws:SourceArn</code></a>, <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html#condition-keys-sourceaccount"><code class="code">aws:SourceAccount</code></a>, <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html#condition-keys-sourceorgid"><code class="code">aws:SourceOrgID</code></a>, and <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html#condition-keys-sourceorgpaths"><code class="code">aws:SourceOrgPaths</code></a> global condition context keys in resource
+            policies to limit the permissions that Amazon SNS gives another service to the resource. Use
+              <code class="code">aws:SourceArn</code> to associate only one resource with cross-service access.
+            Use <code class="code">aws:SourceAccount</code> to let any resource in that account be associated
+            with the cross-service use. Use <code class="code">aws:SourceOrgID</code> to allow any resource from
+            any account within an organization be associated with the cross-service use. Use
+              <code class="code">aws:SourceOrgPaths</code> to associate any resource from accounts within an
+            AWS Organizations path with the cross-service use. For more information about using and
+            understanding paths, see <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html#condition-keys-sourceorgpaths">aws:SourceOrgPaths</a> in the IAM User Guide.</p>
+          <p>The most effective way to protect against the confused deputy problem is to use the
+              <code class="code">aws:SourceArn</code> global condition context key with the full ARN of the
+            resource. If you don't know the full ARN of the resource or if you are specifying
+            multiple resources, use the <code class="code">aws:SourceArn</code> global context condition key with
+            wildcard characters (<code class="code">*</code>) for the unknown portions of the ARN. For example,
+                <code class="code">arn:aws:<code class="replaceable">servicename</code>:*:<code class="replaceable">123456789012</code>:*</code>. </p>
+          <p>If the <code class="code">aws:SourceArn</code> value does not contain the account ID, such as an
+            Amazon S3 bucket ARN, you must use both <code class="code">aws:SourceAccount</code> and
+              <code class="code">aws:SourceArn</code> to limit permissions.</p>
+          <p>To protect against the confused deputy problem at scale, use the
+              <code class="code">aws:SourceOrgID</code> or <code class="code">aws:SourceOrgPaths</code> global condition
+            context key with the organization ID or organization path of the resource in your
+            resource-based policies. Policies that include the <code class="code">aws:SourceOrgID</code> or
+              <code class="code">aws:SourceOrgPaths</code> key will automatically include the correct accounts
+            and you don't have to manually update the policies when you add, remove, or move
+            accounts in your organization.</p>
+          
+          <p>The value of <code class="code">aws:SourceArn</code> must be the ARN of the alarm that is sending
+            notifications.</p>
+          <p>The following example shows how you can use the <code class="code">aws:SourceArn</code> and
+              <code class="code">aws:SourceAccount</code> global condition context keys in CloudWatch to prevent the
+            confused deputy problem.</p>
+          <pre class="programlisting"><div class="code-btn-container"><div class="btn-copy-code" title="Copy"><awsui-icon name="copy"></awsui-icon></div></div><!--DEBUG: cli ()--><code class=""><span>{</span>
+    "Statement": [<span>{</span>
+        "Effect": "Allow",
+        "Principal": <span>{</span>
+            "Service": "cloudwatch.amazonaws.com"
+        },
+        "Action": "SNS:Publish",
+        "Resource": "arn:aws:sns:us-east-2:444455556666:MyTopic",
+        "Condition": <span>{</span>
+            "ArnLike": <span>{</span>
+                "aws:SourceArn": "arn:aws:cloudwatch:us-east-2:111122223333:alarm:*"
+            },
+            "StringEquals": <span>{</span>
+                "aws:SourceAccount": "111122223333"
+            }
+        }
+    }]
+}</code></pre>
+
+
+
+
+
+          <p>If an alarm ARN includes any non-ASCII characters, use only the
+              <code class="code">aws:SourceAccount</code> global condition key to limit the permissions.</p>
+
+         
+
+         
+          <h3 id="set-up-sns-topic-console">Setting up an Amazon SNS topic using the AWS Management Console</h3>
+
+          <p>First, create a topic, then subscribe to it. You can optionally publish a test
+            message to the topic.</p>
+          <div class="procedure"><h6>To create an SNS topic</h6><ol><li><p>Open the Amazon SNS console at
+         <a href="https://console.aws.amazon.com/sns/v3/home" rel="noopener noreferrer" target="_blank"><span>https://console.aws.amazon.com/sns/v3/home</span><awsui-icon class="awsdocs-link-icon" name="external"></awsui-icon></a>.</p></li><li>
+              <p>On the Amazon SNS dashboard, under <b>Common actions</b>, choose
+                  <b>Create Topic</b>. </p>
+            </li><li>
+              <p>In the <b>Create new topic</b> dialog box, for <b>Topic
+                  name</b>, enter a name for the topic (for example,
+                  <code class="userinput">my-topic</code>).</p>
+
+            </li><li>
+              <p>Choose <b>Create topic</b>.</p>
+            </li><li>
+              <p>Copy the <b>Topic ARN</b> for the next task (for example,
+                arn:aws:sns:us-east-1:111122223333:my-topic).</p>
+            </li></ol></div>
+          <div class="procedure"><h6>To subscribe to an SNS topic</h6><ol><li><p>Open the Amazon SNS console at
+         <a href="https://console.aws.amazon.com/sns/v3/home" rel="noopener noreferrer" target="_blank"><span>https://console.aws.amazon.com/sns/v3/home</span><awsui-icon class="awsdocs-link-icon" name="external"></awsui-icon></a>.</p></li><li>
+              <p>In the navigation pane, choose <b>Subscriptions</b>,
+                  <b>Create subscription</b>.</p>
+            </li><li>
+              <p>In the <b>Create subscription</b> dialog box, for <b>Topic
+                  ARN</b>, paste the topic ARN that you created in the previous task.</p>
+            </li><li>
+              <p>For <b>Protocol</b>, choose <b>Email</b>.</p>
+            </li><li>
+              <p>For <b>Endpoint</b>, enter an email address that you can use to
+                receive the notification, and then choose <b>Create
+                subscription</b>.</p>
+            </li><li>
+              <p>From your email application, open the message from AWS Notifications and
+                confirm your subscription.</p>
+              <p>Your web browser displays a confirmation response from Amazon SNS.</p>
+            </li></ol></div>
+          <div class="procedure"><h6>To publish a test message to an SNS topic</h6><ol><li> <p>Open the Amazon SNS console at
+         <a href="https://console.aws.amazon.com/sns/v3/home" rel="noopener noreferrer" target="_blank"><span>https://console.aws.amazon.com/sns/v3/home</span><awsui-icon class="awsdocs-link-icon" name="external"></awsui-icon></a>.</p> </li><li>
+              <p>In the navigation pane, choose <b>Topics</b>.</p>
+            </li><li>
+              <p>On the <b>Topics</b> page, select a topic and choose
+                  <b>Publish to topic</b>.</p>
+            </li><li>
+              <p>In the <b>Publish a message</b> page, for
+                  <b>Subject</b>, enter a subject line for your message, and for
+                  <b>Message</b>, enter a brief message.</p>
+            </li><li>
+              <p>Choose <b>Publish Message</b>.</p>
+            </li><li>
+              <p>Check your email to confirm that you received the message.</p>
+            </li></ol></div>
+         
+
+         
+          <h3 id="set-up-sns-topic-cli">Setting up an SNS topic using the AWS CLI</h3>
+
+          <p>First, you create an SNS topic, and then you publish a message directly to the topic
+            to test that you have properly configured it.</p>
+
+          <div class="procedure"><h6>To set up an SNS topic</h6><ol><li>
+              <p>Create the topic using the <a href="https://docs.aws.amazon.com/cli/latest/reference/sns/create-topic.html">create-topic</a> command as follows.</p>
+              <pre class="programlisting"><div class="code-btn-container"><div class="btn-copy-code" title="Copy"><awsui-icon name="copy"></awsui-icon></div></div><!--DEBUG: cli ()--><code class="nohighlight"><code class="userinput">aws sns create-topic --name <code class="replaceable">my-topic</code></code></code></pre>
+              <p>Amazon SNS returns a topic ARN with the following format:</p>
+              <pre class="programlisting"><div class="code-btn-container"><div class="btn-copy-code" title="Copy"><awsui-icon name="copy"></awsui-icon></div></div><!--DEBUG: cli ()--><code class=""><span>{</span>
+    "TopicArn": "arn:aws:sns:us-east-1:111122223333:my-topic"
+}</code></pre>
+            </li><li>
+              <p>Subscribe your email address to the topic using the <a href="https://docs.aws.amazon.com/cli/latest/reference/sns/subscribe.html">subscribe</a> command. If the
+                subscription request succeeds, you receive a confirmation email message.</p>
+              <pre class="programlisting"><div class="code-btn-container"><div class="btn-copy-code" title="Copy"><awsui-icon name="copy"></awsui-icon></div></div><!--DEBUG: cli ()--><code class="nohighlight"><code class="userinput">aws sns subscribe --topic-arn arn:aws:sns:<code class="replaceable">us-east-1</code>:<code class="replaceable">111122223333</code>:<code class="replaceable">my-topic</code> --protocol email --notification-endpoint</code> <code class="replaceable">my-email-address</code></code></pre>
+              <p>Amazon SNS returns the following:</p>
+              <pre class="programlisting"><div class="code-btn-container"><div class="btn-copy-code" title="Copy"><awsui-icon name="copy"></awsui-icon></div></div><!--DEBUG: cli ()--><code class=""><span>{</span>
+    "SubscriptionArn": "pending confirmation"
+}</code></pre>
+            </li><li>
+              <p>From your email application, open the message from AWS Notifications and
+                confirm your subscription.</p>
+              <p>Your web browser displays a confirmation response from Amazon Simple Notification Service.</p>
+            </li><li>
+              <p>Check the subscription using the <a href="https://docs.aws.amazon.com/cli/latest/reference/sns/list-subscriptions-by-topic.html">list-subscriptions-by-topic</a> command.</p>
+              <pre class="programlisting"><div class="code-btn-container"><div class="btn-copy-code" title="Copy"><awsui-icon name="copy"></awsui-icon></div></div><!--DEBUG: cli ()--><code class="nohighlight"><code class="userinput">aws sns list-subscriptions-by-topic --topic-arn arn:aws:sns:<code class="replaceable">us-east-1</code>:<code class="replaceable">111122223333</code>:<code class="replaceable">my-topic</code></code></code></pre>
+              <p>Amazon SNS returns the following:</p>
+              <pre class="programlisting"><div class="code-btn-container"><div class="btn-copy-code" title="Copy"><awsui-icon name="copy"></awsui-icon></div></div><!--DEBUG: cli ()--><code class=""><span>{</span>
+  "Subscriptions": [
+    <span>{</span>
+        "Owner": "111122223333",
+        "Endpoint": "me@mycompany.com",
+        "Protocol": "email",
+        "TopicArn": "arn:aws:sns:us-east-1:111122223333:my-topic",
+        "SubscriptionArn": "arn:aws:sns:us-east-1:111122223333:my-topic:64886986-bf10-48fb-a2f1-dab033aa67a3"
+    }
+  ]
+}</code></pre>
+            </li><li>
+              <p>(Optional) Publish a test message to the topic using the <a href="https://docs.aws.amazon.com/cli/latest/reference/sns/publish.html">publish</a> command.</p>
+              <pre class="programlisting"><div class="code-btn-container"><div class="btn-copy-code" title="Copy"><awsui-icon name="copy"></awsui-icon></div></div><!--DEBUG: cli ()--><code class="nohighlight"><code class="userinput">aws sns publish --message "Verification" --topic arn:aws:sns:<code class="replaceable">us-east-1</code>:<code class="replaceable">111122223333</code>:<code class="replaceable">my-topic</code></code></code></pre>
+              <p>Amazon SNS returns the following.</p>
+              <pre class="programlisting"><div class="code-btn-container"><div class="btn-copy-code" title="Copy"><awsui-icon name="copy"></awsui-icon></div></div><!--DEBUG: cli ()--><code class=""><span>{</span>
+    "MessageId": "42f189a0-3094-5cf6-8fd7-c2dde61a4d7d"
+}</code></pre>
+            </li><li>
+              <p>Check your email to confirm that you received the message.</p>
+            </li></ol></div>
+         
+
+       
+        <h2 id="alarm-sns-schema">Schema of Amazon SNS notifications when alarms change state</h2>
+
+        <p>When an alarm has tag propagation enabled, these notification schemas include an
+          <code class="code">AlarmTags</code> list and an <code class="code">AlarmTagsStatus</code> field. For how to enable
+          tag propagation and what the status values mean, see <a href="./alarm-tags-in-notifications.html">Alarm tags in action payloads</a>.</p>
+
+        <p>This section lists the schemas of the notifications sent to Amazon SNS topics when alarms
+          change their state.</p>
+
+
+
+
+        <p><b>Schema when a metric alarm changes state</b></p>
+
+        <pre class="programlisting"><div class="code-btn-container"><div class="btn-copy-code" title="Copy"><awsui-icon name="copy"></awsui-icon></div></div><!--DEBUG: cli (json)--><code class="json "><span>{</span>
+  "AlarmName": "string",
+  "AlarmDescription": "string",
+  "AWSAccountId": "string",
+  "AlarmConfigurationUpdatedTimestamp": "string",
+  "NewStateValue": "string",
+  "NewStateReason": "string",
+  "StateChangeTime": "string",
+  "Region": "string",
+  "AlarmArn": "string",
+  "OldStateValue": "string",
+  "OKActions": ["string"],
+  "AlarmActions": ["string"],
+  "InsufficientDataActions": ["string"],
+  "Trigger": <span>{</span>
+    "MetricName": "string",
+    "Namespace": "string",
+    "StatisticType": "string",
+    "Statistic": "string",
+    "Unit": "string or null",
+    "Dimensions": [
+      <span>{</span>
+        "value": "string",
+        "name": "string"
+      }
+    ],
+    "Period": "integer",
+    "EvaluationPeriods": "integer",
+    "DatapointsToAlarm": "integer",
+    "ComparisonOperator": "string",
+    "Threshold": "number",
+    "TreatMissingData": "string",
+    "EvaluateLowSampleCountPercentile": "string or null"
+  },
+  "AlarmTags": [
+    <span>{</span>
+      "Key": "string",
+      "Value": "string"
+    }
+  ],
+  "AlarmTagsStatus": "string"
+}</code></pre>
+
+        <p><b>Schema when a composite alarm changes state</b></p>
+
+        <pre class="programlisting"><div class="code-btn-container"><div class="btn-copy-code" title="Copy"><awsui-icon name="copy"></awsui-icon></div></div><!--DEBUG: cli (json)--><code class="json "><span>{</span>
+  "AlarmName": "string",
+  "AlarmDescription": "string",
+  "AWSAccountId": "string",
+  "NewStateValue": "string",
+  "NewStateReason": "string",
+  "StateChangeTime": "string",
+  "Region": "string",
+  "AlarmArn": "string",
+  "OKActions": [String],
+  "AlarmActions": [String],
+  "InsufficientDataActions": [String],
+  "OldStateValue": "string",
+  "AlarmRule": "string",
+  "TriggeringChildren": [String],
+  "AlarmTags": [
+    <span>{</span>
+      "Key": "string",
+      "Value": "string"
+    }
+  ],
+  "AlarmTagsStatus": "string"
+}
+</code></pre>
+
+        <p><b>Schema when a log alarm changes state</b></p>
+
+        <pre class="programlisting"><div class="code-btn-container"><div class="btn-copy-code" title="Copy"><awsui-icon name="copy"></awsui-icon></div></div><!--DEBUG: cli (json)--><code class="json "><span>{</span>
+  "AlarmName": "string",
+  "AlarmDescription": "string",
+  "AWSAccountId": "string",
+  "AlarmConfigurationUpdatedTimestamp": "string",
+  "NewStateValue": "string",
+  "NewStateReason": "string",
+  "StateChangeTime": "string",
+  "Region": "string",
+  "AlarmArn": "string",
+  "OldStateValue": "string",
+  "OKActions": ["string"],
+  "AlarmActions": ["string"],
+  "InsufficientDataActions": ["string"],
+  "LogGroups": ["string"],
+  "QueryString": "string",
+  "AggregationExpression": "string",
+  "QueryExecutionId": "string",
+  "AlarmTags": [
+    <span>{</span>
+      "Key": "string",
+      "Value": "string"
+    }
+  ],
+  "AlarmTagsStatus": "string"
+}</code></pre>
+
+      <awsdocs-copyright class="copyright-print"></awsdocs-copyright><awsdocs-thumb-feedback right-edge="{{$ctrl.thumbFeedbackRightEdge}}"></awsdocs-thumb-feedback></div><noscript><div><div><div><div id="js_error_message"><p><img src="https://d1ge0kk1l5kms0.cloudfront.net/images/G/01/webservices/console/warning.png" alt="Warning" /> <strong>Javascript is disabled or is unavailable in your browser.</strong></p><p>To use the Amazon Web Services Documentation, Javascript must be enabled. Please refer to your browser's Help pages for instructions.</p></div></div></div></div></noscript><div id="main-col-footer" class="awsui-util-font-size-0"><div id="doc-conventions"><a target="_top" href="/general/latest/gr/docconventions.html">Document Conventions</a></div><div class="prev-next"><div id="previous" class="prev-link" accesskey="p" href="./Acting_Alarm_Changes.html">Acting on alarm changes</div><div id="next" class="next-link" accesskey="n" href="./alarms-and-actions-Lambda.html">Invoke a Lambda function from an alarm</div></div></div><awsdocs-page-utilities></awsdocs-page-utilities></div><div id="quick-feedback-yes" style="display: none;"><div class="title">Did this page help you? - Yes</div><div class="content"><p>Thanks for letting us know we're doing a good job!</p><p>If you've got a moment, please tell us what we did right so we can do more of it.</p><p><awsui-button id="fblink" rel="noopener noreferrer" target="_blank" text="Feedback" click="linkClick($event)" href="https://docs.aws.amazon.com/forms/aws-doc-feedback?hidden_service_name=CloudWatch&amp;topic_url=https://docs.aws.amazon.com/en_us/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html"></awsui-button></p></div></div><div id="quick-feedback-no" style="display: none;"><div class="title">Did this page help you? - No</div><div class="content"><p>Thanks for letting us know this page needs work. We're sorry we let you down.</p><p>If you've got a moment, please tell us how we can make the documentation better.</p><p><awsui-button id="fblink" rel="noopener noreferrer" target="_blank" text="Feedback" click="linkClick($event)" href="https://docs.aws.amazon.com/forms/aws-doc-feedback?hidden_service_name=CloudWatch&amp;topic_url=https://docs.aws.amazon.com/en_us/AmazonCloudWatch/latest/monitoring/Notify_Users_Alarm_Changes.html"></awsui-button></p></div></div></div></body></div></awsdocs-view><div class="page-loading-indicator" id="page-loading-indicator"><awsui-spinner size="large"></awsui-spinner></div></div><div id="tools-panel" dom-region="tools"><awsdocs-tools-panel id="awsdocs-tools-panel"></awsdocs-tools-panel></div></awsui-app-layout><awsdocs-cookie-banner class="doc-cookie-banner"></awsdocs-cookie-banner></div></body></html>

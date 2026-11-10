@@ -68,6 +68,26 @@ test('Azure invoice compiler isolates parser identity, data and native secrets w
  assert.ok(config.resource.terraform_data.review_gate.lifecycle.precondition.every(rule=>!rule.condition.includes('azurerm_container_registry.')),'Review gate must not depend on resources that depend on the review gate');
  assert.throws(()=>azureInvoiceTerraform(project,{...row,provider:'gcp'}));
 });
+test('AWS fixed operating jobs have separate private admin authority and monitored schedules',()=>{
+ const n='block_696e766f696365',files=awsInvoiceTerraform({id:'11111111-1111-4111-8111-111111111111',revision:1,nodes:[],edges:[]},{id:'invoice',address:n,provider:'aws',region:'ap-southeast-2'}),config=JSON.parse(files['main.tf.json']),resources=config.resource;
+ for(const action of ['initialize','maintain','monitor']){
+  const task=resources.aws_ecs_task_definition[n+'_operator_'+action],container=JSON.parse(task.container_definitions).find(row=>row.name==='operator');
+  assert.equal(task.task_role_arn,undefined);assert.equal(task.network_mode,'awsvpc');assert.equal(container.readonlyRootFilesystem,true);assert.deepEqual(container.command,['python','-I','/app/invoice_operator_job.py',action,'--execute']);
+  assert.ok(container.environment.every(row=>!row.name.startsWith('MODEL_')&&!row.name.startsWith('DESTINATION_')&&!row.name.startsWith('PARSER_')));assert.deepEqual(container.secrets.map(row=>row.name),['DATABASE_PASSWORD']);assert.match(container.secrets[0].valueFrom,/master_user_secret\[0\]\.secret_arn.*:password::$/);
+ }
+ const policy=JSON.parse(resources.aws_iam_role_policy[n+'_operator_execution'].policy),secretGrant=policy.Statement.find(row=>row.Action.includes('secretsmanager:GetSecretValue'));
+ assert.match(secretGrant.Resource,/master_user_secret/);assert.ok(policy.Statement.every(row=>!row.Action.some(action=>/^(s3:|bedrock:|rds-db:)/.test(action))));
+ const scheduler=JSON.parse(resources.aws_iam_role_policy[n+'_operator_scheduler'].policy),run=scheduler.Statement.find(row=>row.Action.includes('ecs:RunTask'));assert.equal(run.Resource.length,2);assert.ok(run.Resource.every(value=>!value.includes('_initialize')));assert.ok(run.Condition.ArnEquals['ecs:cluster']);
+ const trust=JSON.parse(resources.aws_iam_role[n+'_operator_scheduler'].assume_role_policy);assert.match(trust.Statement[0].Condition.ArnEquals['aws:SourceArn'],/aws_scheduler_schedule_group/);
+ for(const action of ['maintain','monitor']){const schedule=resources.aws_scheduler_schedule[n+'_'+action];assert.equal(schedule.target.ecs_parameters.network_configuration.assign_public_ip,false);assert.equal(schedule.target.ecs_parameters.enable_execute_command,false);assert.equal(schedule.target.retry_policy.maximum_retry_attempts,2);assert.ok(schedule.target.dead_letter_config.arn);assert.equal(resources.aws_cloudwatch_metric_alarm[n+'_'+action+'_missing'].treat_missing_data,'breaching');}
+ assert.equal(resources.aws_scheduler_schedule[n+'_initialize'],undefined);assert.equal(resources.aws_sqs_queue[n+'_operator_failures'].sqs_managed_sse_enabled,true);
+ assert.equal(resources.aws_cloudwatch_event_target[n+'_operator_stopped'].input,JSON.stringify({format:'invoice-operator-v1',status:'failed',code:'operator_task_stopped'}));
+ const root='applications/'+n+'/';for(const name of ['invoice_operator_job.py','invoice_maintenance.py','invoice_configuration.py']){assert.ok(files[root+name]);assert.ok(files[root+'Dockerfile'].includes(name));}
+});
+test('AWS operating examples follow the selected region instead of retaining Sydney',()=>{
+ const files=awsInvoiceTerraform({id:'11111111-1111-4111-8111-111111111111',revision:1,nodes:[],edges:[]},{id:'invoice',address:'block_696e766f696365',provider:'aws',region:'us-west-2'}),examples=JSON.parse(files['deployment.tfvars.json.example']);
+ assert.equal(examples.region,'us-west-2');assert.ok(examples.operator_alert_topic_arn.startsWith('arn:aws:sns:us-west-2:'));
+});
 
 test('Google invoice compiler binds private SQL proxy, CPU allocation and separate workload authorities',()=>{
  const n='block_696e766f696365',project={id:'11111111-1111-4111-8111-111111111111',revision:1,nodes:[],edges:[]},row={id:'invoice',address:n,provider:'gcp',region:'australia-southeast1'},files=gcpInvoiceTerraform(project,row),config=JSON.parse(files['main.tf.json']);

@@ -195,3 +195,35 @@ build pass. Evidence does not qualify newly rebuilt images or cloud jobs/identit
 Native operator/scheduled retention/monitoring, full state/Spec Kit/registry wiring
 and complete medium conversations remain next. Full 28 and held-out pending.
 Evidence: specs/028-convergence-evaluation/evidence/20261110-invoice-operator-core
+
+
+## 2026-11-10 — Fixed operating jobs and AWS native delivery
+
+Implemented shared explicit initialize/maintain/monitor jobs. Operator credentials
+and authority are separate from API/worker; raw native secret injections become
+private short-lived files. A real prototype check exposed HTTP/JWT coupling, fixed
+by extracting owned deployment/native SQL configuration into a non-HTTP module.
+Monitor is read-only and count-only; unknown/dead/stale work, expired leases and
+retention overdue signal attention. Two-hour work and two-day cleanup-grace thresholds
+are explicit operational defaults, not client SLAs. Deadline is 15 minutes.
+
+Expired-only online maintenance is now admitted by actual SQL tests: live doing
+jobs/leases block deletion, competing submissions wait and survive, exact scoped
+bounded batches report real backlog. This changes only the daily expired-cleanup
+operating boundary; restore/quarantine/reconciliation remain paused and isolated.
+
+AWS native task definitions and schedulers are implemented. Bootstrap remains manual
+and unavailable to the scheduler role. App release requires operating flags, not a
+false claim of actual bootstrap. Exact runbook/request, scoped execution identity,
+private SQL, failure queue and missing-success alarms are emitted. Existing SNS
+notification policy/KMS/subscriptions remain explicit owner-reviewed references.
+Scheduler trust uses the documented schedule-group SourceArn, not schedule ARN.
+Observed primary source bytes and URLs are preserved; no cloud behavior is inferred.
+
+82 API/operator checks, 9 PG18 maintenance checks, 9 native AWS mock plans, 9 exact
+operator-image checks on each PG17/18, 5 exact-image restricted queue checks, 307 JS,
+208 server checks and build pass. Exact image still has 47 open high findings with
+no reported fix, zero critical in cached metadata; no production acceptance.
+Other three native operating wrappers and full state/Spec Kit/registry composition
+remain next. Complete medium conversations, other families and full28/held-out remain
+unfinished. No account operation, publication or deployment. Evidence: specs/028-convergence-evaluation/evidence/20261110-invoice-operating-jobs

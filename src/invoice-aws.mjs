@@ -1,4 +1,5 @@
 import {invoiceBuilder,v,r,l}from'./invoice-builder.mjs';
+import {awsInvoiceOperations}from'./invoice-aws-operations.mjs';
 import {CLOUD_PROVIDER_LOCKS}from'./cloud-provider-locks.mjs';
 
 // Isolated adapter under qualification. Not registered as a complete invoice
@@ -14,9 +15,9 @@ export function awsInvoiceTerraform(project,row,environment='staging'){
  const seed=b.seed;
  for(const key of ['runtime_image','parser_image']){
   input(key,'Published, reviewed immutable image in the emitted ECR repository. Empty during foundation setup.',key==='runtime_image'?'123456789012.dkr.ecr.ap-southeast-2.amazonaws.com/reviewed-runtime@sha256:'+'a'.repeat(64):'123456789012.dkr.ecr.ap-southeast-2.amazonaws.com/reviewed-parser@sha256:'+'b'.repeat(64));
-  b.variable[key].default='';b.variable[key].validation={condition:'${!var.applications_enabled || (can(regex("@sha256:[0-9a-f]{64}$",var.'+key+')) && !endswith(var.'+key+',"@sha256:'+ '0'.repeat(64)+'"))}',error_message:'Application release requires a reviewed immutable image digest.'};
+  b.variable[key].default='';b.variable[key].validation={condition:'${!('+(key==='runtime_image'?'var.applications_enabled || var.operations_enabled':'var.applications_enabled')+') || (can(regex("@sha256:[0-9a-f]{64}$",var.'+key+')) && !endswith(var.'+key+',"@sha256:'+ '0'.repeat(64)+'"))}',error_message:'Application release requires a reviewed immutable image digest.'};
   b.testExpressions[key]='format("123456789012.dkr.ecr.'+(row.region||'ap-southeast-2')+'.amazonaws.com/invoice-%s-'+(key==='runtime_image'?'runtime':'parser')+'@sha256:'+(key==='runtime_image'?'a':'b').repeat(64)+'",substr(sha256('+JSON.stringify(seed)+'),0,12))';
-  b.resource.terraform_data.review_gate.lifecycle.precondition.push({condition:'${!var.applications_enabled || startswith(var.'+key+',format("%s.dkr.ecr.%s.amazonaws.com/%s-'+(key==='runtime_image'?'runtime':'parser')+'@sha256:",var.account_id,var.region,local.name))}',error_message:'Use the package-owned regional ECR repository; a digest from another repository is not an admitted release.'});
+  b.resource.terraform_data.review_gate.lifecycle.precondition.push({condition:'${!('+(key==='runtime_image'?'var.applications_enabled || var.operations_enabled':'var.applications_enabled')+') || startswith(var.'+key+',format("%s.dkr.ecr.%s.amazonaws.com/%s-'+(key==='runtime_image'?'runtime':'parser')+'@sha256:",var.account_id,var.region,local.name))}',error_message:'Use the package-owned regional ECR repository; a digest from another repository is not an admitted release.'});
  }
  b.variable.replay_review_base64={type:'string',default:'',description:'Scoped expiring operator receipt for the real endpoint idempotency contract. Empty disables automatic replay of uncertain deliveries.'};b.examples.replay_review_base64='';
  b.data.aws_caller_identity={destination:{}};b.data.aws_availability_zones={destination:{state:'available',filter:{name:'zone-type',values:['availability-zone']}}};b.data.aws_route53_zone={destination:{zone_id:zone,private_zone:false}};
@@ -85,10 +86,11 @@ export function awsInvoiceTerraform(project,row,environment='staging'){
  }
  b.output.application_url={value:l('public_origin')};b.output.runtime_repository={value:r('aws_ecr_repository',n+'_runtime','repository_url')};b.output.parser_repository={value:r('aws_ecr_repository',n+'_parser','repository_url')};b.output.account_identity={value:l('account_uuid')};
  b.output.operator_deployment={value:{provider:'aws',deploymentId:l('account_uuid'),accountId:l('account_uuid'),namespace:'invoice',tenantId:null,bindings:Object.fromEntries(['api','worker'].map(purpose=>[purpose,{name:l(purpose+'_db_user'),principal:r('aws_iam_role',n+'_'+purpose,'arn')}]))}};
+ awsInvoiceOperations(b,n,{account,region,privateSubnets,trust});
  b.output.database_bootstrap={value:{host:r('aws_db_instance',n,'address'),database:'invoice',adminSecretArn:r('aws_db_instance',n,'master_user_secret[0].secret_arn'),apiRole:l('api_db_user'),workerRole:l('worker_db_user'),apiPrincipal:r('aws_iam_role',n+'_api','arn'),workerPrincipal:r('aws_iam_role',n+'_worker','arn'),destinationSecretArn:r('aws_secretsmanager_secret',n+'_destination','arn')}};
- b.assertions.push(`run "private_database_and_parser" {\n command = plan\n assert {\n condition = aws_db_instance.${n}.publicly_accessible == false && aws_db_instance.${n}.iam_database_authentication_enabled && aws_db_instance.${n}.storage_encrypted && aws_lb.${n}_parser.internal\n error_message = "Database and parser must retain their private, encrypted and IAM boundaries."\n }\n assert {\n condition = aws_ecs_task_definition.${n}_parser[0].task_role_arn == null\n error_message = "Parser must not inherit application data/model authority."\n }\n}\nrun "foundation_only" {\n command = plan\n variables { applications_enabled = false }\n assert {\n condition = length(aws_ecs_service.${n}_api) == 0 && length(aws_ecs_service.${n}_worker) == 0 && length(aws_ecs_service.${n}_parser) == 0\n error_message = "Bootstrap and publication must precede application release."\n }\n}`);
- b.assertions.push(`run "foreign_image_rejected" {\n command = plan\n variables { runtime_image = "123456789012.dkr.ecr.ap-southeast-2.amazonaws.com/foreign@sha256:${'a'.repeat(64)}" }\n expect_failures = [terraform_data.review_gate]\n}\nrun "mutable_image_rejected" {\n command = plan\n variables { runtime_image = "unreviewed:latest" }\n expect_failures = [var.runtime_image]\n}\nrun "foreign_account_rejected" {\n command = plan\n variables {\n account_id = "999999999999"\n applications_enabled = false\n }\n expect_failures = [terraform_data.review_gate]\n}\n`);
- const mock='mock_provider "aws" {\n override_during = plan\n mock_resource "aws_s3_bucket" { defaults = { id="fixture-invoices",arn="arn:aws:s3:::fixture-invoices" } }\n mock_resource "aws_secretsmanager_secret" { defaults = { arn="arn:aws:secretsmanager:ap-southeast-2:123456789012:secret:owned-destination-fixture" } }\n mock_resource "aws_db_instance" { defaults = { address = "fixture.abcdef.ap-southeast-2.rds.amazonaws.com", master_user_secret = [{secret_arn="arn:aws:secretsmanager:ap-southeast-2:123456789012:secret:owned-operator-fixture",kms_key_id="owned-native-key",secret_status="active"}] } }\n mock_resource "aws_cognito_user_pool" { defaults = { id = "ap-southeast-2_Fixture" } }\n mock_resource "aws_cognito_user_pool_client" { defaults = { id = "fixtureclient123" } }\n mock_data "aws_caller_identity" { defaults = { account_id = "123456789012" } }\n mock_data "aws_availability_zones" { defaults = { names = ["ap-southeast-2a","ap-southeast-2b"] } }\n mock_data "aws_route53_zone" { defaults = { name = "example.test.",private_zone = false } }\n}\n';
+ b.assertions.push(`run "private_database_and_parser" {\n command = plan\n assert {\n condition = aws_db_instance.${n}.publicly_accessible == false && aws_db_instance.${n}.iam_database_authentication_enabled && aws_db_instance.${n}.storage_encrypted && aws_lb.${n}_parser.internal\n error_message = "Database and parser must retain their private, encrypted and IAM boundaries."\n }\n assert {\n condition = aws_ecs_task_definition.${n}_parser[0].task_role_arn == null\n error_message = "Parser must not inherit application data/model authority."\n }\n}\nrun "foundation_only" {\n command = plan\n variables {\n applications_enabled = false\n operations_enabled = false\n maintenance_enabled = false\n }\n assert {\n condition = length(aws_ecs_service.${n}_api) == 0 && length(aws_ecs_service.${n}_worker) == 0 && length(aws_ecs_service.${n}_parser) == 0\n error_message = "Bootstrap and publication must precede application release."\n }\n}`);
+ b.assertions.push(`run "foreign_image_rejected" {\n command = plan\n variables { runtime_image = "123456789012.dkr.ecr.ap-southeast-2.amazonaws.com/foreign@sha256:${'a'.repeat(64)}" }\n expect_failures = [terraform_data.review_gate]\n}\nrun "mutable_image_rejected" {\n command = plan\n variables { runtime_image = "unreviewed:latest" }\n expect_failures = [var.runtime_image]\n}\nrun "foreign_account_rejected" {\n command = plan\n variables {\n account_id = "999999999999"\n applications_enabled = false\n operations_enabled = false\n maintenance_enabled = false\n }\n expect_failures = [terraform_data.review_gate]\n}\n`);
+ const mock='mock_provider "aws" {\n override_during = plan\n mock_resource "aws_iam_role" { defaults = { arn="arn:aws:iam::123456789012:role/owned-fixture" } }\n override_resource {\n target = aws_iam_role.'+n+'_api\n values = { arn="arn:aws:iam::123456789012:role/owned-api-fixture" }\n }\n override_resource {\n target = aws_iam_role.'+n+'_worker\n values = { arn="arn:aws:iam::123456789012:role/owned-worker-fixture" }\n }\n mock_resource "aws_s3_bucket" { defaults = { id="fixture-invoices",arn="arn:aws:s3:::fixture-invoices" } }\n mock_resource "aws_secretsmanager_secret" { defaults = { arn="arn:aws:secretsmanager:ap-southeast-2:123456789012:secret:owned-destination-fixture" } }\n mock_resource "aws_db_instance" { defaults = { address = "fixture.abcdef.ap-southeast-2.rds.amazonaws.com", master_user_secret = [{secret_arn="arn:aws:secretsmanager:ap-southeast-2:123456789012:secret:owned-operator-fixture",kms_key_id="owned-native-key",secret_status="active"}] } }\n mock_resource "aws_cognito_user_pool" { defaults = { id = "ap-southeast-2_Fixture" } }\n mock_resource "aws_cognito_user_pool_client" { defaults = { id = "fixtureclient123" } }\n mock_data "aws_caller_identity" { defaults = { account_id = "123456789012" } }\n mock_data "aws_availability_zones" { defaults = { names = ["ap-southeast-2a","ap-southeast-2b"] } }\n mock_data "aws_route53_zone" { defaults = { name = "example.test.",private_zone = false } }\n}\n';
  return b.finish({aws:{region,allowed_account_ids:[account]}},{aws:{source:'hashicorp/aws',version:'6.72.0'}},CLOUD_PROVIDER_LOCKS.aws,mock,AWS_INVOICE_GUIDE);
 }
 
@@ -101,9 +103,11 @@ The public Route53 zone and external accounting system remain existing reference
 
 Run foundation first with applications_enabled=false. Build/scan/publish the exact
 emitted runtime/parser images only after authorization. Bootstrap SQL logins/grants,
-schema and staff memberships with the separate administrator secret; populate the
+schema using the emitted fixed operator initialize task, then admit verified staff
+memberships with the separate operator CLI; populate the
 accounting secret outside Terraform state/source. Then review a plan enabling the
-application release. Native platform secret injection becomes a private temporary
+application release with operations_enabled=true and maintenance_enabled=true.
+Native platform secret injection becomes a private temporary
 file; credential rotation requires an explicit workload rollout. Never put secret
 values in tfvars, source, build context or command arguments.
 
@@ -119,8 +123,15 @@ The storage lifecycle expires current originals after 90 days and noncurrent
 versions after one additional day; physical provider deletion is asynchronous.
 Application payload access expires independently of physical cleanup. The emitted
 OPERATIONS.md and invoice_operator.py implement scoped audit cleanup, restored
-delivery quarantine and explicit completion reconciliation; schedule and monitor
-the separate operator maintenance window before release. Seven-day encrypted database backups may
+delivery quarantine and explicit completion reconciliation. Fixed Fargate operator
+tasks, daily expired-only cleanup and hourly count-only monitoring are emitted;
+review their existing same-account SNS alert route and verify its subscribed
+notification/publish policy before release. Scheduler delivery failures and stopped
+operator failures reach a private encrypted queue; missing successful receipts also
+alarm. No accounting/model/object/task IAM role is given to an operator container.
+The platform execution role can fetch only the managed RDS admin secret password,
+owned image and logs. Bootstrap is manual and never scheduled. Native operating
+checks and alert delivery remain destination acceptance steps. Seven-day encrypted database backups may
 contain older data; review the stated backup/retention policy before deployment.
 No static/mock check establishes an exact deletion deadline or cloud restore.
 

@@ -1,8 +1,9 @@
 """Separate operator authority for retention, recovery and staff membership.
 
 Never import this module into an HTTP handler. Runtime SQL logins cannot perform
-these operations. Pause API and workers before purge/restore/reconciliation; table
-locks and live-job/lease checks supplement that operational boundary, not replace it.
+these operations. Restore/reconciliation require paused, isolated workloads.
+Expired-only cleanup serializes table mutation and refuses live jobs/leases;
+ordinary active and younger operations are preserved during online maintenance.
 All calls require an explicit transaction; receipts contain counts, not documents.
 """
 import hashlib
@@ -41,7 +42,7 @@ def quiescent_rows(conn,account_id,namespace,*,expired=False,restoring=False,lim
         ids=[str(row[0])for row in rows]
         if ids:
             live=cur.execute("SELECT EXISTS(SELECT 1 FROM workflow.procrastinate_jobs WHERE task_name=ANY(%s)AND args->>'operation_id'=ANY(%s)AND status='doing')OR EXISTS(SELECT 1 FROM workflow.operations WHERE id::text=ANY(%s)AND lease_until>clock_timestamp())",([extract,dispatch],ids,ids)).fetchone()[0]
-            if live and not restoring:raise ValueError('Pause workloads and settle or expire live execution leases before maintenance')
+            if live and not restoring:raise ValueError('Settle live execution jobs/leases before expired-record maintenance')
     return ids,extract,dispatch
 
 def purge_expired(conn,*,account_id,namespace='invoice',limit=500):

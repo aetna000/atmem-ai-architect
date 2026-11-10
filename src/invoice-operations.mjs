@@ -67,8 +67,14 @@ lifecycles remove original objects separately; version/noncurrent deletion and n
 provider deletion are asynchronous. Backups may retain expired data for the stated
 backup window. This is not an exact physical-deletion deadline or legal-retention SLA.
 
-Schedule a daily operator maintenance window. Pause uploads/API and workers, allow
-bounded work to settle, then run:
+AWS emits fixed operating jobs and schedules in OPERATING_JOBS.md. Other native
+operator job adapters remain under qualification; do not assume those schedules
+exist. The shared job entrypoint supports preview (without --execute), initialize,
+maintain and monitor using the emitted owned metadata and separate operator identity.
+It is never an API/model endpoint.
+
+For the manual CLI maintenance path, pause uploads/API and workers, allow bounded
+work to settle, then run:
 
     python -I invoice_operator.py purge-expired --connection-file .local/operator-connection.json --deployment-file .local/operator-deployment.json --execute --confirm-workloads-stopped
 
@@ -76,8 +82,13 @@ It removes at most 500 expired operations, their historical suggestions/audit an
 owned queue notifications per transaction. Repeat while moreMayRemain is true.
 Active queue jobs/live leases cause rollback; settle them before retrying. Other
 accounts/namespaces, staff memberships and young records are preserved. Retain the
-count-only maintenance receipt and alert on failure/overdue runs. The generated
-infrastructure does not claim a native scheduler for this operator-owned window.
+count-only maintenance receipt and alert on failure/overdue runs. The fixed
+maintain job additionally bounds a whole execution to twenty 500-record batches,
+reports remaining backlog nonzero and uses the same live-job/lease/ownership guards
+for online expired-only cleanup. Concurrent young submissions are serialized by
+transaction locks and preserved. Restore/reconciliation still require the isolated
+paused boundary. See the provider-specific native job definitions for scheduling;
+a script file alone does not establish that a schedule exists.
 
 Deduplication is scoped to the retained operation lifetime. Do not promise unlimited
 historical deduplication after the client-directed 90-day payload/audit deletion.
