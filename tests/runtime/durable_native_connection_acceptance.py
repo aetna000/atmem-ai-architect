@@ -54,6 +54,12 @@ class NativeDatabaseConnectionTests(unittest.TestCase):
         values=conninfo_to_dict(factory());self.assertEqual(values['host'],'/cloudsql/sample-project:australia-southeast1:architect-db');self.assertEqual(values['user'],'architect-worker@sample-project.iam');self.assertEqual(values['password'],'synthetic-google-access');self.assertEqual(values['sslmode'],'disable')
         with self.assertRaises(ValueError):DatabaseConnection('gcp','127.0.0.1',5432,'architect','worker',lambda:'token',managed_cloudsql=True)
         with self.assertRaises(ValueError):DatabaseConnection('aws',values['host'],5432,'architect','worker',lambda:'token',managed_cloudsql=True)
+    def test_google_private_proxy_is_an_explicit_loopback_only_transport_without_provider_or_host_downgrade(self):
+        values=conninfo_to_dict(gcp_database(connection_name='sample-project:australia-southeast1:architect-db',service_account_email='architect-worker@sample-project.iam.gserviceaccount.com',database='architect',private_proxy=True,credential=lambda:'synthetic-native-iam-token')())
+        self.assertEqual(values['host'],'127.0.0.1');self.assertEqual(values['port'],'5432');self.assertEqual(values['sslmode'],'disable');self.assertEqual(values['user'],'architect-worker@sample-project.iam')
+        for provider,host,port in [('aws','127.0.0.1',5432),('gcp','localhost',5432),('gcp','10.0.0.1',5432),('gcp','127.0.0.1',5433)]:
+            with self.assertRaises(ValueError):DatabaseConnection(provider,host,port,'architect','worker',lambda:'token',managed_proxy_tcp=True)
+        with self.assertRaises(ValueError):gcp_database(connection_name='not-an-owned-instance',service_account_email='architect-worker@sample-project.iam.gserviceaccount.com',database='architect',private_proxy=True)
     def test_ibm_uses_a_distinct_dedicated_database_password_and_native_instance_ca(self):
         passwords=iter(['first-secret-value','second-secret-value']);factory=ibm_database(host='owned.private.databases.appdomain.cloud',port=30324,database='architect',user='architect_worker',ca_file=self.ca,password=lambda:next(passwords))
         first=conninfo_to_dict(factory());second=conninfo_to_dict(factory());self.assertEqual(first['port'],'30324');self.assertEqual(first['sslmode'],'verify-full');self.assertNotEqual(first['password'],second['password']);self.assertEqual(first['ssl_min_protocol_version'],'TLSv1.2');self.assertEqual(first['passfile'],'/dev/null')

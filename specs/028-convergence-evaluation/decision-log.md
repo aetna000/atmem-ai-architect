@@ -264,3 +264,15 @@ drill: ten checks. Four newly rebuilt images pass startup/queue and actual isola
 operator entrypoint checks. Evidence: evidence/20261110-invoice-restore-recovery.
 The earlier checkpoint is preserved. This repairs a component operating gap; it
 does not complete CV-005, native cloud adapter parity or a medium benchmark case.
+
+## 2026-11-10 — Periodic local recovery checkpoints
+
+The owner requested periodic repository backups during implementation. Save local
+Git commits at meaningful work boundaries, including unfinished work with explicit
+status. This checkpoint preserves the Azure emitted-image/parser-plan checks and
+the initial GCP private Cloud SQL proxy adapter. Seven targeted application tests
+and syntax checks passed; retained qualification receipts remain scoped to their
+recorded source hashes. Full generator integration and the repaired 28-project
+evaluation remain in progress. No remote push or deployment was performed.
+
+Evidence: evidence/20261110-generator-backup-checkpoint.

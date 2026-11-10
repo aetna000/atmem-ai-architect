@@ -94,7 +94,7 @@ if __name__=='__main__':
     if args.provider=='aws':runtime_environment['DATABASE_CA_FILE']='/app/rds-global-ca.pem'
     if args.terraform_plan_log:
         plan_path=Path(args.terraform_plan_log).resolve()
-        if args.provider!='aws'or not plan_path.is_relative_to(ROOT/'.local')or plan_path.name!='provider-mocks.log':raise ValueError('Use the exact local qualified AWS native mock plan log')
+        if args.provider not in {'aws','azure'}or not plan_path.is_relative_to(ROOT/'.local')or plan_path.name!='provider-mocks.log':raise ValueError('Use the exact local qualified native mock plan log')
         qualification=json.loads((plan_path.parent/'qualification.json').read_text())
         if qualification.get('passed')is not True or qualification.get('provider')!=args.provider:raise ValueError('Native Terraform qualification must pass first')
         if not any(check.get('name')=='provider-mocks'and check.get('logSha256')==hashlib.sha256(plan_path.read_bytes()).hexdigest()for check in qualification['checks']):raise ValueError('Native plan log no longer matches its receipt')
@@ -102,18 +102,32 @@ if __name__=='__main__':
         for name,digest in source_hashes.items():
             if qualification['sourceHashes'].get(relative+name)!=digest:raise ValueError('Image source is not the exact qualified Terraform package')
         events=[json.loads(line)for line in plan_path.read_text().splitlines()if line.strip()]
-        plans=[event['test_plan']for event in events if event.get('type')=='test_plan'and event.get('@testrun')=='private_database_and_parser']
+        run_name='private_database_and_parser'if args.provider=='aws'else'private_data_and_parser'
+        plans=[event['test_plan']for event in events if event.get('type')=='test_plan'and event.get('@testrun')==run_name]
         if len(plans)!=1:raise ValueError('Expected one admitted application-release mock plan')
-        tasks=[resource for resource in plans[0]['resource_changes']if resource.get('type')=='aws_ecs_task_definition'and resource['address'].endswith('_api[0]')]
+        task_type='aws_ecs_task_definition'if args.provider=='aws'else'azapi_resource'
+        tasks=[resource for resource in plans[0]['resource_changes']if resource.get('type')==task_type and resource['address'].endswith('_api[0]')]
         if len(tasks)!=1:raise ValueError('Expected the exact native API workload')
-        containers=json.loads(tasks[0]['change']['after']['container_definitions']);apis=[container for container in containers if container['name']=='api']
+        def containers(task):
+            after=task['change']['after']
+            return json.loads(after['container_definitions'])if args.provider=='aws'else after['body']['properties']['template']['containers']
+        apis=[container for container in containers(tasks[0])if container['name']=='api']
         if len(apis)!=1:raise ValueError('Expected one native API container')
-        runtime_environment={entry['name']:entry['value']for entry in apis[0]['environment']}
-        worker_tasks=[resource for resource in plans[0]['resource_changes']if resource.get('type')=='aws_ecs_task_definition'and resource['address'].endswith('_worker[0]')]
+        env_key='environment'if args.provider=='aws'else'env'
+        runtime_environment={entry['name']:entry['value']for entry in apis[0][env_key]}
+        worker_tasks=[resource for resource in plans[0]['resource_changes']if resource.get('type')==task_type and resource['address'].endswith('_worker[0]')]
         if len(worker_tasks)!=1:raise ValueError('Expected the exact native worker workload')
-        worker_containers=[container for container in json.loads(worker_tasks[0]['change']['after']['container_definitions'])if container['name']=='worker']
-        if len(worker_containers)!=1 or worker_containers[0].get('command')!=['python','-I','/app/invoice_worker.py']or [secret['name']for secret in worker_containers[0].get('secrets',[])]!=['DESTINATION_TOKEN']:raise ValueError('Native worker command/secret boundary changed')
-        worker_environment={entry['name']:entry['value']for entry in worker_containers[0]['environment']}
+        workers=[container for container in containers(worker_tasks[0])if container['name']=='worker']
+        if len(workers)!=1 or workers[0].get('command')!=['python','-I','/app/invoice_worker.py']:raise ValueError('Native worker command changed')
+        worker=workers[0]
+        secrets=[secret['name']for secret in worker.get('secrets',[])]if args.provider=='aws'else[entry['name']for entry in worker['env']if'secretRef'in entry]
+        if secrets!=['DESTINATION_TOKEN']:raise ValueError('Native worker secret boundary changed')
+        worker_environment={entry['name']:entry['value']for entry in worker[env_key]if'value'in entry}
+        if any(not isinstance(value,str)for value in [*runtime_environment.values(),*worker_environment.values()]):raise ValueError('Native workload environment is unresolved')
+        if args.provider=='azure':
+            for task in [tasks[0],worker_tasks[0]]:
+                configuration=task['change']['after']['body']['properties']['configuration'];registries=configuration['registries']
+                if len(registries)!=1 or not all(container['image'].startswith(registries[0]['server']+'/invoice/')for container in containers(task)):raise ValueError('Registry/image wiring disagrees in the emitted plan')
         plan_evidence={'qualificationSha256':hashlib.sha256((plan_path.parent/'qualification.json').read_bytes()).hexdigest(),'planLogSha256':hashlib.sha256(plan_path.read_bytes()).hexdigest(),'taskAddress':tasks[0]['address'],'boundary':'Actual emitted environment resolved by a native provider-mock Terraform plan; native cloud resources/values remain fixtures.'}
     with tempfile.TemporaryDirectory(prefix='atmem-invoice-image-check-')as scratch:
         config=Path(scratch)/'docker-config';config.mkdir();(config/'config.json').write_text('{}\n');env={'PATH':os.environ.get('PATH',''),'HOME':scratch,'DOCKER_CONFIG':str(config),'DOCKER_HOST':args.docker_host}

@@ -35,7 +35,10 @@ def mounted_secret(path,*,maximum=500):
 def native_database(provider,environment,role):
     if role not in {'api','worker','migration'}:raise ValueError('Use an owned runtime database role')
     env=environment;common={'database':env['DATABASE_NAME'],'role':role}
-    if provider=='gcp':return gcp_database(**common,connection_name=env['DATABASE_CONNECTION_NAME'],service_account_email=env['DATABASE_SERVICE_ACCOUNT'])
+    if provider=='gcp':
+        transport=env.get('DATABASE_TRANSPORT','cloudsql-socket')
+        if transport not in {'cloudsql-socket','cloudsql-private-proxy'}:raise ValueError('Use the owned Cloud SQL transport')
+        return gcp_database(**common,connection_name=env['DATABASE_CONNECTION_NAME'],service_account_email=env['DATABASE_SERVICE_ACCOUNT'],private_proxy=transport=='cloudsql-private-proxy')
     common.update({'host':env['DATABASE_HOST'],'user':env['DATABASE_USER'],'ca_file':env['DATABASE_CA_FILE']})
     if provider=='aws':return aws_database(**common,region=env['REGION'])
     if provider=='azure':return azure_database(**common,managed_identity_client_id=env['WORKLOAD_IDENTITY_CLIENT_ID'])

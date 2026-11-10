@@ -16,11 +16,17 @@ from workflow_errors import TemporaryWork
 class DatabaseCredentialUnavailable(TemporaryWork):pass
 
 class DatabaseConnection:
-    def __init__(self,provider,host,port,database,user,credential,*,ca_file=None,managed_cloudsql=False,role='worker'):
-        if provider not in {'aws','azure','gcp','ibm'}or role not in {'api','worker','migration'}or type(managed_cloudsql)is not bool:raise ValueError('Invalid owned database identity')
+    def __init__(self,provider,host,port,database,user,credential,*,ca_file=None,managed_cloudsql=False,managed_proxy_tcp=False,role='worker'):
+        if provider not in {'aws','azure','gcp','ibm'}or role not in {'api','worker','migration'}or type(managed_cloudsql)is not bool or type(managed_proxy_tcp)is not bool or(managed_cloudsql and managed_proxy_tcp):raise ValueError('Invalid owned database identity')
         if not isinstance(database,str)or not re.fullmatch(r'[a-zA-Z][a-zA-Z0-9_]{0,62}',database)or not isinstance(user,str)or not 1<=len(user.encode('utf-8'))<=63 or any(ord(c)<33 or ord(c)>126 for c in user):raise ValueError('Use exact native database and role names')
         if type(port)is not int or not 1<=port<=65535 or not callable(credential):raise ValueError('Invalid owned database credential source')
-        if managed_cloudsql:
+        if managed_proxy_tcp:
+            # An explicit compiler-owned same-instance proxy, never a fallback
+            # after native TLS failure. The pinned proxy enforces upstream TLS
+            # and private-IP connectivity. No configurable TCP host/port here.
+            if provider!='gcp'or host!='127.0.0.1'or port!=5432 or ca_file is not None:raise ValueError('Use the exact owned Cloud SQL loopback proxy')
+            transport={'sslmode':'disable'}
+        elif managed_cloudsql:
             if provider!='gcp'or not isinstance(host,str)or not re.fullmatch(r'/cloudsql/[a-z][a-z0-9-]{4,28}[a-z0-9]:[a-z]+-[a-z]+[1-9][0-9]?:[a-z][a-z0-9-]{0,62}',host)or len((host+'/.s.PGSQL.'+str(port)).encode())>103 or ca_file is not None:raise ValueError('Use the owned Cloud SQL managed Unix socket with upstream connector TLS')
             transport={'sslmode':'disable'}
         else:
@@ -86,11 +92,11 @@ def google_metadata_token(session=None):
         return value['access_token']
     except Exception:raise DatabaseCredentialUnavailable('Database workload identity is temporarily unavailable')from None
 
-def gcp_database(*,connection_name,service_account_email,database,role='worker',credential=None):
-    if not isinstance(connection_name,str):raise ValueError('Use the owned Cloud SQL connection name')
+def gcp_database(*,connection_name,service_account_email,database,role='worker',credential=None,private_proxy=False):
+    if not isinstance(connection_name,str)or not re.fullmatch(r'[a-z][a-z0-9-]{4,28}[a-z0-9]:[a-z]+-[a-z]+[1-9][0-9]?:[a-z][a-z0-9-]{0,62}',connection_name)or type(private_proxy)is not bool:raise ValueError('Use the owned Cloud SQL connection name and explicit transport')
     if not isinstance(service_account_email,str)or not re.fullmatch(r'[a-z][a-z0-9-]{4,29}@[a-z][a-z0-9-]{4,28}[a-z0-9]\.iam\.gserviceaccount\.com',service_account_email):raise ValueError('Use the owned service account IAM database identity')
     user=service_account_email.removesuffix('.gserviceaccount.com')
-    return DatabaseConnection('gcp','/cloudsql/'+connection_name,5432,database,user,credential or google_metadata_token,managed_cloudsql=True,role=role)
+    return DatabaseConnection('gcp','127.0.0.1'if private_proxy else'/cloudsql/'+connection_name,5432,database,user,credential or google_metadata_token,managed_cloudsql=not private_proxy,managed_proxy_tcp=private_proxy,role=role)
 
 def ibm_database(*,host,port,database,user,ca_file,password,role='worker'):
     if not isinstance(host,str)or not host.endswith('.databases.appdomain.cloud'):raise ValueError('Use the native IBM database endpoint and its instance CA')

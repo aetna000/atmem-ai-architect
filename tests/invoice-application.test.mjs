@@ -5,6 +5,7 @@ import {invoiceDependencies}from'../src/invoice-dependencies.mjs';
 import {pythonContainer}from'../src/python-container.mjs';
 import {createHash}from'node:crypto';
 import {awsInvoiceTerraform}from'../src/invoice-aws.mjs';
+import {azureInvoiceTerraform}from'../src/invoice-azure.mjs';
 
 test('every emitted invoice application contains its local runtime import closure and private parser source',()=>{
  for(const provider of ['aws','azure','gcp','ibm']){
@@ -50,4 +51,18 @@ test('AWS infrastructure keeps parser authority, workload identities, immutable 
  assert.equal(config.data.aws_route53_zone.destination.private_zone,false);assert.equal(Object.keys(config.resource.aws_route53_zone).length,1);assert.ok(config.output.operator_deployment);
  assert.match(files['OPERATIONS.md'],/quarantine-restore/);assert.match(files['tests/invoice.tftest.hcl'],/foreign_image_rejected/);assert.match(files['tests/invoice.tftest.hcl'],/mutable_image_rejected/);
  assert.equal(config.variable.applications_enabled.default,false);assert.ok(config.resource.terraform_data.review_gate.lifecycle.precondition.some(rule=>rule.error_message.includes('ECR')));
+});
+test('Azure invoice compiler isolates parser identity, data and native secrets without provider substitution',()=>{
+ const n='block_696e766f696365',project={id:'11111111-1111-4111-8111-111111111111',revision:1,nodes:[],edges:[]},row={id:'invoice',address:n,provider:'azure',region:'australiaeast'},files=azureInvoiceTerraform(project,row),config=JSON.parse(files['main.tf.json']);
+ assert.deepEqual(Object.keys(config.terraform.required_providers).sort(),['azapi','azuread','azurerm']);assert.equal(config.terraform.required_providers.azapi.version,'2.13.0');assert.ok(Object.keys(config.resource).every(type=>!/^aws_|^google_|^ibm_/.test(type)));
+ const parser=config.resource.azapi_resource[n+'_parser'],api=config.resource.azapi_resource[n+'_api'],worker=config.resource.azapi_resource[n+'_worker'];
+ assert.deepEqual(parser.identity.identity_ids,['${azurerm_user_assigned_identity.'+n+'_pull.id}']);assert.deepEqual(parser.body.properties.configuration.identitySettings,[{identity:'${azurerm_user_assigned_identity.'+n+'_pull.id}',lifecycle:'None'}]);
+ const env=container=>Object.fromEntries(container.env.map(entry=>[entry.name,entry.value]));
+ const parserEnv=env(parser.body.properties.template.containers[0]);assert.equal(parserEnv.PARSER_AUTH_MODE,'entra-workload');assert.equal(parserEnv.PARSER_WORKER_PRINCIPAL_ID,'${azurerm_user_assigned_identity.'+n+'_worker.principal_id}');assert.equal(parser.body.properties.configuration.ingress.external,false);
+ assert.ok(Object.keys(parserEnv).every(key=>key==='PORT'||key.startsWith('PARSER_')));
+ const apiEnv=env(api.body.properties.template.containers[0]);assert.equal(apiEnv.MODEL_RESOURCE_ID,undefined);assert.equal(apiEnv.DESTINATION_TOKEN,undefined);
+ const workerContainer=worker.body.properties.template.containers[0];assert.deepEqual(workerContainer.env.find(entry=>entry.name==='DESTINATION_TOKEN'),{name:'DESTINATION_TOKEN',secretRef:'accounting-token'});assert.equal(worker.body.properties.configuration.secrets[0].value,undefined);assert.equal(config.resource.azurerm_key_vault_secret,undefined);
+ assert.equal(config.resource.azurerm_postgresql_flexible_server[n].authentication.password_auth_enabled,false);assert.equal(config.resource.azurerm_storage_account[n].public_network_access_enabled,false);assert.equal(config.resource.azuread_application_app_role[n+'_parser'].value,'Parser.Invoke');
+ assert.ok(config.resource.terraform_data.review_gate.lifecycle.precondition.every(rule=>!rule.condition.includes('azurerm_container_registry.')),'Review gate must not depend on resources that depend on the review gate');
+ assert.throws(()=>azureInvoiceTerraform(project,{...row,provider:'gcp'}));
 });
