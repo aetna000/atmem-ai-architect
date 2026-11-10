@@ -1,9 +1,11 @@
 # AWS per-file document execution
 
-`enterprise_aws_jobs.py` currently emits an offline-validated task-definition
-contract. It is **not an operational launcher**. The native controller, transfer
-CLI, durable recovery integration, host provisioning/verification and generated
-private export remain unfinished. It does not call AWS or enable a capability.
+`enterprise_aws_jobs.py` now implements the task-definition contract and native
+ECS controller. `enterprise_aws_objects.py` and `enterprise_aws_transfer.py` supply
+conditional storage operations and trusted transfer stages. These are **not a
+complete production composition**: host provisioning/verification, Terraform and
+generated private export wiring remain unfinished. No cloud account was accessed
+in qualification and no new capability/default worker is enabled.
 
 The design uses Linux EC2/ECS for this parser workload. Fargate requires `awsvpc`
 and does not support per-container `disableNetworking`; substituting it would lose
@@ -29,11 +31,31 @@ placement attribute. A matching attribute alone does not attest host settings.
 The controller must reject missing/stale host evidence before sending documents.
 See [AWS LogConfiguration](https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_LogConfiguration.html).
 
-The future controller must also bind the actual destination/worker identity, use
-conditional, owner-checked S3 byte operations, commit cleanup intent before remote
-work, fence result consumption, handle lost RunTask/registration acknowledgements,
-wait for task termination and recover task-definition/object cleanup after restart.
-Provisioning must restrict host identity, IMDS, image pulls, storage, placement,
+The controller binds the selected destination/worker configuration, requires the
+owned host verifier before uploading, commits SQL cleanup intent before mutation,
+uses a unique RunTask client token and fences every result with the live source
+and execution lease. Exact cluster, task family, startedBy and task identity must
+match; all three containers must exit successfully before text is consumed.
+
+S3 operations specify the expected bucket owner. Before reading/writing/deleting,
+they check native bucket placement and reject enabled or suspended versioning.
+Writes require a missing key, explicit AES256 encryption and SHA256 checksum.
+Downloads use the acknowledged ETag as a conditional token; the complete byte
+digest/MIME/request binding is independently checked. ETag is not assumed to be a
+content digest. Oversize, partial, encrypted-policy-mismatched or versioned
+responses are rejected and streams are closed. The transfer CLI writes no document
+content or traceback into logs.
+
+Cleanup discovers both desired RUNNING and STOPPED tasks for the exact family,
+checks ownership before stopping, polls for termination, deregisters/deletes owned
+task definitions and attempts both object deletions even after another cleanup
+failure. Accepted task-definition deletion is not a claim of immediate native
+metadata erasure. Failed cleanup withholds success and retains retry debt; uncertain
+acknowledgements retain the shared ledger's settlement probes after restart. See
+`private-knowledge-document-recovery.md`. Native listing is eventually consistent;
+local fixture evidence does not establish a maximum retention or termination SLA.
+
+Provisioning must still restrict host identity, IMDS, image pulls, storage, placement,
 retention and recovery; never expose application/source/model credentials to the
 parser host. Agent cleanup timing is not a strict deletion guarantee. Shared-kernel
 EC2 containers are not a VM security boundary; the
@@ -41,8 +63,16 @@ EC2 containers are not a VM security boundary; the
 explicitly discusses cross-task/instance credential risks. Host hardening and native
 isolation checks remain acceptance requirements.
 
-Eight offline tests validate the emitted request against the pinned official
-botocore1.43.123 ECS service model. Separate enum recursion catches values the
-SDK's ordinary parameter validator accepts. The original invalid logging enum is
-preserved with the failed request source. This is structural and contract evidence,
-not a launched task, native security verification or complete-project qualification.
+The AWS image passes 95 enterprise policies and 25 AWS contract tests (including
+the original eight task-definition checks), plus 88 SQL tests on each PostgreSQL
+version. Additional recovery runs contain three actual SQL/process-death tests and
+eight offline contract checks per version. They exercise the installed image,
+ordinary roles and a real abrupt child-process exit; ECS/S3 and host policy remain
+explicit fixtures. Emitted stages also process real DOCX and scanned PDF in
+restricted Linux, with actual CHOWN and separate read-only/writable volumes.
+
+Native request checks use the pinned official botocore1.43.123 model plus separate
+enum recursion. The original invalid logging enum is preserved. None of these
+results proves ECS scheduling, account IAM, host settings, native VM/task shutdown,
+security acceptance or whole-project qualification. The rebuilt AWS image has not
+been vulnerability-rescanned; existing security acceptance remains open.
