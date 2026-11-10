@@ -15,10 +15,11 @@ from enterprise_aws_objects import S3DocumentObjects
 from enterprise_document_job import request,result
 from enterprise_document_jobs import DocumentJobLedger
 from enterprise_sources import SourceUnavailable
+from enterprise_aws_hosts import EcsHostPolicy,VerifiedHosts
 
 
 def configuration(value):
-    fields={'format','accountId','region','bucket','clusterArn','hostPolicySha256','workerRoleArn',
+    fields={'format','accountId','region','bucket','clusterArn','hostPolicySha256','hostDocumentArn','hostDocumentHash','hostDocumentVersion','workerRoleArn',
             'transferRoleArn','executionRoleArn','parserImage','transferImage'}
     if not isinstance(value,dict)or set(value)!=fields or value['format']!='enterprise-aws-document-job-v1':
         raise ValueError('Use the exact owned AWS document-job configuration')
@@ -30,6 +31,10 @@ def configuration(value):
         raise ValueError('Use the reviewed dedicated-host policy fingerprint')
     account,region=value['accountId'],value['region']
     prefix='arn:aws:'
+    if (not isinstance(value['hostDocumentArn'],str)or not re.fullmatch(re.escape(prefix+'ssm:'+region+':'+account+':document/')+r'[A-Za-z0-9_.-]{3,128}',value['hostDocumentArn'])or
+        not isinstance(value['hostDocumentHash'],str)or not re.fullmatch('[0-9a-f]{64}',value['hostDocumentHash'])or
+        not isinstance(value['hostDocumentVersion'],str)or not re.fullmatch('[1-9][0-9]{0,8}',value['hostDocumentVersion'])):
+        raise ValueError('Use the exact owned version/hash-bound host document')
     for key in ['workerRoleArn','transferRoleArn','executionRoleArn']:
         if not isinstance(value[key],str)or not re.fullmatch(re.escape(prefix+'iam::'+account+':role/')+r'[A-Za-z0-9_+=,.@/-]{1,128}',value[key]):
             raise ValueError('Use explicit same-account owned roles')
@@ -122,8 +127,9 @@ class EcsDocumentApi:
 
 
 class EcsDocuments:
-    def __init__(self,config,*,host_check,api=None,objects=None,ledger=None,deadline=140,poll_seconds=1):
+    def __init__(self,config,*,host_check=None,api=None,objects=None,ledger=None,deadline=140,poll_seconds=1):
         self.config=MappingProxyType(configuration(config))
+        if host_check is None:host_check=EcsHostPolicy(dict(self.config))
         if not callable(host_check):raise ValueError('Supply the owned dedicated-host verifier')
         if type(deadline)is not int or not 1<=deadline<=140 or type(poll_seconds)not in {int,float}or not .01<=poll_seconds<=2:
             raise ValueError('Use bounded document deadlines')
@@ -163,7 +169,9 @@ class EcsDocuments:
         identifier=uuid.uuid4().hex+uuid.uuid4().hex;metadata=request(raw,mime,identifier)
         guard()
         if self.ledger is None:raise SourceUnavailable('document_job_recovery_required')
-        self.host_check(dict(self.config));guard()
+        hosts=self.host_check(dict(self.config));guard()
+        if not isinstance(hosts,VerifiedHosts):raise SourceUnavailable('document_host_verification_required')
+        hosts.placement(dict(self.config))
         lease=self.ledger.allocate(identifier);known=None;definition=None;started=time.monotonic()
         def check():self.ledger.guard(lease);guard();self.ledger.guard(lease)
         try:
@@ -172,7 +180,8 @@ class EcsDocuments:
             registered=self.api.call('register_task_definition',**task_definition(dict(self.config),metadata,condition))
             definition=self.definition(identifier,registered.get('taskDefinition',{}).get('taskDefinitionArn'));check()
             launched=self.api.call('run_task',cluster=self.cluster,taskDefinition=definition,launchType='EC2',count=1,
-                clientToken=identifier,startedBy=identifier,enableExecuteCommand=False,enableECSManagedTags=False)
+                clientToken=identifier,startedBy=identifier,enableExecuteCommand=False,enableECSManagedTags=False,
+                placementConstraints=hosts.placement(dict(self.config)))
             if launched.get('failures')or len(launched.get('tasks',[]))!=1:raise SourceUnavailable('document_job_unavailable')
             known=self.task(identifier,launched['tasks'][0],definition);self.ledger.advance(lease,'job_running')
             while True:
@@ -183,6 +192,7 @@ class EcsDocuments:
                 task=observed['tasks'][0]
                 if self.task(identifier,task,definition)!=known:raise SourceUnavailable('document_job_unavailable')
                 if task.get('lastStatus')=='STOPPED':
+                    if task.get('containerInstanceArn')not in {arn for arn,_ in hosts.members}:raise SourceUnavailable('document_host_verification_changed')
                     containers=task.get('containers',[])
                     if (len(containers)!=3 or {v.get('name')for v in containers}!={'download','parser','upload'}or
                         any(v.get('lastStatus')!='STOPPED'or type(v.get('exitCode'))is not int or v['exitCode']!=0 for v in containers)):

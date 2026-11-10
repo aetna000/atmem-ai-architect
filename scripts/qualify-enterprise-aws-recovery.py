@@ -26,7 +26,7 @@ def qualify(args):
     hashes={name:hashlib.sha256((ROOT/name).read_bytes()).hexdigest()for name in names}
     hashes[str(Path(__file__).resolve().relative_to(ROOT))]=hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
     payload={name:base64.b64encode((ROOT/name).read_bytes()).decode()for name in names}
-    out.mkdir(parents=True);checks=[];passed=False
+    out.mkdir(parents=True);checks=[];passed=False;native_inputs={}
     env={'PATH':os.environ.get('PATH',''),'HOME':str(out),'DOCKER_HOST':args.docker_host,'DOCKER_CONFIG':str(ROOT/'.local/qualification-docker-config')}
     def run(label,command,data=None):
         done=subprocess.run(['docker',*command],env=env,input=data,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=90)
@@ -58,14 +58,47 @@ entry=root/'tests/runtime/enterprise_aws_document_postgres.py';sys.argv=[str(ent
                 '--memory','512m','--pids-limit','96','--cap-drop','ALL','--security-opt','no-new-privileges','--network','container:'+observed['Id'],
                 '--env','ATMEM_WORKFLOW_TEST_CONFIG=/tmp/workspace/fixture.json','-i',core['imageId'],'python','-I','-c',loader],json.dumps(private).encode())
             if not re.search(rb'Ran 11 tests in [^\n]+\n\nOK\s*$',output):raise ValueError('Unexpected AWS recovery inventory')
+        for index,directory in enumerate(args.host_infrastructure):
+            directory=directory.resolve()
+            if not directory.is_relative_to(ROOT/'.local'):raise ValueError('Use owned native provider evidence')
+            native=json.loads((directory/'receipt.json').read_text())
+            if not native['passed']or native['cloudOperations']:raise ValueError('Require passed provider mocks')
+            for name,digest in native['sourceHashes'].items():
+                if hashlib.sha256((ROOT/name).read_bytes()).hexdigest()!=digest:raise ValueError('Native provider source drift')
+            for name,digest in native['emittedHashes'].items():
+                if hashlib.sha256((directory/name).read_bytes()).hexdigest()!=digest:raise ValueError('Native provider output drift')
+            events=[json.loads(line)for line in (directory/'mock-plans.log').read_text().splitlines()]
+            summary=[event['test_summary']for event in events if event.get('test_summary')]
+            plans=[event['test_plan']for event in events if event.get('@testrun')=='fixed_host_verification'and event.get('test_plan')]
+            if (len(summary)!=1 or summary[0].get('status')!='pass'or summary[0].get('passed')!=6 or
+                any(summary[0].get(key,0)for key in ['failed','errored','skipped'])or len(plans)!=1):raise ValueError('Require all six native mocks and the actual positive plan')
+            plan=plans[0];configuration=plan['output_changes']['host_verification']['after']
+            documents=[json.loads(row['change']['after']['content'])for row in plan['resource_changes']if row['type']=='aws_ssm_document']
+            if len(documents)!=1 or json.loads((directory/'runtime-configurations.json').read_text())!=[configuration]:raise ValueError('Native runtime configuration drift')
+            for name in ['receipt.json','mock-plans.log','runtime-configurations.json']:
+                native_inputs[str((directory/name).relative_to(ROOT))]=hashlib.sha256((directory/name).read_bytes()).hexdigest()
+            proof={'configuration':configuration,'document':documents[0],
+                'hashes':{name:core['sourceHashes']['src/runtime/'+name]for name in ['enterprise_aws_hosts.py','enterprise_aws_host_probe.py']}}
+            consume="""import hashlib,json,sys
+from pathlib import Path
+sys.path.insert(0,'/app');import enterprise_aws_hosts as hosts
+value=json.load(sys.stdin)
+for name,digest in value['hashes'].items():assert hashlib.sha256((Path(hosts.__file__).parent/name).read_bytes()).hexdigest()==digest
+assert hosts.command_document(value['configuration'])==value['document']
+print(json.dumps({'runtimeDocumentMatches':True,'sourceHashesMatch':True}))
+"""
+            output=run('native-host-document-'+str(index),['run','--rm','--platform','linux/amd64','--network','none','--read-only',
+                '--memory','128m','--pids-limit','32','--cap-drop','ALL','--security-opt','no-new-privileges','-i',core['imageId'],'python','-I','-c',consume],json.dumps(proof).encode())
+            if json.loads(output)!={'runtimeDocumentMatches':True,'sourceHashesMatch':True}:raise ValueError('Installed runtime did not verify native document')
         if any(hashlib.sha256((ROOT/name).read_bytes()).hexdigest()!=digest for name,digest in hashes.items()):raise ValueError('Recovery qualification sources changed')
         passed=True
     finally:
         (out/'receipt.json').write_text(json.dumps({'recordedAt':datetime.now(timezone.utc).isoformat(),'passed':passed,'checks':checks,'sourceHashes':hashes,
+            'nativeInputHashes':native_inputs,'nativeHostDocumentsConsumed':len(args.host_infrastructure),
             'imageId':core['imageId'],'cloudOperations':False,'testsPerPostgresVersion':11,'nativeSqlRecoveryTestsPerVersion':3,'additionalOfflineContractTestsPerVersion':8,
             'scope':'Installed Linux AWS controller with real owned PostgreSQL17/18 and abrupt child process death. ECS/S3/host-policy HTTP are fixtures. Not native account behavior, host hardening or complete project acceptance.'},indent=2)+'\n')
 
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser();parser.add_argument('--docker-host',required=True);parser.add_argument('--core-receipt',type=Path,required=True)
-    parser.add_argument('--out',type=Path,required=True);qualify(parser.parse_args())
+    parser.add_argument('--out',type=Path,required=True);parser.add_argument('--host-infrastructure',type=Path,nargs='*',default=[]);qualify(parser.parse_args())

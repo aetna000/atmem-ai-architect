@@ -17,6 +17,7 @@ import gzip
 def config():
     return {'format':'enterprise-aws-document-job-v1','accountId':'123456789012','region':'ap-southeast-2',
             'bucket':'owned-document-bytes','clusterArn':'arn:aws:ecs:ap-southeast-2:123456789012:cluster/document-parser','hostPolicySha256':'e'*64,
+            'hostDocumentArn':'arn:aws:ssm:ap-southeast-2:123456789012:document/owned-document-host-probe','hostDocumentHash':'f'*64,'hostDocumentVersion':'1',
             'workerRoleArn':'arn:aws:iam::123456789012:role/question-worker',
             'transferRoleArn':'arn:aws:iam::123456789012:role/document-transfer',
             'executionRoleArn':'arn:aws:iam::123456789012:role/document-image-pull',

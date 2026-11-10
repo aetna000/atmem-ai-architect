@@ -25,6 +25,7 @@ CORE = ['enterprise_identity.py', 'enterprise_sources.py', 'enterprise_knowledge
         'enterprise_configuration.py', 'enterprise_native.py', 'enterprise_operator.py', 'workflow_connection.py', 'workflow_errors.py',
         'enterprise_google_jobs.py', 'enterprise_google_transfer.py',
         'enterprise_aws_jobs.py', 'enterprise_aws_objects.py', 'enterprise_aws_transfer.py',
+        'enterprise_aws_hosts.py', 'enterprise_aws_host_probe.py',
         'enterprise_document_jobs.py', 'enterprise_document_jobs_schema.sql',
         'aws_json_model.py', 'azure_structured.py', 'gcp_structured.py', 'ibm_structured.py',
         'structured_output.py', 'structured_http.py', 'policy_review.py',
@@ -64,7 +65,7 @@ def qualify(args):
              ROOT / 'tests/runtime/durable_postgres_acceptance.py', ROOT / 'tests/runtime/durable_fixture_tasks.py']
     tests += [ROOT / 'tests/runtime/enterprise_deployment_fixture.py']
     if args.provider=='aws':
-        tests += [ROOT/'tests/runtime/enterprise_aws_jobs_contract.py',ROOT/'tests/runtime/enterprise_aws_execution_contract.py']
+        tests += [ROOT/'tests/runtime/enterprise_aws_jobs_contract.py',ROOT/'tests/runtime/enterprise_aws_execution_contract.py',ROOT/'tests/runtime/enterprise_aws_hosts_contract.py']
     helper_names = ['durable_workflow.py', 'workflow_contract.py']
     sources = [*[runtime / name for name in CORE + helper_names], *tests,
                runtime / lock_name, runtime / 'enterprise-runtime.Dockerfile', runtime / 'python-container-lock.json',
@@ -74,7 +75,9 @@ def qualify(args):
                      'tests/fixtures/providers/google-batch-v1-discovery-20261111.provenance.json']
     if args.provider=='aws':
         schema_assets += ['tests/fixtures/providers/aws-ecs-2014-11-13-botocore-1.43.123.json.gz',
-                          'tests/fixtures/providers/aws-ecs-2014-11-13-botocore-1.43.123.json.provenance.json']
+                          'tests/fixtures/providers/aws-ecs-2014-11-13-botocore-1.43.123.json.provenance.json',
+                          'tests/fixtures/providers/aws-ssm-2014-11-06-botocore-1.43.123.json.gz',
+                          'tests/fixtures/providers/aws-ssm-2014-11-06-botocore-1.43.123.json.provenance.json']
     sources += [ROOT / name for name in schema_assets]
     hashes = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sources}
     checks, image, passed = [], None, False
@@ -162,6 +165,10 @@ sys.path.insert(0,'/app')
                 result=run('aws-document-contracts', [*restricted,'--network','none',image,'python','-I','-c',
                     loader+"import runpy;sys.argv=["+repr(entry)+",'-v'];runpy.run_path("+repr(entry)+",run_name='__main__')"],data=json.dumps(payload).encode())
                 if not re.search(rb'Ran 25 tests in [^\n]+\n\nOK\s*$',result):raise ValueError('Unexpected AWS document contract inventory')
+                entry='/tmp/workspace/tests/runtime/enterprise_aws_hosts_contract.py'
+                result=run('aws-host-contracts', [*restricted,'--network','none',image,'python','-I','-c',
+                    loader+"import runpy;sys.argv=["+repr(entry)+",'-v'];runpy.run_path("+repr(entry)+",run_name='__main__')"],data=json.dumps(payload).encode())
+                if not re.search(rb'Ran 15 tests in [^\n]+\n\nOK\s*$',result):raise ValueError('Unexpected AWS host contract inventory')
             for version in [17, 18]:
                 name = 'atmem-durable-qualification' + ('-pg18' if version == 18 else '')
                 # Select exactly the existing owned fixture, never another DB.
@@ -202,6 +209,7 @@ print(json.dumps({'postgresVersionNum':version}))
                 'passed': passed, 'imageId': image, 'checks': checks, 'sourceHashes': hashes,
                 'provider':args.provider,'packages': len(lock['sources']), 'policyTests': 95, 'sqlTestsPerVersion': sum(SQL.values()),
                 'awsDocumentContractTests':25 if args.provider=='aws'else 0,
+                'awsHostContractTests':15 if args.provider=='aws'else 0,
                 'postgresVersions': [17, 18], 'securityAccepted': False, 'cloudOperations': False,
                 'scope': 'Clean Linux private application/factory/operator dependencies. Actual crypto/SQL/Procrastinate/bootstrap/enrollment/revocation; native model serializers with scripted HTTP. Assembled HTTP API/worker tests run separately on the host. No native account/model quality, per-file cloud launcher/isolation, complete-project or deployment acceptance.'}, indent=2) + '\n')
 

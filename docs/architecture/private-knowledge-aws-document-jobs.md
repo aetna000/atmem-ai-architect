@@ -3,7 +3,7 @@
 `enterprise_aws_jobs.py` now implements the task-definition contract and native
 ECS controller. `enterprise_aws_objects.py` and `enterprise_aws_transfer.py` supply
 conditional storage operations and trusted transfer stages. These are **not a
-complete production composition**: host provisioning/verification, Terraform and
+complete production composition**: host-pool provisioning, remaining Terraform and
 generated private export wiring remain unfinished. No cloud account was accessed
 in qualification and no new capability/default worker is enabled.
 
@@ -25,11 +25,32 @@ no-new-privileges, bounded temporary storage and disabled networking. The transf
 task role is distinct from the question worker and image-pull execution role.
 
 The native API does not accept Docker's `none` logging driver. Omitted container
-logging inherits the daemon default, so the future dedicated host must set and
-verify a `none` default before advertising its policy fingerprint as an ECS
-placement attribute. A matching attribute alone does not attest host settings.
-The controller must reject missing/stale host evidence before sending documents.
+logging inherits the daemon default, so the dedicated host must set and verify a
+`none` default. `EcsHostPolicy` now implements native ECS/SSM inspection rather than
+accepting a scheduling label as proof. The fixed command document has no caller
+parameters and its actual content, version and native SHA256 hash are bound before
+submission. A fresh command invocation checks each connected selected host. The
+probe checks daemon settings, running agent configuration, default bridge, builtin
+seccomp and first-position IPv4/IPv6 metadata-blocking rules and forwarding hooks.
+Docker inspection explicitly uses the local Unix socket, ignoring a saved remote
+Docker context. It prints only a bound policy/cluster/boot observation.
+
+The controller requires a short-lived typed host proof and further constrains
+RunTask to those exact EC2 instance IDs. It verifies the final container-instance
+identity before consuming output. Newly joined hosts cannot enter this launch
+through the broader policy label. Missing, expired, unstructured or mismatched
+proofs reject work before upload. This is point-in-time inspection of a trusted
+host, not cryptographic kernel attestation or a guarantee against later root drift.
 See [AWS LogConfiguration](https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_LogConfiguration.html).
+
+`enterprise-aws-host-infrastructure.mjs` emits the fixed SSM document and one
+additive policy on the existing worker. It references an explicit existing parser
+cluster and does not provision/adopt a host pool. SendCommand is limited to this
+document and instances tagged with the exact policy fingerprint. No document
+mutation, caller-selected shell command or Parameter Store read is granted.
+GetCommandInvocation's native wildcard resource limitation remains explicit.
+The native policy/model contract is documented in the
+[SSM IAM guidance](https://docs.aws.amazon.com/systems-manager/latest/userguide/security_iam_id-based-policy-examples.html).
 
 The controller binds the selected destination/worker configuration, requires the
 owned host verifier before uploading, commits SQL cleanup intent before mutation,
@@ -63,15 +84,25 @@ EC2 containers are not a VM security boundary; the
 explicitly discusses cross-task/instance credential risks. Host hardening and native
 isolation checks remain acceptance requirements.
 
-The AWS image passes 95 enterprise policies and 25 AWS contract tests (including
+Final-source Linux SQL requalification is currently pending repair of the owned
+test VM filesystem; its DiskFull failure is retained. Earlier application checks
+and current host checks are recorded separately. The AWS runtime check inventory
+is 95 enterprise policies and 25 AWS contract tests (including
 the original eight task-definition checks), plus 88 SQL tests on each PostgreSQL
-version. Additional recovery runs contain three actual SQL/process-death tests and
+version, and 15 host-verifier tests. Additional recovery runs contain three actual SQL/process-death tests and
 eight offline contract checks per version. They exercise the installed image,
 ordinary roles and a real abrupt child-process exit; ECS/S3 and host policy remain
 explicit fixtures. Emitted stages also process real DOCX and scanned PDF in
 restricted Linux, with actual CHOWN and separate read-only/writable volumes.
 
-Native request checks use the pinned official botocore1.43.123 model plus separate
+Two exact compiler packages pass six native Terraform mock plans each. Independent
+consumption verifies the actual positive output and resolved command against the
+runtime, including identical embedded Python and policy arguments; installed-image
+checks also consume those native document bytes. Hostile source identifiers remain
+literal evidence. The original forwarding-hook gap is preserved with its failing
+regression and old probe source.
+
+Native request checks use the pinned official botocore1.43.123 ECS/SSM models plus separate
 enum recursion. The original invalid logging enum is preserved. None of these
 results proves ECS scheduling, account IAM, host settings, native VM/task shutdown,
 security acceptance or whole-project qualification. The rebuilt AWS image has not

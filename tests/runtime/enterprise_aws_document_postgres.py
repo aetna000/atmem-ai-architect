@@ -15,7 +15,7 @@ from enterprise_configuration import session_domain
 from enterprise_deployment_fixture import fresh_database,metadata
 from enterprise_operator import activate
 from enterprise_aws_jobs import EcsDocuments
-from enterprise_aws_execution_contract import Ecs,Objects
+from enterprise_aws_execution_contract import Ecs,Objects,verified_hosts
 from enterprise_aws_jobs_contract import config,AwsDocumentTaskContract
 from enterprise_sources import SourceUnavailable
 
@@ -30,7 +30,7 @@ class DurableAwsDocuments(unittest.TestCase):
         self.auth=EnterpriseAuthStore(lambda:psycopg.connect(self.database['worker']),self.database['key'],company_domain=session_domain(self.owned))
         self.api=Ecs(self.model);self.objects=Objects();self.runner=self.adapter()
     def adapter(self):
-        runner=EcsDocuments(config(),api=self.api,objects=self.objects,host_check=lambda value:None,poll_seconds=.01)
+        runner=EcsDocuments(config(),api=self.api,objects=self.objects,host_check=verified_hosts,poll_seconds=.01)
         runner.attach_runtime(self.auth,self.account);return runner
     def rows(self):
         with psycopg.connect(self.database['owner'],row_factory=dict_row)as conn:return conn.execute('SELECT * FROM enterprise_document_jobs.jobs WHERE account_id=%s',(self.account,)).fetchall()
@@ -59,7 +59,7 @@ value=json.load(sys.stdin);sys.path[:0]=[value['runtime'],value['tests'],str(Pat
 import psycopg
 from enterprise_auth_store import EnterpriseAuthStore
 from enterprise_aws_jobs import EcsDocuments
-from enterprise_aws_execution_contract import Ecs,Objects
+from enterprise_aws_execution_contract import Ecs,Objects,verified_hosts
 from enterprise_aws_jobs_contract import config,AwsDocumentTaskContract
 AwsDocumentTaskContract.setUpClass()
 class Crash(Ecs):
@@ -73,7 +73,7 @@ class Remote(Objects):
  def put(self,*args):
   result=super().put(*args);Path(value['remote']).write_bytes(args[2]);return result
 auth=EnterpriseAuthStore(lambda:psycopg.connect(value['database']),value['key'].encode(),company_domain=value['domain'])
-runner=EcsDocuments(config(),api=Crash(AwsDocumentTaskContract.model),objects=Remote(),host_check=lambda config:None)
+runner=EcsDocuments(config(),api=Crash(AwsDocumentTaskContract.model),objects=Remote(),host_check=verified_hosts)
 runner.attach_runtime(auth,value['account']);runner.from_source(b'OWNED SYNTHETIC INPUT','text/plain',lambda:None)
 """
             private={'runtime':str(Path(sys.modules['enterprise_aws_jobs'].__file__).parent),'tests':str(Path(__file__).parent),

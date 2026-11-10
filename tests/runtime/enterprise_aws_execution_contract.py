@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import sys
 import tempfile
+import time
 import unittest
 from unittest.mock import patch
 ROOT=Path(__file__).resolve().parents[2]
@@ -18,6 +19,11 @@ from enterprise_document_job import request
 from enterprise_sources import SourceUnavailable,SourceDenied
 from enterprise_aws_jobs_contract import config,native_check,AwsDocumentTaskContract
 from enterprise_google_jobs_acceptance import MemoryLedger
+from enterprise_aws_hosts import VerifiedHosts
+
+
+def verified_hosts(value):
+    return VerifiedHosts(value['hostPolicySha256'],(('arn:aws:ecs:'+value['region']+':'+value['accountId']+':container-instance/document-parser/'+'a'*32,'i-'+'a'*17),),time.monotonic()+120)
 
 
 def envelope(raw,identifier):
@@ -51,7 +57,7 @@ class Ecs:
             return {'taskDefinition':{'taskDefinitionArn':self.definition}}
         if operation=='run_task':
             self.task={'taskArn':prefix+'task/document-parser/'+'f'*32,'clusterArn':owned['clusterArn'],
-                       'startedBy':values['startedBy'],'taskDefinitionArn':self.definition}
+                       'startedBy':values['startedBy'],'taskDefinitionArn':self.definition,'containerInstanceArn':verified_hosts(owned).members[0][0]}
             if self.run_lost:raise SourceUnavailable('lost_run_ack')
             return {'tasks':[copy.deepcopy(self.task)],'failures':[]}
         if operation=='describe_tasks':
@@ -75,7 +81,7 @@ class AwsExecution(unittest.TestCase):
     def setUp(self):
         self.api=Ecs(self.model);self.objects=Objects();self.ledger=MemoryLedger();self.checked=[]
         self.runner=EcsDocuments(config(),api=self.api,objects=self.objects,ledger=self.ledger,
-            host_check=lambda value:self.checked.append(value),poll_seconds=.01)
+            host_check=lambda value:(self.checked.append(value),verified_hosts(value))[1],poll_seconds=.01)
         self.raw=b'PRIVATE owned policy.'
     def test_success_executes_native_shapes_validates_result_and_cleans_both_objects(self):
         guards=[];value=self.runner.from_source(self.raw,'text/plain',lambda:guards.append(True))
