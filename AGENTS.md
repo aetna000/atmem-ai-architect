@@ -35,3 +35,8 @@ standard, established by the owner.
 - Deliver the ten subgoals as runnable, versioned local candidates with evidence,
   short manual test cards, limitations and rollback instructions. Roadmap percentages
   are not measured quality. Do not claim a release from documentation alone.
+
+- Preserve future cloud web-app portability: the browser talks to a backend session
+  service, not a local CLI. Keep engine sessions, skills, artifacts and evidence
+  backend-neutral. Codex is the first harness adapter; a local subprocess is only a
+  development transport. Never confuse the model backend with the target cloud.

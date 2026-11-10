@@ -134,3 +134,65 @@ ensure they cannot impersonate reviewed practices. Provenance checks are useful 
 are not a semantic applicability/contradiction evaluator or proof the planner used a
 practice correctly. Review must cover the full source → memory → context → decision
 → executable contract → verification chain.
+
+## Completed cross-layer inventory and repair order
+
+The source review now covers the live intake/reducer path (`src/main.jsx:698-717,
+1184-1350`), saved conversations (`conversation.mjs`), offline discovery, accepted
+setting prefill, scroll handling, prompt/model/tool loop, reviewed knowledge/skills,
+project schema, resource planning, cloud/application dispatch, embedded runtime source,
+quality checks, delivery/Spec Kit, the endpoint and UI emulation path, and the live
+benchmark/independent static assessor. This completes the initial cross-layer review;
+it is not a line-by-line security certification or exhaustive behavioral qualification.
+Broader fresh conversations and runtime transfer tests remain release qualification.
+
+Additional findings:
+- Queued intake combines ordered updates and supersedes stale responses. The UI uses
+  current project revisions and preserves conversations per project. However, a saved
+  oversized queue entry can throw in a React effect, and the batcher does not reject
+  more than four attachments on a single entry. Add explicit recovery without losing
+  the intent, plus bounds tests; inspect cancel/reload/project-switch behavior in UI.
+- `discovery.mjs` silently interprets bare `$` as USD even when the model correctly
+  leaves currency open. This creates conflicting facts for clients in dollar-currency
+  countries. Preserve unknown currency; do not solve this with a domain-specific rule.
+- `useChatScroll.jsx` follows the chat pane, not the surrounding page. Browser gesture,
+  reader-position and growing-message behavior still require real UI verification.
+- `emulation_routes.py` chooses whole-project worker families and blocks incomplete
+  packages before runtime. `emulation_worker.py` checks actual emitted handlers with
+  stateful emulators and denied network, while structured workers execute generated
+  source with cryptographic identity and scripted provider/model transports. These are
+  useful bounded checks, not a generic block/connection/journey execution planner.
+- `generationQuality` reconciles registered resources and rejects missing/provider/
+  credential errors, but generator-owned static checks are not independent semantic
+  verification. `deliveryPack` consistently uses a snapshot; embedded runtimes must
+  remain byte-matched to reviewed source during builds and qualification.
+- Foundation regression run: 40 JS intake/emulation/discovery/consultation checks and
+  20 server abstraction/response-repair/knowledge checks passed. These are component
+  tests, not a full matrix or a user-journey qualification.
+
+Repair order: release 1 reconciles general-purpose ownership policy, factual intake
+and bounded queue behavior, with uncoached/manual evidence; releases 2-4 establish the
+shared work model, compositional contracts and provider lowerings. Local block and
+connection checks must be composed with whole-system journeys throughout, then deepen
+application, judgment, knowledge, handoff and recovery capabilities in releases 5-10.
+Do not return to one specialized runtime merely because it has many tractable tests.
+
+## Native harness comparison — material architectural finding
+
+`server/local_providers.py:160-169` currently invokes ephemeral read-only `codex exec`
+with shell, unified execution, plugins/apps/browser and code-mode host disabled,
+then requires a graph-oriented JSON response. `server/architect.py` supplies the
+large custom prompt and schema; selected skill text is loaded by the application.
+This is suitable for bounded conversation/proposals but does not provide a native
+Codex engineering session capable of discovering skills, editing an implementation,
+executing validators and repairing it. A larger prompt or model alone does not fix
+that missing execution loop. Do not mistake manually imported skill text for native
+skill/tool workflow evidence or a fixed compiler recipe for general code synthesis.
+
+Owner confirmed the target is a specialized Codex session with additional intent,
+infrastructure skills and learning. Installed Codex CLI 0.166.0 exposes the official
+app-server protocol. A new internal transport foundation has eight passing protocol
+checks; a native handshake/model-catalogue/workspace-skill probe passes without model
+inference. Product routing, thread/workspace persistence, tool isolation, real coding
+turns, streaming UI and paired quality comparison are still pending. This foundation
+must not be described as the completed engine or first released improvement.

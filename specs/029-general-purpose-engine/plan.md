@@ -24,7 +24,7 @@ remains a separately authorized action.
 
 | Subgoal / candidate | Tangible improvement | Required automated evidence | Owner manual test |
 |---|---|---|---|
-| 1 — 10% / alpha.1 | Coherent general-purpose intake: system purpose first; recommends routine engineering; concise progress and only material questions. | Finish review; uncoached AI/non-AI and existing-system transcripts; retain all constraints; no forced ports/startup questionnaire, no generator-error delegation. Compare frozen baseline and latency/question burden. | Start a fresh project in your own words; add several demands; see a useful architecture proposal and clear next action. |
+| 1 — 10% / alpha.1 | Specialized persistent native Codex engineering session, relevant skills and coherent user intake; capable local file/tool work behind simple progress. | Finish review; qualify project/workspace isolation, thread resume/steering, actual skill/tool use, exact model/effort and artifact capture. Freeze paired native baseline before tuning. Test uncoached briefs, concise progress and ownership. No release claim from transport tests alone. | Start a fresh project, add several demands while it works, observe the engineering progress and inspect/run the generated Terraform and local tests. |
 | 2 — 20% / alpha.2 | Shared architecture work model: intent, responsibilities, delivery units, interfaces, assumptions, ownership and evidence. | Version/migration and save/reload tests; changing a requirement invalidates affected decisions/evidence without deleting scope; UI and export agree. | Edit a block requirement, save/reopen and see precisely what needs reevaluation. |
 | 3 — 30% / alpha.3 | Capability composition replaces whole-project recipe selection for the first shared building blocks. | Standalone and mixed capability tests across four clouds, renamed/reordered/new-domain variants, resource/address collision and dependency checks; supported mixed units compile without suppressed gaps. | Add an independent service to an existing workflow; both remain implemented with clear interfaces. |
 | 4 — 40% / alpha.4 | Provider-aware lowering and lifecycle ownership for those composed capabilities. | Exact provider schema checks, negative identity/network/region tests, reference/import/create preservation, adapter parity report and no provider fallback. | Bring an existing website and new backend; inspect what is preserved versus built. |
@@ -73,8 +73,91 @@ optional manual feedback; incorporate feedback into the next candidate.
 
 ## Current position
 
-Review source findings and four composition counterexamples are recorded. The broad
-review and fresh uncoached conversation audit are still in progress. No subgoal is
-accepted, no quality percentage is established and no new software release has been
-made. Preserve pending Azure work as an unqualified checkpoint; do not continue that
+Initial cross-layer source review, four composition counterexamples and a two-turn
+uncoached conversation diagnostic are recorded. Native-session transport implementation
+has begun; broader conversation, isolation, artifact and baseline qualification remain
+pending. No release subgoal is accepted, no quality percentage is established and no
+new software release has been made. Preserve pending Azure work as an unqualified checkpoint; do not continue that
 specific workflow until the review sets the reusable capability priorities.
+
+## Local emulation acceptance — explicit owner clarification
+
+The owner requires validation of individual blocks and the connected system through
+local emulation; real cloud deployment is not required. This applies to the whole
+programme, including the final 28-case acceptance. Account plans/deployed tests remain
+separate optional evidence levels, not prerequisites for completing the authorized
+local programme. Native cloud behavior that local emulation does not cover must be
+stated precisely; do not imply it has been proven or use that limitation to avoid
+implementing executable local contracts and journeys.
+
+For every supported block, execute generated implementation against local real or
+emulated dependencies, including success/denial/failure behavior. For connections,
+exercise producer/consumer schemas, identity, authorization, retries/idempotency and
+partial failure. For the whole system, execute requirement-linked user journeys,
+including concurrency, isolation, state transitions and recovery. A mock's acceptance
+or a standalone block pass cannot establish system acceptance. Track expected versus
+executed behavior, failed/blocked/unsupported checks and the exact generated artifact.
+Use independently authored acceptance oracles in addition to generated tests.
+
+## Specialized native engineering session — owner direction
+
+The owner requires a capable specialized Codex session, not a weaker model wrapped in
+an architecture questionnaire. Use the native harness for persistent sessions, skill
+selection, file/tool work, local validation and repair; augment its native instructions
+with reviewed infrastructure knowledge instead of replacing its agent loop. Keep
+short user-facing progress separate from internal engineering work and structured
+canvas projections. The output language cannot be limited to a closed list of
+business recipes. Existing verified adapters remain useful dependencies/regressions.
+
+Selected first adapter: official Codex app-server protocol, initially exercised on
+the development machine. It may run in an isolated backend worker later; it is not
+a browser/client-computer dependency. Use backend-owned authentication, project-bound
+persistent threads, progress events and steering/resume.
+Do not extract OAuth tokens or implement custom login. Hosted execution and model
+authentication use a supported backend integration when implemented; do not turn on
+paid or cloud services merely to qualify the local foundation.
+The transport foundation is not workspace isolation or product integration. Qualify
+local file/network/tool boundaries before enabling engineering turns through the UI.
+No deployment tools or cloud credentials are required for local generation/emulation.
+
+Require exact selected model and reasoning effort in run receipts; no silent downgrade
+or fallback. Compare stock native Codex and the AtMem-specialized session on identical
+briefs, model/effort, local tools, repair budget and independent criteria. Include the
+current restricted JSON chat path as a diagnostic, not the target baseline. Measure
+actual artifacts, executed checks, constraint retention, question burden, latency and
+cost. Skill invocation counts alone are not quality. Use reviewed infrastructure
+skills to improve engineering, not to coach evaluation answers.
+
+Terraform acceptance covers provider/schema/lock correctness, complete resources and
+connections, identity/network/secret boundaries, explicit ownership/state/lifecycle,
+correct configurable inputs and operational instructions. Run init/validate/tests
+against pinned local providers as applicable; independent checks must detect missing
+scope and unsafe behavior even when generated tests pass. Couple infrastructure
+acceptance with generated application block/connection/journey emulation. No account
+plan or cloud deployment is needed for this local release target.
+
+## Web deployment portability — explicit owner constraint
+
+The engine must support a cloud-hosted web application later. The browser submits
+intent, project changes and attachments to an authenticated session service; it does
+not run a CLI, supply filesystem paths, hold model credentials or need a local helper.
+The session service owns tenant/project authorization, session/job identity, steering,
+progress, cancellation and artifact access. An isolated worker owns the engineering
+workspace, native harness adapter, reviewed skills and local validators/emulators.
+Workers can run on a developer machine or backend infrastructure through the same
+semantic session contract. Artifacts and evidence use project-bound IDs/digests,
+not client-local paths or a provider's thread ID as authorization.
+
+Keep four separations explicit:
+1. Web UI/session service versus execution worker.
+2. Engineering backend/model versus the target AWS/Azure/GCP/IBM architecture.
+3. Portable project/skill/artifact/evidence contracts versus adapter protocol details.
+4. Worker storage/isolation versus durable project/session metadata.
+
+The current internal `server/codex_app_server.py` is only a Codex protocol adapter;
+its local subprocess launcher is the development transport, not the product core.
+Introduce the backend-neutral session/job boundary alongside the first real worker
+integration, qualify both local and hosted-worker transport contracts, and avoid a
+Codex-only browser protocol. Other capable backends may implement the same contract;
+no automatic lower-quality fallback is permitted. Cloud-hosting architecture is in
+scope for design; actually deploying it is not authorized by this programme.
