@@ -45,7 +45,10 @@ See [AWS LogConfiguration](https://docs.aws.amazon.com/AmazonECS/latest/APIRefer
 
 `enterprise-aws-host-infrastructure.mjs` emits the fixed SSM document and one
 additive policy on the existing worker. It references an explicit existing parser
-cluster and does not provision/adopt a host pool. SendCommand is limited to this
+cluster and does not provision/adopt a host pool. The existing worker role is
+looked up by name and its full returned ARN must match the supplied ARN, including
+the path, before any policy is attached. A basename alone is not ownership proof.
+SendCommand is limited to this
 document and instances tagged with the exact policy fingerprint. No document
 mutation, caller-selected shell command or Parameter Store read is granted.
 GetCommandInvocation's native wildcard resource limitation remains explicit.
@@ -84,10 +87,8 @@ EC2 containers are not a VM security boundary; the
 explicitly discusses cross-task/instance credential risks. Host hardening and native
 isolation checks remain acceptance requirements.
 
-Final-source Linux SQL requalification is currently pending repair of the owned
-test VM filesystem; its DiskFull failure is retained. Earlier application checks
-and current host checks are recorded separately. The AWS runtime check inventory
-is 95 enterprise policies and 25 AWS contract tests (including
+After repair of the owned test VM filesystem, the final AWS image passes
+95 enterprise policies and 25 AWS contract tests (including
 the original eight task-definition checks), plus 88 SQL tests on each PostgreSQL
 version, and 15 host-verifier tests. Additional recovery runs contain three actual SQL/process-death tests and
 eight offline contract checks per version. They exercise the installed image,
@@ -95,7 +96,7 @@ ordinary roles and a real abrupt child-process exit; ECS/S3 and host policy rema
 explicit fixtures. Emitted stages also process real DOCX and scanned PDF in
 restricted Linux, with actual CHOWN and separate read-only/writable volumes.
 
-Two exact compiler packages pass six native Terraform mock plans each. Independent
+Two exact compiler packages run seven native Terraform mock plans each. Independent
 consumption verifies the actual positive output and resolved command against the
 runtime, including identical embedded Python and policy arguments; installed-image
 checks also consume those native document bytes. Hostile source identifiers remain

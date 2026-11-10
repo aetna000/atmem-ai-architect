@@ -31,11 +31,16 @@ def verify(path):
         except ValueError:continue
         if event.get('test_summary'):summary=event['test_summary']
         if event.get('@testrun')=='fixed_host_verification'and event.get('test_plan'):events.append(event['test_plan'])
-    if not summary or summary.get('status')!='pass'or summary.get('passed')!=6 or any(summary.get(key,0)for key in ['failed','errored','skipped'])or len(events)!=1:
-        raise ValueError('Require all six native plans and the actual positive output')
+    if not summary or summary.get('status')!='pass'or summary.get('passed')!=7 or any(summary.get(key,0)for key in ['failed','errored','skipped'])or len(events)!=1:
+        raise ValueError('Require all seven native plans and the actual positive output')
     native=events[0];output=native['output_changes']['host_verification']['after']
     if json.loads((path/'runtime-configurations.json').read_text())!=[output]:raise ValueError('Output did not come from the positive native plan')
     c=configuration({**config(),**output});rows=native['resource_changes']
+    # Terraform's test_plan event omits resolved data-source rows. Consume the
+    # actual post-plan review input, whose field references that lookup's ARN.
+    ownership=[row['change']['after']['input']for row in rows if row['type']=='terraform_data'and row['address'].endswith('_review')]
+    if (len(ownership)!=1 or ownership[0].get('requested_worker_arn')!=c['workerRoleArn']or
+        ownership[0].get('resolved_worker_arn')!=c['workerRoleArn']):raise ValueError('Existing worker identity was not resolved exactly')
     documents=[row['change']['after']for row in rows if row['type']=='aws_ssm_document']
     if len(documents)!=1:raise ValueError('Unexpected command document count')
     document=json.loads(documents[0]['content']);expected=command_document(c)
@@ -68,7 +73,7 @@ def verify(path):
             if operation=='get_command_invocation':return {'CommandId':command,'InstanceId':instance,'DocumentName':c['hostDocumentArn'],'DocumentVersion':c['hostDocumentVersion'],'Status':'Success','ResponseCode':0,'StandardErrorContent':'','StandardOutputContent':json.dumps({'format':'enterprise-aws-host-observation-v1','clusterArn':c['clusterArn'],'policySha256':c['hostPolicySha256'],'bootId':command})}
             raise ValueError('Unexpected native operation')
     proof=EcsHostPolicy(c,api=Api())(c);placement=proof.placement(c)
-    return {'passed':True,'nativeMockTests':6,'runtimeDocumentMatchesNativePlan':True,'probeSourceSha256':hashlib.sha256(probe).hexdigest(),
+    return {'passed':True,'nativeMockTests':7,'existingWorkerArnVerified':True,'runtimeDocumentMatchesNativePlan':True,'probeSourceSha256':hashlib.sha256(probe).hexdigest(),
             'nativeLogSha256':hashlib.sha256(log).hexdigest(),'verifierSha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
             'hostPolicySha256':c['hostPolicySha256'],'calls':calls,'placement':placement,'cloudOperations':False,
             'scope':'Positive native Terraform output consumed by runtime, exact probe/argument binding and native ECS/SSM input schemas. Service responses are fixtures; no actual host/account or full-project acceptance.'}

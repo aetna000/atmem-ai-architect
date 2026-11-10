@@ -32,10 +32,13 @@ export function awsHostVerificationTerraform(project,row,environment='staging'){
  locals.document={schemaVersion:'2.2',description:'Fixed read-only parser host inspection; no caller command or secret parameters.',parameters:{},
   mainSteps:[{action:'aws:runShellScript',name:'verifyHost',precondition:{StringEquals:['platformType','Linux']},
    inputs:{timeoutSeconds:'30',runCommand:['${format("%s%s",'+JSON.stringify(prefix)+',base64encode(jsonencode(local.expected)))}']}}]};
- const resource={terraform_data:{[n+'_review']:{input:{design_revision:project.revision,source_component:literal(row.id),environment},lifecycle:{precondition:[
+ const resource={terraform_data:{[n+'_review']:{input:{design_revision:project.revision,source_component:literal(row.id),environment,
+  requested_worker_arn:worker,resolved_worker_arn:'${data.aws_iam_role.'+n+'_worker.arn}'},lifecycle:{precondition:[
   {condition:v('review_approved'),error_message:'Review the selected host policy and existing worker before apply.'},
   {condition:'${startswith(var.cluster_arn,format("arn:aws:ecs:%s:%s:cluster/",var.region,var.account_id))}',error_message:'Keep the parser cluster in the selected account/region.'},
-  {condition:'${startswith(var.worker_role_arn,format("arn:aws:iam::%s:role/",var.account_id))}',error_message:'Keep the referenced worker in the selected account.'}]}}}};
+  {condition:'${startswith(var.worker_role_arn,format("arn:aws:iam::%s:role/",var.account_id))}',error_message:'Keep the referenced worker in the selected account.'},
+  {condition:'${data.aws_iam_role.'+n+'_worker.arn == var.worker_role_arn}',error_message:'The existing worker role must match the full accepted ARN, including its path.'}]}}}};
+ const data={aws_iam_role:{[n+'_worker']:{name:'${basename(var.worker_role_arn)}'}}};
  const add=(type,name,body)=>((resource[type]??={})[name]={...body,depends_on:['terraform_data.'+n+'_review',...(body.depends_on||[])]});
  add('aws_ssm_document',n,{name:l('name'),document_type:'Command',document_format:'JSON',target_type:'/AWS::EC2::Instance',content:'${jsonencode(local.document)}',
   tags:{'atmem-document-policy':l('policy_sha256')},lifecycle:{prevent_destroy:true,postcondition:[{condition:'${self.hash_type == "Sha256" && can(regex("^[0-9a-f]{64}$",self.hash))}',error_message:'Require the native SHA256 document hash before exposing verification configuration.'}]}});
@@ -46,10 +49,10 @@ export function awsHostVerificationTerraform(project,row,environment='staging'){
   {Sid:'FixedProbeDocumentOnly',Effect:'Allow',Action:['ssm:GetDocument','ssm:SendCommand'],Resource:doc},
   {Sid:'TaggedParserHostsOnly',Effect:'Allow',Action:['ssm:SendCommand'],Resource:'${format("arn:aws:ec2:%s:%s:instance/*",var.region,var.account_id)}',Condition:{StringEquals:{'ssm:resourceTag/atmem-document-policy':l('policy_sha256')}}},
   {Sid:'ReadProbeInvocation',Effect:'Allow',Action:['ssm:GetCommandInvocation'],Resource:'*'}]};
- add('aws_iam_role_policy',n,{name:l('name'),role:'${basename(var.worker_role_arn)}',policy:'${jsonencode(local.worker_policy)}'});
+ add('aws_iam_role_policy',n,{name:l('name'),role:'${data.aws_iam_role.'+n+'_worker.name}',policy:'${jsonencode(local.worker_policy)}'});
  const output={host_verification:{value:{clusterArn:cluster,hostPolicySha256:l('policy_sha256'),hostDocumentArn:doc,hostDocumentHash:r('aws_ssm_document',n,'hash'),hostDocumentVersion:'${tostring(aws_ssm_document.'+n+'.latest_version)}'},
   depends_on:['aws_ssm_document.'+n,'aws_iam_role_policy.'+n],description:'Fixed command/worker policy only. Compute pool and complete private application are not provided by this module.'}};
- const main={terraform:{required_version:'>= 1.17.1, < 2.0.0',required_providers:{aws:{source:'hashicorp/aws',version:'6.72.0'}}},provider:{aws:{region,allowed_account_ids:[account]}},variable,locals,resource,output};
+ const main={terraform:{required_version:'>= 1.17.1, < 2.0.0',required_providers:{aws:{source:'hashicorp/aws',version:'6.72.0'}}},provider:{aws:{region,allowed_account_ids:[account]}},variable,locals,data,resource,output};
  return {'main.tf.json':JSON.stringify(main,null,2)+'\n','.terraform.lock.hcl':CLOUD_PROVIDER_LOCKS.aws,
   'deployment.tfvars.json.example':JSON.stringify(examples,null,2)+'\n',
   'tests/host-verification.tftest.hcl':awsHostVerificationTests(n,seed,row.region),

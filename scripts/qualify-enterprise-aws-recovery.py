@@ -70,8 +70,8 @@ entry=root/'tests/runtime/enterprise_aws_document_postgres.py';sys.argv=[str(ent
             events=[json.loads(line)for line in (directory/'mock-plans.log').read_text().splitlines()]
             summary=[event['test_summary']for event in events if event.get('test_summary')]
             plans=[event['test_plan']for event in events if event.get('@testrun')=='fixed_host_verification'and event.get('test_plan')]
-            if (len(summary)!=1 or summary[0].get('status')!='pass'or summary[0].get('passed')!=6 or
-                any(summary[0].get(key,0)for key in ['failed','errored','skipped'])or len(plans)!=1):raise ValueError('Require all six native mocks and the actual positive plan')
+            if (len(summary)!=1 or summary[0].get('status')!='pass'or summary[0].get('passed')!=7 or
+                any(summary[0].get(key,0)for key in ['failed','errored','skipped'])or len(plans)!=1):raise ValueError('Require all seven native mocks and the actual positive plan')
             plan=plans[0];configuration=plan['output_changes']['host_verification']['after']
             documents=[json.loads(row['change']['after']['content'])for row in plan['resource_changes']if row['type']=='aws_ssm_document']
             if len(documents)!=1 or json.loads((directory/'runtime-configurations.json').read_text())!=[configuration]:raise ValueError('Native runtime configuration drift')

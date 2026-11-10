@@ -59,7 +59,8 @@
     "specs/028-convergence-evaluation/evidence/20261111-private-factories-operator-v1",
     "specs/028-convergence-evaluation/evidence/20261111-private-document-recovery-v1",
     "specs/028-convergence-evaluation/evidence/20261111-private-aws-task-contract-v1",
-    "specs/028-convergence-evaluation/evidence/20261111-private-aws-document-execution-v1"
+    "specs/028-convergence-evaluation/evidence/20261111-private-aws-document-execution-v1",
+    "specs/028-convergence-evaluation/evidence/20261111-private-aws-host-verification-v1"
   ],
   "limitations": [
     "The wider 28-project outcome remains unfinished. No claim of world-leading quality or four-provider connected-application parity.",
@@ -107,7 +108,7 @@
   },
   "baselineCompletedCases": 28,
   "baselineQualifiedCases": 0,
-  "updatedAt": "2026-11-10T17:34:37.478093+00:00",
+  "updatedAt": "2026-11-10T18:01:52.819167+00:00",
   "baselineErrors": {
     "ValidationError": 4,
     "TimeoutError": 6
@@ -243,7 +244,7 @@
       "ibmRegistryRegression": "Shared explicit regional mapping repaired for structured/FAQ/invoice exports; Sydney native image-host regressions pass."
     }
   },
-  "currentEvidence": "specs/028-convergence-evaluation/evidence/20261111-private-aws-document-execution-v1",
+  "currentEvidence": "specs/028-convergence-evaluation/evidence/20261111-private-aws-host-verification-v1",
   "operatorBootstrapCheckpoint": {
     "status": "in_progress",
     "evidence": "specs/028-convergence-evaluation/evidence/20261110-invoice-operator-core",
@@ -1087,15 +1088,13 @@
     "securityAccepted": false
   },
   "privateAwsHostVerificationCheckpoint": {
-    "status": "in_progress",
-    "qualificationStatus": "15 host checks,359 JS tests and12 native mock plans pass. Final complete Linux SQL run interrupted by owned VM DiskFull; filesystem repair/rerun pending.",
-    "implementation": [
-      "src/runtime/enterprise_aws_hosts.py",
-      "src/runtime/enterprise_aws_host_probe.py",
-      "src/enterprise-aws-host-infrastructure.mjs"
-    ],
-    "retainedRegression": ".local/enterprise-aws-host-forwarding-gap-20261111",
+    "status": "locally_qualified_partial_component",
+    "evidence": "specs/028-convergence-evaluation/evidence/20261111-private-aws-host-verification-v1",
+    "documentation": "docs/architecture/private-knowledge-aws-document-jobs.md",
+    "summary": "Fixed native SSM/ECS host verification, exact-instance launch constraints and additive worker-policy compiler locally qualified. Exact AWS image95 policies/25 document contracts/15 host contracts/88 SQL per PG17/18; recovery3 actual SQL/process-death plus8 offline checks per version;20 Office/PDF checks,359 JS tests,14 native Terraform mock plans, two independent output verifications and two installed-image document consumptions pass. Retained forwarding-hook, role-path ownership and verifier-data-event failures. Complete host-pool/execution infrastructure, private export, security, Azure/IBM launchers, remaining families and final28/held-out stay unfinished.",
+    "sourceCheckpointBeforeEnvironmentRepair": "6d70ac9",
     "wholeCaseQualified": false,
-    "cloudOperations": false
+    "cloudOperations": false,
+    "securityAccepted": false
   }
 }

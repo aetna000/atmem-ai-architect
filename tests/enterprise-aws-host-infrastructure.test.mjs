@@ -19,6 +19,9 @@ test('AWS host verifier provisions only a fixed document and additive worker pol
  assert.deepEqual(tf.locals.document.parameters,{});assert.equal(tf.locals.document.mainSteps[0].name,'verifyHost');
  assert.equal(tf.locals.worker_policy.Statement.length,5);assert.equal(tf.locals.worker_policy.Statement[2].Resource,'${aws_ssm_document.'+row.address+'.arn}');
  assert.deepEqual(tf.locals.worker_policy.Statement[4].Action,['ssm:GetCommandInvocation']);
+ assert.equal(tf.data.aws_iam_role[row.address+'_worker'].name,'${basename(var.worker_role_arn)}');
+ assert.ok(tf.resource.terraform_data[row.address+'_review'].lifecycle.precondition.some(item=>item.condition==='${data.aws_iam_role.'+row.address+'_worker.arn == var.worker_role_arn}'));
+ assert.equal(tf.resource.terraform_data[row.address+'_review'].input.resolved_worker_arn,'${data.aws_iam_role.'+row.address+'_worker.arn}');
  assert.ok(!JSON.stringify(tf.locals.worker_policy).includes('ssm:GetParameter'));
  assert.ok(!JSON.stringify(tf.resource).includes('aws_iam_role_policy_attachments_exclusive'));
 });
@@ -27,7 +30,7 @@ test('AWS host verification config uses native document version/hash and retains
  assert.equal(config.hostDocumentHash,'${aws_ssm_document.'+row.address+'.hash}');
  assert.equal(config.hostDocumentVersion,'${tostring(aws_ssm_document.'+row.address+'.latest_version)}');
  assert.equal(JSON.parse(files['host-policy-boundary.json']).wholeProjectQualified,false);
- assert.equal((files['tests/host-verification.tftest.hcl'].match(/run "/g)||[]).length,6);
+ assert.equal((files['tests/host-verification.tftest.hcl'].match(/run "/g)||[]).length,7);
  assert.match(files['README.md'],/does not create a compute pool/);
 });
 test('AWS host verifier preserves hostile source IDs as literal evidence',()=>{
