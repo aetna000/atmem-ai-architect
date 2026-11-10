@@ -1,0 +1,40 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "answer",
+    "citations",
+    "abstained"
+  ],
+  "properties": {
+    "answer": {
+      "type": "string",
+      "description": "Answer supported only by the supplied articles, or a concise statement of insufficient evidence."
+    },
+    "citations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "quote"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Exact ID of a supplied article; never invent a source."
+          },
+          "quote": {
+            "type": "string",
+            "description": "An exact supporting quote from this article text. Never invent or paraphrase the quote."
+          }
+        }
+      }
+    },
+    "abstained": {
+      "type": "boolean",
+      "description": "True when the supplied articles do not contain a supported answer; citations must then be empty."
+    }
+  }
+}

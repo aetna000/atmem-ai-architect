@@ -1,0 +1,405 @@
+{
+  "terraform": {
+    "required_version": ">= 1.17.1, < 2.0.0",
+    "required_providers": {
+      "azurerm": {
+        "source": "hashicorp/azurerm",
+        "version": "4.81.0"
+      }
+    }
+  },
+  "provider": {
+    "azurerm": {
+      "subscription_id": "${var.subscription_id}",
+      "tenant_id": "${var.tenant_id}",
+      "features": {},
+      "storage_use_azuread": true
+    }
+  },
+  "variable": {
+    "review_approved": {
+      "type": "bool",
+      "default": false
+    },
+    "subscription_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Expected destination Azure subscription; operator credential chain only.",
+      "validation": {
+        "condition": "${can(regex(\"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$\", var.subscription_id))}",
+        "error_message": "Supply the reviewed subscription_id value."
+      }
+    },
+    "tenant_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Expected destination tenant. Existing editor identity is preserved.",
+      "validation": {
+        "condition": "${can(regex(\"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$\", var.tenant_id))}",
+        "error_message": "Supply the reviewed tenant_id value."
+      }
+    },
+    "resource_group_name": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing reviewed resource group; not recreated or imported.",
+      "validation": {
+        "condition": "${can(regex(\"^[A-Za-z0-9_.()-]{1,90}$\", var.resource_group_name))}",
+        "error_message": "Supply the reviewed resource_group_name value."
+      }
+    },
+    "registry_name": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing RBAC-mode ACR that accepts the ARM audience for managed identity.",
+      "validation": {
+        "condition": "${can(regex(\"^[a-z0-9]{5,50}$\", var.registry_name))}",
+        "error_message": "Supply the reviewed registry_name value."
+      }
+    },
+    "registry_resource_group_name": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing registry resource group in this subscription.",
+      "validation": {
+        "condition": "${can(regex(\"^[A-Za-z0-9_.()-]{1,90}$\", var.registry_resource_group_name))}",
+        "error_message": "Supply the reviewed registry_resource_group_name value."
+      }
+    },
+    "block_6661712d617070_name": {
+      "type": "string",
+      "nullable": false,
+      "description": "Unique public application name; internal managed services belong to this composition.",
+      "validation": {
+        "condition": "${can(regex(\"^[a-z][a-z0-9-]{3,18}[a-z0-9]$\", var.block_6661712d617070_name))}",
+        "error_message": "Supply the reviewed block_6661712d617070_name value."
+      }
+    },
+    "block_6661712d617070_region": {
+      "type": "string",
+      "nullable": false,
+      "description": "Reviewed application, storage and Regional Standard model location. Verify actual model/version/quotas and processing geography.",
+      "validation": {
+        "condition": "${can(regex(\"^[a-z][a-z0-9]{2,39}$\", var.block_6661712d617070_region))}",
+        "error_message": "Supply the reviewed block_6661712d617070_region value."
+      },
+      "default": "australiaeast"
+    },
+    "block_6661712d617070_repository": {
+      "type": "string",
+      "nullable": false,
+      "description": "Build/publish path for this emitted application in the existing registry.",
+      "validation": {
+        "condition": "${can(regex(\"^[a-z0-9]+(?:[._/-][a-z0-9]+)*$\", var.block_6661712d617070_repository))}",
+        "error_message": "Supply the reviewed block_6661712d617070_repository value."
+      }
+    },
+    "block_6661712d617070_image_digest": {
+      "type": "string",
+      "nullable": false,
+      "description": "Exact built, scanned, tested and authorized-published image digest.",
+      "validation": {
+        "condition": "${can(regex(\"^sha256:[0-9a-f]{64}$\", var.block_6661712d617070_image_digest))}",
+        "error_message": "Supply the reviewed block_6661712d617070_image_digest value."
+      }
+    },
+    "block_6661712d617070_model_name": {
+      "type": "string",
+      "nullable": false,
+      "description": "Reviewed regional model supporting strict JSON Schema output; no availability or price is invented.",
+      "validation": {
+        "condition": "${length(trimspace(var.block_6661712d617070_model_name)) > 0}",
+        "error_message": "Supply the reviewed block_6661712d617070_model_name value."
+      }
+    },
+    "block_6661712d617070_model_version": {
+      "type": "string",
+      "nullable": false,
+      "description": "Exact supported model version; verify lifecycle and Standard regional availability.",
+      "validation": {
+        "condition": "${length(trimspace(var.block_6661712d617070_model_version)) > 0}",
+        "error_message": "Supply the reviewed block_6661712d617070_model_version value."
+      }
+    },
+    "block_6661712d617070_editor_group_object_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing Entra editor security-group object ID; no group/users are created. It receives only public-container data access.",
+      "validation": {
+        "condition": "${can(regex(\"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$\", var.block_6661712d617070_editor_group_object_id))}",
+        "error_message": "Supply the reviewed block_6661712d617070_editor_group_object_id value."
+      }
+    }
+  },
+  "data": {
+    "azurerm_client_config": {
+      "destination": {}
+    }
+  },
+  "locals": {
+    "unfinished_work": []
+  },
+  "resource": {
+    "terraform_data": {
+      "review_gate": {
+        "input": {
+          "design_revision": 4,
+          "environment": "staging"
+        },
+        "lifecycle": {
+          "precondition": [
+            {
+              "condition": "${var.review_approved && length(local.unfinished_work) == 0}",
+              "error_message": "Review the source, public-only publication boundary, destination, native roles, model policy, costs and unresolved scope before deployment."
+            },
+            {
+              "condition": "${data.azurerm_client_config.destination.subscription_id == var.subscription_id && data.azurerm_client_config.destination.tenant_id == var.tenant_id}",
+              "error_message": "Operator identity must match the reviewed tenant and subscription."
+            }
+          ]
+        }
+      }
+    },
+    "azurerm_user_assigned_identity": {
+      "block_6661712d617070": {
+        "name": "${var.block_6661712d617070_name}-runtime",
+        "location": "${var.block_6661712d617070_region}",
+        "resource_group_name": "${var.resource_group_name}",
+        "tags": {
+          "ManagedBy": "AtMem AI Architect",
+          "Environment": "staging",
+          "Component": "block_6661712d617070"
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_service_plan": {
+      "block_6661712d617070": {
+        "name": "${var.block_6661712d617070_name}-plan",
+        "location": "${var.block_6661712d617070_region}",
+        "resource_group_name": "${var.resource_group_name}",
+        "os_type": "Linux",
+        "sku_name": "B1",
+        "worker_count": 1,
+        "tags": {
+          "ManagedBy": "AtMem AI Architect",
+          "Environment": "staging",
+          "Component": "block_6661712d617070"
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_cognitive_account": {
+      "block_6661712d617070": {
+        "name": "${var.block_6661712d617070_name}-ai",
+        "location": "${var.block_6661712d617070_region}",
+        "resource_group_name": "${var.resource_group_name}",
+        "kind": "OpenAI",
+        "sku_name": "S0",
+        "custom_subdomain_name": "${var.block_6661712d617070_name}-ai",
+        "local_auth_enabled": false,
+        "public_network_access_enabled": true,
+        "tags": {
+          "ManagedBy": "AtMem AI Architect",
+          "Environment": "staging",
+          "Component": "block_6661712d617070"
+        },
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_cognitive_deployment": {
+      "block_6661712d617070": {
+        "name": "public-faq",
+        "cognitive_account_id": "${azurerm_cognitive_account.block_6661712d617070.id}",
+        "version_upgrade_option": "NoAutoUpgrade",
+        "model": {
+          "format": "OpenAI",
+          "name": "${var.block_6661712d617070_model_name}",
+          "version": "${var.block_6661712d617070_model_version}"
+        },
+        "sku": {
+          "name": "Standard",
+          "capacity": 1
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_storage_account": {
+      "block_6661712d617070": {
+        "name": "${format(\"faq%s\", substr(sha256(format(\"%s:%s\", var.subscription_id, var.block_6661712d617070_name)), 0, 20))}",
+        "location": "${var.block_6661712d617070_region}",
+        "resource_group_name": "${var.resource_group_name}",
+        "account_tier": "Standard",
+        "account_replication_type": "LRS",
+        "https_traffic_only_enabled": true,
+        "min_tls_version": "TLS1_2",
+        "allow_nested_items_to_be_public": false,
+        "shared_access_key_enabled": false,
+        "default_to_oauth_authentication": true,
+        "public_network_access_enabled": true,
+        "blob_properties": {
+          "versioning_enabled": true,
+          "delete_retention_policy": {
+            "days": 7
+          },
+          "container_delete_retention_policy": {
+            "days": 7
+          }
+        },
+        "tags": {
+          "ManagedBy": "AtMem AI Architect",
+          "Environment": "staging",
+          "Component": "block_6661712d617070"
+        },
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_storage_container": {
+      "block_6661712d617070": {
+        "name": "public-catalog",
+        "storage_account_id": "${azurerm_storage_account.block_6661712d617070.id}",
+        "container_access_type": "private",
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_role_assignment": {
+      "block_6661712d617070": {
+        "scope": "${azurerm_cognitive_account.block_6661712d617070.id}",
+        "role_definition_name": "Cognitive Services OpenAI User",
+        "principal_id": "${azurerm_user_assigned_identity.block_6661712d617070.principal_id}",
+        "principal_type": "ServicePrincipal",
+        "skip_service_principal_aad_check": true,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_6661712d617070_policy": {
+        "scope": "${azurerm_cognitive_account.block_6661712d617070.id}",
+        "role_definition_name": "Reader",
+        "principal_id": "${azurerm_user_assigned_identity.block_6661712d617070.principal_id}",
+        "principal_type": "ServicePrincipal",
+        "skip_service_principal_aad_check": true,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_6661712d617070_pull": {
+        "scope": "/subscriptions/${var.subscription_id}/resourceGroups/${var.registry_resource_group_name}/providers/Microsoft.ContainerRegistry/registries/${var.registry_name}",
+        "role_definition_name": "AcrPull",
+        "principal_id": "${azurerm_user_assigned_identity.block_6661712d617070.principal_id}",
+        "principal_type": "ServicePrincipal",
+        "skip_service_principal_aad_check": true,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_6661712d617070_catalog": {
+        "scope": "${azurerm_storage_container.block_6661712d617070.id}",
+        "role_definition_name": "Storage Blob Data Reader",
+        "principal_id": "${azurerm_user_assigned_identity.block_6661712d617070.principal_id}",
+        "principal_type": "ServicePrincipal",
+        "skip_service_principal_aad_check": true,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_6661712d617070_editor": {
+        "scope": "${azurerm_storage_container.block_6661712d617070.id}",
+        "role_definition_name": "Storage Blob Data Contributor",
+        "principal_id": "${var.block_6661712d617070_editor_group_object_id}",
+        "principal_type": "Group",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_linux_web_app": {
+      "block_6661712d617070": {
+        "name": "${var.block_6661712d617070_name}",
+        "location": "${var.block_6661712d617070_region}",
+        "resource_group_name": "${var.resource_group_name}",
+        "service_plan_id": "${azurerm_service_plan.block_6661712d617070.id}",
+        "https_only": true,
+        "ftp_publish_basic_authentication_enabled": false,
+        "webdeploy_publish_basic_authentication_enabled": false,
+        "identity": {
+          "type": "UserAssigned",
+          "identity_ids": [
+            "${azurerm_user_assigned_identity.block_6661712d617070.id}"
+          ]
+        },
+        "site_config": {
+          "always_on": true,
+          "minimum_tls_version": "1.2",
+          "scm_minimum_tls_version": "1.2",
+          "ftps_state": "Disabled",
+          "http2_enabled": true,
+          "remote_debugging_enabled": false,
+          "health_check_path": "/healthz",
+          "health_check_eviction_time_in_min": 2,
+          "container_registry_use_managed_identity": true,
+          "container_registry_managed_identity_client_id": "${azurerm_user_assigned_identity.block_6661712d617070.client_id}",
+          "application_stack": {
+            "docker_registry_url": "https://${var.registry_name}.azurecr.io",
+            "docker_image_name": "${var.block_6661712d617070_repository}@${var.block_6661712d617070_image_digest}"
+          }
+        },
+        "app_settings": {
+          "WEBSITES_PORT": "8080",
+          "MANAGED_IDENTITY_CLIENT_ID": "${azurerm_user_assigned_identity.block_6661712d617070.client_id}",
+          "MODEL_RESOURCE_ID": "${azurerm_cognitive_account.block_6661712d617070.id}",
+          "MODEL_ENDPOINT": "${azurerm_cognitive_account.block_6661712d617070.endpoint}",
+          "MODEL_DEPLOYMENT": "${azurerm_cognitive_deployment.block_6661712d617070.name}",
+          "MAX_OUTPUT_TOKENS": "1024",
+          "CATALOG_ACCOUNT": "${azurerm_storage_account.block_6661712d617070.name}",
+          "CATALOG_CONTAINER": "${azurerm_storage_container.block_6661712d617070.name}"
+        },
+        "tags": {
+          "ManagedBy": "AtMem AI Architect",
+          "Environment": "staging",
+          "Component": "block_6661712d617070"
+        },
+        "depends_on": [
+          "terraform_data.review_gate",
+          "azurerm_role_assignment.block_6661712d617070",
+          "azurerm_role_assignment.block_6661712d617070_policy",
+          "azurerm_role_assignment.block_6661712d617070_pull",
+          "azurerm_role_assignment.block_6661712d617070_catalog"
+        ]
+      }
+    }
+  },
+  "output": {
+    "block_6661712d617070_url": {
+      "value": "https://${azurerm_linux_web_app.block_6661712d617070.default_hostname}/"
+    },
+    "block_6661712d617070_catalog": {
+      "value": {
+        "storage_account": "${azurerm_storage_account.block_6661712d617070.name}",
+        "container": "${azurerm_storage_container.block_6661712d617070.name}",
+        "region": "${var.block_6661712d617070_region}"
+      }
+    }
+  }
+}

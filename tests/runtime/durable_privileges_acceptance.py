@@ -46,6 +46,12 @@ class RuntimeDatabasePrivilegesTests(unittest.TestCase):
             with self.subTest(statement=statement):
                 with self.assertRaises(psycopg.errors.InsufficientPrivilege):
                     with psycopg.connect(self.api_dsn)as conn:conn.execute(statement)
+    def test_runtime_roles_cannot_change_or_erase_historical_result_snapshots(self):
+        for dsn in [self.api_dsn,self.worker_dsn]:
+            for statement in ["UPDATE workflow.results_history SET result='{}'::jsonb",'DELETE FROM workflow.results_history']:
+                with self.subTest(statement=statement):
+                    with self.assertRaises(psycopg.errors.InsufficientPrivilege):
+                        with psycopg.connect(dsn)as conn:conn.execute(statement)
     def test_granting_administrator_credentials_to_an_application_is_rejected(self):
         with self.assertRaises(ValueError):
             with psycopg.connect(self.owner_dsn)as conn:grant_runtime_roles(conn,'qualification_admin',self.worker_role)

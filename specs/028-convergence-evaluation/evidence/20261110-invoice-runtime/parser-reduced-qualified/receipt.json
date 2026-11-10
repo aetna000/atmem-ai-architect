@@ -1,0 +1,90 @@
+{
+  "kind": "credentialless-linux-invoice-parser",
+  "recordedAt": "2026-11-09T23:43:42.225240+00:00",
+  "passed": true,
+  "seconds": 13.242,
+  "imageId": "sha256:fa27c11f9ca0ebc5f3c4ac1db4d552cc75a9c81a2f0fec6bb61e2841e6f0dbb6",
+  "sourceHashes": {
+    "src/runtime/invoice_document.py": "f409f1b23fce2ad1e90abc7591460ae25669a5e056c0b32d7ffdacf7bc77d93c",
+    "src/runtime/invoice_extraction.py": "8d8c8095fea0476404fd99c9b3302b8d8ed696d8659bc3abca4bdce379b993ff",
+    "src/runtime/structured_output.py": "432c730c54bd7dcae7b52fb73edc67d2e7b44b890e68254fdee832cb4c2304bc",
+    "src/runtime/invoice_parser_cli.py": "31429f76065f221b6e4eb3fce524099f809c618eb399eaa7431d3b38b7a6357a",
+    "src/runtime/invoice-parser.Dockerfile": "79a8ea48a928f8e67b7d28d08b832aff1fc1bdb543dd59bc711b5e536be729aa",
+    "src/runtime/invoice-parser-lock.json": "749c245aa080e0807e4a7d2c19e0a4e13fd2dcc9ac26cf1f2f71132a794dad8b",
+    "scripts/qualify-invoice-parser.py": "6fbe41790ef5b0ed5f3e85fdb2a34ac7fd76b1876da29bc2ec2341259457bb5f",
+    "tests/runtime/invoice_document_acceptance.py": "a170a5af6aeedde0a86f516a50286bcaf3eb7bb743b97c38bc8c78e8a3331410",
+    "tests/runtime/invoice_extraction_acceptance.py": "783b00b4cb127cfe6594a0b22bc10ffc1ee68a03b477c60c87be1837e7b01bce",
+    "benchmarks/convergence/fixtures/invoices/invoice-text.pdf": "bc82f8fbbbbc9b774b5ba90f7655d3c2cac304544a66fe1709dae103d39eb714",
+    "benchmarks/convergence/fixtures/invoices/invoice-scan.pdf": "c579469b4d27b6a9167465933e2166a9afb11d3b907e2391453e8dd8977a185d",
+    "benchmarks/convergence/fixtures/invoices/invoice-encrypted.pdf": "4c2e750eea453f2ac5eb40c5ac1d5517205c4c4ab18809360273418bcafef5fa",
+    "benchmarks/convergence/fixtures/invoices/invoice-mixed.pdf": "83ecc6fdfa891e060e04444dafb42f766aeb91a0ffb0f4c5da49b2bb38c1178a",
+    "benchmarks/convergence/fixtures/invoices/invoice-injected.pdf": "1794b24fcc6860ed0f8a5284b258a57bde5e84e5499d452c5d7c431d567ebf82",
+    "benchmarks/convergence/fixtures/invoices/invoice-ambiguous.pdf": "0ff01f6d0293551f5e02439c00ff563b79a328d82c7272e5902abba6a29a667b",
+    "benchmarks/convergence/fixtures/invoices/invoice-empty.pdf": "226bdbe274d3222c3ed276db4f6736d457282e01abf7982629360f7b4f1ad77b",
+    "benchmarks/convergence/fixtures/invoices/manifest.json": "4f07558accf00b5ea491302075c78078934aebae66bc173011656765417e7e89"
+  },
+  "sourceUnchanged": true,
+  "checks": [
+    {
+      "check": "build",
+      "passed": true,
+      "exitCode": 0,
+      "expectedExitCode": 0
+    },
+    {
+      "check": "image",
+      "passed": true,
+      "exitCode": 0,
+      "expectedExitCode": 0
+    },
+    {
+      "check": "native-dependency-surface",
+      "passed": true,
+      "exitCode": 0,
+      "expectedExitCode": 0
+    },
+    {
+      "check": "native-acceptance",
+      "passed": true,
+      "exitCode": 0,
+      "expectedExitCode": 0
+    },
+    {
+      "check": "cli-invoice-text.pdf",
+      "passed": true,
+      "exitCode": 0,
+      "expectedExitCode": 0
+    },
+    {
+      "check": "cli-invoice-scan.pdf",
+      "passed": true,
+      "exitCode": 0,
+      "expectedExitCode": 0
+    },
+    {
+      "check": "cli-invoice-mixed.pdf",
+      "passed": true,
+      "exitCode": 0,
+      "expectedExitCode": 0
+    },
+    {
+      "check": "cli-invoice-encrypted.pdf",
+      "passed": true,
+      "exitCode": 2,
+      "expectedExitCode": 2
+    }
+  ],
+  "limits": {
+    "memoryMiB": 512,
+    "cpus": 1,
+    "pids": 32,
+    "tmpfsMiB": 64,
+    "readOnly": true,
+    "network": "none",
+    "user": "10001:10001",
+    "capabilities": "none"
+  },
+  "evidenceBoundary": "Exact pinned Linux image, actual native PDF/OCR and scripted-model decoder tests, actual CLI protocol. Synthetic visually reviewed English fixtures only; no native cloud model/identity/storage/API, remote parser hosting, broad hostile corpus, security scan or complete project evidence.",
+  "cloudOperations": false,
+  "imagePublished": false
+}

@@ -46,6 +46,16 @@ CREATE TABLE workflow.operations (
     CHECK ((lease_token IS NULL) = (lease_until IS NULL))
 );
 CREATE INDEX workflow_operations_recovery ON workflow.operations(state, lease_until);
+CREATE TABLE workflow.results_history (
+    operation_id uuid NOT NULL,
+    account_id uuid NOT NULL,
+    revision integer NOT NULL CHECK (revision > 0),
+    result jsonb NOT NULL CHECK (jsonb_typeof(result) = 'object' AND octet_length(result::text) <= 70000),
+    actor text NOT NULL,
+    created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+    PRIMARY KEY (operation_id,revision),
+    FOREIGN KEY (operation_id,account_id) REFERENCES workflow.operations(id,account_id)
+);
 CREATE TABLE workflow.events (
     sequence bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     operation_id uuid NOT NULL,

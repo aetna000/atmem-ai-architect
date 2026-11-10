@@ -6,6 +6,7 @@ from pathlib import Path
 import sys
 import threading
 import unittest
+from email.utils import parsedate_to_datetime
 from unittest.mock import Mock
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'src/runtime'))
 import boto3
@@ -29,6 +30,11 @@ def store(provider,session,auth=None):
     return HttpCatalogStore(provider,'au-syd','reviewed-public-catalog',auth or (lambda:{'Authorization':'Bearer fixture-workload'}),session=session,account='reviewedstorage')
 
 class HttpCatalogContractTests(unittest.TestCase):
+    def test_azure_bearer_requests_include_the_required_http_date_and_version(self):
+        session=Mock();session.request.side_effect=[Response(catalog(),headers={'ETag':'"one"'}),Response(status=201,headers={'ETag':'"two"'})]
+        client=store('azure',session);client.load();client.save(catalog(),None)
+        for call in session.request.call_args_list:
+            headers=call.kwargs['headers'];self.assertEqual(headers['x-ms-version'],'2023-11-03');self.assertIsNotNone(parsedate_to_datetime(headers['x-ms-date']).tzinfo);self.assertTrue(headers['x-ms-date'].endswith(' GMT'))
     def test_azure_and_ibm_authoritative_etag_and_conditional_create_replace(self):
         for provider in ['azure','ibm']:
             session=Mock();session.request.side_effect=[Response(catalog(),headers={'ETag':'"one"'}),Response(status=201,headers={'etag':'"two"'}),Response(headers={'ETag':'"three"'})]

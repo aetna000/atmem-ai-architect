@@ -6,6 +6,7 @@ No private-source connector, request-supplied identity or arbitrary URL is admit
 import json
 import re
 import time
+from email.utils import formatdate
 import requests
 from public_faq import MAX_CATALOG_BYTES,CatalogChanged,CatalogUnavailable,object_pairs,parse_catalog
 
@@ -42,7 +43,9 @@ class HttpCatalogStore:
         auth=headers.get('Authorization','')
         if not isinstance(auth,str) or not auth.startswith('Bearer ') or len(auth)<=7:raise PermissionError('Missing catalog workload identity')
         headers['Content-Type']='application/json'
-        if self.provider=='azure':headers['x-ms-version']='2023-11-03'
+        if self.provider=='azure':
+            headers['x-ms-version']='2023-11-03'
+            headers['x-ms-date']=formatdate(usegmt=True)
         return headers
 
     def _request(self,method,url,headers,*,params=None,data=None,limit=MAX_CATALOG_BYTES):

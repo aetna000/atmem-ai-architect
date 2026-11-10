@@ -423,6 +423,37 @@
       ],
       "reviewedAt": "2026-11-10",
       "status": "active"
+    },
+    {
+      "id": "durable-approval-and-uncertain-outcome",
+      "provider": "portable",
+      "providers": [
+        "aws",
+        "azure",
+        "gcp",
+        "ibm"
+      ],
+      "topic": "durable-human-approved-workflow",
+      "practice": "Commit business state and queue notification in one PostgreSQL transaction. Fence worker leases; recover native stalled jobs and orphaned domain leases. Bind approval to the exact result revision, source and destination contract. A model cannot authorize an action. An uncertain external outcome must not become a fresh approval/send cycle after revocation. Replay only under a verified destination idempotency contract with the same operation and payload identity.",
+      "source": {
+        "repository": "procrastinate-org/procrastinate",
+        "commit": "8b6398329d915b7299c0d936e567facaebea8903",
+        "url": "https://github.com/procrastinate-org/procrastinate/tree/8b6398329d915b7299c0d936e567facaebea8903",
+        "license": "MIT",
+        "archived": false
+      },
+      "evidenceLevel": "locally-tested",
+      "localVerification": {
+        "receipt": "specs/028-convergence-evaluation/evidence/20261110-invoice-runtime/durable-current/receipt.json",
+        "sha256": "f16b70cb12e8675eb60705e771eb9a3db053729dfff352f45f184eafa5e542eb",
+        "scope": "54 native local PostgreSQL/queue/role/SIGKILL/TLS/deadline checks; synthetic processors/destinations."
+      },
+      "limitations": [
+        "Not a provider deployment or complete workflow. Native identity, PDF/storage composition, retention/restore and vendor reconciliation require separate evidence.",
+        "Review destination idempotency durability/window and dependency maintenance before use."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
     }
   ]
 }

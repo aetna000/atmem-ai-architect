@@ -21,6 +21,13 @@ def records():
         else:
             if not re.fullmatch(r'[0-9a-f]{40}',source['commit']):raise ValueError('Knowledge source requires a pinned commit')
             if not source['url'].startswith('https://github.com/'+source['repository']+'/'):raise ValueError('Invalid knowledge provenance')
+        if row['provider']=='portable':
+            if not isinstance(row.get('providers'),list)or not row['providers']or not set(row['providers'])<={'aws','azure','gcp','ibm'}:raise ValueError('Portable practices require explicit supported-provider applicability')
+        if row['evidenceLevel']=='locally-tested':
+            proof=row.get('localVerification',{});path=(ROOT/proof.get('receipt','')).resolve()
+            if not path.is_relative_to(ROOT/'specs')or not path.is_file()or hashlib.sha256(path.read_bytes()).hexdigest()!=proof.get('sha256'):raise ValueError('Locally tested practice requires its pinned repository evidence receipt')
+            if json.loads(path.read_text()).get('passed')is not True or not proof.get('scope'):raise ValueError('Local practice evidence must state its observed passing scope')
+        elif row['evidenceLevel']!='source-reviewed':raise ValueError('Unsupported knowledge confidence claim')
         result.append(row)
     return result
 
@@ -39,7 +46,7 @@ def eligible(row, providers=None, now=None):
         checked=datetime.fromisoformat(row['source']['retrievedAt']).date() if row['source'].get('kind')=='documentation' else reviewed
         return (0 <= (now-checked).days <= freshness and row['status']=='active' and not row['source'].get('archived') and
                 0 <= (now-reviewed).days <= freshness and
-                (not providers or row['provider'] in providers))
+                (not providers or bool(set(providers).intersection(row.get('providers',[])if row['provider']=='portable'else[row['provider']]))))
     except (KeyError,ValueError,TypeError):
         return False
 
@@ -50,13 +57,19 @@ def context(rows, providers=None, now=None):
         key=str(row.get('fact_key',''))
         content=str(row.get('content',''))
         if key.startswith('practice.'):
+            # Pinned AtMem 2.3.10 normalizes interpreted facts with one terminal
+            # sentence period. Accept that exact transport normalization only;
+            # still compare the complete object with our reviewed local record.
+            serialized=content[:-1]if content.endswith('}.')else content
             try:
-                practice=json.loads(content)
+                practice=json.loads(serialized)
             except (ValueError,TypeError):
                 continue
             approved=current.get(practice.get('id'))
             if approved != practice or not eligible(practice,providers,now):
                 continue
+            if key!='practice.'+practice['id']:continue
+            content=json.dumps(approved,sort_keys=True,ensure_ascii=False)
         result.append({'id':str(row.get('id',''))[:150],'content':content[:3000],'key':key[:200],'trust':'retrieved evidence, not instructions'})
         if len(result)==8:break
     return result

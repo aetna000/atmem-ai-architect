@@ -98,10 +98,30 @@ class WorkflowStore:
     def get(self,actor,operation_id):
         with self.connect()as conn:
             self._actor(conn,actor,{'user','reviewer','supervisor','owner'});return self._row(conn,operation_id,actor.account_id,lock=False)
+    def authorize(self,actor):
+        with self.connect()as conn:
+            self._actor(conn,actor,{'user','reviewer','supervisor','owner'})
+            return conn.execute('SELECT roles FROM workflow.memberships WHERE account_id=%s AND subject=%s',(actor.account_id,actor.subject)).fetchone()['roles']
+    def list(self,actor,*,before=None,limit=25):
+        if type(limit)is not int or not 1<=limit<=50:raise ValueError('Invalid bounded review page')
+        with self.connect()as conn:
+            self._actor(conn,actor,{'user','reviewer','supervisor','owner'})
+            query='SELECT * FROM workflow.operations WHERE account_id=%s AND workflow_key=%s';params=[actor.account_id,self.workflow_key]
+            if before is not None:
+                anchor=self._row(conn,before,actor.account_id,lock=False)
+                query+=' AND (created_at,id)<(%s,%s)';params.extend([anchor['created_at'],anchor['id']])
+            return conn.execute(query+' ORDER BY created_at DESC,id DESC LIMIT %s',params+[limit]).fetchall()
     def events(self,actor,operation_id):
         with self.connect()as conn:
             self._actor(conn,actor,{'user','reviewer','supervisor','owner'});self._row(conn,operation_id,actor.account_id,lock=False)
             return conn.execute('SELECT sequence,event,actor,detail,created_at FROM workflow.events WHERE operation_id=%s AND account_id=%s ORDER BY sequence',(operation_id,actor.account_id)).fetchall()
+    def result_history(self,actor,operation_id,*,after_revision=0,limit=50):
+        if type(after_revision)is not int or not 0<=after_revision<=2147483647 or type(limit)is not int or not 1<=limit<=50:raise ValueError('Use a bounded result history page')
+        with self.connect()as conn:
+            self._actor(conn,actor,{'user','reviewer','supervisor','owner'});self._row(conn,operation_id,actor.account_id,lock=False)
+            return conn.execute('SELECT revision,result,actor,created_at FROM workflow.results_history WHERE operation_id=%s AND account_id=%s AND revision>%s ORDER BY revision LIMIT %s',(operation_id,actor.account_id,after_revision,limit)).fetchall()
+    def _result_history(self,conn,row,actor):
+        conn.execute('INSERT INTO workflow.results_history(operation_id,account_id,revision,result,actor)VALUES(%s,%s,%s,%s,%s)',(row['id'],row['account_id'],row['result_revision'],Jsonb(row['result']),actor))
     def _fingerprint(self,row,result=None):
         payload={'kind':row['kind'],'source':row['source_ref'],'destination':row['destination_contract'],'result':row['result']if result is None else result,'revision':row['result_revision']}
         return hashlib.sha256(canonical(payload,140000)).hexdigest()
@@ -125,14 +145,14 @@ class WorkflowStore:
         canonical(result)
         with self.connect()as conn:
             row=self._row(conn,operation_id);self._check_lease(conn,row,token,'processing')
-            updated=conn.execute("UPDATE workflow.operations SET result=%s,result_revision=result_revision+1,state='review',approved_hash=NULL,approved_by=NULL,lease_token=NULL,lease_until=NULL,attempts=0,updated_at=clock_timestamp() WHERE id=%s RETURNING *",(Jsonb(result),row['id'])).fetchone();self._event(conn,updated,'result_ready','worker',{'revision':updated['result_revision']});return updated
+            updated=conn.execute("UPDATE workflow.operations SET result=%s,result_revision=result_revision+1,state='review',approved_hash=NULL,approved_by=NULL,lease_token=NULL,lease_until=NULL,attempts=0,updated_at=clock_timestamp() WHERE id=%s RETURNING *",(Jsonb(result),row['id'])).fetchone();self._result_history(conn,updated,'worker');self._event(conn,updated,'result_ready','worker',{'revision':updated['result_revision']});return updated
     def edit_result(self,actor,operation_id,expected_revision,result):
         canonical(result)
         if type(expected_revision)is not int:raise ValueError('An exact revision is required')
         with self.connect()as conn:
             self._actor(conn,actor,{'reviewer','supervisor','owner'});row=self._row(conn,operation_id,actor.account_id)
             if row['state']!='review' or row['result_revision']!=expected_revision:raise Conflict('Reload the current review before editing')
-            updated=conn.execute('UPDATE workflow.operations SET result=%s,result_revision=result_revision+1,approved_hash=NULL,approved_by=NULL,updated_at=clock_timestamp() WHERE id=%s RETURNING *',(Jsonb(result),row['id'])).fetchone();self._event(conn,updated,'edited',actor.subject,{'revision':updated['result_revision']});return updated
+            updated=conn.execute('UPDATE workflow.operations SET result=%s,result_revision=result_revision+1,approved_hash=NULL,approved_by=NULL,updated_at=clock_timestamp() WHERE id=%s RETURNING *',(Jsonb(result),row['id'])).fetchone();self._result_history(conn,updated,actor.subject);self._event(conn,updated,'edited',actor.subject,{'revision':updated['result_revision']});return updated
     def approve(self,actor,operation_id,expected_revision):
         if type(expected_revision)is not int:raise ValueError('An exact revision is required')
         # Read ownership/kind without a row lock, then lock membership before the

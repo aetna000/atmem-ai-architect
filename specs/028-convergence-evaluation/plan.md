@@ -54,3 +54,12 @@ API/worker/database provider resources, retention and operations. Next qualify t
 boundaries across all four clouds and rerun complete document-intake briefs; then
 expand native enterprise/support and tenant-credit composition. CV-005, full 28-case
 acceptance and held-out evaluation remain unfinished.
+
+
+The invoice runtime increment now has real composed local evidence, including two
+concurrent native queue/model/sandbox/TLS jobs, immutable result history and actual
+AtMem practice recall. See evidence/20261110-invoice-runtime. Continue into complete
+four-provider application/UI/bootstrap, native database credentials/roles, parser
+isolation and retention/reconciliation resources. Then qualify exact fresh exports
+and rerun the original complete document-intake briefs; do not count local fixtures
+as native cloud identity/storage or reduce the remaining medium/hard scope.

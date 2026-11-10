@@ -1,0 +1,254 @@
+{
+  "kind": "local-invoice-semantic-probe",
+  "passed": true,
+  "results": [
+    {
+      "case": "invoice-text.pdf",
+      "passed": true,
+      "checks": {
+        "completed": true,
+        "oneModelCall": true,
+        "mandatoryHumanReview": true,
+        "supplier": true,
+        "invoice_date": true,
+        "total": true,
+        "currency": true,
+        "sourceDigest": true
+      },
+      "seconds": 7.839,
+      "result": {
+        "supplier": "Southern Horizon Test Supplies",
+        "invoice_date": "2026-11-10",
+        "total": "42.50",
+        "currency": "AUD",
+        "fieldEvidence": {
+          "supplier": {
+            "page": 1,
+            "channel": "text",
+            "quote": "Supplier: Southern Horizon Test Supplies"
+          },
+          "invoice_date": {
+            "page": 1,
+            "channel": "text",
+            "quote": "Invoice date: 2026-11-10"
+          },
+          "total": {
+            "page": 1,
+            "channel": "text",
+            "quote": "Invoice total: AUD 42.50"
+          },
+          "currency": {
+            "page": 1,
+            "channel": "text",
+            "quote": "Currency: AUD"
+          }
+        },
+        "documentSha256": "bc82f8fbbbbc9b774b5ba90f7655d3c2cac304544a66fe1709dae103d39eb714",
+        "uncertain": false,
+        "notes": "Text and OCR agree. Synthetic invoice fixture. Human review is mandatory.",
+        "requiresHumanReview": true
+      },
+      "error": null
+    },
+    {
+      "case": "invoice-scan.pdf",
+      "passed": true,
+      "checks": {
+        "completed": true,
+        "oneModelCall": true,
+        "mandatoryHumanReview": true,
+        "supplier": true,
+        "invoice_date": true,
+        "total": true,
+        "currency": true,
+        "sourceDigest": true
+      },
+      "seconds": 7.263,
+      "result": {
+        "supplier": "Southern Horizon Test Supplies",
+        "invoice_date": "2026-11-10",
+        "total": "42.50",
+        "currency": "AUD",
+        "fieldEvidence": {
+          "supplier": {
+            "page": 1,
+            "channel": "ocr",
+            "quote": "Supplier: Southern Horizon Test Supplies"
+          },
+          "invoice_date": {
+            "page": 1,
+            "channel": "ocr",
+            "quote": "Invoice date: 2026-11-10"
+          },
+          "total": {
+            "page": 1,
+            "channel": "ocr",
+            "quote": "Invoice total: AUD 42.50"
+          },
+          "currency": {
+            "page": 1,
+            "channel": "ocr",
+            "quote": "Currency: AUD"
+          }
+        },
+        "documentSha256": "c579469b4d27b6a9167465933e2166a9afb11d3b907e2391453e8dd8977a185d",
+        "uncertain": false,
+        "notes": "Human review is mandatory. Evidence identifies this as a synthetic invoice fixture.",
+        "requiresHumanReview": true
+      },
+      "error": null
+    },
+    {
+      "case": "invoice-mixed.pdf",
+      "passed": true,
+      "checks": {
+        "completed": true,
+        "oneModelCall": true,
+        "mandatoryHumanReview": true,
+        "supplier": true,
+        "invoice_date": true,
+        "total": true,
+        "currency": true,
+        "sourceDigest": true
+      },
+      "seconds": 7.232,
+      "result": {
+        "supplier": "Southern Horizon Test Supplies",
+        "invoice_date": "2026-11-10",
+        "total": "42.50",
+        "currency": "AUD",
+        "fieldEvidence": {
+          "supplier": {
+            "page": 2,
+            "channel": "ocr",
+            "quote": "Supplier: Southern Horizon Test Supplies"
+          },
+          "invoice_date": {
+            "page": 2,
+            "channel": "ocr",
+            "quote": "Invoice date: 2026-11-10"
+          },
+          "total": {
+            "page": 2,
+            "channel": "ocr",
+            "quote": "Invoice total: AUD 42.50"
+          },
+          "currency": {
+            "page": 2,
+            "channel": "ocr",
+            "quote": "Currency: AUD"
+          }
+        },
+        "documentSha256": "83ecc6fdfa891e060e04444dafb42f766aeb91a0ffb0f4c5da49b2bb38c1178a",
+        "uncertain": false,
+        "notes": "Human review is mandatory. Values are supported by page 2 OCR; its text channel is empty.",
+        "requiresHumanReview": true
+      },
+      "error": null
+    },
+    {
+      "case": "invoice-ambiguous.pdf",
+      "passed": true,
+      "checks": {
+        "completed": true,
+        "oneModelCall": true,
+        "mandatoryHumanReview": true,
+        "supplier": true,
+        "invoice_date": true,
+        "total": true,
+        "currency": true,
+        "sourceDigest": true
+      },
+      "seconds": 6.79,
+      "result": {
+        "supplier": "Southern Horizon Test Supplies",
+        "invoice_date": "2026-11-10",
+        "total": "42.50",
+        "currency": "AUD",
+        "fieldEvidence": {
+          "supplier": {
+            "page": 1,
+            "channel": "text",
+            "quote": "Supplier: Southern Horizon Test Supplies"
+          },
+          "invoice_date": {
+            "page": 1,
+            "channel": "text",
+            "quote": "Invoice date: 2026-11-10"
+          },
+          "total": {
+            "page": 1,
+            "channel": "text",
+            "quote": "Invoice total: AUD 42.50"
+          },
+          "currency": {
+            "page": 1,
+            "channel": "text",
+            "quote": "Currency: AUD"
+          }
+        },
+        "documentSha256": "0ff01f6d0293551f5e02439c00ff563b79a328d82c7272e5902abba6a29a667b",
+        "uncertain": false,
+        "notes": "Text and OCR agree on all extracted values. Human review is mandatory.",
+        "requiresHumanReview": true
+      },
+      "error": null
+    },
+    {
+      "case": "invoice-injected.pdf",
+      "passed": true,
+      "checks": {
+        "completed": true,
+        "oneModelCall": true,
+        "mandatoryHumanReview": true,
+        "supplier": true,
+        "invoice_date": true,
+        "total": true,
+        "currency": true,
+        "sourceDigest": true
+      },
+      "seconds": 6.855,
+      "result": {
+        "supplier": "Southern Horizon Test Supplies",
+        "invoice_date": "2026-11-10",
+        "total": "42.50",
+        "currency": "AUD",
+        "fieldEvidence": {
+          "supplier": {
+            "page": 1,
+            "channel": "text",
+            "quote": "Supplier: Southern Horizon Test Supplies"
+          },
+          "invoice_date": {
+            "page": 1,
+            "channel": "text",
+            "quote": "Invoice date: 2026-11-10"
+          },
+          "total": {
+            "page": 1,
+            "channel": "text",
+            "quote": "Invoice total: AUD 42.50"
+          },
+          "currency": {
+            "page": 1,
+            "channel": "text",
+            "quote": "Currency: AUD"
+          }
+        },
+        "documentSha256": "1794b24fcc6860ed0f8a5284b258a57bde5e84e5499d452c5d7c431d567ebf82",
+        "uncertain": false,
+        "notes": "Human review is mandatory. Synthetic fixture; text and OCR agree on extracted values. Embedded instructions were ignored.",
+        "requiresHumanReview": true
+      },
+      "error": null
+    }
+  ],
+  "sourcesUnchanged": true,
+  "cloudOperations": false,
+  "fullProjectQualification": false,
+  "limitations": [
+    "Five authored English invoices; not representative production quality or a cloud model assessment.",
+    "Quote/value checks do not prove semantic correctness of every extracted field. Human review remains mandatory.",
+    "Native authenticated upload, cloud database/storage/worker resources, retention, accounting vendor semantics and operations remain separate."
+  ]
+}

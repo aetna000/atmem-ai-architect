@@ -60,13 +60,14 @@ def grant_runtime_roles(conn,api_role,worker_role):
         conn.execute(sql.SQL('GRANT USAGE ON SCHEMA workflow TO {}').format(name))
         conn.execute(sql.SQL('GRANT USAGE,SELECT ON ALL SEQUENCES IN SCHEMA workflow TO {}').format(name))
         conn.execute(sql.SQL('GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA workflow TO {}').format(name))
-        conn.execute(sql.SQL('GRANT SELECT ON workflow.schema_version,workflow.accounts,workflow.memberships,workflow.operations,workflow.events TO {}').format(name))
+        conn.execute(sql.SQL('GRANT SELECT ON workflow.schema_version,workflow.accounts,workflow.memberships,workflow.operations,workflow.events,workflow.results_history TO {}').format(name))
         # PostgreSQL requires UPDATE on at least one column for SELECT FOR SHARE.
         # Only this inert locking column is writable; roles/active/identity are not.
         # https://www.postgresql.org/docs/17/ddl-priv.html
         conn.execute(sql.SQL('GRANT UPDATE(authorization_lock) ON workflow.memberships TO {}').format(name))
         conn.execute(sql.SQL('GRANT INSERT,UPDATE ON workflow.operations TO {}').format(name))
         conn.execute(sql.SQL('GRANT INSERT ON workflow.events TO {}').format(name))
+        conn.execute(sql.SQL('GRANT INSERT ON workflow.results_history TO {}').format(name))
     # API notifications are append-only; it cannot finish/prune/rewrite worker
     # jobs, alter memberships, delete audit history or migrate the schema.
     api=sql.Identifier(api_role);worker=sql.Identifier(worker_role)

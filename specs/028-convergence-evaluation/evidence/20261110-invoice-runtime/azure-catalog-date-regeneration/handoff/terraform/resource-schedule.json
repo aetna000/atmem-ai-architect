@@ -1,0 +1,215 @@
+{
+  "revision": 4,
+  "rows": [
+    {
+      "id": "faq-visitors",
+      "address": "block_6661712d76697369746f7273",
+      "label": "Website visitors",
+      "provider": "tools",
+      "service": "Web browser",
+      "sourceExisting": true,
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "External client",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "External browser — no infrastructure to provision; connection behavior still requires validation",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "structured": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "externalReference": true,
+      "existingServiceReference": null,
+      "containerContract": null,
+      "implemented": true
+    },
+    {
+      "id": "faq-app",
+      "address": "block_6661712d617070",
+      "label": "Public help assistant",
+      "provider": "azure",
+      "service": "Azure App Service",
+      "sourceExisting": false,
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "australiaeast",
+      "resources": [
+        "azurerm_linux_web_app",
+        "azurerm_storage_account",
+        "azurerm_storage_container"
+      ],
+      "costDrivers": "Compute and HTTP requests, model input/output tokens, catalog read/write/versioned storage, logs and transfer; verify current regional service/model prices and quotas. Capacity limits are not invoice caps.",
+      "dependencies": [
+        "faq-visitors",
+        "faq-editor"
+      ],
+      "terraform": "Public-only cited FAQ source, browser, private catalog, separate editor/runtime roles and regional model transport generated; destination behavior unverified",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "structured": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "externalReference": false,
+      "existingServiceReference": null,
+      "containerContract": null,
+      "implemented": true
+    },
+    {
+      "id": "faq-editor",
+      "address": "block_6661712d656469746f72",
+      "label": "Authorized article editor",
+      "provider": "tools",
+      "service": "Existing authorized operator",
+      "sourceExisting": true,
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "External operator",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing public catalog editor — provider-native role/group input and separate conditional editor CLI generated; actual access unverified",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "structured": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "externalReference": false,
+      "existingServiceReference": null,
+      "containerContract": null,
+      "implemented": true
+    }
+  ],
+  "connections": [
+    {
+      "id": "faq-visitors-to-app",
+      "source": "faq-visitors",
+      "target": "faq-app",
+      "data": "HTTPS questions → cited answers or “I don’t know”",
+      "generated": true,
+      "status": "Scoped access policy generated; account and runtime verification required"
+    },
+    {
+      "id": "faq-editor-to-app",
+      "source": "faq-editor",
+      "target": "faq-app",
+      "data": "Authorized CLI: publish, update and remove public articles",
+      "generated": true,
+      "status": "Scoped access policy generated; account and runtime verification required"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "publicFaqPlan": {
+    "entries": [
+      {
+        "row": {
+          "id": "faq-app",
+          "address": "block_6661712d617070",
+          "label": "Public help assistant",
+          "provider": "azure",
+          "service": "Azure App Service",
+          "sourceExisting": false,
+          "selection": "Needs service confirmation",
+          "existing": false,
+          "region": "australiaeast",
+          "resources": [
+            "azurerm_linux_web_app",
+            "azurerm_storage_account",
+            "azurerm_storage_container"
+          ],
+          "costDrivers": "Compute and HTTP requests, model input/output tokens, catalog read/write/versioned storage, logs and transfer; verify current regional service/model prices and quotas. Capacity limits are not invoice caps.",
+          "dependencies": [
+            "faq-visitors",
+            "faq-editor"
+          ],
+          "terraform": "Public-only cited FAQ source, browser, private catalog, separate editor/runtime roles and regional model transport generated; destination behavior unverified",
+          "foundation": false,
+          "compute": false,
+          "api": false,
+          "structured": false,
+          "summary": false,
+          "settings": {},
+          "reference": false,
+          "externalReference": false,
+          "existingServiceReference": null,
+          "containerContract": null,
+          "implemented": true
+        },
+        "provider": "azure"
+      }
+    ],
+    "componentIds": [
+      "faq-app"
+    ],
+    "editorIds": [
+      "faq-editor"
+    ],
+    "edgeIds": [
+      "faq-visitors-to-app",
+      "faq-editor-to-app"
+    ]
+  },
+  "azureStructuredPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gcpStructuredPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "ibmStructuredPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "structuredApiPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [],
+  "gapDetails": [],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

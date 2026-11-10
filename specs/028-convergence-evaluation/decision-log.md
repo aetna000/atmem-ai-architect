@@ -163,3 +163,21 @@ specs/028-convergence-evaluation/evidence/20261110-durable-core. This core is no
 a registered provider application: PDF/native identity/storage, complete provider
 resources, retention/restore and vendor reconciliation remain implementation work.
 No full project, final 28-case acceptance or cloud deployment is claimed.
+
+
+## 2026-11-10 — Invoice composition and verified learning recall
+
+Added bounded text/OCR and evidence-linked invoice suggestions, private immutable
+object adapters for all four native contracts, restricted-role upload/review API,
+append-only result history and actual local composed queue/model/TLS evaluation.
+The first OCR image retained a critical-rated XML dependency; the reduced source
+build removes unused archive/URL features and their libraries. Its actual runtime
+passes, with 0 critical but 65 unfixed high scan findings still open. No full cloud
+project is registered or counted before native resource/identity/isolation work.
+
+A real AtMem round-trip test exposed sentence normalization that excluded reviewed
+JSON practices from context. Accept exactly the pinned SDK's terminal period, then
+verify full reviewed record/key equality; reject tampering and added instructions.
+Portable locally-tested lessons now retain their evidence receipt and limitations.
+See specs/028-convergence-evaluation/evidence/20261110-invoice-runtime. Full 28-case
+acceptance, medium/hard provider composition and production qualification remain open.

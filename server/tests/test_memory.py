@@ -1,5 +1,6 @@
 import asyncio
 import copy
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -72,7 +73,19 @@ class MemoryTests(unittest.TestCase):
   keys={r.get('fact_key') for r in knowledge}
   self.assertTrue({'skill.'+r['id'] for r in skills.registry()}.issubset(keys))
   self.assertTrue({'practice.'+p+'-container-boundaries' for p in ['aws','azure','gcp','ibm']}.issubset(keys))
-  self.assertTrue(all('source-reviewed' in r['content'] for r in knowledge if r.get('fact_key','').startswith('practice.')))
+  from server.engineering_knowledge import context as knowledge_context
+  practice_rows=[r for r in knowledge if r.get('fact_key','').startswith('practice.')]
+  practices=[json.loads(r['content'])for r in knowledge_context(practice_rows)]
+  self.assertTrue(practices)
+  for practice in practices:
+   self.assertIn(practice['evidenceLevel'],{'source-reviewed','locally-tested'})
+   if practice['evidenceLevel']=='locally-tested':
+    proof=practice['localVerification'];receipt=Path(__file__).resolve().parents[2]/proof['receipt']
+    self.assertEqual(hashlib.sha256(receipt.read_bytes()).hexdigest(),proof['sha256'])
+    self.assertTrue(json.loads(receipt.read_text())['passed'])
+  actual=m.call([{'action':'recall','subject':m.subject('knowledge',PROJECT),'query':'durable approval uncertain outcome queue','limit':8}])[0]
+  selected=knowledge_context(actual,{'aws'})
+  self.assertTrue(any(r['key']=='practice.durable-approval-and-uncertain-outcome'for r in selected))
   chosen=skills.select(m,PROJECT,request(),[]);self.assertIn('aws',[s['id'] for s in chosen])
   with m.db() as db:db.execute('INSERT INTO skill_settings VALUES (?,0)',('aws',))
   self.assertNotIn('aws',[s['id'] for s in skills.select(m,PROJECT,request(),[])])

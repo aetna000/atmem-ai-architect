@@ -117,6 +117,24 @@ class DurablePostgresTests(DurableFixture,unittest.TestCase):
         approved=self.store.approve(self.reviewer,operation,2)
         with self.assertRaises(Conflict):self.store.edit_result(self.reviewer,operation,2,{'supplier':'Change after approval'})
         lease=self.store.claim_dispatch(operation);self.assertEqual(lease['approved_hash'],approved['approved_hash'])
+    def test_each_extraction_and_review_revision_is_retained_with_its_actual_actor(self):
+        operation=self.review(result={'supplier':'Original extraction'})
+        self.store.edit_result(self.reviewer,operation,1,{'supplier':'Reviewer correction'})
+        with self.assertRaises(Conflict):self.store.edit_result(self.reviewer,operation,1,{'supplier':'Stale edit'})
+        rows=self.store.result_history(self.user,operation)
+        self.assertEqual([row['revision']for row in rows],[1,2]);self.assertEqual([row['result']['supplier']for row in rows],['Original extraction','Reviewer correction']);self.assertEqual([row['actor']for row in rows],['worker',self.reviewer.subject])
+        self.assertEqual([row['revision']for row in self.store.result_history(self.user,operation,limit=1)],[1]);self.assertEqual([row['revision']for row in self.store.result_history(self.user,operation,after_revision=1,limit=1)],[2])
+        for after,limit in [(True,1),(-1,1),(0,51)]:
+            with self.assertRaises(ValueError):self.store.result_history(self.user,operation,after_revision=after,limit=limit)
+        with self.assertRaises(Missing):self.store.result_history(self.outsider,operation)
+    def test_bounded_listing_and_cursor_are_scoped_to_current_membership_account_and_workflow(self):
+        operations=[self.submit(key='page-'+str(index))for index in range(3)]
+        first=self.store.list(self.user,limit=2);second=self.store.list(self.user,before=str(first[-1]['id']),limit=2)
+        self.assertEqual([str(row['id'])for row in first+second],list(reversed(operations)))
+        other=self.store.submit(self.outsider,'document','other-account',{})
+        with self.assertRaises(Missing):self.store.list(self.user,before=other)
+        for limit in [True,0,51]:
+            with self.assertRaises(ValueError):self.store.list(self.user,limit=limit)
     def test_live_application_role_revocation_invalidates_queued_approval(self):
         operation=self.approved()
         with self.store.connect()as conn:conn.execute('UPDATE workflow.memberships SET active=false WHERE account_id=%s AND subject=%s',(self.account,self.reviewer.subject))
