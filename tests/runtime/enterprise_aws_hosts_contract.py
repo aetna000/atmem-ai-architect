@@ -149,6 +149,7 @@ class ProbeObservations(unittest.TestCase):
         destination='fd00:ec2::254/128'if 'ip6tables'in argv[0]else'169.254.169.254/32'
         if argv[-1]=='FORWARD':return '-A FORWARD -j ACCEPT'if self.mode=='hook'else'-A FORWARD -j DOCKER-USER'
         rule='-A DOCKER-USER -i docker0 -d '+destination+' -j DROP'
+        if self.mode=='native-order':rule='-A DOCKER-USER -d '+destination+' -i docker0 -j DROP'
         return ('-A DOCKER-USER -j ACCEPT\n'if self.mode=='shadowed'else'')+rule
     def inspect(self):return inspect_host(self.expected,read=lambda name:self.files[name],command=self.command)
     def test_probe_returns_only_bound_observation_after_read_only_checks(self):
@@ -169,6 +170,8 @@ class ProbeObservations(unittest.TestCase):
     def test_missing_or_malformed_host_state_is_not_adopted(self):
         self.files['/etc/docker/daemon.json']='invalid'
         with self.assertRaises(ValueError):self.inspect()
+    def test_actual_native_iptables_option_order_preserves_the_same_policy(self):
+        self.mode='native-order';self.assertEqual(self.inspect()['policySha256'],self.expected['policySha256'])
     def test_native_docker_command_forces_local_socket_and_scrubs_context_environment(self):
         seen=[]
         def command(argv,**options):

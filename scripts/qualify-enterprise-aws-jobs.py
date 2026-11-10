@@ -12,7 +12,7 @@ import sys
 import uuid
 ROOT=Path(__file__).resolve().parents[1]
 sys.path[:0]=[str(ROOT/'src/runtime'),str(ROOT/'tests/runtime'),str(ROOT/'.local/aws-web-runtime-sdk')]
-from enterprise_aws_jobs import task_definition
+from enterprise_aws_jobs import task_definition,task_overrides
 from enterprise_aws_jobs_contract import config,native_check
 from enterprise_document_job import request,result
 from botocore.model import ServiceModel
@@ -31,11 +31,11 @@ def qualify(args):
         for name,digest in value['sourceHashes'].items():
             if hashlib.sha256((ROOT/name).read_bytes()).hexdigest()!=digest:raise ValueError('Qualified source changed: '+name)
         receipts.append(value)
-    if receipts[0].get('provider')!='aws'or receipts[0].get('awsDocumentContractTests')!=25:raise ValueError('Require the AWS image and native contract checks')
+    if receipts[0].get('provider')!='aws'or receipts[0].get('awsDocumentContractTests')!=30:raise ValueError('Require the AWS image and native contract checks')
     out.mkdir(parents=True);checks=[];success=False
     env={'PATH':os.environ.get('PATH',''),'HOME':str(out),'DOCKER_HOST':args.docker_host,'DOCKER_CONFIG':str(ROOT/'.local/qualification-docker-config')}
     paths=[Path(__file__).resolve(),ROOT/'tests/runtime/enterprise_aws_jobs_contract.py',
-           *[ROOT/'src/runtime'/name for name in ['enterprise_aws_jobs.py','enterprise_aws_objects.py','enterprise_aws_transfer.py','enterprise_document_job.py','enterprise_document_contract.py']],
+           *[ROOT/'src/runtime'/name for name in ['enterprise-aws-task-template.json','enterprise_aws_jobs.py','enterprise_aws_objects.py','enterprise_aws_transfer.py','enterprise_document_job.py','enterprise_document_contract.py']],
            ROOT/'tests/fixtures/providers/aws-ecs-2014-11-13-botocore-1.43.123.json.gz']
     hashes={str(p.relative_to(ROOT)):hashlib.sha256(p.read_bytes()).hexdigest()for p in paths}
     schema=paths[-1];provenance=json.loads(schema.with_suffix('.provenance.json').read_text())
@@ -87,7 +87,10 @@ runpy.run_path('/app/enterprise_aws_transfer.py',run_name='__main__')
         for filename,mime,content in [('policy.docx','application/vnd.openxmlformats-officedocument.wordprocessingml.document','twenty days'),('invoice-scan.pdf','application/pdf','42.50')]:
             path=ROOT/'benchmarks/convergence/fixtures'/('invoices'if filename.endswith('.pdf')else'enterprise-documents')/filename
             raw=path.read_bytes();hashes[str(path.relative_to(ROOT))]=hashlib.sha256(raw).hexdigest()
-            identifier=uuid.uuid4().hex+uuid.uuid4().hex;spec=task_definition(owned,request(raw,mime,identifier),'"'+'d'*32+'"')
+            identifier=uuid.uuid4().hex+uuid.uuid4().hex;spec=task_definition(owned)
+            overrides=task_overrides(owned,request(raw,mime,identifier),'"'+'d'*32+'"')
+            native_check(overrides,model.shape_for('TaskOverride'))
+            (out/(filename+'-ecs-overrides.json')).write_text(json.dumps(overrides,indent=2)+'\n')
             native_check(spec,model.operation_model('RegisterTaskDefinition').input_shape)
             (out/(filename+'-ecs-request.json')).write_text(json.dumps(spec,indent=2)+'\n')
             volumes={};uploaded=None
@@ -96,6 +99,9 @@ runpy.run_path('/app/enterprise_aws_transfer.py',run_name='__main__')
                     name='atmem-aws-job-qualification-'+identifier+'-'+side
                     run(filename+'-'+side+'-volume',['volume','create',name]);volumes[side]=name
                 for stage,container in enumerate(spec['containerDefinitions']):
+                    container=dict(container)
+                    for override in overrides['containerOverrides']:
+                        if override['name']==container['name']:container['environment']=override['environment']
                     command=['run','--rm','--platform','linux/amd64','--network','none','--read-only','--log-driver','none',
                              '--user',container['user'],'--memory',str(container['memory'])+'m','--cpu-shares',str(container['cpu']),
                              '--pids-limit','128','--cap-drop','ALL','--security-opt','no-new-privileges']

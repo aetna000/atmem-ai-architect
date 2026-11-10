@@ -1,9 +1,11 @@
 """Fixed SSM host inspection. Standard library only; no document or secret input."""
 import base64
 import json
+import ipaddress
 from pathlib import Path
 import re
 import subprocess
+import shlex
 import sys
 
 
@@ -18,12 +20,33 @@ def run(argv):
     return value.stdout.decode().strip()
 
 
-def inspect_host(expected,*,read=lambda name:Path(name).read_text(),command=run):
+def expected_policy(expected):
     if (not isinstance(expected,dict)or set(expected)!={'format','clusterArn','policySha256'}or
         expected['format']!='enterprise-aws-host-policy-v1'or
         not isinstance(expected['policySha256'],str)or not re.fullmatch('[0-9a-f]{64}',expected['policySha256'])or
         not isinstance(expected['clusterArn'],str)or not re.fullmatch(r'arn:aws:ecs:[a-z]{2}-[a-z]+-[1-9]:[0-9]{12}:cluster/[A-Za-z0-9_-]{1,255}',expected['clusterArn'])):
         raise ValueError('Use the exact owned host policy')
+    return dict(expected)
+
+
+def first_rule_matches(lines,chain,pairs):
+    active=[value for value in lines.splitlines()if value.startswith('-A ')]
+    if not active:return False
+    fields=shlex.split(active[0])
+    if fields[:2]!=['-A',chain]or len(fields)!=2+2*len(pairs):return False
+    actual={}
+    for index in range(2,len(fields),2):
+        key,value=fields[index:index+2]
+        if key in actual:return False
+        if key=='-d':
+            try:value=str(ipaddress.ip_network(value,strict=True))
+            except ValueError:return False
+        actual[key]=value
+    return actual==pairs
+
+
+def inspect_host(expected,*,read=lambda name:Path(name).read_text(),command=run):
+    expected=expected_policy(expected)
     # Parse values as inert text. Never source a host config into a shell.
     values={}
     for line in read('/etc/ecs/ecs.config').splitlines():
@@ -61,12 +84,10 @@ def inspect_host(expected,*,read=lambda name:Path(name).read_text(),command=run)
     # instance-profile credentials to the transfer containers.
     for destination in ['169.254.169.254/32','fd00:ec2::254/128']:
         tool='/usr/sbin/iptables'if ':'not in destination else'/usr/sbin/ip6tables'
-        rules=command([tool,'-w','2','-S','DOCKER-USER']).splitlines()
-        active=[value for value in rules if value.startswith('-A ')]
-        if not active or active[0]!='-A DOCKER-USER -i docker0 -d '+destination+' -j DROP':raise ValueError('IMDS rule is missing or shadowed')
-        forward=command([tool,'-w','2','-S','FORWARD']).splitlines()
-        active=[value for value in forward if value.startswith('-A ')]
-        if not active or active[0]!='-A FORWARD -j DOCKER-USER':raise ValueError('IMDS chain is not the first forwarding hook')
+        rules=command([tool,'-w','2','-S','DOCKER-USER'])
+        if not first_rule_matches(rules,'DOCKER-USER',{'-i':'docker0','-d':destination,'-j':'DROP'}):raise ValueError('IMDS rule is missing or shadowed')
+        forward=command([tool,'-w','2','-S','FORWARD'])
+        if not first_rule_matches(forward,'FORWARD',{'-j':'DOCKER-USER'}):raise ValueError('IMDS chain is not the first forwarding hook')
     boot=read('/proc/sys/kernel/random/boot_id').strip()
     if not re.fullmatch('[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}',boot):raise ValueError('Invalid native boot identity')
     return {'format':'enterprise-aws-host-observation-v1','policySha256':expected['policySha256'],

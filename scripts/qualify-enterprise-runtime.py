@@ -24,7 +24,7 @@ CORE = ['enterprise_identity.py', 'enterprise_sources.py', 'enterprise_knowledge
         'enterprise_audit.py', 'enterprise_audit_schema.sql', 'enterprise_models.py', 'enterprise_secrets.py',
         'enterprise_configuration.py', 'enterprise_native.py', 'enterprise_operator.py', 'workflow_connection.py', 'workflow_errors.py',
         'enterprise_google_jobs.py', 'enterprise_google_transfer.py',
-        'enterprise_aws_jobs.py', 'enterprise_aws_objects.py', 'enterprise_aws_transfer.py',
+        'enterprise-aws-task-template.json', 'enterprise_aws_jobs.py', 'enterprise_aws_objects.py', 'enterprise_aws_transfer.py',
         'enterprise_aws_hosts.py', 'enterprise_aws_host_probe.py',
         'enterprise_document_jobs.py', 'enterprise_document_jobs_schema.sql',
         'aws_json_model.py', 'azure_structured.py', 'gcp_structured.py', 'ibm_structured.py',
@@ -164,11 +164,11 @@ sys.path.insert(0,'/app')
                 entry='/tmp/workspace/tests/runtime/enterprise_aws_execution_contract.py'
                 result=run('aws-document-contracts', [*restricted,'--network','none',image,'python','-I','-c',
                     loader+"import runpy;sys.argv=["+repr(entry)+",'-v'];runpy.run_path("+repr(entry)+",run_name='__main__')"],data=json.dumps(payload).encode())
-                if not re.search(rb'Ran 25 tests in [^\n]+\n\nOK\s*$',result):raise ValueError('Unexpected AWS document contract inventory')
+                if not re.search(rb'Ran 30 tests in [^\n]+\n\nOK\s*$',result):raise ValueError('Unexpected AWS document contract inventory')
                 entry='/tmp/workspace/tests/runtime/enterprise_aws_hosts_contract.py'
                 result=run('aws-host-contracts', [*restricted,'--network','none',image,'python','-I','-c',
                     loader+"import runpy;sys.argv=["+repr(entry)+",'-v'];runpy.run_path("+repr(entry)+",run_name='__main__')"],data=json.dumps(payload).encode())
-                if not re.search(rb'Ran 15 tests in [^\n]+\n\nOK\s*$',result):raise ValueError('Unexpected AWS host contract inventory')
+                if not re.search(rb'Ran 16 tests in [^\n]+\n\nOK\s*$',result):raise ValueError('Unexpected AWS host contract inventory')
             for version in [17, 18]:
                 name = 'atmem-durable-qualification' + ('-pg18' if version == 18 else '')
                 # Select exactly the existing owned fixture, never another DB.
@@ -208,8 +208,8 @@ print(json.dumps({'postgresVersionNum':version}))
             (output / 'receipt.json').write_text(json.dumps({'recordedAt': datetime.now(timezone.utc).isoformat(),
                 'passed': passed, 'imageId': image, 'checks': checks, 'sourceHashes': hashes,
                 'provider':args.provider,'packages': len(lock['sources']), 'policyTests': 95, 'sqlTestsPerVersion': sum(SQL.values()),
-                'awsDocumentContractTests':25 if args.provider=='aws'else 0,
-                'awsHostContractTests':15 if args.provider=='aws'else 0,
+                'awsDocumentContractTests':30 if args.provider=='aws'else 0,
+                'awsHostContractTests':16 if args.provider=='aws'else 0,
                 'postgresVersions': [17, 18], 'securityAccepted': False, 'cloudOperations': False,
                 'scope': 'Clean Linux private application/factory/operator dependencies. Actual crypto/SQL/Procrastinate/bootstrap/enrollment/revocation; native model serializers with scripted HTTP. Assembled HTTP API/worker tests run separately on the host. No native account/model quality, per-file cloud launcher/isolation, complete-project or deployment acceptance.'}, indent=2) + '\n')
 

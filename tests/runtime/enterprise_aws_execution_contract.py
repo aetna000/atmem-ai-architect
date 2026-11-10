@@ -12,12 +12,12 @@ import unittest
 from unittest.mock import patch
 ROOT=Path(__file__).resolve().parents[2]
 sys.path[:0]=[str(ROOT/'src/runtime'),str(ROOT/'tests/runtime'),str(ROOT/'.local/aws-web-runtime-sdk')]
-from enterprise_aws_jobs import EcsDocuments,EcsDocumentApi,transfer_metadata
+from enterprise_aws_jobs import EcsDocuments,EcsDocumentApi,transfer_metadata,task_definition
 from enterprise_aws_objects import S3DocumentObjects,object_key
 from enterprise_aws_transfer import metadata,download,upload
 from enterprise_document_job import request
 from enterprise_sources import SourceUnavailable,SourceDenied
-from enterprise_aws_jobs_contract import config,native_check,AwsDocumentTaskContract
+from enterprise_aws_jobs_contract import config,native_check,AwsDocumentTaskContract,PinnedDefinitionInspection
 from enterprise_google_jobs_acceptance import MemoryLedger
 from enterprise_aws_hosts import VerifiedHosts
 
@@ -38,23 +38,27 @@ class Objects:
     def load(self,identifier,side,condition=None):
         self.calls.append(('load',identifier,side))
         return envelope(b'FORGED'if self.forge else self.raw,identifier)
-    def delete(self,identifier,side):self.calls.append(('delete',identifier,side))
+    def delete(self,identifier,side):
+        self.calls.append(('delete',identifier,side))
+        if getattr(self,'delete_failure',False):raise SourceUnavailable('owned_delete_failed')
 
 
 class Ecs:
     def __init__(self,model):
-        self.model=model;self.calls=[];self.definition=None;self.task=None
-        self.register_lost=self.run_lost=self.delete_failure=self.foreign=self.running=False
+        self.model=model;self.calls=[];self.definition=config()['taskDefinitionArn'];self.task=None
+        self.run_lost=self.foreign=self.running=False
+        self.definition_mutation=None
         self.exit_code=0
     def call(self,operation,**values):
         name=''.join(piece.title()for piece in operation.split('_'))
         native_check(values,self.model.operation_model(name).input_shape)
         self.calls.append((operation,copy.deepcopy(values)))
         owned=config();prefix='arn:aws:ecs:'+owned['region']+':'+owned['accountId']+':'
-        if operation=='register_task_definition':
-            self.definition=prefix+'task-definition/'+values['family']+':1'
-            if self.register_lost:raise SourceUnavailable('lost_registration_ack')
-            return {'taskDefinition':{'taskDefinitionArn':self.definition}}
+        if operation=='describe_task_definition':
+            value=task_definition(owned);value.pop('tags')
+            value.update(taskDefinitionArn=self.definition,revision=1,status='ACTIVE',compatibilities=['EC2'],requiresAttributes=[])
+            if self.definition_mutation:value=self.definition_mutation(value)
+            return {'taskDefinition':value}
         if operation=='run_task':
             self.task={'taskArn':prefix+'task/document-parser/'+'f'*32,'clusterArn':owned['clusterArn'],
                        'startedBy':values['startedBy'],'taskDefinitionArn':self.definition,'containerInstanceArn':verified_hosts(owned).members[0][0]}
@@ -67,11 +71,6 @@ class Ecs:
             return {'tasks':[value],'failures':[]}
         if operation=='list_tasks':return {'taskArns':[self.task['taskArn']]if self.task else[]}
         if operation=='stop_task':self.running=False;return {'task':copy.deepcopy(self.task)}
-        if operation=='list_task_definitions':return {'taskDefinitionArns':[self.definition]if self.definition else[]}
-        if operation=='deregister_task_definition':return {'taskDefinition':{'taskDefinitionArn':self.definition}}
-        if operation=='delete_task_definitions':
-            if self.delete_failure:return {'failures':[{'reason':'PRIVATE upstream'}]}
-            return {'taskDefinitions':[],'failures':[]}
         raise AssertionError(operation)
 
 
@@ -91,6 +90,11 @@ class AwsExecution(unittest.TestCase):
         self.assertNotIn(self.raw.decode(),json.dumps(self.api.calls))
         launch=next(value for op,value in self.api.calls if op=='run_task')
         self.assertEqual(launch['launchType'],'EC2');self.assertFalse(launch['enableExecuteCommand'])
+        self.assertEqual(launch['taskDefinition'],config()['taskDefinitionArn'])
+        self.assertEqual(set(launch['overrides']),{'containerOverrides'})
+        self.assertFalse(any(op in {'register_task_definition','deregister_task_definition','delete_task_definitions','list_task_definitions'}for op,_ in self.api.calls))
+        listed=next(value for op,value in self.api.calls if op=='list_tasks')
+        self.assertEqual(set(listed),{'cluster','startedBy','maxResults'})
     def test_untracked_initial_revocation_and_failed_host_policy_create_no_remote_bytes(self):
         self.runner.ledger=None
         with self.assertRaises(SourceUnavailable):self.runner.from_source(self.raw,'text/plain',lambda:None)
@@ -101,11 +105,12 @@ class AwsExecution(unittest.TestCase):
         self.runner.host_check=bad_host
         with self.assertRaises(SourceUnavailable):self.runner.from_source(self.raw,'text/plain',lambda:None)
         self.assertEqual(self.api.calls,[]);self.assertEqual(self.objects.calls,[]);self.assertEqual(self.ledger.rows,{})
-    def test_lost_registration_ack_still_finds_and_removes_owned_definition(self):
-        self.api.register_lost=True
-        with self.assertRaisesRegex(SourceUnavailable,'lost_registration_ack'):self.runner.from_source(self.raw,'text/plain',lambda:None)
-        self.assertIn('delete_task_definitions',[op for op,_ in self.api.calls])
-        self.assertEqual(next(iter(self.ledger.rows.values()))['state'],'settling')
+    def test_drifted_definition_is_rejected_before_remote_bytes_or_intent(self):
+        def changed(value):value['containerDefinitions'][1]['disableNetworking']=False;return value
+        self.api.definition_mutation=changed
+        with self.assertRaisesRegex(SourceUnavailable,'document_definition_unavailable'):self.runner.from_source(self.raw,'text/plain',lambda:None)
+        self.assertEqual(self.objects.calls,[]);self.assertEqual(self.ledger.rows,{})
+        self.assertEqual([op for op,_ in self.api.calls],['describe_task_definition'])
     def test_lost_run_ack_stops_live_task_before_owned_object_cleanup(self):
         self.api.run_lost=True;self.api.running=True
         with self.assertRaisesRegex(SourceUnavailable,'lost_run_ack'):self.runner.from_source(self.raw,'text/plain',lambda:None)
@@ -118,7 +123,9 @@ class AwsExecution(unittest.TestCase):
         self.api.exit_code=0;self.objects.forge=True
         with self.assertRaises(ValueError):self.runner.from_source(self.raw,'text/plain',lambda:None)
     def test_cleanup_failure_withholds_success_and_keeps_persistent_retry_debt(self):
-        self.api.delete_failure=True
+        original=self.objects.delete
+        def failed(*args):original(*args);raise SourceUnavailable('owned_delete_failed')
+        self.objects.delete=failed
         with self.assertRaisesRegex(SourceUnavailable,'cleanup_unavailable'):self.runner.from_source(self.raw,'text/plain',lambda:None)
         row=next(iter(self.ledger.rows.values()));self.assertEqual(row['phase'],'succeeded');self.assertEqual(row['state'],'pending')
         self.assertEqual([v[2]for v in self.objects.calls if v[0]=='delete'],['input','result'])
@@ -132,6 +139,23 @@ class AwsExecution(unittest.TestCase):
         for provider,changed in [('gcp',env),('aws',{**env,'REGION':'us-east-1'}),('aws',{**env,'WORKER_ROLE_ARN':config()['transferRoleArn']})]:
             with self.assertRaises(ValueError):self.runner.bind_runtime(provider,changed)
         with self.assertRaises(TypeError):self.runner.config['region']='us-east-1'
+    def test_cleanup_can_recover_older_owned_revision_but_foreground_requires_the_pin(self):
+        identifier='a'*64;self.api.running=True
+        self.api.task={'taskArn':'arn:aws:ecs:ap-southeast-2:123456789012:task/document-parser/'+'f'*32,
+                       'clusterArn':config()['clusterArn'],'startedBy':identifier,
+                       'taskDefinitionArn':config()['taskDefinitionArn'].rsplit(':',1)[0]+':2'}
+        self.runner.cleanup(identifier)
+        self.assertIn('stop_task',[op for op,_ in self.api.calls])
+        with self.assertRaises(SourceUnavailable):self.runner.task(identifier,self.api.task,config()['taskDefinitionArn'])
+        self.api.task['taskDefinitionArn']=config()['taskDefinitionArn'].replace('document-owned-parser','document-other')
+        self.api.calls=[];self.api.running=True
+        with self.assertRaises(SourceUnavailable):self.runner.cleanup(identifier)
+        self.assertNotIn('stop_task',[op for op,_ in self.api.calls])
+    def test_cleanup_target_survives_revision_upgrade_but_not_family_or_destination_change(self):
+        def target(changed):return EcsDocuments(changed,api=self.api,objects=self.objects,host_check=verified_hosts).target
+        self.assertEqual(self.runner.target,target({**config(),'taskDefinitionArn':config()['taskDefinitionArn'].rsplit(':',1)[0]+':2'}))
+        self.assertNotEqual(self.runner.target,target({**config(),'taskDefinitionArn':config()['taskDefinitionArn'].replace('document-owned-parser','document-other')}))
+        self.assertNotEqual(self.runner.target,target({**config(),'bucket':'other-owned-bytes'}))
     def test_repeated_native_page_token_is_bounded(self):
         def repeated(operation,**values):return {'taskArns':[],'nextToken':'same'}
         self.api.call=repeated
@@ -141,7 +165,8 @@ class AwsExecution(unittest.TestCase):
             def run_task(self,**value):raise RuntimeError('PRIVATE native response')
         api=EcsDocumentApi('ap-southeast-2',client=Broken())
         with self.assertRaisesRegex(SourceUnavailable,'^document_job_unavailable$'):api.call('run_task')
-        with self.assertRaises(ValueError):api.call('execute_command')
+        for operation in ['execute_command','register_task_definition','deregister_task_definition','delete_task_definitions','list_task_definitions']:
+            with self.assertRaises(ValueError):api.call(operation)
 
 
 class S3:

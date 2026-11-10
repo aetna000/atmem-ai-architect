@@ -673,3 +673,25 @@ Implement Google Batch sequential trusted download, network-blocked credentialle
 ### 2026-11-11 — Generated substrate must preserve literal ownership and bind real targets
 
 Emit the selected-region parser substrate from owned IR, reference existing worker identity additively, keep VM/bucket permissions separate and use explicit private API DNS/routes. Foundation config is null until real artifact inputs; no whole-project/default-worker promotion. Provider set/list equality and actual Terraform source-template evaluation were caught independently; preserve original failures and compare post-plan source IDs byte-for-byte. Runtime verification consumes the positive native plan, not producer metadata or expected-failure output. Bind controller provider/project/region/worker before secret/remote work; immutable config prevents drift. Keep durable crash recovery, strict retention, account semantics and full28 scope unfinished. Retain all7562 local Git objects during safe storage repacking. Evidence: specs/028-convergence-evaluation/evidence/20261111-private-google-infrastructure-binding-v1.
+
+
+### 2026-11-11 — Static AWS task ownership and native host grammar
+
+AWS document configuration v2 consumes a pinned operator-owned task revision;
+the worker validates the complete active definition before intent/upload and sends
+per-file metadata only in download/upload environment overrides. Remove runtime
+registration/deregistration/deletion and definition discovery. Definition revisions
+may upgrade without orphaning same-family recovery; changing family/destination
+requires draining the prior target. Native startedBy discovery cannot be combined
+with family/desired-status filters. Unknown terminal tasks and eventual visibility
+remain retention boundaries, not strict erasure claims.
+
+The dedicated-host bootstrap has12 local filesystem/fixture checks but is not yet
+wired to cloud-init/systemd or qualified on an AWS AMI. Actual owned Linux IPv4/IPv6
+unlinked-chain checks caught native option reordering; semantic matching now retains
+exact rule scope/first-position constraints. Evidence:
+`specs/028-convergence-evaluation/evidence/20261111-private-aws-static-task-v1`.
+Continue with complete AWS pool/network/storage/roles/static task Terraform, then
+full worker/application/Spec Kit composition and equivalent Azure/IBM launchers.
+Do not promote a private case, capability, security status or final28 from these
+component results; the original full project requirements remain unchanged.

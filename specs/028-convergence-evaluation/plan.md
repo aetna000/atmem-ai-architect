@@ -263,3 +263,25 @@ AWS host verification implemented: fixed parameterless SSM probe, native content
 ## 2026-11-11: Qualified AWS host-verification component
 
 Fixed native SSM/ECS host verification, exact-instance launch constraints and additive worker-policy compiler locally qualified. Exact AWS image95 policies/25 document contracts/15 host contracts/88 SQL per PG17/18; recovery3 actual SQL/process-death plus8 offline checks per version;20 Office/PDF checks,359 JS tests,14 native Terraform mock plans, two independent output verifications and two installed-image document consumptions pass. Retained forwarding-hook, role-path ownership and verifier-data-event failures. Complete host-pool/execution infrastructure, private export, security, Azure/IBM launchers, remaining families and final28/held-out stay unfinished. Evidence: specs/028-convergence-evaluation/evidence/20261111-private-aws-host-verification-v1. See docs/architecture/private-knowledge-aws-document-jobs.md. Native SSM/ECS service/host responses remain fixtures, not account attestation. Filesystem maintenance preserved a private COW backup and all images/databases; final source requalified after offline repair and16-to24GiB growth. No capability or whole-case promotion.
+
+
+### 2026-11-11 — Static AWS task ownership and native host grammar
+
+AWS document configuration v2 consumes a pinned operator-owned task revision;
+the worker validates the complete active definition before intent/upload and sends
+per-file metadata only in download/upload environment overrides. Remove runtime
+registration/deregistration/deletion and definition discovery. Definition revisions
+may upgrade without orphaning same-family recovery; changing family/destination
+requires draining the prior target. Native startedBy discovery cannot be combined
+with family/desired-status filters. Unknown terminal tasks and eventual visibility
+remain retention boundaries, not strict erasure claims.
+
+The dedicated-host bootstrap has12 local filesystem/fixture checks but is not yet
+wired to cloud-init/systemd or qualified on an AWS AMI. Actual owned Linux IPv4/IPv6
+unlinked-chain checks caught native option reordering; semantic matching now retains
+exact rule scope/first-position constraints. Evidence:
+`specs/028-convergence-evaluation/evidence/20261111-private-aws-static-task-v1`.
+Continue with complete AWS pool/network/storage/roles/static task Terraform, then
+full worker/application/Spec Kit composition and equivalent Azure/IBM launchers.
+Do not promote a private case, capability, security status or final28 from these
+component results; the original full project requirements remain unchanged.

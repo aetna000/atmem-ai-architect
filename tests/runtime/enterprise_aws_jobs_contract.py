@@ -7,7 +7,7 @@ import sys
 import unittest
 ROOT=Path(__file__).resolve().parents[2]
 sys.path[:0]=[str(ROOT/'src/runtime'),str(ROOT/'.local/aws-web-runtime-sdk')]
-from enterprise_aws_jobs import configuration,task_definition
+from enterprise_aws_jobs import configuration,task_definition,task_overrides,verify_definition
 from enterprise_document_job import request
 from botocore.model import ServiceModel
 from botocore.validate import validate_parameters
@@ -15,9 +15,10 @@ import gzip
 
 
 def config():
-    return {'format':'enterprise-aws-document-job-v1','accountId':'123456789012','region':'ap-southeast-2',
+    return {'format':'enterprise-aws-document-job-v2','accountId':'123456789012','region':'ap-southeast-2',
             'bucket':'owned-document-bytes','clusterArn':'arn:aws:ecs:ap-southeast-2:123456789012:cluster/document-parser','hostPolicySha256':'e'*64,
             'hostDocumentArn':'arn:aws:ssm:ap-southeast-2:123456789012:document/owned-document-host-probe','hostDocumentHash':'f'*64,'hostDocumentVersion':'1',
+            'taskDefinitionArn':'arn:aws:ecs:ap-southeast-2:123456789012:task-definition/document-owned-parser:1',
             'workerRoleArn':'arn:aws:iam::123456789012:role/question-worker',
             'transferRoleArn':'arn:aws:iam::123456789012:role/document-transfer',
             'executionRoleArn':'arn:aws:iam::123456789012:role/document-image-pull',
@@ -47,7 +48,7 @@ class AwsDocumentTaskContract(unittest.TestCase):
         cls.model=ServiceModel(json.loads(gzip.decompress(path.read_bytes())),service_name='ecs')
     def setUp(self):
         self.config=config();self.request=request(b'OWNED SYNTHETIC DOCUMENT','text/plain','c'*64)
-        self.plan=task_definition(self.config,self.request,'"'+'d'*32+'"')
+        self.plan=task_definition(self.config)
     def test_generated_definition_passes_official_native_structure_and_enums(self):
         native_check(self.plan,self.model.operation_model('RegisterTaskDefinition').input_shape)
     def test_shape_checker_rejects_unknown_field_and_invalid_enum(self):
@@ -82,21 +83,67 @@ class AwsDocumentTaskContract(unittest.TestCase):
         changes=[('clusterArn',self.config['clusterArn'].replace('ap-southeast-2','us-east-1')),
                  ('executionRoleArn',self.config['workerRoleArn']),('transferRoleArn',self.config['transferRoleArn'].replace('123456789012','222222222222')),
                  ('parserImage',self.config['parserImage'].split('@')[0]+':latest'),('parserImage',self.config['transferImage']),
+                 ('taskDefinitionArn',self.config['taskDefinitionArn'].rsplit(':',1)[0]+':latest'),
+                 ('taskDefinitionArn',self.config['taskDefinitionArn'].replace('ap-southeast-2','us-east-1')),
                  ('region','us-gov-west-1'),('bucket','../../unowned')]
         for key,value in changes:
             with self.subTest(field=key):
                 changed={**self.config,key:value}
                 with self.assertRaises(ValueError):configuration(changed)
-    def test_only_bounded_exact_byte_metadata_enters_definition(self):
+    def test_only_bounded_exact_byte_metadata_enters_environment_overrides(self):
         encoded=json.dumps(self.plan)
-        self.assertNotIn('OWNED SYNTHETIC DOCUMENT',encoded)
+        self.assertNotIn('OWNED SYNTHETIC DOCUMENT',encoded);self.assertNotIn(self.request['requestId'],encoded)
+        overrides=task_overrides(self.config,self.request,'"'+'d'*32+'"')
+        native_check(overrides,self.model.shape_for('TaskOverride'))
+        self.assertEqual(set(overrides),{'containerOverrides'})
+        self.assertEqual([entry['name']for entry in overrides['containerOverrides']],['download','upload'])
+        for entry in overrides['containerOverrides']:
+            self.assertEqual(set(entry),{'name','environment'})
+            self.assertEqual([item['name']for item in entry['environment']],['DOCUMENT_JOB'])
         for mutation in [{**self.request,'question':'private'},{**self.request,'requestId':'../arbitrary'},{**self.request,'sha256':'bad'}]:
-            with self.assertRaises(ValueError):task_definition(self.config,mutation,'"'+'d'*32+'"')
-        with self.assertRaises(ValueError):task_definition(self.config,self.request,'arbitrary-response')
+            with self.assertRaises(ValueError):task_overrides(self.config,mutation,'"'+'d'*32+'"')
+        with self.assertRaises(ValueError):task_overrides(self.config,self.request,'arbitrary-response')
     def test_configuration_and_metadata_are_not_mutated_or_aliased(self):
         before=copy.deepcopy(self.config);original=copy.deepcopy(self.request)
         self.plan['containerDefinitions'][0]['environment'][0]['value']='changed'
         self.assertEqual(self.config,before);self.assertEqual(self.request,original)
+
+
+class PinnedDefinitionInspection(unittest.TestCase):
+    def setUp(self):
+        self.owned=config();value=task_definition(self.owned);value.pop('tags')
+        self.reply={'taskDefinition':{**value,'taskDefinitionArn':self.owned['taskDefinitionArn'],'status':'ACTIVE','revision':1}}
+    def test_native_metadata_and_inert_defaults_preserve_the_exact_contract(self):
+        value=self.reply['taskDefinition'];value.update(compatibilities=['EC2'],requiresAttributes=[],registeredBy='operator',enableFaultInjection=False)
+        value['containerDefinitions'][0].update(disableNetworking=False,versionConsistency='enabled',portMappings=[],secrets=[])
+        before=copy.deepcopy(self.reply)
+        self.assertEqual(verify_definition(self.owned,self.reply),self.owned['taskDefinitionArn'])
+        self.assertEqual(self.reply,before)
+    def test_authority_network_storage_and_execution_drift_are_rejected(self):
+        mutations=[lambda value:value.update(taskRoleArn=self.owned['workerRoleArn']),
+                   lambda value:value.update(networkMode='host'),lambda value:value.update(pidMode='host'),
+                   lambda value:value.update(enableFaultInjection=True),
+                   lambda value:value['containerDefinitions'][1].update(disableNetworking=False),
+                   lambda value:value['containerDefinitions'][1].update(privileged=True),
+                   lambda value:value['containerDefinitions'][1].update(readonlyRootFilesystem=1),
+                   lambda value:value['containerDefinitions'][1].update(command=['sh']),
+                   lambda value:value['containerDefinitions'][0].update(environment=[{'name':'AWS_ACCESS_KEY_ID','value':'PRIVATE'}]),
+                   lambda value:value['containerDefinitions'][0].update(logConfiguration={'logDriver':'awslogs'}),
+                   lambda value:value['containerDefinitions'][1]['linuxParameters']['capabilities'].update(add=['SYS_ADMIN']),
+                   lambda value:value['volumes'][0].update(host={'sourcePath':'/var/run'}),
+                   lambda value:value['volumes'][0]['dockerVolumeConfiguration'].update(autoprovision=True),
+                   lambda value:value['placementConstraints'].clear()]
+        from enterprise_sources import SourceUnavailable
+        for index,mutate in enumerate(mutations):
+            with self.subTest(mutation=index):
+                changed=copy.deepcopy(self.reply);mutate(changed['taskDefinition'])
+                with self.assertRaisesRegex(SourceUnavailable,'^document_definition_unavailable$'):verify_definition(self.owned,changed)
+    def test_exact_active_revision_and_structured_definition_are_required(self):
+        from enterprise_sources import SourceUnavailable
+        for key,item in [('status','INACTIVE'),('revision',True),('revision',2),('taskDefinitionArn',self.owned['taskDefinitionArn'].rsplit(':',1)[0]+':2'),('containerDefinitions',None)]:
+            changed=copy.deepcopy(self.reply);changed['taskDefinition'][key]=item
+            with self.subTest(field=key):
+                with self.assertRaises(SourceUnavailable):verify_definition(self.owned,changed)
 
 
 if __name__=='__main__':unittest.main(verbosity=2)

@@ -44,10 +44,10 @@ class DurableAwsDocuments(unittest.TestCase):
         self.assertEqual(self.runner.from_source(b'policy','text/plain',lambda:None)['text'],'policy')
         self.assertEqual(seen,[('input_pending','active')]);self.assertEqual(self.rows(),[])
     def test_cleanup_failure_is_retried_after_adapter_restart_without_rerunning_task(self):
-        self.api.delete_failure=True
+        self.objects.delete_failure=True
         with self.assertRaises(SourceUnavailable):self.runner.from_source(b'policy','text/plain',lambda:None)
         self.assertEqual((self.rows()[0]['phase'],self.rows()[0]['state']),('succeeded','pending'))
-        launches=sum(op=='run_task'for op,_ in self.api.calls);self.api.delete_failure=False;self.due()
+        launches=sum(op=='run_task'for op,_ in self.api.calls);self.objects.delete_failure=False;self.due()
         self.assertEqual(self.adapter().reconcile(limit=1),{'claimed':1,'retired':1,'settling':0,'failed':0})
         self.assertEqual(self.rows(),[]);self.assertEqual(sum(op=='run_task'for op,_ in self.api.calls),launches)
     def test_actual_process_death_after_native_start_is_recovered_without_create_ack(self):

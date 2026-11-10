@@ -14,6 +14,24 @@ the parser's required network restriction. See the
 This choice does not move unrelated application components from their accepted
 hosting platform.
 
+The v2 configuration pins an immutable, operator-owned task-definition ARN and
+revision. `enterprise-aws-task-template.json` is the shared static shape. The worker
+has no registration, deregistration, definition discovery or definition deletion
+operation. Before allocating intent or uploading bytes, DescribeTaskDefinition
+must match the exact active revision, image digests, roles, commands, mounts,
+network, capabilities and placement policy. Unknown nonempty configuration fails
+closed; only inert native defaults are normalized, without changing the response.
+The required native DescribeTaskDefinition IAM resource wildcard is a read-only
+limitation, not authority to run another definition. See the
+[ECS authorization reference](https://docs.aws.amazon.com/service-authorization/latest/reference/list_ecs.html).
+
+Per-file request metadata and the acknowledged input ETag enter only bounded
+DOCUMENT_JOB environment overrides on download/upload. The parser receives no
+override, request environment, shell command, image, role or credentials. The task
+definition contains no per-file metadata. This replaces the unreleased v1
+per-file registration prototype; it is not a production migration or adoption.
+The complete Terraform owner and worker permission composition remains unfinished.
+
 The definition orders trusted download, isolated parsing and trusted upload. The
 first two containers are nonessential and their dependents require successful
 exit; the final uploader is essential. Marking an early stage essential would
@@ -70,14 +88,37 @@ content digest. Oversize, partial, encrypted-policy-mismatched or versioned
 responses are rejected and streams are closed. The transfer CLI writes no document
 content or traceback into logs.
 
-Cleanup discovers both desired RUNNING and STOPPED tasks for the exact family,
-checks ownership before stopping, polls for termination, deregisters/deletes owned
-task definitions and attempts both object deletions even after another cleanup
-failure. Accepted task-definition deletion is not a claim of immediate native
-metadata erasure. Failed cleanup withholds success and retains retry debt; uncertain
-acknowledgements retain the shared ledger's settlement probes after restart. See
-`private-knowledge-document-recovery.md`. Native listing is eventually consistent;
-local fixture evidence does not establish a maximum retention or termination SLA.
+Cleanup lists tasks using the exact startedBy identity in the selected cluster,
+then verifies full cluster, task ARN and the owned task-definition family before
+stopping or adopting anything. The native
+[ListTasks contract](https://docs.aws.amazon.com/AmazonECS/latest/APIReference/API_ListTasks.html)
+requires startedBy to be the only filter: do not add a family or desired-status
+filter. Default desired RUNNING includes pending tasks. The foreground task ARN
+is included even after it stops. Definitions are operator-owned and never deleted
+by the worker. Both object deletions are attempted even after another failure.
+
+An upgraded definition revision preserves the same cleanup target, so older owned
+runs can be stopped after restart; foreground execution requires the exact current
+pin. Changing the family, destination or bucket changes the recovery target and
+requires draining the old target first. Failed cleanup withholds success and keeps
+retry debt. Unknown stopped/stopping tasks may be absent from native listing;
+uncertain acknowledgements retain settlement probes, and task-volume cleanup still
+needs destination verification. See `private-knowledge-document-recovery.md`.
+No maximum retention, termination or physical deletion SLA is established here.
+
+`enterprise_aws_host_bootstrap.py` prepares only a new dedicated host: it refuses
+foreign cluster/attribute ownership, preserves unrelated ECS/daemon configuration,
+atomically writes private root-owned files and enforces local daemon/bridge/seccomp
+settings before inserting first-position IPv4/IPv6 metadata blocks. It never
+flushes unrelated rules. Twelve local contracts use real filesystem operations and
+explicit daemon/firewall fixtures. Cloud-init/systemd wiring and actual AMI
+qualification remain unfinished; this helper alone does not qualify a host pool.
+
+The probe compares firewall options semantically, preserving exact destination,
+interface, action and first-rule constraints. A real owned Linux check uses only
+new temporary unlinked chains in both families, verifies normal native option
+ordering and rejects an earlier ACCEPT, then removes those new chains. It does
+not modify existing forwarding or Docker chains, or prove metadata reachability.
 
 Provisioning must still restrict host identity, IMDS, image pulls, storage, placement,
 retention and recovery; never expose application/source/model credentials to the
@@ -88,9 +129,9 @@ explicitly discusses cross-task/instance credential risks. Host hardening and na
 isolation checks remain acceptance requirements.
 
 After repair of the owned test VM filesystem, the final AWS image passes
-95 enterprise policies and 25 AWS contract tests (including
+95 enterprise policies and 30 AWS contract tests (including
 the original eight task-definition checks), plus 88 SQL tests on each PostgreSQL
-version, and 15 host-verifier tests. Additional recovery runs contain three actual SQL/process-death tests and
+version, and 16 host-verifier tests. Additional recovery runs contain three actual SQL/process-death tests and
 eight offline contract checks per version. They exercise the installed image,
 ordinary roles and a real abrupt child-process exit; ECS/S3 and host policy remain
 explicit fixtures. Emitted stages also process real DOCX and scanned PDF in
@@ -108,3 +149,5 @@ enum recursion. The original invalid logging enum is preserved. None of these
 results proves ECS scheduling, account IAM, host settings, native VM/task shutdown,
 security acceptance or whole-project qualification. The rebuilt AWS image has not
 been vulnerability-rescanned; existing security acceptance remains open.
+
+Current static-task evidence: `specs/028-convergence-evaluation/evidence/20261111-private-aws-static-task-v1`. Earlier host/execution receipts are historical snapshots, not current-source acceptance.

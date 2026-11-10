@@ -5,11 +5,13 @@ Host-policy verification/provisioning and complete export integration are requir
 this module does not register a capability or change existing cloud resources.
 """
 import json
+import copy
 import re
 import hashlib
 import threading
 import time
 import uuid
+from pathlib import Path
 from types import MappingProxyType
 from enterprise_aws_objects import S3DocumentObjects
 from enterprise_document_job import request,result
@@ -20,8 +22,8 @@ from enterprise_aws_hosts import EcsHostPolicy,VerifiedHosts
 
 def configuration(value):
     fields={'format','accountId','region','bucket','clusterArn','hostPolicySha256','hostDocumentArn','hostDocumentHash','hostDocumentVersion','workerRoleArn',
-            'transferRoleArn','executionRoleArn','parserImage','transferImage'}
-    if not isinstance(value,dict)or set(value)!=fields or value['format']!='enterprise-aws-document-job-v1':
+            'transferRoleArn','executionRoleArn','parserImage','transferImage','taskDefinitionArn'}
+    if not isinstance(value,dict)or set(value)!=fields or value['format']!='enterprise-aws-document-job-v2':
         raise ValueError('Use the exact owned AWS document-job configuration')
     patterns={'accountId':r'[0-9]{12}','region':r'(?:af|ap|ca|eu|il|me|mx|sa|us)-(?:east|west|south|north|central|southeast|southwest|northeast|northwest)-[1-9]',
               'bucket':r'[a-z0-9][a-z0-9-]{1,61}[a-z0-9]'}
@@ -42,6 +44,8 @@ def configuration(value):
         raise ValueError('Worker, storage transfer and image execution authority must be distinct')
     if not isinstance(value['clusterArn'],str)or not re.fullmatch(re.escape(prefix+'ecs:'+region+':'+account+':cluster/')+r'[A-Za-z0-9_-]{1,255}',value['clusterArn']):
         raise ValueError('Use the owned regional ECS cluster')
+    if (not isinstance(value['taskDefinitionArn'],str)or not re.fullmatch(re.escape(prefix+'ecs:'+region+':'+account+':task-definition/document-')+r'[A-Za-z0-9_-]{1,200}:[1-9][0-9]{0,8}',value['taskDefinitionArn'])):
+        raise ValueError('Use the exact operator-owned regional task-definition revision')
     for key in ['parserImage','transferImage']:
         if not isinstance(value[key],str)or not re.fullmatch(re.escape(account+'.dkr.ecr.'+region+'.amazonaws.com/')+r'[a-z0-9]+(?:[._/-][a-z0-9]+)*@sha256:[0-9a-f]{64}',value[key]):
             raise ValueError('Use immutable owned regional ECR images')
@@ -66,40 +70,60 @@ def transfer_metadata(config,metadata,etag):
             'region':config['region'],'bucket':config['bucket'],'request':dict(metadata),'inputETag':etag}
 
 
-def task_definition(config,metadata,etag):
-    owned=configuration(config);transfer=transfer_metadata(owned,metadata,etag)
-    def mount(name,path,readonly):return {'sourceVolume':name,'containerPath':path,'readOnly':readonly}
-    def common(name,image,user,essential):
-        return {'name':name,'image':image,'user':user,'essential':essential,
-                'cpu':128,'memory':256,'readonlyRootFilesystem':True,'privileged':False,
-                'dockerSecurityOptions':['no-new-privileges'],
-                'linuxParameters':{'capabilities':{'drop':['ALL']},'initProcessEnabled':True,'maxSwap':0},
-                # ECS does not accept Docker's 'none' log driver in this API.
-                # Omission inherits the dedicated host daemon's required 'none'
-                # default. Host policy verification/provisioning is still needed.
-                'stopTimeout':5,
-                'ulimits':[{'name':'nofile','softLimit':256,'hardLimit':256}]}
-    def bridge(mode):
-        value=common(mode,owned['transferImage'],'0:0'if mode=='download'else'10001:10001',mode=='upload')
-        value.update(entryPoint=['python'],command=['-I','/app/enterprise_aws_transfer.py',mode],
-                     environment=[{'name':'DOCUMENT_JOB','value':json.dumps(transfer,separators=(',',':'))}],
-                     mountPoints=[mount('input','/work/input',mode!='download'),mount('output','/work/output',mode!='download')])
-        if mode=='download':value['linuxParameters']['capabilities']['add']=['CHOWN']
-        else:value['dependsOn']=[{'containerName':'parser','condition':'SUCCESS'}];value['startTimeout']=120
+def task_family(config):
+    return config['taskDefinitionArn'].rsplit('/',1)[1].rsplit(':',1)[0]
+
+
+def task_definition(config):
+    """Immutable operator-owned shape, shared with the Terraform compiler.
+
+    No file identity, bytes, ETag, user prompt or model authority belongs here.
+    """
+    owned=configuration(config)
+    replacements={'__FAMILY__':task_family(owned),'__POLICY_SHA256__':owned['hostPolicySha256'],
+                  '__TRANSFER_ROLE_ARN__':owned['transferRoleArn'],'__EXECUTION_ROLE_ARN__':owned['executionRoleArn'],
+                  '__TRANSFER_IMAGE__':owned['transferImage'],'__PARSER_IMAGE__':owned['parserImage']}
+    def resolve(value):
+        if isinstance(value,dict):return {key:resolve(item)for key,item in value.items()}
+        if isinstance(value,list):return [resolve(item)for item in value]
+        if isinstance(value,str):
+            for key,replacement in replacements.items():value=value.replace(key,replacement)
         return value
-    parser=common('parser',owned['parserImage'],'10001:10001',False)
-    parser.update(cpu=1792,memory=2048,disableNetworking=True,entryPoint=['python'],
-                  command=['-I','/app/enterprise_document_cli.py','--job'],
-                  dependsOn=[{'containerName':'download','condition':'SUCCESS'}],startTimeout=60,
-                  mountPoints=[mount('input','/input',True),mount('output','/output',False)])
-    parser['linuxParameters']['tmpfs']=[{'containerPath':'/tmp','size':128,'mountOptions':['rw','noexec','nosuid','nodev']}]
-    return {'family':'document-'+metadata['requestId'],'networkMode':'bridge','requiresCompatibilities':['EC2'],
-            'runtimePlatform':{'cpuArchitecture':'X86_64','operatingSystemFamily':'LINUX'},
-            'placementConstraints':[{'type':'memberOf','expression':'attribute:atmem-document-policy == '+owned['hostPolicySha256']}],
-            'taskRoleArn':owned['transferRoleArn'],'executionRoleArn':owned['executionRoleArn'],
-            'containerDefinitions':[bridge('download'),parser,bridge('upload')],
-            'volumes':[{'name':name,'dockerVolumeConfiguration':{'scope':'task','driver':'local'}}for name in ['input','output']],
-            'tags':[{'key':'atmem-workload','value':'document-parser'}]}
+    return resolve(json.loads(Path(__file__).with_name('enterprise-aws-task-template.json').read_text()))
+
+
+def task_overrides(config,metadata,etag):
+    encoded=json.dumps(transfer_metadata(configuration(config),metadata,etag),separators=(',',':'))
+    return {'containerOverrides':[{'name':name,'environment':[{'name':'DOCUMENT_JOB','value':encoded}]}for name in ['download','upload']]}
+
+
+def verify_definition(config,reply):
+    """Reject drift before storing bytes; tolerate only inert native defaults.
+
+    Native describe metadata is not a runtime override or deployment proof.
+    Unknown nonempty configuration fails closed rather than being projected away.
+    """
+    desired=task_definition(config);desired.pop('tags')
+    if not isinstance(reply,dict)or not isinstance(reply.get('taskDefinition'),dict):raise SourceUnavailable('document_definition_unavailable')
+    actual=copy.deepcopy(reply['taskDefinition'])
+    if (actual.pop('taskDefinitionArn',None)!=config['taskDefinitionArn']or
+        type(actual.get('revision'))is not int or actual.pop('revision')!=int(config['taskDefinitionArn'].rsplit(':',1)[1])or
+        actual.pop('status',None)!='ACTIVE'):
+        raise SourceUnavailable('document_definition_unavailable')
+    for field in ['registeredAt','registeredBy','compatibilities','requiresAttributes']:
+        actual.pop(field,None)
+    if actual.get('enableFaultInjection')is False:actual.pop('enableFaultInjection')
+    if not isinstance(actual.get('containerDefinitions'),list):raise SourceUnavailable('document_definition_unavailable')
+    for container in actual['containerDefinitions']:
+        if not isinstance(container,dict):raise SourceUnavailable('document_definition_unavailable')
+        if container.get('disableNetworking')is False:container.pop('disableNetworking')
+        if container.get('versionConsistency')=='enabled':container.pop('versionConsistency')
+    def canonical(value):
+        if isinstance(value,dict):return {key:canonical(item)for key,item in value.items()if item!=[]and item!={}}
+        if isinstance(value,list):return [canonical(item)for item in value]
+        return value
+    if json.dumps(canonical(actual),sort_keys=True)!=json.dumps(canonical(desired),sort_keys=True):raise SourceUnavailable('document_definition_unavailable')
+    return config['taskDefinitionArn']
 
 
 class EcsDocumentApi:
@@ -108,8 +132,7 @@ class EcsDocumentApi:
         self.region,self.client=region,client;self._lock=threading.Lock()
 
     def call(self,operation,**values):
-        allowed={'register_task_definition','run_task','describe_tasks','list_tasks','stop_task',
-                 'list_task_definitions','deregister_task_definition','delete_task_definitions'}
+        allowed={'describe_task_definition','run_task','describe_tasks','list_tasks','stop_task'}
         if operation not in allowed:raise ValueError('Use the owned document lifecycle')
         try:
             if self.client is None:
@@ -137,7 +160,7 @@ class EcsDocuments:
         self.objects=objects or S3DocumentObjects(self.config['bucket'],self.config['region'],self.config['accountId'])
         self.ledger=ledger;self.deadline,self.poll_seconds=deadline,poll_seconds
         self.cluster=self.config['clusterArn'];self.prefix='arn:aws:ecs:'+self.config['region']+':'+self.config['accountId']+':'
-        self.target=hashlib.sha256(json.dumps({key:self.config[key]for key in ['accountId','region','bucket','clusterArn']},sort_keys=True,separators=(',',':')).encode()).hexdigest()
+        self.target=hashlib.sha256(json.dumps({**{key:self.config[key]for key in ['accountId','region','bucket','clusterArn']},'taskFamily':task_family(self.config)},sort_keys=True,separators=(',',':')).encode()).hexdigest()
 
     def __call__(self,raw,mime):raise SourceUnavailable('source_validation_required')
 
@@ -151,8 +174,8 @@ class EcsDocuments:
         elif (not isinstance(self.ledger,DocumentJobLedger)or self.ledger.auth is not auth or self.ledger.account_id!=account_id or self.ledger.target!=self.target):
             raise ValueError('Use the owned persistent cleanup ledger')
 
-    def definition(self,identifier,arn):
-        if not isinstance(arn,str)or not re.fullmatch(re.escape(self.prefix+'task-definition/document-'+identifier+':')+'[1-9][0-9]{0,8}',arn):
+    def definition(self,arn):
+        if not isinstance(arn,str)or not re.fullmatch(re.escape(self.prefix+'task-definition/'+task_family(self.config)+':')+'[1-9][0-9]{0,8}',arn):
             raise SourceUnavailable('document_job_unavailable')
         return arn
 
@@ -160,7 +183,7 @@ class EcsDocuments:
         arn=value.get('taskArn');cluster_name=self.cluster.rsplit('/',1)[1]
         if (not isinstance(arn,str)or not re.fullmatch(re.escape(self.prefix+'task/'+cluster_name+'/')+'[0-9a-f]{32}',arn)or
             value.get('clusterArn')!=self.cluster or value.get('startedBy')!=identifier):raise SourceUnavailable('document_job_unavailable')
-        owned=self.definition(identifier,value.get('taskDefinitionArn'))
+        owned=self.definition(value.get('taskDefinitionArn'))
         if definition is not None and owned!=definition:raise SourceUnavailable('document_job_unavailable')
         return arn
 
@@ -172,15 +195,16 @@ class EcsDocuments:
         hosts=self.host_check(dict(self.config));guard()
         if not isinstance(hosts,VerifiedHosts):raise SourceUnavailable('document_host_verification_required')
         hosts.placement(dict(self.config))
-        lease=self.ledger.allocate(identifier);known=None;definition=None;started=time.monotonic()
+        definition=verify_definition(dict(self.config),self.api.call('describe_task_definition',taskDefinition=self.config['taskDefinitionArn']))
+        guard()
+        lease=self.ledger.allocate(identifier);known=None;started=time.monotonic()
         def check():self.ledger.guard(lease);guard();self.ledger.guard(lease)
         try:
             check();condition=self.objects.put(identifier,'input',raw)
             self.ledger.advance(lease,'job_pending');check()
-            registered=self.api.call('register_task_definition',**task_definition(dict(self.config),metadata,condition))
-            definition=self.definition(identifier,registered.get('taskDefinition',{}).get('taskDefinitionArn'));check()
             launched=self.api.call('run_task',cluster=self.cluster,taskDefinition=definition,launchType='EC2',count=1,
                 clientToken=identifier,startedBy=identifier,enableExecuteCommand=False,enableECSManagedTags=False,
+                overrides=task_overrides(dict(self.config),metadata,condition),
                 placementConstraints=hosts.placement(dict(self.config)))
             if launched.get('failures')or len(launched.get('tasks',[]))!=1:raise SourceUnavailable('document_job_unavailable')
             known=self.task(identifier,launched['tasks'][0],definition);self.ledger.advance(lease,'job_running')
@@ -205,7 +229,7 @@ class EcsDocuments:
             value=result(raw,mime,identifier,self.objects.load(identifier,'result'));check();return value
         finally:
             cleanup=self.ledger.claim_owner(lease)
-            try:self.cleanup(identifier,known=known,definition=definition)
+            try:self.cleanup(identifier,known=known)
             except BaseException:self.ledger.failed(cleanup);raise
             else:self.ledger.completed(cleanup)
 
@@ -222,15 +246,18 @@ class EcsDocuments:
             seen.add(token)
         raise SourceUnavailable('document_cleanup_unavailable')
 
-    def cleanup(self,identifier,*,known=None,definition=None):
+    def cleanup(self,identifier,*,known=None):
         if not isinstance(identifier,str)or not re.fullmatch('[0-9a-f]{64}',identifier):raise ValueError('Use the owned cleanup identity')
         tasks=[];failure=False;deadline=time.monotonic()+70
         def call(operation,**values):
             if time.monotonic()>deadline:raise SourceUnavailable('document_cleanup_unavailable')
             return self.api.call(operation,**values)
         try:
-            for status in ['RUNNING','STOPPED']:
-                tasks+=self.listed('list_tasks','taskArns',_deadline=deadline,cluster=self.cluster,family='document-'+identifier,desiredStatus=status,maxResults=100)
+            # AWS startedBy is the only filter permitted alongside cluster.
+            # Default RUNNING desired status also includes pending launches.
+            # Unknown terminal tasks are left to native task-volume cleanup;
+            # uncertain creation keeps its durable settlement/retry window.
+            tasks+=self.listed('list_tasks','taskArns',_deadline=deadline,cluster=self.cluster,startedBy=identifier,maxResults=100)
             if known is not None:tasks.append(known)
             tasks=list(dict.fromkeys(tasks))
             if len(tasks)>10:raise SourceUnavailable('document_cleanup_unavailable')
@@ -250,17 +277,8 @@ class EcsDocuments:
                         if current.get('lastStatus')=='STOPPED':break
                         if time.monotonic()-started>20:raise SourceUnavailable('document_cleanup_unavailable')
                         time.sleep(self.poll_seconds)
-            definitions=[]
-            for status in ['ACTIVE','INACTIVE']:
-                definitions+=self.listed('list_task_definitions','taskDefinitionArns',_deadline=deadline,familyPrefix='document-'+identifier,status=status,maxResults=100)
-            if definition is not None:definitions.append(definition)
-            for arn in dict.fromkeys(definitions):
-                self.definition(identifier,arn)
-                call('deregister_task_definition',taskDefinition=arn)
-                reply=call('delete_task_definitions',taskDefinitions=[arn])
-                if reply.get('failures'):raise SourceUnavailable('document_cleanup_unavailable')
         except Exception:failure=True
-        # Even a native task/definition cleanup failure still attempts both owned
+        # Even a native task cleanup failure still attempts both owned
         # objects. Return no document text until the entire cleanup succeeds.
         for side in ['input','result']:
             try:self.objects.delete(identifier,side)
