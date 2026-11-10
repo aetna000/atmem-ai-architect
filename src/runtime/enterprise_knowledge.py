@@ -31,10 +31,10 @@ def evidence(document,question):
 
 
 class EnterpriseKnowledge:
-    def __init__(self,sources,generate,decode_sharepoint,*,audit):
+    def __init__(self,sources,generate,decode_sharepoint,*,audit,authorize):
         if not isinstance(sources,(list,tuple))or not 1<=len(sources)<=20 or len({source.source for source in sources})!=len(sources):raise ValueError('Supply unique configured native sources')
-        if not all(callable(fn)for fn in [generate,decode_sharepoint,audit]):raise ValueError('Supply explicit model, decoder and audit adapters')
-        self.sources=tuple(sources);self.generate=generate;self.decode=decode_sharepoint;self.audit=audit
+        if not all(callable(fn)for fn in [generate,decode_sharepoint,audit,authorize]):raise ValueError('Supply explicit model, decoder, audit and live company authorization adapters')
+        self.sources=tuple(sources);self.generate=generate;self.decode=decode_sharepoint;self.audit=audit;self.authorize=authorize
 
     def record(self,event):
         try:self.audit(event)
@@ -46,21 +46,25 @@ class EnterpriseKnowledge:
         def read(source):
             return tuple(source.fetch(identity,subject,self.decode)for identity in source.search(question,subject,limit=4))
         try:
+            self.authorize(subject)
             # Independent sources progress together. Any failure discards the
             # entire request; successful private data never becomes a fallback.
             with ThreadPoolExecutor(max_workers=min(4,len(self.sources)))as executor:
                 groups=list(executor.map(read,self.sources))
             pairs=[(source,document)for source,documents in zip(self.sources,groups)for document in documents]
             if not pairs:
+                self.authorize(subject)
                 self.record({'event':'knowledge.answer','outcome':'abstained','sources':len(self.sources),'documents':0})
                 return {'answer':ABSTENTION,'citations':[],'abstained':True}
             articles=tuple(evidence(document,question)for _,document in pairs)
             payload=json.dumps({'question':question,'articles':[{'id':article.id,'revision':article.revision,'title':article.title,'text':article.text}for article in articles]},ensure_ascii=False)
             if len(payload.encode())>64000:raise SourceUnavailable('model_context_budget_exceeded')
             for source,document in pairs:source.revalidate(document,subject)
+            self.authorize(subject)
             raw=self.generate(payload,answer_schema(),INSTRUCTION)
             result=decode_answer(raw,articles)
             for source,document in pairs:source.revalidate(document,subject)
+            self.authorize(subject)
             if result['abstained']:result['answer']=ABSTENTION
             self.record({'event':'knowledge.answer','outcome':'abstained'if result['abstained']else'answered','sources':len(self.sources),'documents':len(pairs)})
             return result

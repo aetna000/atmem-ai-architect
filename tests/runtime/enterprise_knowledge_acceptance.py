@@ -29,7 +29,7 @@ class PrivateKnowledgePolicy(unittest.TestCase):
             if model:return model(self.calls[-1])
             a=self.calls[-1]['articles'][0]
             return json.dumps({'answer':'The policy says ninety days.','abstained':False,'citations':[{'id':a['id'],'quote':'Approved retention is ninety days.'}]})
-        return EnterpriseKnowledge(sources,generate,lambda raw,mime:raw.decode(),audit=self.events.append)
+        return EnterpriseKnowledge(sources,generate,lambda raw,mime:raw.decode(),audit=self.events.append,authorize=lambda subject:None)
 
     def test_current_private_answer_has_exact_citations_and_two_live_gates(self):
         source=Source();engine=self.engine([source]);result=engine.answer('What is retention?','alice')
@@ -67,6 +67,15 @@ class PrivateKnowledgePolicy(unittest.TestCase):
         source.revalidate=changed;engine=self.engine([source])
         with self.assertRaises(SourceChanged):engine.answer('What is retention?','alice')
         self.assertEqual(self.calls,[])
+
+    def test_company_membership_revocation_after_model_withholds_output(self):
+        engine=self.engine([Source()]);calls=[]
+        def authorize(subject):
+            calls.append(subject)
+            if len(calls)==3:raise SourceDenied('company_membership_required')
+        engine.authorize=authorize
+        with self.assertRaises(SourceDenied):engine.answer('What is retention?','alice')
+        self.assertEqual(len(self.calls),1);self.assertEqual(self.events[-1]['outcome'],'withheld')
 
     def test_model_error_body_and_audit_failure_are_not_exposed(self):
         def failed(context):raise RuntimeError('PRIVATE-PROMPT-AND-TOKEN')

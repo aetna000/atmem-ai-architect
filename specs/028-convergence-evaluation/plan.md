@@ -144,3 +144,15 @@ hashed. Evidence: specs/028-convergence-evaluation/evidence/20261110-private-nat
 No export capability is advertised: trusted company identity/OAuth broker, extraction,
 cloud models, durable audit and all4 native export/Spec Kit wiring remain unfinished.
 Continue those dependencies, then all4 exact live runs, other families and full28.
+
+### Private identity/native OAuth/store checkpoint
+
+Implement fixed company API JWT verification, live company access gates, actual
+MSAL Graph PKCE/cache/refresh, Confluence native confidential 3LO and encrypted
+per-person SQL credentials. Durable refresh intent/revision fencing prevents blind
+rotating-token reuse after crash/uncertainty and late disconnect reversal. 34
+contract/policy/crypto/SDK tests and 16 real restricted SQL tests on each PG17/18
+pass; JS347/server214 pass. Evidence: specs/028-convergence-evaluation/evidence/20261110-private-native-auth-v1.
+Browser callbacks/session/CSRF, clean Linux dependency qualification, extraction,
+model/audit and all4 native export wiring remain unfinished. No source/IdP account
+or cloud operation ran; do not advertise the new capability or count a medium case.

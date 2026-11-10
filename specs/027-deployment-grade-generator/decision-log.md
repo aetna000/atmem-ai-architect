@@ -401,3 +401,14 @@ not cache private content/authorization across requests. Fix CQL key/ID handling
 against primary documentation. No native-account, scale, residency, OAuth or full
 case claim follows from 23 scripted tests; see explicit dependencies in
 docs/architecture/private-knowledge-native-sources.md and specs/028-convergence-evaluation/evidence/20261110-private-native-foundation-v1.
+
+### 2026-11-10 — Native delegated OAuth and durable refresh ownership
+
+Use MSAL for Graph code/PKCE/cache behavior and the documented confidential Cloud
+3LO exchange for Confluence. Keep membership/mapping writes operator-only and
+credentials encrypted with account/person/source/revision/purpose binding. Persist
+refresh intent before HTTP; fence completion and require fresh consent after
+uncertainty instead of blindly replaying a rotating token. Preserve initial real
+SQL privilege and SDK state-format failures and their source fixes. Current evidence
+is specs/028-convergence-evaluation/evidence/20261110-private-native-auth-v1; browser/controller, native cloud
+key transport, clean Linux/runtime and full export qualification remain open.
