@@ -311,3 +311,15 @@ revocation race at their source. Local evidence: specs/028-convergence-evaluatio
 server214/build pass. Vendor/model/source HTTP is scripted; no medium/export or
 native cloud claim. Next clean Linux/general-document/model/audit/provisioning and
 all4 native export/Spec Kit wiring, then remaining families and full28/held-out.
+
+### Private document-extraction checkpoint
+
+Implement the pinned Tika/Java company-document bridge and separate byte-only RPC,
+retaining the unchanged invoice PDF/OCR path. Actual local Linux evidence: specs/028-convergence-evaluation/evidence/20261110-private-document-extraction-v1.
+16 parser/RPC/composition checks and 39 enterprise policies pass. Exact image retains
+65 HIGH open findings; shaded-Java image scanning omitted its dependencies, so the
+89 embedded Maven coordinates were independently inventoried/scanned with explicit
+coverage limits. No security acceptance, capability registration or medium-case
+promotion. Next async extraction/cache with live permissions and retention/recovery,
+clean Linux app/model/audit/provisioning and native all4 exports; then remaining
+families and final full28/held-out. Preserve synchronous latency/format limits.

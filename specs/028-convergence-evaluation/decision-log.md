@@ -596,3 +596,18 @@ in specs/028-convergence-evaluation/evidence/20261110-private-browser-api-v1. Th
 changes; no existing database was migrated or adopted. Allow explicitly configured
 HTTPS ports for local TLS/company IdPs without relaxing fixed vendor transports.
 No new generator capability, whole-case acceptance or cloud operation is claimed.
+
+## 2026-11-10: Credentialless general-document extraction
+
+Use maintained pinned Apache Tika 3.3.3 for Office/text extraction and retain the
+existing independent PDF text/OCR protocol. Keep native library processing in its
+own network/resource-isolated workload with byte-bound MIME/digest/schema checks,
+explicit failure on partial extraction and live source authorization around decoding.
+Fix unreadable non-root jar permissions and missing OCR language-data path at the
+image/runtime source. Preserve failed native/harness runs, including omitted schema
+assets and a successful-test run invalidated by source mutation. Keep unique image
+tags per qualification so later builds cannot discard an observed manifest.
+Evidence: specs/028-convergence-evaluation/evidence/20261110-private-document-extraction-v1. No cache, native account/deployment or whole-case claim.
+The dedicated owned test VM disk was expanded 8->16 GiB after cache cleanup was
+insufficient; both owned PostgreSQL17/18 servers were restored and guarded reads
+confirmed. No user database was migrated, deleted or adopted. Security remains open.
