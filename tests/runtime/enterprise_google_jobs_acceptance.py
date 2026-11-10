@@ -60,6 +60,7 @@ class NativeHttp:
         self.calls = []; self.responses = []; self.trust_env = True
         self.job = None; self.spec = None; self.state = 'SUCCEEDED'; self.forge = False
         self.lost_create = False; self.cleanup_error = False; self.operation_polls = 0
+        self.extracted_text = 'PRIVATE approved policy.'
     def request(self, method, url, **kwargs):
         self.calls.append((method, url, kwargs))
         if 'upload/storage' in url: reply = Response({'generation': '123'})
@@ -79,7 +80,7 @@ class NativeHttp:
             transfer = json.loads(self.spec['taskGroups'][0]['taskSpec']['runnables'][0]['environment']['variables']['DOCUMENT_JOB'])
             expected = transfer['request']
             reply = Response({'format': expected['format'], 'requestId': expected['requestId'], 'status': 'ok',
-                'document': {'format': 'enterprise-document-v1', 'sha256': '0' * 64 if self.forge else expected['sha256'], 'mediaType': expected['mediaType'], 'text': 'PRIVATE approved policy.'}})
+                'document': {'format': 'enterprise-document-v1', 'sha256': '0' * 64 if self.forge else expected['sha256'], 'mediaType': expected['mediaType'], 'text': self.extracted_text}})
         self.responses.append(reply); return reply
 
 
@@ -173,6 +174,17 @@ class GoogleDocumentJobs(unittest.TestCase):
             {'parserImage': config()['parserImage'].replace('/parser@', '/parser//other@')},
             {'subnetwork': 'projects/owned-project/regions/us-central1/subnetworks/owned-private'}, {'extra': 'credentials'}]:
             with self.assertRaises(ValueError): configuration({**config(), **patch_value})
+
+    def test_runtime_ownership_is_bound_before_execution_and_configuration_cannot_drift(self):
+        owned = config(); runner = GoogleBatchDocuments(owned, api=self.api)
+        env = {'PROJECT_ID': owned['projectId'], 'REGION': owned['region'], 'DATABASE_SERVICE_ACCOUNT': owned['workerServiceAccount']}
+        runner.bind_runtime('gcp', env)
+        for provider, changed in [('aws', env), ('gcp', {**env, 'PROJECT_ID': 'other-project'}),
+            ('gcp', {**env, 'REGION': 'us-central1'}), ('gcp', {**env, 'DATABASE_SERVICE_ACCOUNT': owned['vmServiceAccount']})]:
+            with self.assertRaises(ValueError): runner.bind_runtime(provider, changed)
+        owned['region'] = 'us-central1'; self.assertEqual(runner.config['region'], 'australia-southeast1')
+        with self.assertRaises(TypeError): runner.config['region'] = 'us-central1'
+        self.assertEqual(self.http.calls, [])
 
     def test_error_bodies_redirects_duplicate_and_oversized_metadata_are_sanitized(self):
         class Broken:

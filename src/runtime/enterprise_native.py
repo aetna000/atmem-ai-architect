@@ -87,6 +87,9 @@ class NativeRuntime:
         if role == 'worker' and (not isinstance(executor, DocumentExecutor) or executor.artifact_revision != self.deployment['parserRevision']):
             raise ValueError('Worker requires the owned matching per-file document executor')
         if model_factory is not None and not callable(model_factory): raise ValueError('Supply the owned model factory')
+        if role == 'worker':
+            bind = getattr(executor.run, 'bind_runtime', None)
+            if callable(bind): bind(self.deployment['provider'], environment)
         self.secrets = SecretFiles(self.deployment['provider'], environment, role)
         try:
             env = self.secrets.env

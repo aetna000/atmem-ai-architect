@@ -1,0 +1,113 @@
+{
+  "taskGroups": [
+    {
+      "taskCount": "1",
+      "parallelism": "1",
+      "taskCountPerNode": "1",
+      "taskSpec": {
+        "runnables": [
+          {
+            "container": {
+              "imageUri": "australia-southeast1-docker.pkg.dev/owned-project/runtime/transfer@sha256:09618941133c44663fe2eca47e9f352a1aa4d5e3d2dda79274c262bd7216da8b",
+              "entrypoint": "python",
+              "commands": [
+                "-I",
+                "/app/enterprise_google_transfer.py",
+                "download"
+              ],
+              "volumes": [
+                "/mnt/disks/share/document-b025b5cb43414d708cb7596b983d8ba0367658fda8414b5abcb84fd2d7efba42:/work:rw"
+              ],
+              "options": "--read-only --cap-drop=ALL --security-opt=no-new-privileges:true --pids-limit=128 --log-driver=none --user=0:0 --cap-add=CHOWN"
+            },
+            "environment": {
+              "variables": {
+                "DOCUMENT_JOB": "{\"format\":\"enterprise-google-document-transfer-v1\",\"projectId\":\"owned-project\",\"region\":\"australia-southeast1\",\"bucket\":\"owned-ephemeral-documents\",\"request\":{\"format\":\"enterprise-document-job-v1\",\"requestId\":\"b025b5cb43414d708cb7596b983d8ba0367658fda8414b5abcb84fd2d7efba42\",\"sha256\":\"c579469b4d27b6a9167465933e2166a9afb11d3b907e2391453e8dd8977a185d\",\"mediaType\":\"application/pdf\"},\"inputGeneration\":\"123\"}"
+              }
+            },
+            "timeout": "25s"
+          },
+          {
+            "container": {
+              "imageUri": "australia-southeast1-docker.pkg.dev/owned-project/runtime/parser@sha256:0e6089395cc36c96986ef500026af794dd07f2a8c97196e7c0df726fbe465c82",
+              "entrypoint": "python",
+              "commands": [
+                "-I",
+                "/app/enterprise_document_cli.py",
+                "--job"
+              ],
+              "volumes": [
+                "/mnt/disks/share/document-b025b5cb43414d708cb7596b983d8ba0367658fda8414b5abcb84fd2d7efba42/input:/input:ro",
+                "/mnt/disks/share/document-b025b5cb43414d708cb7596b983d8ba0367658fda8414b5abcb84fd2d7efba42/output:/output:rw"
+              ],
+              "options": "--read-only --cap-drop=ALL --security-opt=no-new-privileges:true --pids-limit=128 --log-driver=none --user=10001:10001 --tmpfs=/tmp:rw,noexec,nosuid,size=128m",
+              "blockExternalNetwork": true
+            },
+            "timeout": "110s"
+          },
+          {
+            "container": {
+              "imageUri": "australia-southeast1-docker.pkg.dev/owned-project/runtime/transfer@sha256:09618941133c44663fe2eca47e9f352a1aa4d5e3d2dda79274c262bd7216da8b",
+              "entrypoint": "python",
+              "commands": [
+                "-I",
+                "/app/enterprise_google_transfer.py",
+                "upload"
+              ],
+              "volumes": [
+                "/mnt/disks/share/document-b025b5cb43414d708cb7596b983d8ba0367658fda8414b5abcb84fd2d7efba42:/work:ro"
+              ],
+              "options": "--read-only --cap-drop=ALL --security-opt=no-new-privileges:true --pids-limit=128 --log-driver=none --user=10001:10001"
+            },
+            "environment": {
+              "variables": {
+                "DOCUMENT_JOB": "{\"format\":\"enterprise-google-document-transfer-v1\",\"projectId\":\"owned-project\",\"region\":\"australia-southeast1\",\"bucket\":\"owned-ephemeral-documents\",\"request\":{\"format\":\"enterprise-document-job-v1\",\"requestId\":\"b025b5cb43414d708cb7596b983d8ba0367658fda8414b5abcb84fd2d7efba42\",\"sha256\":\"c579469b4d27b6a9167465933e2166a9afb11d3b907e2391453e8dd8977a185d\",\"mediaType\":\"application/pdf\"},\"inputGeneration\":\"123\"}"
+              }
+            },
+            "timeout": "25s"
+          }
+        ],
+        "maxRetryCount": 0,
+        "maxRunDuration": "160s",
+        "computeResource": {
+          "cpuMilli": "2000",
+          "memoryMib": "2048"
+        }
+      }
+    }
+  ],
+  "allocationPolicy": {
+    "location": {
+      "allowedLocations": [
+        "regions/australia-southeast1"
+      ]
+    },
+    "serviceAccount": {
+      "email": "document-transfer@owned-project.iam.gserviceaccount.com"
+    },
+    "network": {
+      "networkInterfaces": [
+        {
+          "network": "projects/owned-project/global/networks/owned-private",
+          "subnetwork": "projects/owned-project/regions/australia-southeast1/subnetworks/owned-private",
+          "noExternalIpAddress": true
+        }
+      ]
+    },
+    "instances": [
+      {
+        "policy": {
+          "machineType": "e2-standard-2",
+          "provisioningModel": "STANDARD"
+        },
+        "blockProjectSshKeys": true
+      }
+    ]
+  },
+  "logsPolicy": {
+    "destination": "DESTINATION_UNSPECIFIED"
+  },
+  "labels": {
+    "atmem-workload": "document-parser"
+  }
+}

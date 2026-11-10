@@ -95,6 +95,22 @@ class NativeFactories(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(audit,[('knowledge.answer','answered',1),('knowledge.release','released',1)])
         self.assertEqual(self.model_factories,['aws','azure','gcp','ibm']);self.assertEqual(len(self.extracts),1)
 
+    async def test_google_controller_binds_owned_target_and_completes_native_factory_question(self):
+        from enterprise_google_jobs import GoogleBatchDocuments, GoogleDocumentApi
+        from enterprise_google_jobs_acceptance import NativeHttp, config
+        http=NativeHttp();http.extracted_text='Private policy requires ninety days.'
+        owned=config();runner=GoogleBatchDocuments(owned,api=GoogleDocumentApi(session=http,credential=lambda:'SYNTHETIC-NATIVE-TOKEN'),poll_seconds=.01)
+        executor=DocumentExecutor(REVISION,runner)
+        with self.assertRaisesRegex(ValueError,'selected provider'):self.make('aws','worker',executor=executor)
+        with self.assertRaisesRegex(ValueError,'selected provider'):self.make('gcp','worker',executor=executor,environment_updates={'DATABASE_SERVICE_ACCOUNT':owned['vmServiceAccount']})
+        self.assertEqual(http.calls,[])
+        api=self.make('gcp','api');await self.browser(api)
+        worker=self.make('gcp','worker',executor=executor,environment_updates={'DATABASE_SERVICE_ACCOUNT':owned['workerServiceAccount']})
+        identity=await self.submit();await asyncio.to_thread(worker.answers.execute,identity)
+        response=await self.status(identity);self.assertEqual(response.json()['status'],'ready',response.text)
+        self.assertEqual(response.json()['result']['citations'][0]['quote'],'Private policy requires ninety days.')
+        self.assertEqual(http.operation_polls,1);self.assertEqual(sum(method=='DELETE'for method,_,_ in http.calls),3)
+
     async def test_api_has_no_sync_inference_route_and_cannot_start_worker_or_receive_adapters(self):
         api=self.make('gcp','api');await self.browser(api)
         response=await self.f.client.post('/api/ask',headers=self.f.headers(),json={'question':'What is our retention policy?'})

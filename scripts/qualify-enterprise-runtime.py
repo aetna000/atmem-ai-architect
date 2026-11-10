@@ -148,7 +148,7 @@ sys.path.insert(0,'/app')
 '''
             result = run('policy-tests', [*restricted, '--network', 'none', image,
                 'python', '-I', '-c', loader + "import unittest;unittest.main(module=None,argv=['unittest','discover','-s','/tmp/workspace/tests/runtime','-p','enterprise_*_acceptance.py','-v'])"], data=json.dumps(payload).encode())
-            if not re.search(rb'Ran 93 tests in [^\n]+\n\nOK\s*$', result):
+            if not re.search(rb'Ran 94 tests in [^\n]+\n\nOK\s*$', result):
                 raise ValueError('Unexpected private policy test inventory')
             for version in [17, 18]:
                 name = 'atmem-durable-qualification' + ('-pg18' if version == 18 else '')
@@ -188,7 +188,7 @@ print(json.dumps({'postgresVersionNum':version}))
         finally:
             (output / 'receipt.json').write_text(json.dumps({'recordedAt': datetime.now(timezone.utc).isoformat(),
                 'passed': passed, 'imageId': image, 'checks': checks, 'sourceHashes': hashes,
-                'provider':args.provider,'packages': len(lock['sources']), 'policyTests': 93, 'sqlTestsPerVersion': sum(SQL.values()),
+                'provider':args.provider,'packages': len(lock['sources']), 'policyTests': 94, 'sqlTestsPerVersion': sum(SQL.values()),
                 'postgresVersions': [17, 18], 'securityAccepted': False, 'cloudOperations': False,
                 'scope': 'Clean Linux private application/factory/operator dependencies. Actual crypto/SQL/Procrastinate/bootstrap/enrollment/revocation; native model serializers with scripted HTTP. Assembled HTTP API/worker tests run separately on the host. No native account/model quality, per-file cloud launcher/isolation, complete-project or deployment acceptance.'}, indent=2) + '\n')
 

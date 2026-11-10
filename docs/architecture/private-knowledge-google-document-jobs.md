@@ -76,10 +76,11 @@ exercise the Batch agent, VM identity, private Google networking or actual GCS.
 - Wire reviewed runtime configuration and complete parser artifact provenance into
   the generated private worker; preserve provider/project/region ownership. No
   production default worker command or public capability is enabled by this module.
-- Emit and independently validate Terraform for the temporary bucket's location,
-  access prevention, encryption, deletion/versioning/soft-delete behavior and
-  retention, private Google Access, firewall/routing, service enablement, exact
-  worker/VM IAM, artifact access and application/operator hosting.
+- The parser-substrate Terraform and exact runtime-output consumption are now
+  locally qualified; see `private-knowledge-google-infrastructure.md`. Complete
+  application/operator hosting and destination validation of encryption, retention,
+  routing/DNS, IAM and artifact provenance. The controller is bound to the selected
+  runtime provider/project/region/worker identity; its configuration is immutable.
 - Implement durable orphan tracking/reconciliation for a controller crash, stalled
   deletion or lost database lease. `finally` is not crash recovery. Establish the
   maximum raw/result retention and verify that backups/soft deletion do not silently

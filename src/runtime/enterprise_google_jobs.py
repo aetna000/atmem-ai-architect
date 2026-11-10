@@ -9,6 +9,7 @@ import json
 import re
 import time
 import uuid
+from types import MappingProxyType
 from urllib.parse import quote
 import requests
 from enterprise_document_contract import MAX_INPUT
@@ -160,7 +161,7 @@ class GoogleDocumentObjects:
 class GoogleBatchDocuments:
     """Controller lifecycle; successful delete requests alone do not prove exit."""
     def __init__(self, config, *, api=None, deadline=140, poll_seconds=1):
-        self.config = configuration(config)
+        self.config = MappingProxyType(configuration(config))
         if type(deadline) is not int or not 1 <= deadline <= 140 or type(poll_seconds) not in {int, float} or not .01 <= poll_seconds <= 2:
             raise ValueError('Use bounded owned document deadlines')
         self.api = api or GoogleDocumentApi()
@@ -171,6 +172,12 @@ class GoogleBatchDocuments:
 
     def __call__(self, raw, mime):
         raise SourceUnavailable('source_validation_required')
+
+    def bind_runtime(self, provider, environment):
+        if (provider != 'gcp' or environment.get('PROJECT_ID') != self.config['projectId'] or
+            environment.get('REGION') != self.config['region'] or
+            environment.get('DATABASE_SERVICE_ACCOUNT') != self.config['workerServiceAccount']):
+            raise ValueError('Document execution must match the selected provider, project, region and worker identity')
 
     def from_source(self, raw, mime, guard):
         if not callable(guard): raise ValueError('Supply the current source/company/job check')
@@ -188,7 +195,7 @@ class GoogleBatchDocuments:
             generation = self.objects.put(identifier, 'input', raw)
             guard()
             value = self.api.json('POST', self.base + '/jobs', params={'jobId': name.rsplit('/', 1)[1]},
-                body=job_spec(self.config, metadata, generation))
+                body=job_spec(dict(self.config), metadata, generation))
             if value.get('name') != name: raise SourceUnavailable('document_job_unavailable')
             while True:
                 guard()
