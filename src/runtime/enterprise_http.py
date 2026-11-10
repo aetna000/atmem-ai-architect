@@ -29,7 +29,7 @@ class SourceConnection:
 
 
 def problem(code,status):
-    messages={'signin':'Sign in with your company account to continue.','forbidden':'Your account cannot access this workspace. Ask your workspace owner for access.','request':'Check your question or refresh this page and try again.','setup':'Your workspace owner needs to enable a company source for your account.','source':'Connect your company sources before asking a question.','busy':'Your source connection is updating. Try again in a moment.','unavailable':'A company source is unavailable. No older private content was used. Please try again shortly.','answer':'This answer could not be verified against your current sources. Please try again.'}
+    messages={'signin':'Sign in with your company account to continue.','forbidden':'Your account cannot access this workspace. Ask your workspace owner for access.','request':'Check your question or refresh this page and try again.','setup':'Your workspace owner needs to enable a company source for your account.','source':'Connect your company sources before asking a question.','busy':'Your source connection is updating. Try again in a moment.','capacity':'You already have questions processing. Wait for one to finish or cancel it before asking another.','unavailable':'A company source is unavailable. No older private content was used. Please try again shortly.','answer':'This answer could not be verified against your current sources. Please try again.'}
     return JSONResponse({'error':{'code':code,'message':messages[code]}},status_code=status)
 
 
@@ -38,7 +38,7 @@ def callback_notice(label):
     return HTMLResponse('<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>'+html.escape(title)+'</title><main><h1>'+html.escape(title)+'</h1><p>Return to your workspace, sign in if needed, and choose Connect again.</p><a href="/">Return to your workspace</a></main></html>',status_code=400)
 
 
-def create_app(identity,sessions,connections,make_engine,*,public_origin,web_config=None,static_root=None):
+def create_app(identity,sessions,connections,make_engine,*,public_origin,web_config=None,static_root=None,answers=None):
     trusted_https(public_origin);origin=urlsplit(public_origin)
     if origin.path not in {'','/'}or public_origin.endswith('/'):raise ValueError('Use the canonical owned HTTPS origin without a trailing slash')
     if not isinstance(connections,dict)or not 1<=len(connections)<=20 or not callable(make_engine):raise ValueError('Supply owned native source and application adapters')
@@ -53,8 +53,10 @@ def create_app(identity,sessions,connections,make_engine,*,public_origin,web_con
     app=FastAPI(docs_url=None,redoc_url=None,openapi_url=None)
     callback_paths={'/oauth/callback/'+alias for alias in connections}
     auth=sessions.auth
+    if answers is not None and(answers.store.auth is not auth or answers.store.account_id!=identity.account_id or answers.connections!=connections):raise ValueError('Queued answers must use the same owned account, authority and sources')
     csp="default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
     if web_config is not None:
+        if answers is None:raise ValueError('The browser workspace requires the durable question service')
         from enterprise_web import install_web
         csp=install_web(app,identity,connections,web_config,static_root)
     def cookie(request):
@@ -97,7 +99,7 @@ def create_app(identity,sessions,connections,make_engine,*,public_origin,web_con
             elif code=='source_mapping_required':response=problem('setup',403)
             elif code in {'source_reconnection_required','source_consent_required'}:response=problem('source',409)
             else:response=problem('forbidden',403)
-        except SourceUnavailable as error:response=problem('busy'if str(error)=='source_refresh_in_progress'else'unavailable',503)
+        except SourceUnavailable as error:response=problem('capacity',429)if str(error)=='query_capacity_reached'else problem('busy'if str(error)=='source_refresh_in_progress'else'unavailable',503)
         except InvalidAnswer:response=problem('answer',503)
         except(ValueError,UnicodeError,RecursionError):response=problem('request',400)
         except Exception:response=problem('unavailable',503)
@@ -174,4 +176,37 @@ def create_app(identity,sessions,connections,make_engine,*,public_origin,web_con
             sessions.authenticate(cookie(request))
             return result
         return await run_in_threadpool(answer)
+    @app.post('/api/queries')
+    async def submit_question(request:Request):
+        user=await actor(request,csrf=True);value=await json_body(request)
+        if answers is None:raise SourceUnavailable('question_worker_unavailable')
+        if set(value)!={'question','requestId'}or not isinstance(value['question'],str)or not value['question'].strip()or len(value['question'])>1000:raise ValueError('Supply a question and request identity')
+        from enterprise_queries import QueryConflict
+        try:identity=await run_in_threadpool(answers.store.submit,user,value['question'],value['requestId'])
+        except QueryConflict:return JSONResponse({'error':{'code':'request','message':'This question could not be submitted. Please send it again.'}},status_code=409)
+        return JSONResponse({'id':identity,'status':'queued'},status_code=202)
+    @app.get('/api/queries/{query_id}')
+    async def question_status(query_id:str,request:Request):
+        if request.headers.get('x-workspace-request')!='session':raise SourceDenied('browser_request_denied')
+        user=await actor(request)
+        if answers is None:raise SourceUnavailable('question_worker_unavailable')
+        from enterprise_queries import QueryMissing
+        try:result=await run_in_threadpool(answers.status,user,query_id)
+        except QueryMissing:return JSONResponse({'error':{'code':'request','message':'This question is no longer available.'}},status_code=404)
+        await run_in_threadpool(sessions.authenticate,cookie(request))
+        return result
+    @app.get('/api/queries')
+    async def pending_questions(request:Request):
+        if request.headers.get('x-workspace-request')!='session':raise SourceDenied('browser_request_denied')
+        user=await actor(request)
+        if answers is None:raise SourceUnavailable('question_worker_unavailable')
+        return {'queries':await run_in_threadpool(answers.store.pending,user)}
+    @app.delete('/api/queries/{query_id}')
+    async def cancel_question(query_id:str,request:Request):
+        user=await actor(request,csrf=True)
+        if answers is None:raise SourceUnavailable('question_worker_unavailable')
+        from enterprise_queries import QueryMissing
+        try:await run_in_threadpool(answers.store.cancel,user,query_id)
+        except QueryMissing:return JSONResponse({'error':{'code':'request','message':'This question is no longer available.'}},status_code=404)
+        return Response(status_code=204)
     return app

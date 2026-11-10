@@ -179,3 +179,15 @@ coverage limits. No security acceptance, capability registration or medium-case
 promotion. Next async extraction/cache with live permissions and retention/recovery,
 clean Linux app/model/audit/provisioning and native all4 exports; then remaining
 families and final full28/held-out. Preserve synchronous latency/format limits.
+
+### Private queued-answer checkpoint
+
+The browser submits durable encrypted question jobs and polls/cancels/resumes them;
+real Procrastinate execution no longer holds the question POST. Stored answer receipts
+recheck current source selections/versions and company/session/domain authority at
+release; changed sources requeue a fresh generation. Evidence: specs/028-convergence-evaluation/evidence/20261110-private-queued-answers-v1.
+63 native SQL/API/worker checks per PG17/18, 45 policies, 11 browser checks, 16
+restricted Linux document checks and JS347/server214/build pass. Source/model HTTP
+remains scripted. No capability/medium-case/security promotion. Next encrypted
+parser-versioned extraction cache with live authorization and retention/recovery,
+clean Linux app/model/audit/provisioning, all4 native exports, remaining/full28/held-out.

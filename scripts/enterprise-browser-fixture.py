@@ -28,6 +28,9 @@ from fastapi import Request
 from fastapi.responses import JSONResponse,RedirectResponse,StreamingResponse
 import enterprise_http_postgres as fixture_module
 from enterprise_http import create_app
+from enterprise_queries import producer_queries,initialize_query_store,grant_query_runtime
+from enterprise_query_service import EnterpriseAnswers,EnterpriseQueryWorker
+from psycopg.conninfo import conninfo_to_dict
 
 parser=argparse.ArgumentParser();parser.add_argument('--out',required=True);args=parser.parse_args();out=Path(args.out).resolve()
 if out.exists()or not out.is_relative_to(ROOT/'.local'):raise ValueError('Use a fresh local fixture directory')
@@ -40,15 +43,30 @@ certificate=x509.CertificateBuilder().subject_name(name).issuer_name(name).publi
 private=out/'server.key';private.write_bytes(key.private_bytes(serialization.Encoding.PEM,serialization.PrivateFormat.PKCS8,serialization.NoEncryption()));private.chmod(0o600)
 cert=out/'server.crt';cert.write_bytes(certificate.public_bytes(serialization.Encoding.PEM))
 config={'clientId':'public-web-client','authorizationEndpoint':origin+'/fixture/authorize','tokenEndpoint':origin+'/fixture/token','scopes':['openid','profile','knowledge.read']}
-app=create_app(fixture.identity,fixture.sessions,fixture.connections,fixture.engine_factory,public_origin=origin,web_config=config)
-held=threading.Event();release=threading.Event();pause={'answer':False}
+with psycopg.connect(fixture.owner_dsn)as conn:initialize_query_store(conn);grant_query_runtime(conn,conninfo_to_dict(fixture.app_dsn)['user'],worker=True)
+query_store=producer_queries(fixture.store,fixture.app_dsn,fixture.account)
+held=threading.Event();release=threading.Event();model_held=threading.Event();model_release=threading.Event();pause={'answer':False,'model':False}
+def make_engine(*args):
+    engine=fixture.engine_factory(*args);original=engine.generate
+    def generate(*values):
+        if pause['model']:
+            pause['model']=False;model_held.set();model_release.wait(12)
+        return original(*values)
+    engine.generate=generate;return engine
+answers=EnterpriseAnswers(query_store,fixture.connections,make_engine)
+worker=EnterpriseQueryWorker(fixture.app_dsn,answers)
+app=create_app(fixture.identity,fixture.sessions,fixture.connections,make_engine,public_origin=origin,web_config=config,answers=answers)
 @app.middleware('http')
 async def delay_owned_answer(request,next_handler):
     response=await next_handler(request)
-    if pause['answer']and request.url.path=='/api/ask'and response.status_code==200:
-        pause['answer']=False;payload=b''.join([chunk async for chunk in response.body_iterator])
+    if pause['answer']and request.url.path.startswith('/api/queries/')and request.method=='GET'and response.status_code==200:
+        payload=b''.join([chunk async for chunk in response.body_iterator])
+        ready=json.loads(payload).get('status')=='ready'
+        if ready:pause['answer']=False
         async def stream():
-            yield payload[:10];held.set();await asyncio.to_thread(release.wait,10);yield payload[10:]
+            if ready:
+                yield payload[:10];held.set();await asyncio.to_thread(release.wait,10);yield payload[10:]
+            else:yield payload
         return StreamingResponse(stream(),status_code=200,headers=dict(response.headers))
     return response
 codes={};counts={'companyAuthorize':0,'companyToken':0,'pkceVerified':0};lock=threading.Lock()
@@ -86,12 +104,23 @@ def control():
             elif command=='injection':fixture.source_title='<img src=x onerror="window.privateXss=true">';result={'ok':True}
             elif command=='hold_answer':pause['answer']=True;held.clear();release.clear();result={'ok':True}
             elif command=='release_answer':release.set();result={'ok':True}
-            elif command=='inspect':result={'answerHeld':held.is_set(),**counts,'modelCalls':len(fixture.model_calls),'auditEvents':len(fixture.audit),'graphCodeExchanges':sum(c[0]=='POST'for c in fixture.graph_http.calls),'confluenceExchanges':sum(c[0]=='POST'for c in fixture.confluence_http.calls)}
+            elif command=='hold_model':pause['model']=True;model_held.clear();model_release.clear();result={'ok':True}
+            elif command=='release_model':model_release.set();result={'ok':True}
+            elif command=='inspect':
+                with psycopg.connect(fixture.owner_dsn)as conn:query_count=conn.execute('SELECT count(*)FROM enterprise_queries.requests WHERE account_id=%s',(fixture.account,)).fetchone()[0]
+                result={'answerHeld':held.is_set(),'modelHeld':model_held.is_set(),'queryRequests':query_count,**counts,'modelCalls':len(fixture.model_calls),'auditEvents':len(fixture.audit),'graphCodeExchanges':sum(c[0]=='POST'for c in fixture.graph_http.calls),'confluenceExchanges':sum(c[0]=='POST'for c in fixture.confluence_http.calls)}
             else:raise ValueError('Unknown local fixture command')
             print(json.dumps({'control':packet.get('id'),'result':result}),flush=True)
         except Exception:print(json.dumps({'control':packet.get('id'),'error':'fixture_control_failed'}),flush=True)
 threading.Thread(target=control,daemon=True).start()
 print(json.dumps({'ready':origin,'fixture':'owned-loopback-TLS-SQL','vendorCalls':False}),flush=True)
 server=uvicorn.Server(uvicorn.Config(app,log_level='error',access_log=False,ssl_keyfile=str(private),ssl_certfile=str(cert)))
-asyncio.run(server.serve(sockets=[sock]))
+async def serve():
+    task=asyncio.create_task(worker.run(install_signal_handlers=False,fetch_job_polling_interval=.05,shutdown_graceful_timeout=1))
+    try:await server.serve(sockets=[sock])
+    finally:
+        task.cancel()
+        try:await task
+        except asyncio.CancelledError:pass
+asyncio.run(serve())
 asyncio.run(fixture.asyncTearDown())

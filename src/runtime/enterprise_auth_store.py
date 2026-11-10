@@ -6,11 +6,15 @@ No cloud key is generated or persisted here. API credentials are never logged.
 from contextlib import contextmanager
 from dataclasses import dataclass,field
 import hashlib
+import base64
+import hmac
 import json
 from pathlib import Path
 import re
 import secrets
 from cryptography.fernet import Fernet,InvalidToken
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from psycopg.rows import dict_row
 from enterprise_identity import CompanyPrincipal
 from enterprise_sources import SourceDenied,SourceUnavailable,DelegatedAccess
@@ -28,7 +32,13 @@ def secret_binding(value):
 
 
 class CredentialBox:
-    def __init__(self,key):self.box=Fernet(key)
+    def __init__(self,key):
+        self.box=Fernet(key)
+        self._fingerprint_key=HKDF(algorithm=hashes.SHA256(),length=32,salt=None,info=b'atmem-enterprise-private-fingerprint-v1').derive(base64.urlsafe_b64decode(key))
+    def fingerprint(self,context,value):
+        raw=json.dumps({'context':context,'value':value},sort_keys=True,separators=(',',':')).encode()
+        if len(raw)>2000000:raise SourceUnavailable('credential_material_too_large')
+        return hmac.new(self._fingerprint_key,raw,hashlib.sha256).hexdigest()
     def seal(self,context,value):
         raw=json.dumps({'context':context,'value':value},sort_keys=True,separators=(',',':')).encode()
         if len(raw)>2000000:raise SourceUnavailable('credential_material_too_large')

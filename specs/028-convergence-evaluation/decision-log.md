@@ -611,3 +611,20 @@ Evidence: specs/028-convergence-evaluation/evidence/20261110-private-document-ex
 The dedicated owned test VM disk was expanded 8->16 GiB after cache cleanup was
 insufficient; both owned PostgreSQL17/18 servers were restored and guarded reads
 confirmed. No user database was migrated, deleted or adopted. Security remains open.
+
+## 2026-11-10: Durable questions and current-source delayed release
+
+Use the already reviewed Procrastinate 3.10.0/owned PostgreSQL boundary for
+questions rather than extending browser timeouts or running document parsers in
+the API. Store encrypted question/answer receipts with session/company/purpose/
+attempt bindings and a separate HKDF-derived HMAC identity check. Queue arguments
+contain only the random domain ID. Bind task/queue/claim/recovery to the configured
+company. Keep leases, bounded retry, cancellation and final release fences in
+transactional domain state, independently of queue status. Source selection/version
+changes require fresh generation; outages never authorize a saved answer. The web
+workspace requires this service and resumes the latest current-session question;
+this bounded recent list is not a replacement for full conversation history.
+Preserve the native failure caused by an incorrect queue scheduling option, the
+masked lease-cancellation exception and fault-injection search-path failure. No
+client export/schema was patched; all local schemas are fresh synthetic installs.
+Evidence: specs/028-convergence-evaluation/evidence/20261110-private-queued-answers-v1. No native source account/cloud operation ran.

@@ -195,3 +195,12 @@ remain dependencies. In particular, pairwise IdP subjects and stable directory I
 must be reconciled by the company identity profile/provisioning implementation; do
 not ask a basic user to invent subject IDs or silently self-activate membership.
 No public generator capability is advertised and no complete medium case is counted.
+
+### Durable question processing
+
+The browser now uses real queued SQL/Procrastinate processing, current-source delayed
+release and cancellation/reload recovery. See [queued-answer architecture](private-knowledge-queued-answers.md)
+and specs/028-convergence-evaluation/evidence/20261110-private-queued-answers-v1. The native adapters/coordinator do not cache permissions.
+Encrypted job receipts have a bounded lifetime and never act as outage fallback.
+Extraction caching, clean Linux app/native model/audit/provisioning and all4 exported
+packages remain next; no complete private benchmark case is counted.

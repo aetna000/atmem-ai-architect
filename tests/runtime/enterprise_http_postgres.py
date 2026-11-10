@@ -51,7 +51,7 @@ class CompanyHttpIntegration(unittest.IsolatedAsyncioTestCase):
                 title=getattr(outer,'source_title','Private policy')
                 if '/root/search('in url:value={'value':[{'id':'doc','file':{},'parentReference':{'driveId':'drive'}}]}
                 elif '/items/doc/content'in url:return Reply(200,{},b'Private policy requires ninety days.')
-                elif '/items/doc?'in url:value={'id':'doc','name':title,'eTag':'v1','file':{'mimeType':'text/plain'},'parentReference':{'driveId':'drive'},'webUrl':'https://tenant.sharepoint.com/policy'}
+                elif '/items/doc?'in url:value={'id':'doc','name':title,'eTag':getattr(outer,'source_version','v1'),'file':{'mimeType':'text/plain'},'parentReference':{'driveId':'drive'},'webUrl':'https://tenant.sharepoint.com/policy'}
                 elif '/wiki/rest/api/search?'in url:value={'results':[{'content':{'id':'100','type':'page'}}]}
                 elif '/wiki/api/v2/pages/100?'in url:value={'id':'100','title':title,'status':'current','spaceId':'42','version':{'number':1},'body':{'storage':{'value':'<p>Private policy requires ninety days.</p>'}}}
                 elif url.startswith('https://graph.microsoft.com/v1.0/me?')or url in {'https://api.atlassian.com/me','https://api.atlassian.com/oauth/token/accessible-resources'}:return outer.profiles.get(url,token,hosts=hosts)

@@ -1,13 +1,14 @@
 import {UserManager,WebStorageStateStore,InMemoryWebStorage} from 'oidc-client-ts';
 const $=id=>document.getElementById(id),messages=$('messages');
-let config,manager,csrf=null,epoch=0,busy=false,sessionTask=null,sessionSerial=0;
+let config,manager,csrf=null,epoch=0,busy=false,sessionTask=null,sessionSerial=0,querySerial=0,activeQuery=null;
 class WorkspaceError extends Error{}
 class SessionChanged extends Error{}
 const publicMessage=(error,fallback)=>error instanceof WorkspaceError?error.message:fallback;
 const pending=new Set();
 const say=text=>{$('status').textContent=text;};
+function stopQuestion(){const identity=activeQuery;querySerial++;activeQuery=null;busy=false;$('activity').hidden=true;$('cancel-question').hidden=true;return identity;}
 function clearPrivate(){
- epoch++;csrf=null;busy=false;for(const controller of pending)controller.abort();pending.clear();messages.replaceChildren();$('question').value='';$('workspace').hidden=true;$('welcome').hidden=false;$('sign-out').hidden=true;$('new-answer').hidden=true;$('activity').hidden=true;$('sources').replaceChildren();
+ epoch++;querySerial++;activeQuery=null;csrf=null;busy=false;for(const controller of pending)controller.abort();pending.clear();messages.replaceChildren();$('question').value='';$('workspace').hidden=true;$('welcome').hidden=false;$('sign-out').hidden=true;$('new-answer').hidden=true;$('activity').hidden=true;$('cancel-question').hidden=true;$('sources').replaceChildren();
 }
 async function api(path,{method='GET',data,bootstrapToken}={}){
  const generation=epoch,controller=new AbortController();pending.add(controller);const timeout=setTimeout(()=>controller.abort(),45000);
@@ -17,7 +18,7 @@ async function api(path,{method='GET',data,bootstrapToken}={}){
   let result=null;if(response.status!==204)result=await response.json();
   if(generation!==epoch)throw new SessionChanged();
   if(response.status===401||response.status===403){clearPrivate();throw new WorkspaceError(result?.error?.message||'Sign in with your company account to continue.');}
-  if(!response.ok)throw new WorkspaceError(result?.error?.message||'The workspace is temporarily unavailable. Please try again.');
+  if(!response.ok){const error=new WorkspaceError(result?.error?.message||'The workspace is temporarily unavailable. Please try again.');error.retryable=response.status>=500;throw error;}
   return result;
  }finally{clearTimeout(timeout);pending.delete(controller);}
 }
@@ -28,11 +29,11 @@ function renderSources(rows){
   const li=document.createElement('li'),label=document.createElement('strong'),state=document.createElement('p');label.textContent=row.name;state.textContent=statusText[row.status]||'Connection unavailable';li.append(label,state);
   const connect=document.createElement('button');connect.type='button';if(row.status==='connected')connect.className='quiet';connect.textContent=row.status==='connected'?'Reconnect':'Connect';connect.disabled=row.status==='needs_setup'||row.status==='refreshing';connect.addEventListener('click',()=>connectSource(row.id));li.append(connect);
   if(row.status==='connected'){
-   const remove=document.createElement('button');remove.type='button';remove.textContent='Disconnect';remove.className='quiet disconnect';remove.addEventListener('click',async()=>{try{await api('/api/sources/'+encodeURIComponent(row.id),{method:'DELETE'});messages.replaceChildren();await session();say(row.name+' disconnected.');}catch{say('Could not disconnect the source. Refresh and try again.');}});li.append(remove);
+   const remove=document.createElement('button');remove.type='button';remove.textContent='Disconnect';remove.className='quiet disconnect';remove.addEventListener('click',async()=>{const identity=stopQuestion();try{if(identity)await api('/api/queries/'+encodeURIComponent(identity),{method:'DELETE'});await api('/api/sources/'+encodeURIComponent(row.id),{method:'DELETE'});messages.replaceChildren();await session();say(row.name+' disconnected.');}catch{say('Could not disconnect the source. Refresh and try again.');}});li.append(remove);
   }else ready=false;
   $('sources').append(li);
  }
- if(rows.some(row=>['needs_reconnect','revoked','needs_setup'].includes(row.status)))messages.replaceChildren();$('send').disabled=!ready||busy;
+ if(rows.some(row=>['needs_reconnect','revoked','needs_setup'].includes(row.status))){stopQuestion();messages.replaceChildren();}$('send').disabled=!ready||busy;
 }
 async function session(fresh=false){
  if(!fresh&&sessionTask?.epoch===epoch)return sessionTask.promise;
@@ -55,11 +56,34 @@ async function connectSource(alias){
 $('sign-in').addEventListener('click',async()=>{try{await manager.clearStaleState();await manager.signinRedirect();}catch{say('Company sign-in is unavailable. Please try again shortly.');}});
 $('sign-out').addEventListener('click',async()=>{let confirmed=false;try{await api('/api/session',{method:'DELETE'});confirmed=true;}catch{}finally{clearPrivate();await manager?.removeUser();say(confirmed?'Signed out of this workspace.':'Sign-out could not be confirmed. Reload this page and try again.');}});
 $('new-answer').addEventListener('click',()=>{messages.scrollTop=messages.scrollHeight;$('new-answer').hidden=true;});
-$('ask').addEventListener('submit',async event=>{
- event.preventDefault();if(busy)return;const generation=epoch,question=$('question').value.trim();if(!question)return;busy=true;$('send').disabled=true;$('activity').hidden=false;append('user',question);$('question').value='';say('');
- try{const result=await api('/api/ask',{method:'POST',data:{question}});append('assistant',result.answer,result.citations);}
- catch(error){if(generation===epoch)say(error.name==='AbortError'?'This request took too long. You can ask again.':publicMessage(error,'Could not verify an answer. Please try again.'));}
- finally{if(generation===epoch){busy=false;$('activity').hidden=true;if(csrf)try{await session(true);}catch(error){if(!(error instanceof SessionChanged)){clearPrivate();say(publicMessage(error,'We could not confirm access. Sign in again or retry shortly.'));}}}}
+const queryErrors={source:'Reconnect your company sources, then ask again.',setup:'Your workspace owner needs to enable source access for your account.',signin:'Sign in again to continue.',unavailable:'A company source is unavailable. No older private content was used. Please try again shortly.',answer:'The answer could not be verified against your current sources. Please try again.'};
+async function runQuestion(question,existingId=null){
+ const generation=epoch,flow=++querySerial;busy=true;activeQuery=existingId;$('send').disabled=true;$('activity').hidden=false;$('cancel-question').hidden=false;append('user',question);$('question').value='';say('');
+ try{
+  if(!activeQuery){const submitted=await api('/api/queries',{method:'POST',data:{question,requestId:crypto.randomUUID()}});if(generation!==epoch)throw new SessionChanged();if(flow!==querySerial){await api('/api/queries/'+encodeURIComponent(submitted.id),{method:'DELETE'});return;}activeQuery=submitted.id;}
+  const identity=activeQuery,deadline=Date.now()+15*60*1000;
+  while(generation===epoch&&flow===querySerial){
+   if(Date.now()>deadline){await api('/api/queries/'+encodeURIComponent(identity),{method:'DELETE'});throw new WorkspaceError('This question could not finish in time. Please try again.');}
+   let status;
+   try{status=await api('/api/queries/'+encodeURIComponent(identity));}
+   catch(error){if(error.retryable){say(publicMessage(error,queryErrors.unavailable));await new Promise(resolve=>setTimeout(resolve,2000));continue;}throw error;}
+   if(generation!==epoch||flow!==querySerial)throw new SessionChanged();
+   if(status.status==='ready'){append('assistant',status.result.answer,status.result.citations);say('');break;}
+   if(status.status==='failed')throw new WorkspaceError(queryErrors[status.errorCode]||queryErrors.unavailable);
+   if(status.status==='cancelled'||status.status==='expired'){say(status.status==='cancelled'?'Question cancelled.':'This question expired. Please ask again.');break;}
+   await new Promise(resolve=>setTimeout(resolve,1200));
+  }
+ }
+ catch(error){if(generation===epoch&&flow===querySerial&&!(error instanceof SessionChanged))say(error.name==='AbortError'?'The connection was interrupted. Reload to resume your question.':publicMessage(error,'Could not verify an answer. Please try again.'));}
+ finally{if(generation===epoch&&flow===querySerial){busy=false;activeQuery=null;$('activity').hidden=true;$('cancel-question').hidden=true;if(csrf)try{await session(true);}catch(error){if(!(error instanceof SessionChanged)){clearPrivate();say(publicMessage(error,'We could not confirm access. Sign in again or retry shortly.'));}}}}
+}
+$('ask').addEventListener('submit',event=>{
+ event.preventDefault();if(busy)return;const question=$('question').value.trim();if(question)void runQuestion(question);
+});
+$('cancel-question').addEventListener('click',async()=>{
+ const generation=epoch,identity=stopQuestion();$('send').disabled=false;
+ try{if(identity)await api('/api/queries/'+encodeURIComponent(identity),{method:'DELETE'});if(generation===epoch)say('Question cancelled.');}
+ catch(error){if(generation===epoch)say(publicMessage(error,'Cancellation could not be confirmed. Please try again.'));}
 });
 window.addEventListener('pagehide',clearPrivate);
 window.addEventListener('pageshow',event=>{if(event.persisted)session().catch(()=>{clearPrivate();say('Sign in to reopen your workspace.');});});
@@ -73,7 +97,8 @@ async function boot(){
    const callback=location.href;history.replaceState(null,'','/');let user;
    try{user=await manager.signinRedirectCallback(callback);await api('/api/session',{method:'POST',data:{},bootstrapToken:user.access_token});}finally{await manager.removeUser();user=null;}
   }else if(location.search){history.replaceState(null,'','/');}
-  await session();say('');
+  const current=await session();say('');
+  if(current.sources.every(row=>row.status==='connected')){const recent=await api('/api/queries'),last=recent.queries.at(-1);if(last&&!busy)void runQuestion(last.question,last.id);}
  }catch(error){clearPrivate();say(publicMessage(error,'Sign in with your company account to open your workspace.'));}
 }
 setInterval(()=>{if(csrf&&!busy&&document.visibilityState==='visible')session().catch(error=>{if(!(error instanceof SessionChanged)){clearPrivate();say(publicMessage(error,'Access could not be confirmed. Sign in again or retry shortly.'));}});},15000);
