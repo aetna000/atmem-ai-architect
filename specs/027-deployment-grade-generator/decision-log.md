@@ -599,3 +599,24 @@ Next implement Azure/IBM native execution and complete the four-provider applica
 operator/artifact/source/model/SQL/network/Spec Kit composition, then full client
 briefs, security/performance, remaining families/final28/held-out. The current parser
 revision is an operator/build-record binding, not a fabricated publication proof.
+
+
+### 2026-11-11 — Azure native document request and Linux isolation contract
+
+Pin Microsoft's official Batch2026-10-01 schema at revision
+0b01059c3d95a84bc84ff16a4bb0fd10f66f3abd. Emit one job per opaque file,
+root/hash-bound preparation/release helpers, no shared parser metadata, explicit
+empty native Batch mounts and container-image working directory. Keep the job
+active until its task is submitted/observed; later terminate and wait for release.
+Non-admin Batch UID must work without assuming image UID10001. Host/helper, Blob/MI,
+controller/recovery, private infrastructure and native worker admission stay pending.
+
+Evidence: `specs/028-convergence-evaluation/evidence/20261111-private-azure-document-contract-v1`.
+Ten native schema/hostile contracts and23 actual Linux checks pass, including emitted
+Docker options, UID42424, literal read-only input/root, disabled network/log driver,
+real Word/scanned-PDF OCR and byte-bound results/volume cleanup. Native UID and
+trusted host staging/collection are explicit fixtures. Preserve initial unsupported
+MIME failure; fixed canonical-supported check before scheduling. No cloud/node-agent,
+security, capability, complete-export or full-project promotion. Continue with
+Azure Blob/host/controller/recovery/IaC, equivalent IBM execution and full native
+application/Spec Kit composition, unchanged private briefs and final28/held-out.
