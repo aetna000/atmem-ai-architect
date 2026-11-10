@@ -55,7 +55,8 @@ def main(argv=None):
         # Azure's documented identity mappings run in postgres, then schema and
         # application grants run in the separate destination application database.
         with psycopg.connect(**{**settings,**({'dbname':'postgres'}if deployment['provider']=='azure'else{})})as conn:
-            def passwords(purpose):
+            def passwords(purpose,principal):
+                if purpose not in deployment['bindings']or principal!=deployment['bindings'][purpose]['principal']:raise ValueError('Use the exact owned native password binding')
                 field=payload.get(purpose+'PasswordFile')
                 if not isinstance(field,str):raise ValueError('Supply a private separate IBM role password file')
                 path=Path(field);metadata=path.stat()

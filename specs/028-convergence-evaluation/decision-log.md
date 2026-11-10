@@ -303,3 +303,12 @@ specs/028-convergence-evaluation/evidence/20261110-gcp-invoice-and-queue-recover
 No cloud account operations, deployment or remote pushes occurred. The owner’s
 periodic local Git checkpoint policy remains active. Continue implementation and
 the original full 28-project/held-out evaluation without narrowing the objective.
+
+## 2026-11-10 — Repair IBM operator credential callback
+
+The complete CLI path exposed a one-argument password callback where the native
+bootstrap requires purpose and principal. Repair and verify both owned fields;
+retain the failing CLI regression. Actual SQL login creation, SCRAM authentication
+and restricted grants pass on PG17/18. API aggregate: 62 checks. Native IBM cloud
+resources and the complete invoice export are not qualified by this local proof.
+Evidence: specs/028-convergence-evaluation/evidence/20261110-ibm-operator-bootstrap
