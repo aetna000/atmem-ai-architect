@@ -93,6 +93,25 @@ class ExtractionReuse(unittest.TestCase):
             with self.subTest(changed=changed),self.assertRaises(SourceUnavailable):decoder.from_source(self.raw,'text/plain',source)
             self.assertEqual(self.rows(),[])
 
+    def test_per_file_launcher_rechecks_company_authority_before_releasing_input(self):
+        from enterprise_native import DocumentExecutor
+        calls=[]
+        owner_dsn,account,principal=self.owner_dsn,self.account,self.principal
+        class Launch:
+            def __call__(self,raw,mime):raise AssertionError('Live authority must reach the per-file launcher')
+            def from_source(self,raw,mime,guard):
+                calls.append('waiting-for-workload')
+                # An administrator removes the employee while a native job is
+                # starting. Do not release its source bytes or cache a derivative.
+                with psycopg.connect(owner_dsn)as conn:
+                    conn.execute('UPDATE enterprise_auth.memberships SET active=false WHERE account_id=%s AND principal_key=%s',(account,principal.key))
+                guard()
+                calls.append('released-private-input')
+                raise AssertionError('Revoked job continued')
+        decoder=self.cache.wrap(DocumentExecutor(REVISION,Launch()),lambda:self.store.authorize(self.principal))
+        with self.assertRaises(SourceDenied):decoder.from_source(self.raw,'text/plain',self.source)
+        self.assertEqual(calls,['waiting-for-workload']);self.assertEqual(self.rows(),[])
+
     def test_concurrent_misses_share_one_extractor_without_holding_a_sql_lock(self):
         entered=threading.Event();release=threading.Event();calls=[]
         def extract(raw,mime):calls.append(True);entered.set();release.wait(5);return self.raw.decode()

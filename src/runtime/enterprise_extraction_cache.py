@@ -142,7 +142,11 @@ class CachedDecoder:
             if state == 'claimed':
                 try:
                     guard()
-                    text = checked_text(self.extract(raw, mime))
+                    # A native per-file launcher must recheck authority while
+                    # waiting and before releasing input/results, not only after
+                    # a potentially slow cloud execution has already finished.
+                    owned = getattr(self.extract, 'from_source', None)
+                    text = checked_text(owned(raw, mime, guard) if callable(owned) else self.extract(raw, mime))
                     guard()
                     self.cache.publish(key, material, {'sha256': digest, 'mediaType': mime, 'text': text})
                     guard()

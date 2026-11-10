@@ -26,10 +26,10 @@ CORE = ['enterprise_identity.py', 'enterprise_sources.py', 'enterprise_knowledge
         'aws_json_model.py', 'azure_structured.py', 'gcp_structured.py', 'ibm_structured.py',
         'structured_output.py', 'structured_http.py', 'policy_review.py',
         'enterprise_extraction_cache.py', 'enterprise_extraction_schema.sql',
-        'enterprise_parser_transport.py', 'enterprise_document_contract.py', 'public_faq.py', 'faq-output-contract.json',
+        'enterprise_parser_transport.py', 'enterprise_document_contract.py', 'enterprise_document_job.py', 'public_faq.py', 'faq-output-contract.json',
         'enterprise-web.html', 'enterprise-web-app.js', 'enterprise-web.css', 'enterprise-web-notices.txt', 'enterprise-web-lock.json']
 SQL = {'enterprise_auth_postgres': 21, 'enterprise_sessions_postgres': 4,
-       'enterprise_queries_postgres': 19, 'enterprise_extraction_cache_postgres': 13, 'enterprise_audit_postgres': 9,
+       'enterprise_queries_postgres': 19, 'enterprise_extraction_cache_postgres': 14, 'enterprise_audit_postgres': 9,
        'enterprise_operator_postgres':11}
 
 
@@ -142,7 +142,7 @@ sys.path.insert(0,'/app')
 '''
             result = run('policy-tests', [*restricted, '--network', 'none', image,
                 'python', '-I', '-c', loader + "import unittest;unittest.main(module=None,argv=['unittest','discover','-s','/tmp/workspace/tests/runtime','-p','enterprise_*_acceptance.py','-v'])"], data=json.dumps(payload).encode())
-            if not re.search(rb'Ran 67 tests in [^\n]+\n\nOK\s*$', result):
+            if not re.search(rb'Ran 79 tests in [^\n]+\n\nOK\s*$', result):
                 raise ValueError('Unexpected private policy test inventory')
             for version in [17, 18]:
                 name = 'atmem-durable-qualification' + ('-pg18' if version == 18 else '')

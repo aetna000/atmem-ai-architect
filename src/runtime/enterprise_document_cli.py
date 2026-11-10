@@ -13,6 +13,11 @@ def installed_parser():
 
 
 if __name__ == '__main__':
+    if sys.argv[1:] == ['--job']:
+        from enterprise_document_job import execute
+        value, code = execute(installed_parser())
+        print(json.dumps(value, allow_nan=False))
+        raise SystemExit(code)
     try:
         if len(sys.argv) > 2:
             raise ExtractionError('invalid_document')

@@ -11,7 +11,7 @@ sys.path[:0]=[str(ROOT/'src/runtime'),str(ROOT/'.local/azure-runtime-sdk'),str(R
 from enterprise_configuration import deployment,read_deployment,native_database
 from enterprise_native import DocumentExecutor
 from enterprise_secrets import SecretFiles
-from enterprise_sources import SourceUnavailable
+from enterprise_sources import SourceUnavailable, SourceChanged
 from enterprise_secrets_acceptance import environment
 
 
@@ -77,6 +77,28 @@ class OwnedPrivateConfiguration(unittest.TestCase):
         for value in [{'format':'enterprise-document-v1','sha256':'0'*64,'mediaType':'text/plain','text':'forged'},
                       {'format':'enterprise-document-v1','sha256':hashlib.sha256(raw).hexdigest(),'mediaType':'text/plain','text':'','partial':True}]:
             with self.assertRaises(SourceUnavailable):DocumentExecutor('a'*64,lambda data,mime:value)(raw,'text/plain')
+
+    def test_owned_launcher_receives_live_guard_and_changed_authority_is_not_hidden(self):
+        raw=b'Approved source text.';events=[]
+        def guard():
+            events.append('guard')
+            if len(events)==3: raise SourceChanged('source_version_changed')
+        class Launch:
+            def __call__(self,raw,mime): raise AssertionError('Do not discard the live source check')
+            def from_source(self,raw,mime,revalidate):
+                events.append('launch'); revalidate()
+                raise AssertionError('Revoked work must stop before input release')
+        with self.assertRaises(SourceChanged): DocumentExecutor('a'*64,Launch()).from_source(raw,'text/plain',guard)
+        self.assertEqual(events,['guard','launch','guard'])
+
+    def test_plain_executor_rechecks_authority_before_returning(self):
+        raw=b'Approved source text.';calls=[]
+        def guard():
+            calls.append('guard')
+            if len(calls)>1: raise SourceChanged('source_version_changed')
+        def run(data,mime): return {'format':'enterprise-document-v1','sha256':hashlib.sha256(data).hexdigest(),'mediaType':mime,'text':data.decode()}
+        with self.assertRaises(SourceChanged): DocumentExecutor('a'*64,run).from_source(raw,'text/plain',guard)
+        self.assertEqual(calls,['guard','guard'])
 
 
 if __name__=='__main__':unittest.main()

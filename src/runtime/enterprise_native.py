@@ -51,6 +51,26 @@ class DocumentExecutor:
         except Exception:
             raise SourceUnavailable('document_extraction_unavailable') from None
 
+    def from_source(self, raw, declared, revalidate):
+        if not callable(revalidate): raise ValueError('Supply the live source and company/job check')
+        # Preserve authority exceptions so cancellation/source changes keep their
+        # actual queue semantics. Only transport/parser errors are sanitized.
+        revalidate()
+        owned = getattr(self.run, 'from_source', None)
+        if not callable(owned):
+            value = self(raw, declared)
+        else:
+            try:
+                if not isinstance(raw, bytes) or not 0 < len(raw) <= MAX_INPUT: raise ValueError()
+                declared = media_type(declared)
+                value = document_result(owned(raw, declared, revalidate), raw, declared)['text']
+            except SourceUnavailable:
+                raise
+            except Exception:
+                raise SourceUnavailable('document_extraction_unavailable') from None
+        revalidate()
+        return value
+
 
 def unavailable(*args):
     raise SourceUnavailable('dedicated_question_worker_required')

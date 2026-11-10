@@ -10,6 +10,6 @@ USER root
 COPY --from=document-build /build/java /opt/java
 COPY --chmod=0444 --from=document-build /build/tika-app.jar /app/tika-app.jar
 COPY --from=document-build /build/classes /app/document-bridge
-COPY enterprise_document_contract.py enterprise_document.py enterprise_document_cli.py enterprise_parser_service.py /app/
+COPY enterprise_document_contract.py enterprise_document.py enterprise_document_cli.py enterprise_document_job.py enterprise_parser_service.py /app/
 USER 10001:10001
 CMD ["python", "-I", "/app/enterprise_document_cli.py"]

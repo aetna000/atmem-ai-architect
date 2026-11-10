@@ -32,7 +32,7 @@ async def qualify(args):
     if not args.docker_host.startswith('unix:///')or not Path(args.docker_host[7:]).is_socket():raise ValueError('Use the owned local Docker Unix socket')
     prior=json.loads(receipt_path.read_text())
     if not prior['allChecksPassed']or not re.fullmatch('sha256:[0-9a-f]{64}',prior['imageId']):raise ValueError('Supply the qualified exact parser image')
-    payload=['enterprise_document_contract.py','EnterpriseDocument.java','enterprise_document.py','enterprise_document_cli.py','enterprise_parser_service.py','enterprise-document.Dockerfile','enterprise-document-lock.json']
+    payload=['enterprise_document_contract.py','EnterpriseDocument.java','enterprise_document.py','enterprise_document_cli.py','enterprise_document_job.py','enterprise_parser_service.py','enterprise-document.Dockerfile','enterprise-document-lock.json']
     for name in payload:
         source='src/runtime/'+name
         if hashlib.sha256((ROOT/source).read_bytes()).hexdigest()!=prior['sourceHashes'][source]:raise ValueError('Parser payload source changed; rebuild and qualify it first')
