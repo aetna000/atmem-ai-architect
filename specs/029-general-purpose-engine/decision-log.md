@@ -88,3 +88,50 @@ not business-recipe support, infrastructure quality or general 95% quality.
 Empty-thread and lost-start-acknowledgement recovery remain explicit limitations;
 release 1, independent isolation, UI/skills/artifact integration and paired comparison
 remain pending. No cloud operation or public release was performed.
+
+## 2026-11-11 — Pursue the complete generic-engine/28-project goal
+
+Owner explicitly reaffirmed: pursue a generic engine that can produce the 28 cases
+and unfamiliar combinations. Registered the persistent goal; no cloud deployment is
+authorized. Continue GE-001A/002, not a new sample implementation or scenario expansion.
+
+Freeze an engineering evaluation protocol and independent receipt aggregation before
+further quality tuning. The original corpus remains unchanged. Initial 300-second
+native/composition-skill comparison is disqualified as a clean baseline because its
+workspace inherited this source repository's instructions and allowed host/peer reads.
+Retain its incomplete outputs and failures; rerun from immutable source with unrelated
+short workspaces and a qualified read-restricted worker. No specialization advantage
+or quality percentage is inferred. Unseen-family holdouts remain pending.
+
+For reliable generic execution, replace only a never-started missing native thread;
+recover accepted starts by durable client UUID, never text similarity or replay.
+Preserve explicit uncertainty for absent/ambiguous history. Fix the shared intake
+currency/queue defects and reconcile AI-only/mandatory-question prompt contradictions.
+
+The local worker uses a beta named profile with effective configuration checks,
+read-restricted files, core-only shell environment, disabled external tool surfaces
+and private temporary Unix IPC. Native Terraform needs short socket paths; an active
+deny-all proxy propagates the Unix allowlist while raw IP/host-loopback checks remain
+denied. Empty MCP-table overrides merge, so disable known definitions explicitly and
+verify both their effective enablement and absence of exposed tools. Never copy original
+shell override values. Changes are scoped to worker startup, not global user config.
+
+Evidence and failed probes: `evidence/20261111-engine-intake-recovery/`. No release or
+full-project acceptance; complete source/native validation and UI/artifact integration
+remain required. The 28 cases diagnose the engine; they are not production templates.
+
+### Comparison-driver correction and retained failures
+
+The first isolated pair exposed a coding defect: a tool-directory loop reused `name`
+and overwrote the arm identity with `Frameworks`, so specialization was not enabled.
+It is not a valid comparison. Preserve the native 27-file partial artifact and the
+other workspace's seven-file partial snapshot. Stop only the frozen process identified
+by its own log handle. Add a differential staging test and final assertions for labels,
+identical inputs/selection and the intended skill difference; retain partial output on
+future cancellation without starting another arm. The corrected frozen run is
+`.local/engine-paired/20261111-verified-arm-pair/`. No comparative advantage is claimed.
+
+Broader regression passes: 370 JavaScript and 281 server tests, plus the build and real
+browser recovery checks. The named-profile check now includes foreign Unix sockets and
+a symlink escape attempt (12 local command checks). These counts do not accept any of
+the 28 complete projects. Continue to product integration after this baseline foundation.

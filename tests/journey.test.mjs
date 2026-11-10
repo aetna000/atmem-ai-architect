@@ -45,6 +45,16 @@ test('numbers with units become facts; quality statements become measurable requ
   assert.deepEqual(r.map(x=>x.category),['performance','availability','compliance','security']);
   assert.deepEqual(r[0].measure,{metric:'p95 response time',op:'<=',target:5,unit:'s'});
 });
+test('ambiguous dollar budgets keep currency unknown across unrelated client domains',()=>{
+ assert.equal(extractFacts('We check fraud 500 requests per day').some(f=>f.name==='budget.per_month'),false);
+ for(const brief of ['Library booking system in Australia, budget $500 per month','Warehouse intake in Canada, $500 per month','Member website in New Zealand, $500 per month']){
+  const budget=extractFacts(brief).find(f=>f.name==='budget.per_month');
+  assert.equal(budget.value,500);assert.equal(budget.currency,null);assert.equal(budget.unit,'currency unspecified/month');assert.equal(budget.text,brief);
+ }
+ for(const [symbol,currency]of [['A$','AUD'],['AU$','AUD'],['CAD','CAD'],['US$','USD'],['NZ$','NZD'],['£','GBP'],['€','EUR']]){
+  const budget=extractFacts(`Budget ${symbol}600 per year`).find(f=>f.name==='budget.per_month');assert.equal(budget.currency,currency);assert.equal(budget.value,50);
+ }
+});
 test('conflicting numbers keep both with dates and ask which is current',()=>{
   const {p,body}=talk(empty(),'chatbot for policies','100 staff','sorry, 250 staff');
   assert.equal(p.facts.filter(f=>f.name==='users').length,2);assert.match(body,/Which is current/);

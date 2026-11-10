@@ -191,3 +191,24 @@ GE-002 remains in progress. Empty-thread and uncertain-start recovery, independe
 isolation, skill/artifact/UI integration and GE-001A's paired Terraform/emulation
 comparison still gate alpha.1. No release, measured quality or hosted deployment is
 claimed by this checkpoint.
+
+## Shared execution/intake and frozen-evaluation checkpoint — 2026-11-11
+
+Unused-session and lost-start acknowledgement recovery now have real native evidence;
+missing/ambiguous history still cannot authorize replay. Shared money/queue/intake
+policy repairs have unit and real browser evidence. An optional versioned worker
+profile now qualifies local command read/write/network boundaries, external-tool
+configuration and offline native provider validation. This is not hosted isolation.
+
+Engineering protocol v1 and independent receipt coverage/binding checks preserve the
+original matrix at 0/28 complete acceptance. An initial inherited-instruction comparison
+is explicitly disqualified. A corrected immutable-source, isolated-workspace pair is
+running before additional quality tuning. Follow its exact evidence rather than a moving
+branch. Read `evidence/20261111-engine-intake-recovery/README.md` for commands and limits.
+
+Next GE-001A work: complete and independently assess the frozen pair; establish actual
+unseen holdouts and semantic assessors. Next GE-002 work: model-tool/local validator
+qualification, project-bound backend jobs, durable progress/steering, artifact capture
+and UI integration. None of these component changes earns alpha.1 by itself. Continue
+the full ten-release programme and all 28 plus unfamiliar combinations without waiting
+for optional feedback or drifting back to a specialized workflow.

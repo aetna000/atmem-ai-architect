@@ -28,6 +28,9 @@ class Client:
                       'reasoningEffort': 'high', 'approvalPolicy': 'never',
                       'sandbox': CodexEngineeringBackend._policy(self.root),
                       'thread': {'id': params.get('threadId', 'native-thread')}}
+            if params.get('permissions'):
+                result.update(activePermissionProfile={'id':params['permissions']},runtimeWorkspaceRoots=[str(self.root)])
+                result['sandbox']['networkAccess']=True
             self.mutate(result)
             return result
         if method == 'turn/start':
@@ -41,6 +44,9 @@ class Client:
 
     async def close(self):
         self.closed = True
+
+    async def verify_worker_tools(self,expected_profile):
+        self.verified_profile=expected_profile
 
 
 class CodexBackendTests(unittest.IsolatedAsyncioTestCase):
@@ -196,6 +202,54 @@ class CodexBackendTests(unittest.IsolatedAsyncioTestCase):
         handle = await self.create()
         self.clients[0].history = [{'data': [{'id': 'owned-turn', 'status': 'inProgress'}]}]
         self.assertIsNone(await self.backend.observe(self.scope, handle, 'owned-turn'))
+
+    async def test_start_request_identity_is_sent_unchanged_for_recovery(self):
+        handle = await self.create()
+        request_id = '019c1122-3344-7555-8666-778899001122'
+        await self.backend.start(self.scope,handle,'Implement',self.selection,request_id=request_id)
+        self.assertEqual(self.clients[0].requests[-1][1]['clientUserMessageId'],request_id)
+
+    async def test_named_worker_policy_is_not_mixed_with_legacy_permissions(self):
+        self.backend.permission_profile='qualified-worker'
+        handle=await self.create()
+        params=self.clients[0].requests[0][1]
+        self.assertEqual(params['permissions'],'qualified-worker');self.assertNotIn('sandbox',params)
+        self.assertEqual(params['config'],{'model_reasoning_effort':'high'})
+        self.assertEqual(self.clients[0].verified_profile,'qualified-worker')
+        await self.backend.start(self.scope,handle,'Implement',self.selection)
+        self.assertEqual(self.clients[0].requests[-1][1]['permissions'],'qualified-worker')
+        self.assertNotIn('sandboxPolicy',self.clients[0].requests[-1][1])
+
+    async def test_named_worker_policy_rejects_unconfirmed_profile_or_extra_runtime_roots(self):
+        self.backend.permission_profile='qualified-worker'
+        for mutate in [lambda r:r.update(activePermissionProfile={'id':'broad-default'}),lambda r:r.update(runtimeWorkspaceRoots=[str(self.root),'/other-project'])]:
+            def factory(root):
+                client=Client(root);client.mutate=mutate;self.clients.append(client);return client
+            self.backend.client_factory=factory
+            with self.assertRaises(SessionError):await self.create()
+            self.assertTrue(self.clients[-1].closed)
+
+    async def test_lost_start_is_matched_by_client_identity_not_similar_content(self):
+        handle = await self.create()
+        self.clients[0].history = [{'data': [
+            {'id':'other-turn','status':'completed','items':[{'type':'userMessage','clientId':'other-request','content':[{'type':'text','text':'Same intent'}]}]},
+            {'id':'owned-turn','status':'completed','items':[{'type':'userMessage','clientId':'our-request','content':[]}]},
+        ]}]
+        recovered=await self.backend.recover_start(self.scope,handle,'our-request')
+        self.assertEqual(recovered.turn,'owned-turn');self.assertEqual(recovered.status,'completed')
+        self.assertEqual(self.clients[0].requests[-1][1]['itemsView'],'summary')
+
+    async def test_ambiguous_start_identity_is_not_recovered(self):
+        handle = await self.create()
+        self.clients[0].history = [{'data': [
+            {'id':turn,'status':'completed','items':[{'type':'userMessage','clientId':'our-request'}]}
+            for turn in ['first','duplicate']]}]
+        with self.assertRaises(SessionError):await self.backend.recover_start(self.scope,handle,'our-request')
+
+    async def test_absent_client_identity_does_not_authorize_replay(self):
+        handle = await self.create()
+        self.clients[0].history = [{'data': [{'id':'old-turn','status':'completed','items':[{'type':'userMessage','content':[]}]}]}]
+        self.assertIsNone(await self.backend.recover_start(self.scope,handle,'our-request'))
 
     async def test_missing_malformed_or_cyclic_history_is_uncertain(self):
         handle = await self.create()

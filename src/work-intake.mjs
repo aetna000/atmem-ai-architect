@@ -5,10 +5,11 @@ export function restoreQueuedMessages(messages,projectId){
 export function nextIntakeBatch(queue,projectId,maxChars=8000){
  const items=[];let files=0;
  for(const item of queue.filter(q=>q.projectId===projectId)){
+  const invalid=item.text.length>maxChars?'This saved update exceeds the message limit. Edit it before sending; its full text is still saved.':item.attachments.length>4?'This saved update has more than four files. Edit it before sending; its text and file references are still saved.':null;
+  if(invalid)return items.length?batch(items):{blocked:item.id,reason:invalid};
   if(item.attachments.some(a=>!a.data))return items.length?batch(items):{blocked:item.id,reason:'Attach the files again or continue with the text.'};
   const candidate=[...items,item],message=combine(candidate);
   if(items.length&&(message.length>maxChars||files+item.attachments.length>4))break;
-  if(!items.length&&item.text.length>maxChars)throw Error('A queued message exceeds the request limit; no text was discarded.');
   items.push(item);files+=item.attachments.length;
   if(items.length>=8)break;
  }

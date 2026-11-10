@@ -53,11 +53,12 @@ export function extractFacts(message) {
   if (docs && !volume) add("documents", number(docs[1]), docs[2].toLowerCase());
   const size = /(\d[\d.]*)\s*(gb|tb|mb)\b/i.exec(t);
   if (size) add("data.gb", Number(size[1]) * { gb: 1, tb: 1000, mb: 0.001 }[size[2].toLowerCase()], "GB");
-  const money = /(£|\$|€|usd|gbp|eur|aud)\s?(\d[\d.]*\s*k?)\s*(?:a|per|\/)?\s*(month|year|mo)?/i.exec(t);
+  const money = /(\b(?:US\$|AU\$|A\$|CA\$|C\$|NZ\$|usd|gbp|eur|aud|cad|nzd)|£|\$|€)\s?(\d[\d.]*\s*k?)\s*(?:a|per|\/)?\s*(month|year|mo)?/i.exec(t);
   if (money) {
-    const currency = { "£": "GBP", $: "USD", "€": "EUR" }[money[1]] || money[1].toUpperCase();
+    const symbol=money[1].toUpperCase();
+    const currency=symbol==='$'?null:({"£":"GBP","€":"EUR",'US$':'USD','AU$':'AUD','A$':'AUD','CA$':'CAD','C$':'CAD','NZ$':'NZD'}[symbol]||symbol);
     const per = money[3]?.toLowerCase().startsWith("y") ? 1 / 12 : 1;
-    add("budget.per_month", Math.round(number(money[2]) * per), `${currency}/month`, { period: money[3] ? "stated" : "assumed monthly" });
+    add("budget.per_month", Math.round(number(money[2]) * per), `${currency||'currency unspecified'}/month`, { currency, period: money[3] ? "stated" : "assumed monthly" });
   }
   if (/\b(personal|pii|health|patient|medical|payment|card|salary|confidential|sensitive|gdpr)\b/i.test(t))
     add("data.sensitive", true, "flag");

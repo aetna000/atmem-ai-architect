@@ -1,0 +1,65 @@
+{
+  "passed": false,
+  "checks": [
+    {
+      "name": "workspace-write-and-temporary-files",
+      "passed": true,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "sibling-read-denied",
+      "passed": true,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "symlink-read-denied",
+      "passed": true,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "sibling-write-denied",
+      "passed": true,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "loopback-network-denied",
+      "passed": true,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "offline-provider-init",
+      "passed": true,
+      "exitCode": 0,
+      "stdout": "Initializing provider plugins...\n- Finding hashicorp/aws versions matching \"6.72.0\"...\n- Installing hashicorp/aws v6.72.0...\n- Installed hashicorp/aws v6.72.0 (unauthenticated)\n\nTerraform has created a lock file .terraform.lock.hcl to record the provider\nselections it made above. Include this file in your version control repository\nso that Terraform can guarantee to make the same selections by default when\nyou run \"terraform init\" in the future.\n\n\nWarning: Incomplete lock file information for providers\n\nDue to your customized provider installation methods, Terraform was forced to\ncalculate lock file checksums locally for the following providers:\n  - hashicorp/aws\n\nThe current .terraform.lock.hcl file only includes checksums for\ndarwin_arm64, so Terraform running on another platform will fail to install\nthese providers.\n\nTo calculate additional checksums for another platform, run:\n  terraform providers lock -platform=linux_amd64\n(where linux_amd64 is the platform to generate)\nTerraform has been successfully initialized!\n",
+      "stderr": ""
+    },
+    {
+      "name": "native-provider-schema",
+      "passed": false,
+      "exitCode": 1,
+      "stdout": "",
+      "stderr": "\nError: Failed to load plugin schemas\n\nError while loading schemas for plugin components: Failed to obtain provider\nschema: Could not load the schema for provider\nregistry.terraform.io/hashicorp/aws: failed to instantiate provider\n\"registry.terraform.io/hashicorp/aws\" to obtain schema: Unrecognized remote\nplugin message: \nFailed to read any lines from plugin's stdout\nThis usually means\n  the plugin was not compiled for this architecture,\n  the plugin is missing dynamic-link libraries necessary to run,\n  the plugin is not executable by this process due to file permissions, or\n  the plugin failed to negotiate the initial go-plugin protocol handshake\n\nAdditional notes about plugin:\n  Path: .terraform/providers/registry.terraform.io/hashicorp/aws/6.72.0/darwin_arm64/terraform-provider-aws_v6.72.0_x5\n  Mode: -rwxr-xr-x\n  Owner: 501 [javadtaghia] (current: 501 [javadtaghia])\n  Group: 0 [wheel] (current: 20 [staff])\n  MachO architecture: CpuArm64 (current architecture: arm64)\n..\n"
+    },
+    {
+      "name": "no-configured-mcp-tools",
+      "passed": false,
+      "configuredServers": 2
+    }
+  ],
+  "profile": "atmem-engineering-v1",
+  "listenerConnections": 0,
+  "canaryPreserved": true,
+  "inferenceTurns": 0,
+  "cloudOperations": false,
+  "boundary": "Actual local named-profile acknowledgement and command/exec read/write/network/environment enforcement; real cached AWS provider init/schema and mock plan only. Does not establish model-selected-tool parity, hosted tenant isolation, whole-system behavior or cloud deployment."
+}

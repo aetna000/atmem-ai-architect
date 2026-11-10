@@ -13,16 +13,20 @@ from .local_providers import account_environment
 
 
 class ProtocolError(RuntimeError):
-    pass
+    def __init__(self, message, *, code=None, category=None):
+        super().__init__(message)
+        self.code = code
+        self.category = category
 
 
 class CodexAppServer:
-    def __init__(self, workspace, *, command=None, event_limit=4096):
+    def __init__(self, workspace, *, command=None, event_limit=4096, experimental=False):
         self.workspace = Path(workspace).resolve(strict=True)
         if not self.workspace.is_dir():
             raise ValueError('Codex workspace must be an existing directory')
         self.command = command or ['codex', 'app-server', '--listen', 'stdio://',
                                    '-c', 'analytics.enabled=false']
+        self.experimental = experimental
         self.events = asyncio.Queue(maxsize=event_limit)
         self.process = None
         self.pending = {}
@@ -49,7 +53,8 @@ class CodexAppServer:
         try:
             result = await self.request('initialize', {'clientInfo': {
                 'name': 'atmem_ai_architect', 'title': 'AtMem AI Architect',
-                'version': json.loads((Path(__file__).resolve().parents[1] / 'package.json').read_text())['version']}})
+                'version': json.loads((Path(__file__).resolve().parents[1] / 'package.json').read_text())['version']},
+                **({'capabilities': {'experimentalApi': True}} if self.experimental else {})})
             await self._write({'method': 'initialized', 'params': {}})
             return result
         except BaseException:
@@ -138,7 +143,11 @@ class CodexAppServer:
                     if future and not future.done():
                         if 'error' in message:
                             code = message['error'].get('code') if isinstance(message['error'], dict) else None
-                            future.set_exception(ProtocolError(f'Codex request rejected (code {code})'))
+                            # Retain only a narrow recovery classification; never
+                            # expose the server's raw diagnostics or local paths.
+                            diagnostic = message['error'].get('message', '') if isinstance(message['error'], dict) else ''
+                            category = 'missing_thread' if code == -32600 and isinstance(diagnostic, str) and diagnostic.startswith('no rollout found for thread id ') else None
+                            future.set_exception(ProtocolError(f'Codex request rejected (code {code})', code=code, category=category))
                         elif 'result' in message:
                             future.set_result(message['result'])
                         else:

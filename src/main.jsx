@@ -697,6 +697,7 @@ function App() {
   const agentAbort = useRef(null);
   const intakeRef=useRef(restoreQueuedMessages(messages,project.id));
   const [intake,setIntake]=useState(intakeRef.current),[intakePaused,setIntakePausedState]=useState(()=>restoreIntakePaused(messages));
+  const [intakeIssue,setIntakeIssue]=useState(null);
   const intakePausedRef=useRef(intakePaused);
   function setIntakePaused(value){intakePausedRef.current=value;setIntakePausedState(value);}
   const carryIntent=useRef(null);
@@ -704,12 +705,14 @@ function App() {
   function setRequestState(ids,state){setMessages(list=>list.map(m=>ids.includes(m.requestId)?{...m,workState:state}:m));}
   useEffect(()=>{
     setIntakePaused(restoreIntakePaused(messages));
+    setIntakeIssue(null);
     const restored=restoreQueuedMessages(messages,project.id).filter(q=>!intakeRef.current.some(old=>old.id===q.id));
     if(restored.length)updateIntake([...intakeRef.current,...restored]);
   },[project.id]);
   useEffect(()=>{
     if(agentBusy||agentAbort.current||busy||pending||intakePausedRef.current||!session||!connection)return;
-    const batch=nextIntakeBatch(intakeRef.current,project.id);if(!batch||batch.blocked)return;
+    const batch=nextIntakeBatch(intakeRef.current,project.id);
+    setIntakeIssue(batch?.blocked?batch.reason:null);if(!batch||batch.blocked)return;
     updateIntake(intakeRef.current.filter(q=>!batch.ids.includes(q.id)));
     setRequestState(batch.ids,'processing');
     const history=carryIntent.current?.projectId===project.id?[{role:'user',text:carryIntent.current.text},...messages.slice(-10)]:messages;
@@ -1187,6 +1190,8 @@ function App() {
     stopVoice();
     const message = text.trim() || "Please review the attached files and help me use them in this architecture.";
     const sentAttachments=intakeOptions.attachments||(origin === "chat"?attachments:[]);
+    if(sentAttachments.length>4){notify('Keep up to four files in one update; your draft and files are unchanged.');return;}
+    if(sentAttachments.some(a=>!a.data)){notify('Attach the missing original files again before sending, or remove their references to continue with text.');return;}
     const requestIds=intakeOptions.requestIds||(origin==='chat'?[crypto.randomUUID()]:[]);
     const requestProject=projectRef.current.id;
     if(origin==='chat'&&!intakeOptions.alreadyLogged&&(agentBusy||agentAbort.current||intakeRef.current.some(q=>q.projectId===requestProject))){
@@ -2239,7 +2244,7 @@ function App() {
             {messages.map((m, i) => (
               <div key={i} className={`msg ${m.role}`}>
                 <ChatMessage text={m.text}/>
-                {(m.workState==='queued'||m.workState==='processing'&&intake.some(q=>q.id===m.requestId))&&<small className="message-work-state">Queued for the next update <button className="link" onClick={()=>{updateIntake(intakeRef.current.filter(q=>q.id!==m.requestId));setRequestState([m.requestId],'cancelled');}}>Remove from queue</button>{m.attachments?.some(a=>!a.data)&&<button className="link" onClick={()=>{updateIntake(intakeRef.current.map(q=>q.id===m.requestId?{...q,attachments:[]}:q));setIntakePaused(false);}}>Continue with text only</button>}</small>}
+                {(m.workState==='queued'||m.workState==='processing'&&intake.some(q=>q.id===m.requestId))&&<small className="message-work-state">Queued for the next update <button className="link" onClick={()=>{updateIntake(intakeRef.current.filter(q=>q.id!==m.requestId));setRequestState([m.requestId],'cancelled');}}>Remove from queue</button><button className="link" onClick={()=>{if(input||attachments.length){notify('Your current draft is preserved. Send or clear it before editing a queued update.');return;}const queued=intakeRef.current.find(q=>q.id===m.requestId);if(!queued)return;setInput(queued.text);setAttachments(queued.attachments);updateIntake(intakeRef.current.filter(q=>q.id!==m.requestId));setRequestState([m.requestId],'cancelled');}}>Edit update</button>{m.attachments?.some(a=>!a.data)&&<button className="link" onClick={()=>{updateIntake(intakeRef.current.map(q=>q.id===m.requestId?{...q,attachments:[]}:q));setIntakePaused(false);}}>Continue with text only</button>}</small>}
                 {!!m.attachments?.length&&<div className="sent-attachments">{m.attachments.map(a=><figure key={a.id}>{a.data&&a.mime.startsWith('image/')&&<img src={`data:${a.mime};base64,${a.data}`} alt={a.name}/>}<figcaption><Paperclip size={12}/>{a.name}{a.originalNotSaved && <small>Original file not saved; attach it again to review its contents.</small>}</figcaption></figure>)}</div>}
                 {m.fix && (
                   <button className="btn fix" onClick={() => setModal("connections")}>
@@ -2284,7 +2289,7 @@ function App() {
             )}
             </div>
           </div>
-          {!!intake.filter(q=>q.projectId===project.id).length&&<div className="intake-status" role="status">{intake.filter(q=>q.projectId===project.id).length} update(s) {intakePaused?'saved · paused':'queued · combining next'}{intakePaused&&<button className="link" onClick={()=>setIntakePaused(false)}>Resume</button>}</div>}
+          {!!intake.filter(q=>q.projectId===project.id).length&&<div className="intake-status" role="status">{intake.filter(q=>q.projectId===project.id).length} update(s) {intakePaused?'saved · paused':'queued · combining next'}{intakeIssue&&<span> {intakeIssue}</span>}{intakePaused&&<button className="link" onClick={()=>setIntakePaused(false)}>Resume</button>}</div>}
           <div className="prompts">
             {mode === "design" && brief(project) && ask && (
               <>
@@ -2304,7 +2309,7 @@ function App() {
           </div>
           {readingAttachments&&<p className="attachment-status" role="status"><BrainActivity/> Reading files…</p>}
           {attachmentError&&<p className="attachment-status" role="alert">{attachmentError}</p>}
-          {!!attachments.length&&<div className="attachment-tray" aria-label="Attachments ready to send">{attachments.map(a=><div className="attachment-chip" key={a.id}>{a.mime.startsWith('image/')?<img src={`data:${a.mime};base64,${a.data}`} alt=""/>:<Paperclip size={16}/>}<span>{a.name}<small>{a.mime.startsWith('image/')?'Image':a.mime==='application/pdf'||a.mime.includes('wordprocessingml')?'Text will be extracted; embedded images omitted':'Document text'}</small></span><button className="icon" aria-label={`Remove ${a.name}`} onClick={()=>setAttachments(list=>list.filter(item=>item.id!==a.id))}><X size={14}/></button></div>)}<p>Sent to your selected architect with this message. Original files are not stored in project files.</p></div>}
+          {!!attachments.length&&<div className="attachment-tray" aria-label="Attachments ready to send">{attachments.map(a=><div className="attachment-chip" key={a.id}>{a.data&&a.mime.startsWith('image/')?<img src={`data:${a.mime};base64,${a.data}`} alt=""/>:<Paperclip size={16}/>}<span>{a.name}<small>{!a.data?'Original missing · attach again':a.mime.startsWith('image/')?'Image':a.mime==='application/pdf'||a.mime.includes('wordprocessingml')?'Text will be extracted; embedded images omitted':'Document text'}</small></span><button className="icon" aria-label={`Remove ${a.name}`} onClick={()=>setAttachments(list=>list.filter(item=>item.id!==a.id))}><X size={14}/></button></div>)}<p>Sent to your selected architect with this message. Original files are not stored in project files.</p></div>}
           <form
             className="composer"
             onSubmit={(e) => {

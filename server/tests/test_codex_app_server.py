@@ -18,6 +18,8 @@ for line in sys.stdin:
  if m['method']=='approval':print(json.dumps({'id':'server-approval','method':'item/commandExecution/requestApproval','params':{}}),flush=True)
  if m['method']=='reject':
   print(json.dumps({'id':m['id'],'error':{'code':-32602,'message':'private diagnostic'}}),flush=True);continue
+ if m['method']=='missing-thread':
+  print(json.dumps({'id':m['id'],'error':{'code':-32600,'message':'no rollout found for thread id private-id'}}),flush=True);continue
  if m['method']=='environment':result={k:os.environ.get(k) for k in ['AWS_PROFILE','AZURE_CLIENT_SECRET','TF_VAR_secret','DOCKER_HOST']}
  else:result={'method':m['method'],'params':m['params']}
  print(json.dumps({'id':m['id'],'result':result}),flush=True)
@@ -76,6 +78,12 @@ class CodexTransportTests(unittest.IsolatedAsyncioTestCase):
     async def test_provider_error_is_not_exposed_as_success_or_raw_diagnostics(self):
         with self.assertRaises(ProtocolError) as caught:await self.client.request('reject')
         self.assertIn('-32602',str(caught.exception));self.assertNotIn('private diagnostic',str(caught.exception))
+
+    async def test_missing_history_has_narrow_category_without_raw_diagnostics(self):
+        with self.assertRaises(ProtocolError) as caught:await self.client.request('missing-thread')
+        self.assertEqual(caught.exception.category,'missing_thread')
+        self.assertEqual(caught.exception.code,-32600)
+        self.assertNotIn('private-id',str(caught.exception))
 
     async def test_timeout_does_not_claim_turn_cancelled_and_next_request_works(self):
         with self.assertRaises(asyncio.TimeoutError):await self.client.request('wait',timeout=.02)

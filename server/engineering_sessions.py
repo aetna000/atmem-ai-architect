@@ -14,6 +14,10 @@ class SessionError(RuntimeError):
     pass
 
 
+class EmptySessionUnavailable(SessionError):
+    """Backend confirms no durable thread; replacement requires no accepted run."""
+
+
 @dataclass(frozen=True)
 class ProjectScope:
     tenant: str
@@ -47,12 +51,24 @@ class BackendEvent:
             raise ValueError('Invalid engineering event')
 
 
+@dataclass(frozen=True)
+class RecoveredStart:
+    request_id: str
+    turn: str
+    status: str
+
+    def __post_init__(self):
+        if not self.request_id or not self.turn or self.status not in {'running','completed','failed','interrupted'}:
+            raise ValueError('Invalid recovered start evidence')
+
+
 class EngineeringBackend(Protocol):
     name: str
     async def create(self,scope: ProjectScope,workspace: str,selection: ModelSelection) -> str: ...
     async def resume(self,scope: ProjectScope,handle: str,workspace: str,selection: ModelSelection) -> None: ...
     async def observe(self,scope: ProjectScope,handle: str,turn: str) -> BackendEvent | None: ...
-    async def start(self,scope: ProjectScope,handle: str,text: str,selection: ModelSelection) -> str: ...
+    async def start(self,scope: ProjectScope,handle: str,text: str,selection: ModelSelection,*,request_id: str) -> str: ...
+    async def recover_start(self,scope: ProjectScope,handle: str,request_id: str) -> RecoveredStart | None: ...
     async def steer(self,scope: ProjectScope,handle: str,turn: str,text: str) -> None: ...
     async def interrupt(self,scope: ProjectScope,handle: str,turn: str) -> None: ...
     async def next_event(self,scope: ProjectScope,handle: str) -> BackendEvent: ...
@@ -64,6 +80,7 @@ class SessionStore(Protocol):
     def reserve(self,scope,session,run,text): ...
     def attach_turn(self,scope,session,run,turn): ...
     def terminal(self,scope,session,run,turn,status): ...
+    def replace_empty_handle(self,scope,session,old_handle,new_handle): ...
 
 
 class SqliteSessionStore:
@@ -112,6 +129,16 @@ class SqliteSessionStore:
                 self.get(scope,session)
                 raise SessionError('An engineering turn is active or requires recovery')
             self.db.execute("INSERT INTO engineering_runs (id,session,turn,status,intent) VALUES (?,?,NULL,'starting',?)",(run,session,text))
+
+    def replace_empty_handle(self,scope,session,old_handle,new_handle):
+        with self.db:
+            changed=self.db.execute("""UPDATE engineering_sessions SET handle=?
+                WHERE id=? AND tenant=? AND project=? AND handle=? AND state='idle'
+                AND run IS NULL AND last_status IS NULL
+                AND NOT EXISTS (SELECT 1 FROM engineering_runs WHERE session=?)""",
+                (new_handle,session,scope.tenant,scope.project,old_handle,session)).rowcount
+            if changed!=1:
+                raise SessionError('Only a never-started session can replace a missing backend thread')
 
     def attach_turn(self,scope,session,run,turn):
         with self.db:
@@ -169,7 +196,26 @@ class EngineeringSessions:
 
     async def resume(self,scope,session):
         row=self._owned(scope,session)
-        await self.backend.resume(scope,row['handle'],row['workspace'],ModelSelection(row['model'],row['effort']))
+        selection=ModelSelection(row['model'],row['effort'])
+        try:
+            await self.backend.resume(scope,row['handle'],row['workspace'],selection)
+        except EmptySessionUnavailable:
+            if row['state']!='idle' or row['run'] is not None or row['last_status'] is not None:
+                raise SessionError('Missing history for accepted work requires recovery; no replacement was started') from None
+            handle=await self.backend.create(scope,row['workspace'],selection)
+            if not isinstance(handle,str) or not handle:
+                raise SessionError('Backend did not confirm an empty replacement session')
+            self.store.replace_empty_handle(scope,session,row['handle'],handle)
+            row=self._owned(scope,session)
+        if row['state']=='starting':
+            recovered=await self.backend.recover_start(scope,row['handle'],row['run'])
+            if recovered is not None:
+                if recovered.request_id!=row['run']:
+                    raise SessionError('Recovered start does not match the reserved request')
+                self.store.attach_turn(scope,session,row['run'],recovered.turn)
+                if recovered.status!='running':
+                    self.store.terminal(scope,session,row['run'],recovered.turn,recovered.status)
+                row=self._owned(scope,session)
         if row['state']=='running':
             # A terminal event may have been lost with the connection. Reconcile
             # the owned turn from backend history instead of replaying its intent
@@ -188,7 +234,7 @@ class EngineeringSessions:
         self.store.reserve(scope,session,run,text)
         # Errors, timeout or process death leave a durable uncertain reservation.
         # A second writer cannot submit the same work as a fresh turn.
-        turn=await self.backend.start(scope,row['handle'],text,ModelSelection(row['model'],row['effort']))
+        turn=await self.backend.start(scope,row['handle'],text,ModelSelection(row['model'],row['effort']),request_id=run)
         if not isinstance(turn,str) or not turn:
             raise SessionError('Backend did not confirm a turn; recovery is required')
         self.store.attach_turn(scope,session,run,turn)

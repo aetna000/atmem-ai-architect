@@ -2,23 +2,26 @@ import asyncio
 from pathlib import Path
 import tempfile
 import unittest
-from server.engineering_sessions import (BackendEvent,EngineeringSessions,ModelSelection,
+from server.engineering_sessions import (BackendEvent,EmptySessionUnavailable,EngineeringSessions,ModelSelection,RecoveredStart,
                                         ProjectScope,SessionError,SqliteSessionStore)
 
 class Backend:
     name='test-worker'
     def __init__(self):
-        self.calls=[];self.events=asyncio.Queue();self.fail_start=False;self.observed=None
+        self.calls=[];self.events=asyncio.Queue();self.fail_start=False;self.observed=None;self.recovered_start=None;self.request_ids=[]
     async def create(self,scope,workspace,selection):
         self.calls.append(('create',scope,workspace,selection));return 'backend-private-handle'
     async def resume(self,scope,handle,workspace,selection):
         self.calls.append(('resume',scope,handle,workspace,selection))
     async def observe(self,scope,handle,turn):
         self.calls.append(('observe',scope,handle,turn));return self.observed
-    async def start(self,scope,handle,text,selection):
+    async def start(self,scope,handle,text,selection,*,request_id=None):
+        self.request_ids.append(request_id)
         self.calls.append(('start',scope,handle,text,selection));await asyncio.sleep(0)
         if self.fail_start:raise TimeoutError('Lost acknowledgement')
         return 'native-turn-1'
+    async def recover_start(self,scope,handle,request_id):
+        self.calls.append(('recover-start',scope,handle,request_id));return self.recovered_start
     async def steer(self,scope,handle,turn,text):
         self.calls.append(('steer',scope,handle,turn,text))
     async def interrupt(self,scope,handle,turn):
@@ -41,6 +44,31 @@ class EngineeringSessionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(set(state),{'id','model','effort','state','run','last_status'})
         self.assertNotEqual(state['id'],'backend-private-handle')
         self.assertEqual(state['model'],self.choice.model);self.assertEqual(state['effort'],'high')
+
+    async def test_missing_never_started_thread_is_replaced_without_changing_public_session(self):
+        async def missing(*args):raise EmptySessionUnavailable('No saved thread')
+        async def replacement(*args):return 'replacement-thread'
+        self.backend.resume=missing;self.backend.create=replacement
+        state=await self.engine.resume(self.scope,self.session)
+        self.assertEqual(state['id'],self.session)
+        self.assertEqual(state['state'],'idle')
+        self.assertEqual(self.store.get(self.scope,self.session)['handle'],'replacement-thread')
+        self.assertFalse(any(c[0]=='start' for c in self.backend.calls))
+
+    async def test_missing_thread_with_any_accepted_work_is_not_replaced(self):
+        await self.engine.start(self.scope,self.session,'Preserve this accepted intent')
+        async def missing(*args):raise EmptySessionUnavailable('No saved thread')
+        self.backend.resume=missing
+        before=len(self.backend.calls)
+        with self.assertRaises(SessionError):await self.engine.resume(self.scope,self.session)
+        self.assertEqual(len(self.backend.calls),before)
+        self.assertEqual(self.store.get(self.scope,self.session)['state'],'running')
+
+    async def test_empty_handle_replacement_cannot_race_an_accepted_start(self):
+        self.store.reserve(self.scope,self.session,'run-one','Do not lose this intent')
+        with self.assertRaises(SessionError):
+            self.store.replace_empty_handle(self.scope,self.session,'backend-private-handle','replacement')
+        self.assertEqual(self.store.get(self.scope,self.session)['handle'],'backend-private-handle')
 
     async def test_other_tenant_or_project_cannot_use_an_owned_session(self):
         count=len(self.backend.calls)
@@ -117,6 +145,23 @@ class EngineeringSessionTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(saved['intent'],text)
         with self.assertRaises(SessionError):await self.engine.start(self.scope,self.session,text)
         self.assertEqual(sum(c[0]=='start' for c in self.backend.calls),1)
+
+    async def test_lost_start_acknowledgement_recovers_by_reserved_identity_without_resubmission(self):
+        self.backend.fail_start=True
+        with self.assertRaises(TimeoutError):await self.engine.start(self.scope,self.session,'Execute once')
+        request_id=self.store.get(self.scope,self.session)['run']
+        self.assertEqual(self.backend.request_ids,[request_id])
+        self.backend.recovered_start=RecoveredStart(request_id,'native-turn-1','completed')
+        state=await self.engine.resume(self.scope,self.session)
+        self.assertEqual(state['state'],'idle');self.assertEqual(state['last_status'],'completed')
+        self.assertEqual(sum(c[0]=='start' for c in self.backend.calls),1)
+
+    async def test_start_recovery_for_another_request_does_not_settle_our_reservation(self):
+        self.backend.fail_start=True
+        with self.assertRaises(TimeoutError):await self.engine.start(self.scope,self.session,'Execute once')
+        self.backend.recovered_start=RecoveredStart('another-request','another-turn','completed')
+        with self.assertRaises(SessionError):await self.engine.resume(self.scope,self.session)
+        self.assertEqual(self.store.get(self.scope,self.session)['state'],'starting')
 
     async def test_steering_keeps_new_demands_and_exact_active_turn(self):
         await self.engine.start(self.scope,self.session,'Build reservations')
