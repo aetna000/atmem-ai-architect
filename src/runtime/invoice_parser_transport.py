@@ -60,3 +60,14 @@ def google_parser_authorization(audience,session=None):
         if not value or any(ord(c)<33 or ord(c)>126 for c in value):raise TemporaryWork('Parser workload identity unavailable')
         return'Bearer '+value
     return read
+
+def azure_parser_authorization(audience,worker_client,credential=None):
+    uuid=r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
+    if any(not isinstance(value,str)or not re.fullmatch(uuid,value)for value in [audience,worker_client]):raise ValueError('Use the exact owned parser audience and worker client')
+    if credential is None:
+        from azure.identity import ManagedIdentityCredential
+        credential=ManagedIdentityCredential(client_id=worker_client,retry_total=0,connection_timeout=1,read_timeout=2)
+    def read():
+        try:return'Bearer '+credential.get_token('api://'+audience+'/.default').token
+        except Exception:raise TemporaryWork('Parser workload identity unavailable')from None
+    return read

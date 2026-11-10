@@ -27,9 +27,13 @@ if __name__=='__main__':
             if line not in dockerfile:raise ValueError('Parser Dockerfile differs from the reviewed native package lock')
     source=lock['tesseractSource']
     if 'ADD --checksum=sha256:'+source['sha256']+' '+source['url']+' /tmp/tesseract.tar.gz'not in dockerfile:raise ValueError('Missing pinned OCR source')
-    image_sources=[runtime/name for name in ['invoice_document.py','invoice_extraction.py','structured_output.py','invoice_parser_cli.py','invoice_parser_service.py','invoice-parser.Dockerfile','invoice-parser-lock.json']]
+    python_lock=json.loads((runtime/'invoice-parser-python-lock.json').read_text())
+    if {wheel['name'].lower()for wheel in python_lock['wheels']}!={'pyjwt','cryptography','cffi','pycparser'}:raise ValueError('Review the parser-only JWT dependency closure')
+    for wheel in python_lock['wheels']:
+        if 'ADD --checksum=sha256:'+wheel['sha256']+' '+wheel['url']+' /wheels/'+wheel['filename']not in dockerfile:raise ValueError('Missing exact pinned parser verification wheel')
+    image_sources=[runtime/name for name in ['invoice_document.py','invoice_extraction.py','structured_output.py','invoice_parser_cli.py','invoice_parser_service.py','invoice_parser_identity.py','parser-requirements.lock','invoice-parser-python-lock.json','invoice-parser.Dockerfile','invoice-parser-lock.json']]
     sources=list(image_sources)
-    sources+=[Path(__file__).resolve(),ROOT/'tests/runtime/invoice_document_acceptance.py',ROOT/'tests/runtime/invoice_extraction_acceptance.py',*list((ROOT/'benchmarks/convergence/fixtures/invoices').iterdir())]
+    sources+=[Path(__file__).resolve(),ROOT/'tests/runtime/invoice_document_acceptance.py',ROOT/'tests/runtime/invoice_extraction_acceptance.py',ROOT/'tests/runtime/invoice_parser_identity_acceptance.py',*list((ROOT/'benchmarks/convergence/fixtures/invoices').iterdir())]
     hashes={str(path.relative_to(ROOT)):hashlib.sha256(path.read_bytes()).hexdigest()for path in sources if path.is_file()};checks=[];image=None;started=time.monotonic()
     with tempfile.TemporaryDirectory(prefix='atmem-ocr-qualification-')as scratch:
         folder=Path(scratch);config=folder/'docker-config';config.mkdir();(config/'config.json').write_text(json.dumps({'cliPluginsExtraDirs':['/opt/homebrew/lib/docker/cli-plugins']if Path('/opt/homebrew/lib/docker/cli-plugins').is_dir()else[]}))
@@ -74,7 +78,7 @@ for name,value in json.load(sys.stdin).items():
 sys.path.insert(0,'/app')
 suite=unittest.defaultTestLoader.discover(str(root/'tests/runtime'),pattern='invoice_*acceptance.py')
 result=unittest.TextTestRunner(verbosity=2).run(suite)
-assert result.testsRun==10
+assert result.testsRun==15
 raise SystemExit(0 if result.wasSuccessful()else 1)
 """
             run('native-acceptance',base+['python','-I','-c',wrapper],input=json.dumps(assets).encode())

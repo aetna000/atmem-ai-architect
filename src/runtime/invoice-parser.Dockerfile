@@ -171,13 +171,20 @@ ADD --checksum=sha256:21dbaff9867d937c156d0b898e90b726aa339129cfebd7e1365cd5fee5
 RUN mkdir /tmp/source && tar -xzf /tmp/tesseract.tar.gz --strip-components=1 -C /tmp/source
 RUN cmake -S /tmp/source -B /tmp/build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local -DDISABLE_ARCHIVE=ON -DDISABLE_CURL=ON -DBUILD_TRAINING_TOOLS=OFF -DBUILD_TESTS=OFF -DGRAPHICS_DISABLED=ON -DBUILD_SHARED_LIBS=OFF -DOPENMP_BUILD=OFF -DENABLE_LTO=OFF -DENABLE_NATIVE=OFF
 RUN cmake --build /tmp/build --parallel 2 && cmake --install /tmp/build --strip --prefix /result
+FROM docker.io/library/python:3.13-slim-trixie@sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20 AS parser-wheels
+ADD --checksum=sha256:a931079504ecc49efed7744c476a5c343a92fabf66dec2db95edb1b2fdc770e2 https://files.pythonhosted.org/packages/95/95/86342356ff5953b3fb06f7ef7c5bee212d45e770abc7218d451b9148313c/cffi-2.1.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl /wheels/cffi-2.1.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
+ADD --checksum=sha256:9dab55f57c74c3cad24c323bacbbd04be4705ba6eb0d92e920b1fc4837ed5079 https://files.pythonhosted.org/packages/d3/69/2c833a049475e0a3444e94c7d0aca0aa51d166374a449b09e92ac98138de/cryptography-50.0.2-cp311-abi3-manylinux_2_34_x86_64.whl /wheels/cryptography-50.0.2-cp311-abi3-manylinux_2_34_x86_64.whl
+ADD --checksum=sha256:a076f3f489b39b43ed13563a1dafe42447445bec2e294154ec5c57fcdda4c85e https://files.pythonhosted.org/packages/b6/ae/315bbeee126a769cbde43cf4908acb4b40408d8bf8bbf334dd7368d8dadf/pycparser-3.12-py3-none-any.whl /wheels/pycparser-3.12-py3-none-any.whl
+ADD --checksum=sha256:42d59d631f7768a1028a64c7ff581a9bf7519804daf91fc5b6c56e30eec5e193 https://files.pythonhosted.org/packages/50/ca/44de4e75f8aadc457f0634be3b542815078ded46dca30efb960edeecad6e/pyjwt-2.15.1-py3-none-any.whl /wheels/pyjwt-2.15.1-py3-none-any.whl
 FROM docker.io/library/python:3.13-slim-trixie@sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20
 ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 OMP_THREAD_LIMIT=1
-RUN --mount=type=bind,from=packages,source=/packages,target=/packages,readonly dpkg -i /packages/*.deb && python -I -m pip --isolated uninstall --yes pip && rm -rf /usr/local/lib/python3.13/ensurepip
+RUN --mount=type=bind,from=packages,source=/packages,target=/packages,readonly dpkg -i /packages/*.deb
 COPY --from=tesseract-build /result/bin/tesseract /usr/local/bin/tesseract
 COPY --from=tesseract-build /tmp/source/LICENSE /usr/share/doc/atmem-tesseract/LICENSE
 RUN mkdir -p /usr/local/share/tessdata && ln -s /usr/share/tesseract-ocr/5/tessdata/eng.traineddata /usr/local/share/tessdata/eng.traineddata
 WORKDIR /app
-COPY invoice_document.py invoice_extraction.py structured_output.py invoice_parser_cli.py invoice_parser_service.py ./
+COPY parser-requirements.lock ./
+RUN --mount=type=bind,from=parser-wheels,source=/wheels,target=/wheels,readonly python -I -m pip --isolated install --no-index --find-links=/wheels --only-binary=:all: --no-cache-dir --require-hashes -r parser-requirements.lock && python -I -m pip --isolated uninstall --yes pip && rm -rf /usr/local/lib/python3.13/ensurepip
+COPY invoice_parser_identity.py invoice_document.py invoice_extraction.py structured_output.py invoice_parser_cli.py invoice_parser_service.py ./
 USER 10001:10001
 CMD ["python", "-I", "/app/invoice_parser_cli.py"]

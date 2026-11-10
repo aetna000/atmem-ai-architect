@@ -5,8 +5,9 @@ import {spawn} from 'node:child_process';
 import {createHash} from 'node:crypto';
 import {StringDecoder} from 'node:string_decoder';
 import {awsInvoiceTerraform} from '../src/invoice-aws.mjs';
+import {azureInvoiceTerraform}from'../src/invoice-azure.mjs';
 
-const provider=process.argv[2],adapters={aws:awsInvoiceTerraform};
+const provider=process.argv[2],adapters={aws:awsInvoiceTerraform,azure:azureInvoiceTerraform};
 if(!adapters[provider])throw Error('Invoice adapter not implemented: '+provider);
 const root=path.resolve('.'),out=path.resolve(process.argv[3]||'.local/invoice-cloud-'+provider);
 if(fs.existsSync(out))throw Error('Preserve previous qualification; use a fresh output directory');
@@ -15,7 +16,7 @@ const project={id:'11111111-1111-4111-8111-111111111111',version:1,revision:1,na
 const row={id:'invoice',address:'block_696e766f696365',provider,region:{aws:'ap-southeast-2',azure:'australiaeast',gcp:'australia-southeast1',ibm:'au-syd'}[provider]};
 const embedded=JSON.parse(fs.readFileSync(path.join(root,'src/runtime/invoice-sources.json'),'utf8'));
 for(const[name,body]of Object.entries(embedded))if(fs.readFileSync(path.join(root,'src/runtime',name),'utf8')!==body)throw Error('Embedded runtime is stale; run node scripts/embed-runtimes.mjs before qualification');
-const compilerFiles=['scripts/qualify-invoice-cloud.mjs','src/invoice-aws.mjs','src/invoice-builder.mjs','src/invoice-application.mjs','src/invoice-dependencies.mjs','src/invoice-operations.mjs','src/python-container.mjs','src/runtime/invoice-sources.json'];
+const compilerFiles=['scripts/qualify-invoice-cloud.mjs','src/invoice-aws.mjs','src/invoice-azure.mjs','src/runtime/invoice-azapi-provider-lock.json','src/invoice-builder.mjs','src/invoice-application.mjs','src/invoice-dependencies.mjs','src/invoice-operations.mjs','src/python-container.mjs','src/runtime/invoice-sources.json'];
 const compilerHashes=()=>Object.fromEntries(compilerFiles.map(name=>[name,createHash('sha256').update(fs.readFileSync(path.join(root,name))).digest('hex')]));const compilerBefore=compilerHashes();
 const files=adapters[provider](project,row);
 fs.mkdirSync(out,{recursive:true});

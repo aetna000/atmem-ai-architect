@@ -19,7 +19,7 @@ ROOT=Path(__file__).resolve().parents[2]
 sys.path[:0]=[str(ROOT/'src/runtime'),str(Path(__file__).resolve().parent),str(ROOT/'.local/azure-runtime-sdk')]
 import requests
 from invoice_parser_service import ParserServer
-from invoice_parser_transport import ParserClient,google_parser_authorization
+from invoice_parser_transport import ParserClient,google_parser_authorization,azure_parser_authorization
 from invoice_document import DocumentError
 from invoice_processing import InvoiceProcessor
 from workflow_errors import TemporaryWork,PermanentWork
@@ -93,5 +93,16 @@ class GoogleParserIdentityTests(unittest.TestCase):
         self.assertEqual(args.args[0],'http://metadata.google.internal/computeMetadata/v1/instance/service-accounts/default/identity');self.assertEqual(args.kwargs['params'],{'audience':audience,'format':'full'});self.assertFalse(args.kwargs['allow_redirects']);self.assertFalse(session.trust_env)
         session.get.return_value=self.response({})
         with self.assertRaises(TemporaryWork):read()
+
+class AzureParserIdentityTests(unittest.TestCase):
+    def test_workload_token_uses_exact_parser_scope_and_explicit_worker_identity(self):
+        audience='11111111-1111-1111-1111-111111111111';worker='22222222-2222-2222-2222-222222222222';credential=Mock();credential.get_token.return_value=SimpleNamespace(token='explicit.fixture.token')
+        read=azure_parser_authorization(audience,worker,credential);self.assertEqual(read(),'Bearer explicit.fixture.token');credential.get_token.assert_called_once_with('api://'+audience+'/.default')
+        credential.get_token.side_effect=TimeoutError()
+        with self.assertRaises(TemporaryWork):read()
+        for wrong in ['https://attacker.invalid','not-a-guid']:
+            with self.assertRaises(ValueError):azure_parser_authorization(wrong,worker,credential)
+        with unittest.mock.patch('azure.identity.ManagedIdentityCredential')as factory:azure_parser_authorization(audience,worker)
+        self.assertEqual(factory.call_args.kwargs['client_id'],worker)
 
 if __name__=='__main__':unittest.main(verbosity=2)

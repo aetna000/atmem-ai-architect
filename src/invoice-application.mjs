@@ -18,9 +18,9 @@ export function invoiceApplicationFiles(provider,address){
  if(provider==='aws')files[root+'rds-ca-source.json']=sources['rds-ca-source.json'];
  files[root+'Dockerfile']=pythonContainer('invoice_native',modules,['invoice-deployment.json'],{web:false,contract:false,assets,concurrency:32});
  files[root+'.dockerignore']='*\n!requirements.lock\n!invoice-deployment.json\n'+[...modules,...assets].map(name=>'!'+name+'\n').join('');
- const parserRoot=root+'parser/';for(const name of ['invoice_document.py','invoice_extraction.py','structured_output.py','invoice_parser_cli.py','invoice_parser_service.py','invoice-parser-lock.json'])files[parserRoot+name]=sources[name];
+ const parserRoot=root+'parser/';for(const name of ['invoice_document.py','invoice_extraction.py','structured_output.py','invoice_parser_cli.py','invoice_parser_service.py','invoice_parser_identity.py','parser-requirements.lock','invoice-parser-python-lock.json','invoice-parser-lock.json'])files[parserRoot+name]=sources[name];
  files[parserRoot+'Dockerfile']=sources['invoice-parser.Dockerfile'];
- files[parserRoot+'.dockerignore']='*\n!invoice_document.py\n!invoice_extraction.py\n!structured_output.py\n!invoice_parser_cli.py\n!invoice_parser_service.py\n';
+ files[parserRoot+'.dockerignore']='*\n!invoice_document.py\n!invoice_extraction.py\n!structured_output.py\n!invoice_parser_cli.py\n!invoice_parser_service.py\n!invoice_parser_identity.py\n!parser-requirements.lock\n';
  files[root+'BUILD.md']=INVOICE_BUILD;
  return files;
 }
