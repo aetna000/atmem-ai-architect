@@ -3,7 +3,7 @@ import json
 import time
 from urllib.parse import urlsplit
 import requests
-from enterprise_document import MAX_INPUT, document_result, media_type
+from enterprise_document_contract import MAX_INPUT, document_result, media_type
 from enterprise_sources import SourceUnavailable
 
 

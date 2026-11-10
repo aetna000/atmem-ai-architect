@@ -26,7 +26,7 @@ def qualify(args):
     out.mkdir(parents=True)
     runtime = ROOT / 'src/runtime'
     lock = json.loads((runtime / 'enterprise-document-lock.json').read_text())
-    image_names = ['EnterpriseDocument.java', 'enterprise_document.py', 'enterprise_document_cli.py', 'enterprise_parser_service.py',
+    image_names = ['enterprise_document_contract.py', 'EnterpriseDocument.java', 'enterprise_document.py', 'enterprise_document_cli.py', 'enterprise_parser_service.py',
                    'enterprise-document.Dockerfile', 'enterprise-document-lock.json']
     sources = [runtime / name for name in image_names]
     composition_names = ['enterprise_sources.py', 'enterprise_knowledge.py', 'public_faq.py', 'faq-output-contract.json']
@@ -79,9 +79,13 @@ def qualify(args):
             for name in image_names:
                 shutil.copy2(runtime / name, context / name)
             suffix = hashlib.sha256(str(out).encode()).hexdigest()[:16]
+            # BuildKit interprets a bare sha256 image ID as a repository name.
+            # Give this inspected exact local base a unique owned build reference.
+            parent_tag = 'atmem-qualification/pdf-parent:qualification-' + suffix
+            run('pdf-parent-tag', ['image', 'tag', base['Id'], parent_tag])
             tag = 'atmem-qualification/enterprise-document:qualification-' + suffix
             run('build', ['build', '--platform', 'linux/amd64', '--network', 'none',
-                '--build-arg', 'PDF_PARSER_IMAGE=' + args.pdf_image, '--file', str(context / 'enterprise-document.Dockerfile'), '--tag', tag, str(context)])
+                '--build-arg', 'PDF_PARSER_IMAGE=' + parent_tag, '--file', str(context / 'enterprise-document.Dockerfile'), '--tag', tag, str(context)])
             image = json.loads(run('image', ['image', 'inspect', tag]))[0]
             if image['Os'] != 'linux' or image['Architecture'] != 'amd64' or image['Config']['User'] != '10001:10001':
                 raise ValueError('Unexpected document image platform/user')

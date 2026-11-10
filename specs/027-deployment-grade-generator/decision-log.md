@@ -466,3 +466,10 @@ Encrypted company/parser/bytes/MIME-bound extraction reuse with fresh native sou
 Use HMAC identities and encrypted derivatives, committed builder leases, absolute expiry and bounded purges. Every question still reads current authorized source bytes; no permission, title, selection or outage fallback is cached. Consent generations fence both queued and legacy APIs, and credential ciphertext is bound to that generation. Normal refresh preserves consent. Immediate jobs use NULL readiness and delayed retries use the database clock. Fresh unreleased schemas only; no existing database migration.
 
 Evidence: specs/028-convergence-evaluation/evidence/20261110-private-extraction-cache-v1. Retained failures show the original withdrawal and clock defects; actual Linux extraction uses fresh restricted containers per file. Long-lived parser RPC does not prove containment across future files. See docs/architecture/private-knowledge-extraction-cache.md.
+
+
+## 2026-11-10: Clean Linux private application core
+
+Clean Linux private core has 33 exact dependencies, 45 offline policies and 57 native SQL/crypto/queue/cache tests per PG17/18. Shared document validation is separated from parser code; rebuilt parser16 and composed queue/cache14 pass. Core image scan: 47 HIGH, zero critical and zero fixable HIGH/critical after the already reviewed hash-pinned base update; security remains unaccepted. Native models/secrets/audit/provisioning, per-file isolation, all4 exports, actual private/remaining cases and final28/held-out remain.
+
+Evidence: specs/028-convergence-evaluation/evidence/20261110-private-linux-core-v1. Pin the reviewed full dependency closure and existing zlib fix; do not silently upgrade packages. Native tests import actual installed application files, without mounting host runtime/packages; synthetic fixture secrets enter only bounded tmpfs over stdin. Preserve VM-mount, missing parser-module and bare-image-ID BuildKit failures. Protocol split preserves public parser imports and limits. See docs/architecture/private-knowledge-runtime-core.md. This is not a configured service or a cloud/private-project pass.

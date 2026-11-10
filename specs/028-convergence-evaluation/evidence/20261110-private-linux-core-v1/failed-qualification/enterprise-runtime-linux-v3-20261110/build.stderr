@@ -1,0 +1,47 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.29kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.13-slim-trixie@sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [wheels 1/3] FROM docker.io/library/python:3.13-slim-trixie@sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20
+#4 resolve docker.io/library/python:3.13-slim-trixie@sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20 done
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 281.61kB done
+#5 DONE 0.0s
+
+#6 [wheels 3/3] RUN python -I -m pip --isolated download --only-binary=:all: --require-hashes --dest /wheels -r /build/requirements.lock
+#6 CACHED
+
+#7 [stage-1 3/5] COPY requirements.lock /app/requirements.lock
+#7 CACHED
+
+#8 [stage-1 2/5] WORKDIR /app
+#8 CACHED
+
+#9 [wheels 2/3] COPY requirements.lock /build/requirements.lock
+#9 CACHED
+
+#10 [stage-1 4/5] RUN --mount=type=bind,from=wheels,source=/wheels,target=/wheels,readonly python -I -m pip --isolated install --no-index --find-links=/wheels --only-binary=:all: --no-cache-dir --require-hashes -r /app/requirements.lock && python -I -m pip --isolated check && python -I -m pip --isolated uninstall --yes pip && rm -rf /usr/local/lib/python3.13/ensurepip
+#10 CACHED
+
+#11 [stage-1 5/5] COPY runtime/ /app/
+#11 CACHED
+
+#12 exporting to image
+#12 exporting layers done
+#12 exporting manifest sha256:12565b8c78568cab910589c6e3608abd9f65328bae8d20a0a3968154cc8f0a1b done
+#12 exporting config sha256:01a76efb644f9b21cc656d2cc0ce780c3eff9193ccab55fd8c096b76014de7e6 done
+#12 exporting attestation manifest sha256:b860bdf36c078d6f33d01c09f64f4864fa1f5fbff5291f143c957380c123bfd1 done
+#12 exporting manifest list sha256:c618e77346b57f354e767d99d7d6c544a38f36f380d03b0313ac0f9bbc4a4bf2 done
+#12 naming to docker.io/library/atmem-private-core:qualification-2876cf55be49aa9a done
+#12 DONE 0.0s

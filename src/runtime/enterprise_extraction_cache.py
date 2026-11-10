@@ -12,7 +12,7 @@ import re
 import time
 import uuid
 from psycopg import sql
-from enterprise_document import MAX_INPUT, MAX_TEXT, media_type
+from enterprise_document_contract import MAX_INPUT, MAX_TEXT, media_type
 from enterprise_sources import SourceUnavailable
 
 
