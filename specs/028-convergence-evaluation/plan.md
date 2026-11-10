@@ -226,3 +226,8 @@ Evidence: specs/028-convergence-evaluation/evidence/20261111-private-factories-o
 ## 2026-11-11: Mounted document jobs and actual native assembly
 
 File-only per-file protocol and live executor guards implemented. Linux26/qualification23, SQL122 per PG17/18, policies79, JavaScript347 pass. All4 local native API/worker assemblies pass52 checks with8 actual Office/PDF parses and16 answer releases; observed-running cancellation removes owned containers/volumes. Provider-native job execution, complete exports/whole-case qualification/security and final28/held-out remain unfinished. Evidence: specs/028-convergence-evaluation/evidence/20261111-private-mounted-document-jobs-v1. See docs/architecture/private-knowledge-mounted-document-jobs.md.
+
+
+## 2026-11-11: Native Google document-job prototype
+
+Batch controller/GCS transport/sequential trusted transfer CLIs implemented. Exact Google core:93 policies,78 SQL tests per PG17/18,33 locked packages; emitted three-stage local Office/PDF pipeline18 passes. Official discovery revision20261103 independently checks emitted shape. Exact core scan47 HIGH, zero critical/fixable HIGH/critical; security unaccepted. Native account semantics, IAM/Terraform/provenance/worker wiring and durable orphan recovery unfinished; remaining three native launchers, complete private/other cases and final28/held-out stay required. Evidence: specs/028-convergence-evaluation/evidence/20261111-private-google-document-jobs-v1. See docs/architecture/private-knowledge-google-document-jobs.md.

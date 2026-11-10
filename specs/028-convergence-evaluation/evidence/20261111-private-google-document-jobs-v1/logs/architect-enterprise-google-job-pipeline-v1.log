@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/scripts/qualify-enterprise-google-jobs.py", line 149, in <module>
+    parser.add_argument('--parser-receipt', type=Path, required=True); qualify(parser.parse_args())
+                                                                       ~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/scripts/qualify-enterprise-google-jobs.py", line 124, in qualify
+    logged = run(filename + '-' + mode, command + [image, 'python', '-I', '-c', wrapper],
+        json.dumps({'mode': mode, 'raw': base64.b64encode(raw).decode()}).encode())
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/scripts/qualify-enterprise-google-jobs.py", line 50, in run
+    if done.returncode != 0: raise RuntimeError('Google job local qualification failed: ' + label)
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Google job local qualification failed: policy.docx-download

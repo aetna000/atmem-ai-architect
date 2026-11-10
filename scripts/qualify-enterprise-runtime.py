@@ -23,6 +23,7 @@ CORE = ['enterprise_identity.py', 'enterprise_sources.py', 'enterprise_knowledge
         'enterprise_queries.py', 'enterprise_queries_schema.sql', 'enterprise_query_service.py',
         'enterprise_audit.py', 'enterprise_audit_schema.sql', 'enterprise_models.py', 'enterprise_secrets.py',
         'enterprise_configuration.py', 'enterprise_native.py', 'enterprise_operator.py', 'workflow_connection.py', 'workflow_errors.py',
+        'enterprise_google_jobs.py', 'enterprise_google_transfer.py',
         'aws_json_model.py', 'azure_structured.py', 'gcp_structured.py', 'ibm_structured.py',
         'structured_output.py', 'structured_http.py', 'policy_review.py',
         'enterprise_extraction_cache.py', 'enterprise_extraction_schema.sql',
@@ -65,6 +66,9 @@ def qualify(args):
                runtime / lock_name, runtime / 'enterprise-runtime.Dockerfile', runtime / 'python-container-lock.json',
                ROOT / 'scripts/build-enterprise-runtime-lock.py', Path(__file__).resolve()]
     sources += [ROOT / name for name in lock['derivedFrom']]
+    schema_assets = ['tests/fixtures/providers/google-batch-v1-discovery-20261111.json',
+                     'tests/fixtures/providers/google-batch-v1-discovery-20261111.provenance.json']
+    sources += [ROOT / name for name in schema_assets]
     hashes = {str(p.relative_to(ROOT)): hashlib.sha256(p.read_bytes()).hexdigest() for p in sources}
     checks, image, passed = [], None, False
     # The owned VM shares the workspace, not macOS's private /var/folders tree.
@@ -130,6 +134,8 @@ print(json.dumps({'python':sys.version,'packages':actual,'modules':modules,'nati
                 payload['src/runtime/' + name] = base64.b64encode((runtime / name).read_bytes()).decode()
             for path in tests:
                 payload['tests/runtime/' + path.name] = base64.b64encode(path.read_bytes()).decode()
+            for name in schema_assets:
+                payload[name] = base64.b64encode((ROOT / name).read_bytes()).decode()
             loader = '''import base64,json,os,sys
 from pathlib import Path,PurePosixPath
 root=Path('/tmp/workspace');root.mkdir()
@@ -142,7 +148,7 @@ sys.path.insert(0,'/app')
 '''
             result = run('policy-tests', [*restricted, '--network', 'none', image,
                 'python', '-I', '-c', loader + "import unittest;unittest.main(module=None,argv=['unittest','discover','-s','/tmp/workspace/tests/runtime','-p','enterprise_*_acceptance.py','-v'])"], data=json.dumps(payload).encode())
-            if not re.search(rb'Ran 79 tests in [^\n]+\n\nOK\s*$', result):
+            if not re.search(rb'Ran 93 tests in [^\n]+\n\nOK\s*$', result):
                 raise ValueError('Unexpected private policy test inventory')
             for version in [17, 18]:
                 name = 'atmem-durable-qualification' + ('-pg18' if version == 18 else '')
@@ -182,7 +188,7 @@ print(json.dumps({'postgresVersionNum':version}))
         finally:
             (output / 'receipt.json').write_text(json.dumps({'recordedAt': datetime.now(timezone.utc).isoformat(),
                 'passed': passed, 'imageId': image, 'checks': checks, 'sourceHashes': hashes,
-                'provider':args.provider,'packages': len(lock['sources']), 'policyTests': 67, 'sqlTestsPerVersion': sum(SQL.values()),
+                'provider':args.provider,'packages': len(lock['sources']), 'policyTests': 93, 'sqlTestsPerVersion': sum(SQL.values()),
                 'postgresVersions': [17, 18], 'securityAccepted': False, 'cloudOperations': False,
                 'scope': 'Clean Linux private application/factory/operator dependencies. Actual crypto/SQL/Procrastinate/bootstrap/enrollment/revocation; native model serializers with scripted HTTP. Assembled HTTP API/worker tests run separately on the host. No native account/model quality, per-file cloud launcher/isolation, complete-project or deployment acceptance.'}, indent=2) + '\n')
 
