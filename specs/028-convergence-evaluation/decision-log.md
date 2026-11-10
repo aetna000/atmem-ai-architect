@@ -561,3 +561,14 @@ full input hash/unchanged checks, and regressions. Preserve safe receipts/logs o
 exclude private logical dumps. Native-plan runtime/operator checks and cached exact
 image scans are distinct: passing process checks cannot waive 47 HIGH findings.
 specs/028-convergence-evaluation/evidence/20261110-invoice-live-recovery-images-v1 records the four-provider results.
+
+### 2026-11-10 — Preserve source authority through native federation
+
+Use caller-delegated native search/live reads as the first private-source path,
+instead of treating the normalized bounded fixture catalog as SharePoint/Confluence
+implementation. Retain source indexes and permission authority, deny the entire
+request on source uncertainty, recheck before model context and response, and do
+not cache private content/authorization across requests. Fix CQL key/ID handling
+against primary documentation. No native-account, scale, residency, OAuth or full
+case claim follows from 23 scripted tests; see explicit dependencies in
+docs/architecture/private-knowledge-native-sources.md and specs/028-convergence-evaluation/evidence/20261110-private-native-foundation-v1.

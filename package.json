@@ -23,7 +23,8 @@
     "test:emulation:browser": "node scripts/emulation-browser-check.mjs",
     "setup:emulation:clouds": "python3 scripts/setup-cloud-emulators.py",
     "test:emulation:clouds": "node scripts/cloud-storage-check.mjs",
-    "test:mentor:live": "node scripts/cloud-mentor-live.mjs"
+    "test:mentor:live": "node scripts/cloud-mentor-live.mjs",
+    "test:enterprise": ".venv/bin/python -m unittest discover -s tests/runtime -p \"enterprise_*_acceptance.py\" -v"
   },
   "dependencies": {
     "@xyflow/react": "12.10.0",

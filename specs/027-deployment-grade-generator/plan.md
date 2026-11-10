@@ -278,3 +278,13 @@ operator checks (9/12/12/12). Evidence: specs/028-convergence-evaluation/evidenc
 CRITICAL/fixes in cached metadata; no security acceptance or medium-case promotion.
 Continue native source/permission-aware medium implementation and remaining families
 while retaining unresolved security/native-cloud boundaries.
+
+### Private native-source implementation foundation
+
+Implement caller-delegated Graph/Confluence source reads and a fail-closed concurrent
+retrieval coordinator with live pre-context/pre-release authorization and exact-quote
+citations. 23 scripted native-contract/policy tests pass. Primary APIs reviewed and
+hashed. Evidence: specs/028-convergence-evaluation/evidence/20261110-private-native-foundation-v1.
+No export capability is advertised: trusted company identity/OAuth broker, extraction,
+cloud models, durable audit and all4 native export/Spec Kit wiring remain unfinished.
+Continue those dependencies, then all4 exact live runs, other families and full28.
