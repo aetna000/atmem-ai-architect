@@ -689,6 +689,10 @@ function App() {
   const [session, setSession] = useState(null),
     [connection, setConnection] = useState(readConnection),
     [agentBusy, setAgentBusy] = useState(false);
+  const [workspaceView,setWorkspaceView]=useState(()=>{try{return localStorage.getItem('atmem-workspace-view-v1')||'auto';}catch{return 'auto';}});
+  const buildView=!!session?.engineeringEnabled&&(workspaceView==='build'||(workspaceView==='auto'&&connection?.provider==='codex'));
+  function chooseWorkspace(value){setWorkspaceView(value);try{localStorage.setItem('atmem-workspace-view-v1',value);}catch{}}
+
   useEffect(()=>{saveCanvasView(project,{level,focus,selected,positions:topologyPositions});},[project.id,level,focus,selected,topologyPositions]);
   const emulation=useEmulation(project,environment,session);
   const emulationWorking=emulation.running||(agentBusy&&!!emulation.result);
@@ -711,14 +715,14 @@ function App() {
     if(restored.length)updateIntake([...intakeRef.current,...restored]);
   },[project.id]);
   useEffect(()=>{
-    if(agentBusy||agentAbort.current||busy||pending||intakePausedRef.current||!session||!connection)return;
+    if(buildView||agentBusy||agentAbort.current||busy||pending||intakePausedRef.current||!session||!connection)return;
     const batch=nextIntakeBatch(intakeRef.current,project.id);
     setIntakeIssue(batch?.blocked?batch.reason:null);if(!batch||batch.blocked)return;
     updateIntake(intakeRef.current.filter(q=>!batch.ids.includes(q.id)));
     setRequestState(batch.ids,'processing');
     const history=carryIntent.current?.projectId===project.id?[{role:'user',text:carryIntent.current.text},...messages.slice(-10)]:messages;
     void send(batch.message,'chat',null,null,{alreadyLogged:true,requestIds:batch.ids,attachments:batch.attachments,history});
-  },[agentBusy,busy,pending,intakePaused,intake,session,connection,project.id]);
+  },[buildView,agentBusy,busy,pending,intakePaused,intake,session,connection,project.id]);
   const voice = useRef(null);
   const [voiceState, setVoiceState] = useState("off");
   const [voiceError, setVoiceError] = useState("");
@@ -756,6 +760,7 @@ function App() {
     void voice.current.start();
   }
   function stopVoice() { voice.current?.cancel(); }
+  useEffect(()=>{if(buildView)stopVoice();},[buildView]);
   async function postMessage() {
     if (busy) return;
     if (voice.current?.running || voice.current?.finishing) {
@@ -832,11 +837,11 @@ function App() {
     return ()=>{clearInterval(timer);window.removeEventListener("focus",refreshSession);};
   }, [refreshSession]);
   useEffect(() => {
-    if (!session?.token) return;
+    if (buildView||!session?.token) return;
     const controller = new AbortController();
     fetch("/api/voice/prepare", { method: "POST", headers: { Authorization: `Bearer ${session.token}` }, signal: controller.signal }).catch(() => {});
     return () => controller.abort();
-  }, [session?.token]);
+  }, [buildView,session?.token]);
   useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => setToast(""), 3500);
@@ -929,8 +934,9 @@ function App() {
           setPalette(false);
           setIssuesOpen(false);
         } else if (agentAbort.current) agentAbort.current.abort();
-        else if (!typing) goUp();
+        else if (!typing&&!buildView) goUp();
       }
+      if(buildView)return;
       if (e.key === "/" && !typing) {
         e.preventDefault();
         setPalette(true);
@@ -1168,9 +1174,9 @@ function App() {
   const emulationMentorKey=JSON.stringify([connection?.provider,connection?.model]);
   useEffect(()=>{
     const report=emulation.result;
-    if(intakeRef.current.some(q=>q.projectId===project.id)||!emulation.coach||emulation.running||!report||!emulationCoachReady(session,connection)||busy||agentBusy||pending||coachedReports.current.get(report)?.has(emulationMentorKey))return;
+    if(buildView||intakeRef.current.some(q=>q.projectId===project.id)||!emulation.coach||emulation.running||!report||!emulationCoachReady(session,connection)||busy||agentBusy||pending||coachedReports.current.get(report)?.has(emulationMentorKey))return;
     void discussEmulation(report,'coach');
-  },[emulation.result,emulation.running,emulation.coach,session,connection,busy,agentBusy,pending]);
+  },[buildView,emulation.result,emulation.running,emulation.coach,session,connection,busy,agentBusy,pending]);
 
   async function discussEmulation(report,intent){
     if(busy||agentBusy||pending||report!==emulation.result)return;
@@ -1678,14 +1684,14 @@ function App() {
   const findings = useMemo(() => review(project), [project]);
   const costs = useMemo(() => estimate(project), [project]);
   useEffect(() => {
-    if (!drawLive || !session || !connection || busy || agentBusy || input.trim() || mode !== "design" || designView !== "board" || modal) return;
+    if (buildView || !drawLive || !session || !connection || busy || agentBusy || input.trim() || mode !== "design" || designView !== "board" || modal) return;
     const edits = canvasChanges(project);
     if (!edits.length || project.nodes.some(n => n.data.kind === "note" && !n.data.label.trim())) return;
     const timer = setTimeout(() => send("The user changed the shared diagram: " + edits.join("; ") + ". Work with these edits, preserve their comments and blocks, refine only what follows from their intent, and ask one useful next question if needed.", "canvas"), 1200);
     return () => clearTimeout(timer);
-  }, [project.nodes,project.edges,drawLive,session,connection,busy,agentBusy,input,mode,designView,modal]);
+  }, [buildView,project.nodes,project.edges,drawLive,session,connection,busy,agentBusy,input,mode,designView,modal]);
   useEffect(() => {
-    if (!session || !connection || agentBusy || !project.nodes.length) return;
+    if (buildView || !session || !connection || agentBusy || !project.nodes.length) return;
     let active = true;
     const key = `${project.id}:${project.revision}:${mode}:${designView}`;
     if (consultationAttempts.current.has(key)) return;
@@ -1706,7 +1712,7 @@ function App() {
       })();
     }
     return () => { active = false; };
-  }, [mode,designView,project.id,session,agentBusy]);
+  }, [buildView,mode,designView,project.id,session,agentBusy]);
   const topics = progress(project);
   const blockerCount = findings.filter((f) => f.severity === "blocker" && f.status === "open").length;
   const ask = project.extensions?.activeConsultation ? (project.extensions.activeConsultation.hasQuestion ? project.lastAsked : null) : project.lastAsked?.question ? project.lastAsked : nextQuestion(project);
@@ -1736,7 +1742,7 @@ function App() {
   const diff = pending?.next ? proposalDiff(project, pending.next) : null;
 
   return (
-    <div className={`app ${chatOpen ? "" : "chat-closed"}`}>
+    <div className={`app ${chatOpen&&!buildView ? "" : "chat-closed"} ${buildView?"build-workspace":""}`}>
       <header className="bar">
         <button className="brand" onClick={() => setModal("about")} title="About AtMem AI Architect">
           <Mark />
@@ -1761,13 +1767,14 @@ function App() {
           <span className="current-view"><Workflow size={14}/>{focusLabel||'Components'}</span>
         </nav>
         <div className="modes" role="tablist">
+          {session?.engineeringEnabled&&<button role="tab" aria-selected={buildView} className={buildView?"on":""} onClick={()=>chooseWorkspace("build")}><Package size={14}/>Build</button>}
           {MODES.filter(([id])=>guidance.availableModes.includes(id)).map(([id, label]) => (
             <button
               key={id}
               role="tab"
-              aria-selected={mode === id}
-              className={mode === id ? "on" : ""}
-              onClick={() => setMode(id)}
+              aria-selected={!buildView&&mode === id}
+              className={!buildView&&mode === id ? "on" : ""}
+              onClick={() => {chooseWorkspace("canvas");setMode(id);}}
             >
               {React.createElement(MODE_ICON[id], { size: 14 })}
               {label}
@@ -1776,7 +1783,6 @@ function App() {
           ))}
         </div>
         <div className="bar-actions">
-          {session?.engineeringEnabled&&<button onClick={()=>setModal('engineering')}>Engineering</button>}
           {storageError && <span className="warn-text">Not saved</span>}
           <button
             className="icon"
@@ -1819,7 +1825,7 @@ function App() {
         )}
       </header>
 
-      <section className="journey-wizard" aria-label="Architecture journey">
+      {!buildView&&<section className="journey-wizard" aria-label="Architecture journey">
         <details className="journey-map"><summary title={guidance.reason}>{({idea:"Define the idea",scope:"Define the idea",cloud:"Choose a cloud",location:"Choose a region",architecture:"Design the system",review:"Review",estimate:"Estimate costs",delivery:"Prepare delivery"})[guidance.id]}</summary><ol className="journey-steps">{[
           ['scope','Sketch & document'],['cloud','Cloud options'],['location','Country & region'],['architecture','Cloud architecture'],
           ['review','Review'],['estimate','Costs'],['delivery','Delivery draft']
@@ -1854,12 +1860,13 @@ function App() {
             </>}
           </div>
         </div>
-      </section>
+      </section>}
       <main
         id="canvas"
         className={`canvas level-${level}`}
         onDrop={(e) => {
           e.preventDefault();
+          if(buildView)return;
           const item = ALL_CATALOG.find((c) => c.id === e.dataTransfer.getData("application/atforma-block"));
           if (item) addComponent(item, screenToFlowPosition({ x: e.clientX, y: e.clientY }));
         }}
@@ -1868,6 +1875,9 @@ function App() {
           e.dataTransfer.dropEffect = "move";
         }}
       >
+        {buildView?<section className="native-work-area" aria-label="Build workspace"><EngineeringPanel key={project.id} projectId={project.id} session={session} connection={connection} contextBusy={busy||agentBusy||!!pending}
+          saveProject={()=>projectStore(session,'save',{id:project.id,file:toProjectFile(withConversation(project,messages))})}
+          onConnections={()=>setModal('connections')}/></section>:<>
         <ReactFlow
           nodes={canvasNodes}
           edges={canvasEdges}
@@ -2173,10 +2183,11 @@ function App() {
         {mode === "design" && designView === "requirements" && (
           <RequirementsView project={project} onChange={updateEngagement} reviewing={agentBusy} onReview={(comments)=>{setChatOpen(true);send("Propose revisions for these user comments on the requirements document. The document will remain unchanged until the user applies each suggestion. Explain the proposed change; never say you have already changed the document. Return requirementUpdates for the existing IDs where the feedback is clear, quoting the user's comment exactly in sourceText. Preserve other requirements and the diagram. Ask one question if a comment is ambiguous.\n" + comments.map(c=>`Requirement ${c.requirementId}${c.selectedText ? ` (selected text: ${c.selectedText.slice(0,300)})` : ""} — comment: ${c.text}`).join("\n"), "document");}} onDiscuss={(question) => { setChatOpen(true); send(question, "workflow"); }} />
         )}
+        </>}
       </main>
 
-      {!chatOpen && <button className="icon chat-reopen" title="Show chat" aria-label="Show chat" onClick={()=>setChatOpen(true)}><PanelRightOpen size={18}/></button>}
-      {chatOpen && (
+      {!chatOpen&&!buildView && <button className="icon chat-reopen" title="Show chat" aria-label="Show chat" onClick={()=>setChatOpen(true)}><PanelRightOpen size={18}/></button>}
+      {chatOpen&&!buildView && (
         <aside className="chat" aria-label="Chat">
           <div className="chat-head">
             <div className="chat-heading-row"><strong className="chat-title">
@@ -2371,11 +2382,7 @@ function App() {
             {!(modal === "welcome" && !connection) && <button className="icon modal-close" onClick={() => setModal(null)} aria-label="Close dialog">
               <X size={16} />
             </button>}
-            {modal === "engineering" && session ? (
-              <EngineeringPanel key={project.id} projectId={project.id} session={session} connection={connection}
-                saveProject={()=>projectStore(session,'save',{id:project.id,file:toProjectFile(withConversation(project,messages))})}
-                onConnections={()=>setModal('connections')} />
-            ) : modal === "memory" ? (
+            {modal === "memory" ? (
               <MemoryPanel session={session} project={project} onError={notify} />
             ) : modal === "templates" ? (
               <TemplateDialog onLoad={loadDesign} />

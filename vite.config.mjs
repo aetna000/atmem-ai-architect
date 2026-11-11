@@ -1,5 +1,6 @@
 import { defineConfig } from "vite";
 export default defineConfig({
+  cacheDir: process.env.ATMEM_ARCHITECT_VITE_CACHE_DIR || "node_modules/.vite",
   server: {
     host: "127.0.0.1",
     port: Number((process.env.ATMEM_ARCHITECT_PORT || process.env.ATFORMA_PORT) || 5174),

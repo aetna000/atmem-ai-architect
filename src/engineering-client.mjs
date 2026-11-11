@@ -5,7 +5,8 @@ export async function engineeringCall(session, action, payload, {signal,fetcher=
     headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.token}`},body:JSON.stringify(payload)});
   if(!response.ok){
     let detail;try{detail=(await response.json()).detail;}catch{}
-    throw new Error(typeof detail==='string'?detail:'The engineering request could not be accepted. Your draft is retained.');
+    const error=new Error(typeof detail==='string'?detail:'The engineering request could not be accepted. Your draft is retained.');
+    error.status=response.status;throw error;
   }
   if(action==='download')return response;
   return response.json();
@@ -24,4 +25,21 @@ export async function verifiedEngineeringDownload(session,payload,manifest,optio
   if(digest!==manifest.sha256 || response.headers.get('X-Artifact-Sha256')!==digest)
     throw new Error('The package digest did not match its capture receipt. Download was stopped.');
   return new Blob([bytes],{type:'application/zip'});
+}
+
+
+// User requests and model deltas remain separate from tool-progress/acceptance claims.
+export function engineeringConversation(events){
+  const ordered=mergeEngineeringEvents([],events),accepted=new Set(ordered.filter(e=>e.kind==='steering_accepted').map(e=>e.requestId)),uncertain=new Set(ordered.filter(e=>e.kind==='steering_delivery_uncertain').map(e=>e.requestId));
+  const entries=[];
+  for(const event of ordered){
+    if(event.kind==='accepted'&&typeof event.text==='string')entries.push({id:event.sequence,role:'user',text:event.text,status:'accepted'});
+    else if(event.kind==='steering_submitted'&&typeof event.text==='string')entries.push({id:event.sequence,role:'user',text:event.text,status:accepted.has(event.requestId)?'accepted':uncertain.has(event.requestId)?'uncertain':'pending'});
+    else if(event.kind==='message'&&typeof event.text==='string'){
+      const previous=entries.at(-1);
+      if(previous?.role==='assistant'&&previous.runId===event.runId)previous.text+=event.text;
+      else entries.push({id:event.sequence,role:'assistant',runId:event.runId,text:event.text});
+    }
+  }
+  return entries;
 }

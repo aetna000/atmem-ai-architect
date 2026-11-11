@@ -32,7 +32,17 @@ class JobJournal:
             raise ValueError('Invalid progress cursor')
         rows = self.db.execute('''SELECT sequence,payload FROM engineering_events
             WHERE session=? AND sequence>? ORDER BY sequence LIMIT ?''', (session, after, limit)).fetchall()
-        return [{'sequence': row['sequence'], **json.loads(row['payload'])} for row in rows]
+        result=[]
+        for row in rows:
+            event=json.loads(row['payload'])
+            # Earlier journals recorded the exact owned run ID but not its text.
+            # Recover only through that durable relation, never by matching text
+            # or reading a foreign session's intent. Leave unknown history absent.
+            if event.get('kind')=='accepted' and 'text' not in event:
+                intent=self.db.execute('SELECT intent FROM engineering_runs WHERE id=? AND session=?',(event.get('runId'),session)).fetchone()
+                if intent and isinstance(intent['intent'],str):event.update(text=intent['intent'],textSource='durable_run_intent')
+            result.append({'sequence':row['sequence'],**event})
+        return result
 
 
 class EngineeringJobs:
@@ -92,7 +102,7 @@ class EngineeringJobs:
                     # reserving new intent. Failure must leave an idle job idle.
                     await self.sessions.resume(scope, session)
                 state = await self.sessions.start(scope, session, text)
-                self._record(scope, session, 'accepted', runId=state['run'])
+                self._record(scope, session, 'accepted', runId=state['run'],text=text)
                 self._watch(scope, session)
                 return state
         task = asyncio.create_task(submit())

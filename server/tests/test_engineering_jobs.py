@@ -51,6 +51,7 @@ class EngineeringJobTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.jobs.state(self.scope, self.session)['last_status'], 'completed')
         events = self.jobs.journal.read(self.scope, self.session)
         self.assertEqual([e['kind'] for e in events], ['accepted', 'message', 'completed'])
+        self.assertEqual(events[0]['text'],'Preserve medical record ownership.')
         self.assertEqual(events[1]['text'], 'Retained full result.')
         self.assertEqual(events[-1]['validation'], 'not_established_by_agent_turn')
         self.assertEqual(len(self.backend.request_ids), 1)
@@ -61,6 +62,7 @@ class EngineeringJobTests(unittest.IsolatedAsyncioTestCase):
         await self.backend.events.put(BackendEvent('native-turn-1', 'completed'))
         await self.settle()
         first = self.jobs.journal.read(self.scope, self.session, limit=1)
+        self.assertEqual(first[0]['text'],'Build a field sensor ingestion service.')
         self.store.close()
         self.store = SqliteSessionStore(self.path)
         self.engine.store = self.store
@@ -68,6 +70,18 @@ class EngineeringJobTests(unittest.IsolatedAsyncioTestCase):
         rest = self.jobs.journal.read(self.scope, self.session, after=first[0]['sequence'])
         self.assertEqual([e['kind'] for e in rest], ['progress', 'completed'])
         self.assertEqual(self.jobs.journal.read(self.scope, self.session, after=rest[-1]['sequence']), [])
+
+    async def test_legacy_request_text_is_recovered_only_by_exact_owned_run_identity(self):
+        import json
+        text='Preserve every legacy line.\n'*2000
+        state=await self.jobs.start(self.scope,self.session,text)
+        raw=self.store.db.execute('select sequence,payload from engineering_events where session=?',(self.session,)).fetchone();payload=json.loads(raw['payload']);payload.pop('text')
+        self.store.db.execute('update engineering_events set payload=? where sequence=?',(json.dumps(payload),raw['sequence']));self.store.db.commit()
+        restored=self.jobs.journal.read(self.scope,self.session)[0]
+        self.assertEqual(restored['text'],text);self.assertEqual(restored['textSource'],'durable_run_intent')
+        other=self.store.create(self.scope,'different-workspace','backend','foreign-handle',ModelSelection('chosen-model','high'))['id'];self.store.reserve(self.scope,other,'foreign-run','PRIVATE FOREIGN INTENT')
+        self.jobs.journal.append(self.scope,self.session,{'kind':'accepted','runId':'foreign-run'})
+        missing=self.jobs.journal.read(self.scope,self.session)[-1];self.assertNotIn('text',missing);self.assertNotIn('PRIVATE',str(missing))
 
     async def test_project_and_tenant_scope_checked_before_side_effects(self):
         for scope in [ProjectScope('other-tenant','project-medical'), ProjectScope('tenant-local','other-project')]:

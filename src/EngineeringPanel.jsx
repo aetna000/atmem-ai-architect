@@ -1,9 +1,9 @@
 import React,{useEffect,useRef,useState} from 'react';
-import {engineeringCall,mergeEngineeringEvents,verifiedEngineeringDownload} from './engineering-client.mjs';
+import {engineeringCall,engineeringConversation,mergeEngineeringEvents,verifiedEngineeringDownload} from './engineering-client.mjs';
 import './engineering.css';
 import {ArtifactChecks} from './ArtifactChecks.jsx';
 
-export function EngineeringPanel({projectId,session,connection,saveProject,onConnections}){
+export function EngineeringPanel({projectId,session,connection,saveProject,onConnections,contextBusy=false}){
   const draftKey=`atmem-engineering-draft-v1:${projectId}`;
   const [job,setJob]=useState(null),[events,setEvents]=useState([]),[draft,setDraft]=useState(()=>{try{return localStorage.getItem(draftKey)||'';}catch{return '';}}),
     [busy,setBusy]=useState(false),[error,setError]=useState(''),[loading,setLoading]=useState(true),[artifact,setArtifact]=useState(null);
@@ -22,15 +22,16 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
   },[job?.id,projectId,session.token]);
   useEffect(()=>{
     const controller=new AbortController();let stopped=false;
-    (async()=>{try{
+    (async()=>{let restored=false;try{
       const result=await engineeringCall(session,'list',{projectId},{signal:controller.signal});
       const previous=result.sessions.at(-1);
       if(previous){
+        restored=true;
         if(!stopped)setJob(previous);
         const recovered=await engineeringCall(session,'recover',{projectId,sessionId:previous.id},{signal:controller.signal});
         if(!stopped)setJob(recovered);
       }
-    }catch(e){if(!stopped&&e.name!=='AbortError')setError(e.message);}finally{if(!stopped)setLoading(false);}})();
+    }catch(e){if(!stopped&&e.name!=='AbortError'&&(e.status!==404||restored))setError(e.message);}finally{if(!stopped)setLoading(false);}})();
     return()=>{stopped=true;controller.abort();};
   },[projectId,session.token]);
   useEffect(()=>{
@@ -52,32 +53,57 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
   }
   const exactSelection=connection?.provider==='codex'&&connection.model&&connection.model!=='default'&&connection.effort;
   const running=job?.state==='running',uncertain=job?.state==='starting';
-  const messages=events.filter(event=>event.kind==='message').map(event=>event.text).join('');
+  const conversation=engineeringConversation(events);
+  function submitIntent(event){
+    event.preventDefault();
+    if(!draft.trim()||draft.length>80000||uncertain||(!job&&(!exactSelection||contextBusy)))return;
+    const submitted=draft;
+    void act(async()=>{
+      let current=job;
+      if(!current){
+        await saveProject();
+        current=await call('create',{model:connection.model,effort:connection.effort});
+        if(live.current)setJob(current);
+      }
+      // The new session ID is explicit: React state may not have rendered yet.
+      const next=await call(current.state==='running'?'steer':'start',{sessionId:current.id,text:submitted});
+      if(live.current){setJob(next);setArtifact(null);setDraft(value=>value===submitted?'':value);}
+    });
+  }
   return <div className="engineering-panel">
-    <h2>Engineering workspace</h2>
-    <p>Build implementation files and local tests from your saved project. Work continues when you close this view.</p>
-    {loading?<p role="status">Finding your project’s work…</p>:!job?<>
-      <p>{exactSelection?`${connection.model} · ${connection.effort}`:'Choose a Codex model and reasoning level to start.'}</p>
-      {!exactSelection&&<button onClick={onConnections}>Choose model</button>}
-      <button disabled={busy||!exactSelection} onClick={()=>act(async()=>{await saveProject();const created=await call('create',{model:connection.model,effort:connection.effort});if(live.current)setJob(created);})}>Open engineering job</button>
-    </>:<>
-      <p role="status">{running?'Working':uncertain?'Recovering acceptance of your last request':job.last_status?`Turn ${job.last_status}`:'Ready'} · {job.model} · {job.effort}</p>
-      <p className="muted">This job uses the project snapshot from when it was opened. Send later changes below.</p>
-      <form onSubmit={e=>{e.preventDefault();if(!draft.trim()||uncertain)return;const submitted=draft;void act(async()=>{const next=await call(running?'steer':'start',{text:submitted});if(live.current){setJob(next);setArtifact(null);setDraft(current=>current===submitted?'':current);}});}}>
+    <h2>Build your project</h2>
+    <p>Describe what you need. The architect builds implementation files and runs local checks. Work continues when you leave this view.</p>
+    {loading?<p role="status">Finding your project’s work…</p>:<>
+      {job?<>
+        <p role="status">{running?'Working':uncertain?'Recovering acceptance of your last request':job.last_status?({completed:'Work completed',interrupted:'Work stopped',failed:'Work needs attention'}[job.last_status]||job.last_status):'Ready'} · {job.model} · {job.effort}</p>
+        <p className="muted">Saved project context was included when this work opened. Send later changes below.</p>
+      </>:<>
+        <p>{exactSelection?`${connection.model} · ${connection.effort}`:'Choose a Codex model and reasoning level to start.'}</p>
+        {!exactSelection&&<button onClick={onConnections}>Choose model</button>}
+        {contextBusy&&<p role="status">Finish the current design changes before starting new work.</p>}
+      </>}
+      {conversation.length>0&&<section className="engineering-conversation" role="log" aria-label="Project conversation" aria-live="polite">{conversation.map(entry=><article key={entry.id} className={`engineering-entry ${entry.role}`}>
+        <strong>{entry.role==='user'?'You':'Architect'}</strong>
+        {entry.status==='pending'&&<span> · Sending update</span>}
+        {entry.status==='uncertain'&&<span> · Delivery uncertain; recover before resending</span>}
+        <pre>{entry.text}</pre>
+      </article>)}</section>}
+      <form onSubmit={submitIntent}>
         <label htmlFor="engineering-intent">{running?'Add an update':'What should we build or repair?'}</label>
         <textarea id="engineering-intent" rows={4} value={draft} onChange={e=>setDraft(e.target.value)}/>
         {draft.length>80000&&<p role="alert">This update exceeds 80,000 characters. Edit it before sending; your draft is retained.</p>}
-        <button disabled={busy||uncertain||!draft.trim()||draft.length>80000}>{running?'Send update':'Start work'}</button>
+        <button disabled={busy||uncertain||!draft.trim()||draft.length>80000||(!job&&(!exactSelection||contextBusy))}>{running?'Send update':'Start work'}</button>
       </form>
-      <div className="engineering-actions">
-        <button disabled={busy} onClick={()=>act(async()=>{const next=await call('recover');if(live.current)setJob(next);})}>Recover connection</button>
-        {running&&<button disabled={busy} onClick={()=>act(async()=>{const next=await call('interrupt');if(live.current)setJob(next);})}>Stop work</button>}
-        {!running&&!uncertain&&job.last_status&&<button disabled={busy} onClick={()=>act(async()=>{const captured=await call('capture');if(live.current)setArtifact(captured);})}>Capture package</button>}
-      </div>
-      {messages&&<pre className="engineering-message">{messages}</pre>}
-      <details><summary>Engineering progress ({events.length})</summary><ol>{events.filter(event=>event.kind!=='message').map(event=><li key={event.sequence}>{event.kind}{event.text?` · ${event.text}`:''}</li>)}</ol></details>
-      {artifact&&<div className="engineering-artifact"><p>Implementation draft · {artifact.files.filter(file=>file.kind==='file').length} files · turn {artifact.turnStatus}. Checks are not independently verified.</p>
-        {artifact.runId!==job.run&&<p>This package is from an earlier turn. It does not cover the current work.</p>}
+      {job&&<>
+        <div className="engineering-actions">
+          <button disabled={busy} onClick={()=>act(async()=>{const next=await call('recover');if(live.current)setJob(next);})}>Recover connection</button>
+          {running&&<button disabled={busy} onClick={()=>act(async()=>{const next=await call('interrupt');if(live.current)setJob(next);})}>Stop work</button>}
+          {!running&&!uncertain&&job.last_status&&<button disabled={busy} onClick={()=>act(async()=>{const captured=await call('capture');if(live.current)setArtifact(captured);})}>Capture package</button>}
+        </div>
+        <details><summary>Engineering progress ({events.length})</summary><ol>{events.filter(event=>!['message','accepted','steering_submitted'].includes(event.kind)).map(event=><li key={event.sequence}>{event.kind}{event.text?` · ${event.text}`:''}</li>)}</ol></details>
+      </>}
+      {artifact&&<div className="engineering-artifact"><p>Implementation draft · {artifact.files.filter(file=>file.kind==='file').length} {artifact.files.filter(file=>file.kind==='file').length===1?'file':'files'} · work {artifact.turnStatus}. Checks are not independently verified.</p>
+        {artifact.runId!==job?.run&&<p>This package is from an earlier turn. It does not cover the current work.</p>}
         <button disabled={busy} onClick={()=>act(async()=>{const blob=await verifiedEngineeringDownload(session,{projectId,sessionId:job.id,artifactId:artifact.id},artifact);const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=`engineering-${artifact.id}.zip`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);})}>Download package</button>
         <ArtifactChecks key={artifact.id} session={session} projectId={projectId} sessionId={job.id} artifact={artifact}/>
       </div>}

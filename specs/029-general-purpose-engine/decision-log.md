@@ -338,3 +338,25 @@ work. Component ownership/idempotence/no-replay checks pass; full server suite34
 This new callback is not retrospectively included in the frozen native proof and
 legacy native registries are not silently rewritten on resume. Next native-first
 intake and generic final validation/repair ownership, followed by release qualification.
+
+
+### Primary native Build intake and exact durable conversation
+
+Make native Build the initial view when enabled for a selected Codex backend, with
+explicit Design navigation and a feature-off compatibility path. One Start action
+saves context before creating/submitting native work; saving failure retains intent
+and produces no native request. Keep pending design changes out of a new snapshot.
+Show exact ordered user requests and streamed replies; recover legacy request text
+only through its exact owned durable run relation. Preserve uncertain steering,
+per-project drafts, reload recovery and all existing model/ownership/capture gates.
+Pause hidden legacy queue/auto-coach/voice preparation in Build without deleting
+queued intent, and prevent hidden canvas edits. Native files and graph reconciliation
+remain separate until the shared model is implemented. 346 server/375 JS checks,
+build and desktop/mobile fixture checks pass; no release is inferred.
+
+Add a dated primary-source model/API/region/feature record rather than a workload
+recipe: specific Nova Lite facts have explicit provider/version/freshness and unknown
+account/price/quality limits. Do not generalize this model's native schema support
+or placement to other models/providers. Actual architecture UI evaluation remains
+pending. An explicit operator preview launcher and per-instance Vite cache support
+frozen worktree evaluations alongside development; no installs/accounts/deployment.

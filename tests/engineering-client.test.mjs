@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {engineeringCall,mergeEngineeringEvents,verifiedEngineeringDownload} from '../src/engineering-client.mjs';
+import {engineeringCall,engineeringConversation,mergeEngineeringEvents,verifiedEngineeringDownload} from '../src/engineering-client.mjs';
 
 test('engineering protocol sends only scoped intent and server token',async()=>{
   const text='Keep every line.\n'.repeat(1000);let request;
@@ -25,4 +25,13 @@ test('immutable download checks bytes against both receipt and response digest',
   const blob=await verifiedEngineeringDownload({token:'local'},{artifactId:'public-artifact'},{sha256:digest},{fetcher});
   assert.equal(await blob.text(),'exact package bytes');
   await assert.rejects(verifiedEngineeringDownload({token:'local'},{},{sha256:'incorrect'},{fetcher}),/digest did not match/);
+});
+
+test('native conversation retains complete ordered requests and streamed replies without promoting uncertain delivery',()=>{
+  const text='Preserve every line.\n'.repeat(2000);
+  const events=[{sequence:1,kind:'accepted',runId:'run-one',text},{sequence:2,kind:'message',runId:'run-one',text:'First '},{sequence:3,kind:'progress',text:'commandExecution'},{sequence:4,kind:'message',runId:'run-one',text:'reply.'},{sequence:5,kind:'steering_submitted',requestId:'change',text:'Keep existing records.'},{sequence:6,kind:'steering_delivery_uncertain',requestId:'change'},{sequence:7,kind:'message',runId:'run-one',text:'Observed follow-up.'}];
+  const conversation=engineeringConversation([...events,events[0]]);
+  assert.equal(conversation.length,4);assert.equal(conversation[0].text,text);assert.equal(conversation[1].text,'First reply.');assert.equal(conversation[2].status,'uncertain');assert.equal(conversation[3].text,'Observed follow-up.');
+  assert.equal(engineeringConversation([...events,{sequence:8,kind:'steering_accepted',requestId:'change'}])[2].status,'accepted');
+  assert.deepEqual(engineeringConversation([{sequence:1,kind:'accepted'},{sequence:2,kind:'completed'}]),[],'legacy events without request text are not invented into messages');
 });

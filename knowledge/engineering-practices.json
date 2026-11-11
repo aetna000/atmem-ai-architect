@@ -484,6 +484,27 @@
         "sha256": "9ef7fc10c2f17973f670239ffad4d9b19ddb4c42443339d81911d1860e16c4d6",
         "scope": "Native resolved Sydney image-host mock regression; local SDK/source checks. No registry login, image pull/push or cloud behavior."
       }
+    },
+    {
+      "id": "aws-model-api-region-feature-intersection",
+      "provider": "aws",
+      "topic": "model-api-region-and-feature-selection",
+      "practice": "Select the model/version, API, inference route and feature intersection explicitly; a service region is insufficient. The reviewed amazon.nova-lite-v1:0 card supports Converse on bedrock-runtime and in-region ap-southeast-2, but not native structured outputs. APAC inference profiles can route beyond Sydney. Plain JSON with application validation is different from a provider-enforced schema. This is one model-specific reference, not a default model recommendation or a generic capability for other models.",
+      "source": {
+        "kind": "documentation",
+        "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-amazon-nova-lite.html",
+        "sha256": "7a1a06e5c6f6c110327785d039277bbdf53d3204fc4796910213b58cdccbd6a0",
+        "retrievedAt": "2026-11-11T02:43:08.268623+00:00",
+        "redistribution": "Metadata and original authored summary only; full source stays in local review cache.",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "limitations": [
+        "No account access, model quality, retention settings, quota or price is established.",
+        "Model/API/region/features can change; recheck the dated card. Local contract tests remain separate from actual vendor execution."
+      ],
+      "reviewedAt": "2026-11-11",
+      "status": "active"
     }
   ]
 }

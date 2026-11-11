@@ -72,3 +72,13 @@ class KnowledgeEligibilityTests(unittest.TestCase):
         self.assertTrue(context(recalled,{row['provider']},date(2026,11,10)))
         self.assertEqual(context(recalled,{row['provider']},date(2026,12,20)),[])
         self.assertLess(len(json.dumps(row,sort_keys=True,ensure_ascii=False)),1900)
+
+    def test_model_specific_document_does_not_become_a_generic_structured_output_or_other_cloud_claim(self):
+        import json
+        from datetime import date
+        row=next(r for r in records() if r['id']=='aws-model-api-region-feature-intersection')
+        recalled=[{'id':'model-card','fact_key':'practice.'+row['id'],'content':json.dumps(row)}]
+        selected=context(recalled,{'aws'},date(2026,11,11));self.assertEqual(json.loads(selected[0]['content']),row)
+        for provider in ['azure','gcp','ibm']:self.assertEqual(context(recalled,{provider},date(2026,11,11)),[])
+        self.assertEqual(context(recalled,{'aws'},date(2026,12,20)),[])
+        self.assertEqual(row['evidenceLevel'],'source-reviewed');self.assertIn('not native structured outputs',row['practice']);self.assertIn('not a default model recommendation',row['practice'])
