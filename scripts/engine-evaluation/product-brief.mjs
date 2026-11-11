@@ -55,5 +55,5 @@ try{
  const changed=Object.entries(source).filter(([file,digest])=>sha(fs.readFileSync(file))!==digest).map(([file])=>file);
  Object.assign(live,{status:'artifacts_captured',state,artifactId:artifact.id,artifactSha256:artifact.sha256,fileCount:artifact.files.filter(file=>file.kind==='file').length,sourceChangedDuringRun:changed,
   acceptedRequests:events.filter(event=>event.kind==='accepted').length,steeringAccepted:events.filter(event=>event.kind==='steering_accepted').length,
-  independentAcceptance:'not_established',boundary:'Uncoached client brief through current product API, exact model/effort, natural follow-ups, native work and immutable capture/check receipt. Generated tests, complete turns and files do not establish requirements, Terraform, service connections or system acceptance.'});persist();console.log(JSON.stringify(live,null,2));
+  independentAcceptance:'not_established',boundary:'Client brief through current product API, exact model/effort, natural follow-ups, native work and immutable capture/check receipt. Generated tests, complete turns and files do not establish requirements, Terraform, service connections or system acceptance.'});persist();console.log(JSON.stringify(live,null,2));
 }catch(error){live.status='requires_inspection';live.error=error.message;live.state=state;persist();console.error(error.message);process.exitCode=1;}

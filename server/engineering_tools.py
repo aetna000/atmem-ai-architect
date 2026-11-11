@@ -22,6 +22,7 @@ TOOLS=[
  ('atmem_check_artifacts','List previously captured settled artifacts for this project session. Active working files are not implicitly captured or validated.',schema({})),
  ('atmem_check_working','Snapshot the current owned working files and start/reuse an operator-registered isolated check. Original pinned inputs must be intact. This is in-progress evidence, never a settled delivery package; later edits need a new check.',schema({'validatorId':STRING},['validatorId'])),
  ('atmem_check_start','Start or reuse a registered check on an existing immutable artifact. No arbitrary commands/images/paths. Results apply only to that artifact, not later edits.',schema({'artifactId':STRING,'validatorId':STRING},['artifactId','validatorId'])),
+ ('atmem_check_recover','Confirm cleanup of an uncertain prior check on its original worker. This never reruns work; read the retained failed receipt, then explicitly request a new check if needed.',schema({'checkId':STRING},['checkId'])),
  ('atmem_check_read','Read a scoped check and an explicitly paged output excerpt. Follow nextOffset until null; no output is silently discarded.',schema({'checkId':STRING,'offset':{'type':'integer','minimum':0}},['checkId'])),
 ]
 
@@ -145,6 +146,11 @@ class EngineeringTools:
             if not all(isinstance(args[key],str) and len(args[key])<=120 for key in ['artifactId','validatorId']):raise ValueError('Invalid check identifiers')
             value=await self.validation_service().start(scope,session,args['artifactId'],args['validatorId'])
             return self._check_ack(value)
+        if tool=='atmem_check_recover':
+            self._fields(args,['checkId'])
+            if not isinstance(args['checkId'],str) or len(args['checkId'])>120:raise ValueError('Invalid check identity')
+            value=await self.validation_service().recover(scope,session,args['checkId'])
+            return {**self._check_ack(value),'workReplayed':False}
         if tool=='atmem_check_read':
             self._fields(args,['checkId'],['offset']);offset=args.get('offset',0)
             if not isinstance(args['checkId'],str) or len(args['checkId'])>120 or type(offset) is not int or offset<0:raise ValueError('Invalid check page')

@@ -318,3 +318,23 @@ runtime interfaces/availability; it does not disclose operator oracle command bo
 Tests request browser sandbox explicitly; outer isolation is the worker guarantee.
 Native current-working-tool/HTTP/browser transfer remains pending, all releases and
 original systems unaccepted. Evidence: evidence/20261111-working-browser-checks/README.md.
+
+
+### Real native working/browser transfer and scoped uncertain-check recovery
+
+Frozen 838762a now has actual product/native working-check evidence: one completed
+exact gpt-6.1-sol/high turn, seven successful callbacks, two snapshots and one settled
+archive. Seven generated actual HTTP/Chromium tests pass twice while working and
+again on final bytes; last working digest equals final archive. Twenty independent
+HTTP/browser assertions pass on the unchanged final artifact. This is an explicit
+local capability fixture, not uncoached/holdout/28-case or release acceptance. Keep
+irrelevant Python zero-suite failures visible; generic applicability scheduling is
+next, not a reason to weaken no-test gates.
+
+Add a separate scoped native cleanup/recovery tool for uncertain working checks;
+working evidence is intentionally absent from delivery UI lists. It may confirm
+cleanup on the original worker and return retained failure evidence, never replay
+work. Component ownership/idempotence/no-replay checks pass; full server suite344.
+This new callback is not retrospectively included in the frozen native proof and
+legacy native registries are not silently rewritten on resume. Next native-first
+intake and generic final validation/repair ownership, followed by release qualification.

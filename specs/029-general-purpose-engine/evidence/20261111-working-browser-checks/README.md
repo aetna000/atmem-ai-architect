@@ -63,3 +63,49 @@ a qualified local development runtime, not hosted tenant isolation or cloud depl
 Next: actual fresh native HTTP/browser/working-check transfer, then generic final
 validation/repair ownership and coherent native-first intake. Whole journeys require
 independent oracles in addition to generated tests; all 28 and ten release gates remain.
+
+
+## Actual native working-check/HTTP/browser transfer (frozen source 838762a)
+
+A fresh actual gpt-6.1-sol/high session builds the explicit local volunteer note
+preview fixture through the product API: one accepted start, no steering, completed
+turn, 15 captured files, no monitored source changes. This deliberately exercises
+the offered tool interface and stable HTTP contract; it is not an uncoached
+architecture, holdout, comparative win or original-matrix acceptance. The generic
+runner's original boundary wording is retained but superseded by this explicit scope.
+
+Seven successful native callbacks include catalog, reviewed knowledge search/full
+read, two working snapshots/check starts and two report reads. Both working checks
+run seven authored tests with real HTTP and sandboxed Chromium, no skips. The first
+snapshot differs after evidence-document updates; the second checkpoint SHA matches
+the final settled delivery SHA exactly:
+24578c14f1e70f5488d3121252da6eb016dadfdbf949f012dbf197778acd201b.
+A separate final delivery check repeats the seven tests on that archive. Working
+checkpoints remain kind=in_progress evidence in their own table, while one delivery
+is captured separately. Read-only native history and durable bindings are audited.
+
+A separately authored oracle, not imported from generated tests, passes 20 assertions
+on the unchanged final archive using its actual HTTP service and Chromium. It covers
+exact/no-store output, malformed/wrong-type/missing/extra/blank/oversize rejection,
+the documented 2000 UTF-16-unit boundary, content-type/method/unknown-action denial,
+safe server failure and recovery, five parallel isolated values, safe browser text,
+clear, empty input recovery, no browser persistence/reload state and delayed clear
+with cancellation both effective and deliberately ignored. Preview-function timing/
+failure and one cancellation transport are explicit fixtures. No emitted file is
+repaired and no cloud/vendor identity/model integration is claimed.
+
+The generic external driver also attempts Python validators against this Node-only
+fixture. Their missing/zero suites correctly fail and remain in checks.json. They
+are not silently converted into passes or used as Node application acceptance.
+The native session chose the applicable Node validator. Applicability-aware generic
+check scheduling is still needed; no broad all-checks/project-pass claim is made.
+
+After this frozen native proof, a small follow-up adds an explicit scoped
+atmem_check_recover tool for uncertain working checks, because working IDs are not
+shown as delivery packages in the UI. It confirms cleanup only on the original
+worker, retains the failed receipt and never reruns work. Ownership/idempotence/no-
+replay regression passes; updated full suite:344, no skips. This new callback itself
+is not included in the seven-callback proof and existing native tool registrations
+are not rewritten on resume. Fresh sessions receive the new registry. Full-source
+release qualification, generic final check/repair ownership and native-first intake
+remain pending. No release or original project is accepted.

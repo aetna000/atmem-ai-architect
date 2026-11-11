@@ -77,6 +77,15 @@ class EngineeringToolTests(unittest.IsolatedAsyncioTestCase):
   # A separate explicit request uses the check supervisor's immutable-contract
   # identity to recover the existing receipt, never execute it a second time.
   recovered=await self.tools.invoke(self.scope,self.workspace,'turn-two','lookup-call','atmem_check_start',args);self.assertTrue(recovered['success']);self.assertEqual(len(self.worker.calls),1)
+ async def test_uncertain_checkpoint_check_cleanup_is_scoped_and_never_replays_work(self):
+  source=self.root/'source';source.mkdir();(source/'module.py').write_text('pass')
+  self.store.terminal(self.scope,self.session,'run-one','turn-one','completed');manifest=self.artifacts.capture(self.scope,self.session,source)
+  self.store.reserve(self.scope,self.session,'run-two','Repair');self.store.attach_turn(self.scope,self.session,'run-two','turn-two')
+  async def invoke(identity,check):return await self.tools.invoke(self.scope,self.workspace,'turn-two',identity,'atmem_check_recover',{'checkId':check})
+  job=await self.checks.start(self.scope,self.session,manifest['id'],'local-tests');await asyncio.gather(*list(self.checks.tasks.values()));self.store.db.execute("UPDATE artifact_validation_jobs SET state='recovery_required' WHERE id=?",(job['id'],));self.store.db.commit()
+  self.assertFalse((await invoke('foreign','foreign-check'))['success']);self.assertEqual(self.worker.recovered,[])
+  result=await invoke('recover',job['id']);value=self.value(result);self.assertTrue(result['success']);self.assertFalse(value['workReplayed']);self.assertEqual(value['result']['reason'],'supervisor_restart');self.assertEqual(self.worker.recovered,[job['id']]);self.assertEqual(len(self.worker.calls),1)
+  self.assertEqual(await invoke('recover',job['id']),result);await invoke('explicit-again',job['id']);self.assertEqual(self.worker.recovered,[job['id']]);self.assertEqual(len(self.worker.calls),1)
  async def test_working_files_are_not_implicitly_captured_and_foreign_artifacts_denied(self):
   self.assertEqual(self.value(await self.call('atmem_check_artifacts',{}))['artifacts'],[])
   for args in [{'artifactId':'foreign-artifact','validatorId':'local-tests'},{'artifactId':'x','validatorId':'unknown'}]:self.assertFalse((await self.call('atmem_check_start',args))['success'])
