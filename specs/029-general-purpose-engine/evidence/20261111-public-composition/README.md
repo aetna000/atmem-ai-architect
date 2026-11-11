@@ -82,3 +82,6 @@ GE-004 stays in_progress. Offered increments2/10, originals locally qualified1/2
 owner acceptance0 and95% quality unproven remain unchanged. Then continue all
 remaining subgoals/holdouts/original complete systems; do not substitute static
 checks for the full objective. No deployment required or authorized.
+
+Public source checkpoint: `5ecb8b99962abf80998bb4e6d351c24f35484f0f`. Full source fingerprints are in
+code-sha256.json; later status-binding edits do not change implementation source.
