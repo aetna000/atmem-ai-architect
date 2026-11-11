@@ -10,6 +10,7 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
   const [draftError,setDraftError]=useState('');
   useEffect(()=>{try{localStorage.setItem(draftKey,draft);setDraftError('');}catch{setDraftError('This draft could not be saved in your browser. Keep this view open or copy it before leaving.');}},[draftKey,draft]);
   const live=useRef(true),cursor=useRef(0),actionLock=useRef(false);
+  const finalization=events.filter(event=>event.runId===job?.run&&event.kind.startsWith('finalization_')).at(-1);
   useEffect(()=>{live.current=true;return()=>{live.current=false;};},[]);
   const call=(action,payload={},options)=>engineeringCall(session,action,{projectId,...(job?{sessionId:job.id}:{}),...payload},options);
   useEffect(()=>{
@@ -19,7 +20,7 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
       if(!stopped)setArtifact(result.artifacts.find(item=>item.runId===job.run)||result.artifacts[0]||null);
     }).catch(e=>{if(!stopped&&e.name!=='AbortError')setError(e.message);});
     return()=>{stopped=true;controller.abort();};
-  },[job?.id,projectId,session.token]);
+  },[job?.id,job?.run,finalization?.artifactId,projectId,session.token]);
   useEffect(()=>{
     const controller=new AbortController();let stopped=false;
     (async()=>{let restored=false;try{
@@ -95,6 +96,7 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
         <button disabled={busy||uncertain||!draft.trim()||draft.length>80000||(!job&&(!exactSelection||contextBusy))}>{running?'Send update':'Start work'}</button>
       </form>
       {job&&<>
+        {finalization&&<p role="status"><strong>Recorded verification update: </strong>{finalization.text}</p>}
         <div className="engineering-actions">
           <button disabled={busy} onClick={()=>act(async()=>{const next=await call('recover');if(live.current)setJob(next);})}>Recover connection</button>
           {running&&<button disabled={busy} onClick={()=>act(async()=>{const next=await call('interrupt');if(live.current)setJob(next);})}>Stop work</button>}

@@ -12,16 +12,20 @@ import threading
 import uuid
 from .engineering_sessions import SessionError
 from .local_validation import ValidationSpec
+from .validation_applicability import FileApplicability
 
 
 @dataclass(frozen=True)
 class RegisteredValidator:
     label: str
     spec: ValidationSpec
+    applicability: FileApplicability | None = None
 
     def __post_init__(self):
         if not isinstance(self.label,str) or not self.label.strip() or len(self.label)>120:
             raise ValueError('An explicit validator label is required')
+        if self.applicability is not None and not isinstance(self.applicability,FileApplicability):
+            raise ValueError('Use a reviewed file applicability contract')
 
 
 def registered_validators(entries):
@@ -29,7 +33,7 @@ def registered_validators(entries):
     if not isinstance(entries,list):raise ValueError('Validator configuration must be a list')
     result={}
     for entry in entries:
-        if not isinstance(entry,dict) or set(entry)-{'id','label','image','command','platform','timeoutSeconds','bootstrapPython','isolationProfile','runtimeEnvironment'}:
+        if not isinstance(entry,dict) or set(entry)-{'id','label','image','command','platform','timeoutSeconds','bootstrapPython','isolationProfile','runtimeEnvironment','applicability'}:
             raise ValueError('Unrecognized validator registration')
         if not isinstance(entry.get('command'),list):raise ValueError('Register a validator argument vector')
         environment=entry.get('runtimeEnvironment',{})
@@ -38,7 +42,7 @@ def registered_validators(entries):
             platform=entry.get('platform','linux/amd64'),timeout_seconds=entry.get('timeoutSeconds',60),
             bootstrap_python=entry.get('bootstrapPython','/usr/local/bin/python3'),isolation_profile=entry.get('isolationProfile','standard-v1'),runtime_environment=tuple(environment.items()))
         if spec.name in result:raise ValueError('Validator IDs must be unique')
-        result[spec.name]=RegisteredValidator(entry.get('label',''),spec)
+        result[spec.name]=RegisteredValidator(entry.get('label',''),spec,FileApplicability.parse(entry['applicability']) if 'applicability' in entry else None)
     return result
 
 
@@ -61,13 +65,38 @@ class ValidationJobs:
     def catalog(self):
         return [{'id':key,'label':value.label,'evidenceLevel':'local_container_check',
                  'contractSha256':self._contract(value)[0] if self.worker else None,
-                 'available':self.worker is not None and (not hasattr(self.worker,'supports') or self.worker.supports(value.spec)),
+                 'available':self._available(value),
+                 'applicability':value.applicability.public() if value.applicability else None,
                  'runtime':{'imageId':value.spec.image,'platform':value.spec.platform,'isolationProfile':value.spec.isolation_profile,'environment':dict(value.spec.runtime_environment),'executable':value.spec.command[0],'testRunner':'node:test' if value.spec.command[1:2]==('--test',) else 'unittest' if value.spec.command[1:3]==('-m','unittest') else 'operator_registered'}} for key,value in self.validators.items()]
 
     def _contract(self,registered):
         registration={'spec':asdict(registered.spec),'workerIdentity':self.worker.identity_digest}
+        # Preserve historical manual-only contract hashes. Changing selection rules
+        # invalidates evidence reuse even when the executable is unchanged.
+        if registered.applicability is not None:registration['applicability']=registered.applicability.public()
         digest=hashlib.sha256(json.dumps({**registration,'policy':self.worker.policy_digest},sort_keys=True).encode()).hexdigest()
         return digest,registration
+
+    def _available(self,registered):
+        return self.worker is not None and (not hasattr(self.worker,'supports') or self.worker.supports(registered.spec))
+
+    def plan(self,scope,session,artifact):
+        """No execution or implicit pass; selection binds exact immutable bytes."""
+        manifest,content=self.artifacts.get(scope,session,artifact)
+        if hashlib.sha256(content).hexdigest()!=manifest['sha256']:
+            raise SessionError('Stored artifact bytes do not match their receipt')
+        decisions=[]
+        for ident,registered in self.validators.items():
+            assessment=registered.applicability.assess(manifest['files']) if registered.applicability else None
+            available=self._available(registered)
+            state='manual_only' if assessment is None else 'not_applicable' if not assessment['applies'] else 'selected' if available else 'unavailable'
+            decisions.append({'validatorId':ident,'label':registered.label,'state':state,
+                'contractSha256':self._contract(registered)[0] if self.worker else None,
+                'applicability':registered.applicability.public() if registered.applicability else None,
+                'assessment':assessment})
+        return {'artifactId':manifest['id'],'artifactSha256':manifest['sha256'],'decisions':decisions,
+            'selectionStatus':'checks_selected' if any(d['state']=='selected' for d in decisions) else 'no_available_applicable_checks',
+            'acceptance':'not_established_by_file_applicability'}
 
     def _row(self,scope,session,job):
         self.store.get(scope,session)

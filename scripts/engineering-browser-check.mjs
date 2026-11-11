@@ -61,6 +61,10 @@ try{
  assert.equal(await page.getByLabel('Add an update',{exact:true}).inputValue(),'My next unsent requirement must survive reload.');
  assert.equal(requests.filter(r=>r.action==='start').length,1,'reload never resubmits original intent');assert.equal(requests.filter(r=>r.action==='create').length,1,'reload reuses the job');
  job={...job,state:'idle',last_status:'completed'};events.push({sequence:events.length+1,kind:'message',text:'Implementation files created. Independent validation remains pending.'},{sequence:events.length+2,kind:'completed'});
+ captured={id:'artifact-fixture',runId:job.run,sha256:digest,turnStatus:'completed',files:[{path:'main.tf',kind:'file'}]};
+ const finalizationText='Selected local checks passed for the saved package. Requirements and full-system acceptance still need independent verification.';
+ events.push({sequence:events.length+1,kind:'finalization_local_checks_passed',runId:job.run,artifactId:captured.id,text:finalizationText});
+ await page.getByRole('status').filter({hasText:finalizationText}).waitFor();await page.getByRole('button',{name:'Download package',exact:true}).waitFor();
  await page.getByRole('button',{name:'Capture package',exact:true}).click();await page.getByText(/Checks are not independently verified/).waitFor();
  const downloadPromise=page.waitForEvent('download');await page.getByRole('button',{name:'Download package',exact:true}).click();const download=await downloadPromise;assert.match(download.suggestedFilename(),/^engineering-artifact-fixture.zip$/);
  assert(await page.getByRole('button',{name:'Isolated browser tests · unavailable',exact:true}).isDisabled());await page.getByRole('button',{name:'Local Python tests',exact:true}).click();await page.locator('.artifact-checks strong').filter({hasText:'Local Python tests · running'}).waitFor();

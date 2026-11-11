@@ -58,6 +58,7 @@ class EngineeringJobs:
         self.tasks = {}
         self.submissions = set()
         self.locks = {}
+        self.on_settled = None
 
     def _lock(self, scope, session):
         self.sessions._owned(scope, session)
@@ -84,6 +85,8 @@ class EngineeringJobs:
                     # Quiet reasoning/tool work is not a broken connection.
                     continue
                 self.journal.append(scope, session, event)
+                if event['kind'] in {'completed','failed','interrupted'} and self.on_settled:
+                    self.on_settled(scope,session)
         except asyncio.CancelledError:
             raise
         except Exception:
@@ -123,6 +126,7 @@ class EngineeringJobs:
             self._record(scope, session, 'recovered', state=state['state'],
                          text='State reconciled from native history. Progress emitted before journal commit may be unavailable.',
                          validation='not_established_by_agent_turn')
+            if state['state']=='idle' and self.on_settled:self.on_settled(scope,session)
             self._watch(scope, session)
             return state
 

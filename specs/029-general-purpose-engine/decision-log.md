@@ -360,3 +360,21 @@ account/price/quality limits. Do not generalize this model's native schema suppo
 or placement to other models/providers. Actual architecture UI evaluation remains
 pending. An explicit operator preview launcher and per-instance Vite cache support
 frozen worktree evaluations alongside development; no installs/accounts/deployment.
+
+### Operator file applicability and completed-turn check ownership
+
+Select registered local checks through bounded operator-owned manifest globs, not
+project/domain IDs or model commands. Missing rules remain explicitly manual-only;
+file matching does not prove runtime or semantic compatibility. Bind rules into
+the validator contract while preserving old manual-only hashes. After verified
+completion, synchronously capture original-pinned settled bytes, then supervise
+checks durably outside the HTTP/model lifetime. Keep failures/skips/zero/no-applicable,
+stale policy and interrupted recovery debt visible. New user work supersedes old
+evidence; no check or model replay on restart. A selected local pass is not project
+acceptance. Automatic bounded repair and finalization reconciliation remain next.
+
+361 server/375 JS tests, build, browser fixture and six actual isolated Python and
+Chromium controller probes pass. Runtime lifecycle fixtures are explicit, not native
+generation or whole-system qualification. Separately observe a frozen actual Build
+UI architecture run at 3b80eb4 with the same exposed AWS brief/three natural updates;
+do not change its code or describe it as a holdout/comparative quality result.

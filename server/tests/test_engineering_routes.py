@@ -29,7 +29,7 @@ class EngineeringRouteTests(unittest.TestCase):
 
     def test_every_native_endpoint_requires_local_token(self):
         for endpoint in ['create','list','state','events','start','recover','steer','interrupt','capture','download',
-                         'artifacts','validators','validation/start','validation/list','validation/get','validation/recover']:
+                         'artifacts','finalizations','validators','validation/start','validation/list','validation/plan','validation/get','validation/recover']:
             self.assertEqual(self.client.post('/api/engineering/'+endpoint,json={}).status_code,401)
 
     def test_cross_origin_and_rebinding_denied(self):
@@ -99,6 +99,19 @@ class EngineeringRouteTests(unittest.TestCase):
             for extra in [{'command':['sh','-c','anything']},{'image':'python:latest'},{'endpoint':'tcp://host:2375'},{'retry':'true'}]:
                 self.assertEqual(self.client.post('/api/engineering/validation/start',json={**payload,**extra},headers=self.headers).status_code,422)
             checks.start.assert_not_awaited()
+
+    def test_check_selection_and_finalization_are_scoped_read_only_views(self):
+        with patch.object(routes,'service') as service:
+            checks=service.return_value.validation_service.return_value
+            checks.plan.return_value={'artifactSha256':'bound','acceptance':'not_established_by_file_applicability'}
+            response=self.client.post('/api/engineering/validation/plan',json={**self.payload,'artifactId':self.session},headers=self.headers)
+            self.assertEqual(response.status_code,200)
+            checks.plan.assert_called_once_with(ProjectScope('local-owner',self.project),self.session,self.session)
+            checks.start.assert_not_called()
+            service.return_value.finalization.list.return_value=[]
+            response=self.client.post('/api/engineering/finalizations',json=self.payload,headers=self.headers)
+            self.assertEqual(response.json(),{'finalizations':[]})
+            service.return_value.finalization.list.assert_called_once_with(ProjectScope('local-owner',self.project),self.session)
 
     def test_validation_scope_and_worker_errors_never_fall_back_or_leak(self):
         with patch.object(routes,'service') as service:

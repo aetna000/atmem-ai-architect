@@ -1,5 +1,13 @@
 # General-purpose engine: ten tangible release subgoals
 
+Latest implementation checkpoint: primary native Build intake and durable request
+history are committed at 3b80eb4; its actual UI architecture evaluation is running
+on a frozen separate instance. Generic completed-turn immutable capture and operator
+file applicability/check supervision have component/UI/actual isolated-runtime
+evidence in `evidence/20261111-finalization/README.md`. Finish bounded evidence-driven
+repair and independent architecture package/system assessment before release1.
+Neither this checkpoint nor a generated-test pass earns project acceptance.
+
 Owner direction, 2026-11-11: the deliverable is an architecture engine that can
 produce the original 28 projects and many unfamiliar combinations, targeting 95%
 quality. The 28 projects are diagnostic/regression workloads, not production templates.

@@ -16,6 +16,7 @@ from .codex_engineering_backend import CodexEngineeringBackend
 from .codex_worker_policy import CodexWorkerClient, PROFILE
 from .engineering_artifacts import EngineeringArtifacts,WorkingCheckpoints,CheckSources
 from .engineering_jobs import EngineeringJobs
+from .engineering_finalization import EngineeringFinalization
 from .engineering_delivery import seed_delivery
 from .engineering_tools import EngineeringTools
 from .engineering_sessions import EngineeringSessions, ModelSelection, ProjectScope, SessionError, SqliteSessionStore
@@ -119,6 +120,13 @@ Keep final progress concise and explain any remaining work.''')
         self.native_tools=EngineeringTools(self.store,self.artifacts,self.validation_service,working_check=self.check_working)
         self.backend.tools=self.native_tools
         self.create_lock = asyncio.Lock()
+        self.finalization=EngineeringFinalization(self.jobs,self.capture_completed,self.validation_service)
+        self.jobs.on_settled=self.finalization.observe
+
+    def capture_completed(self,scope,session):
+        row=self.store.get(scope,session)
+        root=self.backend._workspace(scope,row['workspace'])
+        return self.artifacts.capture(scope,session,root,expected_inputs=self.pinned_inputs(scope,session))
 
     def validation_service(self):
         if self.checks.worker is None and self.validator_endpoint:
@@ -183,6 +191,8 @@ Keep final progress concise and explain any remaining work.''')
             return state
 
     async def close(self):
+        self.jobs.on_settled=None
+        await self.finalization.close()
         await self.checks.close()
         await self.jobs.close()
         self.store.close()
@@ -239,6 +249,7 @@ async def action(payload, kind):
     try:
         if kind == 'state': return worker.jobs.state(scope,payload.sessionId)
         if kind == 'artifacts':return {'artifacts':worker.artifacts.manifests(scope,payload.sessionId)}
+        if kind == 'finalizations':return {'finalizations':worker.finalization.list(scope,payload.sessionId)}
         if kind == 'events':
             return {'events':worker.jobs.journal.read(scope,payload.sessionId,payload.after),
                     'session':worker.jobs.state(scope,payload.sessionId)}
@@ -305,6 +316,7 @@ async def validation_action(payload,kind):
         if kind=='catalog':return {'validators':checks.catalog(),'available':checks.worker is not None}
         if kind=='start':return await checks.start(scope,payload.sessionId,payload.artifactId,payload.validatorId,retry=payload.retry)
         if kind=='list':return {'checks':checks.list(scope,payload.sessionId,payload.artifactId)}
+        if kind=='plan':return checks.plan(scope,payload.sessionId,payload.artifactId)
         if kind=='get':return checks.get(scope,payload.sessionId,payload.checkId)
         if kind=='recover':return await checks.recover(scope,payload.sessionId,payload.checkId)
     except SessionError as error:raise HTTPException(409,str(error)) from None
@@ -313,12 +325,16 @@ async def validation_action(payload,kind):
 
 @router.post('/artifacts')
 async def artifacts(payload: SessionRequest):return await action(payload,'artifacts')
+@router.post('/finalizations')
+async def finalizations(payload: SessionRequest):return await action(payload,'finalizations')
 @router.post('/validators')
 async def validators(payload: SessionRequest):return await validation_action(payload,'catalog')
 @router.post('/validation/start')
 async def start_validation(payload: StartValidationRequest):return await validation_action(payload,'start')
 @router.post('/validation/list')
 async def list_validations(payload: ArtifactRequest):return await validation_action(payload,'list')
+@router.post('/validation/plan')
+async def plan_validations(payload: ArtifactRequest):return await validation_action(payload,'plan')
 @router.post('/validation/get')
 async def get_validation(payload: ValidationJobRequest):return await validation_action(payload,'get')
 @router.post('/validation/recover')

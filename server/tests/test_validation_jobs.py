@@ -10,6 +10,7 @@ from server.engineering_artifacts import EngineeringArtifacts
 from server.engineering_sessions import ModelSelection,ProjectScope,SessionError,SqliteSessionStore
 from server.local_validation import ValidationSpec
 from server.validation_jobs import RegisteredValidator,ValidationJobs,registered_validators
+from server.validation_applicability import FileApplicability
 
 
 class Worker:
@@ -124,6 +125,35 @@ class ValidationJobTests(unittest.IsolatedAsyncioTestCase):
     async def test_unknown_validator_does_not_run_model_supplied_commands(self):
         with self.assertRaises(SessionError):await self.jobs.start(self.scope,self.session,self.artifact,'not-registered')
         self.assertEqual(self.worker.calls,[])
+
+    async def test_plan_binds_exact_bytes_without_execution_and_retains_every_decision(self):
+        python=FileApplicability(('**/test_*.py',))
+        node=FileApplicability(('**/*.test.mjs',))
+        self.jobs.validators={
+            'python-tests':RegisteredValidator('Python',self.spec,python),
+            'node-tests':RegisteredValidator('Node',ValidationSpec('node-tests',self.spec.image,('/usr/bin/node','--test')),node),
+            'manual-test':RegisteredValidator('Manual',ValidationSpec('manual-test',self.spec.image,('/usr/bin/true',)))}
+        plan=self.jobs.plan(self.scope,self.session,self.artifact)
+        self.assertEqual(plan['artifactSha256'],self.manifest['sha256'])
+        self.assertEqual([d['state'] for d in plan['decisions']],['selected','not_applicable','manual_only'])
+        self.assertEqual(plan['acceptance'],'not_established_by_file_applicability')
+        self.assertEqual(self.worker.calls,[])
+        self.assertEqual(self.store.db.execute('select count(*) from artifact_validation_jobs').fetchone()[0],0)
+        self.jobs.worker=None
+        unavailable=self.jobs.plan(self.scope,self.session,self.artifact)
+        self.assertEqual(unavailable['decisions'][0]['state'],'unavailable')
+        self.assertEqual(unavailable['selectionStatus'],'no_available_applicable_checks')
+        self.assertIsNone(unavailable['decisions'][0]['contractSha256'])
+        with self.assertRaises(SessionError):self.jobs.plan(ProjectScope('other-owner','project-one'),self.session,self.artifact)
+
+    async def test_applicability_change_invalidates_contract_without_erasing_old_check(self):
+        first=await self.jobs.start(self.scope,self.session,self.artifact,'python-tests');await self.finish()
+        self.jobs.validators['python-tests']=RegisteredValidator('Python',self.spec,FileApplicability(('**/test_*.py',)))
+        plan=self.jobs.plan(self.scope,self.session,self.artifact)
+        self.assertNotEqual(first['contractSha256'],plan['decisions'][0]['contractSha256'])
+        second=await self.jobs.start(self.scope,self.session,self.artifact,'python-tests');await self.finish()
+        self.assertEqual(second['contractSha256'],plan['decisions'][0]['contractSha256'])
+        self.assertEqual(len(self.jobs.list(self.scope,self.session,self.artifact)),2)
 
     def test_operator_registration_rejects_mutable_images_duplicates_and_extra_policy(self):
         base={'id':'python-tests','label':'Python tests','image':'sha256:'+'a'*64,'command':['/usr/local/bin/python3','-m','unittest']}
