@@ -243,3 +243,22 @@ Evidence: evidence/20261111-uncoached-product-run/README.md. Next regenerate unc
 brief, execute clean-unpack and browser/identity/service journeys, and integrate relevant
 reviewed knowledge without case-specific recipes. All ten releases and original 28
 acceptances remain pending; cloud deployment is not a prerequisite or authorized.
+
+
+### Browser evidence and next native capability boundary — 2026-11-11
+
+The original uncoached package passes component checks but fails actual Chromium
+submission: native fetch was stored and called with the ReviewSession receiver,
+raising Illegal invocation before any API request. Preserve original output and all
+failed receipts. The portable regeneration was already running on frozen 3a0bfe7
+before discovery and was not coached with this bug. No project/release is accepted.
+
+Qualify actual browser tools instead of adding a case-specific code recipe. Native
+macOS policy denies Chromium Mach startup; do not grant host IPC. A separate bounded
+network-none Linux prototype passes with nonroot and Chromium sandbox enabled using
+pinned reviewed user-namespace seccomp plus explicit chroot syscall permission;
+outer chroot/capabilities/source/network/host-access guards remain denied. This is
+operator-only evidence, not a production policy change. Next build project/turn-bound
+native tool callbacks for registered checks/knowledge with durable call identity,
+immutable checkpoint receipts and safe recovery. Current settled delivery capture
+and browser command/image/path restrictions remain authoritative.
