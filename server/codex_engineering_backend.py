@@ -12,11 +12,12 @@ from .engineering_sessions import BackendEvent, EmptySessionUnavailable, Recover
 class CodexEngineeringBackend:
     name='codex-app-server'
 
-    def __init__(self,workspaces,*,client_factory=CodexAppServer,instructions='',permission_profile=None):
+    def __init__(self,workspaces,*,client_factory=CodexAppServer,instructions='',permission_profile=None,tools=None):
         self.workspaces=dict(workspaces)
         self.client_factory=client_factory
         self.instructions=instructions
         self.permission_profile=permission_profile
+        self.tools=tools
         if permission_profile:
             # The durable coordinator must refuse a legacy-policy fallback after
             # restart, even though both implementations use the same model API.
@@ -73,18 +74,30 @@ class CodexEngineeringBackend:
             raise SessionError('Codex session is unavailable for this project or model selection')
         return row
 
+    def _bind_tools(self,client,scope,workspace,handle):
+        if self.tools is None:return
+        async def invoke(params):
+            self._owned(scope,handle)
+            if not isinstance(params,dict) or set(params)-{'threadId','turnId','callId','tool','arguments','namespace'} or params.get('threadId')!=handle or params.get('namespace') is not None:
+                raise SessionError('Native tool callback belongs to another thread or namespace')
+            return await self.tools.invoke(scope,workspace,params.get('turnId'),params.get('callId'),params.get('tool'),params.get('arguments'))
+        client.dynamic_tool_handler=invoke
+
     async def create(self,scope,workspace,selection):
         root=self._workspace(scope,workspace)
         client=self.client_factory(root)
         try:
+            if self.tools is not None:client.experimental=True
             await client.start()
-            result=await client.request('thread/start',self._params(root,selection))
+            result=await client.request('thread/start',{**self._params(root,selection),
+                **({'dynamicTools':self.tools.specs} if self.tools is not None else {})})
             handle=self._verify(result,root,selection)
             if self.permission_profile:
                 await client.verify_worker_tools(self.permission_profile)
             if (scope,handle) in self.clients:
                 raise SessionError('Codex returned a previously registered thread')
             self.clients[scope,handle]=(client,root,selection)
+            self._bind_tools(client,scope,workspace,handle)
             return handle
         except BaseException:
             await client.close();raise
@@ -105,6 +118,7 @@ class CodexEngineeringBackend:
             await client.close()
         client=self.client_factory(root)
         try:
+            if self.tools is not None:client.experimental=True
             await client.start()
             # App-server resume reloads runtime configuration. Reassert the exact
             # project model/effort and execution policy instead of inheriting the
@@ -117,6 +131,7 @@ class CodexEngineeringBackend:
             if self.permission_profile:
                 await client.verify_worker_tools(self.permission_profile)
             self.clients[scope,handle]=(client,root,selection)
+            self._bind_tools(client,scope,workspace,handle)
         except ProtocolError as error:
             await client.close()
             if error.category=='missing_thread':

@@ -20,7 +20,7 @@ sys.path.insert(0,str(ROOT))
 from server.codex_worker_policy import CodexWorkerClient, PROFILE
 
 
-async def replay(source, output, *, tool_layout='paired', extra_commands=()):
+async def replay(source, output, *, tool_layout='paired', extra_commands=(), public_setup=False):
     output.mkdir(parents=True,exist_ok=False)
     terraform=(ROOT/'.venv/bin/terraform').resolve(strict=True)
     cache=(ROOT/'.local/provider-cache').resolve(strict=True)
@@ -35,18 +35,22 @@ async def replay(source, output, *, tool_layout='paired', extra_commands=()):
     with tempfile.TemporaryDirectory(prefix='atm-replay-',dir='/tmp') as temporary:
         workspace=Path(temporary).resolve()/'work'
         shutil.copytree(source,workspace)
-        tools=workspace/('.tools' if tool_layout=='product' else 'tools');tools.mkdir()
-        (tools/'terraform').symlink_to(terraform)
-        mirror_name='providerMirror' if tool_layout=='product' else 'provider-cache'
-        (tools/mirror_name).symlink_to(cache,target_is_directory=True)
-        if tool_layout=='product':
-            (tools/'python').symlink_to(python);(tools/'node').symlink_to(shutil.which('node'))
-            configuration={'tools':{name:f'./.tools/{name}' for name in ['terraform','providerMirror','python','node']},
-                           'temporaryStorage':'.worker-tmp','providerPolicy':'Registered offline mirror only; no registry fallback'}
-        else:configuration={'terraform':'./tools/terraform','providerMirror':'./tools/provider-cache','python':str(python),'node':shutil.which('node')}
-        (tools/'toolchain.json').write_text(json.dumps(configuration))
-        mirror=workspace/'offline.terraformrc'
-        mirror.write_text('provider_installation { filesystem_mirror { path = '+json.dumps(str(cache))+' } }\n')
+        if not public_setup:
+            tools=workspace/('.tools' if tool_layout=='product' else 'tools');tools.mkdir()
+            (tools/'terraform').symlink_to(terraform)
+            mirror_name='providerMirror' if tool_layout=='product' else 'provider-cache'
+            (tools/mirror_name).symlink_to(cache,target_is_directory=True)
+            if tool_layout=='product':
+                (tools/'python').symlink_to(python);(tools/'node').symlink_to(shutil.which('node'))
+                configuration={'tools':{name:f'./.tools/{name}' for name in ['terraform','providerMirror','python','node']},
+                               'temporaryStorage':'.worker-tmp','providerPolicy':'Registered offline mirror only; no registry fallback'}
+            else:configuration={'terraform':'./tools/terraform','providerMirror':'./tools/provider-cache','python':str(python),'node':shutil.which('node')}
+            (tools/'toolchain.json').write_text(json.dumps(configuration))
+            mirror=workspace/'offline.terraformrc'
+            mirror.write_text('provider_installation { filesystem_mirror { path = '+json.dumps(str(cache))+' } }\n')
+        else:
+            if tool_layout!='product' or not (workspace/'atmem-tools/prepare.py').is_file():raise ValueError('Public setup requires the supplied exported helper')
+            mirror=workspace/'.worker-tmp/terraform.rc'
         worker=CodexWorkerClient(workspace,read_roots=roots)
         try:
             await worker.start()
@@ -56,7 +60,7 @@ async def replay(source, output, *, tool_layout='paired', extra_commands=()):
                     result=await worker.request('command/exec',{'command':[str(a) for a in argv],'cwd':str(cwd),
                         'permissionProfile':PROFILE,'env':{'TMPDIR':str(workspace/'.worker-tmp'),
                         'TF_CLI_CONFIG_FILE':str(mirror),'TF_IN_AUTOMATION':'1','CHECKPOINT_DISABLE':'1',
-                        'OPENSSL_CONF':'/dev/null','PYTHONDONTWRITEBYTECODE':'1'},
+                        'OPENSSL_CONF':str(workspace/'.worker-tmp/openssl.cnf') if public_setup and (workspace/'.worker-tmp/openssl.cnf').exists() else '/dev/null','PYTHONDONTWRITEBYTECODE':'1'},
                         'timeoutMs':60000,'outputBytesCap':200000},timeout=70)
                     skipped=0
                     if name=='python-generated-unit-tests':
@@ -67,6 +71,8 @@ async def replay(source, output, *, tool_layout='paired', extra_commands=()):
                         'passed':result['exitCode']==0 and skipped==0,**result})
                 except Exception as error:
                     checks.append({'name':name,'passed':False,'errorType':type(error).__name__})
+            if public_setup:
+                await command('exported-offline-tool-setup',[python,'atmem-tools/prepare.py','--python',python,'--node',shutil.which('node'),'--terraform',terraform,'--provider-mirror',cache,'--require','python','--require','node','--require','terraform','--require','providerMirror'])
             if (workspace/'tests').is_dir():
                 await command('python-generated-unit-tests',[python,'-m','unittest','discover','-s','tests','-v'])
             node_tests=sorted(p for p in (workspace/'tests').rglob('*') if p.is_file() and p.name.endswith(('.test.cjs','.test.mjs','.test.js')))
@@ -86,7 +92,7 @@ async def replay(source, output, *, tool_layout='paired', extra_commands=()):
                     changed[name]='missing' if not path.is_file() else hashlib.sha256(path.read_bytes()).hexdigest()
         finally:
             await worker.close()
-    receipt={'sourceHashes':hashes,'changedInputFiles':changed,'toolLayout':tool_layout,'checks':checks,'inferenceTurns':0,'cloudOperations':False,
+    receipt={'sourceHashes':hashes,'changedInputFiles':changed,'toolLayout':tool_layout,'publicExportedSetup':public_setup,'checks':checks,'inferenceTurns':0,'cloudOperations':False,
         'boundary':'Offline sandbox replay on a copy with trusted tool registrations restored. Python/Node generated tests and provider format/init/schema checks; optional explicitly reviewed local commands are labeled separately. No independent semantic/system, cloud-plan or deployment acceptance. Changed input files remain visible.'}
     (output/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
     print(json.dumps({'source':str(source),'checks':[{k:c.get(k) for k in ['name','passed','exitCode']} for c in checks]},indent=2),flush=True)
@@ -97,8 +103,9 @@ if __name__=='__main__':
     parser.add_argument('--source',type=Path,required=True)
     parser.add_argument('--output',type=Path,required=True)
     parser.add_argument('--tool-layout',choices=['paired','product'],default='paired')
+    parser.add_argument('--public-setup',action='store_true',help='Use the captured public helper instead of restoring private tool registrations')
     parser.add_argument('--commands-json',type=Path,help='Operator-reviewed local command vectors; never browser/model-supplied')
     args=parser.parse_args()
     commands=json.loads(args.commands_json.read_text()) if args.commands_json else []
     if not isinstance(commands,list) or any(not isinstance(command,list) or not command or any(not isinstance(arg,str) for arg in command) for command in commands):parser.error('Use explicit command vectors')
-    asyncio.run(replay(args.source.resolve(strict=True),args.output.resolve(),tool_layout=args.tool_layout,extra_commands=commands))
+    asyncio.run(replay(args.source.resolve(strict=True),args.output.resolve(),tool_layout=args.tool_layout,extra_commands=commands,public_setup=args.public_setup))

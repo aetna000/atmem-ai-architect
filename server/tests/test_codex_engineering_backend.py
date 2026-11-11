@@ -72,6 +72,24 @@ class CodexBackendTests(unittest.IsolatedAsyncioTestCase):
     async def create(self):
         return await self.backend.create(self.scope, 'workspace-one', self.selection)
 
+    async def test_native_tool_registration_is_thread_bound_and_not_redefined_on_resume(self):
+        class Tools:
+            specs=[{'type':'function','name':'registered','description':'Scoped evidence','inputSchema':{'type':'object'}}]
+            calls=[]
+            async def invoke(inner,*args):
+                inner.calls.append(args)
+                return {'success':True,'contentItems':[{'type':'inputText','text':'evidence'}]}
+        tools=Tools();self.backend.tools=tools;handle=await self.create();client=self.clients[0]
+        self.assertEqual(client.requests[0][1]['dynamicTools'],tools.specs)
+        params={'threadId':handle,'turnId':'native-turn','callId':'call','tool':'registered','arguments':{}}
+        await client.dynamic_tool_handler(params)
+        self.assertEqual(tools.calls[0],(self.scope,'workspace-one','native-turn','call','registered',{}))
+        for changed in [{**params,'threadId':'foreign'},{**params,'namespace':'foreign'},{**params,'hostPath':'/secret'}]:
+            with self.assertRaises(SessionError):await client.dynamic_tool_handler(changed)
+        self.backend.clients.clear();await self.backend.resume(self.scope,handle,'workspace-one',self.selection)
+        self.assertNotIn('dynamicTools',self.clients[-1].requests[0][1]);self.assertTrue(callable(self.clients[-1].dynamic_tool_handler))
+        await client.close()
+
     async def test_scope_is_checked_before_starting_any_process(self):
         other = ProjectScope('tenant-two', 'project-one')
         for scope, workspace in [(other, 'workspace-one'), (self.scope, '/tmp')]:

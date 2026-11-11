@@ -262,3 +262,19 @@ operator-only evidence, not a production policy change. Next build project/turn-
 native tool callbacks for registered checks/knowledge with durable call identity,
 immutable checkpoint receipts and safe recovery. Current settled delivery capture
 and browser command/image/path restrictions remain authoritative.
+
+
+### Backend-owned native tools, without raw execution or capture-gate weakening
+
+Expose reviewed knowledge search/full reads and existing immutable-artifact validator
+catalog/start/report through project/workspace/turn/call-bound native function tools.
+Codex-specific thread IDs stay in its adapter; portable core authorization uses the
+server-owned session. Journal call intent before effects, reuse exact saved replies,
+reject conflicting identity and preserve uncertain delivery without work replay.
+Knowledge is pinned separately from private memory and rechecked for freshness/
+revocation; no truncated record is presented as complete. This is a small local
+reviewed corpus, not live AtMem or exhaustive vendor research. Keep output paging
+explicit, approvals/unknown server requests denied and all command/image/host choices
+operator-only. 336 tests pass; actual native callback/restart transfer remains pending.
+Do not loosen settled delivery capture to let the model check active files. A separate
+immutable working-checkpoint capability and isolated browser validation are next.

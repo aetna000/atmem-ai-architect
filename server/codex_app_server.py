@@ -35,6 +35,8 @@ class CodexAppServer:
         self.closed = asyncio.Event()
         self.reader = self.stderr_reader = None
         self.write_lock = asyncio.Lock()
+        self.dynamic_tool_handler = None
+        self.tool_tasks = set()
 
     async def start(self):
         if self.process is not None:
@@ -132,10 +134,15 @@ class CodexAppServer:
                     raise ProtocolError('Codex returned an invalid protocol envelope')
                 if 'method' in message:
                     if 'id' in message:
-                        # No automatic approvals or dynamic tool execution in this
-                        # foundation. Unsupported server requests fail closed.
-                        await self._write({'id': message['id'], 'error': {
-                            'code': -32601, 'message': 'Client handler is not enabled'}})
+                        if message['method']=='item/tool/call' and self.dynamic_tool_handler is not None and len(self.tool_tasks)<8:
+                            # Never block protocol responses/progress on a tool.
+                            # Only this exact callback is enabled; approvals stay denied.
+                            task=asyncio.create_task(self._tool_reply(message))
+                            self.tool_tasks.add(task)
+                            task.add_done_callback(self.tool_tasks.discard)
+                        else:
+                            await self._write({'id': message['id'], 'error': {
+                                'code': -32601, 'message': 'Client handler is not enabled'}})
                     else:
                         self.events.put_nowait(message)
                 elif 'id' in message:
@@ -168,10 +175,27 @@ class CodexAppServer:
         while await self.process.stderr.read(65536):
             pass
 
+    async def _tool_reply(self,message):
+        try:
+            result=await asyncio.wait_for(self.dynamic_tool_handler(message.get('params',{})),30)
+            if not isinstance(result,dict) or set(result)!={'success','contentItems'} or type(result['success']) is not bool:
+                raise ValueError('Invalid tool response')
+            if not isinstance(result['contentItems'],list) or any(not isinstance(item,dict) or set(item)!={'type','text'} or item['type']!='inputText' or not isinstance(item['text'],str) for item in result['contentItems']):
+                raise ValueError('Only bounded text evidence is enabled')
+            if len(json.dumps(result,allow_nan=False).encode())>64000:raise ValueError('Tool response exceeds bound')
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            result={'success':False,'contentItems':[{'type':'inputText','text':'The registered engineering tool could not confirm this request. No success or work replay is inferred.'}]}
+        try:await self._write({'id':message['id'],'result':result})
+        except Exception:pass  # Durable tool state survives a lost transport reply.
+
     async def close(self):
         if not self.process:
             return
         self._fail('Codex transport closed; pending work is not confirmed complete')
+        for task in self.tool_tasks:task.cancel()
+        await asyncio.gather(*list(self.tool_tasks),return_exceptions=True)
         if self.process.returncode is None:
             self.process.stdin.close()
             try:

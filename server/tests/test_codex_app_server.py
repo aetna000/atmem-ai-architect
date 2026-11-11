@@ -15,6 +15,7 @@ for line in sys.stdin:
  if m['method']=='wait':continue
  if m['method']=='events':
   for i in range(3):print(json.dumps({'method':'item/progress','params':{'index':i}}),flush=True)
+ if m['method']=='tool':print(json.dumps({'id':'server-tool','method':'item/tool/call','params':{'threadId':'owned-thread','turnId':'owned-turn','callId':'call-one','tool':'registered','arguments':{}}}),flush=True)
  if m['method']=='approval':print(json.dumps({'id':'server-approval','method':'item/commandExecution/requestApproval','params':{}}),flush=True)
  if m['method']=='reject':
   print(json.dumps({'id':m['id'],'error':{'code':-32602,'message':'private diagnostic'}}),flush=True);continue
@@ -74,6 +75,28 @@ class CodexTransportTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(event['params']['id'],'server-approval')
         self.assertEqual(event['params']['error']['code'],-32601)
         self.assertNotIn('result',event['params'])
+
+    async def test_registered_tool_does_not_block_protocol_and_approvals_remain_denied(self):
+        entered,release=asyncio.Event(),asyncio.Event()
+        async def handler(params):
+            self.assertEqual(params['callId'],'call-one');entered.set();await release.wait()
+            return {'success':True,'contentItems':[{'type':'inputText','text':'Scoped evidence'}]}
+        self.client.dynamic_tool_handler=handler
+        await self.client.request('tool');await asyncio.wait_for(entered.wait(),1)
+        self.assertEqual((await self.client.request('probe'))['method'],'probe')
+        await self.client.request('approval');denied=await self.client.notification(timeout=1)
+        self.assertEqual(denied['params']['error']['code'],-32601)
+        release.set();result=await self.client.notification(timeout=1)
+        self.assertEqual(result['params']['id'],'server-tool');self.assertTrue(result['params']['result']['success'])
+
+    async def test_tool_errors_and_oversize_responses_never_expose_raw_diagnostics(self):
+        for mode in ['error','oversize']:
+            async def handler(params):
+                if mode=='error':raise RuntimeError('PRIVATE-WORKER-DIAGNOSTIC')
+                return {'success':True,'contentItems':[{'type':'inputText','text':'x'*65000}]}
+            self.client.dynamic_tool_handler=handler;await self.client.request('tool')
+            result=await self.client.notification(timeout=1)
+            self.assertFalse(result['params']['result']['success']);self.assertNotIn('PRIVATE-WORKER',str(result))
 
     async def test_provider_error_is_not_exposed_as_success_or_raw_diagnostics(self):
         with self.assertRaises(ProtocolError) as caught:await self.client.request('reject')
