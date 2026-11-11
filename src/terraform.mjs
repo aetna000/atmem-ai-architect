@@ -1,5 +1,7 @@
 import {compileCapabilityComposition} from './delivery-capabilities.mjs';
 import {applyStateCustody} from './state-custody.mjs';
+import {ownershipInventory} from './ownership-inspection.mjs';
+import {inspectTerraformModules} from './terraform-admission.mjs';
 import{hasInvoice}from'./invoice-plan.mjs';
 import{invoiceTerraform}from'./invoice-terraform.mjs';
 import {awsPublicFaqTerraform,azurePublicFaqTerraform,gcpPublicFaqTerraform,ibmPublicFaqTerraform} from './public-faq-clouds.mjs';
@@ -116,7 +118,9 @@ function compileTerraform(project, environment = "staging") {
 }
 
 export function terraformSketch(project,environment="staging"){
- const files=applyStateCustody(project,environment,compileTerraform(project,environment));
+ const files=applyStateCustody(project,environment,{...compileTerraform(project,environment),...existingReferenceFiles(project)});
+ const root=JSON.parse(files['main.tf.json']);
+ files['deployment-ownership.json']=JSON.stringify(ownershipInventory(project,inspectTerraformModules(project,resourcePlan(project),files,root,()=>{}).configs),null,2)+'\n';
  files['generation-quality.json']=JSON.stringify(generationQuality(project,resourcePlan(project),files,{environment}),null,2);
  return files;
 }

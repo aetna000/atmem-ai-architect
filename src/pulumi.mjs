@@ -9,6 +9,7 @@ export function importPulumiSnapshot(raw) {
     throw Error(
       "Expected a Pulumi stack export with deployment.resources (up to 1,000 resources).",
     );
+  if(deployment.resources.some(r=>!r||typeof r!=='object'||typeof r.type!=='string'||typeof r.urn!=='string'))throw Error('Pulumi resource metadata is invalid; no resource was silently discarded.');
   const resources = deployment.resources
     .filter(
       (r) =>
@@ -16,11 +17,14 @@ export function importPulumiSnapshot(raw) {
         typeof r.urn === "string" &&
         !r.type.startsWith("pulumi:"),
     )
-    .map((r, i) => ({
+    .map((r, i) => {
+      const name=r.urn.split("::").at(-1);
+      if(!r.urn.startsWith('urn:pulumi:')||r.urn.length>600||!r.type||r.type.length>200||!name||name.length>150)throw Error('Pulumi resource identity exceeds the supported metadata bounds or is invalid; nothing was clipped. Preserve the original export.');
+      return ({
       id: `observed-${i}`,
-      urn: r.urn.slice(0, 600),
-      type: r.type.slice(0, 200),
-      name: r.urn.split("::").at(-1).slice(0, 150),
+      urn: r.urn,
+      type: r.type,
+      name,
       provider: r.type.startsWith("aws:")
         ? "aws"
         : r.type.startsWith("azure")
@@ -30,7 +34,8 @@ export function importPulumiSnapshot(raw) {
             : r.type.startsWith("ibm:")
               ? "ibm"
               : "tools",
-    }));
+    });});
+  if(new Set(resources.map(r=>r.urn)).size!==resources.length)throw Error('Duplicate Pulumi resource identities require an explicit ownership decision; no resource was selected or discarded.');
   // Never retain inputs, outputs, secret envelopes, credentials, provider config or raw state.
   return {
     kind: "imported-pulumi-snapshot",
@@ -51,6 +56,7 @@ export function snapshotToProject(snapshot) {
     provider: "tools",
     requirements:
       "Explicitly imported resource references from a Pulumi stack export. No properties, secrets, cloud access or live drift verification are included.",
+    ...(snapshot.resources.some(r=>r.urn)?{extensions:{externalReferences:{version:1,references:snapshot.resources.filter(r=>r.urn).map(r=>({componentId:r.id,source:'pulumi-stack-export',externalId:r.urn,resourceType:r.type}))}}}:{}),
     nodes: snapshot.resources.map((r, i) => ({
       id: r.id,
       type: "resource",

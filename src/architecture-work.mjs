@@ -1,6 +1,7 @@
 // Shared context/dependency model. Currency means exact context agreement, never
 // proof that a claimed implementation, test, account plan or deployment succeeded.
 import {engineeringConversation} from './engineering-client.mjs';
+import {externalIdentity} from './external-identities.mjs';
 export const WORK_VERSION=2;
 export const WORK_KINDS=['responsibility','delivery-unit','interface','implementation','assumption','decision','evidence','requirement'];
 const clone=value=>JSON.parse(JSON.stringify(value));
@@ -84,7 +85,8 @@ export function architectureSources(project,state=stateOf(project)){
   const {inputPosition,outputPosition,...meaning}=n.data;
   const linked=(rows,type)=>rows.filter(r=>r.links?.includes(n.id)).map(r=>type+':'+r.id);
   const decisions=(project.decisions||[]).filter(d=>d.status==='Accepted'&&(!d.links?.length||d.links.includes(n.id))).map(d=>'decision:'+d.id);
-  add('block:'+n.id,'responsibility',n.data.label,meaning,[...global,...linked(project.needs||[],'requirement'),...linked(project.assumptions||[],'assumption'),...linked(project.openQuestions||[],'question'),...decisions]);
+  const identity=externalIdentity(project,n.id);
+  add('block:'+n.id,'responsibility',n.data.label,{...meaning,...(identity?{externalProvenance:identity}:{})},[...global,...linked(project.needs||[],'requirement'),...linked(project.assumptions||[],'assumption'),...linked(project.openQuestions||[],'question'),...decisions]);
  }
  for(const e of project.edges||[]){
   const {id,source,target,label}=e;

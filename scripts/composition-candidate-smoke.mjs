@@ -9,7 +9,9 @@ const bulk=process.env.ATMEM_CANDIDATE_BULK;
 assert(out&&bulk,'Choose fresh evidence and bulk artifact directories.');
 assert(!fs.existsSync(out)&&!fs.existsSync(bulk),'Preserve previous evidence.');
 fs.mkdirSync(out,{recursive:true});fs.mkdirSync(bulk,{recursive:true});
-const source='specs/029-general-purpose-engine/evidence/20261111-public-composition/composition-example.atmem-ai-architect.json';
+const source=process.env.ATMEM_CANDIDATE_PROJECT||'specs/029-general-purpose-engine/evidence/20261111-public-composition/composition-example.atmem-ai-architect.json';
+const expected=fromProjectFile(JSON.parse(fs.readFileSync(source,'utf8'))).project;
+const version=process.env.ATMEM_CANDIDATE_VERSION||JSON.parse(fs.readFileSync(new URL('../package.json',import.meta.url),'utf8')).version;
 const browser=await chromium.launch({headless:true});let page,submissions=0;
 const errors=[],responses=[];
 try{
@@ -20,8 +22,9 @@ try{
  // Exact user selection is local configuration, not a mocked service response.
  await page.addInitScript(()=>{if(!localStorage.getItem('atforma-connection-v1'))localStorage.setItem('atforma-connection-v1',JSON.stringify({provider:'codex',model:'gpt-6.1-sol',effort:'high'}));});
  await page.goto(base);await page.locator('.react-flow').waitFor();
+ await page.locator('.model .led.on').waitFor({timeout:45000});
  assert.equal(await page.getByRole('tab',{name:'Design',exact:true}).getAttribute('aria-selected'),'true');
- await page.getByTitle('About AtMem AI Architect').click();await page.getByText('0.2.0-alpha.3',{exact:false}).first().waitFor();await page.getByRole('button',{name:'Close dialog',exact:true}).last().click();
+ await page.getByTitle('About AtMem AI Architect').click();await page.getByText(version,{exact:false}).first().waitFor();await page.getByRole('button',{name:'Close dialog',exact:true}).last().click();
  await page.locator('#project-file-input').setInputFiles(source);await page.getByText('Project opened.',{exact:true}).waitFor();
  await page.getByRole('region',{name:'Architecture journey'}).getByRole('button',{name:'Terraform',exact:true}).click();
  const view=page.getByRole('region',{name:'Terraform',exact:true});await view.getByRole('button',{name:'Continue to Test Terraform →',exact:true}).click();
@@ -33,12 +36,17 @@ try{
  const downloading=page.waitForEvent('download');await view.getByRole('button',{name:'Download Terraform',exact:true}).click();const dl=await downloading,target=path.join(bulk,'validated-terraform.zip');await dl.saveAs(target);
  const files=Object.fromEntries(Object.entries(unzipSync(fs.readFileSync(target))).map(([n,b])=>[n,strFromU8(b)]));const receipt=JSON.parse(files['validation-receipt.json']);
  assert.equal(receipt.status,'passed');assert.equal(receipt.cloudPlan,'not_run');assert.equal(receipt.deployment,'not_run');
+ if(expected.extensions?.externalReferences){
+  const references=JSON.parse(files['existing-references.json']).references,ownership=JSON.parse(files['deployment-ownership.json']);
+  assert.equal(ownership.migrationAuthorized,false);assert.equal(ownership.stateAdoptionSupported,false);
+  for(const ref of expected.extensions.externalReferences.references){assert.deepEqual(references.find(r=>r.id===ref.componentId).identity,ref);assert.deepEqual(ownership.components.find(c=>c.id===ref.componentId).managedAddresses,[]);}
+ }
  for(const [n,digest]of Object.entries(report.fileDigests)){assert(Object.hasOwn(files,n),n);assert.equal(createHash('sha256').update(files[n]).digest('hex'),digest,n);}
  await page.screenshot({path:path.join(bulk,'desktop.png')});await page.setViewportSize({width:390,height:900});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.screenshot({path:path.join(bulk,'mobile.png')});
  await page.reload();await page.locator('.react-flow').waitFor();assert.equal(await page.getByRole('tab',{name:'Design',exact:true}).getAttribute('aria-selected'),'true');
- const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('atforma-workspace-v3')));assert.equal(saved.nodes.length,4);assert.equal(saved.requirements,fromProjectFile(JSON.parse(fs.readFileSync(source))).project.requirements);
+ const saved=await page.evaluate(()=>JSON.parse(localStorage.getItem('atforma-workspace-v3')));assert.equal(saved.nodes.length,expected.nodes.length);assert.equal(saved.requirements,expected.requirements);assert.deepEqual(saved.extensions?.externalReferences,expected.extensions?.externalReferences);
  assert.deepEqual(await page.evaluate(()=>JSON.parse(localStorage.getItem('atforma-connection-v1'))),{provider:'codex',model:'gpt-6.1-sol',effort:'high'});
  assert.equal(submissions,0);assert.deepEqual(errors,[]);
- fs.writeFileSync(path.join(out,'receipt.json'),JSON.stringify({passed:true,base,version:'0.2.0-alpha.3',actualHttp:true,transportFixtures:false,unitMockRuns:tests.reduce((n,c)=>n+c.testsReported,0),modules:tests.map(c=>({id:c.moduleId,path:c.modulePath,tests:c.testsReported})),downloadSha256:createHash('sha256').update(fs.readFileSync(target)).digest('hex'),checkedFileCount:Object.keys(report.fileDigests).length,submissions,errors,bulkArtifacts:bulk,boundary:'Actual installed candidate HTTP service/native Terraform init/schema/unit mocks and digest-matched browser download/reload. No inference, supplied-image runtime, account plan or deployment.'},null,2)+'\n');
+ fs.writeFileSync(path.join(out,'receipt.json'),JSON.stringify({passed:true,base,version,source,actualHttp:true,transportFixtures:false,unitMockRuns:tests.reduce((n,c)=>n+c.testsReported,0),modules:tests.map(c=>({id:c.moduleId,path:c.modulePath,tests:c.testsReported})),downloadSha256:createHash('sha256').update(fs.readFileSync(target)).digest('hex'),checkedFileCount:Object.keys(report.fileDigests).length,submissions,errors,bulkArtifacts:bulk,boundary:'Actual installed candidate HTTP service/native Terraform init/schema/unit mocks and digest-matched browser download/reload. No inference, supplied-image runtime, account plan or deployment.'},null,2)+'\n');
  console.log('Installed candidate actual HTTP, native Terraform, download identity and browser continuity passed.');
 }catch(e){if(page){fs.writeFileSync(path.join(out,'failure.txt'),await page.locator('body').innerText());await page.screenshot({path:path.join(bulk,'failure.png'),fullPage:true});}throw e;}finally{await browser.close();}

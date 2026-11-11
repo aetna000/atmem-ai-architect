@@ -879,3 +879,26 @@ exit0; earlier runs are historical, not additional quality coverage. Evidence:
 evidence/20261112-state-protocol/README.md.521JS/build pass; unchanged429server
 evidence retained. No owner UI/job/account changed. GE-005 and full goal remain
 in progress, including lifecycle/provider parity and frozen runnable alpha.4.
+
+
+### 2026-11-12 — Preserve observed identities without state adoption
+
+Keep bounded full URN/type provenance as versioned external-reference metadata,
+not a native physical ID or management request. Reject malformed/oversized/duplicate
+identities without clipping or choosing owners. Preserve explicit reference even
+with a recorded implementation marker; separate existing source/new deployment
+from an observed cloud object. Derive ownership inventory from actual addresses,
+reject state adoption/move/removal and invalidate review when external identity
+changes. No original client bundle or requirements were rewritten.
+
+Four real service cases and an isolated browser/HTTP/ZIP/reload run pass. The
+first browser attempt clicked before session readiness; v2 waits for the actual
+connected indicator, with no transport mocks or UI changes. Stop only the owned
+test preview afterward. Keep raw bulk artifacts on MEM0. Evidence:
+evidence/20261112-lifecycle-ownership/README.md.
+
+Do not freeze alpha.4 yet: parity review found commercial ARN lowering silently
+accepts AWS China placement. Preserve partition-counterexample.json and repair
+provider partition contracts without substituting a different destination. This
+is actionable generator work, not a user-configuration blocker. GE-005 and full
+objective remain in_progress; three runnable increments and1/28 full originals.

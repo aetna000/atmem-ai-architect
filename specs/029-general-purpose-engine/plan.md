@@ -305,3 +305,13 @@ contract, not their selected-platform behavior; no custody acceptance/gates chan
 See evidence/20261112-state-protocol/README.md. Continue remaining lifecycle/
 reference/import and provider operating-policy parity before frozen alpha.4,
 then the full remaining programme and28/unfamiliar local systems.
+
+
+GE-005 lifecycle provenance checkpoint: exact supported Pulumi URNs/types survive
+project/native context/export; explicit reference markers stay external beside
+new source deployment. Native state adoption/move/removal and forged ownership
+claims are rejected.529JS/build,72 actual service unit mocks and isolated browser
+16 mocks/122 ZIP file hashes pass. See evidence/20261112-lifecycle-ownership/README.md.
+Parity review exposed AWS China placement accepted by commercial ARN templates;
+repair the retained counterexample before freezing alpha.4. No release/full-case
+count changed. Full programme and28/unfamiliar local systems remain required.

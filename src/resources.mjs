@@ -9,6 +9,7 @@ import {structuredApiPlan} from './structured-api.mjs';
 import {azureStructuredPlan} from './azure-structured.mjs';
 import {gcpStructuredPlan} from './gcp-structured.mjs';
 import {existingDeployment} from './deployment-ownership.mjs';
+import {externalIdentity,validateExternalReferences} from './external-identities.mjs';
 import {hasContainers,containerContract} from './container-contracts.mjs';
 import {existingReference} from './existing-references.mjs';
 import {hasCrossCloud,crossCloudPlan} from './cross-cloud-storage.mjs';
@@ -62,10 +63,12 @@ export function resolveService(data) {
 }
 
 export function resourcePlan(project) {
+  validateExternalReferences(project);
  assertDistinctIdentifiers(project.nodes.map(n=>n.id));
  return capabilityCompositionPlan(project,standaloneResourcePlan)||standaloneResourcePlan(project);
 }
 function standaloneResourcePlan(project) {
+  validateExternalReferences(project);
   if(hasInvoice(project))return invoiceResourcePlan(project);
   if(hasCrossCloud(project))return crossCloudPlan(project);
   const nodes = project.nodes.filter((n) => n.data.kind !== "note");
@@ -101,7 +104,7 @@ function standaloneResourcePlan(project) {
   for(const row of rows){
     row.reference=accessPlan.bindings.some(b=>b.id===row.id);
     row.externalReference=row.existing && row.provider==="tools" && nodes.find(n=>n.id===row.id)?.data.binding==="web-browser";
-    row.existingServiceReference=existingReference(nodes.find(n=>n.id===row.id));
+    row.existingServiceReference=existingReference(nodes.find(n=>n.id===row.id),externalIdentity(project,row.id));
     row.containerContract=containerContract(nodes.find(n=>n.id===row.id));
     row.implemented=faqPlan.editorIds.includes(row.id)||faqPlan.componentIds.includes(row.id)||ibmPlan.componentIds.includes(row.id)||googlePlan.componentIds.includes(row.id)||azurePlan.componentIds.includes(row.id)||(structuredPlan.entries.some(e=>e.api.id===row.id)&&browserPlan.entries.some(e=>e.api.id===row.id))||!!row.containerContract||!!row.existingServiceReference||row.externalReference||row.foundation||row.compute||row.reference||browserPlan.componentIds.includes(row.id)||connectorPlan.sources.some(s=>s.id===row.id)||retrievalPlan.componentIds.includes(row.id)||modelPlan.modelIds.includes(row.id)||modelPlan.entries.some(e=>e.worker.id===row.id)||asyncPlan.componentIds.includes(row.id);
     if(faqPlan.componentIds.includes(row.id)){row.costDrivers='Compute and HTTP requests, model input/output tokens, catalog read/write/versioned storage, logs and transfer; verify current regional service/model prices and quotas. Capacity limits are not invoice caps.';row.resources={aws:['aws_lambda_function','aws_apigatewayv2_api','aws_s3_bucket','aws_iam_role'],azure:['azurerm_linux_web_app','azurerm_storage_account','azurerm_storage_container'],gcp:['google_cloud_run_v2_service','google_storage_bucket','google_service_account'],ibm:['ibm_code_engine_app','ibm_cos_bucket','ibm_iam_trusted_profile']}[row.provider];row.terraform='Public-only cited FAQ source, browser, private catalog, separate editor/runtime roles and regional model transport generated; destination behavior unverified';}
