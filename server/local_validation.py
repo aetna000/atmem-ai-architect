@@ -65,8 +65,8 @@ class ValidationSpec:
     timeout_seconds: int = 60
 
     def __post_init__(self):
-        if not re.fullmatch(r'[a-z][a-z0-9_-]{2,79}',self.name):raise ValueError('Invalid trusted validator name')
-        if not re.fullmatch(r'sha256:[a-f0-9]{64}',self.image):raise ValueError('Use a cached immutable image ID')
+        if not isinstance(self.name,str) or not re.fullmatch(r'[a-z][a-z0-9_-]{2,79}',self.name):raise ValueError('Invalid trusted validator name')
+        if not isinstance(self.image,str) or not re.fullmatch(r'sha256:[a-f0-9]{64}',self.image):raise ValueError('Use a cached immutable image ID')
         if self.platform not in {'linux/amd64','linux/arm64'}:raise ValueError('Unqualified container platform')
         if not isinstance(self.command,tuple) or not self.command or not all(isinstance(x,str) and x and '\0' not in x for x in self.command) or not self.command[0].startswith('/'):
             raise ValueError('Register an explicit trusted validator executable/argument vector')
@@ -80,11 +80,14 @@ class DockerValidationWorker:
         if type(max_output_bytes) is not int or not 1024<=max_output_bytes<=1000000:
             raise ValueError('Validator output budget must be bounded')
         self.endpoint,self.binary,self.max_output_bytes=endpoint,binary,max_output_bytes
+        self.policy_digest=hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+        self.identity_digest=hashlib.sha256(endpoint.encode()).hexdigest()
 
-    def run(self, archive, expected_digest, spec: ValidationSpec):
+    def run(self, archive, expected_digest, spec: ValidationSpec, *, execution_id=None, cancel_event=None):
         if not isinstance(archive,bytes) or len(archive)>64000000 or hashlib.sha256(archive).hexdigest()!=expected_digest:
             raise ValueError('Digest-bound artifact bytes are required')
-        ident='atmem-validator-'+uuid.uuid4().hex
+        execution=uuid.UUID(execution_id) if execution_id is not None else uuid.uuid4()
+        ident='atmem-validator-'+execution.hex
         started=time.monotonic()
         with tempfile.TemporaryDirectory(prefix='atmem-validator-control-') as folder:
             config=Path(folder)/'docker';config.mkdir()
@@ -117,6 +120,7 @@ class DockerValidationWorker:
                 writer=threading.Thread(target=send,daemon=True);writer.start()
                 try:
                     while process.poll() is None:
+                        if cancel_event is not None and cancel_event.is_set():reason='cancelled';break
                         if time.monotonic()-started>spec.timeout_seconds:reason='timeout';break
                         if log.stat().st_size>self.max_output_bytes:reason='output_limit';break
                         time.sleep(.05)
@@ -149,3 +153,26 @@ class DockerValidationWorker:
                 'outputTruncated':truncated,'durationSeconds':round(time.monotonic()-started,3),
                 'evidenceLevel':'local_container_check','cloudOperations':False,
                 'boundary':'Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance.'}
+
+    def recover(self, execution_id):
+        """Remove only this journaled validator container after supervisor loss.
+
+        A failed daemon query is uncertainty, not proof the prior work stopped.
+        Never replay a check as part of recovery.
+        """
+        name='atmem-validator-'+uuid.UUID(execution_id).hex
+        with tempfile.TemporaryDirectory(prefix='atmem-validator-recover-') as folder:
+            config=Path(folder)/'docker';config.mkdir();(config/'config.json').write_text('{}')
+            env={'PATH':os.environ.get('PATH',''),'HOME':folder,'DOCKER_CONFIG':str(config),'DOCKER_HOST':self.endpoint}
+            prefix=[self.binary,'--host',self.endpoint,'--config',str(config)]
+            def present():
+                result=subprocess.run([*prefix,'container','ls','-a','--filter',f'name=^/{name}$','--format','{{.Names}}'],env=env,capture_output=True,text=True,timeout=15)
+                if result.returncode:raise RuntimeError('Validator cleanup could not be confirmed')
+                names=result.stdout.splitlines()
+                if names not in ([],[name]):raise RuntimeError('Unexpected validator recovery result')
+                return bool(names)
+            if present():
+                result=subprocess.run([*prefix,'rm','-f',name],env=env,capture_output=True,timeout=15)
+                if result.returncode:raise RuntimeError('Validator cleanup could not be confirmed')
+            if present():raise RuntimeError('Validator cleanup could not be confirmed')
+        return {'cleanupConfirmed':True,'workReplayed':False}

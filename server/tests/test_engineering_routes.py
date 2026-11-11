@@ -28,7 +28,8 @@ class EngineeringRouteTests(unittest.TestCase):
         self.home.stop();self.settings.stop();self.temp.cleanup()
 
     def test_every_native_endpoint_requires_local_token(self):
-        for endpoint in ['create','list','state','events','start','recover','steer','interrupt','capture','download']:
+        for endpoint in ['create','list','state','events','start','recover','steer','interrupt','capture','download',
+                         'artifacts','validators','validation/start','validation/list','validation/get','validation/recover']:
             self.assertEqual(self.client.post('/api/engineering/'+endpoint,json={}).status_code,401)
 
     def test_cross_origin_and_rebinding_denied(self):
@@ -85,3 +86,27 @@ class EngineeringRouteTests(unittest.TestCase):
             self.assertEqual(response.headers['cache-control'],'no-store')
             service.return_value.artifacts.get.side_effect = SessionError('Artifact is unavailable for this project and session')
             self.assertEqual(self.client.post('/api/engineering/download',json={**self.payload,'artifactId':self.session},headers=self.headers).status_code,409)
+
+    def test_validation_accepts_only_registered_id_and_scoped_artifact(self):
+        payload={**self.payload,'artifactId':self.session,'validatorId':'python-tests'}
+        with patch.object(routes,'service') as service:
+            checks=service.return_value.validation_service.return_value
+            checks.start=AsyncMock(return_value={'id':self.session,'state':'queued'})
+            response=self.client.post('/api/engineering/validation/start',json=payload,headers=self.headers)
+            self.assertEqual(response.status_code,200)
+            checks.start.assert_awaited_once_with(ProjectScope('local-owner',self.project),self.session,self.session,'python-tests',retry=False)
+            checks.start.reset_mock()
+            for extra in [{'command':['sh','-c','anything']},{'image':'python:latest'},{'endpoint':'tcp://host:2375'},{'retry':'true'}]:
+                self.assertEqual(self.client.post('/api/engineering/validation/start',json={**payload,**extra},headers=self.headers).status_code,422)
+            checks.start.assert_not_awaited()
+
+    def test_validation_scope_and_worker_errors_never_fall_back_or_leak(self):
+        with patch.object(routes,'service') as service:
+            service.return_value.store.get.side_effect=SessionError('Unavailable for this project')
+            response=self.client.post('/api/engineering/validators',json=self.payload,headers=self.headers)
+            self.assertEqual(response.status_code,409);service.return_value.validation_service.assert_not_called()
+            service.return_value.store.get.side_effect=None
+            checks=service.return_value.validation_service.return_value
+            checks.start=AsyncMock(side_effect=RuntimeError('/private/daemon/credential'))
+            response=self.client.post('/api/engineering/validation/start',json={**self.payload,'artifactId':self.session,'validatorId':'python-tests'},headers=self.headers)
+            self.assertEqual(response.status_code,409);self.assertNotIn('/private',response.text)

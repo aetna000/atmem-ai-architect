@@ -192,3 +192,30 @@ synthetic identity/model transports, not complete provider/identity/browser/syst
 acceptance. Cached runtime is Linux Python 3.13.18; do not claim the emitted Python 3.12
 managed runtime/SDK has been tested. Record the probe's zero-test expectation correction
 and preserve its failed receipt. No original project or release is accepted.
+
+### Artifact validation jobs and visible, scoped evidence
+
+Connect the isolated executor through a separate durable artifact-check supervisor;
+do not give the model Docker access or a browser command/image/daemon selector.
+Authorize project/session/artifact IDs, verify stored bytes and bind receipts to
+artifact, validator, executor-policy and worker-identity digests. Deduplicate active
+checks and require explicit retry for finished work. On restart preserve uncertainty,
+confirm cleanup on the original worker and never silently replay it. Shutdown waits
+for bounded cancellation/cleanup. Hosted transactional leases remain future work.
+
+Expose catalog/start/list/get/recover through the existing authenticated local API.
+Restore captured packages/checks in the UI, retain historical definitions and older
+turns, keep skipped/zero-test status visible, and download a separate check report.
+Do not promote generated-test execution into independent or full-project acceptance.
+Missing optional validator access must not prevent native generation.
+
+Current evidence: 374 JS and 323 server tests with no skips, fixture UI lifecycle and
+strict registration/ownership tests, six actual executor probes, exact-container
+cancellation/recovery with peer preservation, and an actual browser/native/package/
+isolated-check workflow. The live module has 12 generated tests and 15 independent
+downloaded-code checks. Native read-only history proves a successful complete pinned
+skill read and one accepted gpt-6.1-sol/high run. Preserve the ambiguous test locator
+failure and development-HMR observation failure; the native run continued and was
+resumed rather than regenerated. No original system or release is accepted. Next
+qualify a fresh uncoached architecture/Terraform/application brief through this path
+and integrate reviewed knowledge plus validation/repair ownership at engine level.

@@ -84,6 +84,14 @@ with no established specialized advantage. The independent original count remain
 Terraform and actual local block/connection/system behavior before offering alpha.1.
 The running implementation preview on port 5274 is not an accepted/versioned release.
 
+The isolated validator is now connected to project-scoped durable artifact jobs and
+the Engineering UI (`evidence/20261111-validation-jobs/`). Real browser generation,
+capture, isolated tests, report download and reopening were exercised, including native
+continuity through an unintended development reload. The current module test transfer
+and actual pinned-skill read do not replace uncoached architecture/Terraform/system
+qualification. Complete that gate and relevant knowledge/repair ownership next; do not
+spend further iterations only polishing transport or growing scenario recipes.
+
 Initial cross-layer source review, four composition counterexamples and a two-turn
 uncoached conversation diagnostic were recorded before this checkpoint. Native-session
 transport has progressed into the qualified local product paths described above;

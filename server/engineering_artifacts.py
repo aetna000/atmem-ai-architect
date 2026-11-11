@@ -119,3 +119,8 @@ class EngineeringArtifacts:
         if row is None:
             raise SessionError('Artifact is unavailable for this project and session')
         return json.loads(row['manifest']), bytes(row['archive'])
+
+    def manifests(self,scope,session):
+        self.store.get(scope,session)
+        rows=self.db.execute('SELECT manifest FROM engineering_artifacts WHERE session=? ORDER BY rowid DESC LIMIT 20',(session,)).fetchall()
+        return [json.loads(row['manifest']) for row in rows]

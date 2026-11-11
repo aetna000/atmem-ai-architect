@@ -17,6 +17,8 @@ from .codex_worker_policy import CodexWorkerClient, PROFILE
 from .engineering_artifacts import EngineeringArtifacts
 from .engineering_jobs import EngineeringJobs
 from .engineering_sessions import EngineeringSessions, ModelSelection, ProjectScope, SessionError, SqliteSessionStore
+from .local_validation import DockerValidationWorker
+from .validation_jobs import ValidationJobs,registered_validators
 from .settings import home, setting
 
 router = APIRouter(prefix='/api/engineering')
@@ -48,6 +50,15 @@ class ArtifactRequest(SessionRequest):
     artifactId: str = Field(pattern=r'^[a-f0-9-]{36}$')
 
 
+class StartValidationRequest(ArtifactRequest):
+    validatorId: str = Field(pattern=r'^[a-z][a-z0-9_-]{2,79}$')
+    retry: bool = Field(default=False,strict=True)
+
+
+class ValidationJobRequest(SessionRequest):
+    checkId: str = Field(pattern=r'^[a-f0-9-]{36}$')
+
+
 def local_scope(project):
     # Local token holder owns saved projects. Browser tenant claims are forbidden.
     path = home()/'projects'/f'{project}.atforma.json'
@@ -73,6 +84,7 @@ class LocalEngineeringService:
             if (name=='providerMirror' and not path.is_dir()) or (name!='providerMirror' and not path.is_file()):
                 raise RuntimeError('A registered local tool or provider mirror is unavailable')
             self.toolchain[name] = str(path)
+        validators=registered_validators(json.loads(setting('ENGINEERING_VALIDATORS') or '[]'))
         control = home()/'engineering'
         control.mkdir(parents=True, exist_ok=True, mode=0o700)
         self.store = SqliteSessionStore(control/'control.sqlite')
@@ -96,7 +108,15 @@ Keep final progress concise and explain any remaining work.''')
         self.sessions = EngineeringSessions(self.store,self.backend)
         self.jobs = EngineeringJobs(self.sessions)
         self.artifacts = EngineeringArtifacts(self.store)
+        self.validator_endpoint=setting('ENGINEERING_VALIDATOR_ENDPOINT')
+        self.checks=ValidationJobs(self.store,self.artifacts,None,validators)
         self.create_lock = asyncio.Lock()
+
+    def validation_service(self):
+        if self.checks.worker is None and self.validator_endpoint:
+            try:self.checks.worker=DockerValidationWorker(self.validator_endpoint)
+            except ValueError:pass
+        return self.checks
 
     async def create(self, scope, project_path, selection):
         async with self.create_lock:
@@ -130,6 +150,7 @@ Keep final progress concise and explain any remaining work.''')
             return state
 
     async def close(self):
+        await self.checks.close()
         await self.jobs.close()
         self.store.close()
 
@@ -184,6 +205,7 @@ async def action(payload, kind):
     worker = service()
     try:
         if kind == 'state': return worker.jobs.state(scope,payload.sessionId)
+        if kind == 'artifacts':return {'artifacts':worker.artifacts.manifests(scope,payload.sessionId)}
         if kind == 'events':
             return {'events':worker.jobs.journal.read(scope,payload.sessionId,payload.after),
                     'session':worker.jobs.state(scope,payload.sessionId)}
@@ -233,3 +255,33 @@ async def interrupt(payload: SessionRequest): return await action(payload,'inter
 async def capture(payload: SessionRequest): return await action(payload,'capture')
 @router.post('/download')
 async def download(payload: ArtifactRequest): return await action(payload,'download')
+
+
+async def validation_action(payload,kind):
+    available()
+    scope,_=local_scope(payload.projectId)
+    worker=service()
+    try:
+        worker.store.get(scope,payload.sessionId)
+        checks=worker.validation_service()
+        if kind=='catalog':return {'validators':checks.catalog(),'available':checks.worker is not None}
+        if kind=='start':return await checks.start(scope,payload.sessionId,payload.artifactId,payload.validatorId,retry=payload.retry)
+        if kind=='list':return {'checks':checks.list(scope,payload.sessionId,payload.artifactId)}
+        if kind=='get':return checks.get(scope,payload.sessionId,payload.checkId)
+        if kind=='recover':return await checks.recover(scope,payload.sessionId,payload.checkId)
+    except SessionError as error:raise HTTPException(409,str(error)) from None
+    except Exception:raise HTTPException(409,'Local checks are unavailable. The package is retained; no check was inferred to pass.') from None
+
+
+@router.post('/artifacts')
+async def artifacts(payload: SessionRequest):return await action(payload,'artifacts')
+@router.post('/validators')
+async def validators(payload: SessionRequest):return await validation_action(payload,'catalog')
+@router.post('/validation/start')
+async def start_validation(payload: StartValidationRequest):return await validation_action(payload,'start')
+@router.post('/validation/list')
+async def list_validations(payload: ArtifactRequest):return await validation_action(payload,'list')
+@router.post('/validation/get')
+async def get_validation(payload: ValidationJobRequest):return await validation_action(payload,'get')
+@router.post('/validation/recover')
+async def recover_validation(payload: ValidationJobRequest):return await validation_action(payload,'recover')

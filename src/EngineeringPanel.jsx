@@ -1,6 +1,7 @@
 import React,{useEffect,useRef,useState} from 'react';
 import {engineeringCall,mergeEngineeringEvents,verifiedEngineeringDownload} from './engineering-client.mjs';
 import './engineering.css';
+import {ArtifactChecks} from './ArtifactChecks.jsx';
 
 export function EngineeringPanel({projectId,session,connection,saveProject,onConnections}){
   const draftKey=`atmem-engineering-draft-v1:${projectId}`;
@@ -11,6 +12,14 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
   const live=useRef(true),cursor=useRef(0),actionLock=useRef(false);
   useEffect(()=>{live.current=true;return()=>{live.current=false;};},[]);
   const call=(action,payload={},options)=>engineeringCall(session,action,{projectId,...(job?{sessionId:job.id}:{}),...payload},options);
+  useEffect(()=>{
+    if(!job)return;
+    const controller=new AbortController();let stopped=false;
+    engineeringCall(session,'artifacts',{projectId,sessionId:job.id},{signal:controller.signal}).then(result=>{
+      if(!stopped)setArtifact(result.artifacts.find(item=>item.runId===job.run)||result.artifacts[0]||null);
+    }).catch(e=>{if(!stopped&&e.name!=='AbortError')setError(e.message);});
+    return()=>{stopped=true;controller.abort();};
+  },[job?.id,projectId,session.token]);
   useEffect(()=>{
     const controller=new AbortController();let stopped=false;
     (async()=>{try{
@@ -68,7 +77,9 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
       {messages&&<pre className="engineering-message">{messages}</pre>}
       <details><summary>Engineering progress ({events.length})</summary><ol>{events.filter(event=>event.kind!=='message').map(event=><li key={event.sequence}>{event.kind}{event.text?` · ${event.text}`:''}</li>)}</ol></details>
       {artifact&&<div className="engineering-artifact"><p>Implementation draft · {artifact.files.filter(file=>file.kind==='file').length} files · turn {artifact.turnStatus}. Checks are not independently verified.</p>
+        {artifact.runId!==job.run&&<p>This package is from an earlier turn. It does not cover the current work.</p>}
         <button disabled={busy} onClick={()=>act(async()=>{const blob=await verifiedEngineeringDownload(session,{projectId,sessionId:job.id,artifactId:artifact.id},artifact);const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=`engineering-${artifact.id}.zip`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);})}>Download package</button>
+        <ArtifactChecks key={artifact.id} session={session} projectId={projectId} sessionId={job.id} artifact={artifact}/>
       </div>}
     </>}
     {error&&<p role="alert">{error}</p>}

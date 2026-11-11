@@ -12,7 +12,7 @@ import zipfile
 ROOT=Path(__file__).resolve().parents[2];sys.path.insert(0,str(ROOT))
 from server.local_validation import DockerValidationWorker,ValidationSpec
 
-OUT=ROOT/'specs/029-general-purpose-engine/evidence/20261111-local-validator'
+OUT=Path(os.getenv('ATMEM_ENGINEERING_EVIDENCE_DIR',str(ROOT/'specs/029-general-purpose-engine/evidence/20261111-local-validator')))
 OUT.mkdir(parents=True,exist_ok=True)
 IMAGE='sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20'
 ENDPOINT='unix://'+str(Path.home()/'.colima/architect-qualification/docker.sock')
