@@ -4,7 +4,7 @@ import {BrainActivity} from "./BrainActivity.jsx";
 import React,{useState} from 'react';
 import {Play,Square,BrainCircuit,Repeat2,Download,ChevronDown,X,CheckCircle2,AlertCircle,HelpCircle,Sparkles} from 'lucide-react';
 import {emulationFeedback,emulationEvidenceSummary} from './emulation-feedback.mjs';
-export function EmulationPanel({project,session,emulation,onDiscuss,discussionBusy=false,onOpenComponent,onClose}){
+export function EmulationPanel({project,session,emulation,onDiscuss,discussionBusy=false,onOpenComponent,onClose,onBuild}){
  const {result,previous,running}=emulation;
  const [expanded,setExpanded]=useState(false),[taskError,setTaskError]=useState('');
  const guidance=emulationGuidance(project,result);
@@ -28,7 +28,7 @@ export function EmulationPanel({project,session,emulation,onDiscuss,discussionBu
   <div className="emulation-track" aria-label="Emulation progress"><span className={running?'current':result?'complete':''}>Test</span><i/><span className={thinking?'current':''}>Review</span><i/><span>Improve</span><i/><span>Retest</span></div>
   {running&&<div className="emulation-progress" role="progressbar" aria-label="Running local checks"><span/></div>}
   <p className="emulation-caption">{running?'Checking the generated code. Keep exploring the diagram.':thinking?'Your architect is working through the evidence in chat.':guidance?guidance.reason:result?emulationEvidenceSummary(result):'Play runs local checks on this architecture. No cloud deployment.'}</p>
-  {guidance&&!running&&!thinking&&<div className="emulation-next-step"><p><strong>Next:</strong> {guidance.next}</p>{guidance.owner==='engineering'?<button className="btn primary" onClick={saveTask}>Prepare repair task</button>:guidance.needsModel?<button className="btn primary" disabled={discussionBusy} onClick={()=>onDiscuss?.(result,'correction')}>Work through this with Architect</button>:<button className="btn ghost" onClick={()=>setExpanded(true)}>See test details</button>}{guidance.componentId&&onOpenComponent&&<button className="link" onClick={()=>onOpenComponent(guidance.componentId)}>Review affected block</button>}{taskError&&<p role="alert">{taskError}</p>}</div>}
+  {guidance&&!running&&!thinking&&<div className="emulation-next-step"><p><strong>Next:</strong> {guidance.next}</p>{guidance.action==='build-and-test'&&onBuild?<button className="btn primary" disabled={discussionBusy} onClick={onBuild}>Build and test this design</button>:guidance.owner==='engineering'?<button className="btn primary" onClick={saveTask}>Prepare repair task</button>:guidance.needsModel?<button className="btn primary" disabled={discussionBusy} onClick={()=>onDiscuss?.(result,'correction')}>Work through this with Architect</button>:<button className="btn ghost" onClick={()=>setExpanded(true)}>See test details</button>}{guidance.componentId&&onOpenComponent&&<button className="link" onClick={()=>onOpenComponent(guidance.componentId)}>Review affected block</button>}{taskError&&<p role="alert">{taskError}</p>}</div>}
   {emulation.retestLimitReached&&<p role="status">Two automatic retests are complete. Review the latest correction, then choose Emulate locally to continue.</p>}
   {expanded&&<div className="emulation-evidence">
    <p>Mentoring {emulation.coach?'on':'off'} · Automatic retests {emulation.autoRetest?'on':'off'}. Changes follow Draw as we talk and remain undoable.</p>

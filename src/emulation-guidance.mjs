@@ -11,14 +11,14 @@ export function emulationGuidance(project,report){
  if(plan&&!plan.rows.length)return {...base,reason:'There is no system drawn yet.',next:'Describe what you want to build so Architect can draw a first design.',owner:'user'};
  const browserIds=new Set((project?.nodes||[]).filter(n=>n.data.origin==='existing'&&n.data.provider==='tools'&&!n.data.binding&&/\bbrowser\b/i.test(n.data.label)).map(n=>n.id));
  const missing=plan?.rows.find(r=>!r.implemented&&!browserIds.has(r.id));
- if(missing)return {...base,reason:`Architect hasn’t implemented a testable version of ${missing.label} yet.`,next:'Architect’s generator needs an implementation fix before this test can run.',componentId:missing.id};
+ if(missing)return {...base,title:'Build the implementation to run its tests',reason:`${missing.label} is designed, but its application implementation has not been built by the current design compiler.`,next:'Build and test the saved design. Architect will implement the application and its connections, then show the local check results in Build.',action:'build-and-test',componentId:missing.id};
  if(browserIds.size)return {...base,reason:'The browser needs to be marked as an external client.',next:'Architect can propose that small correction, then try the test again.',owner:'architect',needsModel:true,componentId:[...browserIds][0]};
  const access=plan?.gapDetails.find(g=>g.id.startsWith('access-'));
  if(access)return {...base,reason:'An access rule is missing.',next:'Confirm who should be allowed to use this block; Architect can add the rule.',owner:'user',needsModel:true,componentId:access.componentIds?.[0]};
  const connection=plan?.connections.find(e=>!e.generated);
- if(connection)return {...base,reason:'The connections between the application’s parts are not implemented yet.',next:'Architect needs to generate and test those connections before this test can run.',componentId:connection.source};
+ if(connection)return {...base,reason:'The connections between the application’s parts are not implemented yet.',next:'Build and test the saved design to implement its connections and run local checks.',action:'build-and-test',componentId:connection.source};
  const container=project?.nodes.find(containerContract);
- if(container)return {...base,reason:`${container.data.label} has infrastructure defined, but no supported local application test yet.`,next:'Connect the application to a supported local test setup, then run its checks.',componentId:container.id};
+ if(container)return {...base,reason:`${container.data.label} has infrastructure defined, but no supported local application test yet.`,next:'Build and test the saved design with its supplied image and local checks.',action:'build-and-test',componentId:container.id};
  return base;
 }
 export function guidanceMessage(guidance){

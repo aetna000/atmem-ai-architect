@@ -19,3 +19,7 @@ test('saved history is not truncated to the model context window and is isolated
  assert.equal(conversationMessages(first).length,40);assert.equal(conversationMessages(second)[0].text,'Other project');
  assert.notEqual(first.id,second.id);
 });
+
+test('public activity response association survives save without changing raw reply or exposing attachments',()=>{
+ const activityId='00000000-0000-4000-8000-000000000001',messages=[{role:'assistant',text:'Exact reply',activityId}];assert.deepEqual(conversationMessages(withConversation(emptyProject(),messages)),messages);
+});

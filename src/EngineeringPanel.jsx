@@ -4,7 +4,7 @@ import {engineeringCall,engineeringConversation,mergeEngineeringEvents,verifiedE
 import './engineering.css';
 import {ArtifactChecks} from './ArtifactChecks.jsx';
 import {verifyArtifactWork} from './artifact-work.mjs';
-import {hasArchitectureDesign,buildIntent} from './design-build-flow.mjs';
+import {hasArchitectureDesign,buildIntent,BUILD_AND_TEST_REQUEST} from './design-build-flow.mjs';
 
 export function EngineeringPanel({projectId,session,connection,saveProject,onConnections,project,onWorkModelChange,onIntentContext,onDesign,buildRequest,onBuildRequestHandled,contextBusy=false}){
   const draftKey=`atmem-engineering-draft-v1:${projectId}`;
@@ -86,7 +86,7 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
     if(!buildRequest||buildRequest.projectId!==projectId||consumedBuild.current===buildRequest.id||loading||contextBusy)return;
     consumedBuild.current=buildRequest.id;onBuildRequestHandled?.(buildRequest.id);
     if(uncertain){setError('Recover the existing request before building the changed design. No new work was submitted.');return;}
-    submitIntent(null,buildIntent(project,''));
+    submitIntent(null,buildRequest.intent==='test'?BUILD_AND_TEST_REQUEST:buildIntent(project,''));
   },[buildRequest,projectId,loading,contextBusy,uncertain,job?.id]);
   async function linkMappings(){
     const result=await call('reconciliation',{artifactId:artifact.id});

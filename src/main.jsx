@@ -2,8 +2,8 @@ import {synchronizeEngineeringIntent,applyArchitectureChange} from './architectu
 import {applyArtifactWork} from './artifact-work.mjs';
 import {ArchitectureWorkPanel} from './ArchitectureWorkPanel.jsx';
 import {hasArchitectureDesign} from './design-build-flow.mjs';
-import {ArchitectureActivity} from './ArchitectureActivity.jsx';
-import {recordArchitectureTurn,finishArchitectureTurn} from './architecture-activity.mjs';
+import {ArchitectureTurn} from './ArchitectureActivity.jsx';
+import {recordArchitectureTurn,finishArchitectureTurn,architectureConversation} from './architecture-activity.mjs';
 import {version as appVersion} from "../package.json";
 import {restoreQueuedMessages,nextIntakeBatch,restoreIntakePaused} from './work-intake.mjs';
 import {emulationGuidance,guidanceMessage} from './emulation-guidance.mjs';
@@ -702,10 +702,10 @@ function App() {
   const buildView=!!session?.engineeringEnabled&&workspaceView==='build';
   const hasDesign=hasArchitectureDesign(project);
   function chooseWorkspace(value){setWorkspaceView(value);}
-  function buildCurrentDesign(){
+  function buildCurrentDesign(intent){
     if(!hasArchitectureDesign(projectRef.current)||busy||agentBusy||pending)return;
     if(connection?.provider!=='codex'||!connection.model||connection.model==='default'||!connection.effort){setModal('connections');return;}
-    setBuildRequest({id:crypto.randomUUID(),projectId:projectRef.current.id});chooseWorkspace('build');
+    setBuildRequest({id:crypto.randomUUID(),projectId:projectRef.current.id,...(intent==='test'?{intent:'test'}:{})});chooseWorkspace('build');
   }
 
   useEffect(()=>{saveCanvasView(project,{level,focus,selected,positions:topologyPositions});},[project.id,level,focus,selected,topologyPositions]);
@@ -1196,7 +1196,7 @@ function App() {
     setChatOpen(true);
     const guidance=emulationGuidance(projectRef.current,report);
     if(guidance&&!guidance.needsModel){
-      setMessages(m=>[...m,{role:'assistant',text:guidanceMessage(guidance)}]);
+      const text=guidanceMessage(guidance);setMessages(m=>m.at(-1)?.role==='assistant'&&m.at(-1)?.text===text?m:[...m,{role:'assistant',text}]);
       return;
     }
     if(intent!=='coach')setMessages(m=>[...m,{role:'user',text:'Help me with the next test step.'}]);
@@ -1249,7 +1249,7 @@ function App() {
     const activityId=session.architectureActivityEnabled?crypto.randomUUID():null;
     try {
       if(activityId){
-        const next=recordArchitectureTurn(projectRef.current,requestProject,{id:activityId,provider:connection.provider,model:connection.model,effort:connection.effort,origin,startedAt:new Date().toISOString()});
+        const next=recordArchitectureTurn(projectRef.current,requestProject,{id:activityId,provider:connection.provider,model:connection.model,effort:connection.effort,origin,requestIds:[...requestIds],startedAt:new Date().toISOString()});
         toProjectFile(next);
         updateEngagement(next);
       }
@@ -1279,7 +1279,7 @@ function App() {
       if(intakeRef.current.some(q=>q.projectId===requestProject)){
         carryIntent.current={projectId:requestProject,text:carryIntent.current?.projectId===requestProject?carryIntent.current.text:message};
         setRequestState(requestIds,'superseded');
-        setMessages(m=>[...m,{role:'assistant',text:'I’ve kept your updates. I’m combining them before changing the design.'}]);
+        setMessages(m=>[...m,{role:'assistant',text:'I’ve kept your updates. I’m combining them before changing the design.',...(activityId?{activityId}:{})}]);
         return;
       }
       carryIntent.current=null;
@@ -1320,7 +1320,7 @@ function App() {
         try {updateEngagement(applyComponentReview(projectRef.current,reviewTarget,result.componentReview));signals.push('block review and linked questions recorded');}
         catch(error){notify(error.message);}
       }
-      setMessages((m) => [...m, { role: "assistant", text: origin==="emulation"?groundEmulationMessage(emulation.result,result.message,projectRef.current):result.message, live: true, signals, contextUsed: result.contextUsed }]);
+      setMessages((m) => [...m, { role: "assistant", ...(activityId?{activityId}:{}), text: origin==="emulation"?groundEmulationMessage(emulation.result,result.message,projectRef.current):result.message, live: true, signals, contextUsed: result.contextUsed }]);
       if (result.proposal && !["document","block-review"].includes(origin)) {
         const proposal = { ...result.proposal, next: validateImport(result.proposal.next), ...(origin==="emulation"?{emulationCorrection:true}:{}) };
         if(origin==="emulation")guardEmulationCorrection(was,proposal.next);
@@ -1337,8 +1337,8 @@ function App() {
       setMessages((m) => [
         ...m,
         error.name === "AbortError"
-          ? { role: "assistant", text: "Stopped. Nothing on the board changed." }
-          : { role: "assistant", text: `Hmm, that didn't work: ${error.message}`, fix: /connect|sign|model|running|service|failed|limit/i.test(error.message) },
+          ? { role: "assistant", ...(activityId?{activityId}:{}), text: "Stopped. Nothing on the board changed." }
+          : { role: "assistant", ...(activityId?{activityId}:{}), text: `Hmm, that didn't work: ${error.message}`, fix: /connect|sign|model|running|service|failed|limit/i.test(error.message) },
       ]);
     } finally {
       if (agentAbort.current === controller) {
@@ -2201,7 +2201,7 @@ function App() {
 
 
 
-        {onBoard&&emulationOpen&&<div className="emulation-dock"><EmulationPanel project={project} session={session} emulation={emulation} onDiscuss={discussEmulation} onOpenComponent={id=>{reviewBlock(id);setEmulationOpen(false);}} discussionBusy={busy||agentBusy||!!pending} onClose={()=>setEmulationOpen(false)}/></div>}
+        {onBoard&&emulationOpen&&<div className="emulation-dock"><EmulationPanel project={project} session={session} emulation={emulation} onDiscuss={discussEmulation} onOpenComponent={id=>{reviewBlock(id);setEmulationOpen(false);}} discussionBusy={busy||agentBusy||!!pending} onClose={()=>setEmulationOpen(false)} onBuild={session?.engineeringEnabled?()=>{setEmulationOpen(false);buildCurrentDesign('test');}:undefined}/></div>}
 
         {mode === "design" && designView === "outputs" && <OutputsView project={project} run={run} environment={environment} session={session} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onDownload={downloadBundle} onBack={()=>setDesignView("board")} />}
         {mode === "design" && designView === "terraform" && <TerraformView project={project} environment={environment} session={session} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onDownload={exportTerraform} onBack={()=>setDesignView("board")} />}
@@ -2285,7 +2285,11 @@ function App() {
           )}
           <div className="messages" ref={chatScroll.viewport}>
             <div className="message-list" ref={chatScroll.content}>
-            {messages.map((m, i) => (
+            {architectureConversation(project,messages).map(entry=>{
+              if(entry.kind==='activity-error')return <p key="activity-error" role="alert">{entry.error}</p>;
+              if(entry.kind==='activity')return <ArchitectureTurn key={project.id+':'+entry.turn.id} turn={entry.turn} number={entry.number} projectId={project.id} session={session} active={agentBusy&&entry.turn.clientStatus==='submitted'} working={agentBusy&&entry.turn.clientStatus==='submitted'}/>;
+              const m=entry.message,i=entry.index;
+              return (
               <div key={i} className={`msg ${m.role}`}>
                 <ChatMessage text={m.text}/>
                 {(m.workState==='queued'||m.workState==='processing'&&intake.some(q=>q.id===m.requestId))&&<small className="message-work-state">Queued for the next update <button className="link" onClick={()=>{updateIntake(intakeRef.current.filter(q=>q.id!==m.requestId));setRequestState([m.requestId],'cancelled');}}>Remove from queue</button><button className="link" onClick={()=>{if(input||attachments.length){notify('Your current draft is preserved. Send or clear it before editing a queued update.');return;}const queued=intakeRef.current.find(q=>q.id===m.requestId);if(!queued)return;setInput(queued.text);setAttachments(queued.attachments);updateIntake(intakeRef.current.filter(q=>q.id!==m.requestId));setRequestState([m.requestId],'cancelled');}}>Edit update</button>{m.attachments?.some(a=>!a.data)&&<button className="link" onClick={()=>{updateIntake(intakeRef.current.map(q=>q.id===m.requestId?{...q,attachments:[]}:q));setIntakePaused(false);}}>Continue with text only</button>}</small>}
@@ -2304,7 +2308,7 @@ function App() {
                 )}
                 {m.contextUsed && <ContextUsed value={m.contextUsed} />}
               </div>
-            ))}
+            );})}
             {pending && diff && (
               <div className="proposal">
                 <strong>{pending.title}</strong>
@@ -2333,7 +2337,6 @@ function App() {
             )}
             </div>
           </div>
-          <ArchitectureActivity key={project.id} project={project} session={session} busy={agentBusy}/>
           {!!intake.filter(q=>q.projectId===project.id).length&&<div className="intake-status" role="status">{intake.filter(q=>q.projectId===project.id).length} update(s) {intakePaused?'saved · paused':'queued · combining next'}{intakeIssue&&<span> {intakeIssue}</span>}{intakePaused&&<button className="link" onClick={()=>setIntakePaused(false)}>Resume</button>}</div>}
           <div className="prompts">
             {mode === "design" && brief(project) && ask && (
