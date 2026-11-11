@@ -1217,3 +1217,15 @@ frontend module/import URLs are hotfixed; owner backend/projects and CSS untouch
 See evidence/20261112-proposal-subject/README.md. Owner retry is pending. This earns
 no new increment; independent Azure receiving-image build completed on MEM0 but
 its connected oracle remains unexecuted and must not be counted as acceptance.
+
+GE-006 receiving Azure checkpoint: actual unchanged offline AMD64 image verifies
+36 runtime pins/172 exact files and10 independent connected HTTP/SQL/queue/UID/
+review/TLS/unknown-restart/revocation groups with fixture cleanup. Independent
+native Azure schema/5 mock plans pass on unchanged configuration. Synthetic
+JWKS/SQL/CA/mock outputs and root-supervisor capability boundaries are explicit.
+Failed evaluator setup attempts are preserved. Seven frozen criteria remain
+partially supported, not full acceptance; missing races/config/recovery/native
+graph/runbook/rollback and generic SDK adaptations stay pending. See native-azure-
+labels/assessment-v2.json. Next repair generic Unicode persistence and review
+inspection/child policies without domain imports, then Google/IBM transfers and
+alpha.5. Four offered increments/1-of28/owner0/unknown quality remain unchanged.

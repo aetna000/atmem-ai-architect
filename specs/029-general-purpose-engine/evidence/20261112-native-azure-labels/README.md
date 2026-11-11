@@ -101,3 +101,53 @@ This establishes domain/child components only. Revision persistence, HTTP/live
 identity/SQL/queue/publication/recovery/provider composition and receiving OCI
 startup still require independent connected checks. The preceding pending steps
 are narrowed only by this evidence; no whole-system/original28/release promotion.
+
+## Independent receiving image and connected checkpoint
+
+The receiving engineer's unchanged Dockerfile now builds offline against the
+reviewed pinned Python3.13.18 Linux AMD64 descriptor, using only its shipped wheels
+and exact hashes. `receiving-image-v1.json` identifies actual image de096e0e. All
+172 exported files still match archive22d35c9d; all172 build inputs are unchanged.
+The actual image verifies36 installed runtime pins and exact Python/schema/locks.
+
+`check-image.py` and `run-image.py` are independent evaluator source, not generated
+tests. `connected-image-v1.json` records10 connected groups: real production
+API/worker assembly, Uvicorn HTTP, restricted PostgreSQL17 roles, durable queue,
+processing/publication children,8 frozen valid/14 invalid inputs, concurrent4
+idempotency/conflicts, identity/role/ownership denials, reviewer edit/revision/
+inspection binding and exact TLS payload, unknown no-replay across worker restart,
+and live membership revocation. An additional trusted ProcessStage probe observes
+distinct65534/65533 child identities, no supplementary groups/effective capabilities,
+no-new-privileges, denied supervisor-environment reads, no SQL keys and dispatch-only
+publication credentials. It does not replace the real app processing child.
+
+Only native JWKS, disposable local SQL connections and a synthetic loopback CA are
+injected at the owned constructor boundary; actual factories and child source run.
+The image's root supervisor is retained as exported; this is not a nonroot-image
+claim. The evaluator grants only SETUID/SETGID/KILL after cap-drop ALL, with
+read-only root/no-new-privileges and bounded tmp/memory/process/CPU. PostgreSQL and
+app use a fresh private internal network without published ports/host source/socket
+mounts. All fixture containers/network are confirmed removed on both failure/pass.
+This qualifies the observed subprocess mechanism, not a hostile-code sandbox.
+
+`check-terraform.py` independently copies only unchanged configuration/lockfiles,
+uses the receiving-host cached AzureRM4.81.0 mirror and Terraform1.17.1, validates
+the schema and executes5 mock plans. Checks cover pre-bootstrap runtime-off,
+private resources/region/native auth/config/entrypoints/separate SQL logins,
+worker-only catalogue secret, readiness/health/worker ingress and disjoint default
+subnets; invalid images/HTTP destinations/environments fail as expected. Mocked
+computed environment/ID values are explicitly synthetic, known during plan. No
+account plan/state/apply or Linux Terraform provider qualification is inferred.
+
+`receiving-attempts-v1.json` retains the unsuccessful evaluator setup iterations
+and their reasons; no application code or assertion was weakened. The full build,
+stdout/stderr, provider cache and all attempted receipts remain on MEM0. Latest
+physical runs are connected-image-v5 and terraform-independent-v6; committed v1
+receipts name the first complete qualified scope, not the first attempted run.
+`assessment-v2.json` retains all seven frozen criteria with explicit remaining
+independent evidence. This does not accept the whole project or promote original28.
+
+Next repair/review the generic SDK adaptations (not domain imports), beginning with
+accepted Unicode persistence, then complete missing independent failure/config/
+receiving checks and Google/IBM native transfers before alpha.5. Existing owner
+previews/UI and the original native session/requirements/pins are untouched.
