@@ -1,14 +1,16 @@
 # General-purpose engine: ten tangible release subgoals
 
-Latest implementation checkpoint: primary native Build intake and durable request
-history are committed at 3b80eb4; its actual UI architecture evaluation is running
-on a frozen separate instance. Generic completed-turn immutable capture and operator
-file applicability/check supervision have component/UI/actual isolated-runtime
-evidence in `evidence/20261111-finalization/README.md`. Bounded same-session repair
-has component/UI evidence in `evidence/20261111-bounded-repair/README.md`; qualify it
-through actual native work and complete independent architecture package/system
-assessment before release1.
-Neither this checkpoint nor a generated-test pass earns project acceptance.
+Latest qualification checkpoint: frozen e678117 has actual primary native intake,
+same-session bounded evidence-driven repair, durable capture/check ownership and
+new-domain local-file readiness transfer. The original AWS package's repaired
+connected17-group browser/PKCE/RSA/packaged-handler journey passes, as do36 separate
+HTTP checks,12/11 target generated tests and12 independent Terraform assertions.
+A different offline classroom viewer passes31 independent file/browser checks.
+Evidence and retained evaluator failures are in `evidence/20261111-readiness-repair/`.
+Resolve dependency/runtime declarations and machine-readable provider retention
+controls, and package/smoke-test the first versioned local candidate with manual
+card/rollback. Counts remain0 accepted releases and0/28 complete original projects;
+neither a candidate nor generated-test success is an attained quality percentage.
 
 Owner direction, 2026-11-11: the deliverable is an architecture engine that can
 produce the original 28 projects and many unfamiliar combinations, targeting 95%

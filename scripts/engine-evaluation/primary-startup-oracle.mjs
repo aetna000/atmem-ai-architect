@@ -35,7 +35,7 @@ try{
  release();
  if(initiallyDisabled){await login.waitFor({state:'visible'});await page.waitForFunction(()=>!document.querySelector('#login').disabled);await login.click();}
  await page.waitForFunction(()=>location.hostname==='independent.auth.ap-southeast-2.amazoncognito.com',null,{timeout:5000}).catch(()=>{});
- const status=await page.locator('#status').textContent().catch(()=>null);
+ const status=await page.evaluate(()=>document.querySelector('#status')?.textContent??null);
  assert(authorizationReached,JSON.stringify({failure:'Action ran before asynchronous configuration was ready; immediate user intent did not reach sign-in after configuration resolved',initiallyDisabled,status}));
  console.log('INDEPENDENT_STARTUP_PREREQUISITE_PASSED');
 }finally{

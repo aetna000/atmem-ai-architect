@@ -431,3 +431,25 @@ case-specific code or provider dispatch, and route independent failure into the
 bounded native repair controller on the original exact-model/session. Preserve
 original client/pinned inputs, artifacts and reports; no hand-patched export or
 complete-system pass until repaired bytes pass the full connected journey.
+
+### Readiness repair and new-domain transfer are independently exercised
+
+The original native session on e678117 reads its full failed startup report and
+performs one bounded repair. Keep every original file/input and both turns; do not
+retroactively label it uncoached. Corrected independent startup oracle fails original
+bytes and passes final bytes; connected17-group journey and36 HTTP checks pass,
+alongside12/11 target tests and clean byte-identical rebuild/fmt/schema/two independent
+mock plans with12 assertions. Preserve the oracle's post-navigation diagnostic timeout
+and the evaluator-overlay format failure; correct their harness boundaries without
+modifying client code or weakening acceptance. Manual recapture retains exact ID.
+
+A separate frozen-before-generation offline classroom viewer transfers the generic
+readiness rule to script initialization and FileReader state:14 files, nine native
+callbacks,17 generated checks,31 independent actual file/browser checks; zero cloud
+or AI/backend invention. Disclose evaluator authorship and post-guidance timing rather
+than claim a blinded holdout. Original AWS frozen22 assessment still withholds acceptance
+on automatic retention verification and declared/tested runtime mismatch. Public
+primary docs and actual SDK/version probes identify actionable dependency/evidence
+gaps. Consolidate redundant pending status entries without deleting roadmap/28-case
+scope. Next qualify dependency/runtime capability and machine safety preconditions,
+then deliver the first runnable versioned candidate and continue the remaining work.

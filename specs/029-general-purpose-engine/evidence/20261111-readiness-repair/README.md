@@ -24,12 +24,10 @@ workload/provider identifiers, code answer or fixed recipe. The independent star
 oracle is an evaluation-only adapter for this observed package layout, not a
 production dispatcher or generality claim.
 
-Next, register that independent oracle explicitly with the already reviewed cached
-browser runtime, restart only the idle owned preview on the new engine source, and
-recover the same original native session. The completed-turn supervisor should
-capture/check unchanged original bytes, retain the failure, reserve one bounded
-repair and ask the selected model to correct it without changing any client scope
-or pinned input. No evaluator may edit the generated files. Keep this coached
-evidence-driven repair distinct from the original uncoached generation. Re-run all
-checks on the repaired artifact and qualify transfer of the general readiness rule
-in another domain before release acceptance. Counts remain0/28 and0/10.
+Subsequent [native repair and independent verification](repaired/README.md) preserve
+the original session/pins and expose two remaining delivery gaps. The evaluator
+never edited generated files. A separate [new-domain file-viewer transfer](new-domain-transfer/README.md)
+passes31 independent browser/file checks. Keep the coached AWS repair distinct from
+the original uncoached generation and the new-domain brief. Next qualify generic
+dependency/runtime capability and available machine-readable safety preconditions,
+then package the versioned local candidate. Counts remain0/28 and0/10.
