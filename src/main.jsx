@@ -2506,7 +2506,7 @@ function App() {
                 <h2>AtMem AI Architect</h2>
                 <p className="muted">Version {appVersion} · local candidate</p>
                 <p>
-                  Describe your project in Build, add updates while it works, and inspect its implementation package and local checks. Use Design to work on the architecture diagram.
+                  Start in Design to describe your project and develop its architecture. Follow Architecture activity while it works, then choose Build this design to create and check its implementation package.
                   Part of atmem.ai. Runs on your computer; nothing is deployed.
                 </p>
                 <p className="muted">Keys: / add block · Esc up a level · ⌘↵ run</p>
