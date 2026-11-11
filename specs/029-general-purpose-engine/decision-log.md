@@ -1079,3 +1079,23 @@ qualify the new launcher separately and disclose that sequencing. Actual restric
 command execution proves source materialization/import, not SQL/application behavior.
 Evidence: evidence/20261112-native-runtime-access/README.md. No UI, AtFlow CSS,
 private owner project, cloud account operation or deployment change.
+
+
+## 2026-11-12 — Qualify native transfer on immutable artifacts and declared inputs
+
+Preserve both the original completed package and one automatic bounded repair. The
+repair records missing validator prerequisites without weakening source/tests. Qualify
+the latest captured code directly; retain exact implementation/build/test equality
+for the documentation-only archive change. Supply declared receiving public wheels,
+nonsecret binding bundle and public CA in a separate receiving context, without
+hand-patching an export or substituting AMD64 for the selected ARM64 target.
+
+Execute independent source SQL/queue/child/TLS checks separately from generated19,
+native schema/5 mocks and actual clean image/factory checks. Do not combine those
+components into a whole-image system claim. Preserve initial evaluator/path/mock/
+platform diagnostics and their scope; fix the invariant checks rather than demand
+an invented HTTP status or alter production code to satisfy an oracle. Public wheel
+metadata/notices/image tar remain on MEM0. No account plan, deployment, new original
+acceptance or release count change. The next shared engine capability is isolated
+SDK/SQL validation accessible to native engineering, then complete image/provider
+transfer and runnable alpha.5. Evidence: evidence/20261112-native-runtime-access/README.md.

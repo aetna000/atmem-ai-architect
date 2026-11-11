@@ -412,3 +412,15 @@ pins and observe the same job if an observation budget expires. See
 evidence/20261112-native-runtime-access/README.md. This is not a frozen release or
 whole-system acceptance; resource/domain/worker/connected handoff and alpha.5 remain.
 Four increments/1-of28/owner0 and unmeasured quality are unchanged.
+
+
+GE-006 equipment transfer qualification: exact gpt-6.1-sol/high completed one native
+turn plus one bounded automatic repair. Latest captured source passes12 independent
+real local SQL/queue/child/TLS checks and19 generated tests without skips; native AWS
+schema/5 independent mock plans and clean offline Linux ARM64 image/factories pass.
+The repair changes only documentation/diagnosis; all code/tests/build inputs match.
+See evidence/20261112-native-runtime-access/assessment-v1.json. This is exposed source
+journey/build component qualification, not whole-system or provider/holdout acceptance.
+The backend's bare Python validator still lacks SDK/SQL prerequisites. Add an isolated
+SDK/PostgreSQL validation fixture, run the complete image journey and equivalent
+provider transfers before runnable alpha.5. Four increments/1-of28/owner0 unchanged.

@@ -3,7 +3,7 @@
 Synthetic Cognito keys/native outputs and injected local SQL/CA only. Production
 source is not edited; internal Python bootstrap injection is not an HTTP feature.
 """
-import asyncio,hashlib,importlib,json,os,subprocess,sys,tempfile,time,uuid
+import asyncio,copy,hashlib,importlib,json,os,subprocess,sys,tempfile,time,uuid
 from pathlib import Path
 from unittest.mock import patch
 ROOT=Path(__file__).resolve().parents[4]
@@ -19,7 +19,7 @@ sys.path.insert(0,str(APP))
 import psycopg,jwt,httpx
 import equipment_api,equipment_worker,equipment_domain,workflow_identity
 from workflow_application import membership_key
-from workflow_bindings import load_bound_profile
+from workflow_bindings import load_bound_profile,write_binding
 from workflow_contract import normalized_contract
 
 
@@ -46,7 +46,7 @@ async def main():
                 conn.execute('INSERT INTO workflow.accounts(id) VALUES(%s)',(account,))
                 for who,roles in [(subject,['user']),(other,['user']),(reviewer,['reviewer'])]:conn.execute('INSERT INTO workflow.memberships(account_id,subject,roles) VALUES(%s,%s,%s)',(account,membership_key(profile,who),roles))
             native_identity=workflow_identity.native_staff_identity
-            with patch.dict(os.environ,environment,clear=True),patch('workflow_application.native_database',return_value=api_dsn),patch('workflow_identity.native_staff_identity',side_effect=lambda provider,config:native_identity(provider,config,jwks=identity.verify.jwks)):
+            with patch.dict(os.environ,environment,clear=True),patch('workflow_application.native_database',return_value=api_dsn),patch('workflow_identity.native_staff_identity',side_effect=lambda provider,config,**kwargs:native_identity(provider,config,jwks=identity.verify.jwks)):
                 app=equipment_api.app()
             with patch('workflow_application.native_database',return_value=worker_dsn):worker=equipment_worker.build(environment)
             # Explicit synthetic CA for the actual HTTPS child; no production
@@ -90,13 +90,40 @@ async def main():
                 approved=await client.post('/api/operations/'+operation+'/approve',json={'revision':1},headers=headers(reviewer));assert approved.status_code==200,approved.text
                 await until(operation,'sent');assert len(sink.calls)==1 and sink.calls[0]['body']['result']=={'itemId':'microscope','memberId':'member-1','loanDays':14,'inspectionRequired':False},sink.calls
                 checks.append('reviewer approval dispatches exact source-bound fulfilment mapping via real bounded child and loopback TLS once')
+                changed_inputs=copy.deepcopy(ledger)
+                next(item for item in changed_inputs['outputs']if item['componentId']=='work:destination'and item['name']=='scope')['value']='changed-review-scope'
+                changed_ledger=root/'changed-outputs.json';changed_ledger.write_text(json.dumps(changed_inputs));changed_binding=root/'changed-binding';write_binding(configured/'application-template.json',changed_ledger,changed_binding)
+                with patch.dict(os.environ,{**environment,'BINDING_DIRECTORY':str(changed_binding)},clear=True),patch('workflow_application.native_database',return_value=api_dsn),patch('workflow_identity.native_staff_identity',side_effect=lambda provider,config,**kwargs:native_identity(provider,config,jwks=identity.verify.jwks)):
+                    changed_app=equipment_api.app()
+                async with httpx.AsyncClient(transport=httpx.ASGITransport(app=changed_app),base_url=profile.data['publicOrigin'])as changed_client:
+                    rejected=await changed_client.post('/api/operations/'+operation+'/approve',json={'revision':1},headers=headers(reviewer));assert rejected.status_code==409,rejected.text
+                checks.append('changed receiving destination/profile contract cannot reapprove an older operation')
+                changed_template=json.loads((configured/'application-template.json').read_text());changed_template['payloadContract']['result']['properties']['loanDays']['maximum']=15
+                altered=root/'altered-template.json';altered.write_text(json.dumps(changed_template));altered_binding=root/'altered-binding';write_binding(altered,inputs,altered_binding)
+                with patch.dict(os.environ,{**environment,'APPLICATION_TEMPLATE':str(altered),'BINDING_DIRECTORY':str(altered_binding)},clear=True),patch('workflow_application.native_database')as native_database:
+                    try:equipment_api.app()
+                    except ValueError:pass
+                    else:raise AssertionError('Changed compiled equipment payload policy started')
+                    native_database.assert_not_called()
+                checks.append('altered payload policy cannot start the compiled application before native database setup')
+
                 fragile={**source,'itemId':'glassware','fragile':True};h={**headers(),'Idempotency-Key':'fragile-'+uuid.uuid4().hex};response=await client.post('/api/operations',json={'source':fragile},headers=h);assert response.status_code==202,response.text;second=response.json()['operation']['id'];await until(second,'review')
                 invalid=await client.post('/api/operations/'+second+'/review',json={'revision':1,'result':{'loanDays':4,'inspectionRequired':True}},headers=headers(reviewer));assert invalid.status_code in {400,409},invalid.text
                 checks.append('fragile3-day policy enforced against otherwise type-valid reviewer edits')
-                sink.mode='pending';approved=await client.post('/api/operations/'+second+'/approve',json={'revision':1},headers=headers(reviewer));assert approved.status_code==200,approved.text
+                edited=await client.post('/api/operations/'+second+'/review',json={'revision':1,'result':{'loanDays':2,'inspectionRequired':True}},headers=headers(reviewer));assert edited.status_code==200,edited.text;revision=edited.json()['operation']['revision'];assert revision==2
+                stale=await client.post('/api/operations/'+second+'/approve',json={'revision':1},headers=headers(reviewer));assert stale.status_code==409,stale.text
+                checks.append('valid reviewer edit advances revision; stale revision cannot approve')
+                sink.mode='pending';approved=await client.post('/api/operations/'+second+'/approve',json={'revision':revision},headers=headers(reviewer));assert approved.status_code==200,approved.text
                 await until(second,'unknown');calls=len(sink.calls);await asyncio.sleep(.4);assert len(sink.calls)==calls==2
-                retry=await client.post('/api/operations/'+second+'/approve',json={'revision':1},headers=headers(reviewer));assert retry.status_code==409,retry.text
-                checks.append('accepted-but-unconfirmed TLS outcome stays unknown, without unverified replay or reapproval')
+                with psycopg.connect(owner)as conn:jobs_before=conn.execute('SELECT count(*) FROM workflow.procrastinate_jobs WHERE args->>\'operation_id\'=%s',(second,)).fetchone()[0]
+                retry=await client.post('/api/operations/'+second+'/approve',json={'revision':revision},headers=headers(reviewer));assert retry.status_code in {200,409},retry.text
+                if retry.status_code==200:assert retry.json()['operation']['state']=='unknown',retry.text
+                await asyncio.sleep(.2)
+                with psycopg.connect(owner)as conn:
+                    assert conn.execute('SELECT count(*) FROM workflow.procrastinate_jobs WHERE args->>\'operation_id\'=%s',(second,)).fetchone()[0]==jobs_before
+                    assert conn.execute('SELECT state FROM workflow.operations WHERE id=%s',(second,)).fetchone()[0]=='unknown'
+                assert len(sink.calls)==calls
+                checks.append('accepted-but-unconfirmed TLS outcome stays unknown; repeated approval creates no new job or external attempt')
                 with psycopg.connect(owner)as conn:conn.execute('UPDATE workflow.memberships SET active=false WHERE account_id=%s AND subject=%s',(account,membership_key(profile,subject)))
                 denied=await client.get('/api/operations/'+operation,headers=headers());assert denied.status_code==403,denied.text
                 checks.append('revoked live membership overrides an unexpired signed native token')

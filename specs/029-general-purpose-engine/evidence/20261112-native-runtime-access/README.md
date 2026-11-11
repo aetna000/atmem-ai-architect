@@ -97,3 +97,75 @@ with manual and rollback cards. Four offered increments,1/28 complete original l
 qualification, owner acceptance0 and unmeasured quality remain the programme facts.
 All ten increments, original28 and unfamiliar complete systems remain in scope.
 No cloud account operation or deployment is authorized or performed.
+
+## 2026-11-12 — Captured transfer and independent qualification
+
+The original turn completed, followed by one automatic bounded repair. Both actual
+native histories now report completed with the same gpt-6.1-sol/high selection.
+The observer resumed the original job after its observation window; no inference
+was resubmitted on timeout. The earlier separate-client history snapshot reported
+interrupted while the original client continued emitting progress. Its scope warning
+and later terminal confirmation are retained; it was not used to interrupt/replay.
+
+Initial artifact `cbf353282ea34b65fa5c683f6171928f4d6060375821144a69cca50a2188baf4`
+and latest artifact
+`5073b4db47d505392722d71b5980fee3da57bbcdd7de2d5bac75073e6a805c65`
+are preserved. Automatic repair changed only artifact-manifest/evidence prose and
+added an environment diagnosis. All implementation, tests, Terraform, Docker and
+supplied-input files remain byte-identical (`native-repair-delta-v2.json`). The
+repair did not remove assertions, hide missing SDK packages or clear incomplete
+validation. No original exported source was patched by the evaluator.
+
+Authoritative latest-source results:
+
+- `equipment-journey-v5.receipt.json`:12 independent logical checks through actual
+  generated API/worker factories, real SQL roles/queue, native JWT signatures,
+  bounded processing/delivery children and loopback TLS. Normal14/fragile3 policy,
+  own-operation visibility, live revocation, account/type override denial, valid
+  edit/stale revision, changed profile, compiled-payload mismatch and unknown-effect
+  repeat approval are exercised. Repeated approval of an unknown outcome may return
+  its unchanged state; it creates no new job/effect. This is source runtime evidence,
+  with synthetic native IDs/keys and private SQL/CA injection disclosed.
+- `generated-tests-v3.receipt.json`: unchanged latest exported qualification runner,
+  all19 tests pass without skips against a fresh nonce-owned PostgreSQL17 database.
+  It includes further concurrent deduplication, role/privilege, policy, fence, native
+  signature/SDK and queue/TLS checks. The fresh database is removed after verifying
+  its exact ownership marker. This does not replace the independently authored oracle.
+- `terraform-v2.receipt.json`: exact generated provider lock/configuration passes
+  cached offline init/backend-disabled/lock-readonly and native validate; five
+  independent mock-only plans check default runtime absence, distinct identities,
+  ARM64/source image, worker-only secret/IAM, database logins, protected SQL and three
+  invalid inputs. CloudWatch ARN is a declared mock value so actual policy expressions
+  can be evaluated. These are not account plans or real resource/IAM acceptance.
+- `sdk-mirror-*-v1.receipt.json`: all38 exact AWS test-lock wheels prepared for each
+  Linux AMD64/ARM64 target, with source hashes, embedded notices and dependency/extra
+  closure. Public downloads and full metadata stay on MEM0. No package was upgraded.
+- `image-arm64-v1.receipt.json`: clean offline build of the unchanged Dockerfile for
+  its selected Linux ARM64 target, using the declared receiving wheel/profile/CA
+  inputs. Actual Python3.13.18/aarch64 API and worker factories initialize with
+  network disabled, nonroot and read-only root. Image/inputs/source hashes and a
+  saved image tar on MEM0 bind this result. All changed repair files are excluded
+  from the image context; implementation/build inputs are identical for the latest
+  artifact. SQL/TLS was not run inside this image.
+
+Retain the failed diagnostics and their corrections. Independent-oraclev1 omitted
+an internal jwks keyword in its fixture lambda;v2 required HTTP409 even though the
+approved unknown state is idempotently returned with no new job. The corrected
+oracle tests the actual no-replay invariant and adds direct revision/profile/policy
+counterexamples. Generated-runv1 omitted the documented TLS opt-in and exposed a
+macOS `/var` versus `/private/var` import-path comparison in its wheel test. Later
+runs explicitly enable only owned local SQL/TLS and use a private canonical TMPDIR,
+as the native worker does. The test's path assumption remains a portability limit;
+its code was not modified to make it pass. Terraformv1 lacked a computed mock log
+ARN;v2 supplies that fixture input without changing source policies. The first
+ARM64 base probe correctly failed because only the AMD64 platform was cached; the
+pinned ARM64 platform was fetched, preserving the actual target.
+
+`assessment-v1.json` reconciles each frozen acceptance criterion. Whole-system,
+new-release, original28, held-out and comparative acceptance are all false. The
+source journey/image/native-schema components are qualified; the next engine task
+is an SDK/PostgreSQL-capable isolated validation runtime and the full application
+image journey, followed by equivalent provider transfers and runnable alpha.5.
+The stock registered Python checker still lacks this application's packages/local
+SQL; the automatic repair diagnosed that environment limit rather than fabricating
+source success. There were no application source changes this qualification turn.
