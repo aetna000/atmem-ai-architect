@@ -1,0 +1,44 @@
+{
+  "checks": [
+    {
+      "id": "c106465f-ad82-44c2-a280-25fdef4d4073",
+      "sessionId": "20fd8475-1663-46d3-9b1c-9f9dc58bfe9c",
+      "artifactId": "de563563-2bd8-46a9-a957-3afa67cf5829",
+      "artifactSha256": "dc3ac6acadb5fd6920e936bd02f5bd8db51bcbb172a7629d4b8c042b1382fad4",
+      "validatorId": "python-sql-aws-tests",
+      "label": "Python3.13/AWS SDK and private PostgreSQL17 tests",
+      "contractSha256": "ef5d057fb33d2afc02363d3de87dc047ba4b2edfa3f03c8639d6788251577a92",
+      "state": "finished",
+      "result": {
+        "validator": "python-sql-aws-tests",
+        "artifactSha256": "dc3ac6acadb5fd6920e936bd02f5bd8db51bcbb172a7629d4b8c042b1382fad4",
+        "imageId": "sha256:d2f7bcb589a14c4dac1ed2bb4d839eb97906ea4202e3b9a48862be04a0bdc948",
+        "runtimeConfigImageId": "sha256:d2f7bcb589a14c4dac1ed2bb4d839eb97906ea4202e3b9a48862be04a0bdc948",
+        "platform": "linux/arm64",
+        "isolationProfile": "postgresql-local-v1",
+        "runtimeEnvironment": {},
+        "command": [
+          "/usr/local/bin/python3",
+          "-I",
+          "/opt/atmem/sql_validation.py",
+          "-m",
+          "unittest",
+          "discover",
+          "-v"
+        ],
+        "status": "passed",
+        "exitCode": 0,
+        "skipped": 0,
+        "testsReported": 22,
+        "reason": null,
+        "output": "test_deferred_bindings_fail_closed (tests.test_bindings.BindingTests.test_deferred_bindings_fail_closed) ... ok\ntest_approval_revision_policy_fences_and_live_membership (tests.test_connected.ConnectedTests.test_approval_revision_policy_fences_and_live_membership) ... ok\ntest_changed_contract_hash_and_expired_dispatch (tests.test_connected.ConnectedTests.test_changed_contract_hash_and_expired_dispatch) ... ok\ntest_queue_atomicity_idempotency_and_ownership (tests.test_connected.ConnectedTests.test_queue_atomicity_idempotency_and_ownership) ... ok\ntest_real_queue_api_and_tls_fulfilment_journey (tests.test_connected.ConnectedTests.test_real_queue_api_and_tls_fulfilment_journey)\nFull local integration, using real RSA, SQL, native queue and TLS. ... /usr/local/lib/python3.13/site-packages/fastapi/testclient.py:1: StarletteDeprecationWarning: Using `httpx` with `starlette.testclient` is deprecated; install `httpx2` instead.\n  from starlette.testclient import TestClient as TestClient  # noqa\nok\ntest_runtime_sql_roles_cannot_enroll_migrate_or_erase_audit (tests.test_connected.ConnectedTests.test_runtime_sql_roles_cannot_enroll_migrate_or_erase_audit) ... ok\ntest_unknown_never_replayed_even_after_revocation (tests.test_connected.ConnectedTests.test_unknown_never_replayed_even_after_revocation) ... ok\ntest_fixed_fulfilment_mapping_preserves_identifiers (tests.test_domain.DomainTests.test_fixed_fulfilment_mapping_preserves_identifiers) ... ok\ntest_policy_all_days (tests.test_domain.DomainTests.test_policy_all_days) ... ok\ntest_reject_invalid_types_ranges_and_extra_controls (tests.test_domain.DomainTests.test_reject_invalid_types_ranges_and_extra_controls) ... ok\ntest_reviewer_can_reduce_but_cannot_violate_policy (tests.test_domain.DomainTests.test_reviewer_can_reduce_but_cannot_violate_policy) ... ok\ntest_utf8_bytes_after_escaped_transport (tests.test_domain.DomainTests.test_utf8_bytes_after_escaped_transport) ... ok\ntest_aws_iam_signer_uses_pinned_sdk_without_account_calls (tests.test_native.NativeTests.test_aws_iam_signer_uses_pinned_sdk_without_account_calls) ... ok\ntest_exact_vendored_wheels_with_real_sdk_signer (tests.test_native.NativeTests.test_exact_vendored_wheels_with_real_sdk_signer) ... ok\ntest_http_boundary_with_mock_sql_store (tests.test_native.NativeTests.test_http_boundary_with_mock_sql_store) ... ok\ntest_native_cognito_cryptographic_verification (tests.test_native.NativeTests.test_native_cognito_cryptographic_verification) ... ok\ntest_normalized_destination_mock_transport (tests.test_native.NativeTests.test_normalized_destination_mock_transport) ... ok\ntest_real_child_processor_and_deadline (tests.test_native.NativeTests.test_real_child_processor_and_deadline) ... ok\ntest_report (tests.test_runtime.RuntimeEvidence.test_report) ... ok\ntest_invalid_operator_fixture_has_no_fallback_or_secret_diagnostics (tests.test_sql_fixture.FixtureSelectionTests.test_invalid_operator_fixture_has_no_fallback_or_secret_diagnostics) ... ok\ntest_local_path_retains_explicit_opt_ins (tests.test_sql_fixture.FixtureSelectionTests.test_local_path_retains_explicit_opt_ins) ... ok\ntest_operator_fixture_uses_unix_defaults_without_lab_flags (tests.test_sql_fixture.FixtureSelectionTests.test_operator_fixture_uses_unix_defaults_without_lab_flags) ... ok\n\n----------------------------------------------------------------------\nRan 22 tests in 3.406s\n\nOK\n{'postgresqlVersionNumber': '170011', 'sqlFixture': 'backend-private-unix'}\n{'python': '3.13.18 (main, Nov  5 2026, 08:08:09) [GCC 14.2.0]', 'packages': {'fastapi': '0.162.0', 'psycopg': '3.3.8', 'procrastinate': '3.10.0', 'PyJWT': '2.15.1', 'cryptography': '50.0.2', 'uvicorn': '0.54.0', 'httpx': '0.28.1'}, 'tools': {'postgres': '/opt/atmem/pg-bin/postgres', 'initdb': '/opt/atmem/pg-bin/initdb', 'pg_ctl': '/opt/atmem/pg-bin/pg_ctl', 'openssl': '/usr/bin/openssl', 'docker': None}}\nVerified the complete 38-distribution test lock on the SQL checker runtime\n",
+        "outputTruncated": false,
+        "durationSeconds": 4.865,
+        "evidenceLevel": "local_container_check",
+        "cloudOperations": false,
+        "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+      },
+      "acceptance": "not_established_by_local_check"
+    }
+  ]
+}

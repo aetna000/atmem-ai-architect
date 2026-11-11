@@ -437,3 +437,16 @@ workspace pins are unchanged. Next activate only the separate idle synthetic pre
 and qualify native test/report use, then actual application image/SQL/TLS and other
 provider transfers. This checkpoint earns no release or whole-project acceptance;
 four offered increments/1-of28/owner0 and unknown measured quality remain unchanged.
+
+GE-006 native SQL and image checkpoint: the separate idle synthetic preview now
+offers the qualified runtime. Same-session gpt-6.1-sol/high completed an explicit
+test-environment adaptation,14 successful callbacks/three full22-test working
+reports, and final archive22/no skips. No production source/locks changed and no
+new automatic repair occurred. The independent unchanged Linux ARM64 image now
+passes10 real HTTP/SQL/queue/child/TLS groups, exact36 runtime pins and fixture
+cleanup. Synthetic native keys, local SQL injection, public ledger and CA remain
+explicit; separate production tasks/native managed startup/full-project acceptance
+are unproved. See evidence/20261112-native-sql-transfer/README.md and assessment-v2.
+Next equivalent Azure/Google/IBM native transfers and full independent receiving
+handoff/resource composition, then runnable alpha.5. All remaining ten-increment/
+original28/unfamiliar scope and four offered/1-of28/owner0/unknown quality remain.

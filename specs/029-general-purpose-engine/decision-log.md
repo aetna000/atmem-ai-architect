@@ -1121,3 +1121,25 @@ The actual fixture and standalone backend catalogue qualify; no native turn was
 launched and no preview was restarted for this checkpoint. Native use and complete
 application-image/SQL/TLS/provider transfer remain next. No release/original28/quality
 promotion. Evidence: evidence/20261112-isolated-sql-validation/README.md.
+## 2026-11-12 — Native fixture adoption and unchanged-image qualification
+
+Restart only the separate synthetic preview after verifying its own session/jobs
+settled. Preserve old workspace pins. Submit one explicit environment-adaptation
+request to the same native thread/exact gpt-6.1-sol/high selection, retaining prior
+failed reports. Use the public catalogue, actual working checks and full report
+reads; finalization binds the final immutable archive independently. Do not count
+this exposed request as uncoached comparison or a new original28 acceptance.
+
+Run the existing production image without source/dependency edits against a private
+local PostgreSQL container and loopback TLS fixture. Verify installed code/SQL/locks
+and36 exact runtime dependencies, then real HTTP/queue/child journeys and negative
+authorization/policy/replay behavior. Inject synthetic native keys, SQL roles, public
+bindings and CA explicitly; do not imply native AWS startup or separate production
+task isolation. Keep image command override and same-container API/worker limits
+visible. No cloud account or deployment operation is needed or performed.
+
+Preserve initial unavailable host mount, Docker absence-text casing and unpacked
+bytecode-diff diagnostics. Use direct trusted oracle arguments, exact case-insensitive
+absence classification and immutable ZIP entries respectively. Require fixture
+cleanup for success. No application/assertion/isolation change is justified by an
+evaluator defect. Evidence: evidence/20261112-native-sql-transfer/README.md.
