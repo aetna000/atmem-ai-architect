@@ -20,8 +20,9 @@ For local checks, the operator explicitly supplies `--tools`, `--validators`, `-
 2. Add two meaningful updates while it works. Reload the page. Verify the original request, ordered updates, exact selected configuration and continuing run are retained.
 3. Switch to Design and back. Inspect progress without resubmitting the request. Design's graph and native files are currently separate review surfaces; changing one does not reconcile the other automatically.
 4. On completion inspect the immutable package and each local report. A failed, skipped, absent or stale check remains a limitation. If a bounded automatic repair ran, inspect both original and repaired evidence.
-5. Download the package; follow its public clean-environment build/test instructions. Receiving instructions must not require the worker's private `.tools` paths. Inspect Terraform and unresolved account inputs; do not apply it.
-6. Close/reopen the candidate and select the saved project. Recover existing work if needed; uncertain execution must not be blindly replayed. Preserve its app-data directory and saved project file.
+5. If verification definitions have been updated after completion, choose **Recheck and repair** on the current package. Earlier reports remain available; a changed check plan can use at most the original request’s remaining repair allowance. An unchanged plan does not replay work.
+6. Download the package; follow its public clean-environment build/test instructions. Receiving instructions must not require the worker's private `.tools` paths. Inspect Terraform and unresolved account inputs; do not apply it.
+7. Close/reopen the candidate and select the saved project. Recover existing work if needed; uncertain execution must not be blindly replayed. Preserve its app-data directory and saved project file.
 
 ## Limits and rollback
 

@@ -13,7 +13,13 @@ const persist=()=>fs.writeFileSync(path.join(out,'live.json'),JSON.stringify(liv
 async function post(action,extra={}){const response=await fetch(base+'/api/engineering/'+action,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+auth.token},body:JSON.stringify({...context,...extra}),signal:AbortSignal.timeout(90000)});if(!response.ok)throw Error('Existing-job request '+action+' failed with '+response.status);return action==='download'?response:response.json();}
 try{
  live.before=await post('state');assert.equal(live.before.state,'idle','Observe active work separately; this driver only reconciles an existing idle completion');assert.equal(live.before.last_status,'completed');persist();
- await post('recover');let latest,done=false;const deadline=Date.now()+seconds*1000;
+ await post('recover');
+ if(args.recheck==='true'){
+  const existing=(await post('finalizations')).finalizations.findLast(item=>item.runId===live.before.run);
+  assert(existing?.artifact,'Explicit recheck requires the existing completed artifact');
+  live.recheck=await post('recheck',{runId:live.before.run,artifactId:existing.artifact.id});persist();
+ }
+ let latest,done=false;const deadline=Date.now()+seconds*1000;
  while(Date.now()<deadline){live.job=await post('state');live.finalizations=(await post('finalizations')).finalizations;latest=live.finalizations.findLast(item=>item.runId===live.job.run);persist();if(live.job.state==='idle'&&latest&&['local_checks_passed','needs_attention','recovery_required'].includes(latest.state)){done=true;break;}await new Promise(resolve=>setTimeout(resolve,1000));}
  if(!done)throw Error('Existing finalization has not settled. Inspect/recover the same run; no work was replayed or interrupted.');
  for(const finalization of live.finalizations){if(!finalization.artifact)continue;const folder=path.join(out,finalization.runId);fs.mkdirSync(folder);const artifacts=(await post('artifacts')).artifacts;const artifact=artifacts.find(a=>a.id===finalization.artifact.id);assert(artifact);fs.writeFileSync(path.join(folder,'artifact.json'),JSON.stringify(artifact,null,2)+'\n');const content=Buffer.from(await(await post('download',{artifactId:artifact.id})).arrayBuffer());assert.equal(sha(content),artifact.sha256);fs.writeFileSync(path.join(folder,'artifact.zip'),content);fs.writeFileSync(path.join(folder,'checks.json'),JSON.stringify(await post('validation/list',{artifactId:artifact.id}),null,2)+'\n');}

@@ -1,0 +1,25 @@
+{
+  "validator": "independent-primary-browser-app",
+  "artifactSha256": "4b7580ad702c706ac25b0c4872fcbf445ff82c2f7bc87c7ae6d06a0b46eb70b0",
+  "imageId": "sha256:cdb746c1eb56b61de56e1b5e78f6194392eb00494a1bb257a592852e72d8314b",
+  "runtimeConfigImageId": "sha256:efb920a19905e2b73c3e56eb22d52b052026b62050ec32eb3c7b28aba449cfc7",
+  "platform": "linux/arm64",
+  "isolationProfile": "standard-v1",
+  "runtimeEnvironment": {},
+  "command": [
+    "/var/lang/bin/python3.12",
+    "-c",
+    "\nimport json,os,sys,time,zipfile,http.server\nos.environ.update(CLIENT_ID='localreviewclient',ISSUER='LOCAL-EMULATED-ISSUER',AUTH_DOMAIN='https://independent.auth.ap-southeast-2.amazoncognito.com',REDIRECT_URI='http://127.0.0.1:56383/',ALLOWED_SUBS='[\"local-staff\"]',INFERENCE_ENABLED='true',RETENTION_VERIFIED_UNTIL=str(int(time.time())+1800))\nimport io\nsys.path.insert(0,'/work/source');from scripts import build\noutput=io.BytesIO();build.build(output_stream=output);output.seek(0)\nwith zipfile.ZipFile(output) as z:\n assert all(not item.filename.startswith('/') and '..' not in item.filename.split('/') for item in z.infolist())\n z.extractall('/tmp/app')\noutput.close()\nsys.path.insert(0,'/tmp/app');import handler\nclass Control:\n def get_account_data_retention(self):return {'mode':'none'}\n def get_model_invocation_logging_configuration(self):return {}\nclass Model:\n def converse(self,**kw):\n  ticket=kw['messages'][0]['content'][0]['text']\n  assert kw['modelId']=='amazon.nova-lite-v1:0'\n  if ticket=='model-timeout':raise TimeoutError('PRIVATE-SYNTHETIC')\n  if ticket=='slow-clear':time.sleep(2)\n  value={'summary':'Fixture: '+ticket[:60],'topic':'technical','urgency':'normal','uncertainty':{'level':'high','reason':'Local emulated model; human review required.'}}\n  if ticket=='unsafe-output':value['extra']='rejected'\n  if ticket=='html-output':value['summary']='<img src=x onerror=window.__oracleXss=1>'\n  if ticket=='unicode-output':value['uncertainty']['reason']='\ud83d\ude00'*151\n  return {'stopReason':'end_turn','output':{'message':{'role':'assistant','content':[{'text':json.dumps(value)}]}}}\nclass Adapter(http.server.BaseHTTPRequestHandler):\n def do_POST(self):\n  event=json.loads(self.rfile.read(int(self.headers['Content-Length'])))\n  result=handler.handler(event,None);body=json.dumps(result).encode()\n  self.send_response(200);self.send_header('Content-Length',str(len(body)));self.end_headers();self.wfile.write(body)\n def log_message(self,*args):pass\nhandler.clients=lambda:(Control(),Model())\nhttp.server.ThreadingHTTPServer(('127.0.0.1',8091),Adapter).serve_forever()\n"
+  ],
+  "status": "failed",
+  "exitCode": 137,
+  "skipped": 0,
+  "testsReported": null,
+  "reason": "cancelled",
+  "output": "",
+  "outputTruncated": false,
+  "durationSeconds": 13.726,
+  "evidenceLevel": "local_container_check",
+  "cloudOperations": false,
+  "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+}

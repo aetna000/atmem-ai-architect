@@ -1,0 +1,181 @@
+{
+  "case": "aws-01-ticket-triage",
+  "provider": "aws",
+  "artifact": {
+    "path": "artifact.zip",
+    "sha256": "4b7580ad702c706ac25b0c4872fcbf445ff82c2f7bc87c7ae6d06a0b46eb70b0"
+  },
+  "classification": "uncoached original generation plus one bounded automatic evidence repair",
+  "localOnly": true,
+  "cloudOperations": false,
+  "checks": [
+    {
+      "id": "scope",
+      "status": "passed",
+      "level": "independent-review",
+      "verifier": {
+        "id": "root-independent-frozen22-review-v1",
+        "sha256": "d637212c82054f2747ed99b7225cab5803ed69c0858293897c4b9f3b24aff964"
+      },
+      "evidence": {
+        "path": "assessment.json",
+        "sha256": "eb221833e2c23a13abdc1c12a91650dda403a2ebf458cee3ac2214127ae94edc",
+        "artifactSha256": "4b7580ad702c706ac25b0c4872fcbf445ff82c2f7bc87c7ae6d06a0b46eb70b0"
+      }
+    },
+    {
+      "id": "ownership",
+      "status": "passed",
+      "level": "independent-review",
+      "verifier": {
+        "id": "root-independent-frozen22-review-v1",
+        "sha256": "d637212c82054f2747ed99b7225cab5803ed69c0858293897c4b9f3b24aff964"
+      },
+      "evidence": {
+        "path": "assessment.json",
+        "sha256": "eb221833e2c23a13abdc1c12a91650dda403a2ebf458cee3ac2214127ae94edc",
+        "artifactSha256": "4b7580ad702c706ac25b0c4872fcbf445ff82c2f7bc87c7ae6d06a0b46eb70b0"
+      }
+    },
+    {
+      "id": "provider",
+      "status": "passed",
+      "level": "provider-schema",
+      "verifier": {
+        "id": "scripts/engine-evaluation/check-ticket-infra-v2.py",
+        "sha256": "ccd48b6aa0f49f745c88b7b4fbae36eace56462b7edd9f038c493843b2a8e99d"
+      },
+      "evidence": {
+        "path": "infrastructure.json",
+        "sha256": "2cf472d7a6476ec12d46c95905417fe7e48ec267f292ad93ab0009cfd1c09edf",
+        "artifactSha256": "4b7580ad702c706ac25b0c4872fcbf445ff82c2f7bc87c7ae6d06a0b46eb70b0"
+      }
+    },
+    {
+      "id": "secrets",
+      "status": "passed",
+      "level": "independent-static",
+      "verifier": {
+        "id": "root-independent-frozen22-review-v1",
+        "sha256": "d637212c82054f2747ed99b7225cab5803ed69c0858293897c4b9f3b24aff964"
+      },
+      "evidence": {
+        "path": "static-review.json",
+        "sha256": "75e1a5066a4f342011f0621f7e3479a13d099c0305745b2cc6b6f9a1926d8a38",
+        "artifactSha256": "4b7580ad702c706ac25b0c4872fcbf445ff82c2f7bc87c7ae6d06a0b46eb70b0"
+      }
+    },
+    {
+      "id": "build",
+      "status": "passed",
+      "level": "local-runtime",
+      "verifier": {
+        "id": "scripts/engine-evaluation/check-ticket-sdk-v2.py",
+        "sha256": "9a0054a9bc9aaae401e16456d1138f2ca2523e7772122e4c2e03a2a55c7d626e"
+      },
+      "evidence": {
+        "path": "independent-ticket-sdk-v2.json",
+        "sha256": "faf2933d682bebd265bedb89c3edbf1d0d4915494109e2f80e45bd74fcd0d085",
+        "artifactSha256": "4b7580ad702c706ac25b0c4872fcbf445ff82c2f7bc87c7ae6d06a0b46eb70b0"
+      }
+    },
+    {
+      "id": "access",
+      "status": "passed",
+      "level": "local-runtime",
+      "verifier": {
+        "id": "scripts/engine-evaluation/check-ticket-browser-v2.py",
+        "sha256": "74eef938d0ff1b70ea60b69de7a570293ea2324b713cc5d5e84ae0af27726aef"
+      },
+      "evidence": {
+        "path": "journey.json",
+        "sha256": "16b5a789322abb9d58763a593e4cc47c106582a54c0f3f01d9b0534a83c99de4",
+        "artifactSha256": "4b7580ad702c706ac25b0c4872fcbf445ff82c2f7bc87c7ae6d06a0b46eb70b0"
+      }
+    },
+    {
+      "id": "connections",
+      "status": "passed",
+      "level": "local-runtime",
+      "verifier": {
+        "id": "scripts/engine-evaluation/check-ticket-browser-v2.py",
+        "sha256": "74eef938d0ff1b70ea60b69de7a570293ea2324b713cc5d5e84ae0af27726aef"
+      },
+      "evidence": {
+        "path": "journey.json",
+        "sha256": "16b5a789322abb9d58763a593e4cc47c106582a54c0f3f01d9b0534a83c99de4",
+        "artifactSha256": "4b7580ad702c706ac25b0c4872fcbf445ff82c2f7bc87c7ae6d06a0b46eb70b0"
+      }
+    },
+    {
+      "id": "journey",
+      "status": "passed",
+      "level": "local-runtime",
+      "verifier": {
+        "id": "scripts/engine-evaluation/ticket-browser-oracle-v2.mjs",
+        "sha256": "77c6576c9f9b79ab043842131ea0d3d162e66c0ad82c19808b3b9940d0b8b93f"
+      },
+      "evidence": {
+        "path": "journey.json",
+        "sha256": "16b5a789322abb9d58763a593e4cc47c106582a54c0f3f01d9b0534a83c99de4",
+        "artifactSha256": "4b7580ad702c706ac25b0c4872fcbf445ff82c2f7bc87c7ae6d06a0b46eb70b0"
+      }
+    },
+    {
+      "id": "failure_recovery",
+      "status": "passed",
+      "level": "local-runtime",
+      "verifier": {
+        "id": "scripts/engine-evaluation/check-ticket-sdk-v2.py",
+        "sha256": "9a0054a9bc9aaae401e16456d1138f2ca2523e7772122e4c2e03a2a55c7d626e"
+      },
+      "evidence": {
+        "path": "independent-ticket-sdk-v2.json",
+        "sha256": "faf2933d682bebd265bedb89c3edbf1d0d4915494109e2f80e45bd74fcd0d085",
+        "artifactSha256": "4b7580ad702c706ac25b0c4872fcbf445ff82c2f7bc87c7ae6d06a0b46eb70b0"
+      }
+    },
+    {
+      "id": "terraform",
+      "status": "passed",
+      "level": "provider-schema",
+      "verifier": {
+        "id": "scripts/engine-evaluation/check-ticket-infra-v2.py",
+        "sha256": "ccd48b6aa0f49f745c88b7b4fbae36eace56462b7edd9f038c493843b2a8e99d"
+      },
+      "evidence": {
+        "path": "infrastructure.json",
+        "sha256": "2cf472d7a6476ec12d46c95905417fe7e48ec267f292ad93ab0009cfd1c09edf",
+        "artifactSha256": "4b7580ad702c706ac25b0c4872fcbf445ff82c2f7bc87c7ae6d06a0b46eb70b0"
+      }
+    },
+    {
+      "id": "runbook",
+      "status": "passed",
+      "level": "independent-review",
+      "verifier": {
+        "id": "root-independent-frozen22-review-v1",
+        "sha256": "d637212c82054f2747ed99b7225cab5803ed69c0858293897c4b9f3b24aff964"
+      },
+      "evidence": {
+        "path": "assessment.json",
+        "sha256": "eb221833e2c23a13abdc1c12a91650dda403a2ebf458cee3ac2214127ae94edc",
+        "artifactSha256": "4b7580ad702c706ac25b0c4872fcbf445ff82c2f7bc87c7ae6d06a0b46eb70b0"
+      }
+    },
+    {
+      "id": "interaction",
+      "status": "passed",
+      "level": "observed-interaction",
+      "verifier": {
+        "id": "scripts/engine-evaluation/audit-engineering-session.py",
+        "sha256": "a25c296809994b16c94c4f062b23b14f157e45267fc1ee07319dd8c3b67ecbdc"
+      },
+      "evidence": {
+        "path": "session-binding-audit.json",
+        "sha256": "ccca09d501eec2072b18d8ecfe5afbfe56b320b64246e2d925931e11e83dfa96",
+        "artifactSha256": "4b7580ad702c706ac25b0c4872fcbf445ff82c2f7bc87c7ae6d06a0b46eb70b0"
+      }
+    }
+  ]
+}
