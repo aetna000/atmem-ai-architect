@@ -272,3 +272,13 @@ external reference boundaries.505JS/429server/build pass; all twelve qualified
 placement artifacts remain byte-identical. See
 evidence/20261112-imported-ownership/README.md. Full lifecycle/network/identity/
 state parity and runnable alpha.4 remain outstanding.
+
+
+GE-005 supplied-image safeguard checkpoint: native AWS network membership and
+account/region-scoped role trust, independent actual IAM/task inspection and
+four-provider lifecycle/image/provider/review protections.511JS/build,unchanged
+429server,12 native packages102 mock plans and72 actual service unit mocks pass.
+See evidence/20261112-container-safeguards/README.md. Read-only network membership
+is not full routing/firewall/egress policy; lifecycle configuration is not state
+custody or migration. Complete remaining parity/operations/browser/export before
+runnable alpha.4; full programme and28/unfamiliar systems remain in scope.

@@ -7,7 +7,8 @@ const regions={aws:['eu-west-1','ap-southeast-2'],azure:['westeurope','australia
 const block=(name,body)=>name+' {\n'+body+'\n}\n';
 const variables=values=>block('variables',Object.entries({...values,review_approved:true}).map(([key,value])=>key+' = '+JSON.stringify(value)).join('\n'));
 function mocks(provider,region,values,alias){
- const data=provider==='azure'?block('mock_data "azurerm_container_app_environment"','defaults = '+JSON.stringify({id:values.environment_id,location:region})):provider==='ibm'?block('mock_data "ibm_code_engine_project"','defaults = '+JSON.stringify({id:values.code_engine_project_id,region,account_id:values.account_id})):'';
+ const vpc=Object.entries(values).find(([key])=>key.endsWith('_vpc_id'))?.[1];
+ const data=provider==='aws'?['aws_subnet','aws_security_group'].map(type=>block('mock_data "'+type+'"','defaults = '+JSON.stringify({vpc_id:vpc}))).join('\n'):provider==='azure'?block('mock_data "azurerm_container_app_environment"','defaults = '+JSON.stringify({id:values.environment_id,location:region})):provider==='ibm'?block('mock_data "ibm_code_engine_project"','defaults = '+JSON.stringify({id:values.code_engine_project_id,region,account_id:values.account_id})):'';
  return block('mock_provider "'+({azure:'azurerm',gcp:'google'}[provider]||provider)+'"',(alias?'alias = '+JSON.stringify(alias)+'\n':'')+data);
 }
 function childOracle(provider,region,tf,values,address){

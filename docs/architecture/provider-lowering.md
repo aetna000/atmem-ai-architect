@@ -49,3 +49,17 @@ fixtures without weakening those gates. This is not cloud observation or complet
 IAM/lifecycle/state-policy acceptance. Pinned native sources and the old compiler
 counterexample are in
 `specs/029-general-purpose-engine/evidence/20261112-provider-placement/README.md`.
+
+Supplied-image units now protect managed resources against destruction/replacement
+while their lifecycle configuration remains present. Independent inspection also
+retains immutable-image validation, review dependencies and provider scope. These
+rules cannot protect a resource after its configuration is removed; state custody,
+backup and authorized migration remain separate operating contracts.
+
+AWS queries only the explicitly supplied existing subnets/security groups and
+requires their VPC membership to agree. It leaves route, firewall/egress and shared
+ownership policy for separate verification. ECS role trust is account/region scoped;
+independent semantic inspection checks actual trust/grants and the task/cluster/log
+bindings, not merely resource addresses. Application task roles remain without
+application grants. Native plan mocks and mutation counterexamples are recorded in
+`specs/029-general-purpose-engine/evidence/20261112-container-safeguards/README.md`.

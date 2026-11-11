@@ -1,6 +1,7 @@
 import {PROVIDER_REGION_PATTERNS,validProviderRegion} from './deployment-region.mjs';
 import {containerContract} from './container-contracts.mjs';
 import {resourceAddress} from './identifiers.mjs';
+import {inspectContainerSecurity} from './container-security-inspection.mjs';
 // Inspect emitted configuration independently of the allocation compiler. Exact
 // quantity conversion is explicit; no platform default or rounded value is proof.
 const bytes=value=>{
@@ -16,8 +17,8 @@ export function inspectContainerConfiguration(node,row,config,plan,add,{root=con
  const expectedResources=new Set(['terraform_data.review_gate',contract.type+'.'+name,...(cloud==='aws'?['aws_ecs_cluster','aws_cloudwatch_log_group','aws_iam_role','aws_iam_role_policy','aws_ecs_task_definition'].map(type=>type+'.'+name).concat('aws_iam_role.'+name+'_task'):cloud==='gcp'?['google_service_account.'+name]:[])]);
  for(const [type,entries]of Object.entries(resource))for(const id of Object.keys(entries)){if(!expectedResources.delete(type+'.'+id))fail('The supplied-image unit contains a managed resource outside its reviewed ownership footprint.');}
  if(expectedResources.size)fail('The supplied-image unit is missing a required owned resource or review gate.');
- const expectedData=cloud==='azure'?'azurerm_container_app_environment':cloud==='ibm'?'ibm_code_engine_project':null;
- for(const [type,entries]of Object.entries(config.data||{}))for(const id of Object.keys(entries))if(type!==expectedData||id!==name)fail('The supplied-image unit queries data outside its reviewed existing-system boundary.');
+ const expectedData=cloud==='aws'?['aws_subnet','aws_security_group']:cloud==='azure'?['azurerm_container_app_environment']:cloud==='ibm'?['ibm_code_engine_project']:[];
+ for(const [type,entries]of Object.entries(config.data||{}))for(const id of Object.keys(entries))if(!expectedData.includes(type)||id!==name)fail('The supplied-image unit queries data outside its reviewed existing-system boundary.');
  const body=resource[contract.type]?.[name];if(!body)return;
  const rawRegion=settings.region,selected=rawRegion&&rawRegion!=='To be selected'&&validProviderRegion(cloud,rawRegion)?rawRegion:null;
  const expectedValidation='${can(regex('+JSON.stringify(PROVIDER_REGION_PATTERNS[cloud])+', var.region))'+(selected?' && var.region == '+JSON.stringify(selected):'')+'}';
@@ -25,6 +26,7 @@ export function inspectContainerConfiguration(node,row,config,plan,add,{root=con
  if(rawRegion&&rawRegion!=='To be selected'&&!selected&&!(plan.gapDetails||[]).some(g=>g.componentIds?.includes(node.id)&&g.id.endsWith('-region')))fail('Unsupported placement was discarded instead of remaining blocking scope.');
  const rootName=key=>scope?scope.module+'__'+key:key,rootRef=key=>'${var.'+rootName(key)+'}';
  const candidates=root.provider?.[contract.provider],providers=Array.isArray(candidates)?candidates:[candidates],provider=providers.find(p=>p&&(scope?p.alias===scope.module:!p.alias));
+ inspectContainerSecurity(cloud,name,config,provider,rootRef,fail);
  if(!provider||cloud!=='azure'&&provider.region!==rootRef('region'))fail('The native provider is not bound to its own delivery-unit region input.');
  if(cloud==='azure'&&provider?.subscription_id!==rootRef('subscription_id'))fail('The Azure lookup and application lost their owned subscription input.');
  if(cloud==='gcp'&&provider?.project!==rootRef('project_id'))fail('The Google provider lost its reviewed project input.');
@@ -33,6 +35,11 @@ export function inspectContainerConfiguration(node,row,config,plan,add,{root=con
   if(cloud==='aws'&&item.region!==undefined&&item.region!=='${var.region}')fail('A container resource overrides its owned deployment region.');
  }
  const conditions=body.lifecycle?.precondition||[],has=condition=>Array.isArray(conditions)&&conditions.some(rule=>rule.condition===condition);
+ if(cloud==='aws')for(const [type,key]of [['aws_subnet','subnets'],['aws_security_group','security_groups']]){
+  const lookup=config.data?.[type]?.[name];
+  if(!lookup||lookup.for_each!=='${toset(var.'+name+'_'+key+')}'||lookup.id!=='${each.value}'||Object.keys(lookup).some(key=>!['for_each','id','provider'].includes(key))||lookup.provider!==undefined&&lookup.provider!=='aws'||body.network_configuration?.[key]!=='${var.'+name+'_'+key+'}')fail('An AWS network lookup or service no longer follows its exact existing network inputs.');
+  if(!has('${alltrue([for item in values(data.'+type+'.'+name+') : item.vpc_id == var.'+name+'_vpc_id])}'))fail('The AWS existing network lost its native VPC membership check.');
+ }
  if(cloud==='gcp'&&body.location!=='${var.region}')fail('Cloud Run location no longer uses the accepted unit region.');
  if(cloud==='azure'){
   const existing=config.data?.azurerm_container_app_environment?.[name];

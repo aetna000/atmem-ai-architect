@@ -820,3 +820,23 @@ Preserve references and separately supported existing-source deployment; never
 change the submitted origin or automatically migrate state. Evidence:
 evidence/20261112-imported-ownership/README.md. This fixes one invariant; GE-005
 lifecycle/state/identity/network parity remains in progress.
+
+
+### 2026-11-12 — Inspect native policy semantics and existing network membership
+
+The db1abd9 counterexample admitted all-actions/all-resources policy mutation at an
+owned address. Add independent semantic IAM/trust/task inspection and scoped ECS
+source-account/regional ARN trust, without granting runtime application rights.
+Read only the explicitly selected AWS subnets/groups and check their VPC. Do not
+claim this proves routing, firewall, egress or shared-network authorization.
+Protect managed supplied-image resources against destruction while configuration
+remains; explicit lifecycle changes and removal still need separate review.
+
+Native fixture work exposed unknown computed support attributes in plan assertions.
+Keep every test plan-only and approval gates intact; supply explicit mocked support
+log ARNs/identity values without overriding the policy/service under assertion.
+Keep failed v1/v2/v3 runs and the README provider-leak regression visible. Final
+v4 passes102 native mocks; final docs-only correction is independently digest-
+compared rather than rerunning/counting native tests again. Evidence:
+evidence/20261112-container-safeguards/README.md. GE-005 stays in_progress; owner
+preview/UI/job untouched, three runnable increments and1/28 full originals remain.
