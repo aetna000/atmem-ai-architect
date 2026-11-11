@@ -11,7 +11,7 @@ const socket=createServer();await new Promise(r=>socket.listen(0,'127.0.0.1',r))
 const base=`http://127.0.0.1:${port}`,server=spawn(process.execPath,['node_modules/vite/bin/vite.js','--host','127.0.0.1','--port',String(port),'--strictPort'],{stdio:'ignore',env:{...process.env,ATMEM_ARCHITECT_VITE_CACHE_DIR:path.join(out,'vite-cache')}});
 const project={id:'engineering-project-123',version:1,revision:1,name:'Sensor processing',provider:'tools',requirements:'Keep the existing sensor service.',nodes:[],edges:[]};
 const archive=Buffer.from('fixture immutable archive'),digest=createHash('sha256').update(archive).digest('hex');
-let browser;const errors=[],requests=[],savedContexts=[];let saved=false,rejectSave=false,engineeringEnabled=true;let job=null,events=[],rejectUpdate=false,captured=null,validations=[],definition='definition-one';
+let browser;const errors=[],requests=[],savedContexts=[];let saved=false,rejectSave=false,engineeringEnabled=true,currentSavedDigest=null;let job=null,events=[],rejectUpdate=false,captured=null,validations=[],definition='definition-one';
 try{
  for(let i=0;i<100;i++){try{if((await fetch(base)).ok)break;}catch{}await new Promise(r=>setTimeout(r,100));}
  browser=await chromium.launch({headless:true});const page=await browser.newPage({viewport:{width:1440,height:1000}});page.on('pageerror',e=>errors.push(e.message));
@@ -21,9 +21,10 @@ try{
   if(url.includes('/engineering/')){
    const action=url.split('/engineering/').at(-1);requests.push({action,payload});
    if(['start','steer'].includes(action))assert.equal(payload.contextSha256,savedContexts.at(-1).sha256,'submission binds the latest successful design save');
+   if(['start','steer'].includes(action)&&payload.contextSha256!==currentSavedDigest)return route.fulfill({status:409,json:{detail:'The saved project changed during session creation; no work was submitted.'}});
    assert.equal(payload.projectId,project.id);assert.equal(payload.workspace,undefined);assert.equal(payload.handle,undefined);
    if(action==='list')return saved?route.fulfill({json:{sessions:job?[job]:[]}}):route.fulfill({status:404,json:{detail:'Save this project before looking up work.'}});
-   if(action==='create'){assert(saved,'project context must save before native creation');assert.equal(payload.model,'exact-model');assert.equal(payload.effort,'high');job={id:'00000000-0000-0000-0000-000000000001',model:payload.model,effort:payload.effort,state:'idle',run:null,last_status:null};}
+   if(action==='create'){assert(saved,'project context must save before native creation');assert.equal(payload.model,'exact-model');assert.equal(payload.effort,'high');job={id:'00000000-0000-0000-0000-000000000001',model:payload.model,effort:payload.effort,state:'idle',run:null,last_status:null};currentSavedDigest=createHash('sha256').update('A pending background save settled during slow native creation.').digest('hex');}
    if(action==='start'){job={...job,state:'running',run:'public-run'};events.push({sequence:events.length+1,kind:'accepted',text:payload.text});}
    if(action==='steer'&&rejectUpdate)return route.fulfill({status:409,json:{detail:'Recover this job before submitting more work.'}});
    if(action==='steer')events.push({sequence:events.length+1,kind:'steering_submitted',requestId:'update-one',text:payload.text},{sequence:events.length+2,kind:'steering_accepted',requestId:'update-one'});
@@ -47,7 +48,7 @@ try{
    if(action==='download')return route.fulfill({body:archive,contentType:'application/zip',headers:{'X-Artifact-Sha256':digest}});
    return route.fulfill({json:job});
   }
-  if(url.endsWith('/api/projects/save')){if(rejectSave)return route.fulfill({status:503,json:{detail:'Synthetic save unavailable'}});saved=true;const sha256=createHash('sha256').update(JSON.stringify(payload.file)).digest('hex');savedContexts.push({file:payload.file,sha256});return route.fulfill({json:{saved:true,sha256}});}
+  if(url.endsWith('/api/projects/save')){if(rejectSave)return route.fulfill({status:503,json:{detail:'Synthetic save unavailable'}});saved=true;const sha256=createHash('sha256').update(JSON.stringify(payload.file)).digest('hex');currentSavedDigest=sha256;savedContexts.push({file:payload.file,sha256});return route.fulfill({json:{saved:true,sha256}});}
   return route.fulfill({json:url.endsWith('/api/session')?{token:'fixture',engineeringEnabled,status:'local-sidecar',providers:{codex:{installed:true,available:true,signedIn:true}}}:{status:'disabled',enabled:false,projects:[],bin:[],saved:true}});
  });
  await page.goto(base);await page.getByRole('heading',{name:'Build your project',exact:true}).waitFor();assert.equal(await page.getByRole('tab',{name:'Build',exact:true}).getAttribute('aria-selected'),'true');

@@ -41,3 +41,19 @@ Actual-native qualification uses scripts/architecture-work-live.mjs and the sepa
 isolated check-reading-library.py oracle. This is an evaluator-authored orchard
 transfer fixture, not a blinded holdout or production recipe. Do not count it as
 qualified until its actual artifacts, receipts and independent results are recorded.
+
+The first actual-UI qualification attempt left a created session idle with no run
+reservation or context revision. Its pinned and current saved project differed only
+in created/updated timestamps. The initial failed HTTP response was not recorded;
+a metadata save race is an inference from that evidence, not a captured response.
+After verifying no inference was started, stop only that evaluator/idle preview and
+retain pre-inference/source.json and verified-pre-inference-stop.json.
+
+Fix the source by confirming the latest matching saved project again after native
+session creation, which can outlast pending autosaves. Read the latest matching
+project/conversation instead of an old async callback snapshot; refuse a project
+switch before submission. Session status refreshes with the same token do not cause
+new project saves. A deterministic browser counterexample changes the saved digest
+during creation and rejects any stale submission. Both guarded browser suites,
+404 JS tests and the production build pass. No inference was replayed; actual native
+qualification must use the corrected frozen source and a new evidence directory.

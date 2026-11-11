@@ -532,3 +532,12 @@ dependencies are not implementation coverage; fix accidental record/history alia
 Read saved context without legacy adapter normalization, preserving structured brief,
 annotation and additional interface semantics.404 JS/418 server/build/two browser
 fixtures pass. Keep GE-003 in progress pending actual-native round trip and alpha.2.
+
+Actual UI staging exposed a pre-inference failure: the session was idle, no run or
+context reservation existed, and only metadata timestamps differed between frozen
+and saved files. The original HTTP rejection is unavailable; treat save-race causation
+as an inference, then exercise it directly in a deterministic browser counterexample.
+Confirm saved context after slow native creation, save from latest matching project/
+conversation refs, refuse a project switch, and stop treating same-token session
+refresh as a project edit. Preserve strict context digests and uncertain-submission
+no-replay behavior.404 JS/build/two guarded browser suites pass; backend418 unchanged.

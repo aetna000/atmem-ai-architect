@@ -691,6 +691,7 @@ function App() {
     [probe, setProbe] = useState(null),
     [snapshot, setSnapshot] = useState(null),
     [measured, setMeasured] = useState({});
+  const messagesRef=useRef(messages);messagesRef.current=messages;
   const [session, setSession] = useState(null),
     [connection, setConnection] = useState(readConnection),
     [agentBusy, setAgentBusy] = useState(false);
@@ -1557,7 +1558,12 @@ function App() {
       } catch (error) { notify(`Project conversation could not be saved: ${error.message}`); }
     }, 800);
     return () => clearTimeout(t);
-  }, [project, messages, session]);
+  }, [project, messages, session?.token]);
+  function saveEngineeringProject(owner){
+    const current=projectRef.current;
+    if(current.id!==owner)throw Error('The project changed while opening engineering work. Return to that project before submitting its draft.');
+    return projectStore(session,'save',{id:owner,file:toProjectFile(withConversation(current,messagesRef.current))});
+  }
   async function refreshProjects() {
     if (!session) return;
     try {
@@ -1883,7 +1889,7 @@ function App() {
         }}
       >
         {buildView?<section className="native-work-area" aria-label="Build workspace"><EngineeringPanel key={project.id} project={project} onWorkModelChange={changeArchitectureWork} onIntentContext={syncEngineeringIntent} projectId={project.id} session={session} connection={connection} contextBusy={busy||agentBusy||!!pending}
-          saveProject={()=>projectStore(session,'save',{id:project.id,file:toProjectFile(withConversation(project,messages))})}
+          saveProject={()=>saveEngineeringProject(project.id)}
           onConnections={()=>setModal('connections')}/></section>:<>
         <ReactFlow
           nodes={canvasNodes}

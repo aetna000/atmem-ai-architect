@@ -64,11 +64,15 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
     const submitted=draft;
     void act(async()=>{
       let current=job;
-      const saved=await saveProject();
+      let saved=await saveProject();
       if(!/^[a-f0-9]{64}$/.test(saved?.sha256||''))throw Error('The server did not confirm the saved design context. Your draft is retained.');
       if(!current){
         current=await call('create',{model:connection.model,effort:connection.effort});
         if(live.current)setJob(current);
+        // Native session creation can outlast pending autosaves. Confirm the
+        // context immediately before submitting, without replaying any intent.
+        saved=await saveProject();
+        if(!/^[a-f0-9]{64}$/.test(saved?.sha256||''))throw Error('The server did not confirm the saved design context. Your draft is retained.');
       }
       // The new session ID is explicit: React state may not have rendered yet.
       const next=await call(current.state==='running'?'steer':'start',{sessionId:current.id,text:submitted,contextSha256:saved.sha256});

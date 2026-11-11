@@ -16,7 +16,8 @@ const browser=await chromium.launch({headless:true});let page,receipt={passed:fa
 try{
  page=await browser.newPage({viewport:{width:1440,height:1000}});page.setDefaultTimeout(30000);page.on('pageerror',e=>errors.push(e.message));
  page.on('websocket',socket=>socket.on('framereceived',frame=>{try{const value=JSON.parse(frame.payload);if(['update','full-reload'].includes(value.type))devReloads.push(value.type);}catch{}}));
- page.on('request',r=>{if(/\/api\/engineering\/(start|steer)$/.test(r.url()))submissions.push({action:r.url().split('/').at(-1),body:r.postDataJSON()});});
+ page.on('request',r=>{if(/\/api\/engineering\/(start|steer)$/.test(r.url())){submissions.push({action:r.url().split('/').at(-1),body:r.postDataJSON()});fs.writeFileSync(path.join(out,'submissions.json'),JSON.stringify(submissions,null,2)+'\n');}});
+ page.on('response',async response=>{if(/\/api\/engineering\/(create|start|steer)$/.test(response.url())&&!response.ok())fs.appendFileSync(path.join(out,'submission-errors.log'),response.status()+' '+await response.text()+'\n');});
  page.on('response',async response=>{if(response.url().endsWith('/api/engineering/reconciliation')&&response.ok())prepared.push(await response.json());});
  await page.addInitScript(p=>{if(!localStorage.getItem('atforma-workspace-v3'))localStorage.setItem('atforma-workspace-v3',JSON.stringify(p));localStorage.setItem('atforma-connection-v1',JSON.stringify({provider:'codex',model:'gpt-6.1-sol',effort:'high'}));},project);
  await page.route('**/api/architect',route=>{designConsultations++;return route.fulfill({json:{message:'Edited requirement retained. Native work must be regenerated against it.',phase:'Architecture Review',componentReview:{componentId:'viewer',summary:'Check the changed unit against the implementation.',questions:[]}}});});
@@ -28,6 +29,7 @@ try{
   while(Date.now()<deadline){
    const jobs=(await api('list')).sessions,job=jobs.at(-1);
    if(job){
+    if(job.state==='idle'&&!job.last_status&&await page.getByRole('alert').count())throw Error('The session is idle and the UI reported a rejected submission: '+await page.getByRole('alert').allTextContents());
     assert.equal(job.model,'gpt-6.1-sol');assert.equal(job.effort,'high');receipt.sessionId=job.id;
     const finals=(await api('finalizations',{sessionId:job.id})).finalizations,last=finals.find(f=>f.runId===job.run);
     if(job.state==='idle'&&job.last_status==='completed'&&last&&['local_checks_passed','needs_attention'].includes(last.state))return job;
