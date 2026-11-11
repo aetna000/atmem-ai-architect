@@ -66,6 +66,30 @@ class EngineeringArtifactTests(unittest.TestCase):
             path.unlink()
         self.assertEqual(self.store.db.execute('SELECT count(*) FROM engineering_artifacts').fetchone()[0],0)
 
+    def test_identical_capture_reuses_identity_but_changed_pins_bytes_and_runs_do_not(self):
+        self.settle();path=self.workspace/'module.py';path.write_text('original')
+        first=self.artifacts.capture(self.scope,self.session,self.workspace)
+        repeated=self.artifacts.capture(self.scope,self.session,self.workspace)
+        self.assertEqual(first,repeated);self.assertEqual(len(self.artifacts.manifests(self.scope,self.session)),1)
+        pinned=self.artifacts.capture(self.scope,self.session,self.workspace,expected_inputs={'module.py':hashlib.sha256(b'original').hexdigest()})
+        self.assertNotEqual(pinned['id'],first['id']);self.assertEqual(pinned['sha256'],first['sha256'])
+        self.assertEqual(self.artifacts.capture(self.scope,self.session,self.workspace,expected_inputs=pinned['pinnedInputs'])['id'],pinned['id'])
+        path.write_text('changed');changed=self.artifacts.capture(self.scope,self.session,self.workspace)
+        self.assertNotEqual(changed['id'],first['id']);self.assertNotEqual(changed['sha256'],first['sha256'])
+        path.write_text('original')
+        self.store.reserve(self.scope,self.session,'run-two','New user requirement, same source bytes')
+        self.store.attach_turn(self.scope,self.session,'run-two','turn-two');self.store.terminal(self.scope,self.session,'run-two','turn-two','completed')
+        later=self.artifacts.capture(self.scope,self.session,self.workspace)
+        self.assertEqual(later['sha256'],first['sha256']);self.assertNotEqual(later['id'],first['id'])
+
+    def test_repeat_capture_rejects_corrupted_stored_bytes_instead_of_attaching_old_evidence(self):
+        self.settle();(self.workspace/'module.py').write_text('original')
+        first=self.artifacts.capture(self.scope,self.session,self.workspace)
+        with self.store.db:self.store.db.execute('update engineering_artifacts set archive=? where id=?',(b'CORRUPT',first['id']))
+        with self.assertRaisesRegex(SessionError,'Stored package bytes'):
+            self.artifacts.capture(self.scope,self.session,self.workspace)
+        self.assertEqual(self.store.db.execute('SELECT count(*) FROM engineering_artifacts').fetchone()[0],1)
+
     def test_oversize_or_excess_entries_explicitly_fail(self):
         self.settle()
         (self.workspace/'large.txt').write_bytes(b'123456')

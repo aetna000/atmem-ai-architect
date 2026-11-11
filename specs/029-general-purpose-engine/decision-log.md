@@ -409,3 +409,14 @@ host SDK skips/browser prerequisite failure separately. Independent packaged HTT
 oracle36 passes; do not infer cryptographic identity or full browser/service journey.
 Complete that connected assessment and requirements/IaC/runbook reconciliation next,
 then freeze untouched holdouts and qualify the first runnable release. No cloud work.
+
+### Repeated identical delivery capture retains its check identity
+
+Inspecting the real native repair UI revealed automatic receipts disappear from
+the package panel after a manual capture creates a new ID for identical bytes.
+Reuse delivery identity only within the same owned run and identical full capture
+metadata/pins/archive; verify stored bytes before reuse. Changed pins/runs/content
+stay separate and corruption fails. Keep original duplicate evidence untouched.
+369 server tests and six actual isolated-runtime capture/check-retention probes
+pass; no model/check replay or complete-system claim. Next work remains connected
+independent browser/authentication/handler journeys on the completed AWS package.

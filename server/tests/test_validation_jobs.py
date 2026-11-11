@@ -66,6 +66,14 @@ class ValidationJobTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.jobs.get(self.scope,self.session,state['id'])['result'],result['result'])
         self.assertEqual(len(self.worker.calls),1)
 
+    async def test_manual_recapture_keeps_automatic_package_checks_visible_without_replay(self):
+        check=await self.jobs.start(self.scope,self.session,self.artifact,'python-tests');await self.finish()
+        captured=self.artifacts.capture(self.scope,self.session,self.root/'source')
+        self.assertEqual(captured['id'],self.artifact)
+        restored=self.jobs.list(self.scope,self.session,captured['id'])
+        self.assertEqual(len(restored),1);self.assertEqual(restored[0]['id'],check['id'])
+        self.assertEqual(restored[0]['result']['status'],'passed');self.assertEqual(len(self.worker.calls),1)
+
     async def test_other_scope_session_or_artifact_cannot_start_or_observe(self):
         state=await self.jobs.start(self.scope,self.session,self.artifact,'python-tests');await self.finish()
         for scope in [ProjectScope('other-owner','project-one'),ProjectScope('local-owner','project-two')]:

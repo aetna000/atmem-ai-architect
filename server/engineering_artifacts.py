@@ -38,6 +38,18 @@ class EngineeringArtifacts:
         return tuple(row[key] for key in ['state','run','turn','last_status'])
 
     def _persist(self,manifest,data):
+        if self.KIND=='delivery':
+            # Reopening/capturing unchanged settled bytes must keep the artifact
+            # identity that owns its automatic check reports. Never carry evidence
+            # across a run, changed pins, exclusions, metadata or bytes.
+            identity={key:value for key,value in manifest.items() if key!='id'}
+            for raw in self.db.execute(f'SELECT id,manifest FROM {self.TABLE} WHERE session=? AND run=? ORDER BY rowid',(manifest['sessionId'],manifest['runId'])):
+                previous=json.loads(raw['manifest'])
+                if {key:value for key,value in previous.items() if key!='id'}==identity:
+                    stored=self.db.execute(f'SELECT archive FROM {self.TABLE} WHERE id=?',(raw['id'],)).fetchone()
+                    if stored is None or bytes(stored['archive'])!=data:
+                        raise SessionError('Stored package bytes do not match their capture receipt')
+                    return previous
         with self.db:
             self.db.execute(f'INSERT INTO {self.TABLE} VALUES (?,?,?,?,?)',
                 (manifest['id'],manifest['sessionId'],manifest['runId'],json.dumps(manifest),data))

@@ -1,0 +1,62 @@
+{
+  "id": "07f82dae-910a-4a93-8413-63b358029bb8",
+  "sessionId": "cb304efe-6495-4020-bff6-8dfbd186616a",
+  "runId": "fixture-run",
+  "state": "local_checks_passed",
+  "artifact": {
+    "id": "faa3e965-b30e-4638-810f-814d10d8ab5d",
+    "sha256": "1c52ed5255f60dbdc322919123b7ee1887861afa6ac4b407fb93f276e64ae181"
+  },
+  "plan": {
+    "artifactId": "faa3e965-b30e-4638-810f-814d10d8ab5d",
+    "artifactSha256": "1c52ed5255f60dbdc322919123b7ee1887861afa6ac4b407fb93f276e64ae181",
+    "decisions": [
+      {
+        "validatorId": "python-tests",
+        "label": "Local Python tests",
+        "state": "selected",
+        "contractSha256": "62e30a4a3ff63a1ea05b4f5a23840aae62c328578a56bf8cc107c29bad0db59b",
+        "applicability": {
+          "anyOf": [
+            "test_*.py"
+          ],
+          "allOf": [],
+          "noneOf": []
+        },
+        "assessment": {
+          "applies": true,
+          "matchedAnyOf": [
+            "test_*.py"
+          ],
+          "missingAllOf": [],
+          "matchedNoneOf": []
+        }
+      },
+      {
+        "validatorId": "node-browser-tests",
+        "label": "Node and Chromium tests (Playwright 1.64.1)",
+        "state": "not_applicable",
+        "contractSha256": "6e7791d451788efe2e10854eb28bb3b14b20c2d94178d59a759d59f9d8989a9b",
+        "applicability": {
+          "anyOf": [
+            "**/*.test.mjs"
+          ],
+          "allOf": [],
+          "noneOf": []
+        },
+        "assessment": {
+          "applies": false,
+          "matchedAnyOf": [],
+          "missingAllOf": [],
+          "matchedNoneOf": []
+        }
+      }
+    ],
+    "selectionStatus": "checks_selected",
+    "acceptance": "not_established_by_file_applicability"
+  },
+  "checks": [
+    "52645fc1-85ca-4e27-9ef4-ccac0c51957f"
+  ],
+  "acceptance": "not_established_by_local_checks"
+}

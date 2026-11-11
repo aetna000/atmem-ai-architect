@@ -81,7 +81,10 @@ async def run():
                 assert all(report['result']['status']==expected_status for report in reports),reports
                 finalizer.observe(scope,session)
                 assert len(finalizer.list(scope,session))==1 and not finalizer.tasks
-                receipts.append({'name':name,'state':result['state'],'checks':[{'validator':r['validatorId'],'status':r['result']['status'],'testsReported':r['result'].get('testsReported'),'skipped':r['result'].get('skipped')}for r in reports],'artifactSha256':manifest['sha256']})
+                recaptured=artifacts.capture(scope,session,workspace)
+                assert recaptured['id']==manifest['id']
+                assert [r['id'] for r in checks.list(scope,session,recaptured['id'])]==[r['id'] for r in reports]
+                receipts.append({'name':name,'state':result['state'],'checks':[{'validator':r['validatorId'],'status':r['result']['status'],'testsReported':r['result'].get('testsReported'),'skipped':r['result'].get('skipped')}for r in reports],'artifactSha256':manifest['sha256'],'repeatedCaptureRetainsCheckIdentity':True})
                 print(name,result['state'],flush=True)
             finally:
                 await finalizer.close();await checks.close();await jobs.close();store.close()
