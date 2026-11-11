@@ -256,3 +256,18 @@ Evidence: evidence/20261111-uncoached-product-run/README.md. Next regenerate unc
 brief, execute clean-unpack and browser/identity/service journeys, and integrate relevant
 reviewed knowledge without case-specific recipes. All ten releases and original 28
 acceptances remain pending; cloud deployment is not a prerequisite or authorized.
+
+
+## Native evidence-to-repair checkpoint
+
+Project/turn-bound native tools now expose pinned full reviewed records and existing
+settled-artifact registered checks. Actual native distance-module transfer crosses a
+real process restart and a new requirement: old bytes fail the new independent
+contract; the same native thread reads the failure, changes working source and both
+independent contracts pass on new bytes. Eight actual callbacks/two completed turns
+are matched to read-only native history. Full updated server regression:337, no skips.
+Evidence: evidence/20261111-native-tools/README.md (exact source scopes and limits).
+GE-002 remains in progress. Next give native engineering separately captured working
+checkpoints and isolated browser execution; preserve the settled delivery gate and
+operator command/image controls. Then qualify generic check/repair ownership and
+coherent native-first intake before claiming alpha.1. No original system is accepted.

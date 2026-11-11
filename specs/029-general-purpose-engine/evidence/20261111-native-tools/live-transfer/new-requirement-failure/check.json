@@ -1,0 +1,34 @@
+{
+  "id": "a44356dd-ed7a-4e01-9721-d80239d5350c",
+  "sessionId": "4c7a7b03-0e38-48a2-bad7-9db1e7b799c3",
+  "artifactId": "51173b36-d21d-446f-a2c8-75ed081fea96",
+  "artifactSha256": "1d22b8dc84627dfef988f96e960947d4135842845edce63abb97391e0fb53e77",
+  "validatorId": "distance-centimetres",
+  "label": "Independent new centimetre requirement",
+  "contractSha256": "08311cbd345e4b644f2b751cc59107af1ef3df57b47699426e364b3c1c1be181",
+  "state": "finished",
+  "result": {
+    "validator": "distance-centimetres",
+    "artifactSha256": "1d22b8dc84627dfef988f96e960947d4135842845edce63abb97391e0fb53e77",
+    "imageId": "sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20",
+    "runtimeConfigImageId": "sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20",
+    "platform": "linux/amd64",
+    "command": [
+      "/usr/local/bin/python3",
+      "-c",
+      "import math\nimport distance\nassert math.isclose(distance.convert(100,\"cm\",\"m\"),1)\nassert math.isclose(distance.convert(1,\"m\",\"cm\"),100)\nassert math.isclose(distance.convert(1,\"ft\",\"cm\"),30.48)\nassert math.isclose(distance.convert(30.48,\"cm\",\"ft\"),1)\nfor value in [True,False,-1,float(\"nan\"),float(\"inf\"),\"1\",None]:\n try:distance.convert(value,\"cm\",\"m\")\n except (ValueError,TypeError):pass\n else:raise AssertionError(\"Expected validation denial\")\nprint(\"INDEPENDENT_DISTANCE_CENTIMETRES_PASSED\")\n"
+    ],
+    "status": "failed",
+    "exitCode": 1,
+    "skipped": 0,
+    "testsReported": null,
+    "reason": null,
+    "output": "Traceback (most recent call last):\n  File \"<string>\", line 3, in <module>\n    assert math.isclose(distance.convert(100,\"cm\",\"m\"),1)\n                        ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^\n  File \"/work/source/distance.py\", line 17, in convert\n    raise ValueError(\"units must be exactly 'm' or 'ft'\")\nValueError: units must be exactly 'm' or 'ft'\n",
+    "outputTruncated": false,
+    "durationSeconds": 0.648,
+    "evidenceLevel": "local_container_check",
+    "cloudOperations": false,
+    "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+  },
+  "acceptance": "not_established_by_local_check"
+}

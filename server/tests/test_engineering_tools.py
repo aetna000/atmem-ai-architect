@@ -53,6 +53,7 @@ class EngineeringToolTests(unittest.IsolatedAsyncioTestCase):
   first=await call('native-call','atmem_check_start',args);again=await call('native-call','atmem_check_start',args);self.assertEqual(first,again)
   job=self.value(first);await asyncio.gather(*list(self.checks.tasks.values()));self.assertEqual(len(self.worker.calls),1)
   data=self.checks.get(self.scope,self.session,job['id'])['result'];data['output']='é'*17000;self.checks._settle(job['id'],data)
+  reused=await call('finished-reuse','atmem_check_start',args);self.assertTrue(reused['success']);summary=self.value(reused);self.assertEqual(summary['id'],job['id']);self.assertNotIn('output',summary['result']);self.assertEqual(summary['result']['outputSummary']['characters'],17000);self.assertEqual(summary['reportTool'],'atmem_check_read')
   text='';offset=0
   for index in range(3):
    value=self.value(await call('page-'+str(index),'atmem_check_read',{'checkId':job['id'],'offset':offset}));self.assertEqual(value['artifactSha256'],manifest['sha256']);page=value['result']['outputPage'];text+=page['text'];offset=page['nextOffset']
@@ -61,6 +62,21 @@ class EngineeringToolTests(unittest.IsolatedAsyncioTestCase):
   self.store.db.execute("UPDATE engineering_tool_calls SET state='reserved',result=NULL WHERE call='native-call'");self.store.db.commit()
   uncertain=await call('native-call','atmem_check_start',args);self.assertFalse(uncertain['success']);self.assertEqual(len(self.worker.calls),1)
   restarted=EngineeringTools(self.store,self.artifacts,lambda:self.checks);self.assertFalse((await restarted.invoke(self.scope,self.workspace,'turn-two','native-call','atmem_check_start',args))['success']);self.assertEqual(len(self.worker.calls),1)
+ async def test_lost_callback_reply_preserves_accepted_check_without_replay(self):
+  source=self.root/'source';source.mkdir();(source/'module.py').write_text('pass')
+  self.store.terminal(self.scope,self.session,'run-one','turn-one','completed');manifest=self.artifacts.capture(self.scope,self.session,source)
+  self.store.reserve(self.scope,self.session,'run-two','Repair');self.store.attach_turn(self.scope,self.session,'run-two','turn-two')
+  entered=asyncio.Event();original=self.checks.start;args={'artifactId':manifest['id'],'validatorId':'local-tests'}
+  async def withheld(*values,**kw):
+   await original(*values,**kw);entered.set();await asyncio.Event().wait()
+  with patch.object(self.checks,'start',side_effect=withheld):
+   request=asyncio.create_task(self.tools.invoke(self.scope,self.workspace,'turn-two','lost-call','atmem_check_start',args));await entered.wait();request.cancel()
+   with self.assertRaises(asyncio.CancelledError):await request
+  await asyncio.gather(*list(self.checks.tasks.values()));self.assertEqual(len(self.worker.calls),1)
+  uncertain=await self.tools.invoke(self.scope,self.workspace,'turn-two','lost-call','atmem_check_start',args);self.assertFalse(uncertain['success'])
+  # A separate explicit request uses the check supervisor's immutable-contract
+  # identity to recover the existing receipt, never execute it a second time.
+  recovered=await self.tools.invoke(self.scope,self.workspace,'turn-two','lookup-call','atmem_check_start',args);self.assertTrue(recovered['success']);self.assertEqual(len(self.worker.calls),1)
  async def test_working_files_are_not_implicitly_captured_and_foreign_artifacts_denied(self):
   self.assertEqual(self.value(await self.call('atmem_check_artifacts',{}))['artifacts'],[])
   for args in [{'artifactId':'foreign-artifact','validatorId':'local-tests'},{'artifactId':'x','validatorId':'unknown'}]:self.assertFalse((await self.call('atmem_check_start',args))['success'])

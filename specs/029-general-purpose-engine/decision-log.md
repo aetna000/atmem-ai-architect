@@ -278,3 +278,22 @@ explicit, approvals/unknown server requests denied and all command/image/host ch
 operator-only. 336 tests pass; actual native callback/restart transfer remains pending.
 Do not loosen settled delivery capture to let the model check active files. A separate
 immutable working-checkpoint capability and isolated browser validation are next.
+
+
+### Actual native tool/restart transfer and bounded check acknowledgements
+
+On frozen 3ef54bc, two actual completed gpt-6.1-sol/high turns in one stored native
+thread cross a server/worker restart. Pinned reviewed-record read, catalog/artifact
+inspection, exact immutable check reuse and report read all succeed. Old bytes fail
+the explicit new centimetre requirement; repaired bytes pass both independent old/
+new module contracts. This is a tool/requirement-evolution fixture, not an uncoached
+architecture, original-project acceptance or comparative quality win.
+
+Preserve public check identity when reusing a finished check with a large output:
+return explicit output length/hash and report-tool identity rather than a full log
+that could exceed the response bound. Full text remains separately paged. Actual
+callback cancellation after check acceptance remains reserved/uncertain, and a new
+explicit lookup reuses the same immutable check without execution replay. 337 tests
+pass; original native proof remains scoped to its frozen source before this small
+response fix. Keep all release/whole-system gates and continue active-checkpoint/
+browser capability rather than patching generated client bundles.

@@ -125,7 +125,17 @@ class EngineeringTools:
         if tool=='atmem_check_start':
             self._fields(args,['artifactId','validatorId'])
             if not all(isinstance(args[key],str) and len(args[key])<=120 for key in ['artifactId','validatorId']):raise ValueError('Invalid check identifiers')
-            return await self.validation_service().start(scope,session,args['artifactId'],args['validatorId'])
+            value=await self.validation_service().start(scope,session,args['artifactId'],args['validatorId'])
+            if value.get('result'):
+                summary=dict(value['result']);text=summary.pop('output',None)
+                if text is not None:
+                    if not isinstance(text,str):raise ValueError('Invalid stored check output')
+                    summary['outputSummary']={'characters':len(text),'sha256':hashlib.sha256(text.encode()).hexdigest(),
+                        'completeOutputAvailableThrough':'atmem_check_read'}
+                value={**value,'result':summary}
+            # A reused finished check may have a large log. Preserve its identity
+            # in the start reply; full evidence is available via explicit pages.
+            return {**value,'reportTool':'atmem_check_read'}
         if tool=='atmem_check_read':
             self._fields(args,['checkId'],['offset']);offset=args.get('offset',0)
             if not isinstance(args['checkId'],str) or len(args['checkId'])>120 or type(offset) is not int or offset<0:raise ValueError('Invalid check page')

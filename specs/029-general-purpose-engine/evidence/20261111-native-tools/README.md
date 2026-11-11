@@ -35,3 +35,32 @@ Delivery capture still requires a settled run. The isolated Chromium prototype r
 operator-only. Next qualify actual native callbacks with a distance-module requirement
 change and restart, then add controlled in-progress checkpoints/isolated browser checks
 and generic validation/repair ownership without weakening settled delivery gates.
+
+
+## Real native tools and restart/repair transfer (generation source 3ef54bc)
+
+A fresh actual gpt-6.1-sol/high thread inspected catalog/artifacts, searched pinned
+reviewed knowledge and read a complete record, then built a standard-library distance
+module. An independently authored isolated check passed the initial m/ft validation
+contract. After an actual owned HTTP/worker process restart, a new cm requirement's
+independent check correctly failed the unchanged earlier artifact. The same native
+thread inspected catalog/artifacts, reused that failed check and read its report,
+then changed implementation/tests. Both original and new independent contracts pass
+on the new immutable artifact. Two real completed turns, eight successful callbacks;
+read-only native-history audit verifies both completed turns in the same stored
+native thread, with private IDs represented only by hashes in the public evidence.
+
+The fixture intentionally supplies a stable module API and asks for native tools to
+qualify transport/evidence/repair, so it is not an uncoached architecture test or
+holdout and demonstrates no specialized quality advantage. Check outputs are real
+cached network-none container executions, not injected pass receipts. A new business
+requirement's failure is not labeled an initial defect. Both original artifact bytes
+and failed checks remain retained. No model command/path/image/daemon was enabled.
+
+A subsequent bounded-reply fix prevents a reused finished check's large log from
+hiding its public check ID: start returns explicit output metadata and the report
+tool; full text remains available through pages. The original native proof is scoped
+to 3ef54bc; this subsequent response fix has regression coverage, including 17,000
+Unicode characters and actual callback cancellation after an accepted check, with
+no check replay. The full updated suite has 337 tests, no skips. It is not promoted
+to a frozen full-source software release qualification.
