@@ -101,3 +101,6 @@ retaining Python source, project stores, session logs, originals, reports, image
 provider mirrors and running previews. Cleanup manifests are retained. Initial
 failed writes are excluded; v3 is the successfully generated/replayed current graph
 pipeline. The first legacy v3 attempt wrote nothing because disk allocation failed.
+
+Source checkpoint: `06a7ff30c5e102c66e5cc5a50bad36a4a61ffcdf`; code/test fingerprints are in
+`code-sha256.json`. This later binding record does not change implementation source.
