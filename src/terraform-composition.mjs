@@ -1,8 +1,9 @@
+import {identityToken} from './identifiers.mjs';
 import {relocateTerraformValues} from './terraform-expressions.mjs';
 // Stable, injective identity. Labels, business domains and array order never dispatch.
 export const deliveryUnitName=id=>{
  if(typeof id!=='string'||!id||new TextEncoder().encode(id).length>512)throw Error('Use a nonempty delivery-unit identity within 512 UTF-8 bytes; no identity was clipped.');
- return 'unit_'+Array.from(new TextEncoder().encode(id),b=>b.toString(16).padStart(2,'0')).join('');
+ return 'unit_'+identityToken(id);
 };
 const encode=value=>JSON.stringify(value,null,2)+'\n';
 const expr=value=>'${'+value+'}';

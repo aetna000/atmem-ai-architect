@@ -1,10 +1,11 @@
+import {resourceAddress} from './identifiers.mjs';
 import{existingDeployment}from'./deployment-ownership.mjs';
 import{existingReference}from'./existing-references.mjs';
 import{validInvoiceRegion}from'./invoice-region.mjs';
 
 export const INVOICE_SERVICES={aws:'Amazon ECS',azure:'Azure Container Apps',gcp:'Google Cloud Run',ibm:'IBM Code Engine'};
 export const hasInvoice=project=>project.nodes.some(node=>node.data.kind!=='note'&&node.data.implementation==='invoice-workflow');
-const address=id=>'block_'+Array.from(new TextEncoder().encode(id),b=>b.toString(16).padStart(2,'0')).join('');
+const address=resourceAddress;
 const resourceTypes={aws:['aws_vpc','aws_db_instance','aws_s3_bucket','aws_ecs_cluster'],azure:['azurerm_resource_group','azurerm_postgresql_flexible_server','azurerm_storage_account','azurerm_container_app_environment'],gcp:['google_compute_network','google_sql_database_instance','google_storage_bucket','google_artifact_registry_repository'],ibm:['ibm_code_engine_project','ibm_database','ibm_cos_bucket','ibm_appid_application']};
 
 // One composed delivery unit owns its API, worker, isolated parser, private SQL,

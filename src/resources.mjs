@@ -1,3 +1,4 @@
+import {resourceAddress,assertDistinctIdentifiers} from './identifiers.mjs';
 import {capabilityCompositionPlan} from './delivery-capabilities.mjs';
 import {hasInvoice,invoiceResourcePlan}from'./invoice-plan.mjs';
 import {publicFaqPlan} from './public-faq.mjs';
@@ -59,6 +60,7 @@ export function resolveService(data) {
 }
 
 export function resourcePlan(project) {
+ assertDistinctIdentifiers(project.nodes.map(n=>n.id));
  return capabilityCompositionPlan(project,standaloneResourcePlan)||standaloneResourcePlan(project);
 }
 function standaloneResourcePlan(project) {
@@ -72,7 +74,7 @@ function standaloneResourcePlan(project) {
     const foundation = !existing && n.data.provider === "aws" && match?.name === "Amazon S3";
     const compute=!existing && n.data.provider==="aws" && match?.name==="AWS Lambda" && n.data.implementation==="text-statistics";
     // Encode the complete ID: stable on reorder/rename, valid Terraform identifier, no collisions.
-    const address = `block_${Array.from(new TextEncoder().encode(n.id), (b) => b.toString(16).padStart(2, "0")).join("")}`;
+    const address = resourceAddress(n.id);
     return { id: n.id, address, label: n.data.label, provider: n.data.provider,
       service: match?.name || n.data.service || CANDIDATES[roleOf(n)] || "Service to be selected",
       sourceExisting:n.data.origin === "existing", selection: match?.ambiguous ? "Ambiguous service names" : match?.name ? (match.selected ? "Explicit service field; deployment review required" : "Named in diagram") : "Needs service confirmation", existing,
@@ -122,7 +124,9 @@ function standaloneResourcePlan(project) {
   const connections = project.edges.filter((e) => ids.has(e.source) && ids.has(e.target)).map((e) => ({ id: e.id, source: e.source, target: e.target, data: e.label || "data", generated: (faqPlan.edgeIds.includes(e.id)||ibmPlan.edgeIds.includes(e.id)||googlePlan.edgeIds.includes(e.id)||azurePlan.edgeIds.includes(e.id)||accessPlan.connections.some(c=>c.id===e.id)||asyncPlan.edgeIds.includes(e.id)||modelPlan.edgeIds.includes(e.id)||retrievalPlan.edgeIds.includes(e.id)||connectorPlan.connections.some(c=>c.id===e.id)||(browserPlan.edgeIds.includes(e.id)||structuredPlan.entries.some(x=>browserPlan.entries.some(w=>w.api.id===x.api.id)&&x.edges.some(y=>y.id===e.id)))), status: (faqPlan.edgeIds.includes(e.id)||ibmPlan.edgeIds.includes(e.id)||googlePlan.edgeIds.includes(e.id)||azurePlan.edgeIds.includes(e.id)||accessPlan.connections.some(c=>c.id===e.id)||asyncPlan.edgeIds.includes(e.id)||modelPlan.edgeIds.includes(e.id)||retrievalPlan.edgeIds.includes(e.id)||connectorPlan.connections.some(c=>c.id===e.id)||(browserPlan.edgeIds.includes(e.id)||structuredPlan.entries.some(x=>browserPlan.entries.some(w=>w.api.id===x.api.id)&&x.edges.some(y=>y.id===e.id)))) ? "Scoped access policy generated; account and runtime verification required" : "Application integration and permissions not implemented" }));
   if(faqPlan.entries.length)for(const connection of connections)if(!faqPlan.edgeIds.includes(connection.id)){connection.generated=false;connection.status='Additional required integration is not implemented by this public FAQ composition';}
   const missingStorageAccess=rows.filter(r=>(r.foundation||r.compute||r.summary||r.api)&&!accessPlan.connections.some(e=>e.target===r.id)&&!browserPlan.entries.some(e=>e.api.id===r.id||e.worker.id===r.id));
+  const containerSettingGaps=rows.filter(r=>r.containerContract).flatMap(row=>Object.entries(row.settings).map(([key,value])=>({id:`container-setting-${row.address}-${key}`,componentIds:[row.id],message:`${row.label}: explicit ${key}=${JSON.stringify(value)} is preserved but not implemented by the supplied-image container footprint; implement and validate provider lowering before applying.`})));
   const gaps = [
+    ...containerSettingGaps.map(g=>g.message),
     ...missingStorageAccess.map(r=>`${r.label}: explicit caller access contract is missing.`),
     ...rows.filter((r) => !r.implemented).map((r) => `${r.label}: ${r.terraform}.`),
     ...connections.filter(e=>!e.generated).map((e) => `Wire ${e.source} → ${e.target}: implement data flow, access policy and acceptance test.`),
@@ -130,6 +134,7 @@ function standaloneResourcePlan(project) {
   ];
   const encode=value=>Array.from(new TextEncoder().encode(value),b=>b.toString(16).padStart(2,"0")).join("");
   const gapDetails=[
+    ...containerSettingGaps,
     ...missingStorageAccess.map(r=>({id:`access-${r.address}`,componentIds:[r.id],taskId:`TASK-RESOURCE-${encode(r.id)}`,message:`${r.label}: explicit caller access contract is missing.`})),
     ...rows.filter(r=>!r.implemented).map(r=>({id:`resource-${r.address}`,componentIds:[r.id],taskId:`TASK-RESOURCE-${encode(r.id)}`,message:`${r.label}: ${r.terraform}.`})),
     ...connections.filter(e=>!e.generated).map(e=>({id:`connection-${encode(e.id)}`,edgeIds:[e.id],taskId:`TASK-INTEGRATION-${encode(e.id)}`,message:`Wire ${e.source} → ${e.target}: implement data flow, access policy and acceptance test.`})),

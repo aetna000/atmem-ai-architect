@@ -673,3 +673,25 @@ Older running helpers may return root-only success for new composed files. Requi
 scoped stage/unit/path identities and nonzero test counts before UI/export receipts
 can report passed composition validation; otherwise retain the root result as
 incomplete. No unrelated service is restarted or given broader filesystem access.
+
+
+### GE-004: actual public checks and lossless long identities
+
+Actual validation-service/native unit tests (112 runs), independent root assertions
+(three), seven browser import/export/reload fixtures and425 server tests pass.
+Browser transport uses recorded real native results; no inference or new runtime
+acceptance is claimed. Keep original project qualification1/28 and quality unknown.
+
+Repair actual ENAMETOOLONG at source with bounded SHA-256 identity tokens using
+exact @noble/hashes2.4.0, raw IDs retained and short addresses unchanged. Stop on
+collisions rather than overwrite. No existing Terraform state is migrated. Preserve
+the before/after unpack evidence and explicit long-address migration-review limit.
+
+Container footprint explicit runtime settings must remain visible as blocking
+implementation gaps until provider lowering supports them. Do not claim defaults
+satisfy an unimplemented client constraint. Mixed supported defaults still compile.
+
+Use the separate MEM0-backed APFS workspace for frozen candidates and bulk working
+artifacts. Keep provider read roots separate, active stores local, previous running
+services intact and machine storage profiles ignored. Previous goal turn made
+progress by verifying offloaded bytes/mounts and preserving future storage policy.

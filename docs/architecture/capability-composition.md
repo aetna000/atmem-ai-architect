@@ -1,8 +1,8 @@
 # Capability composition foundation
 
-Status: GE-004 implementation in progress. The public export compiler still uses
-its established dispatch until module admission and handoff paths are integrated.
-This document describes working internal APIs, not a released alpha.3.
+Status: the public compiler, independent module admission, implementation map and
+Spec Kit now use capability composition. Four-provider service and browser checks
+pass; the frozen runnable alpha.3 must still be verified before release.
 
 The core partitions explicitly contracted delivery units from a complete design,
 retaining existing neighbors and every unresolved requirement/interface. A reviewed
@@ -27,3 +27,21 @@ Primary implementation references:
 
 Current executable evidence and exact limits:
 `specs/029-general-purpose-engine/evidence/20261111-composition-linker/README.md`.
+
+Long component identities retain their raw values in project, requirements and
+manifest records. Filesystem/resource tokens keep the established full UTF-8 hex
+encoding through 124 bytes; longer IDs use a `d` prefix and SHA-256 digest via
+exactly pinned @noble/hashes 2.4.0. The odd-length digest token cannot overlap the
+even-length full-hex encoding. Duplicate/colliding identities stop generation
+before overwriting files. This bounds path components for valid Unicode IDs and
+preserves existing short addresses. Existing state that used longer addresses
+requires explicit migration review; this release performs no state migration.
+
+Explicit runtime settings on supplied-image container footprints are retained as
+blocking implementation gaps until provider lowering implements and independently
+validates them. A default footprint must not claim that an explicit memory,
+retention or concurrency requirement was implemented.
+
+Public evidence, including seven browser exports, actual four-provider native
+schema/unit mocks, five-unit combined-root assertions and Unicode unpack checks:
+`specs/029-general-purpose-engine/evidence/20261111-public-composition/README.md`.

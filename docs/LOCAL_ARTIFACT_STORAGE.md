@@ -11,7 +11,14 @@ mirror uses an APFS sparsebundle on MEM0, mounted at the original
 permissions and filesystem behavior without changing worker read roots. Its
 16 GiB capacity is virtual; physical storage grows with provider-cache content.
 
-Project stores, session logs, source and Git remain local. The copy was verified
+A separate 32 GiB virtual APFS sparsebundle, `workspaces.sparsebundle`, mounts
+at `.local/external-artifacts` for new frozen candidate checkouts and working
+qualification artifacts. It keeps these files separate from the provider mirror
+and preserves executable permissions and symlinks on the ExFAT disk. New large
+archives, browser downloads and screenshots go directly to MEM0.
+
+Active project stores, session logs, the primary source checkout and its Git
+directory remain local. The copy was verified
 before removing local bulk copies; migration records remain both locally and on
 MEM0. All four provider-family schema checks passed using the mounted mirror.
 The migration is storage maintenance, not deployment or runtime acceptance.

@@ -1,9 +1,10 @@
+import {resourceAddress} from './identifiers.mjs';
 import {incompleteTerraform} from './incomplete-terraform.mjs';
 import {existingReference,existingReferenceFiles} from './existing-references.mjs';
 import {CLOUD_PROVIDER_LOCKS} from './cloud-provider-locks.mjs';
 // Narrow native storage contracts; this does not imply general provider coverage.
 const definitions={azure:{name:'Azure Blob Storage',provider:'azurerm',source:'hashicorp/azurerm',version:'4.81.0',types:['azurerm_storage_account','azurerm_storage_container','azurerm_role_definition','azurerm_role_assignment']},gcp:{name:'Google Cloud Storage',provider:'google',source:'hashicorp/google',version:'7.46.2',types:['google_storage_bucket','google_storage_bucket_iam_member']},ibm:{name:'IBM Cloud Object Storage',provider:'ibm',source:'IBM-Cloud/ibm',version:'1.89.0',types:['ibm_cos_bucket','ibm_iam_service_policy']}};
-const address=id=>'block_'+Array.from(new TextEncoder().encode(id),b=>b.toString(16).padStart(2,'0')).join('');
+const address=resourceAddress;
 export const hasCrossCloud=project=>project.nodes.some(n=>n.data.kind!=='note'&&['azure','gcp','ibm'].includes(n.data.provider)&&n.data.implementation==='private-object-storage');
 export function crossCloudPlan(project){
  const nodes=project.nodes.filter(n=>n.data.kind!=='note'),providers=[...new Set(nodes.filter(n=>n.data.origin!=='existing').map(n=>n.data.provider))];

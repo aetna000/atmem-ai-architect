@@ -23,3 +23,14 @@ test('cross-provider independent units preserve all scope; unknown interfaces re
  const p=mixed('aws');p.nodes.at(-1).data.provider='gcp';p.nodes.at(-1).data.service=CONTAINER_SERVICES.gcp.service;let files=terraformSketch(p);assert.deepEqual(JSON.parse(files['generation-quality.json']).fatalFindings,[]);assert.deepEqual(Object.keys(JSON.parse(files['main.tf.json']).terraform.required_providers).sort(),['aws','google']);
  p.edges.push({id:'unimplemented-flow',source:'scientific-µ',target:'invoice',integration:'unimplemented-business-api'});p.nodes[1].data.config.retentionDays=365;files=terraformSketch(p);const q=JSON.parse(files['generation-quality.json']),plan=resourcePlan(p),tf=JSON.parse(files['main.tf.json']);assert.equal(q.infrastructureComplete,false);assert.equal(plan.connections.length,p.edges.length);assert(tf.locals.unfinished_work.some(g=>g.includes('retentionDays')));assert(tf.locals.unfinished_work.some(g=>g.includes('connection-')));assert(q.findings.some(f=>f.code==='connection-required'));assert.deepEqual(q.fatalFindings,[]);
 });
+
+for(const provider of Object.keys(CONTAINER_SERVICES))test(provider+': explicit container runtime settings remain blocking in standalone and composed outputs',()=>{
+ const p=mixed(provider),node=p.nodes.at(-1);node.data.config={memoryMb:1024,concurrency:7,logRetentionDays:90};const before=structuredClone(p);
+ for(const project of [p,{...p,nodes:[node],edges:[]}]){
+  const plan=resourcePlan(project),files=terraformSketch(project),quality=JSON.parse(files['generation-quality.json']),root=JSON.parse(files['main.tf.json']);
+  for(const [key,value]of Object.entries(node.data.config)){assert(plan.gapDetails.some(g=>g.componentIds.includes(node.id)&&g.message.includes(`${key}=${value}`)));assert(root.locals.unfinished_work.some(g=>g.includes('container-setting-')&&g.includes(key)));}
+  assert.equal(quality.infrastructureComplete,false);assert.deepEqual(quality.fatalFindings,[]);
+  if(plan.composition){const unit=plan.composition.units.find(u=>u.id===node.id);assert.equal(JSON.parse(files[unit.path+'/main.tf.json']).locals.unfinished_work.length,3);}
+ }
+ assert.deepEqual(p,before);
+});

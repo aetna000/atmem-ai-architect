@@ -74,3 +74,24 @@ app-data directory, rather than deleting new fields.
 This is a runnable local candidate, not complete architecture or cloud acceptance. Independent positive component/system checks and observed failures are recorded under specs029. The current original-case acceptance count and release/owner status live in its progress and release records; generated tests alone cannot establish acceptance. The original28/four-provider programme, compositional lowering, complete-system reconciliation and hosted isolation are still required. Reviewed knowledge is a small pinned corpus, not live comprehensive AtMem. Billing is deferred. No deployment is authorized.
 
 Before testing a candidate, retain the prior source checkout, its app-data directory and a saved editable project file. Use a separate candidate checkout/home and separate ports. To roll back, stop only the candidate launcher and reopen the previous checkout with its own unchanged data. Do not delete stores, copy credentials, overwrite other workspaces or re-submit uncertain native runs. Keep artifact/check receipts from both versions. Local tags and archives are source backups; remote publication and deployment are separate actions.
+
+## Alpha.3 composition manual test card
+
+Open the public `composition-example.atmem-ai-architect.json` beside the alpha.3
+release record with the project-file picker. It describes an invoice workflow
+and an independent owner-supplied scientific image; it carries no backend session
+or cloud credentials. In Design, inspect both units and preserved existing browser
+and accounting ownership. Open Terraform: both local modules and their distinct
+root inputs should appear. Run Terraform checks and inspect each unit's schema and
+mock-test results. Download the delivery ZIP and follow its per-unit task paths.
+
+Add a required connection without an implemented integration contract, or an
+explicit memory setting to the scientific container. Scope must remain visible
+and blocked until implemented. Save/reopen: both responsibilities and your exact
+model/effort remain. The footprint requires a real supplied application image;
+schema/mock checks do not execute that image or establish a complete system.
+Use Build this design for native engineering work, with the saved scope attached.
+
+Rollback using the previous candidate and its own app home; preserve newer project
+files and existing sessions. Do not migrate Terraform state or strip history to
+make older software accept a project. Keep MEM0 mounted for candidate dependencies.

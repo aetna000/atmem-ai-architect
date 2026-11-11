@@ -85,3 +85,35 @@ checks for the full objective. No deployment required or authorized.
 
 Public source checkpoint: `5ecb8b99962abf80998bb4e6d351c24f35484f0f`. Full source fingerprints are in
 code-sha256.json; later status-binding edits do not change implementation source.
+
+## Qualification after public integration (alpha.3 preparation)
+
+Seven actual validation-service invocations execute admitted module init, validate
+and nonempty native mock tests: AWS13, Azure15, Google14, IBM16, long Unicode
+identity14, five-unit/four-provider20 and two-workflow20:112 unit mock runs.
+`service-*-v2` receipts retain exact generated-file digests and actual stages.
+Independent combined-root tests add2 positive/review-denial runs and1 required-
+interface denial (`root-*-v2/test.log`). No account plan or application ran.
+
+`browser-v3-receipt.json` records seven real Design imports/exports/downloads and
+mobile/reload checks. Session/transport fixtures replay separately observed native
+service results; root-only results remain incomplete. Exact model/effort persist
+and zero inference/native-start submissions occur. Bulk ZIPs/screenshots stay on
+MEM0 at the recorded paths. This is not an authenticated HTTP-service qualification.
+
+A valid100-character Chinese identity originally failed actual unpacking with
+ENAMETOOLONG. `long-identity-before.json` preserves the failure. The source now
+uses bounded collision-checked SHA-256 tokens for long UTF-8 IDs, preserving raw
+identities and short addresses. `long-identity-after.json`, actual14 native mocks
+and browser download prove that case unpacks and validates. @noble/hashes2.4.0 is
+an exact dependency with updated license inventory; no security-audit claim follows.
+
+Explicit container runtime constraints were a second counterexample: the footprint
+used fixed values without a gap. The planner now preserves every explicit setting
+as blocking work in both standalone/composed root and child gates; four-provider
+negative regressions assert no requirement mutation or false completeness. Actual
+provider-specific setting implementation belongs to the next lowering increment.
+
+Previous pending lists above describe the earlier checkpoint. Actual frozen source,
+installed build, real candidate HTTP/browser and runnable release are still required
+before increment3 is offered; current offered count remains2/10.

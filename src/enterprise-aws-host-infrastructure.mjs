@@ -1,3 +1,4 @@
+import {resourceAddress} from './identifiers.mjs';
 import probeSource from './runtime/enterprise-aws-host-probe-source.json' with{type:'json'};
 import {CLOUD_PROVIDER_LOCKS}from'./cloud-provider-locks.mjs';
 import {awsHostVerificationTests}from'./enterprise-aws-host-tests.mjs';
@@ -8,7 +9,7 @@ export function awsHostVerificationTerraform(project,row,environment='staging'){
  if(!project||typeof project.id!=='string'||!project.id||project.id.length>255||!Number.isSafeInteger(project.revision)||project.revision<1)throw Error('Use the owned project/revision');
  if(!row||row.provider!=='aws'||typeof row.id!=='string'||!row.id||typeof row.region!=='string'||!(/^(af|ap|ca|eu|il|me|mx|sa|us)-(east|west|south|north|central|southeast|southwest|northeast|northwest)-[1-9]$/).test(row.region))throw Error('Preserve the explicit AWS provider and selected region');
  encodeURIComponent(row.id);
- const address='block_'+Array.from(new TextEncoder().encode(row.id),value=>value.toString(16).padStart(2,'0')).join('');
+ const address=resourceAddress(row.id);
  if(row.address!==address||!['staging','production','qualification'].includes(environment))throw Error('Use canonical component ownership and environment');
  const n=address,v=name=>'${var.'+name+'}',r=(type,name,attribute)=>'${'+type+'.'+name+'.'+attribute+'}',l=name=>'${local.'+name+'}';
  const literal=value=>value.replace(/\$\{/g,()=>'$${').replace(/%\{/g,()=>'%%{');

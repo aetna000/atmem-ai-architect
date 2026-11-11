@@ -1,3 +1,4 @@
+import {resourceAddress} from './identifiers.mjs';
 import {CLOUD_PROVIDER_LOCKS} from './cloud-provider-locks.mjs';
 import {googleDocumentJobTests} from './enterprise-google-tests.mjs';
 import {enterpriseApplicationFiles}from'./enterprise-application.mjs';
@@ -8,7 +9,7 @@ export function googleDocumentJobTerraform(project,row,environment='staging'){
  if(!project||typeof project.id!=='string'||!project.id||project.id.length>255||!Number.isSafeInteger(project.revision)||project.revision<1)throw Error('Use the stable owned project and design revision');
  if(!row||row.provider!=='gcp'||typeof row.id!=='string'||!row.id||typeof row.address!=='string'||!/^block_[0-9a-f]+$/.test(row.address)||typeof row.region!=='string'||!(/^[a-z]+-[a-z]+[1-9][0-9]?$/).test(row.region))throw Error('Preserve the explicit Google provider and canonical selected region');
  encodeURIComponent(row.id); // Reject invalid Unicode instead of replacing bytes.
- const address='block_'+Array.from(new TextEncoder().encode(row.id),value=>value.toString(16).padStart(2,'0')).join('');
+ const address=resourceAddress(row.id);
  if(row.address!==address)throw Error('Keep the canonical source-component address; do not redirect another component');
  if(!['staging','production','qualification'].includes(environment))throw Error('Use an explicit supported environment');
  const n=row.address,seed='https://atmem.ai/workspaces/'+encodeURIComponent(project.id)+'/'+n+'/'+environment;
