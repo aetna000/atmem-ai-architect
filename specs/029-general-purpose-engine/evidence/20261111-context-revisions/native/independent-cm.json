@@ -1,0 +1,25 @@
+{
+  "validator": "context-independent",
+  "artifactSha256": "c4ec2e6f0f814bb492bdf4abd5deae9628e19a3cca16badf876c710ad24fc42a",
+  "imageId": "sha256:df7f71a8588253403dfa833c5c4aacc95ca340204a88d5483edd58131c7f1128",
+  "runtimeConfigImageId": "sha256:df7f71a8588253403dfa833c5c4aacc95ca340204a88d5483edd58131c7f1128",
+  "platform": "linux/arm64",
+  "isolationProfile": "standard-v1",
+  "runtimeEnvironment": {},
+  "command": [
+    "/usr/bin/node",
+    "-e",
+    "const assert=require('node:assert/strict');const m=require('/work/source/depth.cjs');let n=0;\nassert.equal(m.unit,\"cm\");n++;\nfor(const value of [0,0.001,0.25,1,13.75]){assert.equal(m.normalize(value),value*100);n++;}\nfor(const value of [true,false,'1','',null,undefined,{},[],NaN,Infinity,-Infinity,-1]){assert.throws(()=>m.normalize(value),TypeError);n++;}\nconsole.log('1..'+n);console.log('# tests '+n);console.log('# pass '+n);console.log('# fail 0');\n"
+  ],
+  "status": "passed",
+  "exitCode": 0,
+  "skipped": 0,
+  "testsReported": null,
+  "reason": null,
+  "output": "1..18\n# tests 18\n# pass 18\n# fail 0\n",
+  "outputTruncated": false,
+  "durationSeconds": 0.228,
+  "evidenceLevel": "local_container_check",
+  "cloudOperations": false,
+  "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+}

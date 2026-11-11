@@ -507,3 +507,13 @@ The current service is still local single-owner; this does not establish hosted
 authorization or multi-controller transaction/lease behavior. Full graph/file/
 artifact reconciliation and alpha.2 acceptance remain pending. Qualify actual native
 transfer on an evaluator-authored unfamiliar-domain fixture before claiming it.
+
+Actual e68aec7 transfer now passes: two completed gpt-6.1-sol/high turns, identical
+client prompt, saved requirement changes mm→cm,18 independent isolated assertions
+per package, old artifact fails the new contract, original pins preserved and exact
+native UUID/context history matched. Actual idle service/native-adapter restart
+retains both revisions and identical capture with zero inference replay. Preserve
+the evaluator-only count-field failure and corrected continuation: no first request
+was replayed, no behavior assertion relaxed.393 JS/404 server/build/two browser
+fixtures pass. Context transfer is qualified for this local scope; GE-003 remains
+in progress for artifact-bound graph/file reconciliation and alpha.2.

@@ -14,14 +14,25 @@ parser=argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--base',required=True);parser.add_argument('--home',type=Path,required=True)
 parser.add_argument('--tools',type=Path,required=True);parser.add_argument('--output',type=Path,required=True)
 parser.add_argument('--endpoint',required=True)
-args=parser.parse_args();out=args.output.resolve();out.mkdir(parents=True,exist_ok=False)
+parser.add_argument('--continue-completed',action='store_true',help='Resume evaluator only; verify/reuse completed artifact files, never replay them')
+args=parser.parse_args();out=args.output.resolve()
+if args.continue_completed:
+    assert out.is_dir() and (out/'artifact-mm.json').is_file() and not (out/'artifact-cm.json').exists()
+    for name in ['receipt.json','independent-mm.json']:
+        source=out/name
+        if source.exists():source.rename(out/('prior-evaluator-'+name))
+else:out.mkdir(parents=True,exist_ok=False)
 sha=lambda value:hashlib.sha256(value).hexdigest()
 source_paths=subprocess.check_output(['git','ls-files','server','src','agent-skills'],cwd=ROOT,text=True).splitlines()
 source={name:sha((ROOT/name).read_bytes()) for name in source_paths}
 commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
-(out/'source.json').write_text(json.dumps({'commit':commit,'files':source},indent=2)+'\n')
+if args.continue_completed:
+    frozen=json.loads((out/'source.json').read_text());assert frozen['files']==source
+    commit=frozen['commit']
+else:(out/'source.json').write_text(json.dumps({'commit':commit,'files':source},indent=2)+'\n')
 auth=json.load(urllib.request.urlopen(args.base+'/api/session'))
-project='context-river-'+str(uuid.uuid4());session=None
+project=json.loads((out/'project-mm.json').read_text())['meta']['id'] if args.continue_completed else 'context-river-'+str(uuid.uuid4())
+session=None
 def post(path,payload):
     request=urllib.request.Request(args.base+'/api/'+path,data=json.dumps(payload,ensure_ascii=False).encode(),
         headers={'Content-Type':'application/json','Authorization':'Bearer '+auth['token']})
@@ -68,14 +79,26 @@ async def native_audit(db,row):
         return result['data']
     finally:await client.close()
 
-receipt={'passed':False,'sourceCommit':commit,'model':'gpt-6.1-sol','effort':'high','cloudOperations':False}
+receipt={'passed':False,'sourceCommit':commit,'model':'gpt-6.1-sol','effort':'high','cloudOperations':False,'projectId':project}
+intent='Build or reconcile the independent local conversion library against the current saved project requirements. Preserve client ownership and all prior scope. Produce actual implementation files, meaningful Node built-in tests and a short README, then execute the tests. Use the supplied composition skill and local tools. Keep your final reply concise.'
 try:
     artifacts=[];runs=[]
     for unit in ['mm','cm']:
+        if args.continue_completed and unit=='mm':
+            artifact=json.loads((out/'artifact-mm.json').read_text())
+            jobs=call('list')['sessions'];assert len(jobs)==1
+            state=jobs[0];session=state['id'];assert state['state']=='idle' and state['last_status']=='completed' and state['run']==artifact['runId']
+            receipt['sessionId']=session;runs.append(state['run'])
+            archive=(out/'artifact-mm.zip').read_bytes();assert sha(archive)==artifact['sha256']
+            result=independent(archive,artifact['sha256'],unit)
+            (out/'independent-mm.json').write_text(json.dumps(result,indent=2)+'\n')
+            assert result['status']=='passed' and result['skipped']==0 and '# tests 18\n' in result['output'],result
+            artifacts.append((artifact,archive));print('Reused completed mm request and independently rechecked the same immutable package; no inference replay.',flush=True)
+            continue
         file=saved(unit);(out/f'project-{unit}.json').write_text(json.dumps(file,ensure_ascii=False,indent=2)+'\n')
         save=post('projects/save',{'id':project,'file':file});assert len(save['sha256'])==64
         if session is None:session=call('create',model='gpt-6.1-sol',effort='high')['id']
-        intent='Build or reconcile the independent local conversion library against the current saved project requirements. Preserve client ownership and all prior scope. Produce actual implementation files, meaningful Node built-in tests and a short README, then execute the tests. Use the supplied composition skill and local tools. Keep your final reply concise.'
+        receipt['sessionId']=session
         state=call('start',text=intent,contextSha256=save['sha256']);runs.append(state['run'])
         print('Submitted context '+unit+' to the same exact selected native session.',flush=True)
         await_complete(state['run'])
@@ -85,7 +108,7 @@ try:
         (out/f'artifact-{unit}.zip').write_bytes(archive);(out/f'artifact-{unit}.json').write_text(json.dumps(artifact,indent=2)+'\n')
         result=independent(archive,artifact['sha256'],unit)
         (out/f'independent-{unit}.json').write_text(json.dumps(result,indent=2)+'\n')
-        assert result['status']=='passed' and result['testsReported']==18 and result['skipped']==0,result
+        assert result['status']=='passed' and '# tests 18\n' in result['output'] and result['skipped']==0,result
         artifacts.append((artifact,archive));print('Independent '+unit+' contract: 18 checks passed.',flush=True)
     negative=independent(artifacts[0][1],artifacts[0][0]['sha256'],'cm')
     (out/'old-artifact-new-contract.json').write_text(json.dumps(negative,indent=2)+'\n');assert negative['status']=='failed'

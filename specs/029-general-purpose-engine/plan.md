@@ -80,9 +80,14 @@ protocol after one disclosed bounded native repair; the other 27 remain unqualif
 GE-003 is in progress. A versioned shared context/dependency model, retained review
 history, proposed mapping import, scoped invalidation, ordered native client intent,
 UI/export consistency and new pinned producer schema have component and real-browser
-fixture evidence.393 JS / 388 server tests and build pass. Native current-context
-revisions and artifact-bound graph/file reconciliation remain unfinished; no alpha.2
-release is claimed. See `evidence/20261111-work-model-foundation/README.md` and
+fixture evidence. Immutable current-context revisions now accompany existing native
+work without changing original pins or client text.393 JS / 404 server tests, build
+and browser checks pass. Two real native river-depth turns each pass18 independent
+checks; the old package fails the changed unit requirement. Actual service/adapter
+restart retains revisions and identical capture without inference replay.
+Artifact-bound graph/file reconciliation remains unfinished; no alpha.2
+release is claimed. See `evidence/20261111-context-revisions/README.md`,
+`evidence/20261111-work-model-foundation/README.md` and
 `docs/architecture/architecture-work-model.md` for limits and next actions.
 
 GE-001A prospective holdouts/comparison, remaining nine increments and all original
