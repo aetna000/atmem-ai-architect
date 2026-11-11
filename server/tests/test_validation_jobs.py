@@ -85,6 +85,18 @@ class ValidationJobTests(unittest.IsolatedAsyncioTestCase):
         self.jobs.validators['matching-runtime']=RegisteredValidator('Matching runtime',ValidationSpec('matching-runtime',self.spec.image,self.spec.command),rule(hashlib.sha256(lock.read_bytes()).hexdigest()))
         updated=self.jobs.plan(self.scope,self.session,changed['id']);self.assertEqual(updated['decisions'][0]['state'],'selected');self.assertNotEqual(updated['decisions'][0]['contractSha256'],first_contract)
 
+    async def test_executable_scratch_changes_contract_and_is_disclosed_without_reusing_old_check(self):
+        from dataclasses import replace
+        first=await self.jobs.start(self.scope,self.session,self.artifact,'python-tests');await self.finish()
+        legacy=self.jobs._contract(self.jobs.validators['python-tests'])[1]
+        self.assertNotIn('executable_scratch',legacy['spec'])
+        self.assertEqual(self.jobs.catalog()[0]['runtime']['executableScratchDirectories'],[])
+        self.jobs.validators['python-tests']=RegisteredValidator('Native dependency checks',replace(self.spec,executable_scratch=True))
+        second=await self.jobs.start(self.scope,self.session,self.artifact,'python-tests');await self.finish()
+        self.assertNotEqual(first['contractSha256'],second['contractSha256']);self.assertEqual(len(self.worker.calls),2)
+        self.assertEqual(self.jobs.catalog()[0]['runtime']['executableScratchDirectories'],['/dependencies'])
+        self.assertEqual(self.jobs.get(self.scope,self.session,first['id'])['contractSha256'],first['contractSha256'])
+
     async def test_manual_recapture_keeps_automatic_package_checks_visible_without_replay(self):
         check=await self.jobs.start(self.scope,self.session,self.artifact,'python-tests');await self.finish()
         captured=self.artifacts.capture(self.scope,self.session,self.root/'source')

@@ -36,14 +36,14 @@ def registered_validators(entries):
     if not isinstance(entries,list):raise ValueError('Validator configuration must be a list')
     result={}
     for entry in entries:
-        if not isinstance(entry,dict) or set(entry)-{'id','label','image','command','platform','timeoutSeconds','bootstrapPython','isolationProfile','runtimeEnvironment','applicability','runtimeReceipt'}:
+        if not isinstance(entry,dict) or set(entry)-{'id','label','image','command','platform','timeoutSeconds','bootstrapPython','isolationProfile','runtimeEnvironment','executableScratch','applicability','runtimeReceipt'}:
             raise ValueError('Unrecognized validator registration')
         if not isinstance(entry.get('command'),list):raise ValueError('Register a validator argument vector')
         environment=entry.get('runtimeEnvironment',{})
         if not isinstance(environment,dict):raise ValueError('Runtime environment must be an operator-owned mapping')
         spec=ValidationSpec(entry.get('id',''),entry.get('image',''),tuple(entry['command']),
             platform=entry.get('platform','linux/amd64'),timeout_seconds=entry.get('timeoutSeconds',60),
-            bootstrap_python=entry.get('bootstrapPython','/usr/local/bin/python3'),isolation_profile=entry.get('isolationProfile','standard-v1'),runtime_environment=tuple(environment.items()))
+            bootstrap_python=entry.get('bootstrapPython','/usr/local/bin/python3'),isolation_profile=entry.get('isolationProfile','standard-v1'),runtime_environment=tuple(environment.items()),executable_scratch=entry.get('executableScratch',False))
         if spec.name in result:raise ValueError('Validator IDs must be unique')
         result[spec.name]=RegisteredValidator(entry.get('label',''),spec,FileApplicability.parse(entry['applicability']) if 'applicability' in entry else None,
             RuntimeEvidence.load(entry['runtimeReceipt'],spec) if 'runtimeReceipt' in entry else None)
@@ -72,10 +72,11 @@ class ValidationJobs:
                  'available':self._available(value),
                  'applicability':value.applicability.public() if value.applicability else None,
                  **({'runtimeEvidence':value.runtime_evidence.public()} if value.runtime_evidence else {}),
-                 'runtime':{'imageId':value.spec.image,'platform':value.spec.platform,'isolationProfile':value.spec.isolation_profile,'environment':dict(value.spec.runtime_environment),'executable':value.spec.command[0],'testRunner':validation_test_runner(value.spec)}} for key,value in self.validators.items()]
+                 'runtime':{'imageId':value.spec.image,'platform':value.spec.platform,'isolationProfile':value.spec.isolation_profile,'environment':dict(value.spec.runtime_environment),'executable':value.spec.command[0],'testRunner':validation_test_runner(value.spec),'executableScratchDirectories':['/dependencies']if value.spec.executable_scratch else []}} for key,value in self.validators.items()]
 
     def _contract(self,registered):
         registration={'spec':asdict(registered.spec),'workerIdentity':self.worker.identity_digest}
+        if not registered.spec.executable_scratch:registration['spec'].pop('executable_scratch')
         # Preserve historical manual-only contract hashes. Changing selection rules
         # invalidates evidence reuse even when the executable is unchanged.
         if registered.applicability is not None:registration['applicability']=registered.applicability.public()

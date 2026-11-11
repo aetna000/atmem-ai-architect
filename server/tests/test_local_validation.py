@@ -5,6 +5,14 @@ from server.local_validation import DockerValidationWorker,ValidationSpec
 
 
 class ValidationContractTests(unittest.TestCase):
+    def test_executable_scratch_is_explicit_operator_capability_with_reviewed_combinations(self):
+        from server.validation_jobs import registered_validators
+        entry={'id':'dependency-tests','label':'Native dependencies','image':'sha256:'+'a'*64,'command':['/usr/local/bin/python3','-m','unittest']}
+        self.assertFalse(registered_validators([entry])['dependency-tests'].spec.executable_scratch)
+        self.assertTrue(registered_validators([{**entry,'executableScratch':True}])['dependency-tests'].spec.executable_scratch)
+        for value in [None,1,'true',{},[]]:
+            with self.subTest(value=value),self.assertRaises(ValueError):registered_validators([{**entry,'executableScratch':value}])
+        with self.assertRaises(ValueError):registered_validators([{**entry,'executableScratch':True,'isolationProfile':'chromium-userns-v1'}])
     def test_operator_spec_requires_immutable_local_image_and_bounded_executable(self):
         image='sha256:'+'a'*64
         for values in [dict(image='python:latest'),dict(command=('python','test.py')),

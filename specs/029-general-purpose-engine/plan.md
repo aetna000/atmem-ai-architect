@@ -461,3 +461,19 @@ VM; existing VM/owner previews and active metadata were not restarted or moved.
 Evidence: evidence/20261112-provider-runtime-selection/README.md. Native provider
 applications/full journeys and receiving handoff remain next before alpha.5;
 four offered increments/1-of28/owner0 and unknown measured quality are unchanged.
+
+GE-006 native Azure/checker checkpoint: fresh exposed museum-label generation on
+frozende77256 completes original plus one automatic repair at gpt-6.1-sol/high.
+One operator environment clarification preserves all requirements and original pins.
+The native writer withdraws an invalid intermediate global-package clean-install
+claim; final old-profile checks correctly retain the noexec prerequisite failure.
+The engine now offers an explicit operator-only executable-scratch capability,
+qualified by actual C-extension transfer/denials and the unchanged final archive's
+16 tests/no skips, including fresh38-distribution/native import checks.452server/
+553JS/build pass. Activate only after synthetic service settlement, preserving old
+plans/receipts, then independently assess domain/provider/receiving OCI and generated
+shared-runtime adaptations before extracting generic changes. Existing owner/UI
+previews stay untouched. Original Azure ticket image now qualifies on declared
+Node26.13/AMD64 with6 direct contract groups; full22 acceptance remains pending.
+Evidence: evidence/20261112-executable-dependency-scratch/README.md and linked native/
+image/CLI diagnostics. Four increments/1-of28/owner0/unknown quality are unchanged.

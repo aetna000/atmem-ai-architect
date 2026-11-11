@@ -27,6 +27,17 @@ substituting a runtime. Existing registrations without digest rules retain their
 original shape and contract hash. Changes to these rules bind a new check contract;
 previous evidence is retained separately.
 
+For a qualified standard or PostgreSQL checker, the operator may explicitly set
+`executableScratch: true` to admit freshly installed native dependencies. This adds
+only `/dependencies` as bounded executable scratch and sets TMPDIR and
+ATMEM_TEST_DEPENDENCY_ROOT there. Source stays read-only, /work and /tmp stay
+noexec, and existing nonroot/network/capability/resource limits remain. Default is
+false; combination with the browser profile is unqualified and rejected. The
+catalogue discloses executableScratchDirectories. Observe/register this changed
+runtime binding separately and retain older failed reports. A global package/hash
+match does not prove a clean receiving install; do not bypass noexec, spoof module
+origins or omit required checks when the offered runtime lacks this capability.
+
 ## Manual test card
 
 1. Open Connections and choose Codex with your accessible exact model/effort. Start in Design, describe the project and develop its components or responsibilities. Expand **Architecture activity** while Architect works to inspect public updates, model attempts, evidence lookups and response-format checks. Choose **Build this design** once; the saved context is included automatically, with no repeated brief.

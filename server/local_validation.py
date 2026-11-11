@@ -66,6 +66,7 @@ class ValidationSpec:
     bootstrap_python: str = '/usr/local/bin/python3'
     isolation_profile: str = 'standard-v1'
     runtime_environment: tuple[tuple[str,str], ...] = ()
+    executable_scratch: bool = False
 
     def __post_init__(self):
         if not isinstance(self.name,str) or not re.fullmatch(r'[a-z][a-z0-9_-]{2,79}',self.name):raise ValueError('Invalid trusted validator name')
@@ -77,6 +78,8 @@ class ValidationSpec:
         if not isinstance(self.bootstrap_python,str) or not self.bootstrap_python.startswith('/') or '\0' in self.bootstrap_python:
             raise ValueError('Register an absolute Python bootstrap executable in the reviewed image')
         if self.isolation_profile not in {'standard-v1','chromium-userns-v1','postgresql-local-v1'}:raise ValueError('Unreviewed validator isolation profile')
+        if type(self.executable_scratch)is not bool:raise ValueError('Executable dependency scratch requires an explicit operator boolean')
+        if self.executable_scratch and self.isolation_profile=='chromium-userns-v1':raise ValueError('Executable dependency scratch is not qualified with the browser profile')
         if not isinstance(self.runtime_environment,tuple) or any(not isinstance(pair,tuple) or len(pair)!=2 or not isinstance(pair[0],str) or pair[0] not in {'ATMEM_PLAYWRIGHT_MODULE','PLAYWRIGHT_BROWSERS_PATH'} or not isinstance(pair[1],str) or not pair[1].startswith('/') or any(ord(c)<32 for c in pair[1]) for pair in self.runtime_environment) or len({pair[0] for pair in self.runtime_environment})!=len(self.runtime_environment):
             raise ValueError('Register only explicit image-local runtime module/browser paths')
 
@@ -142,13 +145,14 @@ class DockerValidationWorker:
                 policy=Path(folder)/'reviewed-seccomp.json';policy.write_bytes(self.isolation_profiles[spec.isolation_profile])
                 security=['--security-opt','seccomp='+str(policy)]
             runtime_env=[part for name,value in spec.runtime_environment for part in ['--env',name+'='+value]]
+            dependency_scratch=['--tmpfs','/dependencies:rw,exec,nosuid,nodev,size=128m,mode=1777','--env','TMPDIR=/dependencies','--env','ATMEM_TEST_DEPENDENCY_ROOT=/dependencies']if spec.executable_scratch else []
             command=[*prefix,'run','--pull','never','--rm','--name',ident,'--platform',spec.platform,
                 '--network','none','--read-only','--cap-drop','ALL','--cap-add','SETUID','--cap-add','SETGID',
                 '--security-opt','no-new-privileges',*security,'--pids-limit','128' if browser else '64','--memory','512m' if browser or postgres else '256m','--cpus','1',
                 '--tmpfs','/work:rw,noexec,nosuid,nodev,size=128m,mode=0755',
                 '--tmpfs',f'/tmp:rw,noexec,nosuid,nodev,size={192 if postgres else 64 if browser else 32}m,mode=1777',
                 '--env','HOME=/tmp','--env','PYTHONDONTWRITEBYTECODE=1','--env','AWS_EC2_METADATA_DISABLED=true',
-                *runtime_env,'--entrypoint',spec.bootstrap_python,'-i',spec.image,'-I','-c',BOOTSTRAP,
+                *runtime_env,*dependency_scratch,'--entrypoint',spec.bootstrap_python,'-i',spec.image,'-I','-c',BOOTSTRAP,
                 json.dumps([expected_digest,list(spec.command)])]
             log=Path(folder)/'output.log'
             reason=None
@@ -201,6 +205,7 @@ class DockerValidationWorker:
             return {'validator':spec.name,'artifactSha256':expected_digest,'imageId':spec.image,
                 'runtimeConfigImageId':selection[1],
                 'platform':spec.platform,'isolationProfile':spec.isolation_profile,'runtimeEnvironment':dict(spec.runtime_environment),'command':list(spec.command),'status':status,'exitCode':process.returncode,
+                'executableScratch':spec.executable_scratch,
                 'skipped':skipped,'testsReported':executed,
                 'reason':reason or ('output_limit' if truncated else 'no_tests_reported' if missing_tests else None),'output':text,
                 'outputTruncated':truncated,'durationSeconds':round(time.monotonic()-started,3),

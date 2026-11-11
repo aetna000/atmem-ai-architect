@@ -10,6 +10,16 @@ def observation(spec):
 
 
 class RuntimeEvidenceTests(unittest.TestCase):
+    def test_executable_scratch_cannot_reuse_an_observation_without_that_capability(self):
+        from dataclasses import replace
+        native=replace(self.spec,executable_scratch=True)
+        self.assertNotIn('executableScratch',runtime_binding(self.spec))
+        with self.assertRaises(ValueError):RuntimeEvidence.load(self.reference(),native)
+        value=observation(native)
+        with self.assertRaises(ValueError):RuntimeEvidence.load(self.reference(value),native)
+        value['probe']['executableScratch']=True
+        RuntimeEvidence.load(self.reference(value),native)
+        with self.assertRaises(ValueError):RuntimeEvidence.load(self.reference(value),self.spec)
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name).resolve();self.spec=ValidationSpec('python-tests','sha256:'+'a'*64,('/usr/local/bin/python3','-m','unittest'))
         self.receipt=observation(self.spec)

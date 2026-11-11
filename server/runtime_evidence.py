@@ -7,7 +7,7 @@ from pathlib import Path
 def runtime_binding(spec):
     return {'imageId':spec.image,'platform':spec.platform,'executable':spec.command[0],
         'bootstrapPython':spec.bootstrap_python,'isolationProfile':spec.isolation_profile,
-        'environment':dict(spec.runtime_environment)}
+        'environment':dict(spec.runtime_environment),**({'executableScratch':True}if spec.executable_scratch else {})}
 
 
 def digest(value):return hashlib.sha256(json.dumps(value,sort_keys=True,separators=(',',':')).encode()).hexdigest()
@@ -39,6 +39,7 @@ class RuntimeEvidence:
         if not isinstance(probe,dict) or probe.get('status')!='passed' or type(probe.get('exitCode')) is not int or probe['exitCode']!=0 or probe.get('outputTruncated') is not False or probe.get('artifactSha256')!=hashlib.sha256(b'PK\x05\x06'+b'\0'*18).hexdigest() or any(probe.get(key)!=expected for key,expected in [('imageId',spec.image),('platform',spec.platform),('isolationProfile',spec.isolation_profile),('runtimeEnvironment',dict(spec.runtime_environment))]) or not isinstance(probe.get('command'),list) or probe['command'][:1]!=[spec.command[0]]:
             raise ValueError('Runtime evidence needs a successful empty-source probe of the same runtime')
         observed=receipt.get('observed')
+        if probe.get('executableScratch',False)is not spec.executable_scratch:raise ValueError('Runtime observation does not match executable scratch capability')
         if not isinstance(probe.get('output'),str) or json.loads(probe['output'])!=observed:raise ValueError('Observed facts differ from the complete probe output')
         if not isinstance(observed,dict) or set(observed)-{'kind','executableVersion','packages','serviceOperations','browserVersion'} or observed.get('kind') not in {'python','node'}:
             raise ValueError('Unrecognized observed runtime shape')

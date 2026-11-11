@@ -1167,3 +1167,31 @@ than restart/prune the existing one. Keep cloud accounts, active databases/owner
 previews, Git and UI untouched. Do not promote these prerequisites to native
 application, original28 or release acceptance. Evidence:
 evidence/20261112-provider-runtime-selection/README.md.
+## 2026-11-12 — Admit temporary native dependencies explicitly
+
+Preserve default noexec source/work/tmp behavior. A clean receiving native-library
+test needs an additional execution capability; installed global packages or matching
+hashes do not substitute for actual fresh imports. Add an operator-only boolean
+admitting only bounded /dependencies executable scratch, with unchanged actor,
+network, capability and resource bounds. Disclose/bind it in catalogue, observation
+and check contracts. Reject the unqualified browser combination. Demonstrate real
+compiled loads/denials across domains and same-source final Azure16/no skips, not
+removal of assertions or a mount-policy bypass.
+
+Keep the native baseline frozen and old input pins unchanged. Record one explicit
+environment clarification, original plus one automatic repair, all failed reports
+and withdrawal of the intermediate global-package clean-install claim. Qualify the
+new capability separately; upgrade only the settled synthetic service and recheck
+the same bytes after source freeze. Do not restart owner previews or infer terminal
+native state from expired observer windows. Current producer success is not an
+independent client or release acceptance.
+
+Fresh handoffs also avoid generated stdlib-shadowing Python names and qualify their
+actual CLI commands. Pin primary Python documentation and demonstrate two receiving
+counterexamples. Do not rename existing owned modules or rewrite old pins.
+
+Review the native application's seven shared-module adaptations before generic
+extraction, especially JSON/JSONB accepted Unicode, inspection binding and child
+identities. Never port its labels imports into the engine. The separately built
+original Azure AMD64 image/direct contract checks do not establish its full22
+criteria. Evidence: evidence/20261112-executable-dependency-scratch/README.md.
