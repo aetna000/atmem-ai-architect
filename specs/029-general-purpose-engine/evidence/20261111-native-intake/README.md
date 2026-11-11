@@ -3,7 +3,9 @@
 346 server tests and 375 JavaScript tests pass with no skips. Production build and
 real Chromium fixture checks pass; desktop/mobile screens are retained. This is an
 implementation checkpoint, not alpha.1, an accepted original project or quality score.
-Actual native generation on this new UI/source remains a separate qualification.
+Subsequent actual native architecture generation on frozen3b80eb4 is recorded in
+[architecture-run/README.md](architecture-run/README.md). Independent connected
+browser/service and complete-system acceptance remain pending.
 
 ## Reusable behavior and invariants
 

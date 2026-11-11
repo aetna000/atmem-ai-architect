@@ -392,3 +392,20 @@ prompts are audited separately from client messages. Preserve fast terminal evid
 when it precedes the caller's start reply; retain the discovered race's failed test.
 366 server/376 JS checks, build and browser fixture pass. Actual native repair and
 independent whole-system acceptance remain required, not inferred from fixtures.
+
+### Native bounded repair proof and completed uncoached architecture package
+
+Frozen322568b primary UI/native fixture completes one bounded automatic repair on
+the original thread/model after intentionally failing13-test first bytes. Five
+callbacks include complete failed-report reading and repaired working validation.
+Keep all test bytes unchanged; permit truthful README status correction. Independent
+108-assert behavior fails original bytes and passes final checked/downloaded bytes.
+This is explicitly coached failure qualification, not architecture/holdout acceptance.
+
+Separately frozen3b80eb4 exposed AWS brief completes32 files with20 callbacks and
+six working checks. Final target-runtime replay12 Python/5 Chromium tests passes;
+public setup/deterministic rebuild/fmt/provider schema/one mock plan pass. Retain
+host SDK skips/browser prerequisite failure separately. Independent packaged HTTP
+oracle36 passes; do not infer cryptographic identity or full browser/service journey.
+Complete that connected assessment and requirements/IaC/runbook reconciliation next,
+then freeze untouched holdouts and qualify the first runnable release. No cloud work.

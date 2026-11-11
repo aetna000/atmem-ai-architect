@@ -1,8 +1,10 @@
 # Bounded evidence-driven repair implementation
 
 366 server and 376 JavaScript tests pass, without skips; production build and real
-browser fixture pass. Actual native-model repair qualification is pending on this
-source. No release, original-project acceptance or measured quality is claimed.
+browser fixture pass. Subsequent actual-native successful repair qualification on
+frozen322568b is in [native/README.md](native/README.md); fault-injection evidence
+remains component-only. No release, original-project acceptance or measured quality
+is claimed.
 
 The local product enables one automatic repair per client-request root. Portable
 supervisor callers explicitly configure a bound (0–3); zero remains the default.

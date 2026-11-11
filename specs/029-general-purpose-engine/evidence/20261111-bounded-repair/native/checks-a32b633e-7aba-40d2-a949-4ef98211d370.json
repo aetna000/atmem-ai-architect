@@ -1,0 +1,42 @@
+{
+  "checks": [
+    {
+      "id": "11fef5fe-9249-480b-938e-cf8a4917b75b",
+      "sessionId": "551d8b69-c5b8-4301-a992-db15d6a045f7",
+      "artifactId": "70d1579a-1790-457d-ac01-e24d8f9645ad",
+      "artifactSha256": "b2f7929e86fe7d066fe0009d62b4722dd1b692065adee0c3e5b8313ef17d3b19",
+      "validatorId": "python-tests",
+      "label": "Local Python tests",
+      "contractSha256": "62e30a4a3ff63a1ea05b4f5a23840aae62c328578a56bf8cc107c29bad0db59b",
+      "state": "finished",
+      "result": {
+        "validator": "python-tests",
+        "artifactSha256": "b2f7929e86fe7d066fe0009d62b4722dd1b692065adee0c3e5b8313ef17d3b19",
+        "imageId": "sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20",
+        "runtimeConfigImageId": "sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20",
+        "platform": "linux/amd64",
+        "isolationProfile": "standard-v1",
+        "runtimeEnvironment": {},
+        "command": [
+          "/usr/local/bin/python3",
+          "-m",
+          "unittest",
+          "discover",
+          "-v"
+        ],
+        "status": "failed",
+        "exitCode": 1,
+        "skipped": 0,
+        "testsReported": 13,
+        "reason": null,
+        "output": "test_empty (test_rainfall.TotalMmTests.test_empty) ... ok\ntest_exactly_366_readings (test_rainfall.TotalMmTests.test_exactly_366_readings) ... FAIL\ntest_large_integer (test_rainfall.TotalMmTests.test_large_integer) ... ok\ntest_mixed_ints_and_floats (test_rainfall.TotalMmTests.test_mixed_ints_and_floats) ... ok\ntest_reject_367_entries (test_rainfall.TotalMmTests.test_reject_367_entries) ... ok\ntest_reject_booleans (test_rainfall.TotalMmTests.test_reject_booleans) ... ok\ntest_reject_negative_values (test_rainfall.TotalMmTests.test_reject_negative_values) ... ok\ntest_reject_non_list (test_rainfall.TotalMmTests.test_reject_non_list) ... ok\ntest_reject_nonfinite_values (test_rainfall.TotalMmTests.test_reject_nonfinite_values) ... ok\ntest_reject_strings_and_other_types (test_rainfall.TotalMmTests.test_reject_strings_and_other_types) ... ok\ntest_single_reading (test_rainfall.TotalMmTests.test_single_reading) ... FAIL\ntest_three_readings (test_rainfall.TotalMmTests.test_three_readings) ... FAIL\ntest_two_zeroes (test_rainfall.TotalMmTests.test_two_zeroes) ... ok\n\n======================================================================\nFAIL: test_exactly_366_readings (test_rainfall.TotalMmTests.test_exactly_366_readings)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/work/source/test_rainfall.py\", line 24, in test_exactly_366_readings\n    self.assertEqual(total_mm([1] * 366), 366)\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 365 != 366\n\n======================================================================\nFAIL: test_single_reading (test_rainfall.TotalMmTests.test_single_reading)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/work/source/test_rainfall.py\", line 18, in test_single_reading\n    self.assertEqual(total_mm([4]), 4)\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^\nAssertionError: 0 != 4\n\n======================================================================\nFAIL: test_three_readings (test_rainfall.TotalMmTests.test_three_readings)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/work/source/test_rainfall.py\", line 15, in test_three_readings\n    self.assertEqual(total_mm([1, 2, 3]), 6)\n    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: 3 != 6\n\n----------------------------------------------------------------------\nRan 13 tests in 0.008s\n\nFAILED (failures=3)\n",
+        "outputTruncated": false,
+        "durationSeconds": 1.028,
+        "evidenceLevel": "local_container_check",
+        "cloudOperations": false,
+        "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+      },
+      "acceptance": "not_established_by_local_check"
+    }
+  ]
+}
