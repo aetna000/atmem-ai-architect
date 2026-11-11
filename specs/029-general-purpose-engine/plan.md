@@ -350,3 +350,14 @@ the checks. See evidence/20261112-application-contracts/README.md. Generic model
 selection/API/identity/persistence/bootstrap and connected full application tests
 remain before alpha.5. Current invoice validation remains its own domain policy.
 Four increments, original complete cases1/28 and owner0 are unchanged.
+
+
+GE-006 HTTP checkpoint: a typed generic API now admits data into the shared durable
+workflow, lists/reads its state and enforces revision-bound review/approval. Server
+owns account/kind/origin and identity transport; SQL membership remains live.16
+new tests include two-domain ASGI intake through real queues/workers and synthetic
+TLS, concurrent duplicate HTTP requests, cross-account denial, membership revocation
+during streaming and the actual body deadline.115 exact unpacked package tests
+pass. See evidence/20261112-workflow-http/README.md. Continue shared model selection,
+provider-owned bootstrap/identity/database/async composition, full application
+qualification and runnable alpha.5. Four increments/1-of28/owner0 unchanged.

@@ -959,3 +959,23 @@ This adds a runtime capability, not generic compiler or cloud application covera
 Old binaries require explicit worker quiescence/new namespace before contract rollout.
 Evidence: evidence/20261112-application-contracts/README.md. Owner UI/previews unchanged,
 no cloud operation, deployment or schema migration. GE-006 remains in_progress.
+
+
+## 2026-11-12 — Shared typed HTTP intake preserves server authority
+
+Expose the reusable typed approval mechanism through a separate generic HTTP
+factory. Keep invoice upload/evidence/review/retention policy in its domain adapter.
+Require operator-owned account, origin, operation kind, immutable payload contract
+and trusted subject verifier. Requests cannot choose tenancy, roles, destination
+or code. Recheck identity/membership after streaming; bound bytes/deadline/concurrency
+and reject duplicate authority/envelope fields without coercion. Existing SQL
+approval/account-change, transaction, lease and uncertainty fences remain in force.
+
+Two explicit new-domain fixtures cross ASGI HTTP, real local PostgreSQL/queue/worker,
+reviewer approval and loopback TLS. Include the actual HTTP tests in generated
+packages and run their own full runner on exact unpacked bytes. This proves the
+shared HTTP mechanism, not native cloud identity, business processors, model-driven
+selection or a complete generic application release. Provider/bootstrap/model
+wiring remains implementation work, with no removed missing-work gate. Heavy
+archives stay on MEM0. Owner UI/previews/jobs and AtFlow CSS unchanged; no cloud
+operation, schema migration or deployment. Evidence: evidence/20261112-workflow-http/README.md.
