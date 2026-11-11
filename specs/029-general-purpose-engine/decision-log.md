@@ -633,3 +633,19 @@ Disk initially rejected temp/source writes. Reclaim only completed fixture Vite
 caches and source-backed dependency bytecode; retain session logs, source, project
 stores, exported originals/reports/images/provider mirrors and running previews.
 Record cleanup manifests and exclude failed writes from successful v3 evidence.
+
+
+### Owner storage direction: move heavy ignored data to MEM0
+
+Move verified release archives/inactive research files to content-addressed MEM0
+objects with stable local aliases, and the shared provider mirror into an APFS
+sparsebundle on that ExFAT volume. Mount the mirror at its original registered
+path, preserving worker roots and Mac permissions instead of broadening access
+or introducing provider symlinks outside the existing read boundary. Retain local
+project stores, session logs, Git and source. Verify all bytes before releasing
+local copies; all four actual public-composition schema checks pass after cutover.
+3,287,722,880 logical bytes offloaded; the internal disk reports6.8GiB free at
+handover (other processes can also affect free space). Full migration journals
+stay ignored locally and on MEM0. Add a lightweight operator remount/status helper
+and local-storage documentation; no bulk data enters Git. Owner direction applies
+to subsequent heavy archives/cache downloads as well.
