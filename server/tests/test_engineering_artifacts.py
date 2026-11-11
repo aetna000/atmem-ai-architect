@@ -106,3 +106,8 @@ class EngineeringArtifactTests(unittest.TestCase):
             with self.assertRaisesRegex(SessionError,'Pinned project evidence'):
                 self.artifacts.capture(self.scope,self.session,self.workspace,expected_inputs=expected)
         self.assertEqual(self.store.db.execute('SELECT count(*) FROM engineering_artifacts').fetchone()[0],1)
+
+    def test_missing_or_invalid_pinned_digest_is_not_treated_as_matching_a_missing_file(self):
+        self.settle()
+        for value in [{'missing':None},{'missing':'not-a-digest'},{'../outside':'a'*64},['invalid']]:
+            with self.assertRaises(ValueError):self.artifacts.capture(self.scope,self.session,self.workspace,expected_inputs=value)

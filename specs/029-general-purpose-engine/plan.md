@@ -232,3 +232,27 @@ qualification, project-bound backend jobs, durable progress/steering, artifact c
 and UI integration. None of these component changes earns alpha.1 by itself. Continue
 the full ten-release programme and all 28 plus unfamiliar combinations without waiting
 for optional feedback or drifting back to a specialized workflow.
+
+
+### Portable native delivery and exact local target runtimes — 2026-11-11
+
+The uncoached product architecture diagnostic retained all follow-ups and captured
+40 unchanged files at its 900-second interruption. Offline schema/build replay,
+33 independent packaged HTTP checks and actual Python 3.12 ARM64/SDK contract checks
+pass. This is component evidence, not complete-project acceptance or a quality win.
+The original runbooks need excluded private tool registrations; keep the failure and
+original ZIP. Seed a public pinned delivery contract/offline setup helper for future
+sessions, independently of provider or business domain. Keep legacy sessions resumable
+without claiming those files were seeded. Helper setup never installs dependencies,
+changes global config or accesses accounts; missing/foreign registrations fail closed.
+
+Allow operator-reviewed bootstrap executables and exact cached platforms in registered
+validators. OCI index and runtime-config digests are distinct and both are recorded;
+never pull/fallback during checks. Existing browser restrictions remain unchanged.
+328 server tests and six actual positive/negative controller probes pass. Transfer:
+plain Python module and mixed Node/Terraform tooling closure; counterexamples: missing
+tools, altered pins, links/overwrites, wrong platform and skipped/zero-test evidence.
+Evidence: evidence/20261111-uncoached-product-run/README.md. Next regenerate unchanged
+brief, execute clean-unpack and browser/identity/service journeys, and integrate relevant
+reviewed knowledge without case-specific recipes. All ten releases and original 28
+acceptances remain pending; cloud deployment is not a prerequisite or authorized.

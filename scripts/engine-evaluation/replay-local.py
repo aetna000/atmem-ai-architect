@@ -20,7 +20,7 @@ sys.path.insert(0,str(ROOT))
 from server.codex_worker_policy import CodexWorkerClient, PROFILE
 
 
-async def replay(source, output):
+async def replay(source, output, *, tool_layout='paired', extra_commands=()):
     output.mkdir(parents=True,exist_ok=False)
     terraform=(ROOT/'.venv/bin/terraform').resolve(strict=True)
     cache=(ROOT/'.local/provider-cache').resolve(strict=True)
@@ -35,11 +35,16 @@ async def replay(source, output):
     with tempfile.TemporaryDirectory(prefix='atm-replay-',dir='/tmp') as temporary:
         workspace=Path(temporary).resolve()/'work'
         shutil.copytree(source,workspace)
-        tools=workspace/'tools';tools.mkdir()
+        tools=workspace/('.tools' if tool_layout=='product' else 'tools');tools.mkdir()
         (tools/'terraform').symlink_to(terraform)
-        (tools/'provider-cache').symlink_to(cache,target_is_directory=True)
-        (tools/'toolchain.json').write_text(json.dumps({'terraform':'./tools/terraform','providerMirror':'./tools/provider-cache',
-            'python':str(python),'node':shutil.which('node')}))
+        mirror_name='providerMirror' if tool_layout=='product' else 'provider-cache'
+        (tools/mirror_name).symlink_to(cache,target_is_directory=True)
+        if tool_layout=='product':
+            (tools/'python').symlink_to(python);(tools/'node').symlink_to(shutil.which('node'))
+            configuration={'tools':{name:f'./.tools/{name}' for name in ['terraform','providerMirror','python','node']},
+                           'temporaryStorage':'.worker-tmp','providerPolicy':'Registered offline mirror only; no registry fallback'}
+        else:configuration={'terraform':'./tools/terraform','providerMirror':'./tools/provider-cache','python':str(python),'node':shutil.which('node')}
+        (tools/'toolchain.json').write_text(json.dumps(configuration))
         mirror=workspace/'offline.terraformrc'
         mirror.write_text('provider_installation { filesystem_mirror { path = '+json.dumps(str(cache))+' } }\n')
         worker=CodexWorkerClient(workspace,read_roots=roots)
@@ -64,18 +69,25 @@ async def replay(source, output):
                     checks.append({'name':name,'passed':False,'errorType':type(error).__name__})
             if (workspace/'tests').is_dir():
                 await command('python-generated-unit-tests',[python,'-m','unittest','discover','-s','tests','-v'])
-            node_tests=sorted((workspace/'tests').glob('*.test.cjs'))
+            node_tests=sorted(p for p in (workspace/'tests').rglob('*') if p.is_file() and p.name.endswith(('.test.cjs','.test.mjs','.test.js')))
             if node_tests:await command('node-generated-unit-tests',[shutil.which('node'),'--test',*node_tests])
             if (workspace/'infra').is_dir():
                 await command('terraform-format',[terraform,'-chdir=infra','fmt','-check','-recursive'])
-                await command('terraform-offline-init',[terraform,'-chdir=infra','init','-backend=false','-input=false','-no-color'])
+                await command('terraform-offline-init',[terraform,'-chdir=infra','init','-backend=false','-input=false','-lockfile=readonly','-no-color'])
                 await command('terraform-provider-schema',[terraform,'-chdir=infra','validate','-no-color'])
                 # Do not run Terraform plans/applies or infer account readiness.
                 # Native provider mock replay remains a separately reviewed check.
+            for index,argv in enumerate(extra_commands):
+                await command(f'operator-reviewed-local-check-{index+1}',argv)
+            changed={}
+            for name,digest in hashes.items():
+                path=workspace/name
+                if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest()!=digest:
+                    changed[name]='missing' if not path.is_file() else hashlib.sha256(path.read_bytes()).hexdigest()
         finally:
             await worker.close()
-    receipt={'sourceHashes':hashes,'checks':checks,'inferenceTurns':0,'cloudOperations':False,
-        'boundary':'Offline sandbox replay of generated Python/Node tests, Terraform format/init/provider-schema. No independent semantic acceptance, HTTP listener/browser/system test, mock plan, cloud plan or deployment.'}
+    receipt={'sourceHashes':hashes,'changedInputFiles':changed,'toolLayout':tool_layout,'checks':checks,'inferenceTurns':0,'cloudOperations':False,
+        'boundary':'Offline sandbox replay on a copy with trusted tool registrations restored. Python/Node generated tests and provider format/init/schema checks; optional explicitly reviewed local commands are labeled separately. No independent semantic/system, cloud-plan or deployment acceptance. Changed input files remain visible.'}
     (output/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
     print(json.dumps({'source':str(source),'checks':[{k:c.get(k) for k in ['name','passed','exitCode']} for c in checks]},indent=2),flush=True)
 
@@ -84,5 +96,9 @@ if __name__=='__main__':
     parser=argparse.ArgumentParser()
     parser.add_argument('--source',type=Path,required=True)
     parser.add_argument('--output',type=Path,required=True)
+    parser.add_argument('--tool-layout',choices=['paired','product'],default='paired')
+    parser.add_argument('--commands-json',type=Path,help='Operator-reviewed local command vectors; never browser/model-supplied')
     args=parser.parse_args()
-    asyncio.run(replay(args.source.resolve(strict=True),args.output.resolve()))
+    commands=json.loads(args.commands_json.read_text()) if args.commands_json else []
+    if not isinstance(commands,list) or any(not isinstance(command,list) or not command or any(not isinstance(arg,str) for arg in command) for command in commands):parser.error('Use explicit command vectors')
+    asyncio.run(replay(args.source.resolve(strict=True),args.output.resolve(),tool_layout=args.tool_layout,extra_commands=commands))

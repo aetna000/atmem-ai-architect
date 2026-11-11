@@ -63,6 +63,7 @@ class ValidationSpec:
     command: tuple[str, ...]
     platform: str = 'linux/amd64'
     timeout_seconds: int = 60
+    bootstrap_python: str = '/usr/local/bin/python3'
 
     def __post_init__(self):
         if not isinstance(self.name,str) or not re.fullmatch(r'[a-z][a-z0-9_-]{2,79}',self.name):raise ValueError('Invalid trusted validator name')
@@ -71,6 +72,8 @@ class ValidationSpec:
         if not isinstance(self.command,tuple) or not self.command or not all(isinstance(x,str) and x and '\0' not in x for x in self.command) or not self.command[0].startswith('/'):
             raise ValueError('Register an explicit trusted validator executable/argument vector')
         if type(self.timeout_seconds) is not int or not 1<=self.timeout_seconds<=300:raise ValueError('Validator time budget must be bounded')
+        if not isinstance(self.bootstrap_python,str) or not self.bootstrap_python.startswith('/') or '\0' in self.bootstrap_python:
+            raise ValueError('Register an absolute Python bootstrap executable in the reviewed image')
 
 
 class DockerValidationWorker:
@@ -95,17 +98,22 @@ class DockerValidationWorker:
             env={'PATH':os.environ.get('PATH',''),'HOME':folder,'DOCKER_CONFIG':str(config),'DOCKER_HOST':self.endpoint}
             prefix=[self.binary,'--host',self.endpoint,'--config',str(config)]
             # Local image lookup only: never pull or evaluate a model Dockerfile.
-            inspect=subprocess.run([*prefix,'image','inspect',spec.image,'--format','{{.Id}} {{.Os}}/{{.Architecture}}'],
+            inspect=subprocess.run([*prefix,'image','inspect',spec.image,'--format','{{.Id}}'],
                                    env=env,capture_output=True,text=True,timeout=15)
-            if inspect.returncode!=0 or inspect.stdout.strip()!=f'{spec.image} {spec.platform}':
+            if inspect.returncode!=0 or inspect.stdout.strip()!=spec.image:
                 raise RuntimeError('The reviewed local image/platform is unavailable; no image was pulled')
+            platform=subprocess.run([*prefix,'image','inspect','--platform',spec.platform,spec.image,'--format','{{.Os}}/{{.Architecture}} {{.Id}}'],
+                                    env=env,capture_output=True,text=True,timeout=15)
+            selection=platform.stdout.strip().split()
+            if platform.returncode!=0 or len(selection)!=2 or selection[0]!=spec.platform or not re.fullmatch(r'sha256:[a-f0-9]{64}',selection[1]):
+                raise RuntimeError('The reviewed cached platform is unavailable; no fallback or image pull was used')
             command=[*prefix,'run','--pull','never','--rm','--name',ident,'--platform',spec.platform,
                 '--network','none','--read-only','--cap-drop','ALL','--cap-add','SETUID','--cap-add','SETGID',
                 '--security-opt','no-new-privileges','--pids-limit','64','--memory','256m','--cpus','1',
                 '--tmpfs','/work:rw,noexec,nosuid,nodev,size=128m,mode=0755',
                 '--tmpfs','/tmp:rw,noexec,nosuid,nodev,size=32m,mode=1777',
                 '--env','HOME=/tmp','--env','PYTHONDONTWRITEBYTECODE=1','--env','AWS_EC2_METADATA_DISABLED=true',
-                '--entrypoint','/usr/local/bin/python3','-i',spec.image,'-I','-c',BOOTSTRAP,
+                '--entrypoint',spec.bootstrap_python,'-i',spec.image,'-I','-c',BOOTSTRAP,
                 json.dumps([expected_digest,list(spec.command)])]
             log=Path(folder)/'output.log'
             reason=None
@@ -147,6 +155,7 @@ class DockerValidationWorker:
             missing_tests=unittest and (executed is None or executed==0)
             status='failed' if reason or truncated or process.returncode else 'incomplete' if skipped or missing_tests else 'passed'
             return {'validator':spec.name,'artifactSha256':expected_digest,'imageId':spec.image,
+                'runtimeConfigImageId':selection[1],
                 'platform':spec.platform,'command':list(spec.command),'status':status,'exitCode':process.returncode,
                 'skipped':skipped,'testsReported':executed,
                 'reason':reason or ('output_limit' if truncated else 'no_tests_reported' if missing_tests else None),'output':text,

@@ -7,7 +7,8 @@ import hashlib
 import io
 import json
 import os
-from pathlib import Path
+from pathlib import Path,PurePosixPath
+import re
 import stat
 import uuid
 import zipfile
@@ -27,6 +28,9 @@ class EngineeringArtifacts:
         self.db.commit()
 
     def capture(self, scope, session, workspace, *, expected_inputs=None):
+        if expected_inputs is not None:
+            if not isinstance(expected_inputs,dict) or any(not isinstance(name,str) or not PurePosixPath(name).parts or PurePosixPath(name).is_absolute() or '..' in PurePosixPath(name).parts or '\\' in name or not isinstance(digest,str) or not re.fullmatch(r'[a-f0-9]{64}',digest) for name,digest in expected_inputs.items()):
+                raise ValueError('Pinned inputs require relative names and actual SHA-256 digests')
         before = self.store.get(scope, session)
         if before['state'] != 'idle' or before['last_status'] is None:
             raise SessionError('Artifact capture requires a settled engineering run')

@@ -32,7 +32,7 @@ def main(args):
         if files!=expected:raise ValueError('Source no longer matches the original generation manifest')
     digest=hashlib.sha256(content).hexdigest()
     if args.digest and args.digest!=digest:raise ValueError('Artifact digest mismatch')
-    spec=ValidationSpec(args.name,args.image,tuple(args.command),timeout_seconds=args.seconds)
+    spec=ValidationSpec(args.name,args.image,tuple(args.command),platform=args.platform,timeout_seconds=args.seconds,bootstrap_python=args.bootstrap_python)
     worker=DockerValidationWorker(args.endpoint)
     receipt=worker.run(content,digest,spec)
     receipt['inputSourceHashes']=files
@@ -50,6 +50,8 @@ if __name__=='__main__':
     parser.add_argument('--digest')
     parser.add_argument('--endpoint',required=True)
     parser.add_argument('--image',required=True)
+    parser.add_argument('--platform',default='linux/amd64',choices=['linux/amd64','linux/arm64'])
+    parser.add_argument('--bootstrap-python',default='/usr/local/bin/python3')
     parser.add_argument('--name',required=True)
     parser.add_argument('--seconds',type=int,default=60)
     parser.add_argument('--output',type=Path,required=True)

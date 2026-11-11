@@ -29,11 +29,12 @@ def registered_validators(entries):
     if not isinstance(entries,list):raise ValueError('Validator configuration must be a list')
     result={}
     for entry in entries:
-        if not isinstance(entry,dict) or set(entry)-{'id','label','image','command','platform','timeoutSeconds'}:
+        if not isinstance(entry,dict) or set(entry)-{'id','label','image','command','platform','timeoutSeconds','bootstrapPython'}:
             raise ValueError('Unrecognized validator registration')
         if not isinstance(entry.get('command'),list):raise ValueError('Register a validator argument vector')
         spec=ValidationSpec(entry.get('id',''),entry.get('image',''),tuple(entry['command']),
-            platform=entry.get('platform','linux/amd64'),timeout_seconds=entry.get('timeoutSeconds',60))
+            platform=entry.get('platform','linux/amd64'),timeout_seconds=entry.get('timeoutSeconds',60),
+            bootstrap_python=entry.get('bootstrapPython','/usr/local/bin/python3'))
         if spec.name in result:raise ValueError('Validator IDs must be unique')
         result[spec.name]=RegisteredValidator(entry.get('label',''),spec)
     return result

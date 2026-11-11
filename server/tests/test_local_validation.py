@@ -8,7 +8,7 @@ class ValidationContractTests(unittest.TestCase):
     def test_operator_spec_requires_immutable_local_image_and_bounded_executable(self):
         image='sha256:'+'a'*64
         for values in [dict(image='python:latest'),dict(command=('python','test.py')),
-                       dict(timeout_seconds=0),dict(timeout_seconds=301),dict(platform='linux/unknown')]:
+                       dict(timeout_seconds=0),dict(timeout_seconds=301),dict(platform='linux/unknown'),dict(bootstrap_python='python')]:
             args={'name':'local-tests','image':image,'command':('/usr/local/bin/python3','test.py'),**values}
             with self.subTest(values=values),self.assertRaises(ValueError):ValidationSpec(**args)
 
