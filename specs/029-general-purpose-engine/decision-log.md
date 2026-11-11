@@ -604,3 +604,32 @@ build and actual browser checks. Actual5284 verifies source/version/default/empt
 Build/activity capability without inference. Previous candidates and unrelated5282
 service stay intact. The patch adds no roadmap increment or complete-project pass.
 Owner acceptance remains0; resume GE-004 capability composition.
+
+
+### GE-004: explicit unit partitioning and module-linker foundation
+
+The earlier fixed-recipe mixed failure remains the public baseline; do not overwrite
+its evidence or call a private helper a released fix. Implement a domain-neutral
+partitioner/linker with explicit invoice-policy and supplied-image adapters. Preserve
+all rows, requirements, external ownership and unresolved boundaries. Lift provider
+configurations/validated inputs to root aliases, keep original child bodies/tests,
+reject file/identity/provider-lock conflicts and keep default-deny gates. Production
+state belongs to the complete composition, never a chosen child's backend.
+
+The linker exposed IBM container1.89 versus invoice2.9. Qualify the container against
+the existing reviewed2.9 schema and all mock assertions, then share that pin for
+these adapters only. Do not weaken another compiler's lock or select an incompatible
+provider silently.
+
+429JS/build pass;14 generated packages validate against cached providers and61
+mock-plan checks pass, including all four workflow children, all four container
+footprints, a five-unit/all-cloud plan, unapproved denial and an unknown-interface
+block. This is infrastructure source/schema/mock evidence, no new live model,
+application runtime, account or complete-system qualification. Public dispatch,
+independent module admission, implementation-map/Spec Kit unit paths and a runnable
+alpha.3 remain required. GE-004 stays active;2/10 releases and1/28 originals unchanged.
+
+Disk initially rejected temp/source writes. Reclaim only completed fixture Vite
+caches and source-backed dependency bytecode; retain session logs, source, project
+stores, exported originals/reports/images/provider mirrors and running previews.
+Record cleanup manifests and exclude failed writes from successful v3 evidence.

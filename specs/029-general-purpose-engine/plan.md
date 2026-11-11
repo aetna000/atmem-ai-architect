@@ -204,3 +204,13 @@ activity during bounded model/tool turns. Preserve original native history and
 no-replay recovery. Qualify this patch locally before resuming GE-004 composition;
 it adds no roadmap increment or original-case acceptance. See
 evidence/20261111-design-activity/README.md.
+
+
+GE-004 checkpoint: explicit capability partitioner, registry and module linker are
+implemented internally and qualified with429 JS tests, build,14 cached native-schema
+packages and61 mock-provider plans. See evidence/20261111-composition-linker/README.md.
+Keep public fixed dispatch until independent module-closure admission and actual
+implementation-map/Spec Kit paths/DAGs are complete; never remove unreviewed-module
+or missing-resource guards to promote the new output. Then qualify public exports,
+additional combinations/counterexamples and a separate runnable alpha.3. This
+checkpoint is not a new roadmap increment or whole-system acceptance.
