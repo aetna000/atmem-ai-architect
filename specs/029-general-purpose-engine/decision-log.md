@@ -1276,3 +1276,18 @@ Google original completed but failed integration checks; its one bounded repair
 fdaf0460-7be9-437f-88d3-bf5a431d6f9b is active. Observer95286 follows it; two prior
 observation expiries caused no replay/interrupt/steer. Continue that same pipeline,
 independent final qualification and IBM transfer/generic policies before alpha.5.
+
+Google repair settled needs_attention, not qualified: exact69bdacf7 archive,
+15 tests/5 failures/1 error/zero skips. Native original+one repair completed at
+exact model/effort; original protected pins and source freeze remain identical.
+Independent no-client-code typed-prctl probe reproduces current AMD64 filter
+EINVAL22 versus native ARM64 success under same outer policy/64-bit layout. No
+universal emulator or native-AMD64-kernel conclusion. Capability discovery must
+include actual required process controls, not only image architecture/packages.
+Next qualify compatible requested-platform execution and generic environment-bound
+observations, then recheck unchanged export/full client requirements. Do not remove
+the artifact's chosen mandatory safeguard or silently switch target architecture.
+An alternative design needs complete original credential-boundary evidence. No
+blind native restart/second automatic repair; no deployment. Source/history/report/
+probe evidence is in20261112-native-gcp-water. Original local count remains2/28,
+four increments, owner0/unknown quality; IBM and full programme still pending.

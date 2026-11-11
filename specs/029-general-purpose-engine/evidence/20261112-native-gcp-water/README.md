@@ -46,3 +46,35 @@ completion is not an application pass; inspect the eventual repair artifact/chec
 independently against the original frozen cases. Overall historical original local
 qualification is now2/28 because the separate original Azure ticket case passed
 its22-criterion assessment; this Google diagnostic has earned no such count.
+
+## Settled repair and independently reproduced runtime prerequisite
+
+The original and one bounded repair have now both completed; `native-history-v1`
+confirms actual native terminal states and exact gpt-6.1-sol/high. The final archive
+is78791480-b3ed-4599-869d-0b503c53efe9, SHA69bdacf7d6813bfdd977b007abe7c94d8c3308cb2e09f9fd09c6cb39cf61031d.
+It is needs_attention:15 tests ran,5 failures/1 error, zero skips. Mandatory child
+filter installation returns EINVAL/22; processing consequently fails and dependent
+end-to-end waits remain pending. This is not a generated or independent pass.
+The full final report is retained; do not clear its gate or start a blind retry.
+All original requirements/SDK/tool pins and frozen engine files are unchanged.
+
+`probe-process-controls.py` independently runs an identical minimal additional
+RET_ALLOW filter through typed libc prctl, with no client source or ISA-specific
+syscall numbers. On this ARM64 VM, the configured GCP AMD64 execution path returns
+-1/errno22; the native ARM64 image returns0/errno0. Both report the same64-bit
+structure layout, nonroot UID, no-new-privileges and identical outer controls.
+Different Python/image builds are explicit. This establishes the current context's
+capability gap, not a universal emulator diagnosis or a native AMD64-kernel test.
+The allow-only filter cannot remove the outer policy.
+
+Container image architecture and package versions alone therefore do not qualify
+required process controls. Next add generic observed runtime-capability information
+with appropriate execution-environment binding, and qualify a compatible AMD64
+executor before rechecking these exact bytes. A complete alternative isolation
+design could be assessed only against the original credential boundaries and
+requested AMD64 platform; never silently delete a required safeguard or change
+the target to ARM64 to obtain a pass. The client did not prescribe seccomp itself,
+but this artifact chose it as mandatory. QEMU system x86 is not on the current
+operator PATH; any new tool/VM preparation must stay isolated on MEM0 and preserve
+existing tools/owner previews. Native jobs/observer are terminal, no replay occurs.
+The Google diagnostic remains unqualified; original historical count stays2/28.
