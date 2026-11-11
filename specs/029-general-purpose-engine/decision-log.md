@@ -1244,3 +1244,19 @@ migration/rollback. Evidence: evidence/20261112-unicode-persistence/README.md.
 Next review generic inspection/child policies and remaining independent client
 failures/receiving checks, then Google/IBM native transfers and alpha.5. Four
 offered increments/1-of28/owner0/unknown quality and the full programme remain.
+
+GE-006 Google transfer started: frozen c11fdbc, exact gpt-6.1-sol/high, fresh
+synthetic project on5289/8882. Full brief,7 criteria and10 valid/25 invalid cases
+were frozen before one native submission; schema2 SDK/launcher/original pins are
+verified. Target GCP executable scratch is independently observed with actual
+extension load/denial checks; shared IAP ES256 verifier passes1 valid/13 denials.
+See evidence/20261112-native-gcp-water/README.md. Follow existing observer48148
+and run c319c8c8-9f9c-4863-8f59-c6e8c4d1e36b; observation expiry is not job failure
+or permission to restart. Existing owner previews and client packages unchanged.
+The7-module Azure source review is in native-azure-labels/shared-adaptation-review-
+v1.json. Do not remove shared factories or copy labels imports/fixed privileged
+UID behavior into generic code. Read-scope, derived validation, inspection and
+privilege policies need explicit owned interfaces/counterexamples; Unicode is
+separately repaired. Native application/results/receiving acceptance and IBM
+transfer remain pending before alpha.5. Full ten-increment/28/unfamiliar scope
+and four offered/1-of28/owner0/unknown quality remain.
