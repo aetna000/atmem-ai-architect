@@ -1,5 +1,6 @@
 // Project records beside the diagram: requirements, assumptions, open questions,
 // and decisions with supersession history. See specs/002-project-model.
+import { sha256 } from '@noble/hashes/sha2.js';
 
 export const REQUIREMENT_KINDS = ["functional", "nonfunctional"];
 export const CATEGORIES = [
@@ -107,11 +108,19 @@ export function linkedTo(project, componentId) {
 
 // ---- Decisions ----
 
-export const slugSubject = (title) =>
-  text(title, 80)
+export const slugSubject = (title) => {
+  const full = String(title ?? "");
+  const slug = full
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "") || "general";
+  if (slug.length <= 80) return slug;
+  // This is a derived lookup key, not the decision title. Bind the suffix to
+  // the whole title so proposals sharing a long prefix keep distinct histories.
+  const digest = Array.from(sha256(new TextEncoder().encode(full)), byte =>
+    byte.toString(16).padStart(2, "0")).join("").slice(0, 16);
+  return `${slug.slice(0, 63).replace(/-+$/, "")}-${digest}`;
+};
 
 function nextDecisionId(decisions) {
   const max = Math.max(0, ...decisions.map((d) => Number(/^adr-(\d+)$/.exec(d.id)?.[1] || 0)));

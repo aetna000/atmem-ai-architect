@@ -1207,3 +1207,13 @@ receipt and native-azure-labels independent probe/result. Next independently ver
 connected identity/SQL/queue/review/recovery/publication, provider/receiving OCI and
 shared-runtime adaptations, then Google/IBM transfers and alpha.5. Four offered
 increments/1-of28/owner0/unknown measured quality remain unchanged. UI untouched.
+
+Owner-priority proposal application repair: titles longer than80 characters no
+longer fail while deriving their decision subject. Bound the internal slug using
+a whole-title SHA256 suffix; retain full titles/context, short-key compatibility
+and revision history. Museum/weather shared-prefix and Unicode cases plus actual
+5285 browser module/save/export/revision checks pass;554JS/build pass. Only the
+frontend module/import URLs are hotfixed; owner backend/projects and CSS untouched.
+See evidence/20261112-proposal-subject/README.md. Owner retry is pending. This earns
+no new increment; independent Azure receiving-image build completed on MEM0 but
+its connected oracle remains unexecuted and must not be counted as acceptance.
