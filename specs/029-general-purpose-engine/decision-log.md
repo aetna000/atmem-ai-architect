@@ -420,3 +420,14 @@ stay separate and corruption fails. Keep original duplicate evidence untouched.
 369 server tests and six actual isolated-runtime capture/check-retention probes
 pass; no model/check replay or complete-system claim. Next work remains connected
 independent browser/authentication/handler journeys on the completed AWS package.
+
+### Preserve positive connected evidence and the discovered startup failure
+
+Independent unchanged-browser/packaged-handler PKCE/RSA-gateway journey passes15
+groups, but extended immediate re-login after reload finds undefined async config.
+Retain both outcomes. A stalled-config browser oracle reproduces the missing action
+prerequisite deterministically. Add general readiness/initialization guidance, not
+case-specific code or provider dispatch, and route independent failure into the
+bounded native repair controller on the original exact-model/session. Preserve
+original client/pinned inputs, artifacts and reports; no hand-patched export or
+complete-system pass until repaired bytes pass the full connected journey.
