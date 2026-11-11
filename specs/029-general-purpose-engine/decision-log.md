@@ -1143,3 +1143,27 @@ bytecode-diff diagnostics. Use direct trusted oracle arguments, exact case-insen
 absence classification and immutable ZIP entries respectively. Require fixture
 cleanup for success. No application/assertion/isolation change is justified by an
 evaluator defect. Evidence: evidence/20261112-native-sql-transfer/README.md.
+## 2026-11-12 — Bind runtime selection to reviewed technical lock bytes
+
+Shared Python/SQL file names cannot distinguish SDK runtime prerequisites. Add
+bounded optional regular-file digest alternatives to existing applicability rules,
+using immutable artifact manifest hashes. Bind actual public SDK dependency locks,
+not client/corpus artifacts or business/provider keys. Preserve all other file
+rules, legacy output/contract identity and prior reports. Unknown/changed bytes
+remain unmatched and visible; manual checks or a newly qualified registration can
+resolve them. Selection is not semantic coverage or full compatibility evidence.
+
+Prepare and qualify actual Linux AMD64 provider SDK/SQL images with exact existing
+locks, offline builds, explicit platform assertion and observed runtime facts.
+Separate actual imports/cryptography/SQL from metadata and managed-service claims.
+Use the exact AMD64 descriptor from the unchanged pinned Python index to avoid a
+legacy-builder incomplete-index export; do not substitute architecture or upgrade.
+
+Move only no-open-reader ignored historical archives after exact hash/mode/link
+verification, preserving their original path. Preserve an unused public image's
+verified archive before removing its cached reference without force. Since this
+did not reclaim enough VM space, create a separate MEM0-backed local VM rather
+than restart/prune the existing one. Keep cloud accounts, active databases/owner
+previews, Git and UI untouched. Do not promote these prerequisites to native
+application, original28 or release acceptance. Evidence:
+evidence/20261112-provider-runtime-selection/README.md.

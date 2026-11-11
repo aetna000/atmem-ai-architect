@@ -450,3 +450,14 @@ are unproved. See evidence/20261112-native-sql-transfer/README.md and assessment
 Next equivalent Azure/Google/IBM native transfers and full independent receiving
 handoff/resource composition, then runnable alpha.5. All remaining ten-increment/
 original28/unfamiliar scope and four offered/1-of28/owner0/unknown quality remain.
+
+GE-006 provider runtime foundation: generic reviewed file-digest alternatives now
+select immutable technical dependency locks without domain/provider dispatch.
+Actual four-context materialization/selection, legacy contract preservation and
+changed-lock invalidation qualify with553JS/449server/build. Three offline Linux
+AMD64 SDK/SQL runtimes pass observation, actual imports/crypto/SQL and18 expected
+fixture scenarios with cleanup. Their disks/cache live in a separate MEM0-backed
+VM; existing VM/owner previews and active metadata were not restarted or moved.
+Evidence: evidence/20261112-provider-runtime-selection/README.md. Native provider
+applications/full journeys and receiving handoff remain next before alpha.5;
+four offered increments/1-of28/owner0 and unknown measured quality are unchanged.

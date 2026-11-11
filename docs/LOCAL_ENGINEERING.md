@@ -14,6 +14,19 @@ Choose a new app-data directory and free local ports. The home argument is appli
 
 For local checks, the operator explicitly supplies `--tools`, `--validators`, `--isolation-profiles` and `--validator-endpoint` registrations. These are private machine configuration, not receiving-project build inputs. Tools JSON has `readRoots` and `tools`; the latter admits python/node/terraform/providerMirror/dependencyMirror. Every tool must be within an explicitly approved root. Keep roots narrow and do not register credential directories. Validator definitions select cached immutable image IDs, executable arguments, platform, limits, optional reviewed isolation profile, file applicability and optional pinned runtime receipt. Public dependency mirrors are bounded hash-pinned flat catalogs with provenance/licenses; there is no runtime network resolver or installer. See the operator preparation/evaluation scripts and their `--help` before preparing a new environment. No cloud credentials are needed for local checks.
 
+When runtimes share file names but contain different dependency sets, applicability
+may include `anyFileSha256`: up to sixteen objects with exactly `pattern` and
+`sha256`. A matching regular file in the immutable capture must have the complete
+lowercase SHA256 pin, in addition to the existing anyOf/allOf/noneOf file rules.
+Use reviewed dependency-lock hashes tied to qualified runtime inputs. Never use
+client/evaluation package hashes to choose or hide checks. The generic selector
+does not inspect provider names, run source, resolve dependencies or prove semantic
+coverage. Formatting or dependency changes invalidate an exact lock match; inspect
+the visible plan and qualify/register the changed contract rather than silently
+substituting a runtime. Existing registrations without digest rules retain their
+original shape and contract hash. Changes to these rules bind a new check contract;
+previous evidence is retained separately.
+
 ## Manual test card
 
 1. Open Connections and choose Codex with your accessible exact model/effort. Start in Design, describe the project and develop its components or responsibilities. Expand **Architecture activity** while Architect works to inspect public updates, model attempts, evidence lookups and response-format checks. Choose **Build this design** once; the saved context is included automatically, with no repeated brief.

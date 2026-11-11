@@ -1,0 +1,100 @@
+{
+  "passed": true,
+  "catalogSha256": "3043c3db6a07f07970e39d5487d9b19203b42842ee4653fef52d7a9f4baa59a8",
+  "dependencyLockPins": {
+    "aws": "509db65f2380ecff556837c1f4257ce267dbda364118745cf6a23cfb48d8efd1",
+    "azure": "9629f83845628253c00dc054ad02a5de7a1c1b6db4cf5907cb03edc53ec3eca8",
+    "gcp": "872663ae3c96d4c74141eace1d05c076b257ae08751ae0bb11f4da3ed8ab6260",
+    "ibm": "5c57d047e38aeba4d0b73cf5acd99ab345d20e280457161801623cd074de1f58"
+  },
+  "operatorRules": {
+    "aws": {
+      "anyOf": [
+        "**/test_*.py"
+      ],
+      "allOf": [
+        "**/workflow_schema.sql"
+      ],
+      "noneOf": [],
+      "anyFileSha256": [
+        {
+          "pattern": "**/test-requirements.lock",
+          "sha256": "509db65f2380ecff556837c1f4257ce267dbda364118745cf6a23cfb48d8efd1"
+        }
+      ]
+    },
+    "azure": {
+      "anyOf": [
+        "**/test_*.py"
+      ],
+      "allOf": [
+        "**/workflow_schema.sql"
+      ],
+      "noneOf": [],
+      "anyFileSha256": [
+        {
+          "pattern": "**/test-requirements.lock",
+          "sha256": "9629f83845628253c00dc054ad02a5de7a1c1b6db4cf5907cb03edc53ec3eca8"
+        }
+      ]
+    },
+    "gcp": {
+      "anyOf": [
+        "**/test_*.py"
+      ],
+      "allOf": [
+        "**/workflow_schema.sql"
+      ],
+      "noneOf": [],
+      "anyFileSha256": [
+        {
+          "pattern": "**/test-requirements.lock",
+          "sha256": "872663ae3c96d4c74141eace1d05c076b257ae08751ae0bb11f4da3ed8ab6260"
+        }
+      ]
+    },
+    "ibm": {
+      "anyOf": [
+        "**/test_*.py"
+      ],
+      "allOf": [
+        "**/workflow_schema.sql"
+      ],
+      "noneOf": [],
+      "anyFileSha256": [
+        {
+          "pattern": "**/test-requirements.lock",
+          "sha256": "5c57d047e38aeba4d0b73cf5acd99ab345d20e280457161801623cd074de1f58"
+        }
+      ]
+    }
+  },
+  "cases": [
+    {
+      "providerDependencyLock": "aws",
+      "domainPath": "station",
+      "selectedOnlyMatchingRuntime": true,
+      "changedLockSelectsNone": true
+    },
+    {
+      "providerDependencyLock": "azure",
+      "domainPath": "exhibition",
+      "selectedOnlyMatchingRuntime": true,
+      "changedLockSelectsNone": true
+    },
+    {
+      "providerDependencyLock": "gcp",
+      "domainPath": "seed-library",
+      "selectedOnlyMatchingRuntime": true,
+      "changedLockSelectsNone": true
+    },
+    {
+      "providerDependencyLock": "ibm",
+      "domainPath": "workshop",
+      "selectedOnlyMatchingRuntime": true,
+      "changedLockSelectsNone": true
+    }
+  ],
+  "boundary": "Actual four-context SDK materialization and manifest lock-hash applicability only. No application test, native model or provider acceptance. No business/provider dispatch in production selector.",
+  "cloudOperations": false
+}

@@ -68,6 +68,23 @@ class ValidationJobTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.jobs.get(self.scope,self.session,state['id'])['result'],result['result'])
         self.assertEqual(len(self.worker.calls),1)
 
+    async def test_dependency_lock_pins_select_matching_runtime_from_actual_captured_bytes(self):
+        import hashlib
+        workspace=self.root/'source';(workspace/'nested').mkdir();lock=workspace/'nested/requirements.lock';lock.write_bytes(b'client_sdk==1.0\n')
+        artifact=self.artifacts.capture(self.scope,self.session,workspace)
+        first_pin=hashlib.sha256(lock.read_bytes()).hexdigest();other_pin=hashlib.sha256(b'other_sdk==2.0\n').hexdigest()
+        def rule(pin):return FileApplicability.parse({'anyOf':['**/test_*.py'],'anyFileSha256':[{'pattern':'**/requirements.lock','sha256':pin}]})
+        self.jobs.validators={'matching-runtime':RegisteredValidator('Matching runtime',ValidationSpec('matching-runtime',self.spec.image,self.spec.command),rule(first_pin)),
+                              'other-runtime':RegisteredValidator('Other runtime',ValidationSpec('other-runtime',self.spec.image,self.spec.command),rule(other_pin))}
+        plan=self.jobs.plan(self.scope,self.session,artifact['id'])
+        self.assertEqual([d['state']for d in plan['decisions']],['selected','not_applicable']);self.assertEqual(self.worker.calls,[])
+        first_contract=plan['decisions'][0]['contractSha256']
+        lock.write_bytes(b'client_sdk==1.1\n');changed=self.artifacts.capture(self.scope,self.session,workspace)
+        stale=self.jobs.plan(self.scope,self.session,changed['id']);self.assertEqual(stale['selectionStatus'],'no_available_applicable_checks')
+        self.assertEqual(self.jobs.plan(self.scope,self.session,artifact['id']),plan)
+        self.jobs.validators['matching-runtime']=RegisteredValidator('Matching runtime',ValidationSpec('matching-runtime',self.spec.image,self.spec.command),rule(hashlib.sha256(lock.read_bytes()).hexdigest()))
+        updated=self.jobs.plan(self.scope,self.session,changed['id']);self.assertEqual(updated['decisions'][0]['state'],'selected');self.assertNotEqual(updated['decisions'][0]['contractSha256'],first_contract)
+
     async def test_manual_recapture_keeps_automatic_package_checks_visible_without_replay(self):
         check=await self.jobs.start(self.scope,self.session,self.artifact,'python-tests');await self.finish()
         captured=self.artifacts.capture(self.scope,self.session,self.root/'source')

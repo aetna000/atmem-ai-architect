@@ -3,6 +3,32 @@ from server.validation_applicability import FileApplicability,matches
 
 
 class ApplicabilityTests(unittest.TestCase):
+    def test_exact_dependency_lock_selection_transfers_without_domain_or_provider_dispatch(self):
+        import hashlib
+        contents=[b'client_sdk==1.0\n',b'other_sdk==2.0\n']
+        rules=[FileApplicability.parse({'anyOf':['**/test_*.py'],'anyFileSha256':[{'pattern':'**/requirements.lock','sha256':hashlib.sha256(content).hexdigest()}]})for content in contents]
+        for domain in ['museum/catalog','weather/instruments','renamed']:
+            files=[{'path':domain+'/test_rules.py','kind':'file'},{'path':domain+'/requirements.lock','kind':'file','sha256':hashlib.sha256(contents[0]).hexdigest()}]
+            self.assertEqual([rule.assess(files)['applies']for rule in rules],[True,False])
+            files[-1]['sha256']=hashlib.sha256(contents[0]+b'changed').hexdigest()
+            self.assertEqual([rule.assess(files)['applies']for rule in rules],[False,False])
+
+    def test_digest_rules_require_exact_regular_file_paths_and_preserve_legacy_shape(self):
+        legacy=FileApplicability.parse({'anyOf':['**/test_*.py']})
+        self.assertEqual(legacy.public(),{'anyOf':('**/test_*.py',),'allOf':(),'noneOf':()})
+        rule=FileApplicability.parse({'anyOf':['**/test_*.py'],'anyFileSha256':[{'pattern':'**/requirements.lock','sha256':'a'*64}]})
+        for file in [{'path':'requirements.lock','kind':'symlink','sha256':'a'*64},{'path':'requirements.lock','kind':'file'},{'path':'different.lock','kind':'file','sha256':'a'*64}]:
+            self.assertFalse(rule.assess([{'path':'test_unit.py','kind':'file'},file])['applies'])
+        self.assertFalse(rule.assess([{'path':'requirements.lock','kind':'file','sha256':'a'*64}])['applies'])
+        self.assertEqual(rule.public()['anyFileSha256'],[{'pattern':'**/requirements.lock','sha256':'a'*64}])
+
+    def test_digest_rules_reject_ambiguous_unbounded_or_executable_operator_inputs(self):
+        for value in [None,{},'a'*64,{'pattern':'../requirements.lock','sha256':'a'*64},{'pattern':'requirements.lock','sha256':'A'*64},{'pattern':'requirements.lock','sha256':'a'*63},{'pattern':'requirements.lock','sha256':'a'*64,'command':['/bin/sh']}]:
+            with self.subTest(value=value),self.assertRaises(ValueError):FileApplicability.parse({'anyOf':['**/test_*.py'],'anyFileSha256':[value]})
+        item={'pattern':'requirements.lock','sha256':'a'*64}
+        for values in [[item,item],[{**item,'sha256':format(n,'064x')}for n in range(17)]]:
+            with self.assertRaises(ValueError):FileApplicability.parse({'anyOf':['**/test_*.py'],'anyFileSha256':values})
+
     def test_segment_and_recursive_matching_including_zero_segments(self):
         for pattern,name,expected in [
             ('*.py','test_a.py',True),('*.py','tests/test_a.py',False),

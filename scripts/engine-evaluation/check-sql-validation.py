@@ -6,7 +6,7 @@ import argparse,hashlib,io,json,sys,uuid,zipfile
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2];sys.path.insert(0,str(ROOT))
 from server.local_validation import DockerValidationWorker,ValidationSpec
-parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--image',required=True);parser.add_argument('--output',type=Path,required=True);parser.add_argument('--endpoint',required=True);args=parser.parse_args();out=args.output.resolve();out.mkdir(parents=True,exist_ok=False)
+parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--image',required=True);parser.add_argument('--output',type=Path,required=True);parser.add_argument('--endpoint',required=True);parser.add_argument('--platform',choices=['linux/arm64','linux/amd64'],default='linux/arm64');args=parser.parse_args();out=args.output.resolve();out.mkdir(parents=True,exist_ok=False)
 worker=DockerValidationWorker(args.endpoint);driver=('/usr/local/bin/python3','-I','/opt/atmem/sql_validation.py','-m','unittest','discover','-v')
 code=r'''
 import errno,os,pathlib,socket,stat,unittest
@@ -63,7 +63,7 @@ def archive(source):
 
 rows=[]
 for name,source,expected,sql_fixture,budget in [('transfer_and_denials',code,'passed',True,60),('fresh_job',empty_fixture,'passed',True,60),('same_source_without_fixture',code,'failed',False,60),('skipped_tests','import unittest\nclass Skip(unittest.TestCase):\n def test_skip(self):self.skipTest("synthetic unexecuted prerequisite")\n','incomplete',True,60),('no_tests','VALUE=1\n','failed',True,60),('timeout','import time,unittest\nclass Slow(unittest.TestCase):\n def test_slow(self):time.sleep(30)\n','failed',True,3)]:
- data=archive(source);execution=str(uuid.uuid4());spec=ValidationSpec('sql-'+name.replace('_','-'),args.image,driver if sql_fixture else('/usr/local/bin/python3','-m','unittest','discover','-v'),platform='linux/arm64',timeout_seconds=budget,isolation_profile='postgresql-local-v1'if sql_fixture else'standard-v1')
+ data=archive(source);execution=str(uuid.uuid4());spec=ValidationSpec('sql-'+name.replace('_','-'),args.image,driver if sql_fixture else('/usr/local/bin/python3','-m','unittest','discover','-v'),platform=args.platform,timeout_seconds=budget,isolation_profile='postgresql-local-v1'if sql_fixture else'standard-v1')
  result=worker.run(data,hashlib.sha256(data).hexdigest(),spec,execution_id=execution);(out/(name+'.json')).write_text(json.dumps(result,indent=2)+'\n');assert result['status']==expected,(name,result)
  cleanup=worker.recover(execution);assert cleanup['cleanupConfirmed']and not cleanup['workReplayed'];rows.append({'case':name,'status':result['status'],'tests':result['testsReported'],'skipped':result['skipped'],'reason':result['reason'],'cleanupConfirmed':True})
  if name=='skipped_tests':assert result['skipped']==1
