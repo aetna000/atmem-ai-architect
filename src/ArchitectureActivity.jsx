@@ -23,7 +23,7 @@ export function ArchitectureTurn({turn,number,projectId,session,active,working})
   <summary><strong>Architect activity · turn {number}</strong><span>{turn.model}{turn.effort?' · '+turn.effort:''}</span><em>{states[status]||({submitted:active?'Preparing':'Awaiting details',response_received:'Response received',failed:'Request failed',cancelled:'Stopped'}[turn.clientStatus])}</em></summary>
   <div className="architecture-turn-body">
    {attempts>0&&<p className="activity-count">{attempts} model {attempts===1?'attempt':'attempts'} recorded</p>}
-   {session?.architectureActivityEnabled?<>{error&&<p role="status">{error}</p>}<ol aria-label={'Activity for turn '+number}>{events.map(e=><li key={e.sequence} className={'activity-'+e.kind}>
+   {session?.architectureActivityEnabled?<>{error&&<p role="status">{error}</p>}<ol aria-label={'Activity for turn '+number}>{events.toReversed().map(e=><li data-sequence={e.sequence} key={e.sequence} className={'activity-'+e.kind}>
     <div className="activity-event-heading"><span className="activity-dot"/><strong>{e.kind==='model_started'?`Model attempt ${e.details?.attempt||''}${e.details?.round?' · pass '+e.details.round:''}`:e.kind==='model_message'?'Architect update':e.details?.tool?tools[e.details.tool]||e.details.tool:e.text}</strong><time dateTime={e.at}>{e.at?new Date(e.at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'}):''}</time></div>
     {e.kind==='model_message'?<ChatMessage text={e.text}/>:e.details?.tool&&<p>{e.kind==='tool_finished'&&e.details.success===false?'Evidence was unavailable.':e.text}</p>}
     {!!e.details?.skillIds?.length&&<p>Guidance: {e.details.skillIds.join(', ')}</p>}
