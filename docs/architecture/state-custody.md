@@ -41,3 +41,12 @@ require cloud account access or migration.
 
 See the source-bound native/configuration checks and precise limits in
 `specs/029-general-purpose-engine/evidence/20261112-state-custody/README.md`.
+
+Explicit state packages also emit `state-contract-check.py`. It runs two real
+Terraform clients against an isolated synthetic loopback HTTP fixture, exercises
+writer exclusion/owner-safe unlock and checksum-based local SQLite version
+recovery, and records helper/binary hashes. The fixture has no project endpoint,
+cloud credentials, apply or migration path. Its report keeps selected-backend
+verification false; native S3/Azure/GCS, TLS, external platform durability and
+actual project custody are separate evidence. See
+`specs/029-general-purpose-engine/evidence/20261112-state-protocol/README.md`.

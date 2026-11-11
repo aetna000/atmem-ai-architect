@@ -861,3 +861,21 @@ harness API usage without removing expectations. Evidence:
 evidence/20261112-state-custody/README.md. GE-005 remains in_progress; continue
 local operating protocol and lifecycle/provider parity before frozen alpha.4.
 No cloud account access, state migration or deployment is needed/authorized.
+
+
+### 2026-11-12 — Native local state protocol evidence without accepting custody
+
+Emit an isolated loopback-only helper with synthetic state/credentials and real
+Terraform init/plan/state pull clients. Local SQLite versions/locks provide
+writer exclusion, owner-safe unlock and checksum recovery fixtures. Exclude cloud
+credentials/CLI environment, caller endpoints, apply and migration. Bind exact
+helper bytes in generation and independent admission; reject code changes and
+forged selected-backend verification. Context/custody records stay unverified.
+
+Run exact unpacked Azure/HTTP and Google/GCS package helpers; each passes18 local
+checks. These are the same HTTP contract in two contexts, not separate platform
+acceptances. Final receipts distinguish expected lock-denial exit1 from positive
+exit0; earlier runs are historical, not additional quality coverage. Evidence:
+evidence/20261112-state-protocol/README.md.521JS/build pass; unchanged429server
+evidence retained. No owner UI/job/account changed. GE-005 and full goal remain
+in progress, including lifecycle/provider parity and frozen runnable alpha.4.

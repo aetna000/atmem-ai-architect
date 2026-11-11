@@ -1,6 +1,7 @@
 import test from 'node:test';import assert from 'node:assert/strict';
 import {compositionFixture} from '../scripts/engine-evaluation/composition-fixtures.mjs';
 import {reviewWorkContext,architectureWork} from '../src/architecture-work.mjs';
+import fs from 'node:fs';import {createHash} from 'node:crypto';
 import {validateImport} from '../src/core.mjs';import {toProjectFile,fromProjectFile} from '../src/project-file.mjs';
 import {terraformSketch} from '../src/terraform.mjs';import {resourcePlan} from '../src/resources.mjs';import {generationQuality} from '../src/generation-quality.mjs';import {protectedState} from '../src/protected-state.mjs';import {specKit} from '../src/spec-kit.mjs';
 const choose=(project,backend,environment='production')=>({...project,decisions:[{id:'state-choice',title:'Existing platform state',subject:'state',status:'Proposed',decision:'Preserve the existing platform state owner.'}],extensions:{...project.extensions,terraformState:{version:1,environments:{[environment]:{backend,owner:'Existing platform team',residency:'Australian custody required; destination unverified',decisionId:'state-choice'}}}}});
@@ -48,4 +49,12 @@ test('changing state custody invalidates prior context review without rewriting 
  let p=choose(compositionFixture('ibm'),'http');p=reviewWorkContext(p,'block:instrument-µ');const before=structuredClone(p.extensions.architectureWork);
  assert.equal(architectureWork(p).entities.find(e=>e.id==='block:instrument-µ').contextStatus,'current');
  p.extensions.terraformState.environments.production.backend='gcs';const changed=architectureWork(p).entities.find(e=>e.id==='block:instrument-µ');assert.equal(changed.contextStatus,'changed');assert(changed.changedRefs.includes('intent:project'));assert.deepEqual(p.extensions.architectureWork,before);
+});
+test('emitted local state probe is byte-bound and cannot claim selected-backend verification',()=>{
+ const p=choose(compositionFixture('gcp'),'gcs','staging'),files=terraformSketch(p),plan=resourcePlan(p),record=JSON.parse(files['state-custody.json']);
+ const source=fs.readFileSync(new URL('../src/runtime/state_contract_check.py',import.meta.url),'utf8');assert.equal(files['state-contract-check.py'],source);assert.equal(record.localProbe.sha256,createHash('sha256').update(source).digest('hex'));assert.equal(record.localProbe.selectedBackendVerified,false);assert.equal(record.localProbe.status,'not_run');
+ for(const mutation of ['code','claim','missing']){
+  const changed={...files},r=structuredClone(record);if(mutation==='code')changed['state-contract-check.py']+='\n# unreviewed modification';if(mutation==='claim')r.localProbe.selectedBackendVerified=true;if(mutation==='missing')delete changed['state-contract-check.py'];changed['state-custody.json']=JSON.stringify(r);
+  assert(generationQuality(p,plan,changed).fatalFindings.some(f=>f.code==='state-custody-mismatch'),mutation);
+ }
 });

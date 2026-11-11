@@ -1,5 +1,7 @@
 import fs from 'node:fs';
 import {createHash}from'node:crypto';
+const stateProbeSource=fs.readFileSync(new URL('../src/runtime/state_contract_check.py',import.meta.url),'utf8');
+fs.writeFileSync(new URL('../src/runtime/state-contract-check-source.json',import.meta.url),JSON.stringify({source:stateProbeSource,sha256:createHash('sha256').update(stateProbeSource).digest('hex')},null,2)+'\n');
 const enterpriseManifest=JSON.parse(fs.readFileSync(new URL('../src/runtime/enterprise-application-manifest.json',import.meta.url),'utf8'));
 const enterpriseNames=[...enterpriseManifest.files,...enterpriseManifest.parserFiles,...enterpriseManifest.pdfParserFiles,...Object.values(enterpriseManifest.providerFiles).flat(),'enterprise-runtime.Dockerfile','enterprise-application-manifest.json','python-container-lock.json',...['aws','azure','gcp','ibm'].map(provider=>'enterprise-runtime-'+provider+'-python-lock.json')];
 if(enterpriseManifest.format!=='enterprise-application-files-v1'||enterpriseNames.some(name=>!/^[-A-Za-z0-9_.]+$/.test(name)))throw Error('Use the exact flat private application inventory');

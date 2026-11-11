@@ -1,5 +1,7 @@
 import {stateCustody} from './state-custody.mjs';
 import {generationProviders} from './generation-provider.mjs';
+import stateProbe from './runtime/state-contract-check-source.json' with {type:'json'};
+import {sha256} from '@noble/hashes/sha2.js';
 const stable=value=>JSON.stringify(value,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);
 // Independent backend/settings closure. Never trust emitted custody metadata as
 // authority to select an endpoint, weaken TLS/auth/locking or accept migration.
@@ -18,6 +20,9 @@ export function inspectStateCustody(project,plan,files,root,environment,add){
  let record;try{record=JSON.parse(files['state-custody.json']);}catch{fail('The root state custody record is missing or invalid.');return;}
  const decision=(project.decisions||[]).find(d=>d.id===selection.decisionId);
  if(record.version!==1||record.blocker!=='state-custody-and-operations-acceptance-required'||record.environment!==environment||stable(record.selection)!==stable(selection)||record.scope!=='whole-project-root'||record.decisionStatus!==(decision?.status||'missing')||record.acceptance!=='not_verified'||record.migrationAuthorized!==false||record.backendAccessValidated!==false||stable(record.units)!==stable(Object.keys(root.module||{}).sort()))fail('State custody metadata changed owner, residency, decision, unit scope or unverified acceptance.');
+ const probe=files['state-contract-check.py'];
+ const hash=typeof probe==='string'?Array.from(sha256(new TextEncoder().encode(probe)),v=>v.toString(16).padStart(2,'0')).join(''):null;
+ if(hash!==stateProbe.sha256||stable(record.localProbe)!==stable({file:'state-contract-check.py',sha256:stateProbe.sha256,scope:'isolated-loopback-http-state-protocol',status:'not_run',selectedBackendVerified:false}))fail('The local state protocol probe changed its reviewed source or falsely claims selected-backend verification.');
  if(!root.locals?.unfinished_work?.includes('state-custody-and-operations-acceptance-required'))fail('Selecting a state backend cannot clear custody/operations acceptance.');
  if(root.variable?.review_approved?.default!==false)fail('State selection cannot grant deployment review approval.');
  for(const name of ['STATE.md','backend.hcl.example'])if(typeof files[name]!=='string'||!files[name].trim())fail('The explicit state backend is missing its operating guide or private input example.');

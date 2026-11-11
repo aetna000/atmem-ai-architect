@@ -294,3 +294,14 @@ See evidence/20261112-state-custody/README.md. No backend connection or migratio
 was performed. Local protocol/operations, remaining lifecycle/provider parity and
 frozen runnable alpha.4 remain. Three increments,1/28 originals, owner0, quality
 unknown; full programme remains required without cloud deployment.
+
+
+GE-005 local state protocol checkpoint: root packages emit a byte-bound Python
+checker with concrete instructions. Two exact unpacked helpers each pass18 real
+native client/local SQLite fixture checks, including writer exclusion, owner-safe
+unlock and checksum-verified recovery.521JS/build pass; project native configs/
+tests/locks are unchanged. Both contexts use the same synthetic loopback HTTP
+contract, not their selected-platform behavior; no custody acceptance/gates change.
+See evidence/20261112-state-protocol/README.md. Continue remaining lifecycle/
+reference/import and provider operating-policy parity before frozen alpha.4,
+then the full remaining programme and28/unfamiliar local systems.
