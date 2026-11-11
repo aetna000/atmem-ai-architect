@@ -173,3 +173,22 @@ skipped its HTTP class, so that coverage remains incomplete despite exit zero. N
 specialized advantage, independently accepted original project or software release is
 claimed. Next implement controlled local service/system validators and independent
 acceptance; do not expand scenario dispatch recipes or require cloud deployment.
+
+### Controlled validators with isolated local HTTP
+
+The model worker's host-network denial must remain in force. Reuse the existing local
+qualification VM through its explicit Unix endpoint; do not switch global contexts,
+stop other containers or grant Docker access to the model. Add an internal, provider-
+neutral immutable-artifact check interface backed first by cached Linux containers.
+Trusted bootstrap extracts root-owned read-only inputs and drops identity/capabilities
+before test code. Enforce resource/time/output bounds and retain skip/zero-test failures.
+No model Dockerfiles, host mounts, registry access or cloud credentials are needed.
+
+Six actual policy/counterexample probes pass. Exact captured source passes generated
+native 18 tests plus HTTP smoke, specialized 17 tests with its previously skipped HTTP
+class now executing, and a different-domain measurement package's nine tests. Separate
+evaluation-only HTTP oracles pass 18 behavioral checks per ticket arm. These remain
+synthetic identity/model transports, not complete provider/identity/browser/system
+acceptance. Cached runtime is Linux Python 3.13.18; do not claim the emitted Python 3.12
+managed runtime/SDK has been tested. Record the probe's zero-test expectation correction
+and preserve its failed receipt. No original project or release is accepted.
