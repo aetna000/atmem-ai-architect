@@ -1,0 +1,35 @@
+test_existing_project_files_and_foreign_directory_links_are_preserved (server.tests.test_engineering_delivery.DeliveryContractTests.test_existing_project_files_and_foreign_directory_links_are_preserved) ... ok
+test_exported_helper_restores_offline_tools_for_infrastructure_and_plain_code (server.tests.test_engineering_delivery.DeliveryContractTests.test_exported_helper_restores_offline_tools_for_infrastructure_and_plain_code) ... ok
+test_missing_required_tool_is_explicit_and_writes_nothing (server.tests.test_engineering_delivery.DeliveryContractTests.test_missing_required_tool_is_explicit_and_writes_nothing) ... ok
+test_seed_refuses_overwrite_and_linked_parent_before_writing_anything (server.tests.test_engineering_delivery.DeliveryContractTests.test_seed_refuses_overwrite_and_linked_parent_before_writing_anything) ... ok
+test_receiving_helper_preserves_virtualenv_imports_and_literal_paths (server.tests.test_engineering_delivery.PythonEnvironmentRegistrationTests.test_receiving_helper_preserves_virtualenv_imports_and_literal_paths) ... ok
+test_context_updates_are_control_owned_without_rewriting_workspace_pins (server.tests.test_engineering_local_worker.LocalWorkerRegistrationTests.test_context_updates_are_control_owned_without_rewriting_workspace_pins) ... ok
+test_native_registration_retains_selected_virtualenv_and_requires_its_read_root (server.tests.test_engineering_local_worker.LocalWorkerRegistrationTests.test_native_registration_retains_selected_virtualenv_and_requires_its_read_root) ... Executing <Task finished name='Task-7' coro=<LocalWorkerRegistrationTests.test_native_registration_retains_selected_virtualenv_and_requires_its_read_root() done, defined at /Users/javadtaghia/gitlab/ai-architect-workbench/server/tests/test_engineering_local_worker.py:43> exception=AssertionError('"own qualified read root" does not match "Every registered tool needs a qualified tool read root"') created at /opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py:110> took 0.149 seconds
+FAIL
+test_native_working_check_uses_owned_pinned_checkpoint_and_reuses_exact_bytes (server.tests.test_engineering_local_worker.LocalWorkerRegistrationTests.test_native_working_check_uses_owned_pinned_checkpoint_and_reuses_exact_bytes) ... ok
+test_operator_tool_paths_need_registered_read_roots (server.tests.test_engineering_local_worker.LocalWorkerRegistrationTests.test_operator_tool_paths_need_registered_read_roots) ... ok
+test_operator_toolchain_staging_and_durable_project_registration (server.tests.test_engineering_local_worker.LocalWorkerRegistrationTests.test_operator_toolchain_staging_and_durable_project_registration) ... ok
+
+======================================================================
+FAIL: test_native_registration_retains_selected_virtualenv_and_requires_its_read_root (server.tests.test_engineering_local_worker.LocalWorkerRegistrationTests.test_native_registration_retains_selected_virtualenv_and_requires_its_read_root)
+----------------------------------------------------------------------
+RuntimeError: Every registered tool needs a qualified tool read root
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py", line 128, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py", line 719, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/server/tests/test_engineering_local_worker.py", line 52, in test_native_registration_retains_selected_virtualenv_and_requires_its_read_root
+    with patch('server.engineering_routes.home',return_value=root),patch('server.engineering_routes.setting',side_effect=config.get),self.assertRaisesRegex(RuntimeError,'own qualified read root'):LocalEngineeringService()
+                                                                                                                                     ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "own qualified read root" does not match "Every registered tool needs a qualified tool read root"
+
+----------------------------------------------------------------------
+Ran 10 tests in 0.885s
+
+FAILED (failures=1)

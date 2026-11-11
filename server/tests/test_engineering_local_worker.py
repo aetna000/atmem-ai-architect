@@ -40,6 +40,27 @@ class LocalWorkerRegistrationTests(unittest.IsolatedAsyncioTestCase):
                 finally:
                     await worker.close();shutil.rmtree(path)
 
+    async def test_native_registration_retains_selected_virtualenv_and_requires_its_read_root(self):
+        import subprocess,sys,venv
+        with tempfile.TemporaryDirectory()as folder:
+            root=Path(folder);environment=root/'public-python';venv.EnvBuilder(with_pip=False).create(environment);binary=environment/'bin/python'
+            probe=subprocess.run([str(binary),'-I','-c',"import sysconfig;print(sysconfig.get_path('purelib'))"],capture_output=True,text=True,check=True)
+            (Path(probe.stdout.strip())/'atmem_dependency_canary.py').write_text('VALUE=41\n')
+            context=root/'project.json';context.write_text('{"requirements":"Keep shared worker dependencies"}')
+            base_root=str(Path(sys.executable).resolve().parent)
+            config={'ENGINEERING_TOOL_ROOTS':json.dumps([base_root]),'ENGINEERING_TOOLCHAIN':json.dumps({'python':str(binary)})}
+            with patch('server.engineering_routes.home',return_value=root),patch('server.engineering_routes.setting',side_effect=config.get),self.assertRaisesRegex(RuntimeError,'qualified.*read root'):LocalEngineeringService()
+            config['ENGINEERING_TOOL_ROOTS']=json.dumps([base_root,str(environment)])
+            with patch('server.engineering_routes.home',return_value=root),patch('server.engineering_routes.setting',side_effect=config.get):
+                worker=LocalEngineeringService();scope=ProjectScope('local-owner','environment-test')
+                async def fake_create(scope,workspace,selection):return worker.sessions._public(worker.store.create(scope,workspace,worker.backend.name,'fake-thread',selection))
+                worker.sessions.create=fake_create;state=await worker.create(scope,context,ModelSelection('exact-model','high'));path=worker.backend._workspace(scope,worker.store.get(scope,state['id'])['workspace'])
+                try:
+                    result=subprocess.run([str(path/'.tools/python'),'-I','-c','import atmem_dependency_canary;assert atmem_dependency_canary.VALUE==41'],capture_output=True,text=True)
+                    self.assertEqual(result.returncode,0,result.stderr);self.assertFalse((path/'.tools/python').is_symlink())
+                    self.assertEqual(worker.toolchain['python'],str(binary.absolute()))
+                finally:await worker.close();shutil.rmtree(path)
+
     async def test_operator_toolchain_staging_and_durable_project_registration(self):
         with tempfile.TemporaryDirectory() as folder:
             root=Path(folder);tools=root/'trusted-tools';tools.mkdir()
@@ -65,7 +86,7 @@ class LocalWorkerRegistrationTests(unittest.IsolatedAsyncioTestCase):
                 self.assertTrue((path/'atmem-tools/prepare.py').is_file())
                 events=worker.jobs.journal.read(scope,state['id'])
                 self.assertEqual(events[0]['kind'],'created')
-                self.assertEqual(set(events[0]['inputDigests']),{'project-context.json','.agents/skills/composition/SKILL.md','ATMEM_DELIVERY.md','atmem-tools/prepare.py','atmem-tools/architecture-work.schema.json'})
+                self.assertEqual(set(events[0]['inputDigests']),{'project-context.json','.agents/skills/composition/SKILL.md','ATMEM_DELIVERY.md','atmem-tools/prepare.py','atmem-tools/architecture-work.schema.json','atmem-tools/application-runtime.json','atmem-tools/materialize-runtime.py'})
                 import hashlib
                 schema=path/'atmem-tools/architecture-work.schema.json'
                 self.assertEqual(events[0]['inputDigests']['atmem-tools/architecture-work.schema.json'],hashlib.sha256(schema.read_bytes()).hexdigest())

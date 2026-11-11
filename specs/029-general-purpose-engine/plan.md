@@ -398,3 +398,17 @@ See evidence/20261112-deferred-bindings/README.md. Structural resolution does no
 verify the supplied source or cloud. Provider resource/environment and executable
 domain/worker linkage, full requirements/handoff and runnable alpha.5 remain next;
 retain the complete remaining programme. Four increments/1-of28/owner0 unchanged.
+
+
+GE-006 native runtime access checkpoint: the native engine now receives the same
+shared production source and exact provider locks as optional pinned inputs, with
+an offline portable materializer instead of merely prose naming unavailable modules.
+A real virtualenv alias counterexample also exposed dependency loss; future native
+and receiving registrations retain the selected environment behind a literal launcher
+and require its read root. Real restricted-worker four-provider materialization/
+imports,553JS/443server/build pass. A normal gpt-6.1-sol/high equipment-domain session
+uses the supplied SDK and is being independently qualified; preserve its original
+pins and observe the same job if an observation budget expires. See
+evidence/20261112-native-runtime-access/README.md. This is not a frozen release or
+whole-system acceptance; resource/domain/worker/connected handoff and alpha.5 remain.
+Four increments/1-of28/owner0 and unmeasured quality are unchanged.

@@ -46,6 +46,42 @@ or explicit approved receiving inputs, never private worker mirror paths. The he
 does not install dependencies. State any packaging/service/version limits without
 removing client-required functionality or assuming the image SDK matches a vendored SDK.
 
+## Optional shared application runtime
+
+atmem-tools/application-runtime.json supplies versioned production source and exact
+provider dependency locks for typed HTTP intake, native identity, durable SQL/queue,
+human approval, bounded child stages and reviewed normalized TLS delivery. Inspect
+its applicability before choosing it. It is an optional implementation dependency,
+not a business recipe, required stack or proof of an implemented client system.
+For a compatible workload, materialize a fresh application directory offline:
+
+    python -I atmem-tools/materialize-runtime.py --provider aws --out application
+
+Select the actual target provider (aws, azure, gcp or ibm); never substitute one to
+fit a lock. Preserve supplied inputs. The helper copies source and locks only: it
+installs/runs nothing and creates no cloud resources, model requests or SQL objects.
+Use the emitted runtime-manifest.json to retain source/catalog/dependency identities.
+The embedded sources exclude invoice business logic and synthetic tests. They are
+not an already-built application. Supply concrete domain processor/delivery source,
+API/worker entrypoints, the reviewed profile/template and provider resource/env
+connections from the full brief. Read workflow_application.py and workflow_worker.py
+for the fixed-role API/worker constructors; pass trusted source callbacks, never
+request-selected module paths. An optional ProcessStage provides hard deadlines,
+not an OS sandbox. Keep database credentials out of processing/delivery children.
+Keep API and worker credentials separate; initialize SQL/admit memberships through
+the operator role. Enforce the profile-bound payload, account/kind/namespace,
+identity realm, destination approval hash and uncertain-effect behavior.
+
+Copy actual application modules into the delivered build context and document
+normal target-platform dependency setup. Do not make runtime images read from
+atmem-tools, .tools, host paths or a developer interpreter. Native SDK lock pins
+have provider/platform limits; verify clean builds and full local journeys rather
+than assuming an import or shared-library pass establishes client acceptance.
+Client intent may require a different design or dependency. Do not remove scope to
+force this contract or embed synthetic processors/provider transports as production.
+Legacy sessions may lack these assets: preserve their original pins and state that
+limit; do not silently rewrite a running or resumed workspace.
+
 ## Typed application declarations
 
 A proposed component may carry data.implementation=approval-workflow and a complete
@@ -104,6 +140,8 @@ separate proposed operational guards from explicit client requirements.
 def seed_delivery(workspace):
     root=Path(workspace)
     files={'ATMEM_DELIVERY.md':CONTRACT.encode(),
+           'atmem-tools/application-runtime.json':(Path(__file__).parent/'engineering_assets/application-runtime.json').read_bytes(),
+           'atmem-tools/materialize-runtime.py':(Path(__file__).parent/'engineering_assets/materialize_runtime.py').read_bytes(),
            'atmem-tools/prepare.py':(Path(__file__).parent/'engineering_assets/prepare_tools.py').read_bytes(),
            'atmem-tools/architecture-work.schema.json':(Path(__file__).parent/'engineering_assets/architecture_work.schema.json').read_bytes()}
     for name,content in files.items():

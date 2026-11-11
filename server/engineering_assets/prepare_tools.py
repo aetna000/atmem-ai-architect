@@ -8,8 +8,16 @@ import json
 import os
 from pathlib import Path
 import shutil
+import shlex
 
 NAMES=('python','node','terraform','providerMirror')
+
+
+def python_launcher(path):
+    """Retain an explicitly selected virtualenv; a second symlink loses its prefix."""
+    path=Path(path).absolute()
+    if not (path.parent.parent/'pyvenv.cfg').is_file():return None
+    return '#!/bin/sh\nexec '+shlex.quote(str(path))+' "$@"\n'
 
 
 def prepare(root,choices,required=()):
@@ -19,7 +27,9 @@ def prepare(root,choices,required=()):
     paths={}
     for name,value in choices.items():
         if value is None:continue
-        path=Path(value).expanduser().resolve(strict=True)
+        selected=Path(value).expanduser().absolute()
+        resolved=selected.resolve(strict=True)
+        path=selected if name=='python' and python_launcher(selected) is not None else resolved
         if name=='providerMirror':
             if not path.is_dir():raise ValueError('The offline provider mirror must be a directory')
         elif not path.is_file() or not os.access(path,os.X_OK):
@@ -31,8 +41,12 @@ def prepare(root,choices,required=()):
     for directory in (tools,temporary):
         if directory.is_symlink() or (directory.exists() and not directory.is_dir()):
             raise ValueError('Local tool/temporary directories must not be links or files')
+    launchers={name:python_launcher(target)if name=='python'else None for name,target in paths.items()}
     for name,target in paths.items():
         link=tools/name
+        if launchers[name] is not None:
+            if link.is_symlink()or(link.exists()and(not link.is_file()or link.read_text()!=launchers[name])):raise ValueError('Existing Python registration differs; use a fresh unpack')
+            continue
         if link.is_symlink():
             if link.resolve(strict=True)!=target:raise ValueError('Existing tool registration differs; use a fresh unpack or review it explicitly')
         elif link.exists():raise ValueError('Existing project files will not be replaced by tool aliases')
@@ -55,7 +69,9 @@ def prepare(root,choices,required=()):
     tools.mkdir(exist_ok=True);temporary.mkdir(exist_ok=True)
     for name,target in paths.items():
         link=tools/name
-        if not link.is_symlink():link.symlink_to(target,target_is_directory=name=='providerMirror')
+        if launchers[name] is not None:
+            if not link.exists():link.write_text(launchers[name]);link.chmod(0o755)
+        elif not link.is_symlink():link.symlink_to(target,target_is_directory=name=='providerMirror')
     if not manifest.exists():manifest.write_text(json.dumps(config,indent=2)+'\n')
     for path,content in files.items():
         if not path.exists():path.write_text(content)

@@ -1,3 +1,5 @@
+import {WORKFLOW_RUNTIME_FILES}from '../src/workflow-runtime-inventory.mjs';
+import {invoiceDependencies}from '../src/invoice-dependencies.mjs';
 import fs from 'node:fs';
 import {createHash}from'node:crypto';
 const stateProbeSource=fs.readFileSync(new URL('../src/runtime/state_contract_check.py',import.meta.url),'utf8');
@@ -46,3 +48,8 @@ invoiceTestSources['start-durable-fixture.py']=fs.readFileSync(new URL('./start-
 invoiceTestSources['postgres-qualification-lock.json']=fs.readFileSync(new URL('../src/runtime/postgres-qualification-lock.json',import.meta.url),'utf8');
 invoiceTestSources['invoice-text.pdf.base64']=fs.readFileSync(new URL('../benchmarks/convergence/fixtures/invoices/invoice-text.pdf',import.meta.url)).toString('base64');
 fs.writeFileSync(new URL('../src/runtime/invoice-test-sources.json',import.meta.url),JSON.stringify(invoiceTestSources,null,2)+'\n');
+
+// Supply the same public runtime to native engineering workers and browser exports.
+const sharedFiles=Object.fromEntries([...WORKFLOW_RUNTIME_FILES,'workflow_schema.sql'].map(name=>{const content=fs.readFileSync(new URL('../src/runtime/'+name,import.meta.url),'utf8');return[name,{content,sha256:createHash('sha256').update(content).digest('hex')}];}));
+const sharedProviders=Object.fromEntries(['aws','azure','gcp','ibm'].map(provider=>{const runtime=invoiceDependencies(provider),testing=invoiceDependencies(provider,{tests:true});return[provider,{requirements:runtime.requirements,testRequirements:testing.requirements,sources:runtime.sources,resolutions:runtime.resolutions}];}));
+fs.writeFileSync(new URL('../server/engineering_assets/application-runtime.json',import.meta.url),JSON.stringify({format:'atmem.shared-application-runtime',version:1,files:sharedFiles,providers:sharedProviders,boundary:'Optional shared source and reviewed dependency locks. No domain implementation, source review, resource linkage, cloud operation or complete-system acceptance.'},null,2)+'\n');

@@ -49,3 +49,19 @@ class DeliveryContractTests(unittest.TestCase):
             (root/'atmem-tools').symlink_to(outside,target_is_directory=True)
             with self.assertRaises(ValueError):seed_delivery(root)
             self.assertFalse((root/'ATMEM_DELIVERY.md').exists());self.assertEqual(list(outside.iterdir()),[])
+
+
+class PythonEnvironmentRegistrationTests(unittest.TestCase):
+    def test_receiving_helper_preserves_virtualenv_imports_and_literal_paths(self):
+        import subprocess,venv
+        with tempfile.TemporaryDirectory()as folder:
+            root=Path(folder)/'project';root.mkdir();environment=Path(folder)/"public env ' quoted";venv.EnvBuilder(with_pip=False).create(environment)
+            binary=environment/'bin/python';probe=subprocess.run([str(binary),'-I','-c',"import sysconfig;print(sysconfig.get_path('purelib'))"],capture_output=True,text=True,check=True)
+            (Path(probe.stdout.strip())/'atmem_dependency_canary.py').write_text('VALUE=37\n')
+            seed_delivery(root);prepare(root,{'python':binary},['python'])
+            result=subprocess.run([str(root/'.tools/python'),'-I','-c','import sys,atmem_dependency_canary;assert atmem_dependency_canary.VALUE==37;print(sys.prefix)'],capture_output=True,text=True)
+            self.assertEqual(result.returncode,0,result.stderr);self.assertEqual(Path(result.stdout.strip()).resolve(),environment.resolve())
+            self.assertFalse((root/'.tools/python').is_symlink());prepare(root,{'python':binary},['python'])
+            (root/'.tools/python').write_text('KEEP MY SOURCE')
+            with self.assertRaises(ValueError):prepare(root,{'python':binary},['python'])
+            self.assertEqual((root/'.tools/python').read_text(),'KEEP MY SOURCE')

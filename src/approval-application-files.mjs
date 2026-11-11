@@ -1,9 +1,10 @@
+import {WORKFLOW_API_FILES} from './workflow-runtime-inventory.mjs';
 import sources from './runtime/invoice-sources.json' with {type:'json'};
 import {approvalProfiles} from './approval-applications.mjs';
 import {resourceAddress} from './identifiers.mjs';
 import {invoiceDependencies as workflowDependencies} from './invoice-dependencies.mjs';
 import {pythonContainer} from './python-container.mjs';
-const modules=['workflow_bindings.py','workflow_profile.py','workflow_application.py','workflow_configuration.py','workflow_identity.py','workflow_http.py','workflow_payload.py','workflow_contract.py','workflow_connection.py','workflow_errors.py','workflow_database.py','workflow_role_bootstrap.py','workflow_worker.py','durable_workflow.py','approved_http_destination.py','azure_structured.py','gcp_structured.py','ibm_structured.py','structured_output.py','structured_http.py','policy_review.py'];
+const modules=WORKFLOW_API_FILES;
 export function approvalApplicationFiles(project,environment){
  const files={},records=[];
  for(const {node,profile}of approvalProfiles(project)){

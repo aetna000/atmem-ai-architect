@@ -22,6 +22,7 @@ from .engineering_reconciliation import EngineeringReconciliation
 from .engineering_finalization import EngineeringFinalization
 from .dependency_mirror import inspect_mirror
 from .engineering_delivery import seed_delivery
+from .engineering_assets.prepare_tools import python_launcher
 from .engineering_tools import EngineeringTools
 from .engineering_sessions import EngineeringSessions, ModelSelection, ProjectScope, SessionError, SqliteSessionStore
 from .local_validation import DockerValidationWorker
@@ -90,12 +91,16 @@ class LocalEngineeringService:
         trusted = [Path(root).resolve(strict=True) for root in read_roots]
         for name, value in self.toolchain.items():
             if not isinstance(value,str): raise RuntimeError('Toolchain paths must be operator-owned strings')
-            path = Path(value).resolve(strict=True)
+            selected=Path(value).absolute()
+            path = selected.resolve(strict=True)
             if not any(path==root or path.is_relative_to(root) for root in trusted):
                 raise RuntimeError('Every registered tool needs a qualified tool read root')
             directory=name in {'providerMirror','dependencyMirror'}
             if (directory and not path.is_dir()) or (not directory and not path.is_file()):
                 raise RuntimeError('A registered local tool or provider mirror is unavailable')
+            if name=='python' and python_launcher(selected) is not None:
+                if not any(selected.parent.resolve().is_relative_to(root) for root in trusted):raise RuntimeError('The selected Python environment needs its own qualified read root')
+                path=selected
             self.toolchain[name] = str(path)
         self.dependencies=inspect_mirror(self.toolchain['dependencyMirror']) if 'dependencyMirror' in self.toolchain else None
         validators=registered_validators(json.loads(setting('ENGINEERING_VALIDATORS') or '[]'))
@@ -215,7 +220,10 @@ Keep final progress concise and explain any remaining work.''')
             tools.mkdir()
             registered = {}
             for name,value in self.toolchain.items():
-                (tools/name).symlink_to(value,target_is_directory=name in {'providerMirror','dependencyMirror'})
+                launcher=python_launcher(value)if name=='python'else None
+                if launcher is not None:
+                    (tools/name).write_text(launcher);(tools/name).chmod(0o755)
+                else:(tools/name).symlink_to(value,target_is_directory=name in {'providerMirror','dependencyMirror'})
                 registered[name] = f'./.tools/{name}'
             (tools/'toolchain.json').write_text(json.dumps({'tools':registered,'temporaryStorage':'.worker-tmp',
                 'network':'No domains, IP access, host loopback or package downloads; only private temporary Unix IPC.',

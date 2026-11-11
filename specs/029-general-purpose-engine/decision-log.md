@@ -1057,3 +1057,25 @@ initial harness failure and original artifacts. Catalogue7 and native handoff ca
 the new partial interface and limits. No existing schema/resource gate is cleared;
 UI/AtFlow CSS and previews remain untouched. No cloud operations or new release.
 Evidence: evidence/20261112-deferred-bindings/README.md.
+
+
+## 2026-11-12 — Supply optional shared runtime to native engineering
+
+Put the actual shared production modules, schemas and reviewed provider dependency
+locks behind the existing pinned backend-input contract. Generate one catalogue
+from the same inventory as browser source exports. Native engineers may materialize
+it into fresh owned source, choose applicable mechanisms and implement the actual
+client domain/resource/worker connections. It is not a mandatory stack, compiler
+coverage, domain recipe or acceptance proof. No synthetic business code/tests are
+supplied as production. Preserve old sessions' original inputs and model selection.
+
+A real selected-venv executable exposed Python prefix loss through tool symlinks
+and eager canonicalization. Preserve the selected environment path using a literal
+argument-preserving launcher for that case, with both executable and environment
+read roots qualified; ordinary tool behavior stays covered. Receiving prepare uses
+the same mechanism and refuses unknown files/links. Never edit a running workspace's
+pins to upgrade it. The equipment transfer started before this registration repair;
+qualify the new launcher separately and disclose that sequencing. Actual restricted
+command execution proves source materialization/import, not SQL/application behavior.
+Evidence: evidence/20261112-native-runtime-access/README.md. No UI, AtFlow CSS,
+private owner project, cloud account operation or deployment change.
