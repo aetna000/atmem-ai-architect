@@ -1,0 +1,88 @@
+{
+  "sourceHashes": {
+    "README.md": "961e3263f895682f0b387f790eed50d1a960b66eeda044b293aadb52d4225e07",
+    ".gitignore": "07683a06f892b2f89459199a035be38aa971005c5dc7b9a93f1229b19ac7ef1c",
+    "infra/outputs.tf": "c5e489a52a7f2efa3018626c2e0a0ed5f587f7cd2c0db02dae80a58c497e4a51",
+    "infra/main.tf": "b238960890bfb889a1b5a20e0d52dd5dac09849e728dc48d4c59fa6c10a5e874",
+    "infra/versions.tf": "911cb768e3827d6f4ec7769aca94649c70193ccf011f4b8f648d45085a9a84fd",
+    "infra/variables.tf": "c8b44e5e2d19e93b2f5d64bfc36d19849d484deb777176c454fd316cf8b0c53f",
+    "infra/terraform.tfvars.example": "5dd72c990be4be25890de56ec0273e8dba322b7354ca2b6c2afbde6dfa43f893",
+    "infra/.terraform.lock.hcl": "0131173b0d06818e4bff97bb161005fd542725e9f5560ac6c8a879261efe83c5",
+    "app/error.schema.json": "d984058156566f6a11c7b0d9ba380fde4a2fb9d1a4aa80f3bb6a9b3ce37a3a05",
+    "app/handler.py": "20b16e01fe637b8812a93b30d841937553b823146e702d17b8d8695fd4deaaf7",
+    "app/request.schema.json": "a188cfee82e4e910b1642c0b8a16709120d0ec369a5222b3e9eaf94c7e553203",
+    "app/response.schema.json": "2cded8fdf8eb4571a40cf3fc5dee820e2a9bad675770498ba5bc5f0082aedc9c",
+    "dist/function.zip": "170d228c9d2bb834a003f4d8c32ba2dbbac22e2dd04034e5f12052571f61cff5",
+    "tests/test_handler.py": "17431ab2e2c865dde64219fcf8f71359ef9bb6b2aae7d3ca01840130b9c4c09e",
+    "tests/frontend.test.cjs": "7ccc8430f9ba8d05aa81a4881647eedf2155b261066e8b632fda04160d1f83c7",
+    "tests/test_http.py": "cbb6459e4112cff35ef8a260c1b498f0c727b30a415c7ad7d66aa2bfb38d1002",
+    "docs/COSTS.md": "9d3283074c2585dc89b0d8081bf8da99857236b30f01e53b832a1f71f9cc3b70",
+    "docs/ARCHITECTURE.md": "683d9f9b265fe67e4f9a495668bc95bb620ccd24348364205f117ffd41cf7f18",
+    "docs/OPERATIONS.md": "c31d56dfdf69c4094ab577ebd016feddb9c280d72a73e5eb1a53a1b5ff601f19",
+    "scripts/build.py": "ba96e9d5fef1475a5af6052c98181f34a139745bbe4ed7cd1a208080e0d37468",
+    "scripts/terraform-offline.sh": "33a6b4e826a65d3d89379d2e7b24d0b1d7d34e1d9dfb13685dc8f4b280d3b2e6",
+    "scripts/local_server.py": "2262432f6f8cfaa02762b942d6c0adacf2822f6b7e84a4456fd90028ddd5e71d",
+    "scripts/check.sh": "bbdc15225642a6f58a6698928b239341790697caaa331a76dd875fb032795df7",
+    "scripts/verify_artifact.py": "3b127901efc13fe4cdc401b6882c3bfe40a7b468ef4e03f96c7f13f65343e47b",
+    "app/static/index.html": "ba6ced1096da8de142fb58a812b204f9aab2c0e0dee02237940bea5fddb18a1b",
+    "app/static/style.css": "b0a2cf7f9f1a5e3eac722fdf3f3bdcf6b1879f96e8f86b3223dff5bd35797531",
+    "app/static/app.js": "d6843917653b9e2a0b3b04947a385bb7075c9a5817d680bce8478a739c9daaf0",
+    "infra/tests/architecture.tftest.hcl": "731902b36d79fabf7d40d7d67634be0cf6593f9330deb1918160ec7ef6a4ebb9"
+  },
+  "checks": [
+    {
+      "name": "python-generated-unit-tests",
+      "level": "generated_local_checks",
+      "passed": false,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "test_denied_contexts_never_reach_model (test_handler.HandlerTests.test_denied_contexts_never_reach_model) ... ok\ntest_five_independent_requests_do_not_mix_content (test_handler.HandlerTests.test_five_independent_requests_do_not_mix_content) ... ok\ntest_gateway_group_claim_encodings (test_handler.HandlerTests.test_gateway_group_claim_encodings) ... ok\ntest_invalid_model_outputs_are_never_returned (test_handler.HandlerTests.test_invalid_model_outputs_are_never_returned) ... ok\ntest_malformed_requests_do_not_invoke (test_handler.HandlerTests.test_malformed_requests_do_not_invoke) ... ok\ntest_model_failure_no_retry_no_content_leak_and_recovers (test_handler.HandlerTests.test_model_failure_no_retry_no_content_leak_and_recovers) ... ok\ntest_prompt_injection_is_only_untrusted_user_data (test_handler.HandlerTests.test_prompt_injection_is_only_untrusted_user_data) ... ok\ntest_public_assets_and_unknown_routes (test_handler.HandlerTests.test_public_assets_and_unknown_routes) ... ok\ntest_refusal_truncation_and_unexpected_provider_shapes (test_handler.HandlerTests.test_refusal_truncation_and_unexpected_provider_shapes) ... ok\ntest_schema_enums_and_limits_match_runtime (test_handler.HandlerTests.test_schema_enums_and_limits_match_runtime) ... ok\ntest_sdk_factory_wires_sydney_bounded_timeouts_and_one_attempt (test_handler.HandlerTests.test_sdk_factory_wires_sydney_bounded_timeouts_and_one_attempt) ... ok\ntest_utf8_boundary_and_base64 (test_handler.HandlerTests.test_utf8_boundary_and_base64) ... ok\ntest_valid_response_and_direct_regional_model_contract (test_handler.HandlerTests.test_valid_response_and_direct_regional_model_contract) ... ok\nsetUpClass (test_http.LocalHTTPTests) ... skipped 'Sandbox denies loopback socket binding; HTTP transport tests not run.'\n\n----------------------------------------------------------------------\nRan 13 tests in 0.006s\n\nOK (skipped=1)\n",
+      "commandPassed": true,
+      "skipped": 1
+    },
+    {
+      "name": "node-generated-unit-tests",
+      "level": "generated_local_checks",
+      "passed": true,
+      "exitCode": 0,
+      "stdout": "\u2714 synthetic OAuth callback consumes state and keeps tokens out of storage (14.102583ms)\n\u2714 mismatched OAuth state never exchanges a code (0.69225ms)\n\u2714 submission clears ticket and renders suggestion through textContent (0.998708ms)\n\u2714 byte limit counts UTF-8 and rejects oversized content before transport (0.648875ms)\n\u2714 denied, throttled, invalid-model and network responses clear input and do not retry (3.402667ms)\n\u2714 second submit during processing cannot duplicate a paid model request (0.686708ms)\n\u2714 clear suggestion removes derived content from the page (0.563375ms)\n\u2139 tests 7\n\u2139 suites 0\n\u2139 pass 7\n\u2139 fail 0\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 81.724917\n",
+      "stderr": "",
+      "commandPassed": true,
+      "skipped": 0
+    },
+    {
+      "name": "terraform-format",
+      "level": "generated_local_checks",
+      "passed": true,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "commandPassed": true,
+      "skipped": 0
+    },
+    {
+      "name": "terraform-offline-init",
+      "level": "generated_local_checks",
+      "passed": true,
+      "exitCode": 0,
+      "stdout": "Initializing provider plugins...\n- Reusing version 6.72.0 of hashicorp/aws from the dependency lock file\n- Installing hashicorp/aws v6.72.0...\n- Installed hashicorp/aws v6.72.0 (unauthenticated)\n\nTerraform has been successfully initialized!\n",
+      "stderr": "",
+      "commandPassed": true,
+      "skipped": 0
+    },
+    {
+      "name": "terraform-provider-schema",
+      "level": "generated_local_checks",
+      "passed": true,
+      "exitCode": 0,
+      "stdout": "Success! The configuration is valid.\n\n",
+      "stderr": "",
+      "commandPassed": true,
+      "skipped": 0
+    }
+  ],
+  "inferenceTurns": 0,
+  "cloudOperations": false,
+  "boundary": "Offline sandbox replay of generated Python/Node tests, Terraform format/init/provider-schema. No independent semantic acceptance, HTTP listener/browser/system test, mock plan, cloud plan or deployment.",
+  "interpretation": "Command exit codes retained. Any reported skipped unittest class/test makes that check incomplete, not passed. No check is whole-system acceptance."
+}

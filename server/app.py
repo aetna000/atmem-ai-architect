@@ -23,6 +23,12 @@ from .terraform_routes import router as terraform_router
 app.include_router(terraform_router)
 from .emulation_routes import router as emulation_router
 app.include_router(emulation_router)
+from .engineering_routes import router as engineering_router, close as close_engineering
+app.include_router(engineering_router)
+
+@app.on_event('shutdown')
+async def shutdown_engineering():
+    await close_engineering()
 TOKEN=secrets.token_urlsafe(32)
 ARCHITECT=AtMemArchitect()
 ALLOWED_HOSTS={'127.0.0.1:5174','localhost:5174','127.0.0.1:8766','localhost:8766','testserver'}
@@ -62,7 +68,7 @@ async def session():
         'gemini-api':{'available':bool(ARCHITECT.keys.get('gemini-api') or os.getenv('GEMINI_API_KEY')),'description':'Ephemeral API key or GEMINI_API_KEY'},
         'xai':{'available':bool(ARCHITECT.keys.get('xai') or os.getenv('XAI_API_KEY')),'description':'xAI API key for Grok'},
         'bedrock':{'available':bool(setting('ENABLE_BEDROCK')),'description':'Explicit opt-in plus AWS SDK credential chain; credentials not probed'},
-    },'cloudExecution':False,'mcpEnabled':False,'sdkTimeoutNote':'Stopping a submitted remote model request may not stop provider-side computation or billing.'}
+    },'cloudExecution':False,'mcpEnabled':False,'engineeringEnabled':setting('ENABLE_ENGINEERING')=='1','sdkTimeoutNote':'Stopping a submitted remote model request may not stop provider-side computation or billing.'}
 
 @app.post('/api/architect')
 async def architect(payload:ChatRequest,request:Request):

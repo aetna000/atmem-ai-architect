@@ -135,3 +135,41 @@ Broader regression passes: 370 JavaScript and 281 server tests, plus the build a
 browser recovery checks. The named-profile check now includes foreign Unix sockets and
 a symlink escape attempt (12 local command checks). These counts do not accept any of
 the 28 complete projects. Continue to product integration after this baseline foundation.
+
+### Durable jobs, product integration and local artifact boundary
+
+Implement a backend-neutral supervisor/journal over the durable session coordinator;
+keep job submission independent of HTTP request lifetime. Preserve every steering
+update before delivery, carry client message identity and expose uncertain delivery
+without automatic replay. Distinguish quiet reasoning from transport failure. Reopen
+dead transports against the same native thread. Reject foreign inherited instructions
+on the named worker. The local scope adapter resolves a saved project under the
+single local owner; hosted authorization and OS isolation remain separate work.
+
+Expose native jobs through authenticated project routes and a product Engineering
+view: exact model/effort, progress, updates, interruption/recovery and package capture.
+Keep unsent drafts per project across dialog/browser reload. An implementation package
+is separate from accepted graph proposals and independent validation. Do not lower
+existing compiler or handoff gates to display a successful model turn.
+
+Capture arbitrary source through no-follow directory-relative opens with explicit
+link/special-file/change/size rejection. Preserve executable modes, per-file hashes,
+run/model/effort and partial turn status. Pin original context/reviewed skill hashes;
+verify immutable archive digests at browser download. Trusted operator tool roots and
+the offline mirror are worker registrations, never browser-supplied paths.
+
+Transfer evidence includes an actual ASGI/live-native measurement-library task with
+15 independent behavior checks and worker/store restart; actual browser/native idle
+registration; fixture browser lifecycle/download checks; 374 JS and 309 server tests.
+Retain the failed probe-thread attempt and its corrected receipt. The API probe ran
+before the final steering/pinning/tool-registration additions; their regression evidence
+must not be presented as a frozen full-source release qualification. A real browser
+generation/steering/download run now binds the unchanged integration source separately.
+
+The corrected frozen comparison completed: native finished 31 files in 848.79 seconds;
+specialized reached its 900-second budget with 28 files and was interrupted. Offline
+copied-artifact replay confirms provider-schema checks and generated tests; specialized
+skipped its HTTP class, so that coverage remains incomplete despite exit zero. No
+specialized advantage, independently accepted original project or software release is
+claimed. Next implement controlled local service/system validators and independent
+acceptance; do not expand scenario dispatch recipes or require cloud deployment.

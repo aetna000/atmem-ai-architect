@@ -69,7 +69,7 @@ class EngineeringBackend(Protocol):
     async def observe(self,scope: ProjectScope,handle: str,turn: str) -> BackendEvent | None: ...
     async def start(self,scope: ProjectScope,handle: str,text: str,selection: ModelSelection,*,request_id: str) -> str: ...
     async def recover_start(self,scope: ProjectScope,handle: str,request_id: str) -> RecoveredStart | None: ...
-    async def steer(self,scope: ProjectScope,handle: str,turn: str,text: str) -> None: ...
+    async def steer(self,scope: ProjectScope,handle: str,turn: str,text: str,*,request_id: str | None = None) -> None: ...
     async def interrupt(self,scope: ProjectScope,handle: str,turn: str) -> None: ...
     async def next_event(self,scope: ProjectScope,handle: str) -> BackendEvent: ...
 
@@ -240,12 +240,15 @@ class EngineeringSessions:
         self.store.attach_turn(scope,session,run,turn)
         return self._public(self._owned(scope,session))
 
-    async def steer(self,scope,session,text):
+    async def steer(self,scope,session,text,*,request_id=None):
         self._text(text)
         row=self._owned(scope,session)
         if row['state']!='running':
             raise SessionError('Steering requires a confirmed active turn')
-        await self.backend.steer(scope,row['handle'],row['turn'],text)
+        if request_id is None:
+            await self.backend.steer(scope,row['handle'],row['turn'],text)
+        else:
+            await self.backend.steer(scope,row['handle'],row['turn'],text,request_id=request_id)
 
     async def interrupt(self,scope,session):
         row=self._owned(scope,session)

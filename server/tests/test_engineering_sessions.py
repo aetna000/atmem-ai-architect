@@ -22,7 +22,7 @@ class Backend:
         return 'native-turn-1'
     async def recover_start(self,scope,handle,request_id):
         self.calls.append(('recover-start',scope,handle,request_id));return self.recovered_start
-    async def steer(self,scope,handle,turn,text):
+    async def steer(self,scope,handle,turn,text,*,request_id=None):
         self.calls.append(('steer',scope,handle,turn,text))
     async def interrupt(self,scope,handle,turn):
         self.calls.append(('interrupt',scope,handle,turn))

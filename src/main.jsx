@@ -14,6 +14,7 @@ import {readAttachments,ATTACHMENT_ACCEPT} from "./chat-attachments.mjs";
 import {BrainActivity} from "./BrainActivity.jsx";
 import {useEmulation} from './useEmulation.jsx';
 import {EmulationPanel} from './EmulationPanel.jsx';
+import {EngineeringPanel} from './EngineeringPanel.jsx';
 import {emulationPrompt,guardEmulationCorrection,groundEmulationMessage,emulationCoachReady} from './emulation-feedback.mjs';
 import {projectIdFromUrl} from './project-links.mjs';
 import { diagramAttention } from "./diagram-attention.mjs";
@@ -1775,6 +1776,7 @@ function App() {
           ))}
         </div>
         <div className="bar-actions">
+          {session?.engineeringEnabled&&<button onClick={()=>setModal('engineering')}>Engineering</button>}
           {storageError && <span className="warn-text">Not saved</span>}
           <button
             className="icon"
@@ -2369,7 +2371,11 @@ function App() {
             {!(modal === "welcome" && !connection) && <button className="icon modal-close" onClick={() => setModal(null)} aria-label="Close dialog">
               <X size={16} />
             </button>}
-            {modal === "memory" ? (
+            {modal === "engineering" && session ? (
+              <EngineeringPanel key={project.id} projectId={project.id} session={session} connection={connection}
+                saveProject={()=>projectStore(session,'save',{id:project.id,file:toProjectFile(withConversation(project,messages))})}
+                onConnections={()=>setModal('connections')} />
+            ) : modal === "memory" ? (
               <MemoryPanel session={session} project={project} onError={notify} />
             ) : modal === "templates" ? (
               <TemplateDialog onLoad={loadDesign} />

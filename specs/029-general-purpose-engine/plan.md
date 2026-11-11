@@ -73,9 +73,21 @@ optional manual feedback; incorporate feedback into the next candidate.
 
 ## Current position
 
+2026-11-11 implementation checkpoint: native jobs are now connected to the local
+product through a durable progress/steering service, project authorization adapter,
+exact-selection UI and immutable, digest-verified artifact capture. Real native/API
+library transfer and restart evidence, actual browser/native idle registration and
+fixture UI lifecycle checks are in `evidence/20261111-engineering-jobs/`. The corrected
+paired baseline has finished (native completed; specialized budget-interrupted),
+with no established specialized advantage. The independent original count remains
+0/28. Complete exact-source live workflow, relevant knowledge/tool use, independent
+Terraform and actual local block/connection/system behavior before offering alpha.1.
+The running implementation preview on port 5274 is not an accepted/versioned release.
+
 Initial cross-layer source review, four composition counterexamples and a two-turn
-uncoached conversation diagnostic are recorded. Native-session transport implementation
-has begun; broader conversation, isolation, artifact and baseline qualification remain
+uncoached conversation diagnostic were recorded before this checkpoint. Native-session
+transport has progressed into the qualified local product paths described above;
+broader conversation, hosted isolation and complete package/system acceptance remain
 pending. No release subgoal is accepted, no quality percentage is established and no
 new software release has been made. Preserve pending Azure work as an unqualified checkpoint; do not continue that
 specific workflow until the review sets the reusable capability priorities.

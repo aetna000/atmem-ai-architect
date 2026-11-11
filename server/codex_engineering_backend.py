@@ -49,6 +49,9 @@ class CodexEngineeringBackend:
         if self.permission_profile:
             if result.get('activePermissionProfile',{}).get('id')!=self.permission_profile or result.get('runtimeWorkspaceRoots')!=[str(root)]:
                 raise SessionError('Codex did not confirm the selected worker profile and sole project root')
+            sources=result.get('instructionSources',[])
+            if not isinstance(sources,list) or any(not isinstance(source,str) or not Path(source).resolve().is_relative_to(root) for source in sources):
+                raise SessionError('The native worker inherited instructions outside this project workspace')
         handle=result.get('thread',{}).get('id')
         if not isinstance(handle,str) or not handle:
             raise SessionError('Codex did not confirm a thread')
@@ -92,7 +95,14 @@ class CodexEngineeringBackend:
             row=self._owned(scope,handle,selection)
             if row[1]!=root:
                 raise SessionError('A session cannot change its registered workspace')
-            return
+            client=row[0]
+            process=getattr(client,'process',None)
+            if not getattr(client,'failure',None) and (process is None or process.returncode is None):
+                return
+            # A dead cached transport cannot recover itself. Reopen the same
+            # persisted native thread; never start a replacement for accepted work.
+            self.clients.pop((scope,handle))
+            await client.close()
         client=self.client_factory(root)
         try:
             await client.start()
@@ -194,10 +204,11 @@ class CodexEngineeringBackend:
             seen.add(cursor)
         raise SessionError('The owned turn was not found in bounded history; recovery is required')
 
-    async def steer(self,scope,handle,turn,text):
+    async def steer(self,scope,handle,turn,text,*,request_id=None):
         client,_,_=self._owned(scope,handle)
         await client.request('turn/steer',{'threadId':handle,'expectedTurnId':turn,
-                                         'input':[{'type':'text','text':text}]})
+                                         'input':[{'type':'text','text':text}],
+                                         **({'clientUserMessageId':request_id} if request_id is not None else {})})
 
     async def interrupt(self,scope,handle,turn):
         client,_,_=self._owned(scope,handle)

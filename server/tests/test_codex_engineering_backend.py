@@ -79,6 +79,26 @@ class CodexBackendTests(unittest.IsolatedAsyncioTestCase):
                 await self.backend.create(scope, workspace, self.selection)
         self.assertFalse(self.clients)
 
+    async def test_dead_cached_transport_resumes_the_same_thread_without_new_start(self):
+        handle = await self.create()
+        self.clients[0].failure='Connection lost'
+        await self.backend.resume(self.scope,handle,'workspace-one',self.selection)
+        self.assertTrue(self.clients[0].closed)
+        self.assertEqual(len(self.clients),2)
+        self.assertEqual(self.clients[1].requests[0][0],'thread/resume')
+        self.assertEqual(self.clients[1].requests[0][1]['threadId'],handle)
+
+    async def test_named_worker_refuses_inherited_repository_instructions(self):
+        self.backend.permission_profile='qualified-worker'
+        def factory(root):
+            client=Client(root)
+            client.mutate=lambda result:result.update(instructionSources=['/foreign-project/AGENTS.md'])
+            self.clients.append(client)
+            return client
+        self.backend.client_factory=factory
+        with self.assertRaises(SessionError): await self.create()
+        self.assertTrue(self.clients[0].closed)
+
     async def test_native_response_must_confirm_model_effort_and_write_boundary(self):
         mutations = [
             lambda r: r.update(model='cheaper-model'),
