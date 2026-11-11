@@ -1,0 +1,207 @@
+{
+  "sourceCommit": "6c71fb7",
+  "observedAt": "2026-11-11T22:26:44.760Z",
+  "state": {
+    "id": "f4a5ae46-2788-464e-b542-78c2335db489",
+    "model": "gpt-6.1-sol",
+    "effort": "high",
+    "state": "idle",
+    "run": "09e3626a-4ff4-4146-a73c-41bd19fa4246",
+    "last_status": "completed"
+  },
+  "artifact": {
+    "id": "09b99166-b825-4a66-91ca-ba44b3dec128",
+    "sha256": "22d35c9d11612c91094b4b1e89b1a429000e5ae0be9dc3a6697758ab8843f7ab"
+  },
+  "finalizationState": "local_checks_passed",
+  "priorFinalizationHistory": [
+    {
+      "state": "needs_attention",
+      "payload": {
+        "artifact": {
+          "id": "09b99166-b825-4a66-91ca-ba44b3dec128",
+          "sha256": "22d35c9d11612c91094b4b1e89b1a429000e5ae0be9dc3a6697758ab8843f7ab"
+        },
+        "plan": {
+          "artifactId": "09b99166-b825-4a66-91ca-ba44b3dec128",
+          "artifactSha256": "22d35c9d11612c91094b4b1e89b1a429000e5ae0be9dc3a6697758ab8843f7ab",
+          "decisions": [
+            {
+              "validatorId": "python-sql-azure-tests",
+              "label": "Python3.13/azure dependencies and private PostgreSQL17 tests",
+              "state": "selected",
+              "contractSha256": "ca786249887dedf779d97f8aa348946fce913e1ee115d1ec0cfb37eaca7f9d6e",
+              "applicability": {
+                "anyOf": [
+                  "**/test_*.py"
+                ],
+                "allOf": [
+                  "**/workflow_schema.sql"
+                ],
+                "noneOf": [],
+                "anyFileSha256": [
+                  {
+                    "pattern": "**/test-requirements.lock",
+                    "sha256": "9629f83845628253c00dc054ad02a5de7a1c1b6db4cf5907cb03edc53ec3eca8"
+                  }
+                ]
+              },
+              "assessment": {
+                "applies": true,
+                "matchedAnyFileSha256": [
+                  {
+                    "path": "application/test-requirements.lock",
+                    "pattern": "**/test-requirements.lock",
+                    "sha256": "9629f83845628253c00dc054ad02a5de7a1c1b6db4cf5907cb03edc53ec3eca8"
+                  }
+                ],
+                "requiredAnyFileSha256": [
+                  {
+                    "pattern": "**/test-requirements.lock",
+                    "sha256": "9629f83845628253c00dc054ad02a5de7a1c1b6db4cf5907cb03edc53ec3eca8"
+                  }
+                ],
+                "matchedAnyOf": [
+                  "**/test_*.py"
+                ],
+                "missingAllOf": [],
+                "matchedNoneOf": []
+              }
+            },
+            {
+              "validatorId": "python-sql-gcp-tests",
+              "label": "Python3.13/gcp dependencies and private PostgreSQL17 tests",
+              "state": "not_applicable",
+              "contractSha256": "99751658b427eac0010a6a8c3185a4cf3419d14e1564bd59cd0f2fbc9f9b4d2f",
+              "applicability": {
+                "anyOf": [
+                  "**/test_*.py"
+                ],
+                "allOf": [
+                  "**/workflow_schema.sql"
+                ],
+                "noneOf": [],
+                "anyFileSha256": [
+                  {
+                    "pattern": "**/test-requirements.lock",
+                    "sha256": "872663ae3c96d4c74141eace1d05c076b257ae08751ae0bb11f4da3ed8ab6260"
+                  }
+                ]
+              },
+              "assessment": {
+                "applies": false,
+                "matchedAnyFileSha256": [],
+                "requiredAnyFileSha256": [
+                  {
+                    "pattern": "**/test-requirements.lock",
+                    "sha256": "872663ae3c96d4c74141eace1d05c076b257ae08751ae0bb11f4da3ed8ab6260"
+                  }
+                ],
+                "matchedAnyOf": [
+                  "**/test_*.py"
+                ],
+                "missingAllOf": [],
+                "matchedNoneOf": []
+              }
+            },
+            {
+              "validatorId": "python-sql-ibm-tests",
+              "label": "Python3.13/ibm dependencies and private PostgreSQL17 tests",
+              "state": "not_applicable",
+              "contractSha256": "3ee77daa22c9d65c49c84585a18fba7289c15f2b6fa694ee4982609afee1cfb0",
+              "applicability": {
+                "anyOf": [
+                  "**/test_*.py"
+                ],
+                "allOf": [
+                  "**/workflow_schema.sql"
+                ],
+                "noneOf": [],
+                "anyFileSha256": [
+                  {
+                    "pattern": "**/test-requirements.lock",
+                    "sha256": "5c57d047e38aeba4d0b73cf5acd99ab345d20e280457161801623cd074de1f58"
+                  }
+                ]
+              },
+              "assessment": {
+                "applies": false,
+                "matchedAnyFileSha256": [],
+                "requiredAnyFileSha256": [
+                  {
+                    "pattern": "**/test-requirements.lock",
+                    "sha256": "5c57d047e38aeba4d0b73cf5acd99ab345d20e280457161801623cd074de1f58"
+                  }
+                ],
+                "matchedAnyOf": [
+                  "**/test_*.py"
+                ],
+                "missingAllOf": [],
+                "matchedNoneOf": []
+              }
+            }
+          ],
+          "selectionStatus": "checks_selected",
+          "acceptance": "not_established_by_file_applicability"
+        },
+        "checks": [
+          "a2be0435-8bc5-46bf-9a6b-380b8d38785f"
+        ]
+      }
+    }
+  ],
+  "check": {
+    "id": "d589e8ca-f71e-49a7-b779-d2831e9052c1",
+    "sessionId": "f4a5ae46-2788-464e-b542-78c2335db489",
+    "artifactId": "09b99166-b825-4a66-91ca-ba44b3dec128",
+    "artifactSha256": "22d35c9d11612c91094b4b1e89b1a429000e5ae0be9dc3a6697758ab8843f7ab",
+    "validatorId": "python-sql-azure-tests",
+    "label": "Python3.13/Azure/PostgreSQL17 with native dependency scratch",
+    "contractSha256": "ce2422b86eed31442a412c19e39e46893719d29e76af697de774812b170fdbb3",
+    "state": "finished",
+    "result": {
+      "validator": "python-sql-azure-tests",
+      "artifactSha256": "22d35c9d11612c91094b4b1e89b1a429000e5ae0be9dc3a6697758ab8843f7ab",
+      "imageId": "sha256:63164e32f99523d8b2f108ee05095d51de7a951934cdc6bd3c99ee78993e8f5f",
+      "runtimeConfigImageId": "sha256:63164e32f99523d8b2f108ee05095d51de7a951934cdc6bd3c99ee78993e8f5f",
+      "platform": "linux/amd64",
+      "isolationProfile": "postgresql-local-v1",
+      "runtimeEnvironment": {},
+      "command": [
+        "/usr/local/bin/python3",
+        "-I",
+        "/opt/atmem/sql_validation.py",
+        "-m",
+        "unittest",
+        "discover",
+        "-v"
+      ],
+      "status": "passed",
+      "exitCode": 0,
+      "executableScratch": true,
+      "skipped": 0,
+      "testsReported": 16,
+      "reason": null,
+      "output": "LOCAL FIXTURES: real PostgreSQL 170011 Python 3.13.18 platform linux supervisor uid 65532 ; synthetic Entra RSA/TLS catalogue/SQL passwords\ntest_child_cannot_read_supervisor_environment_and_bad_tls_no_effect (tests.test_integration.Integration.test_child_cannot_read_supervisor_environment_and_bad_tls_no_effect) ... ok\ntest_child_credentials_deadlines_and_bad_tls_receipt (tests.test_integration.Integration.test_child_credentials_deadlines_and_bad_tls_receipt) ... ok\ntest_clean_offline_vendored_dependencies_in_target_runtime (tests.test_integration.Integration.test_clean_offline_vendored_dependencies_in_target_runtime) ... VENDORED TARGET IMPORTS: Clean receiving imports, restricted SQL and synthetic RSA round trip passed\n{'psycopg': '3.3.8', 'azure-identity': '1.27.0', 'PyJWT': '2.15.1', 'fastapi': '0.162.0', 'procrastinate': '3.10.0'}\nok\ntest_closed_request_types_and_no_caller_authority (tests.test_integration.Integration.test_closed_request_types_and_no_caller_authority) ... ok\ntest_concurrent_idempotency_atomic_queue_and_owner_conflict (tests.test_integration.Integration.test_concurrent_idempotency_atomic_queue_and_owner_conflict) ... ok\ntest_database_runtime_roles_cannot_administer_or_erase_history (tests.test_integration.Integration.test_database_runtime_roles_cannot_administer_or_erase_history) ... ok\ntest_full_async_queue_journey_and_exact_https_payload (tests.test_integration.Integration.test_full_async_queue_journey_and_exact_https_payload) ... ok\ntest_identity_live_revocation_and_account_isolation (tests.test_integration.Integration.test_identity_live_revocation_and_account_isolation) ... ok\ntest_lease_fencing_processing_and_ambiguous_dispatch_recovery (tests.test_integration.Integration.test_lease_fencing_processing_and_ambiguous_dispatch_recovery) ... ok\ntest_payload_tamper_and_contract_changes_block_send (tests.test_integration.Integration.test_payload_tamper_and_contract_changes_block_send) ... ok\ntest_real_database_restart_and_worker_reconnect (tests.test_integration.Integration.test_real_database_restart_and_worker_reconnect) ... ok\ntest_review_revision_inspection_hash_and_curator_policy (tests.test_integration.Integration.test_review_revision_inspection_hash_and_curator_policy) ... ok\ntest_revoked_reviewer_before_dispatch_cannot_publish (tests.test_integration.Integration.test_revoked_reviewer_before_dispatch_cannot_publish) ... ok\ntest_unicode_byte_boundaries_escaped_and_raw (tests.test_integration.Integration.test_unicode_byte_boundaries_escaped_and_raw) ... ok\ntest_unknown_no_replay_after_restart_and_reapproval (tests.test_integration.Integration.test_unknown_no_replay_after_restart_and_reapproval) ... ok\ntest_worker_restart_preserves_pending_and_reconciles_lost_notification (tests.test_integration.Integration.test_worker_restart_preserves_pending_and_reconciles_lost_notification) ... ok\n\n----------------------------------------------------------------------\nRan 16 tests in 91.555s\n\nOK\n",
+      "outputTruncated": false,
+      "durationSeconds": 95.472,
+      "evidenceLevel": "local_container_check",
+      "cloudOperations": false,
+      "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+    },
+    "acceptance": "not_established_by_local_check"
+  },
+  "noInferenceSubmittedByRecheck": true,
+  "cloudOperations": false,
+  "wholeSystemAccepted": false,
+  "acceptedEvents": [
+    {
+      "runId": "06b6e37c-679f-4c6d-abc1-1141fb3cfa7d"
+    },
+    {
+      "runId": "09e3626a-4ff4-4146-a73c-41bd19fa4246",
+      "origin": "automatic_repair"
+    }
+  ],
+  "eventCount": 1506
+}

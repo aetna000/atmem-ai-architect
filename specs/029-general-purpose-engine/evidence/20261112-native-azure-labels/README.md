@@ -82,3 +82,22 @@ turn. Next activate the qualified capability only after the synthetic service is
 verified idle, recheck its exact saved package retaining prior history, and continue
 independent client/shared-runtime/receiving/provider assessment before alpha.5.
 Four offered increments/1-of28/owner0 and measured quality unknown remain unchanged.
+
+## Independent component follow-up
+
+The isolated service now runs frozen6c71fb7. Its saved artifact recheck and retained
+old failure are recorded in the executable-scratch API activation receipt. No
+new native turn occurred; the original generation baseline remains de77256.
+
+`probe-client-cases.py` executes the pre-generation frozen inputs against the
+unchanged archive in the pinned Linux AMD64 image. The evaluator imports no
+generated tests and modifies no source. `independent-client-cases-v1.json` records
+8 valid inputs,13 invalid inputs plus whitespace-only denial,8 valid caption edits
+and40 invalid edits (including both curator-flag directions). It also runs the
+actual isolated processing child for all8 valid/14 invalid sources with exact
+expected result/permanent outcomes. Module hashes bind the observed bytes.
+
+This establishes domain/child components only. Revision persistence, HTTP/live
+identity/SQL/queue/publication/recovery/provider composition and receiving OCI
+startup still require independent connected checks. The preceding pending steps
+are narrowed only by this evidence; no whole-system/original28/release promotion.

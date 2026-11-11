@@ -477,3 +477,15 @@ previews stay untouched. Original Azure ticket image now qualifies on declared
 Node26.13/AMD64 with6 direct contract groups; full22 acceptance remains pending.
 Evidence: evidence/20261112-executable-dependency-scratch/README.md and linked native/
 image/CLI diagnostics. Four increments/1-of28/owner0/unknown quality are unchanged.
+
+GE-006 follow-up: the settled synthetic Azure API on frozen6c71fb7 rechecks exact
+22d35c9d archive successfully (16/no skips,95.472seconds), retaining the original
+failed plan/check and exact model/effort. Full1506-event pagination confirms only
+the original turn and one automatic repair; no inference was submitted by recheck.
+Independent frozen source/review cases and actual processing children now pass
+(8 valid/14 invalid sources,8 valid/40 invalid review edits). These are domain/child
+components, not connected-system acceptance. See executable-dependency-scratch API
+receipt and native-azure-labels independent probe/result. Next independently verify
+connected identity/SQL/queue/review/recovery/publication, provider/receiving OCI and
+shared-runtime adaptations, then Google/IBM transfers and alpha.5. Four offered
+increments/1-of28/owner0/unknown measured quality remain unchanged. UI untouched.

@@ -62,3 +62,18 @@ is idle, retain its old plan/reports and recheck the exact artifact without new
 inference. Independently review the generated domain/provider/receiving image and
 shared-runtime adaptations. No release/original28/whole-system acceptance follows
 from this checker change; existing owner previews and UI/CSS are untouched.
+
+## Activated synthetic API checkpoint
+
+The synthetic service was verified idle and restarted on frozen6c71fb7 with the
+new separately observed operator registration. `api-activation-receipt-v1.json`
+records a same-artifact recheck through the actual backend: local_checks_passed,
+16 tests, zero skips,95.472seconds, executableScratch true. The prior failed
+check/needs_attention plan remains in history under its original contract. Exact
+gpt-6.1-sol/high and original run remain unchanged; complete pagination of1506
+events confirms only the original and one automatic repair were accepted. The
+recheck submitted no inference. This is local generated-suite evidence only.
+
+The next step stated above is now complete for this isolated synthetic service.
+Independent connected-domain/provider/receiving-image assessment remains pending.
+Owner previews, UI/CSS and other registered profiles are unchanged.
