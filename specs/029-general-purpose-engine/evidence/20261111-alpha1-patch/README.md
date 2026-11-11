@@ -1,0 +1,7 @@
+# Runnable first-increment patch:0.2.0-alpha.1.1
+
+Frozen source708d6a4, local UI http://127.0.0.1:5280. This patches the first increment; it is not the second roadmap subgoal. Full388 server and376 JavaScript checks pass without skips; production build and actual visible-version/draft/navigation/reload checks pass. Exact source archive/web build hashes, command, manual card, limits and rollback are in release-record.json. Installed optional dependencies are reused explicitly; a clean dependency installation is not claimed.
+
+Engine server/frontend/knowledge/skill files match actual native-qualified a4e902b exactly. Differences are version metadata, documentation and evaluation evidence. Native evidence qualifies the late-check history/bounded-repair behavior; the patch source equivalence and actual UI/version checks are separate, rather than a fabricated new inference run.
+
+The generic candidate has the ordinary operator validator profile. The independent Unicode checker is an evaluation adapter for one observed interface, isolated to the original qualification preview; it is not installed as a hidden new-project answer/template. Original locally qualified count is1/28; remaining27 and quality95% remain unmet. Owner manual test/acceptance remains pending. Shared work model and hosted readiness are still required. Original candidate/tag/home/evidence are preserved for rollback. No remote publication, account plan or deployment.
