@@ -27,6 +27,7 @@ function schema(v,depth,budget){
 }
 const IDENTITY={aws:['REGION','POOL_ID','CLIENT_ID','AUTH_ORIGIN','AUTH_SCOPE'],azure:['TENANT_ID','API_CLIENT_ID','SPA_CLIENT_ID'],gcp:['PROJECT_NUMBER','REGION','SERVICE_NAME'],ibm:['APPID_TENANT_ID','APPID_CLIENT_ID','APPID_ISSUER','AUTH_SCOPE']};
 export function validateApprovalProfile(v){
+ if(v?.format==='approval-application-template-v1')return validateApprovalTemplate(v);
  json(v);if(bytes(JSON.stringify(v))>64000)fail();
  exact(v,['format','provider','componentId','environment','accountId','publicOrigin','operationKind','identitySettings','payloadContract','destinationContract']);
  if(v.format!=='approval-application-v1'||!Object.hasOwn(IDENTITY,v.provider)||typeof v.componentId!=='string'||bytes(v.componentId)<1||bytes(v.componentId)>512||/[\x00-\x1f]/.test(v.componentId)||!['staging','production','qualification'].includes(v.environment)||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(v.accountId)||!['document','draft','account_change'].includes(v.operationKind))fail();
@@ -42,12 +43,39 @@ export function validateApprovalProfile(v){
  if(d.payloadContractSha256!==undefined){const hash=Array.from(sha256(new TextEncoder().encode(JSON.stringify(canonical(p)))),b=>b.toString(16).padStart(2,'0')).join('');if(hash!==d.payloadContractSha256)fail();}
  return structuredClone(v);
 }
+export function outputReference(v){
+ exact(v,['nativeOutput']);const r=v.nativeOutput;exact(r,['componentId','provider','environment','name']);
+ if(typeof r.componentId!=='string'||bytes(r.componentId)<1||bytes(r.componentId)>512||/[\x00-\x1f]/.test(r.componentId)||!['aws','azure','gcp','ibm','tools'].includes(r.provider)||!['staging','production','qualification'].includes(r.environment)||typeof r.name!=='string'||!/^[A-Za-z][A-Za-z0-9_]{0,79}$/.test(r.name)||/secret|password|credential|private_?key/i.test(r.name))fail();
+ return r;
+}
+export function approvalReferences(v){
+ const refs=[];
+ if(plain(v.publicOrigin))refs.push({path:'publicOrigin',...outputReference(v.publicOrigin)});
+ for(const section of ['identitySettings','destinationContract'])for(const[key,value]of Object.entries(v[section]||{}))if(plain(value))refs.push({path:section+'/'+key,...outputReference(value)});
+ return refs;
+}
+function validateApprovalTemplate(v){
+ json(v);if(bytes(JSON.stringify(v))>64000)fail();const trial=structuredClone(v);trial.format='approval-application-v1';
+ const refs=approvalReferences(v);if(!refs.length)fail();
+ for(const r of refs){
+  if(r.environment!==v.environment||r.path.startsWith('identitySettings/')&&r.provider!==v.provider)fail();
+  if(r.path==='publicOrigin')trial.publicOrigin='https://unresolved.invalid';
+  else if(r.path.startsWith('identitySettings/'))trial.identitySettings[r.path.split('/')[1]]='UNRESOLVED_NATIVE_OUTPUT';
+  else if(['destinationContract/endpointSha256','destinationContract/scope'].includes(r.path))trial.destinationContract[r.path.split('/')[1]]=r.path.endsWith('endpointSha256')?'0'.repeat(64):'unresolved';
+  else fail();
+ }
+ validateApprovalProfile(trial);return structuredClone(v);
+}
 export function approvalProfiles(project){
  const selected=[];
  for(const node of project.nodes||[]){
   if(node.data?.approvalProfile===undefined||node.data.approvalProfile===null)continue;
   const profile=validateApprovalProfile(node.data.approvalProfile);
   if(node.data.kind==='note'||node.data.binding||node.data.implementation!=='approval-workflow'||node.data.provider!==profile.provider||node.id!==profile.componentId||existingDeployment(node)||node.data.origin!==undefined&&node.data.origin!=='proposed')throw Error('Approval application must bind its exact proposed component/provider; preserve existing ownership.');
+  for(const ref of approvalReferences(profile)){
+   const source=project.nodes.find(n=>n.id===ref.componentId);
+   if(!source||source.data.kind==='note'||source.data.provider!==ref.provider)throw Error('Native output reference must retain an existing graph component/provider; no source was substituted.');
+  }
   selected.push({node,profile});
  }
  return selected;

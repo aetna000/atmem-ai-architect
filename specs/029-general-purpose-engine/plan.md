@@ -384,3 +384,17 @@ These are partial API assemblies with required domain/worker/resource work, not
 whole applications or planner-quality proof. Intent-to-template/deferred native
 bindings, provider/environment linkage, worker/domain implementation and full
 requirements/handoff remain before alpha.5. Four increments/1-of28/owner0 unchanged.
+
+
+GE-006 public binding checkpoint: templates preserve unknown native public outputs
+as exact graph-owner/provider/environment references; the emitted isolated resolver
+creates a fresh concrete profile plus receipt, and API startup rejects incomplete,
+stale-policy or mismatched bindings before native setup. Separate Spec Kit binding
+tasks follow source/component owners and precede connected acceptance with a checked
+acyclic DAG. Four exact emitted provider-context APIs pass JWT/SQL tests;552JS,
+434server/build and138 exact package regressions pass. Terraform/lock bytes are
+unchanged on the same concrete/deferred graph, not newly schema-qualified here.
+See evidence/20261112-deferred-bindings/README.md. Structural resolution does not
+verify the supplied source or cloud. Provider resource/environment and executable
+domain/worker linkage, full requirements/handoff and runnable alpha.5 remain next;
+retain the complete remaining programme. Four increments/1-of28/owner0 unchanged.

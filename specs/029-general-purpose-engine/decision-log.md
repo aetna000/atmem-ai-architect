@@ -1031,3 +1031,29 @@ reader retains old compatibility. No store rewrite or schema migration. Four
 exact exported entrypoints pass local JWT/SQL tests; no actual cloud/IdP or new
 whole-system acceptance. Evidence: evidence/20261112-application-selection/README.md.
 Owner UI/previews/jobs unchanged; no cloud operations or deployment.
+
+
+## 2026-11-12 — Defer public native outputs without inventing runtime identities
+
+Permit a versioned application template only for public origin, native identity
+setting values and destination endpoint hash/scope. Account, component/provider/
+environment, operation and payload policy remain fixed. References identify exact
+graph owners and source provider/environment/name; changing an owner invalidates
+application context. Native identity stays on its selected provider. The resolver
+uses reviewed public records, rejects missing/ambiguous/sensitive or mixed snapshots,
+and performs no cloud lookup or fallback. User-supplied source hashes are metadata,
+not attestations. Full trust and semantic validation remain explicit separate work.
+
+Emit a template and offline resolver instead of fabricated profile IDs. A fresh
+profile/receipt bundle is required at startup and rechecked against the current
+template; publish receipt last so partial output cannot start. Do not claim fsync
+or transaction durability. Keep secrets outside templates/ledgers/bundles. Source
+assembly precedes resource work; a distinct binding task follows every actual output
+owner and precedes connected acceptance, avoiding an image/resource cycle.
+
+Qualify the exact documented isolated CLI and API on four provider-context exports,
+with synthetic public identity IDs/keys and actual restricted local SQL. Preserve
+initial harness failure and original artifacts. Catalogue7 and native handoff carry
+the new partial interface and limits. No existing schema/resource gate is cleared;
+UI/AtFlow CSS and previews remain untouched. No cloud operations or new release.
+Evidence: evidence/20261112-deferred-bindings/README.md.

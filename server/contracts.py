@@ -86,8 +86,8 @@ class Data(Strict):
     @classmethod
     def approval_declaration(cls,value):
         if value is None:return value
-        from src.runtime.workflow_profile import ApplicationProfile
-        return ApplicationProfile(value).data
+        from src.runtime.workflow_bindings import application_declaration
+        return application_declaration(value).data
 
     @model_validator(mode='after')
     def named_component(self):
@@ -142,6 +142,14 @@ class Project(Strict):
         wires=[e.id for e in self.edges]
         if len(wires)!=len(set(wires)):raise ValueError('Duplicate wire IDs')
         if any(e.source not in ids or e.target not in ids or e.source==e.target for e in self.edges):raise ValueError('Invalid wire endpoint')
+        from src.runtime.workflow_bindings import application_declaration
+        nodes={n.id:n for n in self.nodes}
+        for node in self.nodes:
+            if node.data.approvalProfile is None:continue
+            declaration=application_declaration(node.data.approvalProfile)
+            for ref in getattr(declaration,'references',[]):
+                source=nodes.get(ref['componentId'])
+                if source is None or source.data.kind=='note' or source.data.provider!=ref['provider']:raise ValueError('Native output reference must retain its graph component/provider')
         return self
 
 def validate_proposed_regions(project:Project):

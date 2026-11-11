@@ -49,7 +49,15 @@ removing client-required functionality or assuming the image SDK matches a vendo
 ## Typed application declarations
 
 A proposed component may carry data.implementation=approval-workflow and a complete
-data.approvalProfile. Preserve its exact component/provider/environment, public
+data.approvalProfile (format approval-application-v1), or an explicit deferred
+approval-application-template-v1 when public native outputs do not exist yet.
+Only publicOrigin, identitySettings values and destination endpointSha256/scope may
+reference {nativeOutput:{componentId,provider,environment,name}}. References must
+name real graph owners, retain the application environment, and use the selected
+provider for native identity. Keep account, kind and policy concrete. Export the
+template/resolver, then use a reviewed public-output ledger and fresh binding bundle
+before runtime startup. Never invent identity IDs, silently fall back or put secrets
+in references. Resolution is structural, not cloud/source attestation. Preserve its exact component/provider/environment, public
 identity settings, logical account, operation policy, payload and destination.
 The profile selects shared API source assembly, not completed infrastructure or
 business behavior. Keep source declarations separate from their runtime acceptance.

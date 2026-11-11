@@ -1,5 +1,5 @@
 {
-  "version": 6,
+  "version": 7,
   "providers": [
     "aws",
     "azure",
@@ -735,7 +735,26 @@
       "destinationContract": "Reviewed id,endpointSha256,scope,mappingVersion; never a credential or invented vendor mapping.",
       "emitted": "Shared API source, profile, exact provider lock, Dockerfile and explicit missing-work/task record",
       "boundary": "Source assembly only. Resources, domain processor/worker, identity/database/environment wiring and full tests remain required; never clear work gates or claim application completion. Retain an absent profile while real choices are unresolved; do not invent provider/client identifiers or acceptance.",
-      "projectFileVersion": "3.0.0 only for approval-workflow projects, so older readers reject instead of dropping this intent"
+      "projectFileVersion": "3.0.0 only for approval-workflow projects, so older readers reject instead of dropping this intent",
+      "deferredBinding": {
+        "format": "approval-application-template-v1",
+        "fields": [
+          "publicOrigin",
+          "identitySettings.*",
+          "destinationContract.endpointSha256",
+          "destinationContract.scope"
+        ],
+        "reference": {
+          "nativeOutput": {
+            "componentId": "exact graph component",
+            "provider": "exact source provider",
+            "environment": "same as application",
+            "name": "reviewed public output name"
+          }
+        },
+        "resolver": "resolve-profile.py --outputs /ABSOLUTE/PUBLIC-OUTPUT-LEDGER.json --out /ABSOLUTE/FRESH-BINDING-DIRECTORY",
+        "boundary": "Public values only. No cloud lookup or source attestation; unresolved, partial or mismatched bundles cannot start. Fixed ownership, operation and policy cannot be deferred."
+      }
     }
   ]
 }

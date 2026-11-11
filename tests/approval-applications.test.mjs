@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {spawnSync} from 'node:child_process';
-import {approvalProject} from './fixtures/approval-project.mjs';
+import {approvalProject,approvalTemplateProject} from './fixtures/approval-project.mjs';
 import {approvalProfiles,validateApprovalProfile} from '../src/approval-applications.mjs';
 import {toProjectFile,fromProjectFile} from '../src/project-file.mjs';import {terraformSketch} from '../src/terraform.mjs';import {resourcePlan} from '../src/resources.mjs';import {generationQuality} from '../src/generation-quality.mjs';import {deliveryPack} from '../src/delivery.mjs';import {resourceAddress} from '../src/identifiers.mjs';import {reviewWorkContext,architectureWork} from '../src/architecture-work.mjs';
 for(const provider of ['aws','azure','gcp','ibm'])test(provider+': selected profile survives import/export and emits source without false infrastructure completion',()=>{
@@ -41,4 +41,32 @@ test('browser and pure native declaration validators agree on valid and invalid 
  const js=corpus.map(value=>{try{validateApprovalProfile(value);return true;}catch{return false;}});
  const code='import json,sys;from src.runtime.workflow_profile import ApplicationProfile;values=json.load(sys.stdin);out=[]\nfor value in values:\n try:ApplicationProfile(value);out.append(True)\n except (ValueError,TypeError):out.append(False)\nprint(json.dumps(out))';
  const result=spawnSync('python3',['-c',code],{input:JSON.stringify(corpus),encoding:'utf8'});assert.equal(result.status,0,result.stderr);assert.deepEqual(JSON.parse(result.stdout),js);assert.deepEqual(js,[true,...Array(corpus.length-1).fill(false)]);
+});
+for(const provider of ['aws','azure','gcp','ibm'])test(provider+': native output references survive model/export without invented profile values',()=>{
+ const {project}=approvalTemplateProject(provider),saved=toProjectFile(project),reopened=fromProjectFile(saved).project,files=terraformSketch(reopened),root='applications/'+resourceAddress(project.nodes[0].id)+'/';
+ assert.deepEqual(reopened.nodes[0].data.approvalProfile,project.nodes[0].data.approvalProfile);assert.equal(saved.formatVersion,'3.0.0');
+ assert(files[root+'application-template.json']);assert(!files[root+'application-profile.json']);assert(files[root+'resolve-profile.py']);
+ assert(files[root+'api.py'].includes('load_bound_profile'));assert.equal(JSON.parse(files[root+'assembly-status.json']).bindingStatus,'unresolved');
+ assert(files[root+'Dockerfile'].includes('application-template.json'));
+});
+test('output references require their exact graph owner/provider and affect context currency',()=>{
+ const {project}=approvalTemplateProject();let reviewed=reviewWorkContext(project,'block:'+project.nodes[0].id);
+ reviewed.nodes[1].data.description='Identity owner/configuration changed';assert.equal(architectureWork(reviewed).entities.find(e=>e.id==='block:'+project.nodes[0].id).contextStatus,'changed');
+ for(const mutation of ['missing','provider','environment','sensitive']){
+  const {project}=approvalTemplateProject(),ref=project.nodes[0].data.approvalProfile.identitySettings.POOL_ID.nativeOutput;
+  if(mutation==='missing')ref.componentId='absent';else if(mutation==='provider')ref.provider='azure';else if(mutation==='environment')ref.environment='production';else ref.name='client_secret';
+  assert.throws(()=>approvalProfiles(project));
+ }
+});
+
+test('deferred browser/native validators agree on public fields and policy counterexamples',()=>{
+ const valid=approvalTemplateProject().project.nodes[0].data.approvalProfile,corpus=[valid];
+ for(const mutate of [v=>v.accountId=v.publicOrigin,v=>v.operationKind=v.publicOrigin,v=>v.identitySettings.POOL_ID.nativeOutput.environment='production',v=>v.identitySettings.POOL_ID.nativeOutput.provider='gcp',v=>v.identitySettings.POOL_ID.nativeOutput.name='client_secret',v=>v.destinationContract.mappingVersion=v.publicOrigin,v=>v.destinationContract.scope=v.publicOrigin]){const value=structuredClone(valid);mutate(value);corpus.push(value);}
+ const js=corpus.map(value=>{try{validateApprovalProfile(value);return true;}catch{return false;}});
+ const code='import json,sys;from src.runtime.workflow_bindings import application_declaration;values=json.load(sys.stdin);out=[]\nfor value in values:\n try:application_declaration(value);out.append(True)\n except (ValueError,TypeError):out.append(False)\nprint(json.dumps(out))';
+ const result=spawnSync('python3',['-c',code],{input:JSON.stringify(corpus),encoding:'utf8'});assert.equal(result.status,0,result.stderr);assert.deepEqual(JSON.parse(result.stdout),js);assert.deepEqual(js,[true,false,false,false,false,false,false,true]);
+ const p=approvalTemplateProject().project,files=deliveryPack(p,null,'staging'),tasks=JSON.parse(files['spec-kit/tasks.json']).tasks,assembly=tasks.find(t=>t.id.startsWith('TASK-APP-ASSEMBLY-'));
+ const binding=tasks.find(t=>t.id.startsWith('TASK-APP-BINDING-'));assert(binding.steps.some(s=>s.includes('resolve-profile.py')));assert(binding.dependsOn.includes(assembly.id));assert(!assembly.dependsOn.includes(binding.id));assert(tasks.find(t=>t.id==='TASK-E2E').dependsOn.includes(binding.id));
+ const visit=(id,chain=[])=>{assert(!chain.includes(id),'Task cycle: '+[...chain,id].join(' -> '));const task=tasks.find(t=>t.id===id);assert(task,'Missing task '+id);for(const dep of task.dependsOn)visit(dep,[...chain,id]);};for(const task of tasks)visit(task.id);
+assert(assembly.files.some(s=>s.endsWith('/application-template.json')));assert(!assembly.files.some(s=>s.endsWith('/application-profile.json')));
 });
