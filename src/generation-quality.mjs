@@ -1,4 +1,5 @@
 import {inspectContainerConfiguration} from './container-inspection.mjs';
+import {inspectStateCustody} from './state-inspection.mjs';
 import {inspectTerraformModules} from './terraform-admission.mjs';
 import {existingDeployment} from './deployment-ownership.mjs';
 import catalogue from '../agent-skills/generation-capabilities.json' with {type:'json'};
@@ -6,10 +7,11 @@ import skillDigests from '../agent-skills/specialists/manifest.json' with {type:
 import lifecycle from '../agent-skills/service-lifecycle.json' with {type:'json'};
 import {generationProviders} from './generation-provider.mjs';
 import {artifactWorkProjection} from './artifact-work.mjs';
-export function generationQuality(project,plan,files){
+export function generationQuality(project,plan,files,{environment='staging'}={}){
  const config=JSON.parse(files['main.tf.json']);
  const providers=generationProviders(project),findings=[];
  const add=(code,message,componentId)=>findings.push({code,message,...(componentId?{componentId}:{})});
+ inspectStateCustody(project,plan,files,config,environment,add);
  const sources={aws:'hashicorp/aws',azurerm:'hashicorp/azurerm',azuread:'hashicorp/azuread',azapi:'azure/azapi',google:'hashicorp/google','google-beta':'hashicorp/google-beta',ibm:'ibm-cloud/ibm'};
  const admission=inspectTerraformModules(project,plan,files,config,add);
  const prefixes={aws:'aws_',azure:'azurerm_',gcp:'google_',ibm:'ibm_'},emitted=[];
@@ -46,7 +48,7 @@ export function generationQuality(project,plan,files){
  if(!Array.isArray(unfinished))add('missing-work-gate','Unfinished scope must remain an explicit array of blockers.');
  for(const gap of plan.gapDetails||[]){add('unfinished-scope',gap.message);if(!Array.isArray(unfinished)||!unfinished.includes(gap.id))add('missing-work-gate','The root configuration omits required unfinished scope: '+gap.id+'.');}
  const skills=[...new Set([...catalogue.skills,...providers])].filter(id=>skillDigests[id]).map(id=>({id,sha256:skillDigests[id]}));
- const fatalCodes=new Set(['container-constraint-mismatch','provider-mismatch','missing-resource','unreviewed-provider','embedded-provider-credential','execution-hook','external-execution-or-state','unreviewed-module','unregistered-implementation','service-eligibility-unverified','missing-work-gate']);
+ const fatalCodes=new Set(['state-custody-mismatch','container-constraint-mismatch','provider-mismatch','missing-resource','unreviewed-provider','embedded-provider-credential','execution-hook','external-execution-or-state','unreviewed-module','unregistered-implementation','service-eligibility-unverified','missing-work-gate']);
  const artifactMappings=artifactWorkProjection(project);
  return {version:1,modules:[...admission.scopes].map(([id,scope])=>({id,module:scope.module,path:scope.path})),fatalFindings:findings.filter(f=>fatalCodes.has(f.code)),designRevision:project.revision,catalogueVersion:catalogue.version,providers,skills,skillUsage:"Referenced reviewed guidance; model execution of skills is not attested by this export.",components,findings,artifactMappings:{file:'architecture-artifact-mappings.json',references:artifactMappings.mappings.map(m=>({id:m.id,artifactId:m.artifactId,artifactSha256:m.artifactSha256,contextStatus:m.contextStatus,recordIds:m.records.map(r=>r.id)})),boundary:artifactMappings.boundary},infrastructureComplete:findings.length===0&&unfinished.length===0&&emitted.length>0,validation:{schema:'not_run',runtime:'not_run',cloudPlan:'not_run'},deploymentCandidate:false,evidenceBoundary:catalogue.evidenceBoundary};
 }

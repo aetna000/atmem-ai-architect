@@ -840,3 +840,24 @@ v4 passes102 native mocks; final docs-only correction is independently digest-
 compared rather than rerunning/counting native tests again. Evidence:
 evidence/20261112-container-safeguards/README.md. GE-005 stays in_progress; owner
 preview/UI/job untouched, three runnable increments and1/28 full originals remain.
+
+
+### 2026-11-12 — Root state choice is independent of application target
+
+A root HTTP backend/credential/TLS injection was previously admitted despite
+closed child modules. Add a versioned per-environment Terraform state contract in
+project extensions and independent backend/settings/metadata/input admission.
+Retain the selected owner/residency/decision without treating even an Accepted
+decision as backend verification or migration authorization. Extract protected
+backend settings with an explicit invoice-default compatibility adapter; children
+never choose whole-composition custody. Context snapshots remain immutable and
+state changes invalidate their review. No UI changes or owner work interruption.
+
+Qualify all16 target/backend pairings plus cross-provider/standalone transfer,
+actual service unit checks, persistence/handoff and negative state diversion.
+Fix HTTP staging example namespaces and compare final native bytes rather than
+repeat/count schema checks for example-only changes. Record failed initial test
+harness API usage without removing expectations. Evidence:
+evidence/20261112-state-custody/README.md. GE-005 remains in_progress; continue
+local operating protocol and lifecycle/provider parity before frozen alpha.4.
+No cloud account access, state migration or deployment is needed/authorized.

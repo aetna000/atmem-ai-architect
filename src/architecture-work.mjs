@@ -71,7 +71,7 @@ export function architectureSources(project,state=stateOf(project)){
  const entries=[];const add=(id,kind,title,value,dependsOn=[])=>entries.push({id,kind,title,value:clone(value),dependsOn:[...new Set([...(id==='project:identity'?[]:['project:identity']),...dependsOn])].sort()});
  add('project:identity','identity','Project identity',{id:project.id||null});
  const annotations=(project.nodes||[]).filter(n=>n.data.kind==='note').map(n=>{const {inputPosition,outputPosition,config,provider,origin,...data}=n.data;return {id:n.id,data:{description:'',...data}};}).sort((a,b)=>order(a.id,b.id));
- add('intent:project','intent','Project intent',{text:project.requirements||'',...Object.fromEntries(['brief','useCases','facts','workflow','domain'].filter(k=>project[k]!==undefined).map(k=>[k,project[k]])),...(annotations.length?{annotations}:{})});
+ add('intent:project','intent','Project intent',{text:project.requirements||'',...Object.fromEntries(['brief','useCases','facts','workflow','domain'].filter(k=>project[k]!==undefined).map(k=>[k,project[k]])),...(annotations.length?{annotations}:{}),...(project.extensions?.terraformState?{terraformState:project.extensions.terraformState}:{})});
  add('selection:provider','selection','Selected target provider',{provider:project.provider||'tools'});
  const global=['intent:project','selection:provider',...state.intents.map(i=>'intent:'+i.id)];
  for(const i of state.intents)add('intent:'+i.id,'intent','Engineering request '+i.sequence,i);

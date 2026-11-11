@@ -1,4 +1,5 @@
 import {compileCapabilityComposition} from './delivery-capabilities.mjs';
+import {applyStateCustody} from './state-custody.mjs';
 import{hasInvoice}from'./invoice-plan.mjs';
 import{invoiceTerraform}from'./invoice-terraform.mjs';
 import {awsPublicFaqTerraform,azurePublicFaqTerraform,gcpPublicFaqTerraform,ibmPublicFaqTerraform} from './public-faq-clouds.mjs';
@@ -115,7 +116,7 @@ function compileTerraform(project, environment = "staging") {
 }
 
 export function terraformSketch(project,environment="staging"){
- const files=compileTerraform(project,environment);
- files['generation-quality.json']=JSON.stringify(generationQuality(project,resourcePlan(project),files),null,2);
+ const files=applyStateCustody(project,environment,compileTerraform(project,environment));
+ files['generation-quality.json']=JSON.stringify(generationQuality(project,resourcePlan(project),files,{environment}),null,2);
  return files;
 }

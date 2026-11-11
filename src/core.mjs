@@ -1,4 +1,5 @@
 import {validateArchitectureWork} from './architecture-work.mjs';
+import {validateStateCustody} from './state-custody.mjs';
 import {validateDeploymentOwnership} from './deployment-ownership.mjs';
 import { runtimeSettings } from "./runtime-settings.mjs";
 import { UPSTREAM_DESCRIPTIONS } from "./upstream-catalog.mjs";
@@ -624,6 +625,7 @@ export function validateImport(p) {
     throw Error("Unsupported or oversized project file.");
   if(String(p.requirements||"").length>64000)throw Error("Project requirements exceed 64,000 characters; no content was truncated.");
   if(p.extensions?.architectureWork!==undefined)validateArchitectureWork(p.extensions.architectureWork);
+  validateStateCustody(p.extensions?.terraformState);
   const ids = new Set();
   for (const n of p.nodes) {
     if (

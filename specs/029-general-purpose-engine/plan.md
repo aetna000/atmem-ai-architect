@@ -282,3 +282,15 @@ See evidence/20261112-container-safeguards/README.md. Read-only network membersh
 is not full routing/firewall/egress policy; lifecycle configuration is not state
 custody or migration. Complete remaining parity/operations/browser/export before
 runnable alpha.4; full programme and28/unfamiliar systems remain in scope.
+
+
+GE-005 state-custody checkpoint: explicit environment/backend/owner/residency/
+decision survives save/export and native context; state changes invalidate prior
+context review. Shared backend factory retains the invoice compatibility policy,
+independent root admission rejects diversion/credentials/forged acceptance, and
+a concrete Spec Kit custody task precedes account planning.520JS/build,18 native
+roots and68 actual service unit mocks pass; unchanged429server evidence retained.
+See evidence/20261112-state-custody/README.md. No backend connection or migration
+was performed. Local protocol/operations, remaining lifecycle/provider parity and
+frozen runnable alpha.4 remain. Three increments,1/28 originals, owner0, quality
+unknown; full programme remains required without cloud deployment.

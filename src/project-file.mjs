@@ -1,4 +1,5 @@
 import {validateArchitectureWork} from './architecture-work.mjs';
+import {validateStateCustody} from './state-custody.mjs';
 // The durable project file: atforma.project 2.0.0. See specs/002-project-model.
 import { validateImport } from "./core.mjs";
 
@@ -50,6 +51,7 @@ function unknown(section, allowed) {
 }
 
 export function toProjectFile(project, now = new Date()) {
+  validateStateCustody(project.extensions?.terraformState);
   const {
     version, revision, name, provider, domain, requirements, nodes, edges,
     brief, useCases, gate, needs, assumptions, openQuestions, decisions, assessment,
