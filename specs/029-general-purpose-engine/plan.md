@@ -4,8 +4,10 @@ Latest implementation checkpoint: primary native Build intake and durable reques
 history are committed at 3b80eb4; its actual UI architecture evaluation is running
 on a frozen separate instance. Generic completed-turn immutable capture and operator
 file applicability/check supervision have component/UI/actual isolated-runtime
-evidence in `evidence/20261111-finalization/README.md`. Finish bounded evidence-driven
-repair and independent architecture package/system assessment before release1.
+evidence in `evidence/20261111-finalization/README.md`. Bounded same-session repair
+has component/UI evidence in `evidence/20261111-bounded-repair/README.md`; qualify it
+through actual native work and complete independent architecture package/system
+assessment before release1.
 Neither this checkpoint nor a generated-test pass earns project acceptance.
 
 Owner direction, 2026-11-11: the deliverable is an architecture engine that can

@@ -378,3 +378,17 @@ Chromium controller probes pass. Runtime lifecycle fixtures are explicit, not na
 generation or whole-system qualification. Separately observe a frozen actual Build
 UI architecture run at 3b80eb4 with the same exposed AWS brief/three natural updates;
 do not change its code or describe it as a holdout/comparative quality result.
+
+### Bounded repair stays in the original session and retains uncertainty
+
+Enable one automatic evidence-driven repair per client-request root in the product;
+portable callers explicitly configure a bound. Persist root/parent/attempt/run UUID
+before starting, and reserve that exact UUID through the normal project lock and
+unchanged model/backend. A newer queued user request supersedes stale repair. Lost
+acknowledgements reconcile the existing run and never replay. Keep original failure
+packages/reports; instruct complete paged reads and preserve all scope/tests/ownership.
+Do not spend model turns repairing unavailable operator infrastructure. Internal
+prompts are audited separately from client messages. Preserve fast terminal evidence
+when it precedes the caller's start reply; retain the discovered race's failed test.
+366 server/376 JS checks, build and browser fixture pass. Actual native repair and
+independent whole-system acceptance remain required, not inferred from fixtures.

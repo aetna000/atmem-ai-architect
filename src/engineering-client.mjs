@@ -33,7 +33,7 @@ export function engineeringConversation(events){
   const ordered=mergeEngineeringEvents([],events),accepted=new Set(ordered.filter(e=>e.kind==='steering_accepted').map(e=>e.requestId)),uncertain=new Set(ordered.filter(e=>e.kind==='steering_delivery_uncertain').map(e=>e.requestId));
   const entries=[];
   for(const event of ordered){
-    if(event.kind==='accepted'&&typeof event.text==='string')entries.push({id:event.sequence,role:'user',text:event.text,status:'accepted'});
+    if(event.kind==='accepted'&&event.origin!=='automatic_repair'&&typeof event.text==='string')entries.push({id:event.sequence,role:'user',text:event.text,status:'accepted'});
     else if(event.kind==='steering_submitted'&&typeof event.text==='string')entries.push({id:event.sequence,role:'user',text:event.text,status:accepted.has(event.requestId)?'accepted':uncertain.has(event.requestId)?'uncertain':'pending'});
     else if(event.kind==='message'&&typeof event.text==='string'){
       const previous=entries.at(-1);

@@ -35,3 +35,11 @@ test('native conversation retains complete ordered requests and streamed replies
   assert.equal(engineeringConversation([...events,{sequence:8,kind:'steering_accepted',requestId:'change'}])[2].status,'accepted');
   assert.deepEqual(engineeringConversation([{sequence:1,kind:'accepted'},{sequence:2,kind:'completed'}]),[],'legacy events without request text are not invented into messages');
 });
+
+test('automatic repair intent remains durable progress rather than an invented client message',()=>{
+  const events=[{sequence:1,kind:'accepted',text:'Preserve all customer records.',runId:'client'},
+    {sequence:2,kind:'accepted',origin:'automatic_repair',text:'Internal evidence repair prompt.',runId:'repair'},
+    {sequence:3,kind:'message',text:'Repaired the connection failure.',runId:'repair'}];
+  assert.deepEqual(engineeringConversation(events).map(entry=>[entry.role,entry.text]),[
+    ['user','Preserve all customer records.'],['assistant','Repaired the connection failure.']]);
+});

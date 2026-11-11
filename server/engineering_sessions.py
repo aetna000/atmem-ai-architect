@@ -227,10 +227,12 @@ class EngineeringSessions:
                 self.store.terminal(scope,session,row['run'],row['turn'],event.kind)
         return self._public(self._owned(scope,session))
 
-    async def start(self,scope,session,text):
+    async def start(self,scope,session,text,*,run_id=None):
         self._text(text)
         row=self._owned(scope,session)
-        run=str(uuid.uuid4())
+        run=str(uuid.uuid4()) if run_id is None else run_id
+        if not isinstance(run,str) or str(uuid.UUID(run))!=run:
+            raise ValueError('Use a canonical server-reserved run UUID')
         self.store.reserve(scope,session,run,text)
         # Errors, timeout or process death leave a durable uncertain reservation.
         # A second writer cannot submit the same work as a fresh turn.

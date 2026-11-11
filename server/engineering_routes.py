@@ -120,8 +120,13 @@ Keep final progress concise and explain any remaining work.''')
         self.native_tools=EngineeringTools(self.store,self.artifacts,self.validation_service,working_check=self.check_working)
         self.backend.tools=self.native_tools
         self.create_lock = asyncio.Lock()
-        self.finalization=EngineeringFinalization(self.jobs,self.capture_completed,self.validation_service)
+        self.finalization=EngineeringFinalization(self.jobs,self.capture_completed,self.validation_service,max_repairs=1,
+            can_repair=self.can_repair)
         self.jobs.on_settled=self.finalization.observe
+
+    def can_repair(self,scope,session):
+        initial=self.jobs.journal.read(scope,session,limit=1)
+        return bool(initial and initial[0].get('kind')=='created' and initial[0].get('toolRegistrySha256'))
 
     def capture_completed(self,scope,session):
         row=self.store.get(scope,session)

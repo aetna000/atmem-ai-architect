@@ -95,17 +95,23 @@ class EngineeringJobs:
             self._record(scope, session, 'recovery_required',
                          text='Progress connection interrupted. Recover the existing job; do not resubmit its intent.')
 
-    async def start(self, scope, session, text):
+    async def start(self, scope, session, text, *, expected_run=None, run_id=None, origin=None):
         # Shield the entire reservation/acknowledgement/supervision transition,
         # including when the initiating HTTP client disconnects.
         async def submit():
             async with self._lock(scope, session):
-                if self.state(scope, session)['state'] == 'idle':
+                def current():
+                    state=self.state(scope,session)
+                    if expected_run is not None and (state['state']!='idle' or state['run']!=expected_run):
+                        raise SessionError('Newer user work superseded this automatic repair')
+                    return state
+                if current()['state'] == 'idle':
                     # After a server restart, reconnect the existing backend before
                     # reserving new intent. Failure must leave an idle job idle.
                     await self.sessions.resume(scope, session)
-                state = await self.sessions.start(scope, session, text)
-                self._record(scope, session, 'accepted', runId=state['run'],text=text)
+                current()
+                state = await self.sessions.start(scope, session, text,**({'run_id':run_id} if run_id is not None else {}))
+                self._record(scope, session, 'accepted', runId=state['run'],text=text,**({'origin':origin} if origin else {}))
                 self._watch(scope, session)
                 return state
         task = asyncio.create_task(submit())

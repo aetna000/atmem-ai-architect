@@ -130,3 +130,101 @@ class FinalizationTests(unittest.IsolatedAsyncioTestCase):
         self.backend.observe=observe
         await self.jobs.recover(self.scope,self.session);result=await self.finish()
         self.assertEqual(result['state'],'local_checks_passed');self.assertEqual(len(self.backend.request_ids),1)
+
+    def enable_repair(self,*,always_fail=False,auto_complete=True):
+        self.finalizer.max_repairs=1;self.finalizer.can_repair=lambda *args:True
+        original_run=self.worker.run
+        def run(*args,**kwargs):
+            result=original_run(*args,**kwargs)
+            if always_fail or len(self.worker.calls)==1:result.update(status='failed',reason=None,output='Deliberate runtime assertion failure')
+            return result
+        self.worker.run=run
+        original_start=self.backend.start
+        async def start(*args,**kwargs):
+            await original_start(*args,**kwargs)
+            turn='native-turn-'+str(len(self.backend.request_ids))
+            if auto_complete and len(self.backend.request_ids)>1:
+                (self.workspace/'repair.txt').write_text('Explicit fixture model repair; not an independently generated implementation')
+                await self.backend.events.put(BackendEvent(turn,'completed'))
+            return turn
+        self.backend.start=start
+
+    async def drain(self):
+        for _ in range(500):
+            await asyncio.sleep(.005)
+            if not self.finalizer.tasks and self.jobs.state(self.scope,self.session)['state']!='running':return
+        self.fail('Fixture work did not settle')
+
+    async def test_bounded_repair_uses_same_session_selection_and_retains_failed_package(self):
+        self.enable_repair();await self.settle_turn();await self.drain()
+        results=self.finalizer.list(self.scope,self.session)
+        self.assertEqual([row['state'] for row in results],['repair_finished','local_checks_passed'])
+        self.assertEqual(len(self.backend.request_ids),2);self.assertEqual(len(self.captures),2)
+        self.assertNotEqual(results[0]['artifact']['sha256'],results[1]['artifact']['sha256'])
+        self.assertEqual(results[0]['repair']['runId'],results[1]['runId'])
+        self.assertEqual(results[1]['runId'],self.backend.request_ids[-1])
+        starts=[call for call in self.backend.calls if call[0]=='start']
+        self.assertEqual(starts[0][2],starts[1][2]);self.assertEqual(starts[0][4],starts[1][4])
+        self.assertEqual(self.checks.get(self.scope,self.session,results[0]['checks'][0])['result']['status'],'failed')
+        accepted=[event for event in self.jobs.journal.read(self.scope,self.session) if event['kind']=='accepted']
+        self.assertEqual(accepted[1]['origin'],'automatic_repair')
+        self.assertIn('Read every page',accepted[1]['text']);self.assertIn(results[0]['checks'][0],accepted[1]['text'])
+        self.assertEqual(self.store.db.execute('select count(*) from engineering_repairs').fetchone()[0],1)
+
+    async def test_repeated_failure_stops_at_durable_attempt_limit_without_scope_deletion(self):
+        self.enable_repair(always_fail=True);await self.settle_turn();await self.drain()
+        results=self.finalizer.list(self.scope,self.session)
+        self.assertEqual([row['state'] for row in results],['repair_finished','needs_attention'])
+        self.assertEqual(len(self.backend.request_ids),2)
+        self.assertEqual((self.workspace/'test_river.py').read_text(),'original river telemetry code')
+        self.finalizer.observe(self.scope,self.session);await self.drain()
+        self.assertEqual(len(self.backend.request_ids),2)
+
+    async def test_lost_repair_acceptance_keeps_exact_reserved_uuid_without_replay(self):
+        self.enable_repair(auto_complete=False)
+        original=self.backend.start
+        async def lost(*args,**kwargs):
+            result=await original(*args,**kwargs)
+            if len(self.backend.request_ids)>1:raise TimeoutError('Lost native repair acknowledgement')
+            return result
+        self.backend.start=lost
+        await self.settle_turn();await self.drain()
+        result=self.finalizer.list(self.scope,self.session)[0]
+        self.assertEqual(result['state'],'repair_acceptance_uncertain')
+        self.assertEqual(self.jobs.state(self.scope,self.session)['state'],'starting')
+        self.assertEqual(self.jobs.state(self.scope,self.session)['run'],result['repair']['runId'])
+        self.assertEqual(len(self.backend.request_ids),2)
+        await self.finalizer.close()
+        self.finalizer=EngineeringFinalization(self.jobs,self.capture,lambda:self.checks,max_repairs=1,can_repair=lambda *args:True)
+        self.jobs.on_settled=self.finalizer.observe
+        self.finalizer.observe(self.scope,self.session)
+        self.assertEqual(len(self.backend.request_ids),2)
+        from server.engineering_sessions import RecoveredStart
+        self.backend.recovered_start=RecoveredStart(result['repair']['runId'],'native-turn-2','completed')
+        await self.jobs.recover(self.scope,self.session);await self.drain()
+        self.assertEqual(self.finalizer.list(self.scope,self.session)[-1]['state'],'local_checks_passed')
+        self.assertEqual(len(self.backend.request_ids),2)
+
+    async def test_user_request_queued_first_wins_over_automatic_repair(self):
+        self.enable_repair(auto_complete=False);self.worker.release.clear();await self.settle_turn()
+        await asyncio.to_thread(self.worker.entered.wait,2)
+        lock=self.jobs._lock(self.scope,self.session)
+        await lock.acquire()
+        try:
+            user=asyncio.create_task(self.jobs.start(self.scope,self.session,'Add flood alerts and preserve original scope.'))
+            await asyncio.sleep(.01);self.worker.release.set()
+            for _ in range(100):
+                if self.finalizer.list(self.scope,self.session)[0]['state']=='repair_requested':break
+                await asyncio.sleep(.005)
+        finally:lock.release()
+        await user;await asyncio.gather(*list(self.finalizer.tasks.values()))
+        result=self.finalizer.list(self.scope,self.session)[0]
+        self.assertEqual(result['state'],'superseded');self.assertEqual(len(self.backend.request_ids),2)
+        starts=[call for call in self.backend.calls if call[0]=='start']
+        self.assertEqual(starts[-1][3],'Add flood alerts and preserve original scope.')
+
+    async def test_uncertain_worker_cleanup_failure_never_starts_model_repair(self):
+        self.finalizer.max_repairs=1;self.finalizer.can_repair=lambda *args:True;self.worker.receipt_error=True
+        await self.settle_turn();result=await self.finish()
+        self.assertEqual(result['state'],'needs_attention');self.assertNotIn('repair',result)
+        self.assertEqual(len(self.backend.request_ids),1)
