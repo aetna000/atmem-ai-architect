@@ -263,3 +263,12 @@ mock plans pass. See evidence/20261112-provider-placement/README.md. Lifecycle
 parity, deeper identity/network/state policy and frozen runnable alpha.4 remain;
 three increments, original complete local qualification1/28, owner acceptance0,
 quality unknown. No owner UI or running project was changed.
+
+
+GE-005 ownership checkpoint: imported cloud-state metadata cannot become newly
+managed container infrastructure via create mode. Frontend/backend validation and
+four-provider counterexamples/regressions preserve existing-source deployment and
+external reference boundaries.505JS/429server/build pass; all twelve qualified
+placement artifacts remain byte-identical. See
+evidence/20261112-imported-ownership/README.md. Full lifecycle/network/identity/
+state parity and runnable alpha.4 remain outstanding.

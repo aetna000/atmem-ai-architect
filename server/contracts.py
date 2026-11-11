@@ -85,6 +85,8 @@ class Data(Strict):
         if self.config.containerMemoryBytes is not None and self.implementation!='container-service':raise ValueError('Exact container memory requires an explicit container-service contract')
         if self.deploymentMode=='reference' and self.origin not in {'existing','imported Pulumi state'}:raise ValueError('Reference handling must preserve an existing system')
         if self.binding and (self.origin not in {'existing','imported Pulumi state'} or self.deploymentMode=='create'):raise ValueError('Reference bindings identify existing systems and cannot provision a replacement')
+        if self.origin=='imported Pulumi state' and self.deploymentMode=='create':
+            raise ValueError('Imported cloud-state metadata identifies an existing deployment, not application source. Preserve its reference ownership; create a separate proposed deployment for new resources.')
         if self.origin=='existing' and self.deploymentMode=='create' and (self.implementation!='container-service' or self.binding):
             raise ValueError('Existing application source needs an explicit container-service contract without a reference binding.')
         if self.kind != 'note' and len(self.label)>150:

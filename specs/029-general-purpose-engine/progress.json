@@ -118,7 +118,8 @@
     "evidence/20261111-alpha2-candidate/README.md",
     "evidence/20261111-alpha3-candidate/README.md",
     "evidence/20261111-provider-lowering/README.md",
-    "evidence/20261112-provider-placement/README.md"
+    "evidence/20261112-provider-placement/README.md",
+    "evidence/20261112-imported-ownership/README.md"
   ],
   "cloudOperations": false,
   "limitations": [
@@ -413,6 +414,15 @@
       "evidence": "evidence/20261112-provider-placement/README.md",
       "releaseOffered": false,
       "boundary": "Native schemas and mock plan configuration checks only; no cloud or application runtime."
+    },
+    "importedOwnership": {
+      "status": "implemented_checkpoint",
+      "invariant": "Imported deployment metadata never opts into creation as application source.",
+      "evidence": "evidence/20261112-imported-ownership/README.md",
+      "remaining": "Full lifecycle parity, real import/state custody and provider policy remain.",
+      "javascriptTests": 505,
+      "serverTests": 429,
+      "productionBuild": "passed"
     }
   },
   "currentPriority": "GE-005 lifecycle ownership and deeper provider identity/network/state policy; preserve owner preview and narrow UI scope.",
@@ -441,6 +451,9 @@
     "previousTurn": "no_progress",
     "reason": "Scope acknowledgment only; resumed by verifying current source and completing final placement validation.",
     "currentTurn": "progress",
-    "evidence": "evidence/20261112-provider-placement/README.md"
+    "evidence": [
+      "evidence/20261112-provider-placement/README.md",
+      "evidence/20261112-imported-ownership/README.md"
+    ]
   }
 }

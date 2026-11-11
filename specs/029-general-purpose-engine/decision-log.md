@@ -809,3 +809,14 @@ GE-005 in_progress, not alpha.4, cloud availability or full-system acceptance.
 The preceding acknowledgment-only turn made no engineering progress; this turn
 verified authoritative state and completed final source-bound native/service checks.
 Keep the focused UI patch and owner work untouched.
+
+
+### 2026-11-12 — Imported state is not existing application source
+
+The four-provider counterexample showed imported Pulumi metadata could bypass
+source ownership rules with create mode and an explicit container contract. Reject
+that combination at frontend import/planner/compiler and backend validation.
+Preserve references and separately supported existing-source deployment; never
+change the submitted origin or automatically migrate state. Evidence:
+evidence/20261112-imported-ownership/README.md. This fixes one invariant; GE-005
+lifecycle/state/identity/network parity remains in progress.
