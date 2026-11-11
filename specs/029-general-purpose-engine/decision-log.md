@@ -940,3 +940,22 @@ changed; no AtFlow/layout work. Release4 local automated scope complete; owner
 acceptance0, original complete cases1/28,95% unproved. Proceed application/data
 contracts, remaining increments and original28/unfamiliar full systems. No cloud
 operations, deployment, automatic state adoption or remote tag publication.
+
+
+## 2026-11-12 — Bind reusable payload contracts before processing and effects
+
+Extract a closed bounded input/result contract beside the existing generic durable
+approval mechanism. Keep domain semantics and the established operation/role policy
+separate. Bind the full immutable declaration digest into persisted destination
+identity and approval fingerprints; producer, worker and normalized TLS adapter
+share it. Recheck before claims/commits/reviewer edits/approval/dispatch and before
+destination credentials. No silent coercion, clipping or automatic old-work migration.
+
+Independent same-input probe of frozen94e98a8 claims pending work after a destination
+identity change; repaired code rejects it with persisted work still pending. Two
+new domain fixtures exercise real queue workers and loopback TLS after approval.
+Retain callbacks-only intermediate runs and final source/emitted checks separately.
+This adds a runtime capability, not generic compiler or cloud application coverage.
+Old binaries require explicit worker quiescence/new namespace before contract rollout.
+Evidence: evidence/20261112-application-contracts/README.md. Owner UI/previews unchanged,
+no cloud operation, deployment or schema migration. GE-006 remains in_progress.

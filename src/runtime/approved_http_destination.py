@@ -12,10 +12,10 @@ import ssl
 from urllib.parse import urlsplit
 from durable_workflow import canonical,identifier
 from workflow_errors import ExternalOutcomeUnknown,DestinationNotAttempted,InvalidDispatch
-from workflow_contract import normalized_contract
+from workflow_contract import normalized_contract,bind_payload_contract
 
 class ApprovedHttpDestination:
-    def __init__(self,endpoint,credential,*,destination_scope,idempotency_verified=False,tls_context=None,allowed_kinds=('document',)):
+    def __init__(self,endpoint,credential,*,destination_scope,idempotency_verified=False,tls_context=None,allowed_kinds=('document',),payload_contract=None):
         try:target=urlsplit(endpoint)
         except (TypeError,ValueError):raise ValueError('Invalid operator destination')from None
         if (not isinstance(endpoint,str)or len(endpoint)>2000 or target.scheme!='https' or not target.hostname or target.username or target.password
@@ -27,13 +27,19 @@ class ApprovedHttpDestination:
         context=tls_context or ssl.create_default_context()
         if not isinstance(context,ssl.SSLContext)or context.verify_mode!=ssl.CERT_REQUIRED or not context.check_hostname:raise ValueError('TLS certificate and hostname verification are mandatory')
         self.host=target.hostname;self.port=port;self.path=target.path or'/';self.credential=credential;self.idempotency_verified=idempotency_verified;self.context=context;self.allowed_kinds=frozenset(allowed_kinds)
-        self.contract=normalized_contract(endpoint,destination_scope)
+        self.contract=bind_payload_contract(normalized_contract(endpoint,destination_scope),payload_contract)
+        self.payload_contract=payload_contract
     def __call__(self,row,*,idempotency_key,payload_sha256):
         try:identifier(idempotency_key)
         except (ValueError,TypeError):raise InvalidDispatch('Invalid approved operation identity')from None
         if (str(row.get('id'))!=idempotency_key or row.get('state')!='dispatching' or not row.get('approved_by')or row.get('approved_hash')!=payload_sha256
             or row.get('kind')not in self.allowed_kinds or not isinstance(payload_sha256,str)or not re.fullmatch(r'[0-9a-f]{64}',payload_sha256)):raise InvalidDispatch('A current allowed approved dispatch snapshot is required')
         if row.get('destination_contract')!=self.contract:raise InvalidDispatch('Approved integration identity no longer matches this destination')
+        if self.payload_contract is not None:
+            try:
+                if self.contract['payloadContractSha256']!=self.payload_contract.sha256:raise ValueError()
+                self.payload_contract.validate('source',row['source_ref']);self.payload_contract.validate('result',row['result'])
+            except (KeyError,ValueError):raise InvalidDispatch('Approved application contract no longer matches this destination')from None
         snapshot={'kind':row['kind'],'source':row['source_ref'],'destination':row['destination_contract'],'result':row['result'],'revision':row['result_revision']}
         if hashlib.sha256(canonical(snapshot,140000)).hexdigest()!=payload_sha256:raise InvalidDispatch('Approved payload snapshot changed')
         # Source storage references and credentials stay inside our boundary.

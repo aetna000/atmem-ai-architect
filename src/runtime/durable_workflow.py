@@ -13,7 +13,7 @@ import uuid
 import psycopg
 from psycopg.rows import dict_row
 from psycopg.types.json import Jsonb
-from workflow_contract import reviewed_contract
+from workflow_contract import bind_payload_contract
 
 class Denied(PermissionError):pass
 class Missing(LookupError):pass
@@ -42,8 +42,9 @@ class Principal:
         if not isinstance(self.subject,str) or not 1<=len(self.subject.encode('utf-8'))<=500 or any(ord(c)<32 for c in self.subject):raise ValueError('Invalid verified subject')
 
 class WorkflowStore:
-    def __init__(self,dsn,extract_task,dispatch_task,*,destination_contract,max_attempts=5,lease_seconds=600):
-        self.destination_contract=reviewed_contract(destination_contract)
+    def __init__(self,dsn,extract_task,dispatch_task,*,destination_contract,max_attempts=5,lease_seconds=600,payload_contract=None):
+        self.destination_contract=bind_payload_contract(destination_contract,payload_contract)
+        self.payload_contract=payload_contract
         if not callable(dsn)and(not isinstance(dsn,str) or not dsn):raise ValueError('Supply an operator-managed PostgreSQL connection or trusted credential factory')
         if type(max_attempts)is not int or not 1<=max_attempts<=10 or type(lease_seconds)is not int or not 10<=lease_seconds<=1800:raise ValueError('Invalid owned workflow limits')
         for task in [extract_task,dispatch_task]:
@@ -69,6 +70,15 @@ class WorkflowStore:
         row=conn.execute(query,params).fetchone()
         if not row:raise Missing('Operation unavailable')
         return row
+    def _payload(self,side,value):
+        bound=self.destination_contract.get('payloadContractSha256')
+        if bound!=(self.payload_contract.sha256 if self.payload_contract else None):raise Conflict('Application contract binding changed')
+        canonical(value)
+        return self.payload_contract.validate(side,value)if self.payload_contract else json.loads(canonical(value))
+    def _contract(self,row,*,result=False):
+        if row['destination_contract']!=self.destination_contract:raise Conflict('Application/destination contract changed; explicit reconciliation is required')
+        self._payload('source',row['source_ref'])
+        if result:self._payload('result',row['result'])
     def _event(self,conn,row,event,actor,detail=None):
         if event not in {'submitted','claimed','result_ready','edited','approved','dispatch_claimed','sent','retry_pending','outcome_unknown','dead','recovered','approval_revoked'}:raise ValueError('Unknown owned audit event')
         detail=detail or {};canonical(detail,1500)
@@ -85,7 +95,7 @@ class WorkflowStore:
     def submit(self,actor,kind,dedup_key,source_ref):
         if kind not in {'document','draft','account_change'}:raise ValueError('Unsupported owned operation kind')
         if not isinstance(dedup_key,str) or not 1<=len(dedup_key.encode())<=200:raise ValueError('Invalid stable operation identity')
-        canonical(source_ref)
+        source_ref=self._payload('source',source_ref)
         with self.connect()as conn:
             self._actor(conn,actor,{'user','reviewer','supervisor','owner'})
             new=str(uuid.uuid4())
@@ -134,6 +144,7 @@ class WorkflowStore:
     def claim_extract(self,operation_id):
         with self.connect()as conn:
             row=self._row(conn,operation_id)
+            self._contract(row)
             live=conn.execute('SELECT %s::timestamptz>clock_timestamp() AS live',(row['lease_until'],)).fetchone()['live']
             if row['state']not in {'pending','processing'} or (row['state']=='processing'and live):return None
             if row['attempts']>=self.max_attempts:
@@ -144,15 +155,17 @@ class WorkflowStore:
         live=conn.execute('SELECT %s::timestamptz>clock_timestamp() AS live',(row['lease_until'],)).fetchone()['live']
         if row['state']!=state or str(row['lease_token'])!=token or not live:raise LostLease('The operation lease is no longer current')
     def record_result(self,operation_id,token,result):
-        canonical(result)
+        result=self._payload('result',result)
         with self.connect()as conn:
             row=self._row(conn,operation_id);self._check_lease(conn,row,token,'processing')
+            self._contract(row)
             updated=conn.execute("UPDATE workflow.operations SET result=%s,result_revision=result_revision+1,state='review',approved_hash=NULL,approved_by=NULL,lease_token=NULL,lease_until=NULL,attempts=0,updated_at=clock_timestamp() WHERE id=%s RETURNING *",(Jsonb(result),row['id'])).fetchone();self._result_history(conn,updated,'worker');self._event(conn,updated,'result_ready','worker',{'revision':updated['result_revision']});return updated
     def edit_result(self,actor,operation_id,expected_revision,result):
-        canonical(result)
+        result=self._payload('result',result)
         if type(expected_revision)is not int:raise ValueError('An exact revision is required')
         with self.connect()as conn:
             self._actor(conn,actor,{'reviewer','supervisor','owner'});row=self._row(conn,operation_id,actor.account_id)
+            self._contract(row)
             if row['state']!='review' or row['result_revision']!=expected_revision:raise Conflict('Reload the current review before editing')
             updated=conn.execute('UPDATE workflow.operations SET result=%s,result_revision=result_revision+1,approved_hash=NULL,approved_by=NULL,updated_at=clock_timestamp() WHERE id=%s RETURNING *',(Jsonb(result),row['id'])).fetchone();self._result_history(conn,updated,actor.subject);self._event(conn,updated,'edited',actor.subject,{'revision':updated['result_revision']});return updated
     def approve(self,actor,operation_id,expected_revision):
@@ -164,6 +177,7 @@ class WorkflowStore:
             if initial['destination_contract']!=self.destination_contract:raise Conflict('Destination contract changed; review its migration without replaying prior actions')
             roles={'supervisor','owner'}if initial['kind']=='account_change'else{'reviewer','supervisor','owner'}
             self._actor(conn,actor,roles);row=self._row(conn,operation_id,actor.account_id)
+            self._contract(row,result=True)
             if row['result_revision']!=expected_revision or not row['result']:raise Conflict('Review the current result before approving')
             if row['state']in {'approved','dispatching','unknown','sent'}:
                 if row['approved_hash']!=self._fingerprint(row):raise Conflict('Approved content changed')
@@ -188,6 +202,7 @@ class WorkflowStore:
                 return None
             row=self._row(conn,operation_id)
             if row['approved_by']!=initial['approved_by']:raise Conflict('Reload the current approval identity')
+            self._contract(row,result=True)
             live=conn.execute('SELECT %s::timestamptz>clock_timestamp() AS live',(row['lease_until'],)).fetchone()['live']
             if row['state']=='dispatching'and live:return None
             if row['state']not in {'approved','unknown','dispatching'}:return None

@@ -340,3 +340,13 @@ unknown. Continue GE-006 reusable application/data contracts and full remaining
 programme. Native configuration mocks are not application or cloud acceptance.
 State adoption and selected backend behavior remain unqualified. Owner5285 and
 UI/AtFlow CSS untouched during this release qualification.
+
+
+GE-006 checkpoint: shared immutable bounded application input/result contract binds
+to durable destination/approval identity. Changed-contract pending work cannot be
+claimed by the repaired runtime. Two domains cross real PostgreSQL/Procrastinate/
+human approval and synthetic TLS destination; exact emitted application repeats
+the checks. See evidence/20261112-application-contracts/README.md. Generic model
+selection/API/identity/persistence/bootstrap and connected full application tests
+remain before alpha.5. Current invoice validation remains its own domain policy.
+Four increments, original complete cases1/28 and owner0 are unchanged.
