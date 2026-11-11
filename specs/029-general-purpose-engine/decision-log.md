@@ -297,3 +297,24 @@ explicit lookup reuses the same immutable check without execution replay. 337 te
 pass; original native proof remains scoped to its frozen source before this small
 response fix. Keep all release/whole-system gates and continue active-checkpoint/
 browser capability rather than patching generated client bundles.
+
+
+### Immutable current-working checks and optional reviewed browser runtime
+
+Keep working checkpoints separate from settled delivery records and HTTP downloads.
+The backend-bound native tool chooses only a registered validator; exact pinned bytes
+are captured with no-follow/link/mode/size/tree-race guards. Reuse exact immutable
+inputs/checks and bound per-run snapshot storage; later edits require new evidence.
+Do not claim a filesystem-atomic snapshot, unchanged later files or acceptance.
+
+Promote the isolated browser prototype into an optional named local validator profile,
+accepting only the reviewed pinned policy digest, cached immutable image/platform and
+operator-selected image-local module paths. User-namespace/chroot syscall permissions
+support Chromium sandbox without outer caps, host namespaces, unconfined seccomp or
+model Docker access. Keep standard policy separate. Actual browser-positive/guard,
+Node skip/zero/failure and six standard probes pass; preserve the first zero-status
+correction. 343 server/374 JS checks, build and fixture UI pass. The catalog reports
+runtime interfaces/availability; it does not disclose operator oracle command bodies.
+Tests request browser sandbox explicitly; outer isolation is the worker guarantee.
+Native current-working-tool/HTTP/browser transfer remains pending, all releases and
+original systems unaccepted. Evidence: evidence/20261111-working-browser-checks/README.md.

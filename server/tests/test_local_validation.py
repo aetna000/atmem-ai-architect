@@ -8,7 +8,7 @@ class ValidationContractTests(unittest.TestCase):
     def test_operator_spec_requires_immutable_local_image_and_bounded_executable(self):
         image='sha256:'+'a'*64
         for values in [dict(image='python:latest'),dict(command=('python','test.py')),
-                       dict(timeout_seconds=0),dict(timeout_seconds=301),dict(platform='linux/unknown'),dict(bootstrap_python='python')]:
+                       dict(timeout_seconds=0),dict(timeout_seconds=301),dict(platform='linux/unknown'),dict(bootstrap_python='python'),dict(isolation_profile='unconfined'),dict(runtime_environment=(('AWS_SECRET_ACCESS_KEY','/secret'),)),dict(runtime_environment=(('ATMEM_PLAYWRIGHT_MODULE','relative'),)),dict(runtime_environment=(({},'/path'),))]:
             args={'name':'local-tests','image':image,'command':('/usr/local/bin/python3','test.py'),**values}
             with self.subTest(values=values),self.assertRaises(ValueError):ValidationSpec(**args)
 
@@ -24,3 +24,18 @@ class ValidationContractTests(unittest.TestCase):
         with patch('server.local_validation.subprocess.run') as command:
             with self.assertRaises(ValueError):worker.run(b'archive','incorrect',spec)
             command.assert_not_called()
+
+    def test_unregistered_or_modified_isolation_policy_cannot_launch_a_container(self):
+        import json,tempfile
+        from pathlib import Path
+        with patch('server.local_validation.Path.is_socket',return_value=True):
+            for profiles in [[],{'unconfined':{}},{'chromium-userns-v1':{'path':'relative','sha256':'a'*64}}]:
+                with self.assertRaises(ValueError):DockerValidationWorker('unix:///safe/local.sock',isolation_profiles=profiles)
+            worker=DockerValidationWorker('unix:///safe/local.sock')
+            spec=ValidationSpec('browser-tests','sha256:'+'a'*64,('/usr/bin/node','--test'),isolation_profile='chromium-userns-v1')
+            with patch('server.local_validation.subprocess.run') as command:
+                with self.assertRaises(RuntimeError):worker.run(b'archive',hashlib.sha256(b'archive').hexdigest(),spec)
+                command.assert_not_called()
+            with tempfile.TemporaryDirectory() as folder:
+                path=Path(folder)/'policy.json';path.write_text(json.dumps({'defaultAction':'SCMP_ACT_ALLOW'}))
+                with self.assertRaises(ValueError):DockerValidationWorker('unix:///safe/local.sock',isolation_profiles={'chromium-userns-v1':{'path':str(path),'sha256':worker.REVIEWED_PROFILES['chromium-userns-v1']}})

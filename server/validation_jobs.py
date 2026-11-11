@@ -29,12 +29,14 @@ def registered_validators(entries):
     if not isinstance(entries,list):raise ValueError('Validator configuration must be a list')
     result={}
     for entry in entries:
-        if not isinstance(entry,dict) or set(entry)-{'id','label','image','command','platform','timeoutSeconds','bootstrapPython'}:
+        if not isinstance(entry,dict) or set(entry)-{'id','label','image','command','platform','timeoutSeconds','bootstrapPython','isolationProfile','runtimeEnvironment'}:
             raise ValueError('Unrecognized validator registration')
         if not isinstance(entry.get('command'),list):raise ValueError('Register a validator argument vector')
+        environment=entry.get('runtimeEnvironment',{})
+        if not isinstance(environment,dict):raise ValueError('Runtime environment must be an operator-owned mapping')
         spec=ValidationSpec(entry.get('id',''),entry.get('image',''),tuple(entry['command']),
             platform=entry.get('platform','linux/amd64'),timeout_seconds=entry.get('timeoutSeconds',60),
-            bootstrap_python=entry.get('bootstrapPython','/usr/local/bin/python3'))
+            bootstrap_python=entry.get('bootstrapPython','/usr/local/bin/python3'),isolation_profile=entry.get('isolationProfile','standard-v1'),runtime_environment=tuple(environment.items()))
         if spec.name in result:raise ValueError('Validator IDs must be unique')
         result[spec.name]=RegisteredValidator(entry.get('label',''),spec)
     return result
@@ -58,7 +60,9 @@ class ValidationJobs:
 
     def catalog(self):
         return [{'id':key,'label':value.label,'evidenceLevel':'local_container_check',
-                 'contractSha256':self._contract(value)[0] if self.worker else None} for key,value in self.validators.items()]
+                 'contractSha256':self._contract(value)[0] if self.worker else None,
+                 'available':self.worker is not None and (not hasattr(self.worker,'supports') or self.worker.supports(value.spec)),
+                 'runtime':{'imageId':value.spec.image,'platform':value.spec.platform,'isolationProfile':value.spec.isolation_profile,'environment':dict(value.spec.runtime_environment),'executable':value.spec.command[0],'testRunner':'node:test' if value.spec.command[1:2]==('--test',) else 'unittest' if value.spec.command[1:3]==('-m','unittest') else 'operator_registered'}} for key,value in self.validators.items()]
 
     def _contract(self,registered):
         registration={'spec':asdict(registered.spec),'workerIdentity':self.worker.identity_digest}
@@ -84,7 +88,7 @@ class ValidationJobs:
     def list(self,scope,session,artifact):
         self.store.get(scope,session)
         # Artifact ownership is checked without moving its potentially large bytes.
-        if not self.db.execute('SELECT 1 FROM engineering_artifacts WHERE id=? AND session=?',(artifact,session)).fetchone():
+        if not self.artifacts.contains(scope,session,artifact):
             raise SessionError('Artifact is unavailable for this project and session')
         rows=self.db.execute('SELECT * FROM artifact_validation_jobs WHERE session=? AND artifact=? ORDER BY rowid',(session,artifact)).fetchall()
         return [self._public(dict(row)) for row in rows]

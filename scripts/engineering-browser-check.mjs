@@ -29,7 +29,7 @@ try{
    if(action==='events')return route.fulfill({json:{session:job,events:events.filter(e=>e.sequence>payload.after)}});
    if(action==='artifacts')return route.fulfill({json:{artifacts:captured?[captured]:[]}});
    if(action==='capture'){captured={id:'artifact-fixture',runId:job.run,sha256:digest,turnStatus:'completed',files:[{path:'main.tf',kind:'file'}]};return route.fulfill({json:captured});}
-   if(action==='validators')return route.fulfill({json:{available:true,validators:[{id:'python-tests',label:'Local Python tests',contractSha256:definition}]}});
+   if(action==='validators')return route.fulfill({json:{available:true,validators:[{id:'python-tests',label:'Local Python tests',contractSha256:definition},{id:'browser-tests',label:'Isolated browser tests',available:false,contractSha256:'unavailable-definition'}]}});
    if(action==='validation/list')return route.fulfill({json:{checks:validations}});
    if(action==='validation/start'){
     assert.equal(payload.command,undefined);assert.equal(payload.image,undefined);
@@ -60,7 +60,7 @@ try{
  job={...job,state:'idle',last_status:'completed'};events.push({sequence:events.length+1,kind:'message',text:'Implementation files created. Independent validation remains pending.'},{sequence:events.length+2,kind:'completed'});
  await page.getByRole('button',{name:'Capture package',exact:true}).click();await page.getByText(/Checks are not independently verified/).waitFor();
  const downloadPromise=page.waitForEvent('download');await page.getByRole('button',{name:'Download package',exact:true}).click();const download=await downloadPromise;assert.match(download.suggestedFilename(),/^engineering-artifact-fixture.zip$/);
- await page.getByRole('button',{name:'Local Python tests',exact:true}).click();await page.locator('.artifact-checks strong').filter({hasText:'Local Python tests · running'}).waitFor();
+ assert(await page.getByRole('button',{name:'Isolated browser tests · unavailable',exact:true}).isDisabled());await page.getByRole('button',{name:'Local Python tests',exact:true}).click();await page.locator('.artifact-checks strong').filter({hasText:'Local Python tests · running'}).waitFor();
  await page.getByRole('button',{name:'Close dialog',exact:true}).click();await page.reload();await page.getByRole('button',{name:'Engineering',exact:true}).click();await page.locator('.artifact-checks strong').filter({hasText:'Local Python tests · running'}).waitFor();assert.equal(requests.filter(r=>r.action==='validation/start').length,1,'reload observes the prior check instead of replaying it');
  validations[0]={...validations[0],state:'finished',result:{status:'incomplete',testsReported:3,skipped:1,output:'One check was deliberately skipped.'}};
  await page.getByText('Local Python tests · incomplete',{exact:true}).waitFor();await page.getByText('3 tests reported · 1 skipped',{exact:true}).waitFor();

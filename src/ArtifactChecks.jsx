@@ -34,8 +34,8 @@ export function ArtifactChecks({session,projectId,sessionId,artifact}){
     {catalog.map(validator=>{
       const previous=checks.filter(check=>check.validatorId===validator.id&&check.contractSha256===validator.contractSha256).at(-1);
       const active=previous&&previous.state!=='finished';
-      return <button key={validator.id} disabled={busy||!available||active} onClick={()=>void act('validation/start',{validatorId:validator.id,retry:!!previous})}>
-        {previous?.state==='finished'?'Run again: ':''}{validator.label}{active?' · '+previous.state:''}
+      return <button key={validator.id} disabled={busy||!available||validator.available===false||active} onClick={()=>void act('validation/start',{validatorId:validator.id,retry:!!previous})}>
+        {previous?.state==='finished'?'Run again: ':''}{validator.label}{validator.available===false?' · unavailable':''}{active?' · '+previous.state:''}
       </button>;
     })}
     <ol>{checks.map(check=>{
