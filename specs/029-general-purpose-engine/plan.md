@@ -214,3 +214,13 @@ implementation-map/Spec Kit paths/DAGs are complete; never remove unreviewed-mod
 or missing-resource guards to promote the new output. Then qualify public exports,
 additional combinations/counterexamples and a separate runnable alpha.3. This
 checkpoint is not a new roadmap increment or whole-system acceptance.
+
+
+Public composition checkpoint: default planner/compiler and all-unit handoff are
+now wired behind independent owned-module admission.466 JS/425 server/build and
+four actual provider schemas pass; see evidence/20261111-public-composition/README.md.
+Actual service module-mock replay, combined-root assertions, browser exports and
+the frozen runnable alpha.3 are the next dependency-ordered work. The prior internal
+checkpoint's public-integration-pending status is historical. Owner storage direction
+is persistent: use MEM0 for heavy ignored archives/cache data, retain stable local
+read paths and keep active project stores/session logs/source local.

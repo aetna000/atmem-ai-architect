@@ -2,6 +2,7 @@ from .generation_lint import lint_generated
 from .settings import setting
 """Local schema validation of server-generated Terraform. Never plan/apply or read cloud credentials."""
 import asyncio
+import re
 import json
 import hashlib
 import sys
@@ -33,7 +34,11 @@ def validate(payload):
     with tempfile.TemporaryDirectory(prefix='atforma-validate-') as folder:
         env = {'PATH': os.getenv('PATH', ''), 'HOME': folder, 'TMPDIR': folder, 'TF_IN_AUTOMATION': '1', 'CHECKPOINT_DISABLE': '1', 'AWS_EC2_METADATA_DISABLED': 'true'}
         cache=Path(setting('PROVIDER_CACHE') or ROOT/'.local/provider-cache')
-        if cache.is_dir():env['TF_PLUGIN_CACHE_DIR']=str(cache)
+        if cache.is_dir():
+            env['TF_PLUGIN_CACHE_DIR']=str(cache)
+            mirror=Path(folder)/'.atmem-provider-mirror.tfrc'
+            mirror.write_text('provider_installation { filesystem_mirror { path = '+json.dumps(str(cache.resolve()))+' } }\n')
+            env['TF_CLI_CONFIG_FILE']=str(mirror)
         generated = subprocess.run([node, str(ROOT/'scripts/terraform-render.mjs')], input=json.dumps(payload.model_dump()), capture_output=True, text=True, timeout=20, env=env, cwd=ROOT)
         if generated.returncode:
             raise ValueError('The project could not be converted to the trusted Terraform draft.')
@@ -68,6 +73,26 @@ def validate(payload):
             lint=lint_generated(folder,lint_binary)
             checks.append(lint)
             if not lint['passed']:return {'status':'failed','checks':checks,'fileDigests':file_digests,'message':'Independent Terraform lint found issues. Regenerate after fixing the compiler.'}
+        # Modules are derived by the server generator and independently admitted
+        # against project ownership before any provider is initialized.
+        for unit in quality.get('modules',[]) if quality else []:
+            path=unit.get('path','')
+            if not isinstance(path,str) or not re.fullmatch(r'units/unit_[0-9a-f]+',path):raise ValueError('Invalid admitted module path')
+            target=Path(folder)/path
+            for label,arguments in [('Provider initialization',['init','-backend=false','-input=false','-no-color']),('Terraform schema validation',['validate','-json']),('Generated mock-provider plans',['test','-no-color'])]:
+                result=subprocess.run([binary,f'-chdir={target}',*arguments],env=env,capture_output=True,text=True,timeout=120)
+                output=result.stdout+'\n'+result.stderr
+                passed=result.returncode==0
+                count=None
+                if arguments[0]=='test':
+                    summary=re.search(r'Success!\s+(\d+) passed,\s+(\d+) failed',output)
+                    count=int(summary[1]) if summary else 0
+                    passed=passed and bool(summary) and count>0 and int(summary[2])==0 and not re.search(r'\b[1-9][0-9]* skipped\b|\.\.\.\s+skip\b',output)
+                checks.append({'name':label+' — '+unit['id'],'moduleId':unit['id'],'modulePath':path,'stage':arguments[0],'passed':bool(passed),'output':output[-16000:],**({'testsReported':count} if count is not None else {})})
+                if not passed:return {'status':'failed','checks':checks,'fileDigests':file_digests,'message':'A required module check failed or reported no executed tests. No cloud deployment was attempted.'}
+            if lint_binary:
+                lint=lint_generated(target,lint_binary);lint['name']+=' — '+unit['id'];checks.append(lint)
+                if not lint['passed']:return {'status':'failed','checks':checks,'fileDigests':file_digests,'message':'Independent module lint found issues. Repair the compiler and regenerate.'}
         local_tests=[]
         if any(name.startswith('app-tests/') and name.endswith('_test.py') for name in files):
             local_tests.append(('Generated application acceptance tests',[sys.executable,'-I','-m','unittest','discover','-s','app-tests','-p','*_test.py','-v']))

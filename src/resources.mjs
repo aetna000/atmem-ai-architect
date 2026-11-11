@@ -1,3 +1,4 @@
+import {capabilityCompositionPlan} from './delivery-capabilities.mjs';
 import {hasInvoice,invoiceResourcePlan}from'./invoice-plan.mjs';
 import {publicFaqPlan} from './public-faq.mjs';
 import {ibmStructuredPlan} from './ibm-structured.mjs';
@@ -58,6 +59,9 @@ export function resolveService(data) {
 }
 
 export function resourcePlan(project) {
+ return capabilityCompositionPlan(project,standaloneResourcePlan)||standaloneResourcePlan(project);
+}
+function standaloneResourcePlan(project) {
   if(hasInvoice(project))return invoiceResourcePlan(project);
   if(hasCrossCloud(project))return crossCloudPlan(project);
   const nodes = project.nodes.filter((n) => n.data.kind !== "note");
@@ -142,5 +146,5 @@ export function resourcePlan(project) {
 export function resourceMarkdown(project) {
   const plan = resourcePlan(project);
   const c = (v) => String(v ?? "").replaceAll("|", "\\|").replaceAll("\n", " ");
-  return `## Cloud resource schedule\n\n${plan.scope}\n\n| Block ID | Component | Provider | Service | Region | Ownership | Terraform coverage |\n|---|---|---|---|---|---|---|\n${plan.rows.map((r) => `| ${c(r.id)} | ${c(r.label)} | ${r.provider} | ${c(r.service)} | ${c(r.region)} | ${r.existing ? "Existing" : "Proposed"} | ${r.terraform} |`).join("\n")}\n\n### Resources and cost dimensions\n\n${plan.rows.map((r) => `- **${c(r.label)}** (${c(r.id)}): ${r.resources.join(", ") || "Resource types to confirm"}. ${r.costDrivers}. Depends on: ${r.dependencies.join(", ") || "none drawn"}.`).join("\n")}\n\n### Engineering work remaining\n\n${plan.gaps.map((g) => `- ${g}`).join("\n") || "S3 foundation only. Validate the plan, account, region, cost and security before applying."}\n\nReferences (resource semantics; not retrieved prices):\n${plan.sources.map((s) => `- ${s}`).join("\n")}\n`;
+  return `## Cloud resource schedule\n\n${plan.scope}\n\n| Block ID | Component | Provider | Service | Region | Ownership | Terraform coverage |\n|---|---|---|---|---|---|---|\n${plan.rows.map((r) => `| ${c(r.id)} | ${c(r.label)} | ${r.provider} | ${c(r.service)} | ${c(r.region)} | ${r.existing ? "Existing" : "Proposed"} | ${r.terraform} |`).join("\n")}\n\n### Resources and cost dimensions\n\n${plan.rows.map((r) => `- **${c(r.label)}** (${c(r.id)}): ${r.resources.join(", ") || "Resource types to confirm"}. ${r.costDrivers}. Depends on: ${r.dependencies.join(", ") || "none drawn"}.`).join("\n")}\n\n### Engineering work remaining\n\n${plan.gaps.map((g) => `- ${g}`).join("\n") || "Generated configuration remains unverified. Validate every delivery unit, interface, destination input, cost and security boundary before applying."}\n\nReferences (resource semantics; not retrieved prices):\n${plan.sources.map((s) => `- ${s}`).join("\n")}\n`;
 }

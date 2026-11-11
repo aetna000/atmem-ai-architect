@@ -57,3 +57,25 @@ class TerraformTests(unittest.TestCase):
         self.assertEqual(run.call_count,1)
         self.assertFalse(result['checks'][0]['passed'])
         self.assertIn('generation-quality.json',result['fileDigests'])
+
+    def test_admitted_modules_run_their_own_schemas_and_nonempty_mock_tests(self):
+        generated={'main.tf.json':'{}','units/unit_61/main.tf.json':'{}','units/unit_61/tests/unit.tftest.hcl':'mock_provider "aws" {}','generation-quality.json':json.dumps({'fatalFindings':[],'modules':[{'id':'a','path':'units/unit_61','module':'unit_61'}]})}
+        def invoke(args,**kwargs):
+            self.assertNotIn('AWS_SECRET_ACCESS_KEY',kwargs['env'])
+            if args[-1].endswith('terraform-render.mjs'):return subprocess.CompletedProcess(args,0,json.dumps(generated),'')
+            return subprocess.CompletedProcess(args,0,'Success! 4 passed, 0 failed.' if args[2]=='test' else 'Valid','')
+        with patch.dict('os.environ',{'ATFORMA_TERRAFORM_BIN':'/trusted/terraform','AWS_SECRET_ACCESS_KEY':'never-pass'}),patch('server.terraform_routes.shutil.which',return_value='/trusted/node'),patch('server.terraform_routes.subprocess.run',side_effect=invoke) as runner:
+            result=validate(ValidationRequest(project={}))
+        self.assertEqual(result['status'],'passed');self.assertEqual(result['checks'][-1]['testsReported'],4)
+        calls=runner.call_args_list;self.assertEqual(len(calls),6)
+        for call in calls[3:]:self.assertTrue(call.args[0][1].endswith('/units/unit_61'))
+
+    def test_module_zero_skipped_or_failed_mock_tests_never_pass(self):
+        for output,code in [('Success! 0 passed, 0 failed.',0),('Success! 4 passed, 0 failed, 1 skipped.',0),('Success! 4 passed, 0 failed.',1)]:
+            generated={'main.tf.json':'{}','generation-quality.json':json.dumps({'fatalFindings':[],'modules':[{'id':'a','path':'units/unit_61'}]})}
+            def invoke(args,**kwargs):
+                if args[-1].endswith('terraform-render.mjs'):return subprocess.CompletedProcess(args,0,json.dumps(generated),'')
+                return subprocess.CompletedProcess(args,code if args[2]=='test' else 0,output if args[2]=='test' else 'Valid','')
+            with patch.dict('os.environ',{'ATFORMA_TERRAFORM_BIN':'/trusted/terraform'}),patch('server.terraform_routes.shutil.which',return_value='/trusted/node'),patch('server.terraform_routes.subprocess.run',side_effect=invoke):
+                result=validate(ValidationRequest(project={}))
+            self.assertEqual(result['status'],'failed');self.assertFalse(result['checks'][-1]['passed'])

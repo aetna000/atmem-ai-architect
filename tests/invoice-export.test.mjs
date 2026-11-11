@@ -39,7 +39,7 @@ for(const provider of ['aws','azure','gcp','ibm']){
  });
  test(provider+' invoice cannot recreate an existing deployment or hide a second workflow',()=>{
   const p=invoiceProject(provider);p.nodes[1].data.origin='existing';let files=terraformSketch(p);assert.equal(resourcePlan(p).invoicePlan.entries.length,0);assert.equal(Object.keys(JSON.parse(files['main.tf.json']).resource||{}).filter(name=>name!=='terraform_data').length,0);
-  const other=invoiceProject(provider);other.nodes.push({...structuredClone(other.nodes[1]),id:'second'});files=terraformSketch(other);assert.equal(resourcePlan(other).invoicePlan.entries.length,0);assert.equal(JSON.parse(files['generation-quality.json']).infrastructureComplete,false);
+  const other=invoiceProject(provider);other.nodes.push({...structuredClone(other.nodes[1]),id:'second'});files=terraformSketch(other);const secondPlan=resourcePlan(other);assert.equal(secondPlan.invoicePlan.entries.length,2);assert(secondPlan.gapDetails.some(g=>g.id.includes('invoice-browser-contract')&&g.componentIds.includes('second')));assert(secondPlan.gapDetails.some(g=>g.id.includes('invoice-accounting-contract')&&g.componentIds.includes('second')));assert.equal(JSON.parse(files['generation-quality.json']).infrastructureComplete,false);
  });
  test(provider+' production state is explicit and the invoice Spec Kit has an executable phased DAG',()=>{
   const p=invoiceProject(provider),before=JSON.stringify(p),files=deliveryPack(p,null,'production');assert.equal(JSON.stringify(p),before);

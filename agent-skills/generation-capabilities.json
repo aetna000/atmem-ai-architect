@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "providers": [
     "aws",
     "azure",
@@ -123,7 +123,14 @@
       "implementation": "container-service",
       "resources": [
         "aws_ecs_service"
-      ]
+      ],
+      "deliveryUnit": {
+        "proposedOnly": false,
+        "requiredFiles": [
+          "README.md",
+          "tests/container.tftest.hcl"
+        ]
+      }
     },
     {
       "id": "azure-container",
@@ -132,7 +139,14 @@
       "implementation": "container-service",
       "resources": [
         "azurerm_container_app"
-      ]
+      ],
+      "deliveryUnit": {
+        "proposedOnly": false,
+        "requiredFiles": [
+          "README.md",
+          "tests/container.tftest.hcl"
+        ]
+      }
     },
     {
       "id": "gcp-container",
@@ -141,7 +155,14 @@
       "implementation": "container-service",
       "resources": [
         "google_cloud_run_v2_service"
-      ]
+      ],
+      "deliveryUnit": {
+        "proposedOnly": false,
+        "requiredFiles": [
+          "README.md",
+          "tests/container.tftest.hcl"
+        ]
+      }
     },
     {
       "id": "ibm-container",
@@ -150,7 +171,14 @@
       "implementation": "container-service",
       "resources": [
         "ibm_code_engine_app"
-      ]
+      ],
+      "deliveryUnit": {
+        "proposedOnly": false,
+        "requiredFiles": [
+          "README.md",
+          "tests/container.tftest.hcl"
+        ]
+      }
     },
     {
       "id": "aws-sqs-standard",
@@ -440,7 +468,17 @@
           "type": "aws_ecs_task_definition",
           "suffix": "_operator_monitor"
         }
-      ]
+      ],
+      "deliveryUnit": {
+        "proposedOnly": true,
+        "requiredFiles": [
+          "README.md",
+          "tests/invoice.tftest.hcl",
+          "invoice-contract.json",
+          "OPERATING_JOBS.md",
+          "OPERATIONS.md"
+        ]
+      }
     },
     {
       "id": "azure-invoice-workflow",
@@ -493,7 +531,17 @@
           "type": "azapi_resource",
           "suffix": "_operator_monitor"
         }
-      ]
+      ],
+      "deliveryUnit": {
+        "proposedOnly": true,
+        "requiredFiles": [
+          "README.md",
+          "tests/invoice.tftest.hcl",
+          "invoice-contract.json",
+          "OPERATING_JOBS.md",
+          "OPERATIONS.md"
+        ]
+      }
     },
     {
       "id": "gcp-invoice-workflow",
@@ -546,7 +594,17 @@
           "type": "google_cloud_run_v2_job",
           "suffix": "_operator_monitor"
         }
-      ]
+      ],
+      "deliveryUnit": {
+        "proposedOnly": true,
+        "requiredFiles": [
+          "README.md",
+          "tests/invoice.tftest.hcl",
+          "invoice-contract.json",
+          "OPERATING_JOBS.md",
+          "OPERATIONS.md"
+        ]
+      }
     },
     {
       "id": "ibm-invoice-workflow",
@@ -599,7 +657,17 @@
           "type": "ibm_code_engine_job",
           "suffix": "_operator_monitor"
         }
-      ]
+      ],
+      "deliveryUnit": {
+        "proposedOnly": true,
+        "requiredFiles": [
+          "README.md",
+          "tests/invoice.tftest.hcl",
+          "invoice-contract.json",
+          "OPERATING_JOBS.md",
+          "OPERATIONS.md"
+        ]
+      }
     }
   ],
   "evidenceBoundary": "A matching contract identifies compiler capability only. Resources, edges, application behavior and destination configuration require independent validation."

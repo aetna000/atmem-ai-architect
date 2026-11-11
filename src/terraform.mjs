@@ -1,3 +1,4 @@
+import {compileCapabilityComposition} from './delivery-capabilities.mjs';
 import{hasInvoice}from'./invoice-plan.mjs';
 import{invoiceTerraform}from'./invoice-terraform.mjs';
 import {awsPublicFaqTerraform,azurePublicFaqTerraform,gcpPublicFaqTerraform,ibmPublicFaqTerraform} from './public-faq-clouds.mjs';
@@ -29,6 +30,8 @@ import { resourcePlan } from "./resources.mjs";
 import { blockers, review } from "./review.mjs";
 
 function compileTerraform(project, environment = "staging") {
+  const composed=resourcePlan(project);
+  if(composed.composition)return compileCapabilityComposition(project,composed,resourcePlan,environment);
   if(hasInvoice(project))return invoiceTerraform(project,resourcePlan(project),environment);
   if(hasContainers(project))return containerTerraform(project,resourcePlan(project),environment);
   if(hasCrossCloud(project))return crossCloudTerraform(project,environment);

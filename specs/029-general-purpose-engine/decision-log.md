@@ -649,3 +649,27 @@ handover (other processes can also affect free space). Full migration journals
 stay ignored locally and on MEM0. Add a lightweight operator remount/status helper
 and local-storage documentation; no bulk data enters Git. Owner direction applies
 to subsequent heavy archives/cache downloads as well.
+
+
+### GE-004: public module admission and concrete per-unit handoff
+
+Independently derive eligible unit ownership/path identities from the reviewed
+capability catalogue/project, inspect the actual emitted closure and retain all
+unsafe-module/credential/execution/provider/resource/gate failures. Do not accept
+a manifest's own claim as admission evidence. Check provider aliases per unit,
+root/child input/output contracts and required native test files. Root unfinished
+scope cannot be cleared to hide retained requirements.
+
+Wire the public planner/compiler only with this admission, and produce actual
+scoped implementation-map paths/root inputs and every unit's Spec Kit phases.
+The previous second-invoice negative case now retains two units while explicitly
+blocking its missing browser/accounting contracts; no requirement/gate is removed.
+The server must run each admitted module's schema/native mock tests and reject
+zero/skipped/failing module tests. Current466JS/425server/build pass; four actual
+public-provider schema checks pass using MEM0. Service/browser/candidate/native
+mock replay remains pending, so no alpha.3 or complete-system acceptance is claimed.
+
+Older running helpers may return root-only success for new composed files. Require
+scoped stage/unit/path identities and nonzero test counts before UI/export receipts
+can report passed composition validation; otherwise retain the root result as
+incomplete. No unrelated service is restarted or given broader filesystem access.

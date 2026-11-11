@@ -1,3 +1,4 @@
+import {moduleValidationCoverage} from './terraform-validation-coverage.mjs';
 import {generationQuality} from './generation-quality.mjs';
 import {BrainActivity} from "./BrainActivity.jsx";
 import React, {useEffect, useMemo, useRef, useState} from 'react';
@@ -22,7 +23,7 @@ export function TerraformView({project,environment,session,onDownload,onBack,emu
       if(!session?.token)throw Error('Connect the local service before running Terraform validation.');
       const response=await fetch('/api/terraform/validate',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.token}`},body:JSON.stringify({project,environment}),signal:request.signal});
       const body=await response.json();if(!response.ok)throw Error(typeof body.detail==='string'?body.detail:'Terraform validation failed.');
-      if(!request.signal.aborted)setResult({...body,filesKey:key});
+      if(!request.signal.aborted)setResult({...moduleValidationCoverage(body,quality.modules),filesKey:key});
     }catch(e){if(!request.signal.aborted)setResult({status:'failed',message:e.message,checks:[]});else if(controller.current===request)setResult({status:'failed',message:'Validation stopped or timed out; no success was recorded.',checks:[]});}
     finally{clearTimeout(timer);if(controller.current===request)setRunning(false);}
   }
@@ -47,7 +48,7 @@ export function TerraformView({project,environment,session,onDownload,onBack,emu
       <p><strong>Resource and integration coverage: {gaps.length?'Incomplete':'No recorded gaps'}</strong>{gaps.length?` — ${gaps.length} unfinished tasks block a deployment plan.`:''}</p>
       <button className="btn primary" disabled={running} onClick={test}>{running?'Testing Terraform…':'Run Terraform checks'}</button>
       {running&&<p role="status"><BrainActivity/> Initializing providers, validating configuration and running generated local tests. This may take a few minutes.</p>}
-      {result&&<div role="status"><h3>{result.status==='passed'?'Configuration validated':result.status==='unavailable'?'Terraform validation not run':'Validation failed'}</h3><p>{result.message}</p>{result.checks?.map((c,i)=><details key={i}><summary>{c.passed?'Passed':'Failed'}: {c.name}</summary><pre className="terraform-code">{c.output}</pre></details>)}</div>}
+      {result&&<div role="status"><h3>{result.status==='passed'?'Configuration validated':result.status==='unavailable'?'Terraform validation not run':result.status==='incomplete'?'Validation incomplete':'Validation failed'}</h3><p>{result.message}</p>{result.checks?.map((c,i)=><details key={i}><summary>{c.passed?'Passed':'Failed'}: {c.name}</summary><pre className="terraform-code">{c.output}</pre></details>)}</div>}
       <h3>Cloud deployment plan — not run</h3><p>A real plan must verify the selected account, region, permissions and proposed changes. Cloud access is not connected. Passing these checks does not prove a real deployment or live application behavior.</p>
       <button className="btn" disabled>Run cloud plan (under development)</button>
     </>}
