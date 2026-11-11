@@ -13,6 +13,7 @@ import uuid
 from .engineering_sessions import SessionError
 from .local_validation import ValidationSpec
 from .validation_applicability import FileApplicability
+from .runtime_evidence import RuntimeEvidence
 
 
 @dataclass(frozen=True)
@@ -20,12 +21,14 @@ class RegisteredValidator:
     label: str
     spec: ValidationSpec
     applicability: FileApplicability | None = None
+    runtime_evidence: RuntimeEvidence | None = None
 
     def __post_init__(self):
         if not isinstance(self.label,str) or not self.label.strip() or len(self.label)>120:
             raise ValueError('An explicit validator label is required')
         if self.applicability is not None and not isinstance(self.applicability,FileApplicability):
             raise ValueError('Use a reviewed file applicability contract')
+        if self.runtime_evidence is not None and not isinstance(self.runtime_evidence,RuntimeEvidence):raise ValueError('Use pinned operator runtime evidence')
 
 
 def registered_validators(entries):
@@ -33,7 +36,7 @@ def registered_validators(entries):
     if not isinstance(entries,list):raise ValueError('Validator configuration must be a list')
     result={}
     for entry in entries:
-        if not isinstance(entry,dict) or set(entry)-{'id','label','image','command','platform','timeoutSeconds','bootstrapPython','isolationProfile','runtimeEnvironment','applicability'}:
+        if not isinstance(entry,dict) or set(entry)-{'id','label','image','command','platform','timeoutSeconds','bootstrapPython','isolationProfile','runtimeEnvironment','applicability','runtimeReceipt'}:
             raise ValueError('Unrecognized validator registration')
         if not isinstance(entry.get('command'),list):raise ValueError('Register a validator argument vector')
         environment=entry.get('runtimeEnvironment',{})
@@ -42,7 +45,8 @@ def registered_validators(entries):
             platform=entry.get('platform','linux/amd64'),timeout_seconds=entry.get('timeoutSeconds',60),
             bootstrap_python=entry.get('bootstrapPython','/usr/local/bin/python3'),isolation_profile=entry.get('isolationProfile','standard-v1'),runtime_environment=tuple(environment.items()))
         if spec.name in result:raise ValueError('Validator IDs must be unique')
-        result[spec.name]=RegisteredValidator(entry.get('label',''),spec,FileApplicability.parse(entry['applicability']) if 'applicability' in entry else None)
+        result[spec.name]=RegisteredValidator(entry.get('label',''),spec,FileApplicability.parse(entry['applicability']) if 'applicability' in entry else None,
+            RuntimeEvidence.load(entry['runtimeReceipt'],spec) if 'runtimeReceipt' in entry else None)
     return result
 
 
@@ -67,6 +71,7 @@ class ValidationJobs:
                  'contractSha256':self._contract(value)[0] if self.worker else None,
                  'available':self._available(value),
                  'applicability':value.applicability.public() if value.applicability else None,
+                 **({'runtimeEvidence':value.runtime_evidence.public()} if value.runtime_evidence else {}),
                  'runtime':{'imageId':value.spec.image,'platform':value.spec.platform,'isolationProfile':value.spec.isolation_profile,'environment':dict(value.spec.runtime_environment),'executable':value.spec.command[0],'testRunner':'node:test' if value.spec.command[1:2]==('--test',) else 'unittest' if value.spec.command[1:3]==('-m','unittest') else 'operator_registered'}} for key,value in self.validators.items()]
 
     def _contract(self,registered):
@@ -74,6 +79,7 @@ class ValidationJobs:
         # Preserve historical manual-only contract hashes. Changing selection rules
         # invalidates evidence reuse even when the executable is unchanged.
         if registered.applicability is not None:registration['applicability']=registered.applicability.public()
+        if registered.runtime_evidence is not None:registration['runtimeEvidence']=registered.runtime_evidence.public()
         digest=hashlib.sha256(json.dumps({**registration,'policy':self.worker.policy_digest},sort_keys=True).encode()).hexdigest()
         return digest,registration
 

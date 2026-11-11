@@ -1,3 +1,5 @@
+Latest dependency checkpoint: optional pinned actual-runtime facts and a bounded public artifact mirror are implemented and pass381 server tests. Qualified SDK1.43.123 selected-service source passes13 checks on both Python targets; separate native classroom-query dependency transfer and denied read/write boundaries pass. Evidence: `evidence/20261111-runtime-dependencies/README.md`. Fresh unchanged-brief generation must demonstrate application safety gates and complete delivery before any acceptance.
+
 # General-purpose engine: ten tangible release subgoals
 
 Latest qualification checkpoint: frozen e678117 has actual primary native intake,

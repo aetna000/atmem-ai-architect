@@ -11,6 +11,8 @@ from server.engineering_sessions import ModelSelection,ProjectScope,SessionError
 from server.local_validation import ValidationSpec
 from server.validation_jobs import RegisteredValidator,ValidationJobs,registered_validators
 from server.validation_applicability import FileApplicability
+from server.runtime_evidence import RuntimeEvidence
+from server.tests.test_runtime_evidence import observation
 
 
 class Worker:
@@ -73,6 +75,29 @@ class ValidationJobTests(unittest.IsolatedAsyncioTestCase):
         restored=self.jobs.list(self.scope,self.session,captured['id'])
         self.assertEqual(len(restored),1);self.assertEqual(restored[0]['id'],check['id'])
         self.assertEqual(restored[0]['result']['status'],'passed');self.assertEqual(len(self.worker.calls),1)
+
+    async def test_pinned_observed_runtime_changes_contract_but_does_not_rewrite_prior_check(self):
+        import hashlib
+        first=await self.jobs.start(self.scope,self.session,self.artifact,'python-tests');await self.finish()
+        path=self.root/'runtime.json';path.write_text(json.dumps(observation(self.spec)))
+        reference={'path':str(path.resolve()),'sha256':hashlib.sha256(path.read_bytes()).hexdigest()}
+        self.jobs.validators['python-tests']=RegisteredValidator('Python',self.spec,runtime_evidence=RuntimeEvidence.load(reference,self.spec))
+        catalog=self.jobs.catalog()[0]
+        self.assertEqual(catalog['runtimeEvidence']['observed']['executableVersion'],'3.13.18')
+        self.assertNotEqual(first['contractSha256'],catalog['contractSha256']);self.assertNotIn(str(path),str(catalog))
+        catalog['runtimeEvidence']['observed']['executableVersion']='invented'
+        self.assertEqual(self.jobs.catalog()[0]['runtimeEvidence']['observed']['executableVersion'],'3.13.18')
+        second=await self.jobs.start(self.scope,self.session,self.artifact,'python-tests');await self.finish()
+        self.assertNotEqual(first['id'],second['id']);self.assertEqual(self.jobs.get(self.scope,self.session,first['id'])['contractSha256'],first['contractSha256'])
+
+    def test_operator_runtime_receipt_is_loaded_during_registration_and_cannot_override_image(self):
+        import hashlib
+        path=self.root/'runtime.json';path.write_text(json.dumps(observation(self.spec)))
+        reference={'path':str(path.resolve()),'sha256':hashlib.sha256(path.read_bytes()).hexdigest()}
+        entry={'id':self.spec.name,'label':'Python','image':self.spec.image,'command':list(self.spec.command),'runtimeReceipt':reference}
+        registered=registered_validators([entry])[self.spec.name]
+        self.assertEqual(registered.runtime_evidence.public()['receiptSha256'],reference['sha256'])
+        with self.assertRaises(ValueError):registered_validators([{**entry,'image':'sha256:'+'f'*64}])
 
     async def test_other_scope_session_or_artifact_cannot_start_or_observe(self):
         state=await self.jobs.start(self.scope,self.session,self.artifact,'python-tests');await self.finish()

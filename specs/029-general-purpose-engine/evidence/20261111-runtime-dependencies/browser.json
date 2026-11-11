@@ -1,0 +1,59 @@
+{
+  "format": "atmem.runtime-observation",
+  "version": 1,
+  "passed": true,
+  "observedAt": "2026-11-11T04:57:44.387396+00:00",
+  "runtime": {
+    "imageId": "sha256:df7f71a8588253403dfa833c5c4aacc95ca340204a88d5483edd58131c7f1128",
+    "platform": "linux/arm64",
+    "executable": "/usr/bin/node",
+    "bootstrapPython": "/usr/bin/python3",
+    "isolationProfile": "chromium-userns-v1",
+    "environment": {
+      "ATMEM_PLAYWRIGHT_MODULE": "/opt/atmem/playwright-core/index.mjs"
+    }
+  },
+  "runtimeSha256": "f1f1c2b9bc76ee75cda5eb7c8057fbf481179ae0a66985f7eee7a4ce040e0975",
+  "workerPolicySha256": "acc6cbd46678d4a44152f16d484b2538f322cd6c8ba087812250e1d310bbd27b",
+  "workerIdentitySha256": "310c6b537856ef87248abfae0b239c3a5d068dfefefec205358b7dd83dddd2e5",
+  "observerSha256": "0bdf7277a36a389124377a699181398c1fbf46f50e22e3bf5b455bfcbb916250",
+  "probe": {
+    "validator": "runtime-observation",
+    "artifactSha256": "8739c76e681f900923b900c9df0ef75cf421d39cabb54650c4b9ad19b6a76d85",
+    "imageId": "sha256:df7f71a8588253403dfa833c5c4aacc95ca340204a88d5483edd58131c7f1128",
+    "runtimeConfigImageId": "sha256:df7f71a8588253403dfa833c5c4aacc95ca340204a88d5483edd58131c7f1128",
+    "platform": "linux/arm64",
+    "isolationProfile": "chromium-userns-v1",
+    "runtimeEnvironment": {
+      "ATMEM_PLAYWRIGHT_MODULE": "/opt/atmem/playwright-core/index.mjs"
+    },
+    "command": [
+      "/usr/bin/node",
+      "--input-type=module",
+      "-e",
+      "\nimport fs from 'node:fs';import path from 'node:path';import {pathToFileURL} from 'node:url';\nconst result={kind:'node',executableVersion:process.versions.node,packages:{},serviceOperations:{},browserVersion:null};\nif(process.env.ATMEM_PLAYWRIGHT_MODULE){\n const module=process.env.ATMEM_PLAYWRIGHT_MODULE;\n result.packages['playwright-core']=JSON.parse(fs.readFileSync(path.join(path.dirname(module),'package.json'),'utf8')).version;\n const {chromium}=await import(pathToFileURL(module).href),browser=await chromium.launch({headless:true,chromiumSandbox:true});\n try{result.browserVersion=browser.version();}finally{await browser.close();}\n}\nconsole.log(JSON.stringify(result));\n"
+    ],
+    "status": "passed",
+    "exitCode": 0,
+    "skipped": 0,
+    "testsReported": null,
+    "reason": null,
+    "output": "{\"kind\":\"node\",\"executableVersion\":\"26.13.0\",\"packages\":{\"playwright-core\":\"1.64.1\"},\"serviceOperations\":{},\"browserVersion\":\"156.0.8078.80\"}\n",
+    "outputTruncated": false,
+    "durationSeconds": 0.987,
+    "evidenceLevel": "local_container_check",
+    "cloudOperations": false,
+    "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+  },
+  "cloudOperations": false,
+  "scope": "Empty source archive in the registered immutable local image/profile. No application code, cloud client, account or network dependency is used. Null package versions mean distribution metadata unavailable; not proof that importing a module is impossible. Service operations describe the installed botocore model only, not account/API availability.",
+  "observed": {
+    "kind": "node",
+    "executableVersion": "26.13.0",
+    "packages": {
+      "playwright-core": "1.64.1"
+    },
+    "serviceOperations": {},
+    "browserVersion": "156.0.8078.80"
+  }
+}

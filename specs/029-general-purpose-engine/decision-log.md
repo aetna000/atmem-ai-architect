@@ -453,3 +453,9 @@ primary docs and actual SDK/version probes identify actionable dependency/eviden
 gaps. Consolidate redundant pending status entries without deleting roadmap/28-case
 scope. Next qualify dependency/runtime capability and machine safety preconditions,
 then deliver the first runnable versioned candidate and continue the remaining work.
+
+### Observed runtimes and explicit public artifacts, not invented capability
+
+Register immutable successful isolated runtime observations as optional pinned validator evidence, and an operator-owned public artifact catalog as an explicit read boundary. Verify bounded regular-file bytes before workspace creation; public model inputs retain hashes, versions, licenses and provenance without host paths. Do not install/resolve/import in the backend or change old resumed session pins. Generated packages own their dependency closure and target checks.
+
+Actual SDK1.43.123 selected-service source passes13 checks on each target Python3.12ARM/Python3.13AMD runtime; baked1.42.97 lacks the required operation. Keep original evaluator empty-input-shape failure; corrected oracle accepts equivalent empty structs without weakening the GET/no-input contract. A separate classroom-query use demonstrates artifact transfer and sandbox denial counterexamples.381 server tests pass. Add scoped qualified retention-read knowledge; no production case dispatch or exported-file edits. Next run the same original brief with three unchanged updates and independently re-assess; acceptance/release counts stay0.

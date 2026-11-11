@@ -82,3 +82,14 @@ class KnowledgeEligibilityTests(unittest.TestCase):
         for provider in ['azure','gcp','ibm']:self.assertEqual(context(recalled,{provider},date(2026,11,11)),[])
         self.assertEqual(context(recalled,{'aws'},date(2026,12,20)),[])
         self.assertEqual(row['evidenceLevel'],'source-reviewed');self.assertIn('not native structured outputs',row['practice']);self.assertIn('not a default model recommendation',row['practice'])
+
+    def test_qualified_read_api_record_preserves_sdk_account_and_provider_boundaries(self):
+        import json
+        from datetime import date
+        row=next(r for r in records()if r['id']=='aws-bedrock-account-retention-read')
+        recalled=[{'id':'retention-read','fact_key':'practice.'+row['id'],'content':json.dumps(row)}]
+        self.assertEqual(json.loads(context(recalled,{'aws'},date(2026,11,11))[0]['content']),row)
+        for provider in ['azure','gcp','ibm']:self.assertEqual(context(recalled,{provider},date(2026,11,11)),[])
+        self.assertEqual(context(recalled,{'aws'},date(2026,12,20)),[])
+        self.assertEqual(row['evidenceLevel'],'locally-tested');self.assertIn('no cloud requests',row['localVerification']['scope'])
+        self.assertIn('literal none',row['practice']);self.assertIn('SDK1.42.97 lacks',row['limitations'][0]);self.assertIn('application gates',row['limitations'][0])

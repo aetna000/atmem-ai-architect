@@ -459,7 +459,7 @@
       "id": "ibm-regional-registry-is-not-code-engine-region",
       "provider": "ibm",
       "topic": "provider-specific-endpoints-and-artifact-delivery",
-      "practice": "Use the publisher’s explicit region-to-registry mapping. Sydney Code Engine region au-syd pulls from au.icr.io, not an invented au-syd.icr.io host. Keep accepted placement and reject an implicit global registry fallback. Validate fully resolved native image references in addition to provider schemas and local container startup; those checks catch different defects.",
+      "practice": "Use the publisher\u2019s explicit region-to-registry mapping. Sydney Code Engine region au-syd pulls from au.icr.io, not an invented au-syd.icr.io host. Keep accepted placement and reject an implicit global registry fallback. Validate fully resolved native image references in addition to provider schemas and local container startup; those checks catch different defects.",
       "source": {
         "kind": "documentation",
         "url": "https://cloud.ibm.com/docs/Registry?topic=Registry-registry_overview",
@@ -502,6 +502,32 @@
       "limitations": [
         "No account access, model quality, retention settings, quota or price is established.",
         "Model/API/region/features can change; recheck the dated card. Local contract tests remain separate from actual vendor execution."
+      ],
+      "reviewedAt": "2026-11-11",
+      "status": "active"
+    },
+    {
+      "id": "aws-bedrock-account-retention-read",
+      "provider": "aws",
+      "topic": "model-data-lifecycle-api",
+      "practice": "Use regional Bedrock control-plane GetAccountDataRetention (Python get_account_data_retention), GET /data-retention without arguments; response has mode and updatedAt. For a zero-retention contract, proceed only on literal none; missing/other modes, denial, throttling and timeout fail closed before inference. Verify actual SDK support. Grant bedrock:GetAccountDataRetention only; do not auto-change account-wide settings or replace an available machine check with an unverified attestation.",
+      "source": {
+        "kind": "documentation",
+        "url": "https://docs.aws.amazon.com/bedrock/latest/APIReference/API_GetAccountDataRetention.html",
+        "sha256": "cc53b0f02009f32bd9472de76982b6067d5a1aa3630247f4aaa596014d3782ea",
+        "retrievedAt": "2026-11-11T04:40:47.481638+00:00",
+        "redistribution": "Metadata and authored summary only; source HTML retained in local cache.",
+        "archived": false
+      },
+      "evidenceLevel": "locally-tested",
+      "localVerification": {
+        "receipt": "specs/029-general-purpose-engine/evidence/20261111-runtime-dependencies/sdk/receipt.json",
+        "sha256": "681eaa48138d0b1df36c4cf2636fcfefc5bac889d07579c1edd4abad7db2a0ba",
+        "scope": "boto3/botocore1.43.123 selected Bedrock/Runtime services:13 schema/endpoint and signed synthetic loopback GET/mode/timestamp/denial/throttle/timeout checks on Python3.12 ARM64 and3.13 AMD64; no cloud requests."
+      },
+      "limitations": [
+        "SDK1.42.97 lacks this operation; qualify dependency packaging and application gates. A source wheel is not an installed SDK.",
+        "Not account/model availability, retention-state, atomicity/drift, deployment, other SDK services/languages or optional CRT proof. Preserve existing configuration ownership."
       ],
       "reviewedAt": "2026-11-11",
       "status": "active"
