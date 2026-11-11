@@ -235,3 +235,11 @@ Proceed GE-005 provider lowering/ownership, including explicit runtime constrain
 then all remaining contracts/judgment/knowledge/handoff/recovery/generalisation and
 original28/unfamiliar full systems. Schema/mock checks do not establish application
 runtime or connected-system correctness. No deployment required/authorized.
+
+
+GE-005 checkpoint: exact byte-quantity memory/CPU lowering and independent artifact
+inspection are implemented across four providers, with8 native schema packages/
+40 mocks, earlier58 actual service module mocks,484JS/428server/build. See
+evidence/20261111-provider-lowering/README.md. Explicit placement, environment/
+network/identity/lifecycle/state policy and runnable alpha.4 remain required.
+No new release, original complete-system acceptance or95% claim.

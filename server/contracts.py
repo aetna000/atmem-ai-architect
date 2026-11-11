@@ -41,6 +41,7 @@ class Configuration(Strict):
     region:str=Field(default='To be selected',max_length=100,description='For a proposed cloud deployment, use only its canonical region code, such as ap-southeast-2, australiaeast, australia-southeast1 or au-syd. Put city names, proposed status and unverified availability in description/assumptions, never appended to this machine field. Use To be selected when genuinely unresolved.')
     classification:Literal['Public','Internal','Confidential']='Internal'
     timeout:int=Field(default=5000,ge=100,le=60000)
+    containerMemoryBytes:StrictInt|None=Field(default=None,ge=1,le=9007199254740991)
     memoryMb:StrictInt|None=Field(default=None,ge=128,le=10240)
     functionTimeoutSeconds:StrictInt|None=Field(default=None,ge=1,le=900)
     concurrency:StrictInt|None=Field(default=None,ge=1,le=1000)
@@ -81,6 +82,7 @@ class Data(Strict):
 
     @model_validator(mode='after')
     def named_component(self):
+        if self.config.containerMemoryBytes is not None and self.implementation!='container-service':raise ValueError('Exact container memory requires an explicit container-service contract')
         if self.deploymentMode=='reference' and self.origin not in {'existing','imported Pulumi state'}:raise ValueError('Reference handling must preserve an existing system')
         if self.binding and (self.origin not in {'existing','imported Pulumi state'} or self.deploymentMode=='create'):raise ValueError('Reference bindings identify existing systems and cannot provision a replacement')
         if self.origin=='existing' and self.deploymentMode=='create' and (self.implementation!='container-service' or self.binding):
@@ -205,7 +207,7 @@ class FollowUpQuestion(Strict):
 
 class NodeFieldUpdate(Strict):
     id:StrictStr=Field(min_length=1,max_length=100)
-    field:Literal['label','description','kind','provider','service','role','origin','binding','implementation','deploymentMode','topologyGroup','config.maxPdfBytes','config.maxPdfPages','config.retentionDays','config.region','config.classification','config.maxInputBytes','config.maxOutputTokens','config.memoryMb','config.functionTimeoutSeconds','config.concurrency','config.logRetentionDays','config.modelId','config.outputContract']
+    field:Literal['label','description','kind','provider','service','role','origin','binding','implementation','deploymentMode','topologyGroup','config.maxPdfBytes','config.maxPdfPages','config.retentionDays','config.region','config.classification','config.maxInputBytes','config.maxOutputTokens','config.memoryMb','config.containerMemoryBytes','config.functionTimeoutSeconds','config.concurrency','config.logRetentionDays','config.modelId','config.outputContract']
     value:StrictStr|StrictInt|StrictBool|OutputContract|None
 
 class EdgeFieldUpdate(Strict):

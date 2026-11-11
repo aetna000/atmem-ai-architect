@@ -1,3 +1,4 @@
+import {inspectContainerConfiguration} from './container-inspection.mjs';
 import {inspectTerraformModules} from './terraform-admission.mjs';
 import {existingDeployment} from './deployment-ownership.mjs';
 import catalogue from '../agent-skills/generation-capabilities.json' with {type:'json'};
@@ -27,6 +28,7 @@ export function generationQuality(project,plan,files){
  for(const node of project.nodes.filter(n=>n.data.kind!=='note'))if(plan.rows.filter(r=>r.id===node.id).length!==1)add('unregistered-implementation','The resource schedule must retain each component identity exactly once.',node.id);
  const components=plan.rows.map(row=>{
   const node=project.nodes.find(n=>n.id===row.id),d=node?.data||{},scope=admission.scopes.get(row.id),actual=scope?.config||(admission.composed?{}:config),prefix=scope?.prefix||'';
+  if(node)inspectContainerConfiguration(node,row,actual,plan,add);
   if(!node||row.provider!==d.provider||!!row.existing!==!!(node&&existingDeployment(node)))add('unregistered-implementation','The schedule changed a component provider or ownership identity.',row.id);
   const contracts=catalogue.contracts.filter(c=>c.provider===d.provider&&(!c.service||c.service===row.service)&&(!c.implementation||c.implementation===d.implementation));
   if(!row.existing&&row.implemented){
@@ -44,7 +46,7 @@ export function generationQuality(project,plan,files){
  if(!Array.isArray(unfinished))add('missing-work-gate','Unfinished scope must remain an explicit array of blockers.');
  for(const gap of plan.gapDetails||[]){add('unfinished-scope',gap.message);if(!Array.isArray(unfinished)||!unfinished.includes(gap.id))add('missing-work-gate','The root configuration omits required unfinished scope: '+gap.id+'.');}
  const skills=[...new Set([...catalogue.skills,...providers])].filter(id=>skillDigests[id]).map(id=>({id,sha256:skillDigests[id]}));
- const fatalCodes=new Set(['provider-mismatch','missing-resource','unreviewed-provider','embedded-provider-credential','execution-hook','external-execution-or-state','unreviewed-module','unregistered-implementation','service-eligibility-unverified','missing-work-gate']);
+ const fatalCodes=new Set(['container-constraint-mismatch','provider-mismatch','missing-resource','unreviewed-provider','embedded-provider-credential','execution-hook','external-execution-or-state','unreviewed-module','unregistered-implementation','service-eligibility-unverified','missing-work-gate']);
  const artifactMappings=artifactWorkProjection(project);
  return {version:1,modules:[...admission.scopes].map(([id,scope])=>({id,module:scope.module,path:scope.path})),fatalFindings:findings.filter(f=>fatalCodes.has(f.code)),designRevision:project.revision,catalogueVersion:catalogue.version,providers,skills,skillUsage:"Referenced reviewed guidance; model execution of skills is not attested by this export.",components,findings,artifactMappings:{file:'architecture-artifact-mappings.json',references:artifactMappings.mappings.map(m=>({id:m.id,artifactId:m.artifactId,artifactSha256:m.artifactSha256,contextStatus:m.contextStatus,recordIds:m.records.map(r=>r.id)})),boundary:artifactMappings.boundary},infrastructureComplete:findings.length===0&&unfinished.length===0&&emitted.length>0,validation:{schema:'not_run',runtime:'not_run',cloudPlan:'not_run'},deploymentCandidate:false,evidenceBoundary:catalogue.evidenceBoundary};
 }

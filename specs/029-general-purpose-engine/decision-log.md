@@ -706,3 +706,26 @@ helper-field comparison failure; corrected smoke passes without candidate edits.
 Record exact archive/build identity, installed start, manual card/limits/rollback.
 Three runnable increments offered, owner acceptance0 and original1/28 unchanged;
 full goal remains active. Continue GE-005 provider lowering and lifecycle ownership.
+
+
+### GE-005: exact quantities and independent native configuration inspection
+
+Preserve container memory as exact bytes, with legacy memoryMb retaining MiB.
+Do not substitute IBM decimal GB for binary GiB or round unsupported quantities.
+Provider policies propose compatible CPU; the output does not prove performance
+or affordability. Preserve conflicts/unsupported settings as blocking scope and
+restrict the new field to explicit container contracts. AWS finite log retention
+is a real mapping; do not substitute unrelated provider scaling/logging controls.
+
+Independent inspection derives applicability/canonical identity from the project
+and checks actual memory/private ingress/explicit identity, even if row metadata
+is forged. Eight current generated native packages and40 mock runs retain exact
+implementation/test hashes; full484JS/428server/build pass. Four earlier real
+service validations/58 mocks bind their own pre-README/platform-pin output bytes.
+Primary source snapshots/hashes, upper-bound/counterexample evidence and current
+regeneration equality are retained. No application/model/cloud acceptance follows.
+
+Keep GE-005 in_progress: explicit container-region input reconciliation remains a
+known source defect for the next step, along with environment/network/identity/
+lifecycle and composition state policy. No alpha.4 release or new original-case
+acceptance. Alpha.3 and other previews remain running. Heavy data stays on MEM0.

@@ -25,12 +25,12 @@ test('cross-provider independent units preserve all scope; unknown interfaces re
 });
 
 for(const provider of Object.keys(CONTAINER_SERVICES))test(provider+': explicit container runtime settings remain blocking in standalone and composed outputs',()=>{
- const p=mixed(provider),node=p.nodes.at(-1);node.data.config={memoryMb:1024,concurrency:7,logRetentionDays:90};const before=structuredClone(p);
+ const p=mixed(provider),node=p.nodes.at(-1);node.data.config={concurrency:7,functionTimeoutSeconds:90};const before=structuredClone(p);
  for(const project of [p,{...p,nodes:[node],edges:[]}]){
   const plan=resourcePlan(project),files=terraformSketch(project),quality=JSON.parse(files['generation-quality.json']),root=JSON.parse(files['main.tf.json']);
   for(const [key,value]of Object.entries(node.data.config)){assert(plan.gapDetails.some(g=>g.componentIds.includes(node.id)&&g.message.includes(`${key}=${value}`)));assert(root.locals.unfinished_work.some(g=>g.includes('container-setting-')&&g.includes(key)));}
   assert.equal(quality.infrastructureComplete,false);assert.deepEqual(quality.fatalFindings,[]);
-  if(plan.composition){const unit=plan.composition.units.find(u=>u.id===node.id);assert.equal(JSON.parse(files[unit.path+'/main.tf.json']).locals.unfinished_work.length,3);}
+  if(plan.composition){const unit=plan.composition.units.find(u=>u.id===node.id);assert.equal(JSON.parse(files[unit.path+'/main.tf.json']).locals.unfinished_work.length,2);}
  }
  assert.deepEqual(p,before);
 });
