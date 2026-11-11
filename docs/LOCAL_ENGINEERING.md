@@ -1,6 +1,6 @@
 # Local engineering and architecture-work candidate
 
-This candidate adds persistent native engineering work behind the browser's Build tab. You describe the outcome, add updates while it works, inspect the conversation and local checks, then capture/download exact files. The Codex CLI is the first backend worker adapter; the browser uses project-bound backend APIs. Hosted transport and tenant isolation remain unfinished.
+Projects open in Design. Describe the outcome and develop its requirements and components with Architect, then choose **Build this design** to implement the saved design. Build shows implementation progress, files and local checks. Existing engineering jobs remain recoverable through the Build tab. The Codex CLI is the first backend worker adapter; the browser uses project-bound backend APIs. Hosted transport and tenant isolation remain unfinished.
 
 ## Start in an installed checkout
 
@@ -16,13 +16,30 @@ For local checks, the operator explicitly supplies `--tools`, `--validators`, `-
 
 ## Manual test card
 
-1. Open Connections, choose Codex and your accessible exact model/effort. In Build, enter a fresh project intent and click Start work once.
+1. Open Connections and choose Codex with your accessible exact model/effort. Start in Design, describe the project and develop its components or responsibilities. Expand **Architecture activity** while Architect works to inspect public updates, model attempts, evidence lookups and response-format checks. Choose **Build this design** once; the saved context is included automatically, with no repeated brief.
 2. Add two meaningful updates while it works. Reload the page. Verify the original request, ordered updates, exact selected configuration and continuing run are retained.
 3. Switch to Design and back. Inspect progress without resubmitting the request. Design retains its graph; proposed mappings link native files to the same requirements/context without silently redrawing the graph or changing ownership.
 4. On completion inspect the immutable package and each local report. A failed, skipped, absent or stale check remains a limitation. If a bounded automatic repair ran, inspect both original and repaired evidence.
 5. If verification definitions have been updated after completion, choose **Recheck and repair** on the current package. Earlier reports remain available; a changed check plan can use at most the original request’s remaining repair allowance. An unchanged plan does not replay work.
 6. Download the package; follow its public clean-environment build/test instructions. Receiving instructions must not require the worker's private `.tools` paths. Inspect Terraform and unresolved account inputs; do not apply it.
 7. Close/reopen the candidate and select the saved project. Recover existing work if needed; uncertain execution must not be blindly replayed. Preserve its app-data directory and saved project file.
+
+## Alpha.2.1 Design-first and activity test card
+
+Open a fresh project: Design is selected, and an empty design cannot start a build.
+Send an architecture request and inspect the expandable activity timeline while it
+works. Each recorded attempt retains its exact model/effort, timestamps, public
+updates, real host tool actions and format-repair status. Reload and reopen the
+history; it must not replay inference. The timeline records public replies and
+observed actions, not private reasoning or successful application verification.
+Existing older services keep working but cannot supply historical details they
+never recorded. Activity references travel in the project file; detailed events
+remain in its backend service store. Keep that app-data directory. A service restart
+marks unfinished activity as outcome unknown and never resumes it automatically.
+
+**Build this design** starts or updates implementation using the current saved
+context. Additional instructions in Build are optional. Reload starts in Design;
+select Build to recover the existing job. Earlier alpha.2 remains a separate rollback.
 
 ## Alpha.2 shared-model test card
 

@@ -257,6 +257,7 @@ class Attachment(Strict):
     data:str=Field(min_length=1,max_length=5592408)
 
 class ChatRequest(Strict):
+    activityId:str|None=Field(default=None,pattern=r'^[a-f0-9-]{36}$')
     attachments:list[Attachment]=Field(default_factory=list,max_length=4)
     origin:Literal['chat','canvas','workflow','document','preview','emulation','block-review']='chat'
     projectId:str|None=Field(default=None,pattern=r'^[A-Za-z0-9-]{8,64}$')

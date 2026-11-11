@@ -42,7 +42,7 @@ try{
  });
  const state=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('atforma-workspace-v3')));
  const work=()=>page.locator('.architecture-work');
- await page.goto(base);await work().locator(':scope > summary').click();await work().getByText('Reading files',{exact:true}).waitFor();assert.match(await work().locator('li[data-work-ref="work:Reading files"]').innerText(),/Context current/);assert.deepEqual(nativeMutations,[]);
+ await page.goto(base);await page.getByRole('tab',{name:'Build',exact:true}).click();await work().locator(':scope > summary').click();await work().getByText('Reading files',{exact:true}).waitFor();assert.match(await work().locator('li[data-work-ref="work:Reading files"]').innerText(),/Context current/);assert.deepEqual(nativeMutations,[]);
  const proposal={version:1,records:[record('Reported check','evidence',['work:Reading files'],{reportedStatus:'passed',level:'local-runtime'})]};
  await work().getByLabel('Import proposed work mappings').setInputFiles({name:'proposal.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(proposal))});
  await work().getByText('Reported check',{exact:true}).waitFor();assert.match(await work().locator('li[data-work-ref="work:Reported check"]').innerText(),/agent · proposed/);await work().getByRole('button',{name:'Record context review: Reported check',exact:true}).click();
@@ -53,12 +53,12 @@ try{
  for(const name of ['Reading files','Reported check'])assert.match(await work().locator('li[data-work-ref='+JSON.stringify('work:'+name)+']').innerText(),/Review again/);
  assert.match(await work().locator('li[data-work-ref="work:Catalogue reference"]').innerText(),/Context current/);
  assert.deepEqual((await state()).nodes.map(n=>n.data.origin),['existing','existing']);
- await page.reload();await work().locator(':scope > summary').click();assert.match(await work().locator('li[data-work-ref="work:Reported check"]').innerText(),/Review again/);
+ await page.reload();await page.getByRole('tab',{name:'Build',exact:true}).click();await work().locator(':scope > summary').click();assert.match(await work().locator('li[data-work-ref="work:Reported check"]').innerText(),/Review again/);
  await page.screenshot({path:path.join(out,'changed-desktop.png'),fullPage:true});await page.setViewportSize({width:390,height:900});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.screenshot({path:path.join(out,'changed-mobile.png'),fullPage:true});
  await work().getByRole('button',{name:'Record context review: Reported check',exact:true}).click();const beforeNative=await state();assert.equal(beforeNative.extensions.architectureWork.history.length,1);
  const view=architectureWork(beforeNative),exported=deliveryPack(beforeNative);assert.deepEqual(JSON.parse(exported['architecture-work.json']),view);assert.deepEqual(architectureWork(parseProjectFile(exported['project.atmem-ai-architect.json']).project),view);
  fs.writeFileSync(path.join(out,'exported-architecture-work.json'),exported['architecture-work.json']);
- await page.getByLabel('What should we build or repair?',{exact:true}).fill('Retain the existing catalogue; add a local screen.');await page.getByRole('button',{name:'Start work',exact:true}).click();
+ await page.getByLabel('Additional build instructions (optional)',{exact:true}).fill('Retain the existing catalogue; add a local screen.');await page.getByRole('button',{name:'Build this design',exact:true}).click();
  await page.waitForFunction(()=>JSON.parse(localStorage.getItem('atforma-workspace-v3')).extensions.architectureWork.intents.length===1);
  events.push({sequence:2,kind:'accepted',origin:'automatic_repair',runId:job.run,text:'Synthetic internal repair; not a client demand.'},{sequence:3,kind:'steering_submitted',requestId:'fixture-update',text:'Keep Unicode labels intact.'},{sequence:4,kind:'steering_accepted',requestId:'fixture-update'});
  await page.waitForFunction(()=>JSON.parse(localStorage.getItem('atforma-workspace-v3')).extensions.architectureWork.intents.length===2);

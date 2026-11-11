@@ -4,8 +4,9 @@ import {engineeringCall,engineeringConversation,mergeEngineeringEvents,verifiedE
 import './engineering.css';
 import {ArtifactChecks} from './ArtifactChecks.jsx';
 import {verifyArtifactWork} from './artifact-work.mjs';
+import {hasArchitectureDesign,buildIntent} from './design-build-flow.mjs';
 
-export function EngineeringPanel({projectId,session,connection,saveProject,onConnections,project,onWorkModelChange,onIntentContext,contextBusy=false}){
+export function EngineeringPanel({projectId,session,connection,saveProject,onConnections,project,onWorkModelChange,onIntentContext,onDesign,buildRequest,onBuildRequestHandled,contextBusy=false}){
   const draftKey=`atmem-engineering-draft-v1:${projectId}`;
   const [job,setJob]=useState(null),[events,setEvents]=useState([]),[draft,setDraft]=useState(()=>{try{return localStorage.getItem(draftKey)||'';}catch{return '';}}),
     [busy,setBusy]=useState(false),[error,setError]=useState(''),[loading,setLoading]=useState(true),[artifact,setArtifact]=useState(null);
@@ -58,10 +59,12 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
   const exactSelection=connection?.provider==='codex'&&connection.model&&connection.model!=='default'&&connection.effort;
   const running=job?.state==='running',uncertain=job?.state==='starting';
   const conversation=engineeringConversation(events);
-  function submitIntent(event){
-    event.preventDefault();
-    if(!draft.trim()||draft.length>80000||uncertain||contextBusy||(!job&&!exactSelection))return;
-    const submitted=draft;
+  const hasDesign=hasArchitectureDesign(project),canSubmit=running?!!draft.trim():!!buildIntent(project,draft);
+  const consumedBuild=useRef(null);
+  function submitIntent(event,requestedText){
+    event?.preventDefault();
+    const submitted=requestedText??(running?draft:buildIntent(project,draft));
+    if(!submitted||submitted.length>80000||uncertain||contextBusy||(!job&&(!exactSelection||!hasDesign)))return;
     void act(async()=>{
       let current=job;
       let saved=await saveProject();
@@ -79,6 +82,12 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
       if(live.current){setJob(next);setArtifact(null);setDraft(value=>value===submitted?'':value);}
     });
   }
+  useEffect(()=>{
+    if(!buildRequest||buildRequest.projectId!==projectId||consumedBuild.current===buildRequest.id||loading||contextBusy)return;
+    consumedBuild.current=buildRequest.id;onBuildRequestHandled?.(buildRequest.id);
+    if(uncertain){setError('Recover the existing request before building the changed design. No new work was submitted.');return;}
+    submitIntent(null,buildIntent(project,''));
+  },[buildRequest,projectId,loading,contextBusy,uncertain,job?.id]);
   async function linkMappings(){
     const result=await call('reconciliation',{artifactId:artifact.id});
     if(result.status==='proposal_missing')throw Error(result.message);
@@ -87,9 +96,10 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
     onWorkModelChange({kind:'artifact',verified},projectId);
   }
   return <div className="engineering-panel">
-    <h2>Build your project</h2>
-    <p>Describe what you need. The architect builds implementation files and runs local checks. Work continues when you leave this view.</p>
-    <ArchitectureWorkPanel project={project} onChange={onWorkModelChange} busy={busy||contextBusy}/>
+    <h2>Build outcome</h2>
+    <p>Implementation files, checks and progress for your saved design. Its requirements, components and ownership are included automatically.</p>
+    {onDesign&&<button onClick={onDesign}>Return to Design</button>}
+    {(hasDesign||job)&&<ArchitectureWorkPanel project={project} onChange={onWorkModelChange} busy={busy||contextBusy}/>}
     {loading?<p role="status">Finding your project’s work…</p>:<>
       {job?<>
         <p role="status">{running?'Working':uncertain?'Recovering acceptance of your last request':job.last_status?({completed:'Work completed',interrupted:'Work stopped',failed:'Work needs attention'}[job.last_status]||job.last_status):'Ready'} · {job.model} · {job.effort}</p>
@@ -105,12 +115,12 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
         {entry.status==='uncertain'&&<span> · Delivery uncertain; recover before resending</span>}
         <pre>{entry.text}</pre>
       </article>)}</section>}
-      <form onSubmit={submitIntent}>
-        <label htmlFor="engineering-intent">{running?'Add an update':'What should we build or repair?'}</label>
+      {!hasDesign&&!job?<p>Start with the architecture in Design. Add the components or responsibilities before building an implementation.</p>:<form onSubmit={submitIntent}>
+        <label htmlFor="engineering-intent">{running?'Add an implementation update':hasDesign?'Additional build instructions (optional)':'Continue implementation'}</label>
         <textarea id="engineering-intent" rows={4} value={draft} onChange={e=>setDraft(e.target.value)}/>
         {draft.length>80000&&<p role="alert">This update exceeds 80,000 characters. Edit it before sending; your draft is retained.</p>}
-        <button disabled={busy||uncertain||contextBusy||!draft.trim()||draft.length>80000||(!job&&!exactSelection)}>{running?'Send update':'Start work'}</button>
-      </form>
+        <button disabled={busy||uncertain||contextBusy||!canSubmit||draft.length>80000||(!job&&!exactSelection)}>{running?'Send update':hasDesign?'Build this design':'Continue implementation'}</button>
+      </form>}
       {job&&<>
         {finalization&&<p role="status"><strong>Recorded verification update: </strong>{finalization.text}</p>}
         <div className="engineering-actions">

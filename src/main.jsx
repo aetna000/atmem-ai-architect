@@ -1,6 +1,9 @@
 import {synchronizeEngineeringIntent,applyArchitectureChange} from './architecture-work.mjs';
 import {applyArtifactWork} from './artifact-work.mjs';
 import {ArchitectureWorkPanel} from './ArchitectureWorkPanel.jsx';
+import {hasArchitectureDesign} from './design-build-flow.mjs';
+import {ArchitectureActivity} from './ArchitectureActivity.jsx';
+import {recordArchitectureTurn,finishArchitectureTurn} from './architecture-activity.mjs';
 import {version as appVersion} from "../package.json";
 import {restoreQueuedMessages,nextIntakeBatch,restoreIntakePaused} from './work-intake.mjs';
 import {emulationGuidance,guidanceMessage} from './emulation-guidance.mjs';
@@ -695,9 +698,15 @@ function App() {
   const [session, setSession] = useState(null),
     [connection, setConnection] = useState(readConnection),
     [agentBusy, setAgentBusy] = useState(false);
-  const [workspaceView,setWorkspaceView]=useState(()=>{try{return localStorage.getItem('atmem-workspace-view-v1')||'auto';}catch{return 'auto';}});
-  const buildView=!!session?.engineeringEnabled&&(workspaceView==='build'||(workspaceView==='auto'&&connection?.provider==='codex'));
-  function chooseWorkspace(value){setWorkspaceView(value);try{localStorage.setItem('atmem-workspace-view-v1',value);}catch{}}
+  const [workspaceView,setWorkspaceView]=useState('canvas'),[buildRequest,setBuildRequest]=useState(null);
+  const buildView=!!session?.engineeringEnabled&&workspaceView==='build';
+  const hasDesign=hasArchitectureDesign(project);
+  function chooseWorkspace(value){setWorkspaceView(value);}
+  function buildCurrentDesign(){
+    if(!hasArchitectureDesign(projectRef.current)||busy||agentBusy||pending)return;
+    if(connection?.provider!=='codex'||!connection.model||connection.model==='default'||!connection.effort){setModal('connections');return;}
+    setBuildRequest({id:crypto.randomUUID(),projectId:projectRef.current.id});chooseWorkspace('build');
+  }
 
   useEffect(()=>{saveCanvasView(project,{level,focus,selected,positions:topologyPositions});},[project.id,level,focus,selected,topologyPositions]);
   const emulation=useEmulation(project,environment,session);
@@ -707,7 +716,7 @@ function App() {
   const consultationAttempts = useRef(new Set());
   const agentAbort = useRef(null);
   const intakeRef=useRef(restoreQueuedMessages(messages,project.id));
-  const [intake,setIntake]=useState(intakeRef.current),[intakePaused,setIntakePausedState]=useState(()=>restoreIntakePaused(messages));
+  const [intake,setIntake]=useState(intakeRef.current),[intakePaused,setIntakePausedState]=useState(()=>restoreIntakePaused(messages)||intakeRef.current.length>0);
   const [intakeIssue,setIntakeIssue]=useState(null);
   const intakePausedRef=useRef(intakePaused);
   function setIntakePaused(value){intakePausedRef.current=value;setIntakePausedState(value);}
@@ -715,7 +724,7 @@ function App() {
   function updateIntake(next){intakeRef.current=next;setIntake(next);}
   function setRequestState(ids,state){setMessages(list=>list.map(m=>ids.includes(m.requestId)?{...m,workState:state}:m));}
   useEffect(()=>{
-    setIntakePaused(restoreIntakePaused(messages));
+    setIntakePaused(restoreIntakePaused(messages)||restoreQueuedMessages(messages,project.id).length>0);
     setIntakeIssue(null);
     const restored=restoreQueuedMessages(messages,project.id).filter(q=>!intakeRef.current.some(old=>old.id===q.id));
     if(restored.length)updateIntake([...intakeRef.current,...restored]);
@@ -746,6 +755,7 @@ function App() {
     }
     setVoiceError("");voice.current?.cancel();
     let activeSession = session;
+    fetch('/api/voice/prepare',{method:'POST',headers:{Authorization:`Bearer ${session.token}`}}).catch(()=>{});
     voice.current = new VoiceDictation({
       base: input, onState: setVoiceState, onError: setVoiceError, onDraft: setInput,
       transcribe: async (audio, signal) => {
@@ -842,12 +852,6 @@ function App() {
     window.addEventListener("focus",refreshSession);
     return ()=>{clearInterval(timer);window.removeEventListener("focus",refreshSession);};
   }, [refreshSession]);
-  useEffect(() => {
-    if (buildView||!session?.token) return;
-    const controller = new AbortController();
-    fetch("/api/voice/prepare", { method: "POST", headers: { Authorization: `Bearer ${session.token}` }, signal: controller.signal }).catch(() => {});
-    return () => controller.abort();
-  }, [buildView,session?.token]);
   useEffect(() => {
     if (!toast) return;
     const timer = setTimeout(() => setToast(""), 3500);
@@ -1242,7 +1246,13 @@ function App() {
     agentAbort.current = controller;
     chatScroll.followLatest();
     setAgentBusy(true);
+    const activityId=session.architectureActivityEnabled?crypto.randomUUID():null;
     try {
+      if(activityId){
+        const next=recordArchitectureTurn(projectRef.current,requestProject,{id:activityId,provider:connection.provider,model:connection.model,effort:connection.effort,origin,startedAt:new Date().toISOString()});
+        toProjectFile(next);
+        updateEngagement(next);
+      }
       // Keep the discovery record current from the user's words, whatever model replies.
       const was = projectRef.current;
       const heard = origin === "chat" ? understand(message, was) : { project: was };
@@ -1262,8 +1272,10 @@ function App() {
         stage: destination?.mode || mode,
         origin,
         signal: controller.signal,
+        activityId,
       });
       if(projectRef.current.id!==requestProject)return;
+      if(activityId)updateEngagement(finishArchitectureTurn(projectRef.current,requestProject,activityId,'response_received',result.architectureActivity?.detailsAvailable!==false));
       if(intakeRef.current.some(q=>q.projectId===requestProject)){
         carryIntent.current={projectId:requestProject,text:carryIntent.current?.projectId===requestProject?carryIntent.current.text:message};
         setRequestState(requestIds,'superseded');
@@ -1320,6 +1332,7 @@ function App() {
       return result.message;
     } catch (error) {
       if(projectRef.current.id!==requestProject)return;
+      if(activityId)updateEngagement(finishArchitectureTurn(projectRef.current,requestProject,activityId,error.name==='AbortError'?'cancelled':'failed'));
       setRequestState(requestIds,'failed');setIntakePaused(true);
       setMessages((m) => [
         ...m,
@@ -1573,6 +1586,7 @@ function App() {
     }
   }
   function switchTo(next) {
+    chooseWorkspace('canvas');setBuildRequest(null);
     next = withDerived(next);
     const leaving = projectRef.current;
     if (session && !binned.current.has(leaving.id) && (leaving.nodes.length || leaving.brief?.application?.trim() || messages.length > 1))
@@ -1780,7 +1794,6 @@ function App() {
           <span className="current-view"><Workflow size={14}/>{focusLabel||'Components'}</span>
         </nav>
         <div className="modes" role="tablist">
-          {session?.engineeringEnabled&&<button role="tab" aria-selected={buildView} className={buildView?"on":""} onClick={()=>chooseWorkspace("build")}><Package size={14}/>Build</button>}
           {MODES.filter(([id])=>guidance.availableModes.includes(id)).map(([id, label]) => (
             <button
               key={id}
@@ -1794,6 +1807,7 @@ function App() {
               {id === "review" && blockerCount > 0 && <span className="badge">{blockerCount}</span>}
             </button>
           ))}
+          {session?.engineeringEnabled&&<button role="tab" aria-selected={buildView} className={buildView?"on":""} title="Implementation and verification of your design" onClick={()=>chooseWorkspace('build')}><Package size={14}/>Build</button>}
         </div>
         <div className="bar-actions">
           {storageError && <span className="warn-text">Not saved</span>}
@@ -1863,6 +1877,7 @@ function App() {
         )}
         <div className="journey-current"><div><strong>{guidance.title}</strong><p>{guidance.reason}</p><p className="journey-next"><span>Next</span> {guidance.checkpoint?guidance.continueLabel:guidance.action}</p></div>
           <div className="journey-actions">
+            {session?.engineeringEnabled&&hasDesign&&<button className="btn primary build-design-button" disabled={busy||agentBusy||!!pending} onClick={buildCurrentDesign}><Package size={18}/>Build this design</button>}
             <button className="btn primary" disabled={busy||agentBusy||!!pending} aria-label={guidance.checkpoint?guidance.continueLabel+' →':guidance.action} title={guidance.checkpoint?guidance.continueLabel:guidance.action} onClick={()=>guidance.checkpoint?continueJourney():followJourney()}>{agentBusy?<BrainActivity size={26}/>:<BrainCircuit size={20}/>}</button>
 
             {project.nodes.length>0&&<><button className="btn primary" disabled={busy||!!pending} aria-label="Emulate & improve" aria-busy={emulationWorking} title={emulation.running?"Emulation running — show progress":emulationWorking?"Architect is reviewing — show progress":"Run local checks and improve this architecture"} onClick={()=>{setMode("design");setDesignView("board");setEmulationOpen(true);if(!emulation.running&&!emulation.result&&!emulation.previous)void emulation.run();}}>{emulationWorking?<BrainActivity size={24}/>:<Play size={20}/>}</button><button className="btn" aria-label="Outputs" title="Inspect and download generated outputs" onClick={()=>{setMode("design");setDesignView("outputs");}}><Package size={20}/></button></>}
@@ -1890,6 +1905,8 @@ function App() {
       >
         {buildView?<section className="native-work-area" aria-label="Build workspace"><EngineeringPanel key={project.id} project={project} onWorkModelChange={changeArchitectureWork} onIntentContext={syncEngineeringIntent} projectId={project.id} session={session} connection={connection} contextBusy={busy||agentBusy||!!pending}
           saveProject={()=>saveEngineeringProject(project.id)}
+          onDesign={()=>{chooseWorkspace('canvas');setMode('design');}}
+          buildRequest={buildRequest} onBuildRequestHandled={id=>setBuildRequest(current=>current?.id===id?null:current)}
           onConnections={()=>setModal('connections')}/></section>:<>
         <ReactFlow
           nodes={canvasNodes}
@@ -2316,6 +2333,7 @@ function App() {
             )}
             </div>
           </div>
+          <ArchitectureActivity key={project.id} project={project} session={session} busy={agentBusy}/>
           {!!intake.filter(q=>q.projectId===project.id).length&&<div className="intake-status" role="status">{intake.filter(q=>q.projectId===project.id).length} update(s) {intakePaused?'saved · paused':'queued · combining next'}{intakeIssue&&<span> {intakeIssue}</span>}{intakePaused&&<button className="link" onClick={()=>setIntakePaused(false)}>Resume</button>}</div>}
           <div className="prompts">
             {mode === "design" && brief(project) && ask && (

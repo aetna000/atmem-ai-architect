@@ -124,6 +124,7 @@ export async function requestArchitect({
   origin = "chat",
   extra = [],
   attachments = [],
+  activityId,
   signal,
 }) {
   const scoped = project.id && !/^Connection check/.test(message);
@@ -140,6 +141,7 @@ export async function requestArchitect({
     body: JSON.stringify({
       provider: connection.provider,
       ...(scoped ? { projectId: project.id } : {}),
+      ...(scoped&&session.architectureActivityEnabled&&activityId?{activityId}:{}),
       origin,
       model: connection.model,
       ...(connection.effort ? { effort: connection.effort } : {}),

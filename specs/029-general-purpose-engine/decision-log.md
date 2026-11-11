@@ -572,3 +572,28 @@ GE-003 implementation/automated local scope is done; runnable/implemented increm
 owner-accepted0, original qualification1/28, measured quality unknown. Continue GE-004
 capability composition and all remaining programme requirements without waiting for
 optional manual feedback. No remote tag publication or cloud operation authorized.
+
+
+### Owner priority: Design first and inspectable architecture activity
+
+The owner rejected Build as the entry point: implementation is an outcome of the
+saved design, and an empty design must not ask for a duplicate implementation brief.
+Open and restore projects in Design, retain existing native work behind Build, and
+add an explicit Build this design action binding the latest saved context. Preserve
+exact model/effort and uncertain-submission recovery; never replay work on reload.
+Queued older design requests stay paused, and voice preparation requires user action.
+
+The owner also requested agent turns/details while Architecting. Add a project-scoped
+public activity journal: observed context/skill selection, actual model attempts,
+validated public replies, bounded format repair, real host tool actions/cache/status
+and response readiness. No private reasoning, rejected raw output, raw prompts,
+credentials or protocol dumps. Observer write failure cannot retry inference or
+discard its response. Duplicate turn IDs stop before inference; a restart marks
+running records uncertain, without replay. This backend session interface and the
+browser remain independent of the CLI harness; hosted tenant identity is still
+unfinished. Imported references cannot reveal another project's journal.
+
+This patch is reusable for all design domains and providers. Tool and format checks
+are not runtime/system acceptance. UI/browser fixtures and real bounded host-loop
+unit observations are distinct; no new complete-project qualification is claimed.
+GE-004 composition remains next after this owner-requested patch candidate.

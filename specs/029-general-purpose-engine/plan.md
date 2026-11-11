@@ -196,3 +196,11 @@ execution/ownership concerns. Architect's own subscriptions, checkout and paywal
 explicitly deferred; do not add them to release 1 or treat missing payments as a blocker.
 This does not remove metering/credit requirements in the client projects the engine
 is tasked to generate. Hosting this SaaS remains future work, not a request to deploy.
+
+
+Owner-requested alpha.2.1 patch priority: make Design the entry point, implement
+Build this design using its saved context, and show durable public Architecture
+activity during bounded model/tool turns. Preserve original native history and
+no-replay recovery. Qualify this patch locally before resuming GE-004 composition;
+it adds no roadmap increment or original-case acceptance. See
+evidence/20261111-design-activity/README.md.

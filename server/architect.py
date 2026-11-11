@@ -19,7 +19,7 @@ class AtMemArchitect:
     def context(request:ChatRequest,runtime=None):
         return json.dumps({'consultationFocus':consultation_focus(request),'origin':request.origin,'currentProject':request.project.model_dump(exclude_none=True),'baseRevision':request.project.revision,'history':[m.model_dump() for m in request.history],'stage':request.stage,'readOnlyContext':[c.model_dump() for c in request.context],'request':request.message,'runtimeContext':runtime or {},'outputSchema':AtMemArchitect.output_schema(runtime)},ensure_ascii=False)
 
-    async def call(self,request:ChatRequest,is_disconnected,runtime=None):
+    async def call(self,request:ChatRequest,is_disconnected,runtime=None,activity=None):
         from .attachments import prepare
         attachments=await asyncio.to_thread(prepare,[a.model_dump() for a in request.attachments])
         runtime={**(runtime or {}),'attachmentEvidence':[a for a in attachments if 'text' in a],'imageEvidence':[{'name':a['name'],'mime':a['mime']} for a in attachments if 'data' in a]}
@@ -31,6 +31,7 @@ class AtMemArchitect:
         for attempt in range(2):
             disconnected=is_disconnected()
             if await disconnected if inspect.isawaitable(disconnected) else disconnected:raise asyncio.CancelledError()
+            if activity:activity({'kind':'model_started','text':'Consulting the selected model.','details':{'attempt':attempt+1,'provider':request.provider,'model':request.model,'effort':request.effort}})
             if request.provider in {'claude-code','codex','copilot','gemini-cli'}:
                 from .local_providers import call_cli
                 raw=await self._claude(request,is_disconnected,runtime,images) if request.provider=='claude-code' else await call_cli(request.provider,request.model,self.context(request,runtime),SYSTEM_PROMPT,self.output_schema(runtime),is_disconnected,request.effort,images,timeout=response_budget_seconds(request))
@@ -51,9 +52,13 @@ class AtMemArchitect:
                 result._response_repair_attempts=attempt
                 result._model_response_encoding=encoding
                 result._model_response_json_bytes=len(json.dumps(raw,ensure_ascii=True,separators=(",",":")).encode("ascii"))
+                if activity:
+                    activity({'kind':'model_message','text':result.message,'details':{'attempt':attempt+1}})
+                    activity({'kind':'model_checked','text':'Response format checked against the current design revision.','details':{'encoding':encoding,'proposal':bool(result.proposal)}})
                 return result
             except (ValidationError,ValueError) as error:
                 if attempt:raise
+                if activity:activity({'kind':'response_repair','text':'Correcting a response-format problem before applying any changes.','details':{'attempt':attempt+1}})
                 issues=([{'path':'.'.join(map(str,e['loc'])),'message':e['msg']} for e in error.errors(include_input=False,include_url=False)] if isinstance(error,ValidationError) else [{'path':'toolRequests' if raw.get('toolRequests') and not runtime.get('toolBudget',{}).get('canRequestTools',True) else 'patch' if raw.get('patch') else 'proposal.baseRevision','message':str(error)}])
                 encoded=json.dumps(raw,ensure_ascii=False)
                 runtime={**runtime,'responseRepair':{
