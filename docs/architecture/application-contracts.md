@@ -58,3 +58,37 @@ real producer/queue/worker, human approval and a synthetic TLS destination. The 
 checks run from an exact emitted/unpacked application. TLS credentials/identity and
 processing callbacks are explicit local fixtures, not cloud services or real domain
 implementations. No new original-case acceptance, release5 or deployment is claimed.
+
+## Unicode storage and schema admission
+
+Fresh workflow schema2 stores source, result, result history and external receipt
+objects as PostgreSQL `json`. Their canonical application serialization uses UTF8
+without ASCII expansion, retains controls including U+0000, and preserves the
+existing byte/type/structure/revision/approval boundaries. Destination metadata and
+internal audit details remain `jsonb`; they do not carry arbitrary payload text.
+This is a storage mechanism, not a new domain policy or text normalization rule.
+
+PostgreSQL `jsonb` cannot store U+0000. Some JSON-to-text scalar functions also
+cannot process it. Do not cast the payload columns to `jsonb` or use text scalar
+extraction as a substitute for decoding and validating their JSON in the runtime.
+This storage choice gives up JSONB payload indexing/operators; these workflows
+query relational identity/state fields and bind decoded payloads in application
+code. No performance or query-planning improvement is claimed.
+
+Every store connection and worker startup checks schema version2, exact source
+hash and pinned queue version before operating. Queue registration/heartbeat and
+recovery cannot start against an unreviewed schema. Operator grants and maintenance
+retain the same exact-version/hash checks. A mismatch fails without adopting,
+rewriting or migrating an existing database. `initialize_database` remains fresh
+CREATE-only; running it over an existing schema is an error.
+
+Existing schema1 deployments require a separately reviewed and authorized migration,
+with old/new workers quiesced, retained source/results/history/receipts and approvals
+verified, destination bindings preserved and rollback assessed before switching.
+No migration is supplied, performed or implied by this change. Keep old artifacts,
+their schema and pinned runtime together until that process is approved. Rolling
+back a binary across schema versions is not a valid rollback procedure.
+
+The primary PostgreSQL17.11 source revision and actual old/new SQL, domain-transfer,
+boundary and worker-admission checks are retained in
+`specs/029-general-purpose-engine/evidence/20261112-unicode-persistence/`.

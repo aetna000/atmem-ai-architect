@@ -1,0 +1,32 @@
+{
+  "validator": "unicode-persistence",
+  "artifactSha256": "933c5f5376796c4bfb814eebcd0a2295dbbd19b99f835c78cf1a11ea6418cdf3",
+  "imageId": "sha256:63164e32f99523d8b2f108ee05095d51de7a951934cdc6bd3c99ee78993e8f5f",
+  "runtimeConfigImageId": "sha256:63164e32f99523d8b2f108ee05095d51de7a951934cdc6bd3c99ee78993e8f5f",
+  "platform": "linux/amd64",
+  "isolationProfile": "postgresql-local-v1",
+  "runtimeEnvironment": {},
+  "command": [
+    "/usr/local/bin/python3",
+    "-I",
+    "/opt/atmem/sql_validation.py",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "oracle",
+    "-v"
+  ],
+  "status": "failed",
+  "exitCode": 1,
+  "executableScratch": false,
+  "skipped": 0,
+  "testsReported": 3,
+  "reason": null,
+  "output": "test_large_non_bmp_result_remains_in_byte_contract_and_history (test_persistence.Persistence.test_large_non_bmp_result_remains_in_byte_contract_and_history) ... ok\ntest_two_domains_preserve_control_unicode_history_approval_and_receipt (test_persistence.Persistence.test_two_domains_preserve_control_unicode_history_approval_and_receipt) ... \n  test_two_domains_preserve_control_unicode_history_approval_and_receipt (test_persistence.Persistence.test_two_domains_preserve_control_unicode_history_approval_and_receipt) (domain='archive-transcription') ... ERROR\n  test_two_domains_preserve_control_unicode_history_approval_and_receipt (test_persistence.Persistence.test_two_domains_preserve_control_unicode_history_approval_and_receipt) (domain='sensor-annotation') ... ERROR\ntest_unknown_schema_blocks_runtime_and_grants_without_rewriting (test_persistence.Persistence.test_unknown_schema_blocks_runtime_and_grants_without_rewriting) ... FAIL\n\n======================================================================\nERROR: test_two_domains_preserve_control_unicode_history_approval_and_receipt (test_persistence.Persistence.test_two_domains_preserve_control_unicode_history_approval_and_receipt) (domain='archive-transcription')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/work/source/oracle/test_persistence.py\", line 56, in test_two_domains_preserve_control_unicode_history_approval_and_receipt\n    operation = api.submit(self.user, 'draft', domain, source)\n  File \"/work/source/runtime/durable_workflow.py\", line 106, in submit\n    row=conn.execute(\"INSERT INTO workflow.operations(id,account_id,workflow_key,kind,dedup_key,created_by,source_ref,destination_contract,state) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,'pending') ON CONFLICT(account_id,workflow_key,kind,dedup_key) DO NOTHING RETURNING *\",(new,actor.account_id,self.workflow_key,kind,dedup_key,actor.subject,Jsonb(source_ref),Jsonb(self.destination_contract))).fetchone()\n        ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.13/site-packages/psycopg/connection.py\", line 304, in execute\n    raise ex.with_traceback(None)\npsycopg.errors.UntranslatableCharacter: unsupported Unicode escape sequence\nDETAIL:  \\u0000 cannot be converted to text.\nCONTEXT:  JSON data, line 1: {\"transcript\": \"\\u0000...\nunnamed portal parameter $7 = '...'\n\n======================================================================\nERROR: test_two_domains_preserve_control_unicode_history_approval_and_receipt (test_persistence.Persistence.test_two_domains_preserve_control_unicode_history_approval_and_receipt) (domain='sensor-annotation')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/work/source/oracle/test_persistence.py\", line 56, in test_two_domains_preserve_control_unicode_history_approval_and_receipt\n    operation = api.submit(self.user, 'draft', domain, source)\n  File \"/work/source/runtime/durable_workflow.py\", line 106, in submit\n    row=conn.execute(\"INSERT INTO workflow.operations(id,account_id,workflow_key,kind,dedup_key,created_by,source_ref,destination_contract,state) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,'pending') ON CONFLICT(account_id,workflow_key,kind,dedup_key) DO NOTHING RETURNING *\",(new,actor.account_id,self.workflow_key,kind,dedup_key,actor.subject,Jsonb(source_ref),Jsonb(self.destination_contract))).fetchone()\n        ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.13/site-packages/psycopg/connection.py\", line 304, in execute\n    raise ex.with_traceback(None)\npsycopg.errors.UntranslatableCharacter: unsupported Unicode escape sequence\nDETAIL:  \\u0000 cannot be converted to text.\nCONTEXT:  JSON data, line 1: {\"observation\": \"\\u0000...\nunnamed portal parameter $7 = '...'\n\n======================================================================\nFAIL: test_unknown_schema_blocks_runtime_and_grants_without_rewriting (test_persistence.Persistence.test_unknown_schema_blocks_runtime_and_grants_without_rewriting)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/work/source/oracle/test_persistence.py\", line 94, in test_unknown_schema_blocks_runtime_and_grants_without_rewriting\n    with self.assertRaises(ValueError):\n         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^\nAssertionError: ValueError not raised\n\n----------------------------------------------------------------------\nRan 3 tests in 1.275s\n\nFAILED (failures=1, errors=2)\n",
+  "outputTruncated": false,
+  "durationSeconds": 4.39,
+  "evidenceLevel": "local_container_check",
+  "cloudOperations": false,
+  "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+}

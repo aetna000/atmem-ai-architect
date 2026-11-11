@@ -13,6 +13,7 @@ import uuid
 from psycopg.rows import tuple_row
 from psycopg.types.json import Jsonb
 from durable_workflow import canonical
+from workflow_database import SCHEMA_VERSION
 
 def owned_scope(conn,account_id,namespace):
     if conn.autocommit:raise ValueError('Use one operator transaction')
@@ -23,7 +24,7 @@ def owned_scope(conn,account_id,namespace):
         version=cur.execute('SELECT version,source_sha256,queue_version FROM workflow.schema_version').fetchone()
     expected=hashlib.sha256((Path(__file__).parent/'workflow_schema.sql').read_bytes()).hexdigest()
     if not authority or authority[0]is not True:raise PermissionError('Use the separate reviewed schema-owner/operator connection')
-    if version!=(1,expected,'3.10.0'):raise ValueError('Review the schema migration before operating this database')
+    if version!=(SCHEMA_VERSION,expected,'3.10.0'):raise ValueError('Review the schema migration before operating this database')
     conn.execute('SET LOCAL search_path=pg_catalog,workflow,pg_temp')
     conn.execute("SET LOCAL lock_timeout='3s'");conn.execute("SET LOCAL statement_timeout='30s'")
     conn.execute('SELECT pg_advisory_xact_lock(hashtextextended(%s,0))',('atmem-invoice-operations:'+account_id+':'+namespace,))

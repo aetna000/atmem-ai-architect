@@ -12,8 +12,9 @@ import json
 import uuid
 import psycopg
 from psycopg.rows import dict_row
-from psycopg.types.json import Jsonb
+from psycopg.types.json import Json,Jsonb
 from workflow_contract import bind_payload_contract
+from workflow_database import require_current_schema
 
 class Denied(PermissionError):pass
 class Missing(LookupError):pass
@@ -32,6 +33,11 @@ def canonical(value,limit=64000):
     except (ValueError,TypeError,UnicodeError,RecursionError):raise ValueError('Invalid bounded JSON') from None
     if len(raw)>limit:raise ValueError('JSON exceeds its boundary')
     return raw
+
+def stored_json(value):
+    # Canonical UTF8 preserves the validated size. Default ASCII escaping can
+    # expand a valid non-BMP payload beyond its SQL history bound.
+    return Json(value,dumps=lambda item:canonical(item).decode('utf-8'))
 
 @dataclass(frozen=True)
 class Principal:
@@ -59,7 +65,11 @@ class WorkflowStore:
     def connect(self):
         value=self.dsn()if callable(self.dsn)else self.dsn
         if not isinstance(value,str)or not value:raise ValueError('Database credential factory did not return an owned connection')
-        return psycopg.connect(value,connect_timeout=5,row_factory=dict_row,options='-c search_path=pg_catalog,workflow,pg_temp -c statement_timeout=10000 -c lock_timeout=3000')
+        conn=psycopg.connect(value,connect_timeout=5,row_factory=dict_row,options='-c search_path=pg_catalog,workflow,pg_temp -c statement_timeout=10000 -c lock_timeout=3000')
+        try:require_current_schema(conn)
+        except Exception:
+            conn.close();raise
+        return conn
     def _actor(self,conn,actor,roles):
         if not isinstance(actor,Principal):raise Denied('Verified application identity required')
         row=conn.execute('SELECT active,roles FROM workflow.memberships WHERE account_id=%s AND subject=%s FOR SHARE',(actor.account_id,actor.subject)).fetchone()
@@ -103,7 +113,7 @@ class WorkflowStore:
         with self.connect()as conn:
             self._actor(conn,actor,{'user','reviewer','supervisor','owner'})
             new=str(uuid.uuid4())
-            row=conn.execute("INSERT INTO workflow.operations(id,account_id,workflow_key,kind,dedup_key,created_by,source_ref,destination_contract,state) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,'pending') ON CONFLICT(account_id,workflow_key,kind,dedup_key) DO NOTHING RETURNING *",(new,actor.account_id,self.workflow_key,kind,dedup_key,actor.subject,Jsonb(source_ref),Jsonb(self.destination_contract))).fetchone()
+            row=conn.execute("INSERT INTO workflow.operations(id,account_id,workflow_key,kind,dedup_key,created_by,source_ref,destination_contract,state) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,'pending') ON CONFLICT(account_id,workflow_key,kind,dedup_key) DO NOTHING RETURNING *",(new,actor.account_id,self.workflow_key,kind,dedup_key,actor.subject,stored_json(source_ref),Jsonb(self.destination_contract))).fetchone()
             if not row:
                 row=conn.execute('SELECT * FROM workflow.operations WHERE account_id=%s AND workflow_key=%s AND kind=%s AND dedup_key=%s',(actor.account_id,self.workflow_key,kind,dedup_key)).fetchone()
                 if canonical(row['source_ref'])!=canonical(source_ref):raise Conflict('Stable identity cannot refer to a changed source')
@@ -137,7 +147,7 @@ class WorkflowStore:
             self._actor(conn,actor,{'user','reviewer','supervisor','owner'});self._row(conn,operation_id,actor.account_id,lock=False)
             return conn.execute('SELECT revision,result,actor,created_at FROM workflow.results_history WHERE operation_id=%s AND account_id=%s AND revision>%s ORDER BY revision LIMIT %s',(operation_id,actor.account_id,after_revision,limit)).fetchall()
     def _result_history(self,conn,row,actor):
-        conn.execute('INSERT INTO workflow.results_history(operation_id,account_id,revision,result,actor)VALUES(%s,%s,%s,%s,%s)',(row['id'],row['account_id'],row['result_revision'],Jsonb(row['result']),actor))
+        conn.execute('INSERT INTO workflow.results_history(operation_id,account_id,revision,result,actor)VALUES(%s,%s,%s,%s,%s)',(row['id'],row['account_id'],row['result_revision'],stored_json(row['result']),actor))
     def _fingerprint(self,row,result=None):
         payload={'kind':row['kind'],'source':row['source_ref'],'destination':row['destination_contract'],'result':row['result']if result is None else result,'revision':row['result_revision']}
         return hashlib.sha256(canonical(payload,140000)).hexdigest()
@@ -163,7 +173,7 @@ class WorkflowStore:
         with self.connect()as conn:
             row=self._row(conn,operation_id);self._check_lease(conn,row,token,'processing')
             self._contract(row)
-            updated=conn.execute("UPDATE workflow.operations SET result=%s,result_revision=result_revision+1,state='review',approved_hash=NULL,approved_by=NULL,lease_token=NULL,lease_until=NULL,attempts=0,updated_at=clock_timestamp() WHERE id=%s RETURNING *",(Jsonb(result),row['id'])).fetchone();self._result_history(conn,updated,'worker');self._event(conn,updated,'result_ready','worker',{'revision':updated['result_revision']});return updated
+            updated=conn.execute("UPDATE workflow.operations SET result=%s,result_revision=result_revision+1,state='review',approved_hash=NULL,approved_by=NULL,lease_token=NULL,lease_until=NULL,attempts=0,updated_at=clock_timestamp() WHERE id=%s RETURNING *",(stored_json(result),row['id'])).fetchone();self._result_history(conn,updated,'worker');self._event(conn,updated,'result_ready','worker',{'revision':updated['result_revision']});return updated
     def edit_result(self,actor,operation_id,expected_revision,result):
         result=self._payload('result',result)
         if type(expected_revision)is not int:raise ValueError('An exact revision is required')
@@ -171,7 +181,7 @@ class WorkflowStore:
             self._actor(conn,actor,{'reviewer','supervisor','owner'});row=self._row(conn,operation_id,actor.account_id)
             self._contract(row)
             if row['state']!='review' or row['result_revision']!=expected_revision:raise Conflict('Reload the current review before editing')
-            updated=conn.execute('UPDATE workflow.operations SET result=%s,result_revision=result_revision+1,approved_hash=NULL,approved_by=NULL,updated_at=clock_timestamp() WHERE id=%s RETURNING *',(Jsonb(result),row['id'])).fetchone();self._result_history(conn,updated,actor.subject);self._event(conn,updated,'edited',actor.subject,{'revision':updated['result_revision']});return updated
+            updated=conn.execute('UPDATE workflow.operations SET result=%s,result_revision=result_revision+1,approved_hash=NULL,approved_by=NULL,updated_at=clock_timestamp() WHERE id=%s RETURNING *',(stored_json(result),row['id'])).fetchone();self._result_history(conn,updated,actor.subject);self._event(conn,updated,'edited',actor.subject,{'revision':updated['result_revision']});return updated
     def approve(self,actor,operation_id,expected_revision):
         if type(expected_revision)is not int:raise ValueError('An exact revision is required')
         # Read ownership/kind without a row lock, then lock membership before the
@@ -226,7 +236,7 @@ class WorkflowStore:
         canonical(receipt,1500)
         with self.connect()as conn:
             row=self._row(conn,operation_id);self._check_lease(conn,row,token,'dispatching')
-            updated=conn.execute("UPDATE workflow.operations SET state='sent',receipt=%s,lease_token=NULL,lease_until=NULL,updated_at=clock_timestamp() WHERE id=%s RETURNING *",(Jsonb(receipt),row['id'])).fetchone();self._event(conn,updated,'sent','worker',{'payloadSha256':row['approved_hash']});return updated
+            updated=conn.execute("UPDATE workflow.operations SET state='sent',receipt=%s,lease_token=NULL,lease_until=NULL,updated_at=clock_timestamp() WHERE id=%s RETURNING *",(stored_json(receipt),row['id'])).fetchone();self._event(conn,updated,'sent','worker',{'payloadSha256':row['approved_hash']});return updated
     def recover_expired(self,*,limit=50):
         """Owned worker reconciliation, independent of a queue notification's fate.
 

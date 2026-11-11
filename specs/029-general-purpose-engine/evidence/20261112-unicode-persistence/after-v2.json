@@ -1,0 +1,32 @@
+{
+  "validator": "unicode-persistence",
+  "artifactSha256": "8769457b5bad2c05c31f2d46bcd3bd5297b94c8a661d45054a26b181551e7546",
+  "imageId": "sha256:63164e32f99523d8b2f108ee05095d51de7a951934cdc6bd3c99ee78993e8f5f",
+  "runtimeConfigImageId": "sha256:63164e32f99523d8b2f108ee05095d51de7a951934cdc6bd3c99ee78993e8f5f",
+  "platform": "linux/amd64",
+  "isolationProfile": "postgresql-local-v1",
+  "runtimeEnvironment": {},
+  "command": [
+    "/usr/local/bin/python3",
+    "-I",
+    "/opt/atmem/sql_validation.py",
+    "-m",
+    "unittest",
+    "discover",
+    "-s",
+    "oracle",
+    "-v"
+  ],
+  "status": "passed",
+  "exitCode": 0,
+  "executableScratch": false,
+  "skipped": 0,
+  "testsReported": 4,
+  "reason": null,
+  "output": "test_large_non_bmp_result_remains_in_byte_contract_and_history (test_persistence.Persistence.test_large_non_bmp_result_remains_in_byte_contract_and_history) ... ok\ntest_two_domains_preserve_control_unicode_history_approval_and_receipt (test_persistence.Persistence.test_two_domains_preserve_control_unicode_history_approval_and_receipt) ... ok\ntest_unknown_schema_blocks_runtime_and_grants_without_rewriting (test_persistence.Persistence.test_unknown_schema_blocks_runtime_and_grants_without_rewriting) ... ok\ntest_stale_schema_prevents_queue_registration_and_callbacks (test_worker_admission.WorkerAdmission.test_stale_schema_prevents_queue_registration_and_callbacks) ... ok\n\n----------------------------------------------------------------------\nRan 4 tests in 3.800s\n\nOK\n",
+  "outputTruncated": false,
+  "durationSeconds": 7.093,
+  "evidenceLevel": "local_container_check",
+  "cloudOperations": false,
+  "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+}

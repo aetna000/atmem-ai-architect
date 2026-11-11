@@ -86,6 +86,29 @@ class PayloadContractTests(unittest.TestCase):
 class PayloadPostgresTests(DurableFixture,unittest.TestCase):
     def owned(self,value):
         return WorkflowStore(self.dsn,self.extract,self.dispatch,destination_contract=FIXTURE_CONTRACT,payload_contract=PayloadContract(value))
+    def test_unicode_controls_survive_two_domain_source_result_history_and_receipt(self):
+        for domain,source,result in [
+            ('equipment-reservation',{'itemId':'asset\0🙂','memberId':'member-1'},{'loanDays':14,'inspectionRequired':False}),
+            ('editorial-publication',{'articleId':'article\0🙂','revision':1},{'title':'Draft\0🙂','channels':['web']})]:
+            with self.subTest(domain=domain):
+                store=self.owned(definition(domain))
+                operation=store.submit(self.user,'draft',domain,source)
+                self.assertEqual(store.submit(self.user,'draft',domain,source),operation)
+                claim=store.claim_extract(operation)
+                store.record_result(operation,str(claim['lease_token']),result)
+                store.edit_result(self.reviewer,operation,1,result)
+                self.assertEqual(store.get(self.user,operation)['source_ref'],source)
+                self.assertEqual([row['result']for row in store.result_history(self.reviewer,operation)],[result,result])
+                store.approve(self.reviewer,operation,2);claim=store.claim_dispatch(operation)
+                receipt={'externalId':'receipt\0🙂'}
+                store.record_sent(operation,str(claim['lease_token']),receipt)
+                self.assertEqual(store.get(self.user,operation)['receipt'],receipt)
+    def test_large_utf8_result_is_not_rejected_by_ascii_serialization_expansion(self):
+        value=definition('editorial-publication');value['result']['properties']['title']=text(64000)
+        store=self.owned(value);result={'title':'🙂'*15000,'channels':['web']}
+        operation=store.submit(self.user,'draft','long-unicode',{'articleId':'long','revision':1})
+        claim=store.claim_extract(operation);store.record_result(operation,str(claim['lease_token']),result)
+        self.assertEqual(store.result_history(self.reviewer,operation)[0]['result'],result)
     def test_two_domains_use_same_real_approval_and_queue_mechanisms(self):
         for domain,source,result in [
             ('equipment-reservation',{'itemId':'microscope','memberId':'member-1'},{'loanDays':7,'inspectionRequired':True}),

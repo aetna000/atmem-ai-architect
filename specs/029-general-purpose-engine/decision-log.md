@@ -1229,3 +1229,18 @@ graph/runbook/rollback and generic SDK adaptations stay pending. See native-azur
 labels/assessment-v2.json. Next repair generic Unicode persistence and review
 inspection/child policies without domain imports, then Google/IBM transfers and
 alpha.5. Four offered increments/1-of28/owner0/unknown quality remain unchanged.
+
+GE-006 generic Unicode persistence checkpoint: the shared contract previously
+accepted U+0000 then failed JSONB persistence in both archive transcription and
+sensor annotations. Fresh schema2 now stores canonical UTF8 JSON source/result/
+history/receipt objects; no clipping/domain inference or ASCII expansion. Exact
+version/source/queue admission precedes store use and worker queue writes, with
+operator grant/maintenance guards. Identical original three-case oracle passes
+plus a worker-admission test;83 regular workflow regressions/no skips,4 provider
+materializations,554JS/452server/build pass. Primary PostgreSQL17.11 source pinned.
+No existing databases migrated, frozen client artifacts/pins or owner previews
+changed. Keep schema1 and its old runtime together pending authorized reviewed
+migration/rollback. Evidence: evidence/20261112-unicode-persistence/README.md.
+Next review generic inspection/child policies and remaining independent client
+failures/receiving checks, then Google/IBM native transfers and alpha.5. Four
+offered increments/1-of28/owner0/unknown quality and the full programme remain.

@@ -1,7 +1,7 @@
 -- Apply only through the reviewed migration role, in its own database/schema.
 -- Queue schema is supplied by the pinned Procrastinate dependency, not copied here.
 CREATE TABLE workflow.schema_version (
-    version integer PRIMARY KEY CHECK (version = 1),
+    version integer PRIMARY KEY CHECK (version = 2),
     source_sha256 text NOT NULL,
     queue_version text NOT NULL,
     created_at timestamptz NOT NULL DEFAULT clock_timestamp()
@@ -24,10 +24,13 @@ CREATE TABLE workflow.operations (
     kind text NOT NULL CHECK (kind IN ('document','draft','account_change')),
     dedup_key text NOT NULL CHECK (octet_length(dedup_key) BETWEEN 1 AND 200),
     created_by text NOT NULL,
-    source_ref jsonb NOT NULL CHECK (jsonb_typeof(source_ref) = 'object'),
+    -- Payload JSON must retain every accepted Unicode scalar, including U+0000.
+    -- Do not cast these fields to jsonb/text scalars: PostgreSQL cannot represent
+    -- NUL in text. Application contracts validate and canonically bind the JSON.
+    source_ref json NOT NULL CHECK (json_typeof(source_ref) = 'object'),
     destination_contract jsonb NOT NULL CHECK (jsonb_typeof(destination_contract) = 'object'),
     state text NOT NULL CHECK (state IN ('pending','processing','review','approved','dispatching','unknown','sent','dead')),
-    result jsonb,
+    result json,
     result_revision integer NOT NULL DEFAULT 0,
     approved_hash text,
     approved_by text,
@@ -36,7 +39,7 @@ CREATE TABLE workflow.operations (
     execution_epoch bigint NOT NULL DEFAULT 0,
     attempts integer NOT NULL DEFAULT 0,
     queue_job_id bigint,
-    receipt jsonb,
+    receipt json,
     created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
     updated_at timestamptz NOT NULL DEFAULT clock_timestamp(),
     UNIQUE (account_id, workflow_key, kind, dedup_key),
@@ -50,7 +53,7 @@ CREATE TABLE workflow.results_history (
     operation_id uuid NOT NULL,
     account_id uuid NOT NULL,
     revision integer NOT NULL CHECK (revision > 0),
-    result jsonb NOT NULL CHECK (jsonb_typeof(result) = 'object' AND octet_length(result::text) <= 70000),
+    result json NOT NULL CHECK (json_typeof(result) = 'object' AND octet_length(result::text) <= 70000),
     actor text NOT NULL,
     created_at timestamptz NOT NULL DEFAULT clock_timestamp(),
     PRIMARY KEY (operation_id,revision),

@@ -114,6 +114,11 @@ class WorkflowRuntime:
                 # Close even when the initial pool wait fails: retaining a
                 # partially opened pool would bypass fresh credentials on retry.
                 try:
+                    # Admit the exact owned schema before queue registration,
+                    # heartbeat/recovery writes or fetching a notification.
+                    def admit():
+                        with self.store.connect():pass
+                    await asyncio.to_thread(admit)
                     await self.app.open_async()
                     async def recovery():
                         while True:

@@ -13,6 +13,16 @@ import procrastinate
 from procrastinate.schema import SchemaManager
 
 QUEUE_TABLES=['procrastinate_jobs','procrastinate_events','procrastinate_workers','procrastinate_periodic_defers']
+SCHEMA_VERSION=2
+
+
+def require_current_schema(conn):
+    """Read-only admission; never migrate/adopt a database during runtime use."""
+    expected=hashlib.sha256((Path(__file__).parent/'workflow_schema.sql').read_bytes()).hexdigest()
+    with conn.cursor(row_factory=tuple_row)as cursor:
+        row=cursor.execute('SELECT version,source_sha256,queue_version FROM workflow.schema_version').fetchone()
+    if row!=(SCHEMA_VERSION,expected,'3.10.0'):
+        raise ValueError('Use the owned exact schema version; review migrations before using this runtime')
 
 def initialize_database(conn):
     if procrastinate.__version__!='3.10.0':raise ValueError('Use the reviewed queue dependency before migration')
@@ -23,7 +33,7 @@ def initialize_database(conn):
     conn.execute('SET LOCAL search_path=workflow,pg_catalog')
     conn.execute(SchemaManager.get_schema())
     conn.execute(body.decode('utf-8'))
-    conn.execute('INSERT INTO workflow.schema_version(version,source_sha256,queue_version) VALUES(1,%s,%s)',(hashlib.sha256(body).hexdigest(),procrastinate.__version__))
+    conn.execute('INSERT INTO workflow.schema_version(version,source_sha256,queue_version) VALUES(%s,%s,%s)',(SCHEMA_VERSION,hashlib.sha256(body).hexdigest(),procrastinate.__version__))
     conn.execute('REVOKE ALL ON SCHEMA workflow FROM PUBLIC')
     conn.execute('REVOKE ALL ON ALL TABLES IN SCHEMA workflow FROM PUBLIC')
     conn.execute('REVOKE ALL ON ALL SEQUENCES IN SCHEMA workflow FROM PUBLIC')
@@ -37,10 +47,7 @@ def grant_runtime_roles(conn,api_role,worker_role,*,native_provider=None):
     conn.execute("SELECT pg_advisory_xact_lock(hashtextextended('atmem-workflow-runtime-grants-v1',0))")
     authentication_roles={None:set(),'aws':{'rds_iam'},'azure':set(),'gcp':{'cloudsqliamuser','cloudsqliamserviceaccount'},'ibm':set()}
     if native_provider not in authentication_roles:raise ValueError('Use an explicitly reviewed native database grant profile')
-    expected=hashlib.sha256((Path(__file__).parent/'workflow_schema.sql').read_bytes()).hexdigest()
-    with conn.cursor(row_factory=tuple_row)as cursor:
-        row=cursor.execute('SELECT version,source_sha256,queue_version FROM workflow.schema_version').fetchone()
-    if row!=(1,expected,'3.10.0'):raise ValueError('Use the owned exact schema version; review migrations before changing grants')
+    require_current_schema(conn)
     if api_role==worker_role:raise ValueError('Application and worker database identities must be separate')
     for role in [api_role,worker_role]:
         if not isinstance(role,str)or not re.fullmatch(r'[A-Za-z0-9_.@-]{1,63}',role):raise ValueError('Use the reviewed existing native database principal name')
