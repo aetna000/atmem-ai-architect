@@ -3,6 +3,7 @@ import React,{useEffect,useRef,useState} from 'react';
 import {engineeringCall,engineeringConversation,mergeEngineeringEvents,verifiedEngineeringDownload} from './engineering-client.mjs';
 import './engineering.css';
 import {ArtifactChecks} from './ArtifactChecks.jsx';
+import {verifyArtifactWork} from './artifact-work.mjs';
 
 export function EngineeringPanel({projectId,session,connection,saveProject,onConnections,project,onWorkModelChange,onIntentContext,contextBusy=false}){
   const draftKey=`atmem-engineering-draft-v1:${projectId}`;
@@ -74,6 +75,13 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
       if(live.current){setJob(next);setArtifact(null);setDraft(value=>value===submitted?'':value);}
     });
   }
+  async function linkMappings(){
+    const result=await call('reconciliation',{artifactId:artifact.id});
+    if(result.status==='proposal_missing')throw Error(result.message);
+    const verified=await verifyArtifactWork(result);
+    if(verified.payload.artifactId!==artifact.id||verified.payload.artifactSha256!==artifact.sha256||verified.payload.sessionId!==job.id)throw Error('The mapping receipt does not match this captured package.');
+    onWorkModelChange({kind:'artifact',verified},projectId);
+  }
   return <div className="engineering-panel">
     <h2>Build your project</h2>
     <p>Describe what you need. The architect builds implementation files and runs local checks. Work continues when you leave this view.</p>
@@ -112,6 +120,7 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
         {artifact.runId!==job?.run&&<p>This package is from an earlier turn. It does not cover the current work.</p>}
         <button disabled={busy} onClick={()=>act(async()=>{const blob=await verifiedEngineeringDownload(session,{projectId,sessionId:job.id,artifactId:artifact.id},artifact);const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=`engineering-${artifact.id}.zip`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);})}>Download package</button>
         {!running&&!uncertain&&job?.last_status==='completed'&&artifact.runId===job.run&&<button disabled={busy} onClick={()=>act(async()=>{await call('recheck',{runId:job.run,artifactId:artifact.id});const next=await call('state');if(live.current)setJob(next);})}>Recheck and repair</button>}
+        {onWorkModelChange&&!running&&!uncertain&&job?.last_status==='completed'&&artifact.runId===job.run&&<button disabled={busy||contextBusy} onClick={()=>act(linkMappings)}>Link proposed mappings</button>}
         <ArtifactChecks key={artifact.id} session={session} projectId={projectId} sessionId={job.id} artifact={artifact}/>
       </div>}
     </>}

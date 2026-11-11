@@ -1,7 +1,7 @@
 // Shared context/dependency model. Currency means exact context agreement, never
 // proof that a claimed implementation, test, account plan or deployment succeeded.
 import {engineeringConversation} from './engineering-client.mjs';
-export const WORK_VERSION=1;
+export const WORK_VERSION=2;
 export const WORK_KINDS=['responsibility','delivery-unit','interface','implementation','assumption','decision','evidence','requirement'];
 const clone=value=>JSON.parse(JSON.stringify(value));
 const order=(a,b)=>a<b?-1:a>b?1:0;
@@ -15,12 +15,13 @@ function ref(value){return text(value,240,'work reference');}
 function array(value,max,name){if(!Array.isArray(value)||value.length>max)throw Error(`Invalid or oversized ${name}; no records were discarded.`);}
 function assertWorkJSON(v,depth=0){if(depth>40)throw Error('Architecture work is nested too deeply.');if(v===null||typeof v==='string'||typeof v==='boolean')return;if(typeof v==='number'&&Number.isFinite(v))return;if(Array.isArray(v)){v.forEach(x=>assertWorkJSON(x,depth+1));return;}if(plain(v)&&[Object.prototype,null].includes(Object.getPrototypeOf(v))){Object.values(v).forEach(x=>assertWorkJSON(x,depth+1));return;}throw Error('Work data must be lossless finite JSON values.');}
 
-export function emptyArchitectureWork(){return {version:WORK_VERSION,records:[],intents:[],snapshots:[],bindings:[],history:[]};}
+export function emptyArchitectureWork(){return {version:WORK_VERSION,records:[],intents:[],snapshots:[],bindings:[],history:[],artifactMappings:[]};}
 export function validateArchitectureWork(value){
  if(value===undefined)return emptyArchitectureWork();
- only(value,['version','records','intents','snapshots','bindings','history'],'architecture work');
+ if(value.version===1){only(value,['version','records','intents','snapshots','bindings','history'],'legacy architecture work');value={...value,version:WORK_VERSION,artifactMappings:[]};}
+ only(value,['version','records','intents','snapshots','bindings','history','artifactMappings'],'architecture work');
  if(value.version!==WORK_VERSION)throw Error('Unsupported architecture work version; retain the file and use a compatible reader.');
- for(const key of ['records','intents','snapshots','bindings','history'])array(value[key],key==='snapshots'?4000:1000,key);
+ for(const key of ['records','intents','snapshots','bindings','history','artifactMappings'])array(value[key],key==='snapshots'?4000:1000,key);
  const unique=(items,key,name)=>{const seen=new Set();for(const item of items){const id=ref(item[key]);if(seen.has(id))throw Error(`Duplicate ${name}: ${id}`);seen.add(id);}};
  unique(value.records,'id','work record');unique(value.intents,'id','engineering intent');unique(value.snapshots,'id','context snapshot');unique(value.bindings,'ref','context binding');
  for(const r of value.records){
@@ -43,6 +44,22 @@ export function validateArchitectureWork(value){
   const refs=b.snapshotIds.map(id=>snapshots.get(id).ref);if(new Set(refs).size!==refs.length||!refs.includes(b.ref))throw Error('A binding must retain its own source exactly once.');
   if(b.scope!=='context_review_only'||!['user','agent','import'].includes(b.recordedBy)||!/^\d{4}-\d\d-\d\dT/.test(b.recordedAt)||!Number.isFinite(Date.parse(b.recordedAt)))throw Error('Context review is distinct from executed evidence.');
  }
+ unique(value.artifactMappings,'id','artifact mapping receipt');
+ for(const m of value.artifactMappings){
+  only(m,['id','receiptSha256','sessionId','runId','artifactId','artifactSha256','proposalSha256','contextId','contextRevision','contextSha256','definitionSha256','records','files','sourceSnapshotIds','recordedAt','scope'],'artifact mapping');
+  for(const key of ['id','sessionId','runId','artifactId','contextId'])text(m[key],100,key);
+  for(const key of ['receiptSha256','artifactSha256','proposalSha256','contextSha256','definitionSha256'])if(!/^[a-f0-9]{64}$/.test(m[key]))throw Error('Artifact references require exact SHA-256 digests.');
+  if(m.scope!=='artifact_file_binding_only'||!Number.isSafeInteger(m.contextRevision)||m.contextRevision<1||!Number.isFinite(Date.parse(m.recordedAt)))throw Error('Artifact file binding is distinct from execution or acceptance.');
+  array(m.records,200,'artifact records');if(!m.records.length)throw Error('Empty artifact mapping receipt.');
+  validateArchitectureWork({...emptyArchitectureWork(),records:m.records});
+  if(m.records.some(r=>r.source!=='agent'||r.agreement!=='proposed'))throw Error('Artifact mappings remain proposed.');
+  array(m.files,2000,'artifact file bindings');const paths=new Set();
+  for(const file of m.files){only(file,['path','bytes','sha256'],'artifact file binding');if(paths.has(file.path)||!Number.isSafeInteger(file.bytes)||file.bytes<0||!/^[a-f0-9]{64}$/.test(file.sha256))throw Error('Invalid artifact file binding.');paths.add(file.path);}
+  for(let i=0;i<m.files.length;i+=200)validateArchitectureWork({...emptyArchitectureWork(),records:[{id:'file-paths',kind:'implementation',title:'File paths',description:'',source:'agent',agreement:'proposed',dependsOn:[],data:{files:m.files.slice(i,i+200).map(f=>f.path)}}]});
+  array(m.sourceSnapshotIds,4000,'artifact basis');const refs=new Set();
+  for(const id of m.sourceSnapshotIds){const source=snapshots.get(id);if(!source||refs.has(source.ref))throw Error('Artifact basis must retain unique exact source snapshots.');refs.add(source.ref);}
+  if(!refs.has('project:identity'))throw Error('Artifact basis must retain its project identity.');
+ }
  assertWorkJSON(value);
  const encoded=JSON.stringify(value);if(new TextEncoder().encode(encoded).length>1_500_000)throw Error('Architecture work history exceeds its storage bound; retain/archive it before adding more. Nothing was discarded.');
  return clone(value);
@@ -53,7 +70,8 @@ function store(project,state){validateArchitectureWork(state);return {...project
 export function architectureSources(project,state=stateOf(project)){
  const entries=[];const add=(id,kind,title,value,dependsOn=[])=>entries.push({id,kind,title,value:clone(value),dependsOn:[...new Set([...(id==='project:identity'?[]:['project:identity']),...dependsOn])].sort()});
  add('project:identity','identity','Project identity',{id:project.id||null});
- add('intent:project','intent','Project intent',{text:project.requirements||''});
+ const annotations=(project.nodes||[]).filter(n=>n.data.kind==='note').map(n=>{const {inputPosition,outputPosition,config,provider,origin,...data}=n.data;return {id:n.id,data:{description:'',...data}};}).sort((a,b)=>order(a.id,b.id));
+ add('intent:project','intent','Project intent',{text:project.requirements||'',...Object.fromEntries(['brief','useCases','facts','workflow','domain'].filter(k=>project[k]!==undefined).map(k=>[k,project[k]])),...(annotations.length?{annotations}:{})});
  add('selection:provider','selection','Selected target provider',{provider:project.provider||'tools'});
  const global=['intent:project','selection:provider',...state.intents.map(i=>'intent:'+i.id)];
  for(const i of state.intents)add('intent:'+i.id,'intent','Engineering request '+i.sequence,i);
@@ -69,8 +87,9 @@ export function architectureSources(project,state=stateOf(project)){
   add('block:'+n.id,'responsibility',n.data.label,meaning,[...global,...linked(project.needs||[],'requirement'),...linked(project.assumptions||[],'assumption'),...linked(project.openQuestions||[],'question'),...decisions]);
  }
  for(const e of project.edges||[]){
-  const {id,source,target,label,access,integration}=e;
-  add('interface:'+id,'interface',label||id,{source,target,...(label!==undefined?{label}:{}),...(access!==undefined?{access}:{}),...(integration!==undefined?{integration}:{})},['block:'+source,'block:'+target]);
+  const {id,source,target,label}=e;
+  const visual=new Set(['id','type','sourceHandle','targetHandle','style','markerStart','markerEnd','animated','selected','hidden','labelStyle','labelBgStyle','labelShowBg','labelBgPadding','labelBgBorderRadius']);
+  add('interface:'+id,'interface',label||id,Object.fromEntries(Object.entries(e).filter(([key])=>!visual.has(key))),['block:'+source,'block:'+target]);
  }
  for(const r of state.records)add('work:'+r.id,r.kind,r.title,r,[...global,...r.dependsOn]);
  if(new Set(entries.map(e=>e.id)).size!==entries.length)throw Error('Duplicate architecture source identity.');
@@ -98,6 +117,15 @@ export function architectureWork(project){
 export function workContextIdentity(project,target){
  const current=context(architectureSources(project),target);
  return canonicalWork({sources:Object.fromEntries(current.values),missing:current.missing});
+}
+export function captureWorkSources(state,entries){
+ const snapshots=[...state.snapshots],ids=[];let next=1;
+ for(const s of snapshots){const n=Number(/^basis-(\d+)$/.exec(s.id)?.[1]);if(Number.isSafeInteger(n))next=Math.max(next,n+1);}
+ for(const value of [...entries].sort((a,b)=>order(a.id,b.id))){
+  let snapshot=snapshots.find(s=>s.ref===value.id&&canonicalWork(s.value)===canonicalWork(value));
+  if(!snapshot){snapshot={id:'basis-'+next++,ref:value.id,value:clone(value)};snapshots.push(snapshot);}ids.push(snapshot.id);
+ }
+ return {snapshots,ids};
 }
 export function applyArchitectureChange(project,owner,change){
  if(project.id!==owner)return project;

@@ -1,4 +1,6 @@
 import {synchronizeEngineeringIntent,applyArchitectureChange} from './architecture-work.mjs';
+import {applyArtifactWork} from './artifact-work.mjs';
+import {ArchitectureWorkPanel} from './ArchitectureWorkPanel.jsx';
 import {version as appVersion} from "../package.json";
 import {restoreQueuedMessages,nextIntakeBatch,restoreIntakePaused} from './work-intake.mjs';
 import {emulationGuidance,guidanceMessage} from './emulation-guidance.mjs';
@@ -442,7 +444,7 @@ function Linked({ project, id, hideNeeds = false }) {
   );
 }
 
-function BlockDetail({ project, node, run, probe, busy, reviewItems, onReviewConfirm, onReviewDiscuss, onReviewQuestion, onReviewResolve, onRequirementSave, onChange, onRemove, onOpen, onBack }) {
+function BlockDetail({ project, node, run, probe, busy, reviewItems, onReviewConfirm, onReviewDiscuss, onReviewQuestion, onReviewResolve, onRequirementSave, onWorkModelChange, onChange, onRemove, onOpen, onBack }) {
   const trace = run?.steps.find((s) => s.id === node.id);
   const inputs = project.edges.filter((e) => e.target === node.id);
   const outputs = project.edges.filter((e) => e.source === node.id);
@@ -488,6 +490,7 @@ function BlockDetail({ project, node, run, probe, busy, reviewItems, onReviewCon
         </div>
         <p className="muted">{node.data.description || "No description."}</p>
         <BlockRequirements project={project} nodeId={node.id} busy={busy} onSave={onRequirementSave}/>
+        {project.extensions?.architectureWork?.artifactMappings?.length>0&&<ArchitectureWorkPanel project={project} onChange={onWorkModelChange} busy={busy}/>}
         <ComponentReview key={node.id} item={reviewItems.find(r=>r.id===node.id)} items={reviewItems} busy={busy} onOpen={onOpen} onConfirm={onReviewConfirm} onDiscuss={onReviewDiscuss} onQuestion={onReviewQuestion} onResolve={onReviewResolve} onDetailAnswer={patch=>onChange({...node,data:{...node.data,...patch,...(patch.config?{config:{...node.data.config,...patch.config}}:{})}})}/>
         <details className="component-settings"><summary>Component settings</summary><div className="fields">
           <label>
@@ -892,7 +895,7 @@ function App() {
     setProject(updated);
   }, []);
   const syncEngineeringIntent=useCallback((owner,id,events)=>{const current=projectRef.current,next=synchronizeEngineeringIntent(current,id,events,owner);if(next!==current)updateEngagement(next);},[updateEngagement]);
-  const changeArchitectureWork=useCallback((change,owner)=>{const current=projectRef.current,next=applyArchitectureChange(current,owner,change);if(next!==current){toProjectFile(next);updateEngagement(next);}},[updateEngagement]);
+  const changeArchitectureWork=useCallback((change,owner)=>{const current=projectRef.current,next=change.kind==='artifact'?applyArtifactWork(current,owner,change.verified):applyArchitectureChange(current,owner,change);if(next!==current){toProjectFile(next);updateEngagement(next);}},[updateEngagement]);
   const allIssues = checkProject(project).filter((i) => i.level !== "info");
   // Fixture checks only matter for designs that can be test-run; sketches are reviewed in Review.
   const runnable = project.nodes.some((n) => n.data.kind !== "note") && !project.nodes.some((n) => n.data.kind === "resource");
@@ -2049,6 +2052,7 @@ function App() {
             onReviewQuestion={question=>updateEngagement({...project,openQuestions:[...(project.openQuestions||[]),newQuestion({question,links:[selectedNode.id]})]})}
             onReviewResolve={(id,answer)=>updateEngagement({...project,openQuestions:project.openQuestions.map(q=>q.id===id?{...q,status:'answered',answer}:q)})}
             onChange={updateNode}
+            onWorkModelChange={changeArchitectureWork}
             onRemove={() => removeNode(selectedNode.id)}
             onOpen={(id) => openBlock(id)}
             onBack={goUp}

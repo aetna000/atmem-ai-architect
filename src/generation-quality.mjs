@@ -2,6 +2,7 @@ import catalogue from '../agent-skills/generation-capabilities.json' with {type:
 import skillDigests from '../agent-skills/specialists/manifest.json' with {type:'json'};
 import lifecycle from '../agent-skills/service-lifecycle.json' with {type:'json'};
 import {generationProviders} from './generation-provider.mjs';
+import {artifactWorkProjection} from './artifact-work.mjs';
 export function generationQuality(project,plan,files){
  const config=JSON.parse(files['main.tf.json']);
  const providers=generationProviders(project),findings=[];
@@ -33,5 +34,6 @@ export function generationQuality(project,plan,files){
  const unfinished=config.locals?.unfinished_work||[];
  const skills=[...new Set([...catalogue.skills,...providers])].filter(id=>skillDigests[id]).map(id=>({id,sha256:skillDigests[id]}));
  const fatalCodes=new Set(['provider-mismatch','missing-resource','unreviewed-provider','embedded-provider-credential','execution-hook','external-execution-or-state','unreviewed-module','unregistered-implementation','service-eligibility-unverified']);
- return {version:1,fatalFindings:findings.filter(f=>fatalCodes.has(f.code)),designRevision:project.revision,catalogueVersion:catalogue.version,providers,skills,skillUsage:"Referenced reviewed guidance; model execution of skills is not attested by this export.",components,findings,infrastructureComplete:findings.length===0&&unfinished.length===0&&emitted.length>0,validation:{schema:'not_run',runtime:'not_run',cloudPlan:'not_run'},deploymentCandidate:false,evidenceBoundary:catalogue.evidenceBoundary};
+ const artifactMappings=artifactWorkProjection(project);
+ return {version:1,fatalFindings:findings.filter(f=>fatalCodes.has(f.code)),designRevision:project.revision,catalogueVersion:catalogue.version,providers,skills,skillUsage:"Referenced reviewed guidance; model execution of skills is not attested by this export.",components,findings,artifactMappings:{file:'architecture-artifact-mappings.json',references:artifactMappings.mappings.map(m=>({id:m.id,artifactId:m.artifactId,artifactSha256:m.artifactSha256,contextStatus:m.contextStatus,recordIds:m.records.map(r=>r.id)})),boundary:artifactMappings.boundary},infrastructureComplete:findings.length===0&&unfinished.length===0&&emitted.length>0,validation:{schema:'not_run',runtime:'not_run',cloudPlan:'not_run'},deploymentCandidate:false,evidenceBoundary:catalogue.evidenceBoundary};
 }

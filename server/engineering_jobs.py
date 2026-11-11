@@ -148,6 +148,17 @@ class EngineeringJobs:
             if task is not None and not task.done():
                 return self.state(scope, session)
             state = await self.sessions.resume(scope, session)
+            if state['state']!='starting' and state['run'] is not None:
+                # A lost start acknowledgement may have prevented the original
+                # accepted journal commit. Recover exact intent through the owned
+                # durable run, not guessed text or an inference replay.
+                known=self.sessions.store.db.execute("SELECT 1 FROM engineering_events WHERE session=? AND json_extract(payload,'$.kind')='accepted' AND json_extract(payload,'$.runId')=?",(session,state['run'])).fetchone()
+                if not known:
+                    saved=self.sessions.store.db.execute('SELECT intent,turn FROM engineering_runs WHERE id=? AND session=?',(state['run'],session)).fetchone()
+                    if saved and saved['turn'] and isinstance(saved['intent'],str):
+                        has_repairs=self.sessions.store.db.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='engineering_repairs'").fetchone()
+                        repair=has_repairs and self.sessions.store.db.execute('SELECT 1 FROM engineering_repairs WHERE run=? AND session=?',(state['run'],session)).fetchone()
+                        self._record(scope,session,'accepted',runId=state['run'],text=saved['intent'],origin='automatic_repair' if repair else 'recovered_client_request')
             self._record(scope, session, 'recovered', state=state['state'],
                          text='State reconciled from native history. Progress emitted before journal commit may be unavailable.',
                          validation='not_established_by_agent_turn')

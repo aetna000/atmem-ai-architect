@@ -1,6 +1,7 @@
 import{applyInvoiceTasks,invoiceSpecDocuments}from'./invoice-spec-kit.mjs';
 import {interfaceContracts} from './interface-contracts.mjs';
 import {implementationMap} from './implementation-map.mjs';
+import {artifactWorkProjection} from './artifact-work.mjs';
 import {terraformSketch} from './terraform.mjs';
 import {implementationOutcome} from './implementation-outcome.mjs';
 // Implementation handoff, derived from requirements and the graph; never mutates them.
@@ -147,6 +148,7 @@ export function specKit(project,{snapshotId,stamp,environment,now}){
  const files={
   'spec-kit/interfaces.json':json({version:1,designRevision:project.revision,interfaces,evidenceBoundary:'Compiler-defined contracts; actual service behavior, model quality and account access require independent tests.'}),
   "spec-kit/implementation-map.json":json(implementation),
+  "spec-kit/artifact-mappings.json":json(artifactWorkProjection(project)),
  'spec-kit/readiness.json':json({...readiness,snapshotId}),
  'spec-kit/readiness.md':`${stamp}\n\n${handoffMarkdown(readiness)}`,
  'START_HERE.md':`# Start here — ${project.name}\n\n${stamp}\n\nGive this ZIP to a coding agent with this instruction:\n\n> Read AGENTS.md and spec-kit/plan.md. Review the specification, design and implementation tasks. Explain the first actionable task and ask about the highest-impact missing decision. Then implement approved scope, maintaining task progress and test evidence. Do not treat this handoff as permission to deploy.\n\n## Reading order\n\n1. AGENTS.md\n2. specification.md or specification.pdf\n3. diagram.svg or diagram.pdf, then resource-schedule.json\n4. spec-kit/readiness.md, plan.md, contracts.md and questions.md\n5. spec-kit/tasks.md or tasks.json\n6. terraform/ and estimate.json\n\nproject.atmem-ai-architect.json is the editable source snapshot. PDFs/images are review formats. The receiving agent needs the destination repository, runtime decisions and appropriate access; unknowns are listed rather than invented.\n`,
@@ -165,6 +167,11 @@ export function specKit(project,{snapshotId,stamp,environment,now}){
  if(resources.invoicePlan?.entries.length){
   files['spec-kit/plan.md']+='\n## Invoice delivery phases\n\nRead invoice-delivery.md and the concrete TASK-INVOICE-* dependencies. The emitted\nsource supplies runtime, parser, queue, identities and operating jobs. Validate it\nlocally, then separately authorize state/account planning, foundation, image\npublication, SQL/staff bootstrap, schedule/alert acceptance and application release.\nDo not ask the user to invent already supplied commands or clear scope gates.\n';
   files['spec-kit/contracts.md']=`# Invoice component and interface contracts\n\n${stamp}\n\nRead interfaces.json for the exact generated upload/review and approved-accounting\nrequest, response, authorization, timeout, idempotency and recovery contracts.\nRead implementation-map.json for exact files, native resource addresses and inputs.\nGenerated contracts do not establish actual accounting compatibility or cloud access.\n\n${resources.rows.map(row=>`## ${row.label} (${row.id})\n\n${nodes.get(row.id)?.data.description||row.label}\n\n${row.invoice?'Supplied API/worker and separate private parser, durable SQL/outbox, original-version store, native staff verification, current SQL membership/reviewer checks and operator tools. Source and locks: terraform/applications/'+row.address+'/. Read BUILD.md, TESTING.md, invoice-contract.json, OPERATING_JOBS.md and OPERATIONS.md. Native model policy, actual accounting contract, private routing, permissions, schedules, notifications and recovery remain destination acceptance.':row.existing?'Preserved existing actor/service. No resource creation/import/replacement or availability is inferred.':row.terraform}`).join('\n\n')}\n`;
+ }
+ const artifactMappings=artifactWorkProjection(project);
+ if(artifactMappings.mappings.length){
+  files['spec-kit/plan.md']+='\n\n## Recorded native artifact mappings\n\nRead artifact-mappings.json for exact artifact IDs/digests, proposed work records, file hashes and saved-context currency. These reference separately downloadable native packages; their source bytes are not embedded by these references. Retained previous versions and unmapped requirements remain visible. File binding does not complete compiler tasks, prove behavior or authorize deployment.\n';
+  files['spec-kit/validation.md']+='\n\n## Native file-reference coverage\n\n'+bullets(artifactMappings.coverage.map(r=>`${r.ref}: ${r.status}; ${r.references.map(x=>`${x.recordId} in artifact ${x.artifactId}: ${x.files.join(', ')}`).join('; ')||'No current file mapping recorded.'}`))+'\n\nA file reference is not a successful requirement acceptance test. Reverify each receipt with its owning session service and execute the referenced immutable package.\n';
  }
  files['spec-kit/implementation-spec.md']=['spec-kit/plan.md','spec-kit/readiness.md','spec-kit/contracts.md','spec-kit/tasks.md','spec-kit/validation.md',...(files['spec-kit/invoice-delivery.md']?['spec-kit/invoice-delivery.md']:[])].map(name=>files[name]).join('\n\n');
  return files;

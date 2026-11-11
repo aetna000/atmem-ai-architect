@@ -1,9 +1,10 @@
 import React,{useState,useMemo} from 'react';
 import {architectureWork,workContextIdentity} from './architecture-work.mjs';
+import {artifactWorkProjection} from './artifact-work.mjs';
 const labels={current:'Context current',changed:'Review again',missing:'Missing reference',unreviewed:'Not reviewed'};
 function WorkPanel({project,onChange,busy=false}){
  const [error,setError]=useState('');
- const result=useMemo(()=>{try{return {model:project?architectureWork(project):null};}catch(e){return {error:e.message};}},[project]);
+ const result=useMemo(()=>{try{return {model:project?architectureWork(project):null,artifacts:project?artifactWorkProjection(project):null};}catch(e){return {error:e.message};}},[project]);
  if(!project)return null;
  if(result.error)return <p role="alert">Work context could not be read: {result.error}</p>;
  const model=result.model;
@@ -30,6 +31,14 @@ function WorkPanel({project,onChange,busy=false}){
    {onChange&&e.contextStatus!=='missing'&&<button disabled={busy} onClick={()=>{try{apply({kind:'review',ref:e.id,expectedContext:workContextIdentity(project,e.id)});}catch(e){setError(e.message);}}}>Record context review: {e.title}</button>}
   </li>)}</ul>:<p>No responsibilities or implementation mappings recorded yet. Engineering can propose them without changing the existing diagram.</p>}
   {onChange&&<label>Import proposed work mappings<input type="file" accept="application/json,.json" disabled={busy} onChange={importProposal}/></label>}
+  {result.artifacts.mappings.length>0&&<section aria-label="Linked artifact mappings">
+   <h3>Linked artifacts</h3><p>File and context references remain proposed. They do not establish that a test passed or that the implementation meets every requirement.</p>
+   <ul>{result.artifacts.mappings.map(m=><li key={m.id} data-artifact-mapping={m.artifactId}>
+    <strong>{m.contextStatus==='current'?'Saved context matches':m.contextStatus==='superseded'?'Earlier artifact retained':'Design changed; regenerate mappings'}</strong>
+    <span> · {m.records.length} proposed mappings · context revision {m.contextRevision}</span>
+    <details><summary>Artifact and file references</summary><pre>{JSON.stringify({artifactId:m.artifactId,artifactSha256:m.artifactSha256,contextSha256:m.contextSha256,files:m.files,changedRefs:m.changedRefs,scope:m.scope},null,2)}</pre></details>
+   </li>)}</ul>
+  </section>}
   {error&&<p role="alert">{error}</p>}
  </details>;
 }

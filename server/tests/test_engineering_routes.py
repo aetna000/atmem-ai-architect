@@ -29,7 +29,7 @@ class EngineeringRouteTests(unittest.TestCase):
 
     def test_every_native_endpoint_requires_local_token(self):
         for endpoint in ['create','list','state','events','start','recover','steer','interrupt','capture','download',
-                         'artifacts','finalizations','recheck','validators','validation/start','validation/list','validation/plan','validation/get','validation/recover']:
+                         'artifacts','reconciliation','finalizations','recheck','validators','validation/start','validation/list','validation/plan','validation/get','validation/recover']:
             self.assertEqual(self.client.post('/api/engineering/'+endpoint,json={}).status_code,401)
 
     def test_recheck_is_project_bound_with_exact_run_and_artifact_only(self):
@@ -98,6 +98,16 @@ class EngineeringRouteTests(unittest.TestCase):
                 getattr(service.return_value.jobs,action).assert_awaited_once_with(ProjectScope('local-owner',self.project),self.session,body['text'],context_sha256=digest)
                 for change in [{'contextSha256':'bad'},{'context':{'requirements':'replace client intent'}},{'contextPath':'/private/secret'}]:
                     self.assertEqual(self.client.post('/api/engineering/'+action,json={**body,**change},headers=self.headers).status_code,422)
+
+    def test_mapping_reconciliation_is_exact_artifact_scoped_and_has_no_command_or_context_override(self):
+        with patch.object(routes,'service') as service:
+            service.return_value.reconciliation.prepare.return_value={'status':'prepared','id':'receipt'}
+            body={**self.payload,'artifactId':self.session}
+            result=self.client.post('/api/engineering/reconciliation',json=body,headers=self.headers)
+            self.assertEqual(result.status_code,200)
+            service.return_value.reconciliation.prepare.assert_called_once_with(ProjectScope('local-owner',self.project),self.session,self.session)
+            for extra in ['context','command','records','sha256','tenant','workspace']:
+                self.assertEqual(self.client.post('/api/engineering/reconciliation',json={**body,extra:'untrusted'},headers=self.headers).status_code,422)
 
     def test_artifact_download_is_project_bound_and_returns_digest(self):
         with patch.object(routes,'service') as service:

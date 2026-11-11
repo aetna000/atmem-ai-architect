@@ -51,13 +51,22 @@ removing client-required functionality or assuming the image SDK matches a vendo
 When present in project-context.json, extensions.architectureWork retains explicit
 work mappings, scoped review contexts and the full recorded client engineering
 intent. Its context review does not prove implementation or runtime success.
-The pinned atmem-tools/architecture-work.schema.json describes optional proposed
-mappings in architecture-work-proposal.json. Use only actual project IDs and explicit
+The pinned atmem-tools/architecture-work.schema.json describes proposed mappings in
+architecture-work-proposal.json (proposal format1, separate from the versioned saved
+work-state extension). When producing implementation files, also produce this mapping
+file with the applicable responsibilities, explicit delivery units, interfaces,
+implementation files and test/evidence references. Use only actual project IDs and explicit
 work: references; retain responsibility, delivery-unit, interface, implementation,
 assumption/decision dependencies and evidence limits. File paths must be relative.
 Do not invent graph links, change client provider/ownership or mark model assertions
-as verified execution. Importing proposals adds unreviewed metadata; graph/file
-reconciliation and artifact validation remain separate required work. Legacy sessions
+as verified execution. Use data.files to reference actual delivered implementation
+and test files, never the supplied pinned inputs or this proposal file. Keep stable
+mapping IDs across iterations; a later artifact may explicitly revise its own earlier
+agent-proposed mappings, with the service retaining prior values. It cannot replace
+accepted/user/imported records. The current saved context may accompany a request as
+a separate labelled evidence envelope; the original project-context.json stays frozen.
+Linking proposals adds unreviewed file/context metadata; semantic correctness and
+artifact validation remain separate required work. Legacy sessions
 may lack this input: do not rewrite their pinned files or claim it was supplied.
 
 ## Completion evidence

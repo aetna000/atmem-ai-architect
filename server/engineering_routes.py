@@ -18,6 +18,7 @@ from .codex_worker_policy import CodexWorkerClient, PROFILE
 from .engineering_artifacts import EngineeringArtifacts,WorkingCheckpoints,CheckSources
 from .engineering_jobs import EngineeringJobs
 from .engineering_contexts import EngineeringContexts, MAX_CONTEXT_BYTES
+from .engineering_reconciliation import EngineeringReconciliation
 from .engineering_finalization import EngineeringFinalization
 from .dependency_mirror import inspect_mirror
 from .engineering_delivery import seed_delivery
@@ -129,6 +130,7 @@ Keep final progress concise and explain any remaining work.''')
         self.contexts = EngineeringContexts(self.store)
         self.jobs.context_provider = self.attach_context
         self.artifacts = EngineeringArtifacts(self.store)
+        self.reconciliation = EngineeringReconciliation(self.store,self.artifacts,self.contexts)
         self.checkpoints = WorkingCheckpoints(self.store)
         self.validator_endpoint=setting('ENGINEERING_VALIDATOR_ENDPOINT')
         self.validator_profiles=json.loads(setting('ENGINEERING_ISOLATION_PROFILES') or '{}')
@@ -297,6 +299,7 @@ async def action(payload, kind):
     try:
         if kind == 'state': return worker.jobs.state(scope,payload.sessionId)
         if kind == 'artifacts':return {'artifacts':worker.artifacts.manifests(scope,payload.sessionId)}
+        if kind == 'reconciliation':return worker.reconciliation.prepare(scope,payload.sessionId,payload.artifactId)
         if kind == 'recheck':return await worker.finalization.recheck(scope,payload.sessionId,payload.runId,payload.artifactId)
         if kind == 'finalizations':return {'finalizations':worker.finalization.list(scope,payload.sessionId)}
         if kind == 'events':
@@ -376,6 +379,8 @@ async def validation_action(payload,kind):
 
 @router.post('/artifacts')
 async def artifacts(payload: SessionRequest):return await action(payload,'artifacts')
+@router.post('/reconciliation')
+async def reconciliation(payload: ArtifactRequest):return await action(payload,'reconciliation')
 @router.post('/recheck')
 async def recheck(payload: RecheckRequest):return await action(payload,'recheck')
 

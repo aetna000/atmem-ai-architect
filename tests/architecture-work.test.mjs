@@ -15,7 +15,7 @@ const state=p=>p.extensions.architectureWork;
 const entity=(p,id)=>architectureWork(p).entities.find(e=>e.id===id);
 const now=new Date('2026-11-11T00:00:00Z');
 test('legacy projects project lossless sources without inventing deployment units or execution evidence',()=>{
- const p=project(),m=architectureWork(p);assert.equal(m.version,1);assert.equal(m.entities.filter(e=>e.kind==='delivery-unit').length,0);assert.equal(entity(p,'block:sensor').value.origin,'existing');assert.equal(entity(p,'block:sensor').contextStatus,'unreviewed');assert.equal(p.extensions?.architectureWork,undefined);
+ const p=project(),m=architectureWork(p);assert.equal(m.version,2);assert.equal(m.entities.filter(e=>e.kind==='delivery-unit').length,0);assert.equal(entity(p,'block:sensor').value.origin,'existing');assert.equal(entity(p,'block:sensor').contextStatus,'unreviewed');assert.equal(p.extensions?.architectureWork,undefined);
  assert.match(m.boundary,/not independently verified/);assert.equal(entity(p,'requirement:latency').value.source,'user');
 });
 test('transitive requirement change affects mapped units/files/evidence and decisions; old scope/history remains',()=>{
@@ -64,7 +64,7 @@ test('cycles are bounded context relationships, never circular evidence of succe
 test('invalid/future/colliding/oversized/lossy states and path escapes fail without mutating the original',()=>{
  const p=project();for(const path of ['/host/secret','../outside','dir/../outside','a\\b','./entry'])assert.throws(()=>proposeWorkRecords(p,[record('bad','implementation',[],{files:[path]})]),/relative/);
  assert.throws(()=>proposeWorkRecords(p,[record('x','interface',[]),record('x','interface',[])]),/overwrite/);assert.equal(p.extensions?.architectureWork,undefined);
- for(const bad of [{...emptyArchitectureWork(),version:2},{...emptyArchitectureWork(),unknown:'future'}, {...emptyArchitectureWork(),records:[record('nan','responsibility',[],{value:NaN})]}, {...emptyArchitectureWork(),records:Array.from({length:1001},(_,i)=>record('r'+i,'responsibility',[]))}])assert.throws(()=>validateArchitectureWork(bad));
+ for(const bad of [{...emptyArchitectureWork(),version:3},{...emptyArchitectureWork(),unknown:'future'}, {...emptyArchitectureWork(),records:[record('nan','responsibility',[],{value:NaN})]}, {...emptyArchitectureWork(),records:Array.from({length:1001},(_,i)=>record('r'+i,'responsibility',[]))}])assert.throws(()=>validateArchitectureWork(bad));
  let q=reviewWorkContext(proposeWorkRecords(p,[record('x','responsibility',[])]),'work:x',{now});q=structuredClone(q);state(q).bindings[0].snapshotIds.push('missing-snapshot');assert.throws(()=>toProjectFile(q),/retained source/);
  assert.throws(()=>proposeWorkRecords(p,[record('big','responsibility',[],{value:'x'.repeat(1_500_001)})]),/storage bound/);
 });

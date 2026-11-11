@@ -1,4 +1,4 @@
-# Architecture work context, version 1
+# Architecture work context, version 2
 
 This model connects recorded intent, requirements, responsibilities, interfaces,
 explicit delivery units, implementation mappings, assumptions, decisions and evidence
@@ -7,10 +7,14 @@ a physical deployment unit from every diagram block or turn a proposed requireme
 into an accepted business constraint.
 
 `src/architecture-work.mjs` supplies the shared projection. Its optional persistent
-state is `project.extensions.architectureWork`, version 1. Existing project files
+state is `project.extensions.architectureWork`, version 2. Existing project files
 remain format 2.3 and migrate by projecting their existing sources; they acquire no
 invented mappings or execution receipts. Future unsupported state versions and
 malformed references fail explicitly without discarding the original input.
+Version1 state migrates losslessly by retaining its records, intent and review
+history and adding an empty artifact-mapping history. Producer proposals retain
+their independent version1 format. Older readers must retain version2 files rather
+than discard their new fields.
 
 ## References and changes
 
@@ -30,6 +34,11 @@ endpoints. Work declarations explicitly name their dependencies. Unclassified na
 client updates conservatively affect all mappings until semantic reconciliation.
 Project identity and target provider remain part of the context. Late callbacks from a different project are ignored; asynchronous proposal imports apply against the latest matching project, and a context review rejects sources changed since display. Moving a block or
 changing its connection-handle position does not alter its meaning.
+Structured brief/use-case/fact/workflow changes and substantive diagram annotations
+are intent changes too; notes are not deployment units. Additional interface contract
+fields participate in comparison. Exact saved context is read without the legacy
+compiler's adapter/default normalization so a new contract cannot silently disappear
+while an artifact is being linked.
 
 Context review captures the exact transitive source values and reference sets. Full
 JSON values are compared, rather than relying on a weak UI hash. Shared snapshots are
@@ -129,3 +138,55 @@ The protocol surface follows [official App Server documentation](https://develop
 checked against the installed adapter's request contract. Component doubles and
 browser fixtures do not establish actual native transfer; the separate river-depth
 evaluation script exercises that boundary without patching generated files.
+
+## Artifact-bound proposals
+
+The project-bound `/api/engineering/reconciliation` service accepts only a captured
+artifact ID. It requires the current completed delivery run, verifies archive and
+proposal bytes against the immutable manifest, validates the public proposal schema,
+and binds declared implementation/test files to actual relative files and SHA-256
+values. Missing files, supplied inputs, directory/path escapes, malformed/duplicate
+JSON, invalid identities, credentials and unresolved intent delivery reject atomically.
+A missing proposal is explicit; no mappings are invented. The latest accepted client
+start/update supplies the immutable context; automatic repairs retain that context.
+A recovered lost start acknowledgement restores its exact durable client text once,
+with automatic repair prompts still excluded from client intent.
+
+The server stores an immutable digest-bound reconciliation receipt outside the
+native workspace. The browser verifies its exact encoded bytes and context digest,
+then applies the proposed records to the latest matching project. This transport
+integrity check is not a detached signature or runtime acceptance. All current
+semantic sources, except mapping IDs being explicitly revised, must agree with the
+saved context after exact client-history synchronization. This is conservative
+whole-context comparison; scoped individual context reviews remain separate.
+
+Mapping references must resolve. An implementation must name real captured files.
+Existing client requirements, decisions, graph/provider/ownership and imported,
+user-authored or accepted mapping records cannot be overwritten. A later artifact
+can explicitly revise only its own session's unchanged, agent-proposed records.
+Previous receipt record values, file hashes and source snapshots remain retained;
+missing records are not deleted. Receipt reapplication is idempotent. A new artifact
+supersedes earlier artifacts in that session; requirement/brief/interface/ownership
+changes remain visible without rewriting historical evidence claims.
+
+Build and Design block review show the same artifact mapping projection. The delivery
+pack exports it as architecture-artifact-mappings.json and the Spec Kit as
+artifact-mappings.json. Generation-quality reports reference those same mappings
+without clearing compiler gaps or claiming tests ran. Coverage means only an explicit
+file-reference link; global change dependencies such as an unscoped ADR do not prove
+that one implementation covers every requirement. Unmapped requirements and blocks
+remain visible. Native packages are separately downloadable; metadata references do
+not embed their source in a compiler-generated ZIP.
+
+Version2 stores at most1,000 immutable artifact mapping receipts under the existing
+1.5MB work-state bound and 2MB complete-project bound. Each receipt retains at most200
+records and2,000 file references; source snapshots are deduplicated. Limits refuse
+without clipping or pruning history. Reopened/exported metadata is not authenticated
+proof: reverify receipts with the owning session service and execute the exact
+packages. The current single-owner service does not qualify hosted authorization,
+leases or distributed transaction behavior.
+
+Component and browser fixtures qualify this reconciliation path. Actual native
+mapping generation/edit/regeneration qualification and a runnable alpha.2 remain
+pending until their independent evidence is recorded. Broad provider composition,
+full connected systems and the remaining27 originals remain later programme work.

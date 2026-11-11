@@ -119,6 +119,30 @@ class EngineeringJobTests(unittest.IsolatedAsyncioTestCase):
         for limit in [0,201,True]:
             with self.assertRaises(ValueError): self.jobs.journal.read(self.scope,self.session,limit=limit)
 
+    async def test_lost_ack_recovers_durable_client_intent_once_without_replaying_inference(self):
+        from server.engineering_sessions import RecoveredStart
+        self.backend.fail_start=True
+        text='Keep the existing medical system.\nPreserve 🛰️ and every original requirement.'
+        with self.assertRaises(TimeoutError):await self.jobs.start(self.scope,self.session,text)
+        run=self.jobs.state(self.scope,self.session)['run']
+        self.backend.recovered_start=RecoveredStart(run,'native-turn-one','completed')
+        await self.jobs.recover(self.scope,self.session);await self.jobs.recover(self.scope,self.session)
+        events=[e for e in self.jobs.journal.read(self.scope,self.session) if e['kind']=='accepted']
+        self.assertEqual(len(events),1);self.assertEqual(events[0]['text'],text);self.assertEqual(events[0]['runId'],run)
+        self.assertEqual(events[0]['origin'],'recovered_client_request');self.assertEqual(len(self.backend.request_ids),1)
+
+    async def test_recovered_automatic_repair_does_not_become_client_intent(self):
+        from server.engineering_sessions import RecoveredStart
+        self.backend.fail_start=True
+        with self.assertRaises(TimeoutError):await self.jobs.start(self.scope,self.session,'INTERNAL repair instruction',origin='automatic_repair')
+        run=self.jobs.state(self.scope,self.session)['run']
+        self.store.db.execute('CREATE TABLE engineering_repairs (run TEXT, session TEXT)')
+        self.store.db.execute('INSERT INTO engineering_repairs VALUES (?,?)',(run,self.session));self.store.db.commit()
+        self.backend.recovered_start=RecoveredStart(run,'recovered-repair','completed')
+        await self.jobs.recover(self.scope,self.session)
+        event=next(e for e in self.jobs.journal.read(self.scope,self.session) if e['kind']=='accepted')
+        self.assertEqual(event['origin'],'automatic_repair');self.assertEqual(len(self.backend.request_ids),1)
+
     async def test_recover_live_watcher_does_not_race_terminal_reconciliation(self):
         await self.jobs.start(self.scope,self.session,'Build the service.')
         state = await self.jobs.recover(self.scope,self.session)

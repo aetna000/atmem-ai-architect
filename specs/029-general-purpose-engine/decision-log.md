@@ -517,3 +517,18 @@ the evaluator-only count-field failure and corrected continuation: no first requ
 was replayed, no behavior assertion relaxed.393 JS/404 server/build/two browser
 fixtures pass. Context transfer is qualified for this local scope; GE-003 remains
 in progress for artifact-bound graph/file reconciliation and alpha.2.
+
+### GE-003: artifact-bound reconciliation and retained proposed revisions
+
+Implement a project/session/current-artifact service that verifies actual proposal
+and referenced file bytes, stores an immutable receipt and supplies exact current
+context/client history. Browser application compares the latest full semantic model
+and refuses stale/colliding changes. Proposed mappings remain proposed; newer
+artifacts revise only their own unchanged proposed identities and retain earlier
+values/digests. State version2 migrates1 losslessly; producer proposal format remains1.
+Expose the same references in Build, Design, delivery, Spec Kit and compiler-quality
+metadata without clearing gaps or claiming runtime success. Broad ADR invalidation
+dependencies are not implementation coverage; fix accidental record/history aliasing.
+Read saved context without legacy adapter normalization, preserving structured brief,
+annotation and additional interface semantics.404 JS/418 server/build/two browser
+fixtures pass. Keep GE-003 in progress pending actual-native round trip and alpha.2.

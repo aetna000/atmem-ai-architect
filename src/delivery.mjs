@@ -1,4 +1,5 @@
 import {architectureWork} from './architecture-work.mjs';
+import {artifactWorkProjection} from './artifact-work.mjs';
 import {generationQuality} from './generation-quality.mjs';
 import {implementationOutcome} from './implementation-outcome.mjs';
 import {systemDescriptionMarkdown,requirementExplanation} from './system-description.mjs';
@@ -39,6 +40,7 @@ export function deliveryPack(project, run, environment = "staging", now = new Da
     ...specKit(project,{snapshotId,stamp,now,environment:environment === "production" ? "production" : "staging"}),
     "project.atmem-ai-architect.json": json(file),
     "architecture-work.json": json(architectureWork(project)),
+    "architecture-artifact-mappings.json": json(artifactWorkProjection(project)),
     "specification.md": `${stamp}\n\n${solutionSpecification(project)}\n\n## Implementation specification and coding-agent handoff\n\nThe Spec Kit translates these requirements and the architecture into implementation work. Start with START_HERE.md and AGENTS.md; read spec-kit/implementation-spec.md (or PDF) for the implementation plan, contracts, detailed tasks and validation plan. Requirements remain the source of desired outcomes; the kit is the build plan derived from them.\n`,
     "architecture-and-deployment.md": `${stamp}\n\n${deploymentDocument(project, run, now)}`,
     "diagram.mmd": mermaid(project),

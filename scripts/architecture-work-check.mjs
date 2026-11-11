@@ -1,6 +1,8 @@
 // Actual browser/persistence/export; backend and model responses are fixtures.
 import assert from 'node:assert/strict';import fs from 'node:fs';import path from 'node:path';import {spawn} from 'node:child_process';import {createServer} from 'node:net';import {chromium} from '@playwright/test';
 import {validateImport} from '../src/core.mjs';import {architectureWork,proposeWorkRecords,reviewWorkContext} from '../src/architecture-work.mjs';import {toProjectFile,parseProjectFile} from '../src/project-file.mjs';import {deliveryPack} from '../src/delivery.mjs';
+import {createHash} from 'node:crypto';import {artifactWorkProjection} from '../src/artifact-work.mjs';
+const sha=value=>createHash('sha256').update(value).digest('hex');
 const out=path.resolve(process.env.ATMEM_ARCHITECT_WORK_EVIDENCE||'.local/engine-product/architecture-work-browser');if(fs.existsSync(out))throw Error('Preserve previous evidence; choose a new output directory.');fs.mkdirSync(out,{recursive:true});
 const socket=createServer();await new Promise(r=>socket.listen(0,'127.0.0.1',r));const port=socket.address().port;await new Promise(r=>socket.close(r));
 const base='http://127.0.0.1:'+port,server=spawn(process.execPath,['node_modules/vite/bin/vite.js','--host','127.0.0.1','--port',String(port),'--strictPort'],{stdio:'ignore',env:{...process.env,ATMEM_ARCHITECT_VITE_CACHE_DIR:path.join(out,'vite-cache')}});
@@ -9,7 +11,7 @@ let project=validateImport({id:'library-work-ui',version:1,revision:1,name:'Libr
 const record=(id,kind,dependsOn,data)=>({id,kind,title:id,description:'A proposed mapping, not execution proof.',dependsOn,data});
 project=proposeWorkRecords(project,[record('Reading files','implementation',['block:viewer'],{files:['viewer/read.mjs']}),record('Catalogue reference','implementation',['block:catalog'],{files:['reference/catalog.json']})]);
 for(const id of ['work:Reading files','work:Catalogue reference'])project=reviewWorkContext(project,id);
-let browser,page,job=null,events=[],modelCalls=0;const errors=[],nativeMutations=[],devReloads=[];
+let browser,page,job=null,events=[],modelCalls=0,savedFile=null,captured=null,mappingReads=0;const errors=[],nativeMutations=[],devReloads=[];
 try{
  for(let i=0;i<100;i++){try{if((await fetch(base)).ok)break;}catch{}await new Promise(r=>setTimeout(r,100));}
  browser=await chromium.launch({headless:true});page=await browser.newPage({viewport:{width:1440,height:1000}});page.setDefaultTimeout(15000);page.on('pageerror',e=>errors.push(e.message));page.on('websocket',socket=>socket.on('framereceived',frame=>{try{const value=JSON.parse(frame.payload);if(['update','full-reload'].includes(value.type))devReloads.push(value.type);}catch{}}));
@@ -23,11 +25,19 @@ try{
    if(action==='create')job={id:'00000000-0000-0000-0000-000000000001',model:body.model,effort:body.effort,state:'idle',run:null};
    if(action==='start'){job={...job,state:'running',run:'00000000-0000-0000-0000-000000000002'};events.push({sequence:1,kind:'accepted',runId:job.run,text:body.text});}
    if(action==='events')return route.fulfill({json:{session:job,events:events.filter(e=>e.sequence>body.after)}});
-   if(action==='artifacts')return route.fulfill({json:{artifacts:[]}});
+   if(action==='artifacts')return route.fulfill({json:{artifacts:captured?[captured]:[]}});
+   if(action==='capture'){captured={id:'fixture-artifact',sessionId:job.id,runId:job.run,sha256:sha('fixture archive'),turnStatus:'completed',files:[{kind:'file',path:'viewer/read.mjs'}]};return route.fulfill({json:captured});}
+   if(action==='validators')return route.fulfill({json:{available:false,validators:[]}});
+   if(action==='validation/list')return route.fulfill({json:{checks:[]}});
+   if(action==='reconciliation'){
+    mappingReads++;const content=JSON.stringify(savedFile),proposal={version:1,records:[record('Generated reader','implementation',['block:viewer'],{files:['viewer/read.mjs']}),record('Generated test reference','evidence',['work:Generated reader'],{files:['tests/read.test.mjs'],reportedStatus:'passed'})]};
+    const payload={format:'atmem.architecture-proposal',version:1,projectId:project.id,sessionId:job.id,runId:job.run,artifactId:captured.id,artifactSha256:captured.sha256,proposalSha256:sha(JSON.stringify(proposal)),context:{id:'fixture-context',revision:1,sha256:sha(content),projectId:project.id,content},events,proposal,files:['viewer/read.mjs','tests/read.test.mjs'].map(path=>({path,bytes:100,sha256:sha(path)})),definitionSha256:sha('fixture definition'),boundary:'artifact_file_binding_only'};
+    const encoded=JSON.stringify(payload);return route.fulfill({json:{status:'prepared',id:'fixture-mapping-receipt',sha256:sha(encoded),content:encoded}});
+   }
    return route.fulfill({json:job});
   }
   if(url.endsWith('/api/architect')){modelCalls++;return route.fulfill({json:{message:'Requirement recorded. Existing graph retained.',phase:'Architecture Review',componentReview:{componentId:'viewer',summary:'Check dependent implementation against the updated requirement.',questions:[]}}});}
-  if(url.endsWith('/api/projects/save'))return route.fulfill({json:{saved:true,sha256:'a'.repeat(64)}});
+  if(url.endsWith('/api/projects/save')){savedFile=body.file;return route.fulfill({json:{saved:true,sha256:sha(JSON.stringify(savedFile))}});}
   return route.fulfill({json:url.endsWith('/api/session')?{token:'fixture',engineeringEnabled:true,status:'local-sidecar',providers:{codex:{installed:true,available:true,signedIn:true}}}:{status:'disabled',enabled:false,saved:true,projects:[],bin:[]}});
  });
  const state=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('atforma-workspace-v3')));
@@ -53,6 +63,17 @@ try{
  events.push({sequence:2,kind:'accepted',origin:'automatic_repair',runId:job.run,text:'Synthetic internal repair; not a client demand.'},{sequence:3,kind:'steering_submitted',requestId:'fixture-update',text:'Keep Unicode labels intact.'},{sequence:4,kind:'steering_accepted',requestId:'fixture-update'});
  await page.waitForFunction(()=>JSON.parse(localStorage.getItem('atforma-workspace-v3')).extensions.architectureWork.intents.length===2);
  const current=await state();assert.deepEqual(current.extensions.architectureWork.intents.map(i=>i.text),['Retain the existing catalogue; add a local screen.','Keep Unicode labels intact.']);
- await page.reload();await page.waitForFunction(()=>JSON.parse(localStorage.getItem('atforma-workspace-v3')).extensions.architectureWork.intents.length===2);assert.deepEqual(nativeMutations,['create','start']);assert.deepEqual(errors,[]);assert.deepEqual(devReloads,[]);
- fs.writeFileSync(path.join(out,'receipt.json'),JSON.stringify({passed:true,checks:['unreviewed import remains proposed despite reported pass','scoped requirement edit invalidates transitive mappings/evidence','unrelated catalogue mapping remains current','graph ownership preserved','reload preserves stale context/history','UI/export/project round-trip agree','desktop/mobile','ordered native client intent persisted without internal repair prompts','reload does not replay native work'],modelBoundary:'Actual browser/UI/storage/export; explicit fixture model/backend. No live native generation, runtime evidence acceptance, cloud operation or completed GE-003 inferred.',errors,devReloads},null,2)+'\n');console.log('Architecture work browser checks passed.');
+ job={...job,state:'idle',last_status:'completed'};await page.getByRole('button',{name:'Capture package',exact:true}).click();await page.getByRole('button',{name:'Link proposed mappings',exact:true}).click();
+ await page.waitForFunction(()=>JSON.parse(localStorage.getItem('atforma-workspace-v3')).extensions.architectureWork.artifactMappings?.length===1);
+ const linked=await state();assert.equal(artifactWorkProjection(linked).mappings[0].contextStatus,'current');assert.equal(linked.extensions.architectureWork.records.find(r=>r.id==='Generated reader').agreement,'proposed');
+ if(!await work().evaluate(e=>e.open))await work().locator(':scope > summary').click();await page.screenshot({path:path.join(out,'linked-artifact-desktop.png'),fullPage:true});
+ await page.getByRole('tab',{name:'Design',exact:true}).click();await page.locator('.detail-core .architecture-work > summary').click();await page.getByRole('region',{name:'Linked artifact mappings'}).getByText('Saved context matches',{exact:true}).waitFor();
+ const changedReq=page.getByRole('article',{name:'Requirement readings',exact:true});await changedReq.getByRole('button',{name:'Edit requirement',exact:true}).click();await changedReq.getByRole('textbox',{name:'Requirement text',exact:true}).fill('Show readings in micrograms.');await changedReq.getByRole('button',{name:'Save & re-evaluate',exact:true}).click();
+ await page.getByText('Design changed; regenerate mappings',{exact:true}).waitFor();
+ await page.getByRole('tab',{name:'Build',exact:true}).click();await page.getByRole('button',{name:'Link proposed mappings',exact:true}).click();await page.getByRole('alert').filter({hasText:'design changed since this package'}).waitFor();
+ const final=await state(),pack=deliveryPack(final);assert.equal(final.extensions.architectureWork.artifactMappings.length,1);assert.deepEqual(JSON.parse(pack['architecture-artifact-mappings.json']),artifactWorkProjection(final));assert.deepEqual(final.nodes.map(n=>n.data.origin),['existing','existing']);
+ if(!await work().evaluate(e=>e.open))await work().locator(':scope > summary').click();await page.setViewportSize({width:390,height:900});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.screenshot({path:path.join(out,'stale-artifact-mobile.png'),fullPage:true});
+ fs.writeFileSync(path.join(out,'exported-artifact-mappings.json'),pack['architecture-artifact-mappings.json']);fs.writeFileSync(path.join(out,'linked-project.json'),pack['project.atmem-ai-architect.json']);
+ await page.reload();await page.waitForFunction(()=>JSON.parse(localStorage.getItem('atforma-workspace-v3')).extensions.architectureWork.intents.length===2);assert.equal(mappingReads,2);assert.deepEqual(nativeMutations,['create','start']);assert.deepEqual(errors,[]);assert.deepEqual(devReloads,[]);
+ fs.writeFileSync(path.join(out,'receipt.json'),JSON.stringify({passed:true,checks:['unreviewed import remains proposed despite reported pass','scoped requirement edit invalidates transitive mappings/evidence','unrelated catalogue mapping remains current','graph ownership preserved','reload preserves stale context/history','UI/export/project round-trip agree','desktop/mobile','ordered native client intent persisted without internal repair prompts','exact-artifact receipt/digest linking','Build and Design show the same artifact context','later requirement edit marks artifact mapping stale','stale callback cannot overwrite changed requirements','reload does not replay native work or mapping import'],modelBoundary:'Actual browser/UI/storage/export; explicit fixture model/backend. No live native generation, runtime evidence acceptance, cloud operation or completed GE-003 inferred.',errors,devReloads},null,2)+'\n');console.log('Architecture work browser checks passed.');
 }catch(e){if(page){fs.writeFileSync(path.join(out,'failure.txt'),await page.locator('body').innerText());await page.screenshot({path:path.join(out,'failure.png'),fullPage:true});}throw e;}finally{await browser?.close();server.kill('SIGTERM');}
