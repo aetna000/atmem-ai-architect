@@ -926,3 +926,17 @@ Qualified native bytes are unchanged after README-only clarification. Proceed
 frozen runnable alpha.4; counts remain3 increments,1/28 full originals, owner0,
 quality unknown until actual delivery/new full-system evidence. Owner UI/jobs
 untouched; no cloud/account operation or deployment.
+
+
+## 2026-11-12 — Offer frozen alpha.4; preserve owner UI scope
+
+Qualify exact108981b separately on5286/8879 with a fresh app home. Connect only
+installed dependency code through explicit aliases; retain initial missing-runtime
+failures and emulator skips, then430server/no skips.537JS/build pass. Two actual
+HTTP/browser runs pass49 native unit mocks and152 ZIP file hashes; no inference
+submissions or copied private projects. Source/archive/build hashes, manual card,
+limits and rollback bind the frozen checkout. Owner5285 is neither restarted nor
+changed; no AtFlow/layout work. Release4 local automated scope complete; owner
+acceptance0, original complete cases1/28,95% unproved. Proceed application/data
+contracts, remaining increments and original28/unfamiliar full systems. No cloud
+operations, deployment, automatic state adoption or remote tag publication.

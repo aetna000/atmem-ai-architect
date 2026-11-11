@@ -15,7 +15,7 @@ local version for the owner. A plan, renamed abstraction or passing unit-test co
 alone cannot earn a release. No version is released by writing this document.
 
 Proposed local prerelease series: `0.2.0-alpha.1` through `0.2.0-alpha.10`.
-Alpha.1, its patch alpha.1.1 and alpha.2 are offered locally; alpha.3 is now offered locally; alpha.4 through alpha.10 remain reserved. Remote publication has not occurred. Critical fixes may have patch candidates; evidence always
+Alpha.1, its patch alpha.1.1 and alpha.2 are offered locally; alpha.3 and alpha.4 are now offered locally; alpha.5 through alpha.10 remain reserved. Remote publication has not occurred. Critical fixes may have patch candidates; evidence always
 binds exact commit/artifact rather than a moving label. Remote publication/deployment
 remains a separately authorized action.
 
@@ -329,3 +329,14 @@ evidence/20261112-aws-partitions/README.md. Proceed frozen runnable alpha.4 and
 actual candidate/browser/export/manual/rollback qualification; GE-005 remains
 in_progress until that delivery. Full28/unfamiliar local systems and remaining
 contracts/judgment/knowledge/handoff/recovery/generalisation remain required.
+
+
+GE-005 local automated scope complete: frozen108981b alpha.4 is offered on5286,
+with537JS/430server/no skips/build, two actual HTTP/browser cases49 unit mocks/
+152 matched ZIP files, exact source/archive/build/manual/rollback. See
+evidence/20261112-alpha4-candidate/README.md. Earlier checkpoint statuses above
+are historical. Four increments offered; owner0, complete originals1/28, quality
+unknown. Continue GE-006 reusable application/data contracts and full remaining
+programme. Native configuration mocks are not application or cloud acceptance.
+State adoption and selected backend behavior remain unqualified. Owner5285 and
+UI/AtFlow CSS untouched during this release qualification.

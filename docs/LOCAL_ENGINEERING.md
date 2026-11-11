@@ -95,3 +95,30 @@ Use Build this design for native engineering work, with the saved scope attached
 Rollback using the previous candidate and its own app home; preserve newer project
 files and existing sessions. Do not migrate Terraform state or strip history to
 make older software accept a project. Keep MEM0 mounted for candidate dependencies.
+
+
+## Alpha.4 provider and ownership manual test card
+
+Open http://127.0.0.1:5286 and import
+`specs/029-general-purpose-engine/evidence/20261112-alpha4-candidate/ownership-example.atmem-ai-architect.json`.
+Inspect the existing website/accounting references beside the new supplied-image
+source deployment and invoice unit. Run Terraform checks, download the ZIP and
+inspect `deployment-ownership.json`: external identities stay references; new
+source has managed resources. Regions and exact model/effort survive save/reopen.
+
+Import `partitions-example.atmem-ai-architect.json` from the same folder to inspect
+three independently placed commercial/China/GovCloud units. Inspect native
+partition metadata and task-role/repository guards. Deliberately mismatched
+repository/region partitions must fail the native negative checks. The supplied
+image itself is not executed by these schema/mock checks.
+
+State custody choices remain unverified; the emitted state checker exercises only
+a synthetic local HTTP/SQLite contract. Existing-state adoption is unsupported
+and must remain blocked. No account access, plan, migration or deployment needed.
+Exact source/build/archive/start command and limits are in release-record.json.
+MEM0 and the recorded installed dependency aliases are required.
+
+Rollback to the preserved owner alpha.3.1 at http://127.0.0.1:5285/dist/index.html
+using its own app home; stop only alpha.4 if needed. Keep new project files,
+artifact receipts and uncertain requests unchanged. Do not strip fields or move
+Terraform state. Owner acceptance remains separate from automated qualification.
