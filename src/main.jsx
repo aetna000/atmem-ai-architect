@@ -2,8 +2,8 @@ import {synchronizeEngineeringIntent,applyArchitectureChange} from './architectu
 import {applyArtifactWork} from './artifact-work.mjs';
 import {ArchitectureWorkPanel} from './ArchitectureWorkPanel.jsx';
 import {hasArchitectureDesign} from './design-build-flow.mjs';
-import {ArchitectureTurn} from './ArchitectureActivity.jsx';
-import {recordArchitectureTurn,finishArchitectureTurn,architectureConversation} from './architecture-activity.mjs';
+import {ArchitectureTurn,EarlierArchitectureActivity} from './ArchitectureActivity.jsx';
+import {recordArchitectureTurn,finishArchitectureTurn,architectureChatEntries} from './architecture-activity.mjs';
 import {version as appVersion} from "../package.json";
 import {restoreQueuedMessages,nextIntakeBatch,restoreIntakePaused} from './work-intake.mjs';
 import {emulationGuidance,guidanceMessage} from './emulation-guidance.mjs';
@@ -800,6 +800,7 @@ function App() {
     finally{attachmentReadLock.current=false;setReadingAttachments(false);}
   }
   const chatScroll = useChatScroll(project.id,chatOpen);
+  const latestArchitectureTurn=Array.isArray(project.extensions?.architectureActivity?.turns)?project.extensions.architectureActivity.turns.at(-1):null;
   const runToken = useRef(0);
   const commitGroup = useRef(false);
   const notify = useCallback((t) => setToast(t), []);
@@ -2285,9 +2286,10 @@ function App() {
           )}
           <div className="messages" ref={chatScroll.viewport}>
             <div className="message-list" ref={chatScroll.content}>
-            {architectureConversation(project,messages).map(entry=>{
+            {architectureChatEntries(project,messages).map(entry=>{
               if(entry.kind==='activity-error')return <p key="activity-error" role="alert">{entry.error}</p>;
-              if(entry.kind==='activity')return <ArchitectureTurn key={project.id+':'+entry.turn.id} turn={entry.turn} number={entry.number} projectId={project.id} session={session} active={agentBusy&&entry.turn.clientStatus==='submitted'} working={agentBusy&&entry.turn.clientStatus==='submitted'}/>;
+              if(entry.kind==='legacy-activity')return <EarlierArchitectureActivity key={entry.id} entries={entry.entries} projectId={project.id} session={session}/>;
+              if(entry.kind==='activity')return <ArchitectureTurn key={project.id+':'+entry.turn.id} turn={entry.turn} number={entry.number} projectId={project.id} session={session} active={agentBusy&&entry.turn.clientStatus==='submitted'&&entry.turn.id===latestArchitectureTurn?.id} working={agentBusy&&entry.turn.clientStatus==='submitted'} onStop={()=>agentAbort.current?.abort()}/>;
               const m=entry.message,i=entry.index;
               return (
               <div key={i} className={`msg ${m.role}`}>
@@ -2329,7 +2331,7 @@ function App() {
                 </div>
               </div>
             )}
-            {agentBusy && (
+            {agentBusy && !(session?.architectureActivityEnabled&&latestArchitectureTurn?.clientStatus==='submitted') && (
               <div className="msg assistant working">
                 <BrainActivity size={24} /> Architecting…
                 <button className="link" onClick={() => agentAbort.current?.abort()}>Cancel</button>

@@ -32,7 +32,7 @@ export function architectureConversation(project,messages){
  });
  const slots=new Map();turns.forEach((turn,i)=>{
   const at=positions[i]??positions.slice(i+1).find(p=>p!==null)??messages.length;
-  const entries=slots.get(at)||[];entries.push({kind:'activity',turn,number:i+1});slots.set(at,entries);
+  const entries=slots.get(at)||[];entries.push({kind:'activity',turn,number:i+1,unassociated:positions[i]===null});slots.set(at,entries);
  });
  return Array.from({length:messages.length+1},(_,i)=>[...(slots.get(i)||[]),...(i<messages.length?[{kind:'message',message:messages[i],index:i}]:[])]).flat();
 }
@@ -49,4 +49,15 @@ export async function readArchitectureActivity(session,projectId,id,after,signal
  const r=await fetcher('/api/architect/activity',{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+session.token},body:JSON.stringify({projectId,activityId:id,after}),signal});
  if(!r.ok){const error=Error(r.status===404?'Detailed activity is not recorded in this service for this turn.':'Architecture activity could not be loaded.');error.status=r.status;throw error;}
  const value=await r.json();if(value.id!==id||value.projectId!==projectId||!Array.isArray(value.events))throw Error('Activity does not belong to this project and turn.');return value;
+}
+
+export function architectureChatEntries(project,messages){
+ const entries=[];
+ for(const entry of architectureConversation(project,messages)){
+  if(entry.kind==='activity'&&entry.unassociated){
+   const previous=entries.at(-1);if(previous?.kind==='legacy-activity')previous.entries.push(entry);
+   else entries.push({kind:'legacy-activity',id:'legacy:'+entry.turn.id,entries:[entry]});
+  }else entries.push(entry);
+ }
+ return entries;
 }

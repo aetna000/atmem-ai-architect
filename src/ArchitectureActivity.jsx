@@ -1,35 +1,53 @@
-import React,{useEffect,useRef,useState} from 'react';
+import React,{useEffect,useRef,useState,useId} from 'react';
 import {mergeArchitectureActivity,readArchitectureActivity} from './architecture-activity.mjs';
+import {architectureSteps,architectureActivityLabel} from './activity-presentation.mjs';
 import {ChatMessage} from './ChatMessage.jsx';
 import './architecture-activity.css';
-const states={running:'Working',response_ready:'Response ready',failed:'Could not finish',cancelled:'Stopped',recovery_required:'Outcome unknown after service restart',details_unavailable:'Some details unavailable'};
-const tools={'project.read':'Current design','memory.lookup':'Project memory','knowledge.lookup':'Engineering sources','skills.lookup':'Engineering guidance','pricing.lookup':'Provider prices','pricing.aws_s3':'Provider prices'};
-export function ArchitectureTurn({turn,number,projectId,session,active,working}){
- const [open,setOpen]=useState(active),[events,setEvents]=useState([]),[status,setStatus]=useState(null),[error,setError]=useState('');const cursor=useRef(0),observed=useRef([]);
- useEffect(()=>{if(active)setOpen(true);},[active]);
+// A view of observed work, never a completion claim about the client's system.
+function TurnActivity({label,latest,steps=[],model,effort,working=false,failed=false,open,onOpenChange,onStop,children}){
+ const [expanded,setExpanded]=useState(false),id=useId();const shown=open??expanded;
+ const change=value=>{setExpanded(value);onOpenChange?.(value);};
+ useEffect(()=>{if(failed)change(true);},[failed]);
+ return <div className={'turn-activity'+(failed?' has-error':'')}>
+  <div className="turn-activity-row">
+   <button type="button" className="turn-activity-toggle" aria-expanded={shown} aria-controls={id} title={[model,effort].filter(Boolean).join(' · ')} onClick={()=>{change(!shown);}}>
+    <span aria-hidden="true" className={'turn-state-icon'+(working?' is-working':'')}>{working?'◌':failed?'!':'›'}</span>
+    <span className="turn-activity-label" role="status" aria-live="polite">{label}</span>{latest&&<span className="turn-latest"> · {latest}</span>}
+    <span className="turn-chevron" aria-hidden="true">{shown?'⌄':'›'}</span>
+   </button>
+   {onStop&&working&&<button type="button" className="turn-inline-action" onClick={onStop}>Stop</button>}
+  </div>
+  <div id={id} hidden={!shown} className="turn-activity-details">
+   {(model||effort)&&<p className="turn-selection">{[model,effort].filter(Boolean).join(' · ')}</p>}
+   <ol>{steps.map(step=><li key={step.id} data-step={step.id}>{step.message?<ChatMessage text={step.text}/>:<p>{step.text}</p>}{step.detail&&<small>{step.detail}</small>}</li>)}</ol>
+   {children}
+  </div>
+ </div>;
+}
+
+export function ArchitectureTurn({turn,projectId,session,active,working,onStop,historyNumber}){
+ const [open,setOpen]=useState(false),[events,setEvents]=useState([]),[status,setStatus]=useState(null),[error,setError]=useState('');const cursor=useRef(0),observed=useRef([]);
  useEffect(()=>{
-  if(!open||!session?.architectureActivityEnabled)return;
+  if((!open&&!active)||!session?.architectureActivityEnabled)return;
   let stopped=false,timer;const controller=new AbortController();
   async function poll(){try{
    const value=await readArchitectureActivity(session,projectId,turn.id,cursor.current,controller.signal);
    if(stopped)return;const merged=mergeArchitectureActivity(observed.current,value.events);observed.current=merged;setEvents(merged);setStatus(value.state);setError('');
    if(value.events.length)cursor.current=value.events.at(-1).sequence;
    if(value.state==='running'||value.events.length===200)timer=setTimeout(poll,value.events.length===200?0:700);
-  }catch(e){if(!stopped&&e.name!=='AbortError'){setError(e.message);if(e.status===404&&working)timer=setTimeout(poll,1000);}}}
+  }catch(e){if(!stopped&&e.name!=='AbortError'){setError(e.status===404?'Details not recorded for this turn.':e.message);if(e.status===404&&working)timer=setTimeout(poll,1000);}}}
   void poll();return()=>{stopped=true;controller.abort();clearTimeout(timer);};
- },[open,projectId,turn.id,turn.clientStatus,session?.token,session?.architectureActivityEnabled,working]);
- const attempts=events.filter(e=>e.kind==='model_started').length;
- return <details className="architecture-turn conversation-activity" open={open} onToggle={e=>setOpen(e.currentTarget.open)}>
-  <summary><strong>Architect activity · turn {number}</strong><span>{turn.model}{turn.effort?' · '+turn.effort:''}</span><em>{states[status]||({submitted:active?'Preparing':'Awaiting details',response_received:'Response received',failed:'Request failed',cancelled:'Stopped'}[turn.clientStatus])}</em></summary>
-  <div className="architecture-turn-body">
-   {attempts>0&&<p className="activity-count">{attempts} model {attempts===1?'attempt':'attempts'} recorded</p>}
-   {session?.architectureActivityEnabled?<>{error&&<p role="status">{error}</p>}<ol aria-label={'Activity for turn '+number}>{events.toReversed().map(e=><li data-sequence={e.sequence} key={e.sequence} className={'activity-'+e.kind}>
-    <div className="activity-event-heading"><span className="activity-dot"/><strong>{e.kind==='model_started'?`Model attempt ${e.details?.attempt||''}${e.details?.round?' · pass '+e.details.round:''}`:e.kind==='model_message'?'Architect update':e.details?.tool?tools[e.details.tool]||e.details.tool:e.text}</strong><time dateTime={e.at}>{e.at?new Date(e.at).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'}):''}</time></div>
-    {e.kind==='model_message'?<ChatMessage text={e.text}/>:e.details?.tool&&<p>{e.kind==='tool_finished'&&e.details.success===false?'Evidence was unavailable.':e.text}</p>}
-    {!!e.details?.skillIds?.length&&<p>Guidance: {e.details.skillIds.join(', ')}</p>}
-    {e.details?.recordCount!==undefined&&<p>{e.details.recordCount} relevant memory references</p>}
-   </li>)}</ol></>:<p>This service provides conversation replies; detailed live activity is not available here.</p>}
-   {turn.detailsAvailable===false&&<p>Some progress details could not be recorded. The conversation contains the returned response.</p>}
-  </div>
+ },[open,active,projectId,turn.id,turn.clientStatus,session?.token,session?.architectureActivityEnabled,working]);
+ const steps=architectureSteps(events),label=architectureActivityLabel(turn,status,active),failed=status==='failed'||turn.clientStatus==='failed';
+ return <div className="conversation-activity" data-turn={turn.id}><TurnActivity label={historyNumber?'Activity '+historyNumber+' · '+label:label} latest={active?steps.at(-1)?.text:undefined} steps={steps} model={turn.model} effort={turn.effort} working={active} failed={failed} open={open} onOpenChange={setOpen} onStop={active?onStop:undefined}>
+  {error&&<p role="status">{error}</p>}
+  {!session?.architectureActivityEnabled&&<p>Live details are unavailable from this service. The reply remains in chat.</p>}
+  {turn.detailsAvailable===false&&<p>Some activity details were not recorded. The returned response remains in chat.</p>}
+ </TurnActivity></div>;
+}
+export function EarlierArchitectureActivity({entries,projectId,session}){
+ const [open,setOpen]=useState(false);
+ return <details className="legacy-activity" open={open} onToggle={e=>setOpen(e.currentTarget.open)}><summary>{entries.length} earlier {entries.length===1?'turn':'turns'} · activity history</summary>
+  {open&&<><p>Recorded before activity was linked to individual replies.</p>{entries.toReversed().map(({turn,number})=><ArchitectureTurn key={projectId+':'+turn.id} turn={turn} projectId={projectId} session={session} active={false} working={false} historyNumber={number}/>)}</>}
  </details>;
 }
