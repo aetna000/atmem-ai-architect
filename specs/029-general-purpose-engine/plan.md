@@ -15,7 +15,7 @@ local version for the owner. A plan, renamed abstraction or passing unit-test co
 alone cannot earn a release. No version is released by writing this document.
 
 Proposed local prerelease series: `0.2.0-alpha.1` through `0.2.0-alpha.10`.
-Alpha.1, its patch alpha.1.1 and alpha.2 are offered locally; alpha.3 through alpha.10 remain reserved. Remote publication has not occurred. Critical fixes may have patch candidates; evidence always
+Alpha.1, its patch alpha.1.1 and alpha.2 are offered locally; alpha.3 is now offered locally; alpha.4 through alpha.10 remain reserved. Remote publication has not occurred. Critical fixes may have patch candidates; evidence always
 binds exact commit/artifact rather than a moving label. Remote publication/deployment
 remains a separately authorized action.
 
@@ -95,7 +95,7 @@ are recorded; owner manual acceptance remains separate and pending. See
 `evidence/20261111-work-model-foundation/README.md` and
 `docs/architecture/architecture-work-model.md` for limits and next actions.
 
-GE-001A prospective holdouts/comparison, remaining eight increments and all original
+GE-001A prospective holdouts/comparison, remaining seven increments and all original
 provider/difficulty strata plus unfamiliar combinations remain in scope. Previous
 implementation status notes are preserved in `implementation-checkpoints.md` and
 exact evidence directories rather than presented as current counts.
@@ -224,3 +224,14 @@ the frozen runnable alpha.3 are the next dependency-ordered work. The prior inte
 checkpoint's public-integration-pending status is historical. Owner storage direction
 is persistent: use MEM0 for heavy ignored archives/cache data, retain stable local
 read paths and keep active project stores/session logs/source local.
+
+
+GE-004 local automated scope complete: alpha.3 frozen `ea11bf8` is offered on5285,
+with473 JS/425 server/build, real HTTP/browser/native-unit validation and exact
+source/archive/build identities. See evidence/20261111-alpha3-candidate/README.md.
+Older checkpoints above remain historical. Three runnable increments are offered;
+owner acceptance0, original complete local qualification1/28 and quality unknown.
+Proceed GE-005 provider lowering/ownership, including explicit runtime constraints,
+then all remaining contracts/judgment/knowledge/handoff/recovery/generalisation and
+original28/unfamiliar full systems. Schema/mock checks do not establish application
+runtime or connected-system correctness. No deployment required/authorized.

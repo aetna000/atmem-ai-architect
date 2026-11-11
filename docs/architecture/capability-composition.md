@@ -2,7 +2,8 @@
 
 Status: the public compiler, independent module admission, implementation map and
 Spec Kit now use capability composition. Four-provider service and browser checks
-pass; the frozen runnable alpha.3 must still be verified before release.
+pass. Frozen alpha.3 (`ea11bf8`) is verified and offered locally on5285; see
+`specs/029-general-purpose-engine/evidence/20261111-alpha3-candidate/README.md`.
 
 The core partitions explicitly contracted delivery units from a complete design,
 retaining existing neighbors and every unresolved requirement/interface. A reviewed

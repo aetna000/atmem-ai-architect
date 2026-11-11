@@ -695,3 +695,14 @@ Use the separate MEM0-backed APFS workspace for frozen candidates and bulk worki
 artifacts. Keep provider read roots separate, active stores local, previous running
 services intact and machine storage profiles ignored. Previous goal turn made
 progress by verifying offloaded bytes/mounts and preserving future storage policy.
+
+
+### GE-004 released locally; GE-005 next
+
+Freeze ea11bf8 as local v0.2.0-alpha.3 on MEM0, keep fresh internal app home and
+previous previews unchanged.473JS/425server/build and actual5285HTTP/browser pass,
+including13 native mock runs and115 generated-file digest matches. Preserve initial
+helper-field comparison failure; corrected smoke passes without candidate edits.
+Record exact archive/build identity, installed start, manual card/limits/rollback.
+Three runnable increments offered, owner acceptance0 and original1/28 unchanged;
+full goal remains active. Continue GE-005 provider lowering and lifecycle ownership.
