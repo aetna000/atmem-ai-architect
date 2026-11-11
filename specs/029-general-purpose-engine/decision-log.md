@@ -979,3 +979,30 @@ selection or a complete generic application release. Provider/bootstrap/model
 wiring remains implementation work, with no removed missing-work gate. Heavy
 archives stay on MEM0. Owner UI/previews/jobs and AtFlow CSS unchanged; no cloud
 operation, schema migration or deployment. Evidence: evidence/20261112-workflow-http/README.md.
+
+
+## 2026-11-12 — Immutable native application profile and policy/realm binding
+
+Extract provider-native staff and SQL/origin helpers for shared assembly, retaining
+legacy invoice imports and native policy. Profiles own provider/component/account/
+environment/origin, public identity settings, operation kind and typed destination/
+payload declaration. API and worker use the same derived namespace and fixed SQL
+roles; worker import does not load API/JWT code. Preserve stage deadlines/attributes
+and guard account/kind before callbacks. No profile selects code or credentials.
+
+Initial unoffered bootstrap failed a real SQL regression: changed supervisor-only
+policy could approve older draft work. Preserve its source snapshot/failure. Bind
+the complete declaration into persisted destination and approval identity and enforce
+configured operation kind throughout the store. Keep the namespace to find/block old
+work; no automatic replay, field stripping or migration. Native memberships derive
+from complete verified subject plus owned issuer realm. Changing realm requires
+explicit admission; changing client/scope preserves person identity while changing
+work policy binding. Legacy invoice subjects/namespaces stay unchanged.
+
+Final16 bootstrap checks and131 exact emitted package checks include actual JWT
+signatures for four adapter profiles, scoped local SQL roles/queues and loopback
+TLS. Credentials/key sources are explicit local fixtures, not managed cloud proof.
+89 durable regressions pass; shared identity/helper extraction preserves the old
+implementation bytes. Model/resource/environment/entrypoint linkage and full
+application/handoff remain before alpha.5. No owner UI/job or cloud operation changed.
+Evidence: evidence/20261112-workflow-bootstrap/README.md.

@@ -12,10 +12,10 @@ import ssl
 from urllib.parse import urlsplit
 from durable_workflow import canonical,identifier
 from workflow_errors import ExternalOutcomeUnknown,DestinationNotAttempted,InvalidDispatch
-from workflow_contract import normalized_contract,bind_payload_contract
+from workflow_contract import normalized_contract,bind_payload_contract,bind_application_contract
 
 class ApprovedHttpDestination:
-    def __init__(self,endpoint,credential,*,destination_scope,idempotency_verified=False,tls_context=None,allowed_kinds=('document',),payload_contract=None):
+    def __init__(self,endpoint,credential,*,destination_scope,idempotency_verified=False,tls_context=None,allowed_kinds=('document',),payload_contract=None,application_contract_sha256=None):
         try:target=urlsplit(endpoint)
         except (TypeError,ValueError):raise ValueError('Invalid operator destination')from None
         if (not isinstance(endpoint,str)or len(endpoint)>2000 or target.scheme!='https' or not target.hostname or target.username or target.password
@@ -28,6 +28,7 @@ class ApprovedHttpDestination:
         if not isinstance(context,ssl.SSLContext)or context.verify_mode!=ssl.CERT_REQUIRED or not context.check_hostname:raise ValueError('TLS certificate and hostname verification are mandatory')
         self.host=target.hostname;self.port=port;self.path=target.path or'/';self.credential=credential;self.idempotency_verified=idempotency_verified;self.context=context;self.allowed_kinds=frozenset(allowed_kinds)
         self.contract=bind_payload_contract(normalized_contract(endpoint,destination_scope),payload_contract)
+        if application_contract_sha256 is not None:self.contract=bind_application_contract(self.contract,application_contract_sha256)
         self.payload_contract=payload_contract
     def __call__(self,row,*,idempotency_key,payload_sha256):
         try:identifier(idempotency_key)

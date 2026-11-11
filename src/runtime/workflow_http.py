@@ -8,12 +8,12 @@ import asyncio
 import json
 import re
 import threading
-from urllib.parse import urlsplit
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from starlette.concurrency import run_in_threadpool
 from durable_workflow import Principal, Denied, Missing, Conflict, identifier
 from workflow_payload import PayloadContract
+from workflow_configuration import owned_origin
 
 MAX_BODY = 66000  # Includes the envelope; typed data itself remains <=64000.
 
@@ -21,20 +21,6 @@ MAX_BODY = 66000  # Includes the envelope; typed data itself remains <=64000.
 class BodyTooLarge(ValueError): pass
 class UnsupportedBody(ValueError): pass
 class Busy(RuntimeError): pass
-
-
-def owned_origin(value):
-    try:
-        parts = urlsplit(value)
-        port = parts.port
-    except (TypeError, ValueError): raise ValueError('Use the exact owned application origin') from None
-    if (type(value) is not str or not parts.hostname or parts.username or parts.password or
-        parts.query or parts.fragment or parts.path or
-        (port is not None and not 1 <= port <= 65535) or
-        any(ord(c) < 33 or ord(c) > 126 for c in value) or
-        (parts.scheme != 'https' and not (parts.scheme == 'http' and parts.hostname in {'localhost','127.0.0.1','::1'}))):
-        raise ValueError('Use the exact HTTPS origin or explicit loopback test origin')
-    return value
 
 
 def public_operation(row):
@@ -75,6 +61,7 @@ def create_app(verify, store, *, account_id, public_origin, operation_kind='draf
     if not callable(verify) or type(getattr(store,'payload_contract',None)) is not PayloadContract:
         raise ValueError('Supply an owned verifier and typed application store')
     if type(operation_kind) is not str or operation_kind not in {'document','draft','account_change'}: raise ValueError('Use an owned operation policy')
+    if getattr(store,'operation_kind',None) not in {None,operation_kind}: raise ValueError('HTTP and stored operation policies differ')
     if token_header is not None and (type(token_header) is not str or token_header != 'x-goog-iap-jwt-assertion'): raise ValueError('Unsupported native identity transport')
     app = FastAPI(docs_url=None,redoc_url=None,openapi_url=None)
     slots = threading.BoundedSemaphore(20)

@@ -361,3 +361,15 @@ during streaming and the actual body deadline.115 exact unpacked package tests
 pass. See evidence/20261112-workflow-http/README.md. Continue shared model selection,
 provider-owned bootstrap/identity/database/async composition, full application
 qualification and runnable alpha.5. Four increments/1-of28/owner0 unchanged.
+
+
+GE-006 native assembly checkpoint: shared identity/database helpers now serve an
+immutable owned application profile, with exact API/worker roles, issuer-scoped
+membership and account/kind guards. The initial candidate allowed an older draft
+approval after policy changed to supervisor-only; retained counterexample now
+rejects through full application-declaration binding.16 bootstrap checks, four
+native identity profiles with real JWT crypto/separate local SQL roles and131 exact
+unpacked package checks pass. See evidence/20261112-workflow-bootstrap/README.md.
+This is local injected database/key-source evidence, not managed cloud acceptance.
+Model selection, resource/environment linkage, entrypoints/domain implementations,
+handoff and frozen alpha.5 remain. Four increments/1-of28/owner0 unchanged.

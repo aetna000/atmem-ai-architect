@@ -29,17 +29,17 @@ def _namespace(value):
     if not isinstance(value,str)or not value.isascii()or not value.replace('-','').isalnum()or not 1<=len(value)<=20:raise ValueError('Invalid owned workflow namespace')
     return value
 
-def producer_store(dsn,*,destination_contract,namespace='workflow',lease_seconds=600,payload_contract=None):
+def producer_store(dsn,*,destination_contract,namespace='workflow',lease_seconds=600,payload_contract=None,operation_kind=None):
     """API-side store: synchronous outbox, no worker/model credentials needed."""
     namespace=_namespace(namespace)
     app=procrastinate.App(connector=procrastinate.SyncPsycopgConnector(conninfo=dsn,kwargs={'connect_timeout':5,'options':'-c search_path=pg_catalog,workflow,pg_temp'}))
     def worker_only(operation_id):raise PermanentWork('Run the dedicated owned worker, not an API-side producer')
     extract=app.task(name=namespace+'.extract',queue=namespace+'-extract')(worker_only)
     dispatch=app.task(name=namespace+'.dispatch',queue=namespace+'-dispatch')(worker_only)
-    return WorkflowStore(dsn,extract,dispatch,destination_contract=destination_contract,lease_seconds=lease_seconds,payload_contract=payload_contract)
+    return WorkflowStore(dsn,extract,dispatch,destination_contract=destination_contract,lease_seconds=lease_seconds,payload_contract=payload_contract,operation_kind=operation_kind)
 
 class WorkflowRuntime:
-    def __init__(self,dsn,processor,deliver,*,destination_contract=None,idempotent_destination=False,namespace='workflow',lease_seconds=600,retry_wait=5,payload_contract=None):
+    def __init__(self,dsn,processor,deliver,*,destination_contract=None,idempotent_destination=False,namespace='workflow',lease_seconds=600,retry_wait=5,payload_contract=None,operation_kind=None):
         if type(idempotent_destination)is not bool:raise ValueError('Invalid owned worker configuration')
         namespace=_namespace(namespace)
         if type(retry_wait)is not int or not 0<=retry_wait<=300:raise ValueError('Invalid retry policy')
@@ -57,7 +57,7 @@ class WorkflowRuntime:
         # The domain transaction is a synchronous psycopg connection. Keep its
         # producer connector synchronous even while the async worker pool is open;
         # never accidentally bridge that connection into an async cursor context.
-        self.store=producer_store(dsn,destination_contract=destination_contract,namespace=namespace,lease_seconds=lease_seconds,payload_contract=payload_contract)
+        self.store=producer_store(dsn,destination_contract=destination_contract,namespace=namespace,lease_seconds=lease_seconds,payload_contract=payload_contract,operation_kind=operation_kind)
     async def _fail(self,row,reason,*,retryable=False,ambiguous=True):
         try:await asyncio.to_thread(self.store.fail,str(row['id']),str(row['lease_token']),reason,retryable=retryable,ambiguous=ambiguous)
         except LostLease:return

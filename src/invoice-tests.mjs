@@ -55,7 +55,7 @@ import re
 import subprocess
 import sys
 ROOT=Path(__file__).resolve().parents[1]
-TESTS=['invoice_extraction_acceptance.py','invoice_storage_acceptance.py','invoice_http_acceptance.py','invoice_web_acceptance.py','invoice_identity_acceptance.py','invoice_parser_rpc_acceptance.py','invoice_parser_identity_acceptance.py','invoice_worker_acceptance.py','invoice_operations_acceptance.py','invoice_operator_acceptance.py','invoice_operator_job_acceptance.py','workflow_payload_acceptance.py','workflow_http_acceptance.py']
+TESTS=['invoice_extraction_acceptance.py','invoice_storage_acceptance.py','invoice_http_acceptance.py','invoice_web_acceptance.py','invoice_identity_acceptance.py','invoice_parser_rpc_acceptance.py','invoice_parser_identity_acceptance.py','invoice_worker_acceptance.py','invoice_operations_acceptance.py','invoice_operator_acceptance.py','invoice_operator_job_acceptance.py','workflow_payload_acceptance.py','workflow_http_acceptance.py','workflow_application_acceptance.py']
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--fixture',required=True);parser.add_argument('--out',required=True);args=parser.parse_args()

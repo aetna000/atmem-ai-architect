@@ -42,9 +42,11 @@ class Principal:
         if not isinstance(self.subject,str) or not 1<=len(self.subject.encode('utf-8'))<=500 or any(ord(c)<32 for c in self.subject):raise ValueError('Invalid verified subject')
 
 class WorkflowStore:
-    def __init__(self,dsn,extract_task,dispatch_task,*,destination_contract,max_attempts=5,lease_seconds=600,payload_contract=None):
+    def __init__(self,dsn,extract_task,dispatch_task,*,destination_contract,max_attempts=5,lease_seconds=600,payload_contract=None,operation_kind=None):
         self.destination_contract=bind_payload_contract(destination_contract,payload_contract)
         self.payload_contract=payload_contract
+        if operation_kind is not None and(type(operation_kind)is not str or operation_kind not in {'document','draft','account_change'}):raise ValueError('Use an owned operation policy')
+        self.operation_kind=operation_kind
         if not callable(dsn)and(not isinstance(dsn,str) or not dsn):raise ValueError('Supply an operator-managed PostgreSQL connection or trusted credential factory')
         if type(max_attempts)is not int or not 1<=max_attempts<=10 or type(lease_seconds)is not int or not 10<=lease_seconds<=1800:raise ValueError('Invalid owned workflow limits')
         for task in [extract_task,dispatch_task]:
@@ -77,6 +79,7 @@ class WorkflowStore:
         return self.payload_contract.validate(side,value)if self.payload_contract else json.loads(canonical(value))
     def _contract(self,row,*,result=False):
         if row['destination_contract']!=self.destination_contract:raise Conflict('Application/destination contract changed; explicit reconciliation is required')
+        if self.operation_kind is not None and row['kind']!=self.operation_kind:raise Conflict('Operation policy differs from this application')
         self._payload('source',row['source_ref'])
         if result:self._payload('result',row['result'])
     def _event(self,conn,row,event,actor,detail=None):
@@ -94,6 +97,7 @@ class WorkflowStore:
         return self.tasks[kind].configure(connection=conn,lock=str(operation_id)).defer(operation_id=str(operation_id))
     def submit(self,actor,kind,dedup_key,source_ref):
         if kind not in {'document','draft','account_change'}:raise ValueError('Unsupported owned operation kind')
+        if self.operation_kind is not None and kind!=self.operation_kind:raise ValueError('Operation policy differs from this application')
         if not isinstance(dedup_key,str) or not 1<=len(dedup_key.encode())<=200:raise ValueError('Invalid stable operation identity')
         source_ref=self._payload('source',source_ref)
         with self.connect()as conn:
