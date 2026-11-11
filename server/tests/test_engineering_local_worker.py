@@ -34,7 +34,11 @@ class LocalWorkerRegistrationTests(unittest.IsolatedAsyncioTestCase):
                 self.assertTrue((path/'atmem-tools/prepare.py').is_file())
                 events=worker.jobs.journal.read(scope,state['id'])
                 self.assertEqual(events[0]['kind'],'created')
-                self.assertEqual(len(events[0]['inputDigests']),4)
+                self.assertEqual(set(events[0]['inputDigests']),{'project-context.json','.agents/skills/composition/SKILL.md','ATMEM_DELIVERY.md','atmem-tools/prepare.py','atmem-tools/architecture-work.schema.json'})
+                import hashlib
+                schema=path/'atmem-tools/architecture-work.schema.json'
+                self.assertEqual(events[0]['inputDigests']['atmem-tools/architecture-work.schema.json'],hashlib.sha256(schema.read_bytes()).hexdigest())
+                self.assertEqual(json.loads(schema.read_text())['properties']['version']['const'],1)
                 await worker.close()
                 restarted=LocalEngineeringService()
                 self.assertEqual(restarted.backend._workspace(scope,row['workspace']),path)

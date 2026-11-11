@@ -1,3 +1,4 @@
+import {validateArchitectureWork} from './architecture-work.mjs';
 // The durable project file: atforma.project 2.0.0. See specs/002-project-model.
 import { validateImport } from "./core.mjs";
 
@@ -89,7 +90,9 @@ export function toProjectFile(project, now = new Date()) {
     // Browser-only fields the file format doesn't name yet are preserved, not dropped.
     extensions: { ...(extensions || {}), ...rest },
   };
+  if(file.extensions.architectureWork!==undefined)validateArchitectureWork(file.extensions.architectureWork);
   refuseCredentials(file, "Export");
+  if(new TextEncoder().encode(JSON.stringify(file)).length>MAX_FILE_BYTES)throw Error("Project files must be 2 MB or smaller; no content was truncated.");
   return file;
 }
 
@@ -144,6 +147,6 @@ export function fromProjectFile(raw) {
 }
 
 export function parseProjectFile(textContent) {
-  if (textContent.length > MAX_FILE_BYTES) throw Error("Project files must be 2 MB or smaller.");
+  if (new TextEncoder().encode(textContent).length > MAX_FILE_BYTES) throw Error("Project files must be 2 MB or smaller.");
   return fromProjectFile(JSON.parse(textContent));
 }

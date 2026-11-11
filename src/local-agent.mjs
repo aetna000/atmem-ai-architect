@@ -1,3 +1,4 @@
+import {architectureWork} from './architecture-work.mjs';
 import {consultationContext} from './consultation-context.mjs';
 import { runtimeSettings } from "./runtime-settings.mjs";
 import { handoffAssessment } from './handoff.mjs';
@@ -66,7 +67,10 @@ export function agentContext(p) {
   const measure = (m) => (m ? ` [${m.metric} ${m.op} ${m.target}${m.unit || ""}]` : "");
   const next = journey(p);
   const costs = estimate(p), work = consultingEstimate(p), resources = resourcePlan(p), handoff = handoffAssessment(p);
+  const shared=p.extensions?.architectureWork?architectureWork(p):null;
+  const workContext=shared?shared.entities.filter(e=>e.id.startsWith('intent:')&&e.id!=='intent:project'||e.id.startsWith('work:')).map((e,i)=>item('discovery','shared-work-'+i,JSON.stringify({reference:e.id,kind:e.kind,contextStatus:e.contextStatus,changedRefs:e.changedRefs,missingRefs:e.missingRefs,value:e.value,boundary:'Recorded intent or proposed mapping; context review is not verified execution or business acceptance.'}))):[];
   return consultationContext([
+    ...workContext,
     item("discovery","guided-journey",`Current journey step: ${next.id} — ${next.title}. ${next.reason} Next action: ${next.action}. Add or refine the needed components and their connections from known answers. Keep topology reasoning internal and explain components in plain language. Ask only a material question that unlocks the next design decision; defer packaging details. Later stages remain hidden until the working draft progresses; never direct the user to a hidden tab. Named service mapping is not verified cloud compatibility.`),
     item("discovery", "estimate-summary", `Current estimate stage: ${costs.maturity}. Monthly cloud subtotal ${costs.expected ?? "unknown"} ${costs.currency || "currency unresolved"}; range ${costs.low ?? "?"}–${costs.high ?? "?"}; ${costs.gaps.length} worksheet gaps. One-off consulting/build subtotal ${work.expected ?? "unknown"} ${work.currency}; ${work.complete ? "all phases entered" : "incomplete"}. Values are user inputs, not provider quotes. Later journey stages provide costs and a downloadable delivery draft with a Terraform sketch. Follow guided-journey before directing the user to those stages.`),
     ...costs.gaps.slice(0, 5).map((g, i) => item("discovery", `cost-gap-${i}`, g)),

@@ -46,6 +46,20 @@ or explicit approved receiving inputs, never private worker mirror paths. The he
 does not install dependencies. State any packaging/service/version limits without
 removing client-required functionality or assuming the image SDK matches a vendored SDK.
 
+## Shared architecture work context
+
+When present in project-context.json, extensions.architectureWork retains explicit
+work mappings, scoped review contexts and the full recorded client engineering
+intent. Its context review does not prove implementation or runtime success.
+The pinned atmem-tools/architecture-work.schema.json describes optional proposed
+mappings in architecture-work-proposal.json. Use only actual project IDs and explicit
+work: references; retain responsibility, delivery-unit, interface, implementation,
+assumption/decision dependencies and evidence limits. File paths must be relative.
+Do not invent graph links, change client provider/ownership or mark model assertions
+as verified execution. Importing proposals adds unreviewed metadata; graph/file
+reconciliation and artifact validation remain separate required work. Legacy sessions
+may lack this input: do not rewrite their pinned files or claim it was supplied.
+
 ## Completion evidence
 
 Run the real emitted checks and label schema, provider mocks, local runtime and
@@ -60,7 +74,8 @@ separate proposed operational guards from explicit client requirements.
 def seed_delivery(workspace):
     root=Path(workspace)
     files={'ATMEM_DELIVERY.md':CONTRACT.encode(),
-           'atmem-tools/prepare.py':(Path(__file__).parent/'engineering_assets/prepare_tools.py').read_bytes()}
+           'atmem-tools/prepare.py':(Path(__file__).parent/'engineering_assets/prepare_tools.py').read_bytes(),
+           'atmem-tools/architecture-work.schema.json':(Path(__file__).parent/'engineering_assets/architecture_work.schema.json').read_bytes()}
     for name,content in files.items():
         target=root/name
         for parent in target.parents:

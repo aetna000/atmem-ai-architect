@@ -1,9 +1,10 @@
+import {ArchitectureWorkPanel} from './ArchitectureWorkPanel.jsx';
 import React,{useEffect,useRef,useState} from 'react';
 import {engineeringCall,engineeringConversation,mergeEngineeringEvents,verifiedEngineeringDownload} from './engineering-client.mjs';
 import './engineering.css';
 import {ArtifactChecks} from './ArtifactChecks.jsx';
 
-export function EngineeringPanel({projectId,session,connection,saveProject,onConnections,contextBusy=false}){
+export function EngineeringPanel({projectId,session,connection,saveProject,onConnections,project,onWorkModelChange,onIntentContext,contextBusy=false}){
   const draftKey=`atmem-engineering-draft-v1:${projectId}`;
   const [job,setJob]=useState(null),[events,setEvents]=useState([]),[draft,setDraft]=useState(()=>{try{return localStorage.getItem(draftKey)||'';}catch{return '';}}),
     [busy,setBusy]=useState(false),[error,setError]=useState(''),[loading,setLoading]=useState(true),[artifact,setArtifact]=useState(null);
@@ -47,6 +48,7 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
     }catch(e){if(!stopped&&e.name!=='AbortError')setError(e.message);}finally{if(!stopped)timer=setTimeout(poll,1000);}}
     void poll();return()=>{stopped=true;clearTimeout(timer);controller.abort();};
   },[job?.id,projectId,session.token]);
+  useEffect(()=>{if(job&&onIntentContext){try{onIntentContext(projectId,job.id,events);}catch(e){setError(e.message);}}},[job?.id,events,onIntentContext]);
   async function act(operation){
     if(actionLock.current)return;
     actionLock.current=true;setBusy(true);setError('');
@@ -74,6 +76,7 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
   return <div className="engineering-panel">
     <h2>Build your project</h2>
     <p>Describe what you need. The architect builds implementation files and runs local checks. Work continues when you leave this view.</p>
+    <ArchitectureWorkPanel project={project} onChange={onWorkModelChange} busy={busy||contextBusy}/>
     {loading?<p role="status">Finding your project’s work…</p>:<>
       {job?<>
         <p role="status">{running?'Working':uncertain?'Recovering acceptance of your last request':job.last_status?({completed:'Work completed',interrupted:'Work stopped',failed:'Work needs attention'}[job.last_status]||job.last_status):'Ready'} · {job.model} · {job.effort}</p>

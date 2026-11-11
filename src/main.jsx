@@ -1,3 +1,4 @@
+import {synchronizeEngineeringIntent,applyArchitectureChange} from './architecture-work.mjs';
 import {version as appVersion} from "../package.json";
 import {restoreQueuedMessages,nextIntakeBatch,restoreIntakePaused} from './work-intake.mjs';
 import {emulationGuidance,guidanceMessage} from './emulation-guidance.mjs';
@@ -890,6 +891,8 @@ function App() {
     projectRef.current = updated;
     setProject(updated);
   }, []);
+  const syncEngineeringIntent=useCallback((owner,id,events)=>{const current=projectRef.current,next=synchronizeEngineeringIntent(current,id,events,owner);if(next!==current)updateEngagement(next);},[updateEngagement]);
+  const changeArchitectureWork=useCallback((change,owner)=>{const current=projectRef.current,next=applyArchitectureChange(current,owner,change);if(next!==current){toProjectFile(next);updateEngagement(next);}},[updateEngagement]);
   const allIssues = checkProject(project).filter((i) => i.level !== "info");
   // Fixture checks only matter for designs that can be test-run; sketches are reviewed in Review.
   const runnable = project.nodes.some((n) => n.data.kind !== "note") && !project.nodes.some((n) => n.data.kind === "resource");
@@ -1876,7 +1879,7 @@ function App() {
           e.dataTransfer.dropEffect = "move";
         }}
       >
-        {buildView?<section className="native-work-area" aria-label="Build workspace"><EngineeringPanel key={project.id} projectId={project.id} session={session} connection={connection} contextBusy={busy||agentBusy||!!pending}
+        {buildView?<section className="native-work-area" aria-label="Build workspace"><EngineeringPanel key={project.id} project={project} onWorkModelChange={changeArchitectureWork} onIntentContext={syncEngineeringIntent} projectId={project.id} session={session} connection={connection} contextBusy={busy||agentBusy||!!pending}
           saveProject={()=>projectStore(session,'save',{id:project.id,file:toProjectFile(withConversation(project,messages))})}
           onConnections={()=>setModal('connections')}/></section>:<>
         <ReactFlow
