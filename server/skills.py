@@ -24,6 +24,7 @@ def generation_guidance():
     catalogue = json.loads((ROOT / 'agent-skills/generation-capabilities.json').read_text())
     return ('Compiler capability catalogue v' + str(catalogue['version']) + ': ' +
             json.dumps(catalogue['contracts'], separators=(',', ':')) + '. ' + catalogue['evidenceBoundary'] +
+            ' Application source assembly contracts: ' + json.dumps(catalogue.get('applicationAssemblies', []), separators=(',', ':')) + '. ' +
             ' Preserve required unsupported scope and identify missing compiler work; never substitute a different provider or present references as generated infrastructure.')
 
 

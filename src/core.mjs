@@ -1,3 +1,4 @@
+import {approvalProfiles} from './approval-applications.mjs';
 import {validateArchitectureWork} from './architecture-work.mjs';
 import {validateStateCustody} from './state-custody.mjs';
 import {validateExternalReferences} from './external-identities.mjs';
@@ -628,6 +629,7 @@ export function validateImport(p) {
   if(p.extensions?.architectureWork!==undefined)validateArchitectureWork(p.extensions.architectureWork);
   validateStateCustody(p.extensions?.terraformState);
   validateExternalReferences(p);
+  approvalProfiles(p);
   const ids = new Set();
   for (const n of p.nodes) {
     if (
@@ -692,12 +694,13 @@ export function validateImport(p) {
           ).slice(0, 100),
           timeout: 5000,
         },
+        ...(n.data.approvalProfile!=null ? {approvalProfile:structuredClone(n.data.approvalProfile)}:{}),
         ...(n.data.topologyGroup ? {topologyGroup:String(n.data.topologyGroup)}:{}),
         ...(["reference","create"].includes(n.data.deploymentMode)?{deploymentMode:n.data.deploymentMode}:{}),
         origin: String(n.data.origin || "proposed").slice(0, 100),
         ...(n.data.poc ? { poc: true } : {}),
         ...(["public-catalog-editor","cloud-storage-principal","aws-iam-principal","aws-bedrock-model","normalized-source-contract","web-browser","existing-service"].includes(n.data.binding) ? { binding: n.data.binding } : {}),
-        ...(["invoice-workflow","public-faq-app","ibm-structured-app","gcp-structured-app","azure-structured-app","container-service","private-object-storage","rag-web-app","rag-user-pool","bounded-keyword-rag","iam-rag-api","bounded-rag-catalog","text-statistics","bedrock-summary","bedrock-structured","structured-api","structured-web-app","structured-user-pool","async-word-count","sqs-standard","sqs-dead-letter","word-count-results"].includes(n.data.implementation) ? { implementation: n.data.implementation } : {}),
+        ...(["approval-workflow","invoice-workflow","public-faq-app","ibm-structured-app","gcp-structured-app","azure-structured-app","container-service","private-object-storage","rag-web-app","rag-user-pool","bounded-keyword-rag","iam-rag-api","bounded-rag-catalog","text-statistics","bedrock-summary","bedrock-structured","structured-api","structured-web-app","structured-user-pool","async-word-count","sqs-standard","sqs-dead-letter","word-count-results"].includes(n.data.implementation) ? { implementation: n.data.implementation } : {}),
         ...(ROLES.includes(n.data.role) ? { role: n.data.role } : {}),
         ...(Array.isArray(n.data.measures) ? { measures: cleanMeasures(n.data.measures) } : {}),
         ...(n.data.service

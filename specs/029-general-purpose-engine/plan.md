@@ -373,3 +373,14 @@ unpacked package checks pass. See evidence/20261112-workflow-bootstrap/README.md
 This is local injected database/key-source evidence, not managed cloud acceptance.
 Model selection, resource/environment linkage, entrypoints/domain implementations,
 handoff and frozen alpha.5 remain. Four increments/1-of28/owner0 unchanged.
+
+
+GE-006 selection checkpoint: complete node-owned declarations now pass structured
+producer/browser validation and reach actual source/lock/container/API exports and
+concrete Spec Kit tasks. Four exact selected entrypoints pass native JWT/SQL tests;
+old-reader format3 rejection prevents silent intent loss.546JS/432server/build and
+131 full-package regressions pass; see evidence/20261112-application-selection/README.md.
+These are partial API assemblies with required domain/worker/resource work, not
+whole applications or planner-quality proof. Intent-to-template/deferred native
+bindings, provider/environment linkage, worker/domain implementation and full
+requirements/handoff remain before alpha.5. Four increments/1-of28/owner0 unchanged.

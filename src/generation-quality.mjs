@@ -36,6 +36,10 @@ export function generationQuality(project,plan,files,{environment='staging'}={})
  for(const node of project.nodes.filter(n=>n.data.kind!=='note'))if(plan.rows.filter(r=>r.id===node.id).length!==1)add('unregistered-implementation','The resource schedule must retain each component identity exactly once.',node.id);
  const components=plan.rows.map(row=>{
   const node=project.nodes.find(n=>n.id===row.id),d=node?.data||{},scope=admission.scopes.get(row.id),actual=scope?.config||(admission.composed?{}:config),prefix=scope?.prefix||'';
+  if(d.implementation==='approval-workflow'){
+   add('application-resource-linkage-required','The approval API source is partial assembly; provider resources, worker/domain behavior and operating acceptance remain required.',row.id);
+   if(row.implemented)add('unregistered-implementation','Shared approval source cannot be presented as completed infrastructure.',row.id);
+  }
   if(node&&!existingDeployment(node)&&d.provider==='aws'&&d.implementation==='invoice-workflow'&&/^(cn-|us-gov-)/.test(d.config?.region||'')){
    add('partition-implementation-required','The requested invoice partition is retained, but its complete ARN/registry/model policy is not implemented by the commercial adapter.',row.id);
    const blocker=(scope?scope.module+':':'')+'invoice-config-region';

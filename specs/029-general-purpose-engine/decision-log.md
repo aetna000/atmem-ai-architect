@@ -1006,3 +1006,28 @@ TLS. Credentials/key sources are explicit local fixtures, not managed cloud proo
 implementation bytes. Model/resource/environment/entrypoint linkage and full
 application/handoff remain before alpha.5. No owner UI/job or cloud operation changed.
 Evidence: evidence/20261112-workflow-bootstrap/README.md.
+
+
+## 2026-11-12 — Typed component selection and compatible file boundary
+
+Carry approval-workflow/data.approvalProfile through actual structured proposals,
+saved design, context review and export. Extract pure declaration validation for
+engine and delivered runtime; no database/JWT import is needed to validate intent.
+Retain complete component/provider ownership and reject reference/note/foreign
+profile claims. Select only the shared source assembly; stale labels cannot claim
+an S3 implementation and independent quality checks retain unfinished scope.
+
+Emit real API source, profile/lock/container and pending assembly status, with
+concrete requirement/file/task links. Source work precedes component acceptance,
+not a semantically circular dependency. Domain/worker/resource code and native
+output/environment bindings remain required; do not invent IDs or mark fixtures
+as a complete implementation. The generation catalogue6 keeps source assemblies
+separate from reviewed Terraform contracts; native handoff guidance carries limits.
+
+Frozen108981b parser silently drops the new intent/profile if a counterfactual
+copy is labelled2.3. Format3 only for projects using this new intent makes that
+parser reject before data loss. Existing ordinary projects remain2.3 and current
+reader retains old compatibility. No store rewrite or schema migration. Four
+exact exported entrypoints pass local JWT/SQL tests; no actual cloud/IdP or new
+whole-system acceptance. Evidence: evidence/20261112-application-selection/README.md.
+Owner UI/previews/jobs unchanged; no cloud operations or deployment.

@@ -3,7 +3,7 @@
 No cloud request, secret read, HTTP or JWT adapter is loaded at import.
 """
 from pathlib import Path
-from urllib.parse import urlsplit
+from workflow_profile import owned_origin
 from workflow_connection import aws_database,azure_database,gcp_database,ibm_database
 
 def mounted_secret(path,*,maximum=500):
@@ -26,20 +26,6 @@ def native_database(provider,environment,role):
     if provider=='azure':return azure_database(**common,managed_identity_client_id=env['WORKLOAD_IDENTITY_CLIENT_ID'])
     if provider=='ibm':return ibm_database(**common,port=int(env['DATABASE_PORT']),password=mounted_secret(env['DATABASE_PASSWORD_FILE']))
     raise ValueError('Unsupported owned database provider')
-
-def owned_origin(value):
-    try:
-        parts = urlsplit(value)
-        port = parts.port
-    except (TypeError, ValueError): raise ValueError('Use the exact owned application origin') from None
-    if (type(value) is not str or not parts.hostname or parts.username or parts.password or
-        parts.query or parts.fragment or parts.path or
-        (port is not None and not 1 <= port <= 65535) or
-        any(ord(c) < 33 or ord(c) > 126 for c in value) or
-        (parts.scheme != 'https' and not (parts.scheme == 'http' and parts.hostname in {'localhost','127.0.0.1','::1'}))):
-        raise ValueError('Use the exact HTTPS origin or explicit loopback test origin')
-    return value
-
 
 def native_identity_realm(provider,settings):
     """Issuer identity from owned settings, never unverified token claims.

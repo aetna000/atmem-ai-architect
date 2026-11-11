@@ -1,3 +1,4 @@
+import {approvalProfiles} from './approval-applications.mjs';
 import {declaredRegion} from './deployment-region.mjs';
 import {containerRuntime} from './container-runtime.mjs';
 import {resourceAddress,assertDistinctIdentifiers} from './identifiers.mjs';
@@ -48,6 +49,7 @@ const CANDIDATES = { data: "Storage or existing data connector", ingest: "Ingest
 // Explicit selections are authoritative; labels are only candidates, never a way to
 // override an unsupported or conflicting selection. Generic names retain open modes.
 export function resolveService(data) {
+  if(data.implementation==='approval-workflow')return null;
   if (data.provider !== "aws") return null;
   const value = String(data.service || data.label || "");
   if (/bedrock/i.test(value) && /\b(model|inference|invoke)\b/i.test(value) && /(guardrail|knowledge)/i.test(value) && /\bwith\b|[+&]/i.test(value)) return { ambiguous: true, selected: !!data.service };
@@ -63,6 +65,7 @@ export function resolveService(data) {
 }
 
 export function resourcePlan(project) {
+  approvalProfiles(project);
   validateExternalReferences(project);
  assertDistinctIdentifiers(project.nodes.map(n=>n.id));
  return capabilityCompositionPlan(project,standaloneResourcePlan)||standaloneResourcePlan(project);

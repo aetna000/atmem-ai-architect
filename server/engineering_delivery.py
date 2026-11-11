@@ -46,6 +46,19 @@ or explicit approved receiving inputs, never private worker mirror paths. The he
 does not install dependencies. State any packaging/service/version limits without
 removing client-required functionality or assuming the image SDK matches a vendored SDK.
 
+## Typed application declarations
+
+A proposed component may carry data.implementation=approval-workflow and a complete
+data.approvalProfile. Preserve its exact component/provider/environment, public
+identity settings, logical account, operation policy, payload and destination.
+The profile selects shared API source assembly, not completed infrastructure or
+business behavior. Keep source declarations separate from their runtime acceptance.
+Implement domain stages, real worker entrypoints, provider resources and connections
+from the full scope; never substitute an invoice recipe, synthetic processor or
+invented native identity/client IDs. Exported assembly-status.json and component
+Spec Kit tasks identify missing work. Existing systems stay external unless a
+separate authorized ownership transition is recorded.
+
 ## Shared architecture work context
 
 When present in project-context.json, extensions.architectureWork retains explicit

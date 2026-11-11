@@ -1,3 +1,4 @@
+import {approvalApplicationFiles} from './approval-application-files.mjs';
 import {compileCapabilityComposition} from './delivery-capabilities.mjs';
 import {applyStateCustody} from './state-custody.mjs';
 import {ownershipInventory} from './ownership-inspection.mjs';
@@ -119,6 +120,7 @@ function compileTerraform(project, environment = "staging") {
 
 export function terraformSketch(project,environment="staging"){
  const files=applyStateCustody(project,environment,{...compileTerraform(project,environment),...existingReferenceFiles(project)});
+ Object.assign(files,approvalApplicationFiles(project,environment));
  const root=JSON.parse(files['main.tf.json']);
  files['deployment-ownership.json']=JSON.stringify(ownershipInventory(project,inspectTerraformModules(project,resourcePlan(project),files,root,()=>{}).configs),null,2)+'\n';
  files['generation-quality.json']=JSON.stringify(generationQuality(project,resourcePlan(project),files,{environment}),null,2);

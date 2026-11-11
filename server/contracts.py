@@ -78,10 +78,21 @@ class Data(Strict):
     service:str|None=Field(default=None,max_length=150)
     category:str|None=Field(default=None,max_length=150)
     binding:Literal['public-catalog-editor','cloud-storage-principal','aws-iam-principal','aws-bedrock-model','normalized-source-contract','web-browser','existing-service']|None=None
-    implementation:Literal['invoice-workflow','public-faq-app','ibm-structured-app','gcp-structured-app','azure-structured-app','container-service','private-object-storage','rag-web-app','rag-user-pool','bounded-keyword-rag','iam-rag-api','bounded-rag-catalog','text-statistics','bedrock-summary','bedrock-structured','structured-api','structured-web-app','structured-user-pool','async-word-count','sqs-standard','sqs-dead-letter','word-count-results']|None=None
+    implementation:Literal['approval-workflow','invoice-workflow','public-faq-app','ibm-structured-app','gcp-structured-app','azure-structured-app','container-service','private-object-storage','rag-web-app','rag-user-pool','bounded-keyword-rag','iam-rag-api','bounded-rag-catalog','text-statistics','bedrock-summary','bedrock-structured','structured-api','structured-web-app','structured-user-pool','async-word-count','sqs-standard','sqs-dead-letter','word-count-results']|None=None
+
+    approvalProfile:dict|None=None
+
+    @field_validator('approvalProfile')
+    @classmethod
+    def approval_declaration(cls,value):
+        if value is None:return value
+        from src.runtime.workflow_profile import ApplicationProfile
+        return ApplicationProfile(value).data
 
     @model_validator(mode='after')
     def named_component(self):
+        if self.approvalProfile is not None and (self.kind=='note' or self.binding or self.implementation!='approval-workflow' or self.provider!=self.approvalProfile['provider'] or self.origin!='proposed'):
+            raise ValueError('Approval profile requires its exact proposed provider/component contract; preserve existing ownership')
         if self.config.containerMemoryBytes is not None and self.implementation!='container-service':raise ValueError('Exact container memory requires an explicit container-service contract')
         if self.deploymentMode=='reference' and self.origin not in {'existing','imported Pulumi state'}:raise ValueError('Reference handling must preserve an existing system')
         if self.binding and (self.origin not in {'existing','imported Pulumi state'} or self.deploymentMode=='create'):raise ValueError('Reference bindings identify existing systems and cannot provision a replacement')
@@ -100,6 +111,11 @@ class Node(Strict):
     type:Literal['resource']='resource'
     position:Position
     data:Data
+
+    @model_validator(mode='after')
+    def approval_owner(self):
+        if self.data.approvalProfile is not None and self.data.approvalProfile['componentId']!=self.id:raise ValueError('Approval profile component identity differs from its owner')
+        return self
 
 class Edge(Strict):
     id:str=Field(min_length=1,max_length=150)

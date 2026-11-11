@@ -2,7 +2,10 @@
 import hashlib
 import json
 import re
-from workflow_payload import PayloadContract
+if __package__:
+    from .workflow_payload import PayloadContract
+else:
+    from workflow_payload import PayloadContract
 
 def reviewed_contract(value):
     fields={'id','endpointSha256','scope','mappingVersion'}

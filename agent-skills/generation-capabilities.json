@@ -1,5 +1,5 @@
 {
-  "version": 5,
+  "version": 6,
   "providers": [
     "aws",
     "azure",
@@ -670,5 +670,72 @@
       }
     }
   ],
-  "evidenceBoundary": "A matching contract identifies compiler capability only. Resources, edges, application behavior and destination configuration require independent validation."
+  "evidenceBoundary": "A matching contract identifies compiler capability only. Resources, edges, application behavior and destination configuration require independent validation.",
+  "applicationAssemblies": [
+    {
+      "id": "typed-approval-application-v1",
+      "implementation": "approval-workflow",
+      "providers": [
+        "aws",
+        "azure",
+        "gcp",
+        "ibm"
+      ],
+      "selection": "Explicit proposed non-note component with data.approvalProfile matching node.id and provider; fits durable human-reviewed typed workflows on PostgreSQL. Do not apply this as a universal business application recipe.",
+      "profileFields": [
+        "format",
+        "provider",
+        "componentId",
+        "environment",
+        "accountId",
+        "publicOrigin",
+        "operationKind",
+        "identitySettings",
+        "payloadContract",
+        "destinationContract"
+      ],
+      "format": "approval-application-v1",
+      "environment": [
+        "staging",
+        "production",
+        "qualification"
+      ],
+      "operationKind": [
+        "document",
+        "draft",
+        "account_change"
+      ],
+      "accountId": "Canonical logical application-account UUID; not a cloud account ID",
+      "identitySettings": {
+        "aws": [
+          "REGION",
+          "POOL_ID",
+          "CLIENT_ID",
+          "AUTH_ORIGIN",
+          "AUTH_SCOPE"
+        ],
+        "azure": [
+          "TENANT_ID",
+          "API_CLIENT_ID",
+          "SPA_CLIENT_ID"
+        ],
+        "gcp": [
+          "PROJECT_NUMBER",
+          "REGION",
+          "SERVICE_NAME"
+        ],
+        "ibm": [
+          "APPID_TENANT_ID",
+          "APPID_CLIENT_ID",
+          "APPID_ISSUER",
+          "AUTH_SCOPE"
+        ]
+      },
+      "payloadContract": "Exactly version=1,id (lowercase identifier),source,result; source/result are closed object schemas with type/properties/required. Fields support bounded string(minBytes,maxBytes), integer(minimum,maximum), boolean, enum(values), array(items,maxItems) and nested object. No JSON Schema extensions/coercion.",
+      "destinationContract": "Reviewed id,endpointSha256,scope,mappingVersion; never a credential or invented vendor mapping.",
+      "emitted": "Shared API source, profile, exact provider lock, Dockerfile and explicit missing-work/task record",
+      "boundary": "Source assembly only. Resources, domain processor/worker, identity/database/environment wiring and full tests remain required; never clear work gates or claim application completion. Retain an absent profile while real choices are unresolved; do not invent provider/client identifiers or acceptance.",
+      "projectFileVersion": "3.0.0 only for approval-workflow projects, so older readers reject instead of dropping this intent"
+    }
+  ]
 }
