@@ -32,3 +32,20 @@ application execution or cloud/account acceptance.
 See `specs/029-general-purpose-engine/evidence/20261111-provider-lowering/README.md`
 for executable evidence, exact supported scope and remaining region/network/
 identity/lifecycle/state policy work before alpha.4.
+
+Configured placement now follows the same explicit contract through standalone
+and composed supplied-image units. A known canonical region becomes a validated
+input bound to that unit's provider and native location; changing it requires
+regeneration. An unknown region has no default destination. Unsupported identifiers
+retain blocking scope. Existing invoice-region policy is reused without claiming
+that identifier syntax proves service availability. Proposals remain proposals.
+
+Azure reads the exact existing managed environment and checks location and ARM ID;
+IBM reads the existing Code Engine project and checks region and account. These
+are read-only references. Independent inspection rejects changed provider bindings,
+removed guards and extra resources/queries outside the supplied-image footprint.
+Parent review gates can defer child lookups; unit mock plans exercise resolved
+fixtures without weakening those gates. This is not cloud observation or complete
+IAM/lifecycle/state-policy acceptance. Pinned native sources and the old compiler
+counterexample are in
+`specs/029-general-purpose-engine/evidence/20261112-provider-placement/README.md`.

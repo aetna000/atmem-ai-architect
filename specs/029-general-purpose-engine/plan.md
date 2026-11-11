@@ -253,3 +253,13 @@ server/build/focused browser/live built-view pass. An active owner implementatio
 job prevents a service restart; keep it running. See
 evidence/20261111-inline-activity-patch/README.md. This patch adds no increment or
 original-case acceptance. Resume GE-005 region/ownership, then full programme.
+
+
+GE-005 placement checkpoint: configured destinations are retained through standalone
+and composed inputs/providers, with native read-only Azure environment and IBM
+project region/identity checks and independent supplied-image footprint admission.
+501JS/428server/build,12 native packages82 mock plans and70 actual service unit
+mock plans pass. See evidence/20261112-provider-placement/README.md. Lifecycle
+parity, deeper identity/network/state policy and frozen runnable alpha.4 remain;
+three increments, original complete local qualification1/28, owner acceptance0,
+quality unknown. No owner UI or running project was changed.

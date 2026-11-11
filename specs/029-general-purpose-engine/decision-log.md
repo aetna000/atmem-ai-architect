@@ -789,3 +789,23 @@ was stopped. Serve the built page at5285/dist/index.html while the old dev-modul
 cache remains at root. Do not invalidate worker state, copy the app home or replay
 any request. This fulfills the narrow UI scope; no app implementation/test success
 is inferred. Wider Build layout and scrolling changes were removed as instructed.
+
+
+### 2026-11-12 — Preserve configured provider placement without accepting proposals
+
+Extract the existing canonical-region policy as a shared contract. Bind configured
+values through unit inputs, provider aliases and native locations; require explicit
+input for unresolved placement and retain unsupported values as blocking scope.
+Generation does not accept a proposed region or grant review approval. Use native
+read-only Azure environment and IBM project lookups to check exact region/identity,
+not replacement resources. Keep parent review gates even when they defer data reads;
+qualify resolved unit fixtures separately with plan-only mocks. Independent artifact
+inspection admits only the supplied-image unit resource/query footprint.
+
+The old AWS compiler fails the independent European-placement oracle; corrected
+output passes alongside all four providers and distinct-region compositions.
+Evidence: evidence/20261112-provider-placement/README.md. This checkpoint remains
+GE-005 in_progress, not alpha.4, cloud availability or full-system acceptance.
+The preceding acknowledgment-only turn made no engineering progress; this turn
+verified authoritative state and completed final source-bound native/service checks.
+Keep the focused UI patch and owner work untouched.
