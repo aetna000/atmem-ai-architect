@@ -1,6 +1,9 @@
 # AtMem AI Architect
 
-AtMem AI Architect is an AI architecture platform built around modern agent memory. It helps you design, and eventually deploy, an AI solution that fits your existing systems. You describe what you want in your own words; the architect asks a few easy questions at a time ("not sure" is always fine), sketches a first design, and leads you through **Sketch and document → Cloud options → Country and concrete service architecture → Review → Estimate → Delivery draft**. Everything is kept in one project file you can reopen and regenerate outputs from. Runs locally; nothing is deployed.
+AtMem AI Architect helps turn a client's intent into architecture and implementation. The current local candidate adds **Build**: a persistent native engineering session that retains ordered updates, works with reviewed skills and local tools, captures immutable packages and records local checks. **Design** preserves the existing diagram, review and estimate workflow. The engine programme targets AWS, Azure, Google Cloud, IBM and unfamiliar combinations; complete original-project acceptance remains under independent assessment. Nothing is deployed.
+
+For the native candidate, read [Local engineering Build](docs/LOCAL_ENGINEERING.md). The candidate is not a hosted service or a claim that all 28 projects pass.
+
 
 The architect's know-how lives in [`agent-skills/`](agent-skills): a discovery skill (what to ask, in what order, in plain language, and what to assume when unsure) and workflow skills (knowledge assistant, document processing, prediction, agentic automation). The connected model uses them alongside a small reviewed specialist registry for architecture, security, FinOps, DevOps and all four clouds.
 

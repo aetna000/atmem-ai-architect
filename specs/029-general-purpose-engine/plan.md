@@ -29,8 +29,7 @@ local version for the owner. A plan, renamed abstraction or passing unit-test co
 alone cannot earn a release. No version is released by writing this document.
 
 Proposed local prerelease series: `0.2.0-alpha.1` through `0.2.0-alpha.10`.
-These are reserved candidate identifiers, not published versions. The current package
-version remains unchanged. Critical fixes may have patch candidates; evidence always
+These are reserved candidate identifiers, not published versions. The package is being prepared as alpha.1; it is not offered or accepted until its runnable candidate record and exact checks are complete. Critical fixes may have patch candidates; evidence always
 binds exact commit/artifact rather than a moving label. Remote publication/deployment
 remains a separately authorized action.
 

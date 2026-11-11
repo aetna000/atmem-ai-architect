@@ -1,0 +1,3 @@
+# Original Azure ticket-triage generation in progress
+
+Frozen original exposed workload and22 criteria precede generation. Only explicit target provider changes from the earlier AWS input/map; no defect hints, provider architecture, resource names or dependency answers are injected. Three natural client follow-ups are unchanged. Exact gpt-6.1-sol/high; source0b8fe07; authenticated primary Build UI; no cloud account calls/deployment. See progress.json for original project/session IDs. Live operational evidence remains .local/engine-product/20261111-native-azure-primary until captured and independently assessed. No acceptance inferred. Provider-neutral artifact/runtime guidance is shared; AWS-only knowledge is not returned by the Azure retrieval filter.

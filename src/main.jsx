@@ -1,3 +1,4 @@
+import {version as appVersion} from "../package.json";
 import {restoreQueuedMessages,nextIntakeBatch,restoreIntakePaused} from './work-intake.mjs';
 import {emulationGuidance,guidanceMessage} from './emulation-guidance.mjs';
 import {readCanvasView,saveCanvasView,arrangeOverview} from './canvas-view.mjs';
@@ -2472,8 +2473,9 @@ function App() {
             ) : (
               <>
                 <h2>AtMem AI Architect</h2>
+                <p className="muted">Version {appVersion} · local candidate</p>
                 <p>
-                  Let's design your AI stack together: you describe it, we draw it, then review, estimate and document it.
+                  Describe your project in Build, add updates while it works, and inspect its implementation package and local checks. Use Design to work on the architecture diagram.
                   Part of atmem.ai. Runs on your computer; nothing is deployed.
                 </p>
                 <p className="muted">Keys: / add block · Esc up a level · ⌘↵ run</p>
