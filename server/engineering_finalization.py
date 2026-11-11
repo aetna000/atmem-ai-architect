@@ -7,6 +7,7 @@ does not establish semantic acceptance or replay interrupted checks on restart.
 import asyncio
 import json
 import uuid
+from .engineering_sessions import SessionError
 
 
 class EngineeringFinalization:
@@ -63,16 +64,55 @@ class EngineeringFinalization:
             self.jobs._record(scope,session,'finalization_started',runId=row['run'],finalizationId=ident,
                 artifactId=manifest['id'],artifactSha256=manifest['sha256'],
                 text='Saved the completed files. Selecting registered local checks; project acceptance remains unverified.')
-            task=asyncio.create_task(self._execute(scope,session,row['run'],ident,payload,checks))
-            self.tasks[ident]=task
-            def settled(completed):
-                self.tasks.pop(ident,None)
-                if not completed.cancelled():completed.exception()
-            task.add_done_callback(settled)
+            self._start_checks(scope,session,row['run'],ident,payload,checks)
         except Exception:
             self._save(ident,'needs_attention',payload)
             self.jobs._record(scope,session,'finalization_needs_attention',runId=row['run'],finalizationId=ident,
                 text='The completed files could not be captured or checks could not be selected. No result was inferred to pass. Capture/check the retained workspace explicitly.')
+
+    async def recheck(self,scope,session,run,artifact):
+        """Explicitly apply a changed operator check plan to unchanged completed files.
+
+        Keep every previous plan/receipt association. No startup replay, arbitrary
+        command or new client intent; any repair consumes the original root budget.
+        """
+        async with self.jobs._lock(scope,session):
+            if self.closed or not self._current(scope,session,run):
+                raise SessionError('Recheck requires this exact idle completed run')
+            row=self.db.execute('SELECT * FROM engineering_finalizations WHERE session=? AND run=?',(session,run)).fetchone()
+            if not row or row['state'] not in {'local_checks_passed','needs_attention'}:
+                raise SessionError('Existing verification must settle or recover before rechecking')
+            if row['id'] in self.tasks and not self.tasks[row['id']].done():
+                raise SessionError('Existing verification is still settling')
+            payload=json.loads(row['payload'])
+            if payload.get('artifact',{}).get('id')!=artifact:
+                raise SessionError('Recheck must name the current completed artifact')
+            captured=self.capture(scope,session)
+            if {'id':captured['id'],'sha256':captured['sha256']}!=payload['artifact']:
+                raise SessionError('Working files changed; prior completed evidence cannot cover them')
+            checks=self.checks();plan=json.loads(json.dumps(checks.plan(scope,session,artifact),allow_nan=False))
+            if plan==payload['plan']:
+                self.jobs._record(scope,session,'finalization_recheck_unchanged',runId=run,finalizationId=row['id'],
+                    artifactId=artifact,text='No updated verification is available. Existing results and repair limits are retained.')
+                return self._public(row)
+            history=payload.get('history',[])
+            if len(history)>=16:raise SessionError('Verification history is full; retain it and start new engineering work')
+            snapshot={'state':row['state'],'payload':{k:v for k,v in payload.items() if k!='history'}}
+            payload={'artifact':payload['artifact'],'plan':plan,'checks':[],
+                     'history':[*history,snapshot]}
+            self._save(row['id'],'checking',payload)
+            self.jobs._record(scope,session,'finalization_recheck_requested',runId=run,finalizationId=row['id'],
+                artifactId=artifact,text='Rechecking the unchanged completed package with updated registered checks. Earlier plans and reports are retained; any repair uses the existing request limit.')
+            self._start_checks(scope,session,run,row['id'],payload,checks)
+            return self._public(self.db.execute('SELECT * FROM engineering_finalizations WHERE id=?',(row['id'],)).fetchone())
+
+    def _start_checks(self,scope,session,run,ident,payload,checks):
+        task=asyncio.create_task(self._execute(scope,session,run,ident,payload,checks))
+        self.tasks[ident]=task
+        def settled(completed):
+            if self.tasks.get(ident) is completed:self.tasks.pop(ident,None)
+            if not completed.cancelled():completed.exception()
+        task.add_done_callback(settled)
 
     def _current(self,scope,session,run):
         row=self.store.get(scope,session)

@@ -54,6 +54,10 @@ class ArtifactRequest(SessionRequest):
     artifactId: str = Field(pattern=r'^[a-f0-9-]{36}$')
 
 
+class RecheckRequest(ArtifactRequest):
+    runId: str = Field(pattern=r'^[a-f0-9-]{36}$')
+
+
 class StartValidationRequest(ArtifactRequest):
     validatorId: str = Field(pattern=r'^[a-z][a-z0-9_-]{2,79}$')
     retry: bool = Field(default=False,strict=True)
@@ -108,6 +112,7 @@ When present, read and preserve ATMEM_DELIVERY.md and atmem-tools/prepare.py. Ex
 Preserve its requirements, decisions, existing systems, provider and ownership boundaries.
 Produce real implementation files, Terraform where applicable, tests and build/run/rollback instructions.
 Use operator-pinned runtimeEvidence when present in the check catalog to distinguish the actual immutable check image's interpreter/package/browser versions and installed SDK operations from host tools or requested dependencies. Null observations are unknown, not universal absence. Artifact-vendored dependencies need their own compatibility checks. Keep delivered supported/tested version declarations consistent with executed evidence; never infer a missing SDK operation exists or substitute an unverified manual control for an available required machine check.
+For contracts shared across languages or runtimes, define and preserve units for each bound (UTF-8 bytes, Unicode code points, UTF-16 code units or another explicit convention). JSON Schema string lengths count Unicode code points; JavaScript string.length counts UTF-16 code units. Keep server/browser/schema validation consistent. Test valid and invalid boundary values including non-BMP Unicode and escaped transport forms; do not silently shrink accepted values or change client requirements to match a convenient runtime measurement.
 For interactive applications, make asynchronous initialization prerequisites explicit: keep dependent actions unavailable or safely retain their intent until configuration/identity/dependencies are ready. Verify immediate interaction, delayed or failed initialization, reload and recovery in an actual browser; a visible control or page load does not establish readiness. Preserve usable retry/error behavior without losing client data.
 Use native local tools, preserve complete user intent and ask only material business questions.
 The server-selected local tools and offline provider mirror are listed in .tools/toolchain.json; do not modify .tools or the supplied input/skill files.
@@ -265,6 +270,7 @@ async def action(payload, kind):
     try:
         if kind == 'state': return worker.jobs.state(scope,payload.sessionId)
         if kind == 'artifacts':return {'artifacts':worker.artifacts.manifests(scope,payload.sessionId)}
+        if kind == 'recheck':return await worker.finalization.recheck(scope,payload.sessionId,payload.runId,payload.artifactId)
         if kind == 'finalizations':return {'finalizations':worker.finalization.list(scope,payload.sessionId)}
         if kind == 'events':
             return {'events':worker.jobs.journal.read(scope,payload.sessionId,payload.after),
@@ -341,6 +347,10 @@ async def validation_action(payload,kind):
 
 @router.post('/artifacts')
 async def artifacts(payload: SessionRequest):return await action(payload,'artifacts')
+@router.post('/recheck')
+async def recheck(payload: RecheckRequest):return await action(payload,'recheck')
+
+
 @router.post('/finalizations')
 async def finalizations(payload: SessionRequest):return await action(payload,'finalizations')
 @router.post('/validators')

@@ -14,6 +14,8 @@ try{
  await choose(sample('Boundaries',[-50,70]));await ready();assert.equal(await page.locator('#mean').textContent(),'10.0');assert.equal(await page.locator('#minimum').textContent(),'-50.0');assert.equal(await page.locator('#maximum').textContent(),'70.0');count++;
  await choose(sample('Full set',Array(1000).fill(2)));await ready();assert.equal(await page.locator('#count').textContent(),'1000');assert.equal(await page.locator('#mean').textContent(),'2.0');count++;
  await choose(sample('Rounding',[-1,-1,10]));await ready();assert.equal(await page.locator('#mean').textContent(),'2.7');count++;
+ await choose(sample('😀'.repeat(80),[1]));await ready();assert.equal(await page.locator('#room').textContent(),'😀'.repeat(80));count++;
+ await invalid(sample('😀'.repeat(81),[1]));
  await choose(sample('<img src=x onerror=window.__injected=1>',[1]));await ready();assert.equal(await page.locator('#room').textContent(),'<img src=x onerror=window.__injected=1>');assert.equal(await page.locator('#room img').count(),0);assert.equal(await page.evaluate(()=>window.__injected),undefined);count++;
  const valid=Buffer.from(sample('Byte boundary',[1]));await choose(Buffer.concat([valid,Buffer.alloc(65536-valid.length,32)]));await ready();count++;
  await invalid(Buffer.concat([valid,Buffer.alloc(65537-valid.length,32)]));

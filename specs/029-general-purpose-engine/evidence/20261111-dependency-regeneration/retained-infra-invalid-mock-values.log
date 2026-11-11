@@ -1,0 +1,67 @@
+public-offline-setup 0 {
+  "configured": [
+    "python",
+    "node",
+    "terraform",
+    "providerMirror"
+  ],
+  "missingOptional": [],
+  "cloudAccess": false,
+  "downloads": false,
+  "environmentFiles": {
+    "OPENSSL_CONF": ".worker-tmp/openssl.cnf",
+    "TF_CLI_CONFIG_FILE": ".worker-tmp/terraform.rc"
+  }
+}
+ 
+rebuild-runtime-package 0 Built function.zip with verified dependencies and runtime files only
+ 
+terraform-format 0  
+offline-init 0 Initializing provider plugins...
+- Reusing version 6.72.0 of hashicorp/aws from the dependency lock file
+- Installing hashicorp/aws v6.72.0...
+- Installed hashicorp/aws v6.72.0 (unauthenticated)
+
+Terraform has been successfully initialized!
+ 
+provider-schema 0 Success! The configuration is valid.
+
+ 
+independent-mocked-apply 1 tests/independent.tftest.hcl... in progress
+  run "independent_boundaries"... fail
+tests/independent.tftest.hcl... tearing down
+tests/independent.tftest.hcl... fail
+
+Failure! 0 passed, 1 failed.
+ 
+Error: "user_pool_id" must be the region name followed by an underscore and then alphanumeric pattern
+
+  with aws_cognito_user_group.reviewers,
+  on main.tf line 70, in resource "aws_cognito_user_group" "reviewers":
+  70:   user_pool_id = aws_cognito_user_pool.staff.id
+
+
+Error: "source_arn" (cwsg9gte/*/*) is an invalid ARN: arn: invalid prefix
+
+  with aws_lambda_permission.gateway,
+  on main.tf line 195, in resource "aws_lambda_permission" "gateway":
+ 195:   source_arn    = "${aws_apigatewayv2_api.app.execution_arn}/*/*"
+
+
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/scripts/engine-evaluation/check-ticket-infra-v2.py", line 98, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py", line 205, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py", line 128, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py", line 719, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/scripts/engine-evaluation/check-ticket-infra-v2.py", line 95, in main
+    (output/'oracle.tftest.hcl').write_text(ORACLE);(output/'receipt.json').write_text(json.dumps(receipt,indent=2)+'\n');assert receipt['passed'],receipt
+                                                                                                                                 ~~~~~~~^^^^^^^^^^
+AssertionError: {'passed': False, 'runtimeFilesByteIdentical': True, 'artifactSha256': '1b3bdaac06abece237c58fe5742aff6ef58d38ca3f54c35edb075c1c2cda6996', 'oracleSha256': '865c568c72b5f6af77ec363922844d7f13c59a599735959c0556cd957798e014', 'assertions': 12, 'sourceChanged': [], 'checks': [{'name': 'public-offline-setup', 'exitCode': 0, 'stdout': '{\n  "configured": [\n    "python",\n    "node",\n    "terraform",\n    "providerMirror"\n  ],\n  "missingOptional": [],\n  "cloudAccess": false,\n  "downloads": false,\n  "environmentFiles": {\n    "OPENSSL_CONF": ".worker-tmp/openssl.cnf",\n    "TF_CLI_CONFIG_FILE": ".worker-tmp/terraform.rc"\n  }\n}\n', 'stderr': ''}, {'name': 'rebuild-runtime-package', 'exitCode': 0, 'stdout': 'Built function.zip with verified dependencies and runtime files only\n', 'stderr': ''}, {'name': 'terraform-format', 'exitCode': 0, 'stdout': '', 'stderr': ''}, {'name': 'offline-init', 'exitCode': 0, 'stdout': 'Initializing provider plugins...\n- Reusing version 6.72.0 of hashicorp/aws from the dependency lock file\n- Installing hashicorp/aws v6.72.0...\n- Installed hashicorp/aws v6.72.0 (unauthenticated)\n\nTerraform has been successfully initialized!\n', 'stderr': ''}, {'name': 'provider-schema', 'exitCode': 0, 'stdout': 'Success! The configuration is valid.\n\n', 'stderr': ''}, {'name': 'independent-mocked-apply', 'exitCode': 1, 'stdout': 'tests/independent.tftest.hcl... in progress\n  run "independent_boundaries"... fail\ntests/independent.tftest.hcl... tearing down\ntests/independent.tftest.hcl... fail\n\nFailure! 0 passed, 1 failed.\n', 'stderr': '\nError: "user_pool_id" must be the region name followed by an underscore and then alphanumeric pattern\n\n  with aws_cognito_user_group.reviewers,\n  on main.tf line 70, in resource "aws_cognito_user_group" "reviewers":\n  70:   user_pool_id = aws_cognito_user_pool.staff.id\n\n\nError: "source_arn" (cwsg9gte/*/*) is an invalid ARN: arn: invalid prefix\n\n  with aws_lambda_permission.gateway,\n  on main.tf line 195, in resource "aws_lambda_permission" "gateway":\n 195:   source_arn    = "${aws_apigatewayv2_api.app.execution_arn}/*/*"\n\n'}], 'inferenceTurns': 0, 'cloudOperations': False, 'boundary': 'Clean receiving copy/public offline setup/runtime-content reproducible rebuild/format/real provider schema plus independent evaluator overlay: independent assertions in an offline-provider mocked apply. Original captured source/dependencies and built runtime file contents match independently enumerated included source and wheel member bytes; ZIP timestamps may differ. No requirement for byte-identical archive metadata is invented. No account plan/apply, effective cloud IAM, service capacity or deployed-system claim.'}

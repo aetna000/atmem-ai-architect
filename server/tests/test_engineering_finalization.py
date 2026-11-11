@@ -131,6 +131,104 @@ class FinalizationTests(unittest.IsolatedAsyncioTestCase):
         await self.jobs.recover(self.scope,self.session);result=await self.finish()
         self.assertEqual(result['state'],'local_checks_passed');self.assertEqual(len(self.backend.request_ids),1)
 
+    def add_late_check(self):
+        spec=ValidationSpec('late-contract','sha256:'+'a'*64,('/usr/local/bin/python3','-m','unittest','discover','-v'))
+        self.checks.validators['late-contract']=RegisteredValidator('New independent contract',spec,FileApplicability(('test_river.py',)))
+
+    async def test_explicit_recheck_preserves_old_plan_and_reuses_unchanged_receipt(self):
+        state=await self.settle_turn();before=await self.finish();self.add_late_check()
+        current=await self.finalizer.recheck(self.scope,self.session,state['run'],before['artifact']['id'])
+        self.assertEqual(current['state'],'checking');after=await self.finish()
+        self.assertEqual(after['state'],'local_checks_passed');self.assertEqual(len(self.worker.calls),2)
+        self.assertEqual(after['checks'][0],before['checks'][0])
+        self.assertEqual(after['history'],[{'state':before['state'],'payload':{k:v for k,v in before.items() if k not in {'id','sessionId','runId','state','acceptance'}}}])
+        again=await self.finalizer.recheck(self.scope,self.session,state['run'],before['artifact']['id'])
+        self.assertEqual(again,after);self.assertEqual(len(self.worker.calls),2)
+        self.assertEqual(len(self.backend.request_ids),1)
+
+    async def test_recheck_exact_run_artifact_scope_and_unchanged_work_are_required(self):
+        state=await self.settle_turn();before=await self.finish();self.add_late_check()
+        for scope,run,artifact in [(self.scope,'foreign-run',before['artifact']['id']),
+                                  (self.scope,state['run'],'foreign-artifact'),
+                                  (ProjectScope('other','river-monitor'),state['run'],before['artifact']['id'])]:
+            with self.assertRaises(SessionError):await self.finalizer.recheck(scope,self.session,run,artifact)
+        (self.workspace/'test_river.py').write_text('outside completed native run')
+        with self.assertRaisesRegex(SessionError,'Working files changed'):
+            await self.finalizer.recheck(self.scope,self.session,state['run'],before['artifact']['id'])
+        self.assertEqual(self.finalizer.list(self.scope,self.session)[0],before)
+        self.assertEqual(len(self.worker.calls),1);self.assertEqual(len(self.backend.request_ids),1)
+
+    async def test_recheck_does_not_duplicate_active_checks_and_newer_intent_wins(self):
+        state=await self.settle_turn();before=await self.finish();self.add_late_check();self.worker.release.clear()
+        await self.finalizer.recheck(self.scope,self.session,state['run'],before['artifact']['id'])
+        with self.assertRaises(SessionError):await self.finalizer.recheck(self.scope,self.session,state['run'],before['artifact']['id'])
+        original=self.backend.start
+        async def unique_start(*args,**kwargs):
+            await original(*args,**kwargs);return 'native-turn-'+str(len(self.backend.request_ids))
+        self.backend.start=unique_start
+        await self.jobs.start(self.scope,self.session,'Keep the new telemetry requirement.')
+        self.worker.release.set();after=await self.finish()
+        self.assertEqual(after['state'],'superseded');self.assertEqual(len(self.backend.request_ids),2)
+        self.assertEqual(len(after['history']),1)
+
+    async def test_recheck_restart_retains_history_without_replaying_checks(self):
+        state=await self.settle_turn();before=await self.finish();self.add_late_check()
+        self.worker.entered.clear();self.worker.release.clear()
+        await self.finalizer.recheck(self.scope,self.session,state['run'],before['artifact']['id'])
+        self.assertTrue(await asyncio.to_thread(self.worker.entered.wait,2))
+        await self.finalizer.close()
+        self.finalizer=EngineeringFinalization(self.jobs,self.capture,lambda:self.checks)
+        self.jobs.on_settled=self.finalizer.observe
+        after=self.finalizer.list(self.scope,self.session)[0]
+        self.assertEqual(after['state'],'recovery_required');self.assertEqual(len(after['history']),1)
+        self.assertEqual(after['history'][0]['payload']['checks'],before['checks'])
+        await asyncio.sleep(.01);self.assertEqual(len(self.worker.calls),2)
+        self.assertEqual(len(self.backend.request_ids),1)
+        with self.assertRaises(SessionError):await self.finalizer.recheck(self.scope,self.session,state['run'],before['artifact']['id'])
+        self.worker.release.set()
+
+    async def test_recheck_history_is_bounded_without_truncating_evidence(self):
+        import json
+        state=await self.settle_turn();before=await self.finish();self.add_late_check()
+        row=self.store.db.execute('SELECT payload FROM engineering_finalizations WHERE id=?',(before['id'],)).fetchone()
+        payload=json.loads(row[0]);payload['history']=[{'retained':i} for i in range(16)]
+        self.finalizer._save(before['id'],before['state'],payload)
+        with self.assertRaisesRegex(SessionError,'history is full'):
+            await self.finalizer.recheck(self.scope,self.session,state['run'],before['artifact']['id'])
+        self.assertEqual(self.finalizer.list(self.scope,self.session)[0]['history'],payload['history'])
+        self.assertEqual(len(self.worker.calls),1);self.assertEqual(len(self.backend.request_ids),1)
+
+    async def test_late_failure_can_use_only_existing_root_repair_budget(self):
+        import io,zipfile
+        state=await self.settle_turn();before=await self.finish();self.add_late_check();self.enable_repair()
+        original=self.worker.run
+        def run(content,digest,spec,**kwargs):
+            result=original(content,digest,spec,**kwargs)
+            if spec.name=='late-contract' and 'repair.txt' not in zipfile.ZipFile(io.BytesIO(content)).namelist():
+                result.update(status='failed',reason=None,output='Independent late contract fails original source')
+            return result
+        self.worker.run=run
+        await self.finalizer.recheck(self.scope,self.session,state['run'],before['artifact']['id']);await self.drain()
+        results=self.finalizer.list(self.scope,self.session)
+        self.assertEqual([r['state'] for r in results],['repair_finished','local_checks_passed'])
+        self.assertEqual(results[0]['history'][0]['payload']['checks'],before['checks'])
+        self.assertEqual(results[0]['repair']['rootRunId'],state['run'])
+        self.assertEqual(len(self.backend.request_ids),2)
+        self.assertEqual(self.jobs.journal.read(self.scope,self.session)[-1]['kind'],'finalization_local_checks_passed')
+        # Changing another operator contract can add checks but cannot refresh the
+        # original request's consumed automatic model repair allowance.
+        current=results[-1];extra=ValidationSpec('later-contract','sha256:'+'a'*64,('/usr/local/bin/python3','-m','unittest','discover','-v'))
+        self.checks.validators['later-contract']=RegisteredValidator('Later failing contract',extra,FileApplicability(('test_river.py',)))
+        prior=self.worker.run
+        def fail_later(content,digest,spec,**kwargs):
+            result=prior(content,digest,spec,**kwargs)
+            if spec.name=='later-contract':result.update(status='failed',reason=None,output='Still incomplete')
+            return result
+        self.worker.run=fail_later
+        await self.finalizer.recheck(self.scope,self.session,current['runId'],current['artifact']['id']);await self.drain()
+        self.assertEqual(self.finalizer.list(self.scope,self.session)[-1]['state'],'needs_attention')
+        self.assertEqual(len(self.backend.request_ids),2)
+
     def enable_repair(self,*,always_fail=False,auto_complete=True):
         self.finalizer.max_repairs=1;self.finalizer.can_repair=lambda *args:True
         original_run=self.worker.run
