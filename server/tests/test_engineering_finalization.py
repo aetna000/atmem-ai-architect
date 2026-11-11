@@ -326,3 +326,13 @@ class FinalizationTests(unittest.IsolatedAsyncioTestCase):
         await self.settle_turn();result=await self.finish()
         self.assertEqual(result['state'],'needs_attention');self.assertNotIn('repair',result)
         self.assertEqual(len(self.backend.request_ids),1)
+
+    async def test_sql_fixture_prerequisite_failure_never_requests_source_repair(self):
+        self.finalizer.max_repairs=1;self.finalizer.can_repair=lambda *args:True
+        original=self.worker.run
+        def failed_fixture(*args,**kwargs):
+            result=original(*args,**kwargs);return {**result,'status':'failed','reason':'sql_fixture_unavailable','exitCode':69}
+        self.worker.run=failed_fixture
+        await self.settle_turn();result=await self.finish()
+        self.assertEqual(result['state'],'needs_attention');self.assertNotIn('repair',result)
+        self.assertEqual(len(self.backend.request_ids),1)

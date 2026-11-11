@@ -10,7 +10,7 @@ from server.local_validation import DockerValidationWorker
 from server.validation_jobs import registered_validators
 from server.runtime_evidence import runtime_binding,digest
 PYTHON=r'''
-import importlib.metadata,json,sys
+import importlib.metadata,json,os,sys
 packages,services=json.loads(sys.argv[1]);versions={}
 for name in packages:
  try:versions[name]=importlib.metadata.version(name)
@@ -24,6 +24,10 @@ if services:
  else:
   session=botocore.session.get_session()
   for name in services:operations[name]=sorted(session.get_service_model(name).operation_names)
+if 'ATMEM_TEST_POSTGRES_DSN' in os.environ:
+ import psycopg
+ with psycopg.connect(os.environ['ATMEM_TEST_POSTGRES_DSN']) as connection:
+  versions['postgresql-server']=connection.execute('SHOW server_version').fetchone()[0].split()[0]
 print(json.dumps({'kind':'python','executableVersion':sys.version.split()[0],'packages':versions,'serviceOperations':operations}))
 '''
 NODE=r'''
@@ -47,6 +51,9 @@ entries=json.loads(args.validators.read_text());entry=next((item for item in ent
 if entry is None:parser.error('Choose an operator-registered validator')
 entry={key:value for key,value in entry.items()if key!='runtimeReceipt'};registered=registered_validators([entry])[args.validator];spec=registered.spec
 command=(spec.command[0],'-I','-c',PYTHON,json.dumps([args.python_package,args.python_service])) if args.kind=='python' else (spec.command[0],'--input-type=module','-e',NODE)
+if spec.isolation_profile=='postgresql-local-v1':
+ if args.kind!='python' or len(args.python_package)>31 or 'postgresql-server' in args.python_package:parser.error('SQL observation requires Python and room for the actual server version')
+ command=(spec.command[0],'-I','/opt/atmem/sql_validation.py','-c',PYTHON,json.dumps([args.python_package,args.python_service]))
 probe=dataclasses.replace(spec,name='runtime-observation',command=command,timeout_seconds=30)
 worker=DockerValidationWorker(args.endpoint,isolation_profiles=json.loads(args.profiles.read_text())if args.profiles else None)
 data=io.BytesIO()

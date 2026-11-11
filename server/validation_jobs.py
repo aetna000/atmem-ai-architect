@@ -11,7 +11,7 @@ import json
 import threading
 import uuid
 from .engineering_sessions import SessionError
-from .local_validation import ValidationSpec
+from .local_validation import ValidationSpec,validation_test_runner
 from .validation_applicability import FileApplicability
 from .runtime_evidence import RuntimeEvidence
 
@@ -72,7 +72,7 @@ class ValidationJobs:
                  'available':self._available(value),
                  'applicability':value.applicability.public() if value.applicability else None,
                  **({'runtimeEvidence':value.runtime_evidence.public()} if value.runtime_evidence else {}),
-                 'runtime':{'imageId':value.spec.image,'platform':value.spec.platform,'isolationProfile':value.spec.isolation_profile,'environment':dict(value.spec.runtime_environment),'executable':value.spec.command[0],'testRunner':'node:test' if value.spec.command[1:2]==('--test',) else 'unittest' if value.spec.command[1:3]==('-m','unittest') else 'operator_registered'}} for key,value in self.validators.items()]
+                 'runtime':{'imageId':value.spec.image,'platform':value.spec.platform,'isolationProfile':value.spec.isolation_profile,'environment':dict(value.spec.runtime_environment),'executable':value.spec.command[0],'testRunner':validation_test_runner(value.spec)}} for key,value in self.validators.items()]
 
     def _contract(self,registered):
         registration={'spec':asdict(registered.spec),'workerIdentity':self.worker.identity_digest}

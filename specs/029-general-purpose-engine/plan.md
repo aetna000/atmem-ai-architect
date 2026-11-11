@@ -424,3 +424,16 @@ journey/build component qualification, not whole-system or provider/holdout acce
 The backend's bare Python validator still lacks SDK/SQL prerequisites. Add an isolated
 SDK/PostgreSQL validation fixture, run the complete image journey and equivalent
 provider transfers before runnable alpha.5. Four increments/1-of28/owner0 unchanged.
+
+GE-006 isolated SQL validation checkpoint: an operator-owned pinned image now gives
+Python checks a fresh authenticated PostgreSQL17 instance inside their existing
+isolated container. Neutral fixture variables, SDK dependencies and wrapped unittest
+classification preserve missing/skipped/zero-test and prerequisite failure evidence.
+Actual editorial/inventory transactions, role/auth/network/read-only denials, fresh
+state, missing-fixture counterexample and timeout cleanup qualify the mechanism.
+Backend catalogue registration and553JS/445server/build pass. Evidence:
+evidence/20261112-isolated-sql-validation/README.md. Existing owner previews and
+workspace pins are unchanged. Next activate only the separate idle synthetic preview
+and qualify native test/report use, then actual application image/SQL/TLS and other
+provider transfers. This checkpoint earns no release or whole-project acceptance;
+four offered increments/1-of28/owner0 and unknown measured quality remain unchanged.

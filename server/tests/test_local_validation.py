@@ -39,3 +39,12 @@ class ValidationContractTests(unittest.TestCase):
             with tempfile.TemporaryDirectory() as folder:
                 path=Path(folder)/'policy.json';path.write_text(json.dumps({'defaultAction':'SCMP_ACT_ALLOW'}))
                 with self.assertRaises(ValueError):DockerValidationWorker('unix:///safe/local.sock',isolation_profiles={'chromium-userns-v1':{'path':str(path),'sha256':worker.REVIEWED_PROFILES['chromium-userns-v1']}})
+
+
+class SqlValidatorContractTests(unittest.TestCase):
+    def test_sql_wrapper_is_reported_as_unittest_and_keeps_secret_environment_denial(self):
+        from server.local_validation import validation_test_runner
+        spec=ValidationSpec('sql-tests','sha256:'+'a'*64,('/usr/local/bin/python3','-I','/opt/atmem/sql_validation.py','-m','unittest','discover','-v'),isolation_profile='postgresql-local-v1')
+        self.assertEqual(validation_test_runner(spec),'unittest')
+        with patch('server.local_validation.Path.is_socket',return_value=True):self.assertTrue(DockerValidationWorker('unix:///safe/local.sock').supports(spec))
+        with self.assertRaises(ValueError):ValidationSpec('sql-tests','sha256:'+'a'*64,spec.command,isolation_profile='postgresql-local-v1',runtime_environment=(('PGPASSWORD','/secret'),))

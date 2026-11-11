@@ -1099,3 +1099,25 @@ metadata/notices/image tar remain on MEM0. No account plan, deployment, new orig
 acceptance or release count change. The next shared engine capability is isolated
 SDK/SQL validation accessible to native engineering, then complete image/provider
 transfer and runnable alpha.5. Evidence: evidence/20261112-native-runtime-access/README.md.
+
+## 2026-11-12 — Private SQL inside the existing isolated validation job
+
+Supply PostgreSQL as a trusted image-owned fixture after the existing bootstrap
+drops privileges, rather than granting generated tests a host database, Docker
+socket or cloud credential. Keep source/image read-only and network disabled. Use
+fresh private SCRAM-authenticated Unix-socket state per check, with the existing
+controller owning deadline/removal. Neutral test variables expose only that fixture;
+tests retain responsibility for role and domain assertions. Database startup failure
+is a prerequisite diagnosis, not a reason to rewrite application semantics.
+
+Derive the checker offline from explicit public pinned base images and existing
+hash-locked SDK wheels. Preserve public notices/provenance and private PostgreSQL
+library paths; dereference trusted sample configuration during construction. Do not
+consume a model-authored Dockerfile or install newer dependencies. The qualified
+variant is AWS-lock/Linux ARM64 only; supported builder options are not parity proof.
+
+Keep generated-client source, prior failed receipts and owner previews untouched.
+The actual fixture and standalone backend catalogue qualify; no native turn was
+launched and no preview was restarted for this checkpoint. Native use and complete
+application-image/SQL/TLS/provider transfer remain next. No release/original28/quality
+promotion. Evidence: evidence/20261112-isolated-sql-validation/README.md.

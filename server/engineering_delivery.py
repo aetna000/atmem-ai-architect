@@ -82,6 +82,26 @@ force this contract or embed synthetic processors/provider transports as product
 Legacy sessions may lack these assets: preserve their original pins and state that
 limit; do not silently rewrite a running or resumed workspace.
 
+## Isolated local SQL checks
+
+When the offered validator catalogue includes a PostgreSQL/Python runtime, use its
+registered command/image for compatible tests. It creates a fresh private PostgreSQL
+17 instance inside that check's isolated container, with password authentication,
+no TCP listener or host/cloud database. Tests may read ATMEM_TEST_POSTGRES_DSN for
+the disposable administrative setup connection and create separate runtime roles.
+PGHOST/PGPORT/PGUSER/PGDATABASE/PGPASSWORD point only to that same fixture.
+ATMEM_TEST_POSTGRES_DATA and ATMEM_TEST_POSTGRES_BIN allow explicit local recovery
+tests using the owned data directory/tools. Never print credentials or copy them
+into source/production configuration. The fixture disappears with the check; it is
+not an application database or proof of cloud authentication/backup/recovery.
+
+Select validators by observed dependency versions, platform and required services;
+do not substitute another provider/SDK or assume every Python checker supplies SQL.
+If a test needs SQL and the fixture is absent, report the missing prerequisite and
+leave that acceptance unexecuted. Do not invent a DSN or silently use an in-memory
+store. Tests still own real domain/API/worker/identity/retry/isolation assertions;
+a running database or green generated suite does not establish full-system quality.
+
 ## Typed application declarations
 
 A proposed component may carry data.implementation=approval-workflow and a complete

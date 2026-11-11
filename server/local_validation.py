@@ -76,9 +76,18 @@ class ValidationSpec:
         if type(self.timeout_seconds) is not int or not 1<=self.timeout_seconds<=300:raise ValueError('Validator time budget must be bounded')
         if not isinstance(self.bootstrap_python,str) or not self.bootstrap_python.startswith('/') or '\0' in self.bootstrap_python:
             raise ValueError('Register an absolute Python bootstrap executable in the reviewed image')
-        if self.isolation_profile not in {'standard-v1','chromium-userns-v1'}:raise ValueError('Unreviewed validator isolation profile')
+        if self.isolation_profile not in {'standard-v1','chromium-userns-v1','postgresql-local-v1'}:raise ValueError('Unreviewed validator isolation profile')
         if not isinstance(self.runtime_environment,tuple) or any(not isinstance(pair,tuple) or len(pair)!=2 or not isinstance(pair[0],str) or pair[0] not in {'ATMEM_PLAYWRIGHT_MODULE','PLAYWRIGHT_BROWSERS_PATH'} or not isinstance(pair[1],str) or not pair[1].startswith('/') or any(ord(c)<32 for c in pair[1]) for pair in self.runtime_environment) or len({pair[0] for pair in self.runtime_environment})!=len(self.runtime_environment):
             raise ValueError('Register only explicit image-local runtime module/browser paths')
+
+
+def validation_test_runner(spec):
+    command=spec.command
+    if spec.isolation_profile=='postgresql-local-v1' and command[1:3]==('-I','/opt/atmem/sql_validation.py'):
+        command=(command[0],*command[3:])
+    if command[1:3]==('-m','unittest'):return 'unittest'
+    if Path(command[0]).name in {'node','nodejs'}and command[1:2]==('--test',):return 'node:test'
+    return 'operator_registered'
 
 
 class DockerValidationWorker:
@@ -102,7 +111,7 @@ class DockerValidationWorker:
         self.policy_digest=hashlib.sha256(json.dumps({'code':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'profiles':{name:hashlib.sha256(content).hexdigest() for name,content in self.isolation_profiles.items()}},sort_keys=True).encode()).hexdigest()
         self.identity_digest=hashlib.sha256(endpoint.encode()).hexdigest()
 
-    def supports(self,spec):return spec.isolation_profile=='standard-v1' or spec.isolation_profile in self.isolation_profiles
+    def supports(self,spec):return spec.isolation_profile in {'standard-v1','postgresql-local-v1'} or spec.isolation_profile in self.isolation_profiles
 
     def run(self, archive, expected_digest, spec: ValidationSpec, *, execution_id=None, cancel_event=None):
         if not isinstance(archive,bytes) or len(archive)>64000000 or hashlib.sha256(archive).hexdigest()!=expected_digest:
@@ -127,6 +136,7 @@ class DockerValidationWorker:
             if platform.returncode!=0 or len(selection)!=2 or selection[0]!=spec.platform or not re.fullmatch(r'sha256:[a-f0-9]{64}',selection[1]):
                 raise RuntimeError('The reviewed cached platform is unavailable; no fallback or image pull was used')
             browser=spec.isolation_profile=='chromium-userns-v1'
+            postgres=spec.isolation_profile=='postgresql-local-v1'
             security=[]
             if browser:
                 policy=Path(folder)/'reviewed-seccomp.json';policy.write_bytes(self.isolation_profiles[spec.isolation_profile])
@@ -134,9 +144,9 @@ class DockerValidationWorker:
             runtime_env=[part for name,value in spec.runtime_environment for part in ['--env',name+'='+value]]
             command=[*prefix,'run','--pull','never','--rm','--name',ident,'--platform',spec.platform,
                 '--network','none','--read-only','--cap-drop','ALL','--cap-add','SETUID','--cap-add','SETGID',
-                '--security-opt','no-new-privileges',*security,'--pids-limit','128' if browser else '64','--memory','512m' if browser else '256m','--cpus','1',
+                '--security-opt','no-new-privileges',*security,'--pids-limit','128' if browser else '64','--memory','512m' if browser or postgres else '256m','--cpus','1',
                 '--tmpfs','/work:rw,noexec,nosuid,nodev,size=128m,mode=0755',
-                '--tmpfs',f'/tmp:rw,noexec,nosuid,nodev,size={64 if browser else 32}m,mode=1777',
+                '--tmpfs',f'/tmp:rw,noexec,nosuid,nodev,size={192 if postgres else 64 if browser else 32}m,mode=1777',
                 '--env','HOME=/tmp','--env','PYTHONDONTWRITEBYTECODE=1','--env','AWS_EC2_METADATA_DISABLED=true',
                 *runtime_env,'--entrypoint',spec.bootstrap_python,'-i',spec.image,'-I','-c',BOOTSTRAP,
                 json.dumps([expected_digest,list(spec.command)])]
@@ -172,8 +182,9 @@ class DockerValidationWorker:
             with log.open('rb') as output:raw=output.read(self.max_output_bytes+1)
             truncated=len(raw)>self.max_output_bytes
             text=raw[:self.max_output_bytes].decode('utf-8',errors='replace')
-            unittest=spec.command[1:3]==('-m','unittest')
-            node_tests=Path(spec.command[0]).name in {'node','nodejs'} and spec.command[1:2]==('--test',)
+            runner=validation_test_runner(spec)
+            unittest=runner=='unittest'
+            node_tests=runner=='node:test'
             skips=re.search(r'OK \(skipped=(\d+)\)',text) if unittest else None
             skipped=int(skips.group(1)) if skips else 0
             count=re.search(r'Ran (\d+) tests? in ',text) if unittest else None
@@ -183,6 +194,8 @@ class DockerValidationWorker:
                 executed=int(totals[-1]) if totals else None
                 skipped=int(skip_counts[-1]) if skip_counts else 0
             else:executed=int(count.group(1)) if count else None
+            if postgres and process.returncode==69 and 'ATMEM_SQL_FIXTURE_UNAVAILABLE' in text and reason is None:
+                reason='sql_fixture_unavailable'
             missing_tests=(unittest or node_tests) and (executed is None or executed==0)
             status='failed' if reason or truncated or process.returncode or missing_tests else 'incomplete' if skipped else 'passed'
             return {'validator':spec.name,'artifactSha256':expected_digest,'imageId':spec.image,
