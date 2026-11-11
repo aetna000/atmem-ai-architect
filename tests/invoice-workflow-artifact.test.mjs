@@ -9,6 +9,7 @@ test('workflow rejects incomplete or non-local artifact admission before importi
  result=run(['--application-source','/tmp/unqualified-application','--artifact-receipt','/tmp/unqualified-receipt']);assert.notEqual(result.status,0);assert.match(result.stderr,/Use local qualification artifacts/);
 });
 test('workflow rejects a failed receipt and modified emitted Python before importing it',t=>{
+ fs.mkdirSync(path.resolve('.local'),{recursive:true});
  const root=fs.mkdtempSync(path.resolve('.local/invoice-workflow-admission-test-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
  const app=path.join(root,'application'),receipt=path.join(root,'qualification.json');fs.mkdirSync(app);fs.writeFileSync(path.join(app,'invoice_http.py'),'raise RuntimeError("UNQUALIFIED_CODE_EXECUTED")\n');
  fs.writeFileSync(receipt,JSON.stringify({kind:'invoice-live-artifact-native-qualification',passed:false}));

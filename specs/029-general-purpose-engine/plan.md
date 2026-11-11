@@ -1,3 +1,5 @@
+Runnable local candidate0.2.0-alpha.1 is offered on frozen f883e7c at http://127.0.0.1:5279. Its configured381 server/376 JS checks, production build and actual UI version/draft/reload checks pass. Read `evidence/20261111-alpha1-candidate/release-record.json` for hashes, exact source boundaries, manual card, rollback and limitations. Owner/roadmap acceptance and original-project count remain0. New AWS/Azure outputs on engine-equivalent0b8fe07 still require independent assessment.
+
 Latest dependency checkpoint: optional pinned actual-runtime facts and a bounded public artifact mirror are implemented and pass381 server tests. Qualified SDK1.43.123 selected-service source passes13 checks on both Python targets; separate native classroom-query dependency transfer and denied read/write boundaries pass. Evidence: `evidence/20261111-runtime-dependencies/README.md`. Fresh unchanged-brief generation must demonstrate application safety gates and complete delivery before any acceptance.
 
 # General-purpose engine: ten tangible release subgoals
@@ -29,7 +31,7 @@ local version for the owner. A plan, renamed abstraction or passing unit-test co
 alone cannot earn a release. No version is released by writing this document.
 
 Proposed local prerelease series: `0.2.0-alpha.1` through `0.2.0-alpha.10`.
-These are reserved candidate identifiers, not published versions. The package is being prepared as alpha.1; it is not offered or accepted until its runnable candidate record and exact checks are complete. Critical fixes may have patch candidates; evidence always
+Alpha.1 is available locally; alpha.2 through alpha.10 remain reserved and remote publication has not occurred. The package is being prepared as alpha.1; it is not offered or accepted until its runnable candidate record and exact checks are complete. Critical fixes may have patch candidates; evidence always
 binds exact commit/artifact rather than a moving label. Remote publication/deployment
 remains a separately authorized action.
 
