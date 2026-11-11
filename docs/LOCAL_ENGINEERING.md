@@ -1,4 +1,4 @@
-# Local engineering Build candidate
+# Local engineering and architecture-work candidate
 
 This candidate adds persistent native engineering work behind the browser's Build tab. You describe the outcome, add updates while it works, inspect the conversation and local checks, then capture/download exact files. The Codex CLI is the first backend worker adapter; the browser uses project-bound backend APIs. Hosted transport and tenant isolation remain unfinished.
 
@@ -18,14 +18,42 @@ For local checks, the operator explicitly supplies `--tools`, `--validators`, `-
 
 1. Open Connections, choose Codex and your accessible exact model/effort. In Build, enter a fresh project intent and click Start work once.
 2. Add two meaningful updates while it works. Reload the page. Verify the original request, ordered updates, exact selected configuration and continuing run are retained.
-3. Switch to Design and back. Inspect progress without resubmitting the request. Design's graph and native files are currently separate review surfaces; changing one does not reconcile the other automatically.
+3. Switch to Design and back. Inspect progress without resubmitting the request. Design retains its graph; proposed mappings link native files to the same requirements/context without silently redrawing the graph or changing ownership.
 4. On completion inspect the immutable package and each local report. A failed, skipped, absent or stale check remains a limitation. If a bounded automatic repair ran, inspect both original and repaired evidence.
 5. If verification definitions have been updated after completion, choose **Recheck and repair** on the current package. Earlier reports remain available; a changed check plan can use at most the original request’s remaining repair allowance. An unchanged plan does not replay work.
 6. Download the package; follow its public clean-environment build/test instructions. Receiving instructions must not require the worker's private `.tools` paths. Inspect Terraform and unresolved account inputs; do not apply it.
 7. Close/reopen the candidate and select the saved project. Recover existing work if needed; uncertain execution must not be blindly replayed. Preserve its app-data directory and saved project file.
 
+## Alpha.2 shared-model test card
+
+After a current engineering package completes, choose **Link proposed mappings**.
+Expand **Architecture work context**. Inspect responsibilities, explicit delivery
+units, interfaces, implementation/test file references and the exact artifact hashes.
+They remain proposed; linking does not mean a requirement or test passed.
+
+In Design, open a block with a linked requirement, edit that requirement and save.
+The block and dependent records need reevaluation; the linked artifact says its
+design changed. Accepted decisions and earlier reported outcomes remain retained.
+Return to Build and request reconciliation against the current saved design. After
+completion, link the new proposed mappings: earlier artifact/record values remain
+available and the newest context matches. Save/reopen and compare the same projection
+in Design, Build, exported architecture-artifact-mappings.json and the Spec Kit.
+
+For a quick metadata-only example, open the public
+[qualified orchard project](../specs/029-general-purpose-engine/evidence/20261111-artifact-reconciliation/native/project-m.json)
+with the app's project-file picker. Its two mapping versions and local qualification
+receipts are recorded beside that file. Imported metadata is not an authenticated
+session: the new installation does not inherit its backend thread or artifact store.
+Use it to inspect/edit context tracking; use a fresh project for new native work.
+Do not strip old mapping metadata to force a different session to overwrite it.
+
+Work state version1 migrates to2 with existing records/review history retained;
+proposal files keep their separate format1. Older candidates may refuse version2
+files. Retain those files unchanged and roll back using the older candidate's own
+app-data directory, rather than deleting new fields.
+
 ## Limits and rollback
 
-This is a runnable local candidate, not complete architecture or cloud acceptance. Independent positive component/system checks and observed failures are recorded under specs029. The current original-case acceptance count and release/owner status live in its progress and release records; generated tests alone cannot establish acceptance. The original28/four-provider programme, shared graph/file work model and hosted isolation are still required. Reviewed knowledge is a small pinned corpus, not live comprehensive AtMem. Billing is deferred. No deployment is authorized.
+This is a runnable local candidate, not complete architecture or cloud acceptance. Independent positive component/system checks and observed failures are recorded under specs029. The current original-case acceptance count and release/owner status live in its progress and release records; generated tests alone cannot establish acceptance. The original28/four-provider programme, compositional lowering, complete-system reconciliation and hosted isolation are still required. Reviewed knowledge is a small pinned corpus, not live comprehensive AtMem. Billing is deferred. No deployment is authorized.
 
 Before testing a candidate, retain the prior source checkout, its app-data directory and a saved editable project file. Use a separate candidate checkout/home and separate ports. To roll back, stop only the candidate launcher and reopen the previous checkout with its own unchanged data. Do not delete stores, copy credentials, overwrite other workspaces or re-submit uncertain native runs. Keep artifact/check receipts from both versions. Local tags and archives are source backups; remote publication and deployment are separate actions.

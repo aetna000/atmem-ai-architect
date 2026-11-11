@@ -1,0 +1,27 @@
+{
+  "validator": "reading-contract-independent",
+  "artifactSha256": "ad18d0d2b26250c51db4776b8a985924b9bcaa6707f15f83171c5d1ef4ad88be",
+  "imageId": "sha256:df7f71a8588253403dfa833c5c4aacc95ca340204a88d5483edd58131c7f1128",
+  "runtimeConfigImageId": "sha256:df7f71a8588253403dfa833c5c4aacc95ca340204a88d5483edd58131c7f1128",
+  "platform": "linux/arm64",
+  "isolationProfile": "standard-v1",
+  "runtimeEnvironment": {},
+  "command": [
+    "/usr/bin/node",
+    "-e",
+    "\nconst assert=require('node:assert/strict'),m=require('/work/source/readings.cjs');let n=0;\nassert.equal(m.unit,\"m\");n++;\nfor(const value of [0,0.001,0.5,12.25,2000,Number.MAX_VALUE,-0]){\n const actual=m.normalize(value),expected=value*0.001;\n assert.equal(typeof actual,'number');assert.ok(Number.isFinite(actual));\n assert.ok(Math.abs(actual-expected)<=Math.max(1,Math.abs(expected))*1e-12);n++;\n}\nfor(const value of [true,false,'1','',null,undefined,{},[],NaN,Infinity,-Infinity,-1]){assert.throws(()=>m.normalize(value),TypeError);n++;}\nconsole.log('Independent assertions executed: '+n);\n"
+  ],
+  "status": "passed",
+  "exitCode": 0,
+  "skipped": 0,
+  "testsReported": null,
+  "reason": null,
+  "output": "Independent assertions executed: 20\n",
+  "outputTruncated": false,
+  "durationSeconds": 0.231,
+  "evidenceLevel": "local_container_check",
+  "cloudOperations": false,
+  "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance.",
+  "independentAssertions": 20,
+  "oracleBoundary": "Evaluator-authored module API/units/finite-domain/denial assertions in a real isolated Linux Node runtime. Relative tolerance1e-12 accommodates floating point representation; no graph/service/cloud/system acceptance inferred."
+}

@@ -81,12 +81,14 @@ GE-003 is in progress. A versioned shared context/dependency model, retained rev
 history, proposed mapping import, scoped invalidation, ordered native client intent,
 UI/export consistency and new pinned producer schema have component and real-browser
 fixture evidence. Immutable current-context revisions now accompany existing native
-work without changing original pins or client text.393 JS / 404 server tests, build
+work without changing original pins or client text.404 JS / 418 server tests, build
 and browser checks pass. Two real native river-depth turns each pass18 independent
 checks; the old package fails the changed unit requirement. Actual service/adapter
 restart retains revisions and identical capture without inference replay.
-Artifact-bound graph/file reconciliation remains unfinished; no alpha.2
-release is claimed. See `evidence/20261111-context-revisions/README.md`,
+Artifact-bound proposed mapping reconciliation now has component/browser and actual
+native edit/regeneration evidence, including20 independent checks per package,
+retained mapping versions and full Build restore. Alpha.2 preparation is underway;
+no runnable second increment is counted until its frozen candidate is verified. See `evidence/20261111-context-revisions/README.md`,
 `evidence/20261111-work-model-foundation/README.md` and
 `docs/architecture/architecture-work-model.md` for limits and next actions.
 

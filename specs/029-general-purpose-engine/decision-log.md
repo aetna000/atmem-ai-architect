@@ -541,3 +541,13 @@ Confirm saved context after slow native creation, save from latest matching proj
 conversation refs, refuse a project switch, and stop treating same-token session
 refresh as a project edit. Preserve strict context digests and uncertain-submission
 no-replay behavior.404 JS/build/two guarded browser suites pass; backend418 unchanged.
+
+Guarded ce7d713 actual-native qualification passes:15 callbacks, two completed exact-
+model turns and20 independent module assertions per artifact. The new unit is supplied
+only through the edited saved requirement; the original package fails that contract.
+Stable mapping identities, all five applicable record kinds, retained receipt values,
+original pins and exact native context/request history are verified. Actual Build
+restoration is checked after session discovery, not its temporary Design fallback.
+All selected Node checks pass for these two scoped runs. A different project shares
+the development service: leave it intact/running and prepare alpha.2 on separate
+ports with fresh data. No public candidate includes that project's control store.

@@ -57,3 +57,23 @@ new project saves. A deterministic browser counterexample changes the saved dige
 during creation and rejects any stale submission. Both guarded browser suites,
 404 JS tests and the production build pass. No inference was replayed; actual native
 qualification must use the corrected frozen source and a new evidence directory.
+
+
+Actual guarded source ce7d713 now qualifies the orchard round trip: two completed
+gpt-6.1-sol/high turns,15 tool callbacks, two native-produced mapping versions,20
+independent isolated assertions per downloaded package and an old-package/new-unit
+counterexample. All selected registered Node checks pass for these two runs. Exact
+native history/context envelopes and stored receipt/archive identity are audited.
+The legacy Design consultation response alone is an explicit fixture; actual editing,
+saved context, native generation/files, linking and restore use the real application.
+
+The first final screenshot was captured before session discovery completed after
+reload, so it showed the Design fallback. Supplementary reopened-build-check.mjs
+waits for actual Build/session/history restoration, observes both accepted requests
+and mapping versions, reloads again and confirms zero inference/mapping replay.
+Retain both sets of screenshots and receipts; future live-driver reload checks now
+wait for Build readiness. This evaluator correction changes no runtime source.
+
+Another project was observed in the same development service. Its state and files
+are outside this qualification. Leave that service running; prepare alpha.2 with a
+fresh home and distinct ports, without copying another project or its control store.

@@ -186,7 +186,9 @@ proof: reverify receipts with the owning session service and execute the exact
 packages. The current single-owner service does not qualify hosted authorization,
 leases or distributed transaction behavior.
 
-Component and browser fixtures qualify this reconciliation path. Actual native
-mapping generation/edit/regeneration qualification and a runnable alpha.2 remain
-pending until their independent evidence is recorded. Broad provider composition,
+Component/browser fixtures and the actual-native orchard round trip qualify this
+reconciliation path. Two real turns preserve mapping identities/history across a
+requirement edit, with20 independent checks per artifact and an old-artifact failure
+under the new contract. Exact native/context/receipt history and full Build restore
+are audited. Runnable alpha.2 preparation is tracked separately. Broad provider composition,
 full connected systems and the remaining27 originals remain later programme work.

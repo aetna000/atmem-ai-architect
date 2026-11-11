@@ -1,0 +1,118 @@
+{
+  "version": 1,
+  "fatalFindings": [],
+  "designRevision": 1,
+  "catalogueVersion": 4,
+  "providers": [],
+  "skills": [
+    {
+      "id": "architecture",
+      "sha256": "c5cc1056e3ed9a00799882f3a7f4ff2e957e4941fe10e4fd865f5c02ceb01058"
+    },
+    {
+      "id": "composition",
+      "sha256": "df2291a4e0d48a979d4f7c6e99da046bdedfc0e54d41e0b5379b2bc8086b5be6"
+    },
+    {
+      "id": "terraform",
+      "sha256": "492329421a332c8e2f47cb753973d766e881dde6542029657c98e74b6a308cfc"
+    },
+    {
+      "id": "security",
+      "sha256": "c75cf46b29eb786b27d88d36604f521d6d287182d47df7d5c03845585d64f914"
+    },
+    {
+      "id": "devops",
+      "sha256": "cd5a428597fbf388a12a863721d93e551c200f4ed30be3469fd8eae78262884c"
+    },
+    {
+      "id": "finops",
+      "sha256": "8154254b2d49bb536ac6663a74cd245ebbca391fbc11713ce2c282998e57a930"
+    }
+  ],
+  "skillUsage": "Referenced reviewed guidance; model execution of skills is not attested by this export.",
+  "components": [
+    {
+      "id": "gauge",
+      "provider": "tools",
+      "ownership": "existing",
+      "contracts": [],
+      "coverage": "reference_or_external_contract"
+    },
+    {
+      "id": "viewer",
+      "provider": "tools",
+      "ownership": "proposed",
+      "contracts": [],
+      "coverage": "implementation_required"
+    },
+    {
+      "id": "archive",
+      "provider": "tools",
+      "ownership": "existing",
+      "contracts": [],
+      "coverage": "reference_or_external_contract"
+    }
+  ],
+  "findings": [
+    {
+      "code": "implementation-required",
+      "message": "Existing rain gauge: implementation remains required.",
+      "componentId": "gauge"
+    },
+    {
+      "code": "implementation-required",
+      "message": "Local reading viewer: implementation remains required.",
+      "componentId": "viewer"
+    },
+    {
+      "code": "implementation-required",
+      "message": "Archive catalogue: implementation remains required.",
+      "componentId": "archive"
+    },
+    {
+      "code": "connection-required",
+      "message": "Connection readings has no generated integration."
+    }
+  ],
+  "artifactMappings": {
+    "file": "architecture-artifact-mappings.json",
+    "references": [
+      {
+        "id": "b0a0268d-4dc3-4a31-923a-f24973f19d7f",
+        "artifactId": "0c916a86-40bd-47c7-8bd1-4b23bb43e21d",
+        "artifactSha256": "a1cebd7c20ad8e15c30d381778812093256e9e5b8507f8941745ba3031601040",
+        "contextStatus": "superseded",
+        "recordIds": [
+          "viewer-conversion-responsibility",
+          "readings-commonjs-unit",
+          "readings-call-contract",
+          "readings-implementation",
+          "readings-local-evidence"
+        ]
+      },
+      {
+        "id": "b3d4f839-80bd-4016-b5bc-9d415216e2e3",
+        "artifactId": "dc099cff-516e-45e4-90bd-ffd1968a2902",
+        "artifactSha256": "ad18d0d2b26250c51db4776b8a985924b9bcaa6707f15f83171c5d1ef4ad88be",
+        "contextStatus": "current",
+        "recordIds": [
+          "viewer-conversion-responsibility",
+          "readings-commonjs-unit",
+          "readings-call-contract",
+          "readings-implementation",
+          "readings-local-evidence"
+        ]
+      }
+    ],
+    "boundary": "References to server-bound artifact files and saved context, not execution, acceptance or compiler coverage. Reopened project metadata is not an authenticated receipt; use the owning session service to reverify it."
+  },
+  "infrastructureComplete": false,
+  "validation": {
+    "schema": "not_run",
+    "runtime": "not_run",
+    "cloudPlan": "not_run"
+  },
+  "deploymentCandidate": false,
+  "evidenceBoundary": "A matching contract identifies compiler capability only. Resources, edges, application behavior and destination configuration require independent validation."
+}
