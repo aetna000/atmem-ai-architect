@@ -15,7 +15,7 @@ local version for the owner. A plan, renamed abstraction or passing unit-test co
 alone cannot earn a release. No version is released by writing this document.
 
 Proposed local prerelease series: `0.2.0-alpha.1` through `0.2.0-alpha.10`.
-Alpha.1 and its patch alpha.1.1 are offered locally; alpha.2 through alpha.10 remain reserved. Remote publication has not occurred. Critical fixes may have patch candidates; evidence always
+Alpha.1, its patch alpha.1.1 and alpha.2 are offered locally; alpha.3 through alpha.10 remain reserved. Remote publication has not occurred. Critical fixes may have patch candidates; evidence always
 binds exact commit/artifact rather than a moving label. Remote publication/deployment
 remains a separately authorized action.
 
@@ -77,7 +77,7 @@ alpha.1.1 remain available on frozen708d6a4 at http://127.0.0.1:5280; owner manu
 acceptance is pending. One original AWS project locally qualifies against the frozen
 protocol after one disclosed bounded native repair; the other 27 remain unqualified.
 
-GE-003 is in progress. A versioned shared context/dependency model, retained review
+GE-003 implementation and automated local scope are complete. A versioned shared context/dependency model, retained review
 history, proposed mapping import, scoped invalidation, ordered native client intent,
 UI/export consistency and new pinned producer schema have component and real-browser
 fixture evidence. Immutable current-context revisions now accompany existing native
@@ -87,12 +87,15 @@ checks; the old package fails the changed unit requirement. Actual service/adapt
 restart retains revisions and identical capture without inference replay.
 Artifact-bound proposed mapping reconciliation now has component/browser and actual
 native edit/regeneration evidence, including20 independent checks per package,
-retained mapping versions and full Build restore. Alpha.2 preparation is underway;
-no runnable second increment is counted until its frozen candidate is verified. See `evidence/20261111-context-revisions/README.md`,
+retained mapping versions and full Build restore. The frozen alpha.2 candidate
+is verified and offered at5283.404 JS/418 server/build
+and actual candidate version/model/draft/reload smoke pass. Two runnable increments
+are recorded; owner manual acceptance remains separate and pending. See
+`evidence/20261111-alpha2-candidate/README.md`, `evidence/20261111-context-revisions/README.md`,
 `evidence/20261111-work-model-foundation/README.md` and
 `docs/architecture/architecture-work-model.md` for limits and next actions.
 
-GE-001A prospective holdouts/comparison, remaining nine increments and all original
+GE-001A prospective holdouts/comparison, remaining eight increments and all original
 provider/difficulty strata plus unfamiliar combinations remain in scope. Previous
 implementation status notes are preserved in `implementation-checkpoints.md` and
 exact evidence directories rather than presented as current counts.

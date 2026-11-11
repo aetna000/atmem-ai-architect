@@ -551,3 +551,24 @@ restoration is checked after session discovery, not its temporary Design fallbac
 All selected Node checks pass for these two scoped runs. A different project shares
 the development service: leave it intact/running and prepare alpha.2 on separate
 ports with fresh data. No public candidate includes that project's control store.
+
+### Second runnable increment offered; begin capability composition
+
+Freeze6a48af7 as local v0.2.0-alpha.2 and verify its exact installed checkout:404 JS,
+418 server/no skips, production build and actual5283 version/project-file/history/
+draft/reload checks pass with zero inference. All tracked runtime/UI/skill sources
+match actual-native-qualified ce7d713. Store full source archive and web-build digests;
+release-record.json identifies exact commands, limits, separate fresh home and rollback
+to unchanged5280 alpha.1.1. The source archive's preparation-time status remains
+historical; the later release record is authoritative for offered status.
+
+The initial checkout exhausted disk and its incomplete test attempts are excluded.
+Reclaim only324MB of completed browser-fixture Vite caches, retaining source/evidence,
+provider caches, app stores and running services; retry the entire12007-file checkout
+successfully. Another project uses5282, so leave it and its data untouched. No other
+control store or native handle is cloned into the candidate.
+
+GE-003 implementation/automated local scope is done; runnable/implemented increments2,
+owner-accepted0, original qualification1/28, measured quality unknown. Continue GE-004
+capability composition and all remaining programme requirements without waiting for
+optional manual feedback. No remote tag publication or cloud operation authorized.

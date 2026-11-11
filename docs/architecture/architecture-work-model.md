@@ -92,14 +92,18 @@ mapping retention, import, save/reload, UI/export agreement, native event persis
 and desktop/mobile layout with explicit fixture backend/model responses. A river
 telemetry fixture provides a different domain. These are not blinded holdouts.
 
-GE-003 is unfinished. Native sessions retain their immutable initial snapshot.
-Each new client start/update can now attach a separate immutable current-context
-revision from the authorized saved project. See the revision contract below. We still need an
-artifact-bound proposal/reconciliation path, and independent actual-native checks
-that prove the diagram, requirements, implementation files and evidence remain aligned.
-Revising/importing mappings must retain history and reject stale/cross-project artifacts.
-Existing compiler views must consume the reconciled model without losing scope. No
-alpha.2 release or original-case improvement is claimed by this foundation.
+GE-003 implementation/automated local scope is qualified, and alpha.2 is offered on
+frozen6a48af7 at http://127.0.0.1:5283. Native sessions retain their immutable initial
+snapshot while new client requests attach current saved context. Proposed artifact
+mappings bind exact files and context and retain prior revisions. Actual-native
+edit/regeneration, independent module behavior, exact history/receipt binding and
+Build restore supplement the component/browser fixtures. Owner manual acceptance
+remains pending; original project acceptance stays1/28.
+
+The graph and accepted requirements remain authoritative. Linking metadata does not
+automatically redraw topology, complete capability/provider composition, bundle a
+unified source handoff or establish whole-system acceptance. Those remain required
+later programme work; no broader generative quality or cloud deployment is inferred.
 
 ## Native context revisions
 
@@ -190,5 +194,5 @@ Component/browser fixtures and the actual-native orchard round trip qualify this
 reconciliation path. Two real turns preserve mapping identities/history across a
 requirement edit, with20 independent checks per artifact and an old-artifact failure
 under the new contract. Exact native/context/receipt history and full Build restore
-are audited. Runnable alpha.2 preparation is tracked separately. Broad provider composition,
+are audited. The verified runnable alpha.2 release is tracked separately in its release record. Broad provider composition,
 full connected systems and the remaining27 originals remain later programme work.
