@@ -597,3 +597,10 @@ This patch is reusable for all design domains and providers. Tool and format che
 are not runtime/system acceptance. UI/browser fixtures and real bounded host-loop
 unit observations are distinct; no new complete-project qualification is claimed.
 GE-004 composition remains next after this owner-requested patch candidate.
+
+
+Freeze4ee58fe as local alpha.2.1. Exact installed checkout passes408JS/423server,
+build and actual browser checks. Actual5284 verifies source/version/default/empty
+Build/activity capability without inference. Previous candidates and unrelated5282
+service stay intact. The patch adds no roadmap increment or complete-project pass.
+Owner acceptance remains0; resume GE-004 capability composition.

@@ -54,3 +54,30 @@ The runnable record will bind the frozen source, new local preview, exact startu
 command and observed checks. Keep alpha.2 at5283 and alpha.1.1 at5280 unchanged for
 rollback. The shared5282 development service and its unrelated project stay intact.
 No cloud account, deployment or remote publication is involved.
+
+
+## Frozen runnable candidate offered
+
+Source `4ee58fe347e731224c4e49a6c0e451f30f788f67`, local tag
+`v0.2.0-alpha.2.1`, separate installed checkout `.local/candidates/0.2.0-alpha.2.1`.
+Open **http://127.0.0.1:5284**. Exact startup command/home/rollback and limits are
+in `release-record.json`; the source's preparation-time progress is historical.
+
+The frozen checkout independently passes408 JS and423 server tests without skips,
+production build and the full activity browser fixture (`frozen-*.log`,
+`frozen-activity-browser.json`). Its tracked tree equals the frozen Git commit.
+The earlier7e36979 frozen passes are retained separately; final4ee58fe also aligns
+About guidance with Design-first and is the offered source.
+
+Actual5284 UI/sidecar verification (`verify-preview.mjs`, `preview-check.json`)
+confirms visible version, Design default/reload despite stale Build preference,
+empty Build outcome with no input/start, enabled activity capability and scoped404,
+with zero inference/voice preparation. The first preview driver used the button's
+title as its accessible name; corrected to its actual title selector. This fixture
+selector failure is excluded from passes. `preview-version.png` records the UI.
+
+The backend was started at7e36979 and all tracked server files are identical at4ee58fe;
+the only source difference is About copy. No live user service was restarted.
+Full source remains reproducible from the Git tag; `web-build-files.json` binds the
+production build without another large archive on this nearly full local disk.
+This patch adds no roadmap increment and awaits optional owner acceptance.
