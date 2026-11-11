@@ -243,3 +243,13 @@ inspection are implemented across four providers, with8 native schema packages/
 evidence/20261111-provider-lowering/README.md. Explicit placement, environment/
 network/identity/lifecycle/state policy and runnable alpha.4 remain required.
 No new release, original complete-system acceptance or95% claim.
+
+
+Owner-priority alpha.3.1 focused UI patch is offered at
+http://127.0.0.1:5285/dist/index.html (same origin/data/backend). Actual Claude
+consultation informed compact Design activity/history; owner rejected broader
+Build/scrolling work, which was removed. atflow.css unchanged.480JS/425unchanged-
+server/build/focused browser/live built-view pass. An active owner implementation
+job prevents a service restart; keep it running. See
+evidence/20261111-inline-activity-patch/README.md. This patch adds no increment or
+original-case acceptance. Resume GE-005 region/ownership, then full programme.

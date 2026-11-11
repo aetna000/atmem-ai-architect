@@ -729,3 +729,63 @@ Keep GE-005 in_progress: explicit container-region input reconciliation remains 
 known source defect for the next step, along with environment/network/identity/
 lifecycle and composition state policy. No alpha.4 release or new original-case
 acceptance. Alpha.3 and other previews remain running. Heavy data stays on MEM0.
+
+
+### Owner feedback: unsupported Design tests and confusing turn UI
+
+The owner reports that a Website assistant application cannot start Design testing
+and that a separate turn view is confusing. Trace confirms the fixed design compiler
+has no runnable implementation contract for that conceptual block. Add an explicit
+Build and test action to the existing native engineering session, carrying the saved
+full scope and exact selection; keep zero-executed tests blocked and prevent repeated
+automatic blocker explanations. This is an executable handoff, not a website runtime
+pass or another recipe added to production dispatch.
+
+Move public architecture activity inside chat with exact request/reply associations;
+retain old unassociated records without inventing a binding. Newest progress is first
+inside its related turn. Intermediate UI source9744da0 and focused alpha.3.1 source
+16d4e87 are qualified with476JS/425server/build and real browser fixtures. Upgrade
+idle5285 using the same app home: two project IDs and all seven old public turn
+records/49 events remain, no model replay. A live browser autosaved one project after
+reconnect, so cross-save file byte identity is not claimed. Private content/journals
+remain ignored; no client file is committed or used as a benchmark.
+
+The owner then explicitly asks for Claude's UI design help because the view remains
+confusing. Invoke the installed authenticated Claude Code read-only on public fixture
+screens/source in a restricted MEM0 review directory, no private client content,
+Bash/edit tools, MCP servers or deployment. Await the actual consultation and implement
+a simpler coherent Design/Build activity pattern before claiming this patch complete.
+The production architect's chosen model/effort is unchanged. GE-005/full programme
+remains in scope after this owner-priority patch.
+
+
+### Owner scope correction: only the pictured Design turn cards
+
+The owner says the UI work was overdone and asks why atflow.css was being changed.
+It was inspected only; no atflow.css edit exists. Remove the uncommitted Build
+layout/composer/scroll-hook changes and related broader checks. Preserve the
+already requested native test handoff. Apply only component-local Design activity
+presentation: compact per-message activity, latest step in the collapsed line,
+conservative paired public action details and one collapsed legacy history, newest
+first. Do not follow Claude's wider Build/navigation recommendations without a
+new owner request. Current focused source e70b5ec is frozen as f5b88de in the patch
+checkout;480JS/build and focused browser checks pass. The exact backend/skills
+remain unchanged from alpha.3.
+
+A new native implementation job is active in the owning service. The final upgrade
+guard correctly refuses a service restart; no process was stopped. Serve the
+qualified relative-base local build under the same origin while that work runs,
+then revalidate its actual page. Do not interrupt, clone or replay the owner job.
+No website application/runtime acceptance follows from the UI/test handoff checks.
+
+
+### Focused patch offered without interrupting owner work
+
+Freeze f5b88de as local v0.2.0-alpha.3.1.480JS/425unchanged-server/build and focused
+Design/handoff browser fixtures pass. The actual same-origin relative build passes
+read-only browser checks for one historical disclosure/newest-first/no large cards.
+The idle guard observed active native owner work and refused restart; no process
+was stopped. Serve the built page at5285/dist/index.html while the old dev-module
+cache remains at root. Do not invalidate worker state, copy the app home or replay
+any request. This fulfills the narrow UI scope; no app implementation/test success
+is inferred. Wider Build layout and scrolling changes were removed as instructed.
