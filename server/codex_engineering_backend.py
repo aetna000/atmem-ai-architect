@@ -140,10 +140,11 @@ class CodexEngineeringBackend:
         except BaseException:
             await client.close();raise
 
-    async def start(self,scope,handle,text,selection,*,request_id=None):
+    async def start(self,scope,handle,text,selection,*,request_id=None,context=None):
         client,root,_=self._owned(scope,handle,selection)
+        inputs = self._inputs(scope, text, context)
         result=await client.request('turn/start',{'threadId':handle,
-            'input':[{'type':'text','text':text}],'cwd':str(root),
+            'input':inputs,'cwd':str(root),
             'model':selection.model,'effort':selection.effort,
             'approvalPolicy':'never',
             **({'permissions':self.permission_profile} if self.permission_profile else {'sandboxPolicy':self._policy(root)}),
@@ -219,10 +220,20 @@ class CodexEngineeringBackend:
             seen.add(cursor)
         raise SessionError('The owned turn was not found in bounded history; recovery is required')
 
-    async def steer(self,scope,handle,turn,text,*,request_id=None):
+    @staticmethod
+    def _inputs(scope, text, context):
+        inputs = [{'type':'text','text':text}]
+        if context is not None:
+            from .engineering_contexts import context_input
+            if context.get('projectId') != scope.project:
+                raise SessionError('Project context does not belong to this engineering session')
+            inputs.append(context_input(context))
+        return inputs
+
+    async def steer(self,scope,handle,turn,text,*,request_id=None,context=None):
         client,_,_=self._owned(scope,handle)
         await client.request('turn/steer',{'threadId':handle,'expectedTurnId':turn,
-                                         'input':[{'type':'text','text':text}],
+                                         'input':self._inputs(scope, text, context),
                                          **({'clientUserMessageId':request_id} if request_id is not None else {})})
 
     async def interrupt(self,scope,handle,turn):

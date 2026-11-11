@@ -155,6 +155,26 @@ class CodexBackendTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(params['model'], self.selection.model)
         self.assertEqual(params['sandboxPolicy'], self.backend._policy(self.root))
 
+    async def test_revision_is_a_separate_input_with_exact_message_and_request_identity(self):
+        import hashlib, json
+        handle = await self.create()
+        content = json.dumps({'format':'atmem.ai-architect.project','meta':{'id':self.scope.project},
+            'requirements':['Preserve client-owned wetland gauges; use centimetres. 🛰️']},ensure_ascii=False)
+        context = {'id':'context-one','projectId':self.scope.project,'revision':2,
+            'sha256':hashlib.sha256(content.encode()).hexdigest(),'content':content}
+        text = 'Follow the edited design.\nPreserve all earlier constraints.'
+        await self.backend.start(self.scope,handle,text,self.selection,request_id='start-request',context=context)
+        await self.backend.steer(self.scope,handle,'native-turn',text,request_id='update-request',context=context)
+        for (method,params),request in zip(self.clients[0].requests[-2:],['start-request','update-request']):
+            self.assertEqual(params['input'][0],{'type':'text','text':text})
+            self.assertEqual(json.loads(params['input'][1]['text'].split('\n',1)[1]),context)
+            self.assertEqual(params['clientUserMessageId'],request)
+        before = len(self.clients[0].requests)
+        for invalid in [{**context,'projectId':'another-project'},{**context,'content':content+' '},{**context,'sha256':'0'*64}]:
+            with self.assertRaises((ValueError,SessionError)):
+                await self.backend.start(self.scope,handle,text,self.selection,context=invalid)
+        self.assertEqual(len(self.clients[0].requests),before)
+
     async def test_foreign_scope_and_changed_model_cannot_access_live_thread(self):
         handle = await self.create()
         before = len(self.clients[0].requests)

@@ -59,17 +59,18 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
   const conversation=engineeringConversation(events);
   function submitIntent(event){
     event.preventDefault();
-    if(!draft.trim()||draft.length>80000||uncertain||(!job&&(!exactSelection||contextBusy)))return;
+    if(!draft.trim()||draft.length>80000||uncertain||contextBusy||(!job&&!exactSelection))return;
     const submitted=draft;
     void act(async()=>{
       let current=job;
+      const saved=await saveProject();
+      if(!/^[a-f0-9]{64}$/.test(saved?.sha256||''))throw Error('The server did not confirm the saved design context. Your draft is retained.');
       if(!current){
-        await saveProject();
         current=await call('create',{model:connection.model,effort:connection.effort});
         if(live.current)setJob(current);
       }
       // The new session ID is explicit: React state may not have rendered yet.
-      const next=await call(current.state==='running'?'steer':'start',{sessionId:current.id,text:submitted});
+      const next=await call(current.state==='running'?'steer':'start',{sessionId:current.id,text:submitted,contextSha256:saved.sha256});
       if(live.current){setJob(next);setArtifact(null);setDraft(value=>value===submitted?'':value);}
     });
   }
@@ -80,7 +81,7 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
     {loading?<p role="status">Finding your project’s work…</p>:<>
       {job?<>
         <p role="status">{running?'Working':uncertain?'Recovering acceptance of your last request':job.last_status?({completed:'Work completed',interrupted:'Work stopped',failed:'Work needs attention'}[job.last_status]||job.last_status):'Ready'} · {job.model} · {job.effort}</p>
-        <p className="muted">Saved project context was included when this work opened. Send later changes below.</p>
+        <p className="muted">Each request includes your saved design. Earlier versions remain in the work history.</p>
       </>:<>
         <p>{exactSelection?`${connection.model} · ${connection.effort}`:'Choose a Codex model and reasoning level to start.'}</p>
         {!exactSelection&&<button onClick={onConnections}>Choose model</button>}
@@ -96,7 +97,7 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
         <label htmlFor="engineering-intent">{running?'Add an update':'What should we build or repair?'}</label>
         <textarea id="engineering-intent" rows={4} value={draft} onChange={e=>setDraft(e.target.value)}/>
         {draft.length>80000&&<p role="alert">This update exceeds 80,000 characters. Edit it before sending; your draft is retained.</p>}
-        <button disabled={busy||uncertain||!draft.trim()||draft.length>80000||(!job&&(!exactSelection||contextBusy))}>{running?'Send update':'Start work'}</button>
+        <button disabled={busy||uncertain||contextBusy||!draft.trim()||draft.length>80000||(!job&&!exactSelection)}>{running?'Send update':'Start work'}</button>
       </form>
       {job&&<>
         {finalization&&<p role="status"><strong>Recorded verification update: </strong>{finalization.text}</p>}

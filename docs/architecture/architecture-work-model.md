@@ -83,10 +83,49 @@ mapping retention, import, save/reload, UI/export agreement, native event persis
 and desktop/mobile layout with explicit fixture backend/model responses. A river
 telemetry fixture provides a different domain. These are not blinded holdouts.
 
-GE-003 is unfinished. Native sessions still start from an immutable project snapshot.
-We must add versioned current-context updates for existing native work, an
+GE-003 is unfinished. Native sessions retain their immutable initial snapshot.
+Each new client start/update can now attach a separate immutable current-context
+revision from the authorized saved project. See the revision contract below. We still need an
 artifact-bound proposal/reconciliation path, and independent actual-native checks
 that prove the diagram, requirements, implementation files and evidence remain aligned.
 Revising/importing mappings must retain history and reject stale/cross-project artifacts.
 Existing compiler views must consume the reconciled model without losing scope. No
 alpha.2 release or original-case improvement is claimed by this foundation.
+
+## Native context revisions
+
+The session service stores exact UTF-8 project file bytes and SHA-256 outside the
+model-writable workspace. Each changed saved snapshot appends a revision; unchanged
+consecutive bytes reuse a revision, and reverting to earlier bytes appends a new
+revision. Request UUIDs bind immutable revisions before native submission. This
+records attachment, not acknowledgement, acceptance, execution or completed design
+reconciliation. Lost acknowledgements leave the existing request/context association
+intact; recovery never resubmits either. Automatic repairs retain the prior thread
+context rather than inventing a new client design update.
+
+Build saves before every client submission. The save response hashes the exact
+written bytes; start/steer check that digest against the server-resolved saved file
+inside the session's submission lock. An intervening save fails before inference.
+Legacy API clients without the optional digest attach the current saved file without
+that optimistic concurrency guard. Browser input cannot supply snapshot content,
+native handles, workspace paths or revision identities.
+
+The Codex adapter sends the exact client text as its first input and a separately
+labelled evidence envelope as its second input. The envelope preserves the complete
+project JSON as an encoded string, revision identity and digest. It is evidence to
+reconcile, never authority overriding client intent or worker policy. Existing native
+request IDs, model/effort and start/steer recovery semantics remain. The original
+project-context.json and all pinned inputs stay untouched, including legacy sessions.
+The browser/session data contract does not depend on a CLI or local host path.
+
+Bounds explicitly reject without trimming or pruning: 2 MB per UTF-8 snapshot,
+1,000 revisions and 20 MB stored context per session. Duplicate JSON keys, nonfinite
+numbers, invalid Unicode, mismatched project identity, stale digests, symlink/special
+saved files and stored digest corruption fail closed. These are implementation
+storage bounds, not customer quotas. Native model context capacity is a separate
+limit; a rejected inference is not a reason to truncate design evidence.
+
+The protocol surface follows [official App Server documentation](https://developers.openai.com/codex/app-server/),
+checked against the installed adapter's request contract. Component doubles and
+browser fixtures do not establish actual native transfer; the separate river-depth
+evaluation script exercises that boundary without patching generated files.

@@ -27,6 +27,7 @@ try{
    return route.fulfill({json:job});
   }
   if(url.endsWith('/api/architect')){modelCalls++;return route.fulfill({json:{message:'Requirement recorded. Existing graph retained.',phase:'Architecture Review',componentReview:{componentId:'viewer',summary:'Check dependent implementation against the updated requirement.',questions:[]}}});}
+  if(url.endsWith('/api/projects/save'))return route.fulfill({json:{saved:true,sha256:'a'.repeat(64)}});
   return route.fulfill({json:url.endsWith('/api/session')?{token:'fixture',engineeringEnabled:true,status:'local-sidecar',providers:{codex:{installed:true,available:true,signedIn:true}}}:{status:'disabled',enabled:false,saved:true,projects:[],bin:[]}});
  });
  const state=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('atforma-workspace-v3')));

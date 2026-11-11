@@ -1,6 +1,6 @@
 from .settings import setting, home as product_home
 """Loopback-only AtMem AI Architect sidecar. No cloud discovery or deployment endpoints."""
-import asyncio, os, secrets, shutil
+import asyncio, os, secrets, shutil, hashlib
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from .architect import AtMemArchitect
@@ -180,10 +180,11 @@ async def projects_save(request:Request):
     if not memory_safe(file):raise HTTPException(422,'Project content looks like a credential; remove it before saving.')
     if (_home()/'bin'/f'{pid}.atforma.json').exists():raise HTTPException(409,'This project is in the bin. Restore it first.')
     target=_home()/'projects'/f'{pid}.atforma.json';tmp=target.with_suffix('.tmp')
-    tmp.write_text(_json.dumps(file,ensure_ascii=False),encoding='utf-8');tmp.replace(target)
+    content=_json.dumps(file,ensure_ascii=False,allow_nan=False).encode('utf-8')
+    tmp.write_bytes(content);tmp.replace(target)
     try:memory=await asyncio.to_thread(memory_service().sync,pid,file)
     except Exception:memory={'status':'unavailable'}
-    return {'saved':True,'memory':memory}
+    return {'saved':True,'sha256':hashlib.sha256(content).hexdigest(),'memory':memory}
 
 @app.post('/api/projects/trash')
 async def projects_trash(request:Request):

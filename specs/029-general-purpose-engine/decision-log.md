@@ -493,3 +493,17 @@ Add optional version1 architectureWork state without replacing existing project 
 Keep project format2.3, version the optional extension, reject incompatible or lossy input and enforce the existing2MB file bound in UTF-8 on import/export. No extra dependency or local-CLI requirement enters the browser/data model. New sessions receive a pinned public proposal schema; old inputs stay unchanged. Actual library UI and river telemetry fixtures plus negative cases qualify the foundation;393 JS / 388 server/build/Engineering regression pass. Preserve corrected schema-pin fixture/selector failures and development-build interruption separately; stable browser run asserts no dev reloads. No cloud or deployment operation, new original acceptance or second increment claimed. GE-003 remains in progress until native context revisions/artifact-bound reconciliation and runnable alpha.2 are independently qualified.
 
 Guard context updates against project switches and newer edits: native intent callbacks identify their source project; imported proposals apply typed changes to the latest matching state; review actions include the exact displayed dependency context and reject intervening changes. This prevents cross-project leakage and stale asynchronous overwrites. Both negative cases have regressions; final UI runs pass on the guarded source.
+
+### GE-003: immutable current-context submissions
+
+Keep the initial workspace snapshot and all pins unchanged. Store append-only saved
+project revisions in the control store, bind them to server-reserved submission UUIDs
+before inference, and attach them as separate labelled evidence alongside exact
+client text. Build saves every request and passes the exact saved-byte digest;
+intervening saves reject before submission. Automatic repair does not introduce a
+new saved context. Context attachment is not delivery acknowledgement or artifact
+reconciliation. Preserve uncertain submissions; never replay them on recovery.
+The current service is still local single-owner; this does not establish hosted
+authorization or multi-controller transaction/lease behavior. Full graph/file/
+artifact reconciliation and alpha.2 acceptance remain pending. Qualify actual native
+transfer on an evaluator-authored unfamiliar-domain fixture before claiming it.

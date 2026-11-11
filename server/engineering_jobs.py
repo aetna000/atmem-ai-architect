@@ -59,6 +59,18 @@ class EngineeringJobs:
         self.submissions = set()
         self.locks = {}
         self.on_settled = None
+        self.context_provider = None
+
+    def _context(self, scope, session, request, expected_sha256):
+        if self.context_provider is None:
+            if expected_sha256 is not None:
+                raise SessionError('This worker cannot attach the requested project context')
+            return None
+        context = self.context_provider(scope, session, request, expected_sha256)
+        self._record(scope, session, 'context_attached', requestId=request,
+                     contextId=context['id'], contextRevision=context['revision'], contextSha256=context['sha256'],
+                     text='Saved design context attached to this submission; delivery and implementation are not established by this receipt.')
+        return context
 
     def _lock(self, scope, session):
         self.sessions._owned(scope, session)
@@ -95,7 +107,7 @@ class EngineeringJobs:
             self._record(scope, session, 'recovery_required',
                          text='Progress connection interrupted. Recover the existing job; do not resubmit its intent.')
 
-    async def start(self, scope, session, text, *, expected_run=None, run_id=None, origin=None):
+    async def start(self, scope, session, text, *, expected_run=None, run_id=None, origin=None, context_sha256=None):
         # Shield the entire reservation/acknowledgement/supervision transition,
         # including when the initiating HTTP client disconnects.
         async def submit():
@@ -109,8 +121,15 @@ class EngineeringJobs:
                     # After a server restart, reconnect the existing backend before
                     # reserving new intent. Failure must leave an idle job idle.
                     await self.sessions.resume(scope, session)
-                current()
-                state = await self.sessions.start(scope, session, text,**({'run_id':run_id} if run_id is not None else {}))
+                if current()['state'] != 'idle':
+                    raise SessionError('An engineering turn is active or requires recovery')
+                self.sessions._text(text)
+                request = run_id if run_id is not None else str(uuid.uuid4())
+                # Repairs retain their existing thread context, rather than
+                # introducing design changes as an invented client request.
+                context = None if origin == 'automatic_repair' else self._context(scope, session, request, context_sha256)
+                state = await self.sessions.start(scope, session, text, run_id=request,
+                    **({'context':context} if context is not None else {}))
                 self._record(scope, session, 'accepted', runId=state['run'],text=text,**({'origin':origin} if origin else {}))
                 self._watch(scope, session)
                 return state
@@ -136,16 +155,18 @@ class EngineeringJobs:
             self._watch(scope, session)
             return state
 
-    async def steer(self, scope, session, text):
+    async def steer(self, scope, session, text, *, context_sha256=None):
         async def deliver():
             async with self._lock(scope, session):
                 self.sessions._text(text)
                 if self.state(scope,session)['state'] != 'running':
                     raise SessionError('Steering requires a confirmed active turn')
                 request = str(uuid.uuid4())
+                context = self._context(scope, session, request, context_sha256)
                 self._record(scope,session,'steering_submitted',requestId=request,text=text)
                 try:
-                    await self.sessions.steer(scope,session,text,request_id=request)
+                    await self.sessions.steer(scope,session,text,request_id=request,
+                        **({'context':context} if context is not None else {}))
                 except Exception:
                     self._record(scope,session,'steering_delivery_uncertain',requestId=request,
                                  text='This saved update may already be accepted. It was not replayed automatically.')

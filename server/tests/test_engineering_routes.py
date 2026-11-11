@@ -87,6 +87,18 @@ class EngineeringRouteTests(unittest.TestCase):
             self.assertEqual(self.client.post('/api/engineering/start',json={**self.payload,'text':'x'*80001},headers=self.headers).status_code,422)
             service.return_value.jobs.start.assert_not_awaited()
 
+    def test_context_digest_is_forwarded_but_browser_cannot_supply_snapshot_content(self):
+        with patch.object(routes,'service') as service:
+            service.return_value.jobs.start=AsyncMock(return_value={'state':'running'})
+            service.return_value.jobs.steer=AsyncMock()
+            digest='a'*64
+            for action in ['start','steer']:
+                body={**self.payload,'text':'Use the current saved design.','contextSha256':digest}
+                self.assertEqual(self.client.post('/api/engineering/'+action,json=body,headers=self.headers).status_code,200)
+                getattr(service.return_value.jobs,action).assert_awaited_once_with(ProjectScope('local-owner',self.project),self.session,body['text'],context_sha256=digest)
+                for change in [{'contextSha256':'bad'},{'context':{'requirements':'replace client intent'}},{'contextPath':'/private/secret'}]:
+                    self.assertEqual(self.client.post('/api/engineering/'+action,json={**body,**change},headers=self.headers).status_code,422)
+
     def test_artifact_download_is_project_bound_and_returns_digest(self):
         with patch.object(routes,'service') as service:
             service.return_value.artifacts.get.return_value = ({'id':self.session,'sha256':'abc123'},b'ZIP')

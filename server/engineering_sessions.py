@@ -67,9 +67,9 @@ class EngineeringBackend(Protocol):
     async def create(self,scope: ProjectScope,workspace: str,selection: ModelSelection) -> str: ...
     async def resume(self,scope: ProjectScope,handle: str,workspace: str,selection: ModelSelection) -> None: ...
     async def observe(self,scope: ProjectScope,handle: str,turn: str) -> BackendEvent | None: ...
-    async def start(self,scope: ProjectScope,handle: str,text: str,selection: ModelSelection,*,request_id: str) -> str: ...
+    async def start(self,scope: ProjectScope,handle: str,text: str,selection: ModelSelection,*,request_id: str,context: dict | None = None) -> str: ...
     async def recover_start(self,scope: ProjectScope,handle: str,request_id: str) -> RecoveredStart | None: ...
-    async def steer(self,scope: ProjectScope,handle: str,turn: str,text: str,*,request_id: str | None = None) -> None: ...
+    async def steer(self,scope: ProjectScope,handle: str,turn: str,text: str,*,request_id: str | None = None,context: dict | None = None) -> None: ...
     async def interrupt(self,scope: ProjectScope,handle: str,turn: str) -> None: ...
     async def next_event(self,scope: ProjectScope,handle: str) -> BackendEvent: ...
 
@@ -227,7 +227,7 @@ class EngineeringSessions:
                 self.store.terminal(scope,session,row['run'],row['turn'],event.kind)
         return self._public(self._owned(scope,session))
 
-    async def start(self,scope,session,text,*,run_id=None):
+    async def start(self,scope,session,text,*,run_id=None,context=None):
         self._text(text)
         row=self._owned(scope,session)
         run=str(uuid.uuid4()) if run_id is None else run_id
@@ -236,21 +236,21 @@ class EngineeringSessions:
         self.store.reserve(scope,session,run,text)
         # Errors, timeout or process death leave a durable uncertain reservation.
         # A second writer cannot submit the same work as a fresh turn.
-        turn=await self.backend.start(scope,row['handle'],text,ModelSelection(row['model'],row['effort']),request_id=run)
+        turn=await self.backend.start(scope,row['handle'],text,ModelSelection(row['model'],row['effort']),request_id=run,
+            **({'context':context} if context is not None else {}))
         if not isinstance(turn,str) or not turn:
             raise SessionError('Backend did not confirm a turn; recovery is required')
         self.store.attach_turn(scope,session,run,turn)
         return self._public(self._owned(scope,session))
 
-    async def steer(self,scope,session,text,*,request_id=None):
+    async def steer(self,scope,session,text,*,request_id=None,context=None):
         self._text(text)
         row=self._owned(scope,session)
         if row['state']!='running':
             raise SessionError('Steering requires a confirmed active turn')
-        if request_id is None:
-            await self.backend.steer(scope,row['handle'],row['turn'],text)
-        else:
-            await self.backend.steer(scope,row['handle'],row['turn'],text,request_id=request_id)
+        await self.backend.steer(scope,row['handle'],row['turn'],text,
+            **({'request_id':request_id} if request_id is not None else {}),
+            **({'context':context} if context is not None else {}))
 
     async def interrupt(self,scope,session):
         row=self._owned(scope,session)

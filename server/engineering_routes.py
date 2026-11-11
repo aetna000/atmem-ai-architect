@@ -7,6 +7,7 @@ its worker isolation; enabling these routes does not establish hosted readiness.
 import asyncio
 import hashlib
 import json
+import os
 from pathlib import Path
 import tempfile
 from fastapi import APIRouter, HTTPException
@@ -16,6 +17,7 @@ from .codex_engineering_backend import CodexEngineeringBackend
 from .codex_worker_policy import CodexWorkerClient, PROFILE
 from .engineering_artifacts import EngineeringArtifacts,WorkingCheckpoints,CheckSources
 from .engineering_jobs import EngineeringJobs
+from .engineering_contexts import EngineeringContexts, MAX_CONTEXT_BYTES
 from .engineering_finalization import EngineeringFinalization
 from .dependency_mirror import inspect_mirror
 from .engineering_delivery import seed_delivery
@@ -44,6 +46,7 @@ class SessionRequest(ProjectRequest):
 
 class IntentRequest(SessionRequest):
     text: str = Field(min_length=1, max_length=80000)
+    contextSha256: str | None = Field(default=None, pattern=r'^[a-f0-9]{64}$')
 
 
 class EventsRequest(SessionRequest):
@@ -123,6 +126,8 @@ Report mock, local runtime, provider-schema and unresolved checks separately. Ag
 Keep final progress concise and explain any remaining work.''')
         self.sessions = EngineeringSessions(self.store,self.backend)
         self.jobs = EngineeringJobs(self.sessions)
+        self.contexts = EngineeringContexts(self.store)
+        self.jobs.context_provider = self.attach_context
         self.artifacts = EngineeringArtifacts(self.store)
         self.checkpoints = WorkingCheckpoints(self.store)
         self.validator_endpoint=setting('ENGINEERING_VALIDATOR_ENDPOINT')
@@ -134,6 +139,28 @@ Keep final progress concise and explain any remaining work.''')
         self.finalization=EngineeringFinalization(self.jobs,self.capture_completed,self.validation_service,max_repairs=1,
             can_repair=self.can_repair)
         self.jobs.on_settled=self.finalization.observe
+
+    def attach_context(self, scope, session, request, expected_sha256):
+        self.store.get(scope, session)
+        # Server-resolved saved file only; never a browser or native host path.
+        authorized, path = local_scope(scope.project)
+        if authorized != scope:
+            raise SessionError('Saved context is unavailable for this project scope')
+        fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        try:
+            import stat
+            info = os.fstat(fd)
+            if not stat.S_ISREG(info.st_mode) or info.st_size > MAX_CONTEXT_BYTES:
+                raise SessionError('Saved context must be a bounded regular project file')
+            with os.fdopen(fd, 'rb', closefd=False) as source:
+                content = source.read(MAX_CONTEXT_BYTES + 1)
+        finally:
+            os.close(fd)
+        from .memory_service import safe
+        from .engineering_contexts import validate_context
+        if not safe(validate_context(content, scope.project)):
+            raise SessionError('Saved project context looks like a credential')
+        return self.contexts.attach(scope, session, request, content, expected_sha256=expected_sha256)
 
     def can_repair(self,scope,session):
         initial=self.jobs.journal.read(scope,session,limit=1)
@@ -275,10 +302,12 @@ async def action(payload, kind):
         if kind == 'events':
             return {'events':worker.jobs.journal.read(scope,payload.sessionId,payload.after),
                     'session':worker.jobs.state(scope,payload.sessionId)}
-        if kind == 'start': return await worker.jobs.start(scope,payload.sessionId,payload.text)
+        if kind == 'start': return await worker.jobs.start(scope,payload.sessionId,payload.text,
+            **({'context_sha256':payload.contextSha256} if payload.contextSha256 is not None else {}))
         if kind == 'recover': return await worker.jobs.recover(scope,payload.sessionId)
         if kind == 'steer':
-            await worker.jobs.steer(scope,payload.sessionId,payload.text)
+            await worker.jobs.steer(scope,payload.sessionId,payload.text,
+                **({'context_sha256':payload.contextSha256} if payload.contextSha256 is not None else {}))
             return worker.jobs.state(scope,payload.sessionId)
         if kind == 'interrupt': return await worker.jobs.interrupt(scope,payload.sessionId)
         if kind == 'capture':

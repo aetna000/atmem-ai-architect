@@ -9,6 +9,37 @@ from server.engineering_sessions import ModelSelection, ProjectScope
 
 
 class LocalWorkerRegistrationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_context_updates_are_control_owned_without_rewriting_workspace_pins(self):
+        import hashlib, uuid
+        from server.engineering_sessions import SessionError
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);(root/'projects').mkdir()
+            context=root/'projects/project-one.atforma.json'
+            original=json.dumps({'format':'atmem.ai-architect.project','meta':{'id':'project-one'},
+                'requirements':['Preserve the existing observatory.'],'design':{'provider':'tools'}}).encode()
+            context.write_bytes(original)
+            with patch('server.engineering_routes.home',return_value=root),patch('server.engineering_routes.setting',return_value=None):
+                worker=LocalEngineeringService();scope=ProjectScope('local-owner','project-one')
+                async def fake_create(scope,workspace,selection):return worker.sessions._public(worker.store.create(scope,workspace,worker.backend.name,'fake-thread',selection))
+                worker.sessions.create=fake_create
+                state=await worker.create(scope,context,ModelSelection('exact-model','high'))
+                path=worker.backend._workspace(scope,worker.store.get(scope,state['id'])['workspace'])
+                try:
+                    pins=worker.pinned_inputs(scope,state['id']).copy()
+                    first=worker.attach_context(scope,state['id'],str(uuid.uuid4()),hashlib.sha256(original).hexdigest())
+                    changed=original.replace(b'observatory',b'observatory; report non-BMP Unicode labels')
+                    context.write_bytes(changed)
+                    with self.assertRaises(SessionError):worker.attach_context(scope,state['id'],str(uuid.uuid4()),first['sha256'])
+                    second=worker.attach_context(scope,state['id'],str(uuid.uuid4()),hashlib.sha256(changed).hexdigest())
+                    self.assertEqual(second['revision'],2)
+                    self.assertEqual((path/'project-context.json').read_bytes(),original)
+                    self.assertEqual(worker.pinned_inputs(scope,state['id']),pins)
+                    self.assertEqual(worker.contexts.get(scope,state['id'],first['id'])['content'].encode(),original)
+                    context.unlink();context.symlink_to(path/'project-context.json')
+                    with self.assertRaises(Exception):worker.attach_context(scope,state['id'],str(uuid.uuid4()),first['sha256'])
+                finally:
+                    await worker.close();shutil.rmtree(path)
+
     async def test_operator_toolchain_staging_and_durable_project_registration(self):
         with tempfile.TemporaryDirectory() as folder:
             root=Path(folder);tools=root/'trusted-tools';tools.mkdir()
