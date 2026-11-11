@@ -542,3 +542,19 @@ privilege policies need explicit owned interfaces/counterexamples; Unicode is
 separately repaired. Native application/results/receiving acceptance and IBM
 transfer remain pending before alpha.5. Full ten-increment/28/unfamiliar scope
 and four offered/1-of28/owner0/unknown quality remain.
+
+Original Azure frozen22 now qualifies locally: unchanged bea50c6b/source0b8fe07
+Node26.13 AMD64 image, real sandboxed Chromium/native OAuth/PKCE/RS256/HTTP/TLS,
+five distinct staff sessions with20480 bytes each,30-second timeout/failure/recovery/
+clear/no-storage and policy no-inference denials; exact52-file clean receiving
+build, native schema/fmt/4 independent+3 original mock plans. Per-criterion audit:
+evidence/20261112-original-azure-amd64/assessment-v2.json. Synthetic provider/TLS
+fixtures, no real account/model/retention/deployment acceptance. Published regional
+model is deprecated/retiring2027-04-14: flag lifecycle/approval/availability/cost
+review before separately authorized rollout, never claim a current recommendation
+or silently replace the original candidate version. Historical originals2/28,26 remaining;
+four offered increments/owner0/unknown measured quality. No export or owner change.
+Google original completed but failed integration checks; its one bounded repair
+fdaf0460-7be9-437f-88d3-bf5a431d6f9b is active. Observer95286 follows it; two prior
+observation expiries caused no replay/interrupt/steer. Continue that same pipeline,
+independent final qualification and IBM transfer/generic policies before alpha.5.

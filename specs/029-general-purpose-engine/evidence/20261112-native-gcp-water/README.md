@@ -34,3 +34,15 @@ Native implementation, generated checks, bounded repair, receiving image, provid
 composition and independent client acceptance are pending. Follow the existing
 observer/job; do not start another session after an observation timeout. Four
 offered increments/1-of28/owner0/unknown measured quality remain unchanged.
+
+Follow-up: original native run completed and produced immutable artifact287d33fc;
+its integration checks failed and the backend submitted its one bounded automatic
+repair fdaf0460-7be9-437f-88d3-bf5a431d6f9b in the same exact-model/effort session.
+It remains active at the last live API observation. Two observer windows expired
+while that pipeline was live; neither caused a restart, interrupt, operator steer
+or duplicate inference. Current observer handle95286 follows the same session.
+Original input/requirements and frozen engine remain unchanged. Source/native
+completion is not an application pass; inspect the eventual repair artifact/checks
+independently against the original frozen cases. Overall historical original local
+qualification is now2/28 because the separate original Azure ticket case passed
+its22-criterion assessment; this Google diagnostic has earned no such count.
