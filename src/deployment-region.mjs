@@ -1,6 +1,7 @@
 // Supported identifier shapes, not a region/service-availability catalogue.
-// Keep existing commercial-provider policies unchanged during shared extraction.
-export const PROVIDER_REGION_PATTERNS={aws:'^[a-z]{2}-[a-z]+-[0-9]{1,2}$',azure:'^[a-z][a-z0-9]{1,39}$',gcp:'^[a-z]+-[a-z]+[0-9]{1,2}$',ibm:'^[a-z]{2}-[a-z]+$'};
+// AWS supplied-image lowering supports commercial, China and GovCloud identifier
+// families. Other partitions remain explicit implementation work, not a fallback.
+export const PROVIDER_REGION_PATTERNS={aws:'^([a-z]{2}-[a-z]+|us-gov-[a-z]+)-[0-9]{1,2}$',azure:'^[a-z][a-z0-9]{1,39}$',gcp:'^[a-z]+-[a-z]+[0-9]{1,2}$',ibm:'^[a-z]{2}-[a-z]+$'};
 export const validProviderRegion=(provider,value)=>typeof value==='string'&&Object.hasOwn(PROVIDER_REGION_PATTERNS,provider)&&new RegExp(PROVIDER_REGION_PATTERNS[provider]).test(value);
 export function declaredRegion(node){
  const value=node.data.config?.region;

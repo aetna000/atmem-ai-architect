@@ -31,8 +31,13 @@ and tests. Destruction protection can be removed by changing/removing configurat
 it is not backup or state custody. The local HTTP/SQLite state probe is not native
 S3/Azure/GCS, TLS or project-backend acceptance.
 
-Open release blocker: AWS China placement currently passes syntax checks while
-commercial ARN templates remain. See `partition-counterexample.json` beside the
-evidence report. Repair it before offering frozen alpha.4. Other partitions and
-future combinations cannot inherit a support claim from these commercial/AU/EU
-diagnostics. All28 originals and unfamiliar complete local systems remain required.
+The historical AWS China ARN counterexample is repaired for supplied-image units:
+native aws_partition metadata supplies trust ARN partitions, and native guards
+check region families and repository scope across commercial, China and GovCloud.
+See `specs/029-general-purpose-engine/evidence/20261112-aws-partitions/README.md`.
+The invoice adapter remains commercial-only and preserves other requested
+partitions as explicit implementation blockers, including independent protection
+against suppressed planner gaps. This is ARN/configuration behavior under local
+mocks, not regional service availability or whole-application support. Other
+partitions and future combinations need their own contract/evidence. All28
+originals and unfamiliar complete local systems remain required.

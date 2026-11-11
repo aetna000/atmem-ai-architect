@@ -130,7 +130,7 @@ class Project(Strict):
 
 def validate_proposed_regions(project:Project):
     """Repair producer output without rejecting historical incoming designs."""
-    patterns={'aws':r'[a-z]{2}-[a-z]+-[0-9]{1,2}','azure':r'[a-z][a-z0-9]{1,39}','gcp':r'[a-z]+-[a-z]+[0-9]{1,2}','ibm':r'[a-z]{2}-[a-z]+'}
+    patterns={'aws':r'([a-z]{2}-[a-z]+|us-gov-[a-z]+)-[0-9]{1,2}','azure':r'[a-z][a-z0-9]{1,39}','gcp':r'[a-z]+-[a-z]+[0-9]{1,2}','ibm':r'[a-z]{2}-[a-z]+'}
     for node in project.nodes:
         data=node.data
         if data.implementation!='invoice-workflow'or data.origin in {'existing','imported Pulumi state'}or data.config.region=='To be selected':continue

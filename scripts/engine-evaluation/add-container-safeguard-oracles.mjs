@@ -6,6 +6,7 @@ for(const entry of manifest.cases){
  const provider=entry.name.split('-')[0],unit=entry.units.find(u=>u.implementation==='container-service'),prefix=unit?unit.path+'/':'',root=path.join(folder,entry.name),tf=JSON.parse(fs.readFileSync(path.join(root,prefix+'main.tf.json'),'utf8')),values=JSON.parse(fs.readFileSync(path.join(root,prefix+'deployment.tfvars.json.example'),'utf8'));
  const name=Object.keys(tf.variable).find(k=>k.endsWith('_image')).slice(0,-6),local={azure:'azurerm',gcp:'google'}[provider]||provider;
  let text='mock_provider "'+local+'" {\n override_during = plan\n';
+ if(provider==='aws')text+='mock_data "aws_partition" { defaults = {partition = "aws"} }\n';
  if(provider==='aws')text+='mock_resource "aws_cloudwatch_log_group" {\n override_during = plan\n defaults = {arn = "arn:aws:logs:'+values.region+':123456789012:log-group:/fixture/owned"}\n}\n';
  if(provider==='gcp')text+='mock_resource "google_service_account" {\n override_during = plan\n defaults = {email = "fixture@reviewed-project.iam.gserviceaccount.com"}\n}\n';
  if(provider==='aws')for(const type of ['aws_subnet','aws_security_group'])text+='mock_data "'+type+'" { defaults = '+JSON.stringify({vpc_id:values[name+'_vpc_id']})+' }\n';

@@ -1,0 +1,31 @@
+tests/container.tftest.hcl... in progress
+  run "block_696e737472756d656e742dc2b5_reject_foreign_aws_subnet"... pass
+  run "block_696e737472756d656e742dc2b5_reject_foreign_aws_security_group"... pass
+  run "block_696e737472756d656e742dc2b5_security"... pass
+  run "block_696e737472756d656e742dc2b5_reject_mutable_image"... pass
+  run "block_696e737472756d656e742dc2b5_footprint"... pass
+  run "invalid_region_blocked"... pass
+  run "changed_accepted_region_blocked"... pass
+  run "unapproved_blocked"... pass
+tests/container.tftest.hcl... tearing down
+tests/container.tftest.hcl... pass
+tests/independent-partition.tftest.hcl... in progress
+  run "independent_exact_partition_trust"... fail
+
+Error: Test assertion failed
+
+  on tests/independent-partition.tftest.hcl line 26, in run "independent_exact_partition_trust":
+  26:  condition = jsondecode(aws_iam_role.block_696e737472756d656e742dc2b5_task.assume_role_policy).Statement[0].Condition.ArnLike["aws:SourceArn"] == "arn:aws-cn:ecs:cn-north-1:123456789012:*"
+    ├────────────────
+    │ Diff:
+    │ --- actual
+    │ +++ expected
+    │ - "arn:aws:ecs:cn-north-1:123456789012:*"
+    │ + "arn:aws-cn:ecs:cn-north-1:123456789012:*"
+
+
+Native role trust uses the wrong requested partition or region.
+tests/independent-partition.tftest.hcl... tearing down
+tests/independent-partition.tftest.hcl... fail
+
+Failure! 8 passed, 1 failed.

@@ -315,3 +315,17 @@ claims are rejected.529JS/build,72 actual service unit mocks and isolated browse
 Parity review exposed AWS China placement accepted by commercial ARN templates;
 repair the retained counterexample before freezing alpha.4. No release/full-case
 count changed. Full programme and28/unfamiliar local systems remain required.
+
+
+GE-005 partition release blocker resolved: supplied-image ARN lowering now uses
+native partition metadata across commercial/China/GovCloud identifiers; repository
+partition/region-family and native metadata guards retain exact selection. The
+commercial invoice policy remains separate blocked work for other partitions,
+including independent protection against suppressed planner/root gaps.537JS/
+430server/build,7 partition packages97 native mocks,12 four-provider regressions
+108 mocks and53 actual service unit mocks pass. Identical-input frozen before
+compiler fails the exact China ARN oracle despite8 generated passes. See
+evidence/20261112-aws-partitions/README.md. Proceed frozen runnable alpha.4 and
+actual candidate/browser/export/manual/rollback qualification; GE-005 remains
+in_progress until that delivery. Full28/unfamiliar local systems and remaining
+contracts/judgment/knowledge/handoff/recovery/generalisation remain required.

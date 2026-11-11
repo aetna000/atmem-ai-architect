@@ -36,6 +36,11 @@ export function generationQuality(project,plan,files,{environment='staging'}={})
  for(const node of project.nodes.filter(n=>n.data.kind!=='note'))if(plan.rows.filter(r=>r.id===node.id).length!==1)add('unregistered-implementation','The resource schedule must retain each component identity exactly once.',node.id);
  const components=plan.rows.map(row=>{
   const node=project.nodes.find(n=>n.id===row.id),d=node?.data||{},scope=admission.scopes.get(row.id),actual=scope?.config||(admission.composed?{}:config),prefix=scope?.prefix||'';
+  if(node&&!existingDeployment(node)&&d.provider==='aws'&&d.implementation==='invoice-workflow'&&/^(cn-|us-gov-)/.test(d.config?.region||'')){
+   add('partition-implementation-required','The requested invoice partition is retained, but its complete ARN/registry/model policy is not implemented by the commercial adapter.',row.id);
+   const blocker=(scope?scope.module+':':'')+'invoice-config-region';
+   if(!config.locals?.unfinished_work?.includes(blocker))add('missing-work-gate','The unsupported invoice partition lost its component-owned implementation blocker.',row.id);
+  }
   if(node)inspectContainerConfiguration(node,row,actual,plan,add,{root:config,scope});
   if(!node||row.provider!==d.provider||!!row.existing!==!!(node&&existingDeployment(node)))add('unregistered-implementation','The schedule changed a component provider or ownership identity.',row.id);
   const contracts=catalogue.contracts.filter(c=>c.provider===d.provider&&(!c.service||c.service===row.service)&&(!c.implementation||c.implementation===d.implementation));

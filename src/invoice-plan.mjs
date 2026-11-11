@@ -1,7 +1,7 @@
 import {resourceAddress} from './identifiers.mjs';
 import{existingDeployment}from'./deployment-ownership.mjs';
 import{existingReference}from'./existing-references.mjs';
-import{validInvoiceRegion}from'./invoice-region.mjs';
+import{validInvoiceRegion,invoicePartitionGap}from'./invoice-region.mjs';
 
 export const INVOICE_SERVICES={aws:'Amazon ECS',azure:'Azure Container Apps',gcp:'Google Cloud Run',ibm:'IBM Code Engine'};
 export const hasInvoice=project=>project.nodes.some(node=>node.data.kind!=='note'&&node.data.implementation==='invoice-workflow');
@@ -25,7 +25,7 @@ export function invoiceResourcePlan(project){
   if(!browserEdges.length)add('invoice-browser-contract','Connect the existing staff browser to the workflow with browser-https.',{componentIds:[selected.id]});
   if(accountingEdges.length!==1)add('invoice-accounting-contract','Connect the workflow to exactly one explicitly existing accounting service with approved-accounting-api. Its endpoint, credential and normalized action/idempotency acceptance are destination inputs, not a replacement accounting system.',{componentIds:[selected.id]});
   const config=selected.data.config||{};
-  if(config.region&&config.region!=='To be selected'&&!validInvoiceRegion(selected.data.provider,config.region))add('invoice-config-region','Preserve the selected placement and propose a canonical provider region within that accepted residency. Country names or expressions are not deployment-region identifiers; this is engineering work, not a request for the user to configure infrastructure.',{componentIds:[selected.id]});
+  if(config.region&&config.region!=='To be selected'&&!validInvoiceRegion(selected.data.provider,config.region))add('invoice-config-region',invoicePartitionGap(selected.data.provider,config.region)||'Preserve the selected placement and propose a canonical provider region within that accepted residency. Country names or expressions are not deployment-region identifiers; this is engineering work, not a request for the user to configure infrastructure.',{componentIds:[selected.id]});
   for(const[key,expected]of Object.entries({maxPdfBytes:10000000,maxPdfPages:100,retentionDays:90}))if(config[key]!==undefined&&config[key]!==expected)add('invoice-config-'+key,'The invoice implementation supplies '+key+'='+expected+'; preserve the explicit '+config[key]+' requirement and implement that change before claiming coverage.',{componentIds:[selected.id]});
   for(const key of ['outputContract','modelId','maxInputBytes','maxOutputTokens','memoryMb','containerMemoryBytes','functionTimeoutSeconds','concurrency','logRetentionDays'])if(config[key]!==undefined)add('invoice-config-'+key,'Explicit '+key+' is not mapped by this composed invoice contract; retain and implement that selection instead of substituting the recipe setting.',{componentIds:[selected.id]});
  }

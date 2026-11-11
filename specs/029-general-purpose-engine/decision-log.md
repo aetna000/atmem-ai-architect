@@ -902,3 +902,27 @@ accepts AWS China placement. Preserve partition-counterexample.json and repair
 provider partition contracts without substituting a different destination. This
 is actionable generator work, not a user-configuration blocker. GE-005 and full
 objective remain in_progress; three runnable increments and1/28 full originals.
+
+
+### 2026-11-12 — Resolve partition lowering without changing destinations
+
+Use pinned native aws_partition metadata for supplied-image ECS trust ARNs; keep
+provider/region/account bindings and reject repository partition/region-family
+mismatch. Explicitly support commercial, China and GovCloud identifier families,
+not regional service availability or every AWS partition. Domain invoice ARN/
+registry/model policy does not inherit this support; retain noncommercial requests
+and their missing-work gate, independently even if planner gaps are suppressed.
+Producer canonical GovCloud values remain unchanged without claiming deployment
+support. Same complete input bytes prove the frozen78bab01 compiler fails the
+independent China ARN check while corrected packages pass.
+
+Preserve initial oracle formatting failure and invalid generated negative-test
+dependency expectations. Split policy and service denials so each guard actually
+evaluates rather than expecting a dependent object to fail after its prerequisite.
+No guard or negative intent was removed. Evidence:
+evidence/20261112-aws-partitions/README.md.537JS/430server/build,97 partition mocks,
+108 existing four-provider regression mocks and53 actual service unit mocks pass.
+Qualified native bytes are unchanged after README-only clarification. Proceed
+frozen runnable alpha.4; counts remain3 increments,1/28 full originals, owner0,
+quality unknown until actual delivery/new full-system evidence. Owner UI/jobs
+untouched; no cloud/account operation or deployment.

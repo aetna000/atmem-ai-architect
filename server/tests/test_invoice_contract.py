@@ -52,4 +52,12 @@ class InvoiceDesignContractTests(unittest.TestCase):
         self.assertEqual(result.proposal.next.nodes[0].data.config.region,'au-syd');self.assertIn('unverified',result.proposal.next.nodes[0].data.description)
         diagnostic=json.loads(cli.await_args_list[1].args[2])['runtimeContext']['responseRepair'];self.assertIn('Do not ask the user',diagnostic['instruction']);self.assertIn('canonical provider region',json.dumps(diagnostic))
 
+    def test_canonical_partition_regions_are_retained_without_claiming_adapter_support(self):
+        for region in ['cn-north-1', 'us-gov-west-1']:
+            with self.subTest(region=region):
+                value=self.project();value['provider']='aws';value['nodes'][0]['data'].update(provider='aws',service='Amazon ECS')
+                value['nodes'][0]['data']['config']['region']=region
+                project=Project.model_validate(value);validate_proposed_regions(project)
+                self.assertEqual(project.nodes[0].data.config.region,region)
+
 if __name__=='__main__':unittest.main()

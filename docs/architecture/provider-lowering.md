@@ -63,3 +63,13 @@ independent semantic inspection checks actual trust/grants and the task/cluster/
 bindings, not merely resource addresses. Application task roles remain without
 application grants. Native plan mocks and mutation counterexamples are recorded in
 `specs/029-general-purpose-engine/evidence/20261112-container-safeguards/README.md`.
+
+The supplied-image AWS unit now derives ARN partitions from native aws_partition
+metadata. Commercial, China and GovCloud region families retain exact placement;
+native checks reject mismatched partition metadata, repository partitions and
+repository region families. Data-source/provider binding and trust references are
+inspected independently. A composite can retain several independent partitions
+without implying cross-partition data transfer. Invoice ARN/registry/model policy
+is separate: noncommercial selections remain explicit blocked scope until that
+adapter is implemented. See
+`specs/029-general-purpose-engine/evidence/20261112-aws-partitions/README.md`.

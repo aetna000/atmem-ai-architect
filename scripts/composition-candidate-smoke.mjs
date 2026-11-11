@@ -12,6 +12,7 @@ fs.mkdirSync(out,{recursive:true});fs.mkdirSync(bulk,{recursive:true});
 const source=process.env.ATMEM_CANDIDATE_PROJECT||'specs/029-general-purpose-engine/evidence/20261111-public-composition/composition-example.atmem-ai-architect.json';
 const expected=fromProjectFile(JSON.parse(fs.readFileSync(source,'utf8'))).project;
 const version=process.env.ATMEM_CANDIDATE_VERSION||JSON.parse(fs.readFileSync(new URL('../package.json',import.meta.url),'utf8')).version;
+const expectedUnits=Number(process.env.ATMEM_CANDIDATE_UNITS||2);
 const browser=await chromium.launch({headless:true});let page,submissions=0;
 const errors=[],responses=[];
 try{
@@ -31,7 +32,7 @@ try{
  await view.getByRole('button',{name:'Run Terraform checks',exact:true}).click();
  await view.getByRole('heading',{name:'Configuration validated',exact:true}).waitFor({timeout:180000});
  assert.equal(responses.length,1);const report=responses[0];assert.equal(report.status,'passed');
- const tests=report.checks.filter(c=>c.stage==='test');assert.equal(tests.length,2);assert(tests.every(c=>c.passed&&c.testsReported>0));
+ const tests=report.checks.filter(c=>c.stage==='test');assert.equal(tests.length,expectedUnits);assert(tests.every(c=>c.passed&&c.testsReported>0));
  fs.writeFileSync(path.join(out,'actual-http-validation.json'),JSON.stringify(report,null,2)+'\n');
  const downloading=page.waitForEvent('download');await view.getByRole('button',{name:'Download Terraform',exact:true}).click();const dl=await downloading,target=path.join(bulk,'validated-terraform.zip');await dl.saveAs(target);
  const files=Object.fromEntries(Object.entries(unzipSync(fs.readFileSync(target))).map(([n,b])=>[n,strFromU8(b)]));const receipt=JSON.parse(files['validation-receipt.json']);

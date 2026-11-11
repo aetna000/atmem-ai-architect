@@ -17,7 +17,7 @@ export function inspectContainerConfiguration(node,row,config,plan,add,{root=con
  const expectedResources=new Set(['terraform_data.review_gate',contract.type+'.'+name,...(cloud==='aws'?['aws_ecs_cluster','aws_cloudwatch_log_group','aws_iam_role','aws_iam_role_policy','aws_ecs_task_definition'].map(type=>type+'.'+name).concat('aws_iam_role.'+name+'_task'):cloud==='gcp'?['google_service_account.'+name]:[])]);
  for(const [type,entries]of Object.entries(resource))for(const id of Object.keys(entries)){if(!expectedResources.delete(type+'.'+id))fail('The supplied-image unit contains a managed resource outside its reviewed ownership footprint.');}
  if(expectedResources.size)fail('The supplied-image unit is missing a required owned resource or review gate.');
- const expectedData=cloud==='aws'?['aws_subnet','aws_security_group']:cloud==='azure'?['azurerm_container_app_environment']:cloud==='ibm'?['ibm_code_engine_project']:[];
+ const expectedData=cloud==='aws'?['aws_subnet','aws_security_group','aws_partition']:cloud==='azure'?['azurerm_container_app_environment']:cloud==='ibm'?['ibm_code_engine_project']:[];
  for(const [type,entries]of Object.entries(config.data||{}))for(const id of Object.keys(entries))if(!expectedData.includes(type)||id!==name)fail('The supplied-image unit queries data outside its reviewed existing-system boundary.');
  const body=resource[contract.type]?.[name];if(!body)return;
  const rawRegion=settings.region,selected=rawRegion&&rawRegion!=='To be selected'&&validProviderRegion(cloud,rawRegion)?rawRegion:null;

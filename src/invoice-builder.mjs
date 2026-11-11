@@ -22,6 +22,7 @@ export function invoiceBuilder(project,row,environment='staging'){
  };
  if(row.region&&!validInvoiceRegion(row.provider,row.region))throw Error('Preserve and resolve the explicit invoice region as a canonical provider region before compilation.');
  const region=input('region','Reviewed single deployment/data region; verify current service/model availability and quotas.',row.region||{aws:'ap-southeast-2',azure:'australiaeast',gcp:'australia-southeast1',ibm:'au-syd'}[row.provider],INVOICE_REGION_PATTERNS[row.provider]);
+ if(row.provider==='aws')variable.region.validation.condition=variable.region.validation.condition.slice(0,-1)+' && !startswith(var.region,"cn-")}';
  if(row.region){variable.region.default=row.region;variable.region.validation={condition:'${var.region == '+JSON.stringify(row.region)+'}',error_message:'Placement is bound to this design. Update and regenerate the design before changing region.'};}
  resource.terraform_data={review_gate:{input:{design_revision:project.revision,environment,provider:row.provider},lifecycle:{precondition:[{condition:'${var.review_approved}',error_message:'Review the actual source, placement, identities, existing accounting contract, costs, operations and destination account before any apply.'}]}}};
  const add=(type,name,body)=>((resource[type]||={})[name]={...body,depends_on:['terraform_data.review_gate',...(body.depends_on||[])]});
