@@ -26,6 +26,7 @@ import {emulationPrompt,guardEmulationCorrection,groundEmulationMessage,emulatio
 import {projectIdFromUrl} from './project-links.mjs';
 import { diagramAttention } from "./diagram-attention.mjs";
 import { VoiceDictation } from "./voice-conversation.mjs";
+import {OpenAIVoicePanel} from './OpenAIVoicePanel.jsx';
 import { OutputsView } from "./OutputsView.jsx";
 import { outputBundle } from "./output-bundle.mjs";
 import { TerraformView } from "./TerraformView.jsx";
@@ -741,12 +742,13 @@ function App() {
     const history=carryIntent.current?.projectId===project.id?[{role:'user',text:carryIntent.current.text},...messages.slice(-10)]:messages;
     void send(batch.message,'chat',null,null,{alreadyLogged:true,requestIds:batch.ids,attachments:batch.attachments,history});
   },[buildView,agentBusy,busy,pending,intakePaused,intake,session,connection,project.id]);
-  const voice = useRef(null);
+  const voice = useRef(null),openaiVoice=useRef(null);
   const [voiceState, setVoiceState] = useState("off");
   const [voiceError, setVoiceError] = useState("");
   const voiceActive = !["off", "error"].includes(voiceState);
   useEffect(() => () => voice.current?.cancel(), []);
   function startVoice() {
+    if(openaiVoice.current?.stop({preservePending:true})?.retained)return notify("I kept the recognized words in your draft. Review them before starting local dictation.");
     if (busy) return notify("Wait for the current test to finish before recording.");
     if (!session) return notify("Connect the local helper before starting dictation.");
     let consent = false;
@@ -778,7 +780,7 @@ function App() {
     });
     void voice.current.start();
   }
-  function stopVoice() { voice.current?.cancel(); }
+  function stopVoice() { voice.current?.cancel();openaiVoice.current?.interrupt(); }
   useEffect(()=>{if(buildView)stopVoice();},[buildView]);
   async function postMessage() {
     if (busy) return;
@@ -1326,6 +1328,7 @@ function App() {
         catch(error){notify(error.message);}
       }
       setMessages((m) => [...m, { role: "assistant", ...(activityId?{activityId}:{}), text: origin==="emulation"?groundEmulationMessage(emulation.result,result.message,projectRef.current):result.message, live: true, signals, contextUsed: result.contextUsed }]);
+      openaiVoice.current?.speak(origin==="emulation"?groundEmulationMessage(emulation.result,result.message,projectRef.current):result.message);
       if (result.proposal && !["document","block-review"].includes(origin)) {
         const proposal = { ...result.proposal, next: validateImport(result.proposal.next), ...(origin==="emulation"?{emulationCorrection:true}:{}) };
         if(origin==="emulation")guardEmulationCorrection(was,proposal.next);
@@ -2358,7 +2361,7 @@ function App() {
               className={`mic ${voiceActive ? "on" : ""}`}
               aria-label={voiceActive ? "Stop dictation" : "Start dictation"}
               aria-pressed={voiceActive}
-              title={voiceActive ? "Stop dictation and finish the transcript" : "Dictate a message"}
+              title={voiceActive ? "Stop dictation and finish the transcript" : "Dictate locally with Whisper"}
               disabled={voiceState === "transcribing"}
               onClick={voiceActive ? () => { void voice.current?.finish(); } : startVoice}
             >
@@ -2369,6 +2372,10 @@ function App() {
             </button>
             </div>
           </form>
+          {session&&<OpenAIVoicePanel key={project.id} session={session} connection={connection} transportRef={openaiVoice} onConnections={()=>setModal('connections')} onStart={()=>{voice.current?.cancel();setVoiceError('');}} onTranscript={(text,automatic)=>{
+            if(automatic&&!input.trim()&&!attachments.length){setInput(text);void send(text);}
+            else setInput(current=>current+(current.trim()?' ':'')+text);
+          }}/>}
           <div className="voice-status" role="status" aria-live="polite">
             {!voiceError&&["starting","transcribing"].includes(voiceState)&&<BrainActivity size={22}/>}
             {voiceError || ({ starting: "Opening microphone…", listening: "Dictating locally — review your words, then press Send.", transcribing: "Finishing your transcript…" }[voiceState] || "")}

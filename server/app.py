@@ -32,7 +32,9 @@ class ArchitectureActivityRequest(BaseModel):
 app=FastAPI(title='AtMem AI Architect helper',docs_url=None,redoc_url=None,openapi_url=None)
 app.include_router(memory_router)
 from .voice_routes import router as voice_router, engine as voice_engine
+from .openai_voice import router as openai_voice_router
 app.include_router(voice_router)
+app.include_router(openai_voice_router)
 
 @app.on_event("shutdown")
 async def shutdown_voice():
