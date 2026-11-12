@@ -1367,3 +1367,13 @@ workspace-relative generated-directory exclusions, same-URL invalidation checks 
 actual-address UI fixtures. Preserve existing idle sessions on the one preview restart.
 Project title expands to466px desktop and remains responsive. UI-003 evidence records
 28 live-asset states/1777 contrast checks; no native/cloud or programme promotion.
+
+
+## 2026-11-12 — Empty-board help must yield to editing
+
+Owner could neither close the welcome card nor use the obscured component picker.
+Keep welcome dismissal in per-project browser UI preferences, not source requirements
+or AtMem memory. Hide help during selection and give both surfaces explicit close
+controls. Picker receives pointer input above Board overlays; its filtering preserves
+the component sidebar. UI-004 actual5298 and source browser evidence records all4
+viewport/theme cases, no model work, data mutation or backend restart.

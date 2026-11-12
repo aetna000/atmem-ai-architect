@@ -623,3 +623,9 @@ after source-only contrast fixes. Use relative watch exclusions, verify the same
 URL invalidates, and test actual5298 assets.572JS/build/real Vite watch regression and
 28 contrast states/1777 checks pass; project title466px/responsive; data preserved.
 Evidence:029/evidence/20261112-live-preview-cache. Programme remains paused.
+
+
+2026-11-12 empty-board overlay repair: closeable per-project welcome, hidden during
+component selection; close/Escape/top-layer bounded picker and stable sidebar filtering.
+Build plus4 source/4 actual5298 desktop/mobile/theme cases pass with no inference or
+owner writes. No backend restart or programme resumption. Evidence:029/evidence/20261112-board-overlays.
