@@ -1,7 +1,7 @@
 // Review, Estimate and Deploy steps of the AtMem AI Architect journey.
 import React from "react";
 import { ATTRIBUTES, acceptRisk, blockers } from "./review.mjs";
-import { DISCLAIMER, INPUTS, setPrice, setUsage } from "./estimate.mjs";
+import { DISCLAIMER, INPUTS, PROJECT_SIZES, setProjectSize, setPrice, setUsage } from "./estimate.mjs";
 import { deploymentSteps } from "./document.mjs";
 import { GATE } from "./engagement.mjs";
 import { DetailedCharges, ConsultingView, ResourcesView } from "./DeliveryViews.jsx";
@@ -89,18 +89,23 @@ export function ReviewView({ project, findings, onChange, onOpen, onAddRequireme
   );
 }
 
-export function EstimateView({ project, result, onChange }) {
+export function EstimateView({ project, result, onChange, onEstimate, busy=false }) {
   const e = result;
   return (
     <section className="doc" aria-label="Estimate">
       <header className="doc-head">
-        <h2>Estimate</h2>
-        <p className="muted">{DISCLAIMER} We refine usage together in chat and attach sources to prices. Missing prices stay open; a partial estimate is not a full quote.</p>
-        <p><strong>{e.maturity}</strong> · Start with a rough order of magnitude; refine each charge as the design becomes clear.</p>
+        <h2>Costs</h2>
+        <p className="muted">Choose an expected project size. We use it to estimate usage; you can refine the assumptions later. {DISCLAIMER}</p>
       </header>
+      <fieldset disabled={busy}><legend>How large do you expect this project to be?</legend>
+        <div className="row">{PROJECT_SIZES.map(size=><button type="button" className="btn" key={size.id} aria-pressed={project.estimate?.projectSize===size.id} onClick={()=>{const next=setProjectSize(project,size.id);onChange(next);onEstimate?.(next);}}>{size.label}</button>)}</div>
+        <p className="muted small">Small: 10,000 requests / 10 GB; Medium: 100,000 / 100 GB; Large: 1 million / 1 TB; Extra Large: 10 million / 10 TB per month. Existing usage figures take priority. Model assumptions: 3,000 tokens per request and 730 endpoint hours; training usage needs separate agreement.</p>
+      </fieldset>
+      {busy&&<p role="status">Architect is preparing the estimate…</p>}
+      {onEstimate&&project.estimate?.projectSize&&<button className="link" disabled={busy} onClick={()=>onEstimate(project)}>Refresh estimate with Architect</button>}
       <div className="totals">
         <div>
-          <small className="muted">Expected / month</small>
+          <small className="muted">Estimated subtotal / month</small>
           <strong>{e.lines.some((l) => l.cost != null) ? money(e.expected, e.currency) : "—"}</strong>
         </div>
         <div>
@@ -112,7 +117,7 @@ export function EstimateView({ project, result, onChange }) {
         <div>
           <small className="muted">Status</small>
           <span className={e.complete ? "ok-text" : "warn-text"}>
-            {e.complete ? "Complete worksheet" : e.mixedCurrencies ? "Mixed currencies" : "Incomplete"}
+            {e.complete ? "All entered charges estimated" : e.mixedCurrencies ? "Currency needs review" : "Some charges not yet estimated"}
           </span>
         </div>
         {e.budget && (
@@ -125,14 +130,15 @@ export function EstimateView({ project, result, onChange }) {
           </div>
         )}
       </div>
-      <p className="muted small">Worksheet completion covers the entered lines. It does not establish a full cloud quote; confirm every billable dimension, region and price source.</p>
+      <p className="muted small">The subtotal includes priced charges only. Architect needs to resolve unpriced services before this becomes a full estimate.</p>
       {e.drivers.length > 0 && (
         <p className="small">
           Biggest drivers: {e.drivers.map((d) => `${d.component} (${money(d.cost, d.price.currency)})`).join(", ")}
         </p>
       )}
-      <div className="resource-schedule" aria-label="Estimate breakdown">{e.lines.map(l=><article key={l.id}><strong>{l.component} · {l.driver}</strong><span>{l.cost==null?'We still need '+l.status.replace(' needed',''):money(l.cost,l.price.currency)+'/month'}</span>{l.price&&<small>{l.quantity??'Usage needed'} {l.unit} · {l.price.source}{l.price.url&&<> · <a href={l.price.url} target="_blank" rel="noreferrer">price source</a></>}</small>}</article>)}</div>
-      <details className="extra"><summary>Inspect or edit estimate inputs and sources</summary>
+      {e.lines.some(l=>l.cost==null)&&<p role="status">{e.lines.filter(l=>l.cost==null).length} charges await {e.lines.some(l=>l.quantity==null)?'usage assumptions or service pricing':'service pricing'}. {onEstimate?'Ask Architect using the estimate action above; detailed inputs are optional below.':'Service prices must be connected before these charges can be calculated.'}</p>}
+      <details className="extra"><summary>Cost breakdown and price sources</summary><div className="resource-schedule" aria-label="Estimate breakdown">{e.lines.map(l=><article key={l.id}><strong>{l.component} · {l.driver}</strong><span>{l.cost==null?'Not yet estimated':money(l.cost,l.price.currency)+'/month'}</span><small>{l.quantity??'Usage unresolved'} {l.unit}{l.price&&<> · {l.price.source}{l.price.url&&<> · <a href={l.price.url} target="_blank" rel="noreferrer">price source</a></>}</>}</small></article>)}</div></details>
+      <details className="extra"><summary>Adjust usage assumptions and prices</summary>
       {e.lines.some((l) => !l.detailed) && <>
       <div className="doc-sub">
         <h3>Usage</h3>
@@ -207,10 +213,10 @@ export function EstimateView({ project, result, onChange }) {
         </label>
       </div>
       </details>
-      <DetailedCharges project={project} onChange={onChange} />
+      <details className="extra"><summary>Advanced charge worksheet</summary><DetailedCharges project={project} onChange={onChange} /></details>
       {e.lines.some((l) => l.detailed) && <div className="resource-schedule" aria-label="Detailed cost breakdown">{e.lines.filter((l) => l.detailed).map((l) => <article key={l.id}><strong>{l.component} · {l.driver}</strong><span>{l.quantity ?? "?"} {l.unit} × {l.price ? money(l.price.price, l.price.currency) : "price needed"} = {l.cost == null ? l.status : money(l.cost, l.price.currency)}/month</span></article>)}</div>}
       <details className="extra"><summary>What we still need for a full estimate · {e.gaps.length} worksheet gaps</summary><ul>{e.gaps.map((g,i) => <li key={i}>{g}</li>)}</ul><p className="muted small">Check networking, security, logging, backups, support, licences, taxes and delivery effort. A detailed worksheet still needs validation against the selected services.</p></details>
-      <ConsultingView project={project} onChange={onChange} />
+      <details className="extra"><summary>Optional delivery effort estimate</summary><ConsultingView project={project} onChange={onChange} /></details>
     </section>
   );
 }

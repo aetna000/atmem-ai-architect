@@ -14,6 +14,19 @@ export const INPUTS = [
   { id: "training_hours", label: "Training hours per month", unit: "hours" },
 ];
 
+// Planning assumptions, not provider prices or capacity guarantees. Explicit inputs
+// and discovered business facts always take precedence over these presets.
+export const PROJECT_SIZES = Object.freeze([
+  {id:'small', label:'Small', requests_per_month:10000, data_gb:10, events_per_month:10000},
+  {id:'medium', label:'Medium', requests_per_month:100000, data_gb:100, events_per_month:100000},
+  {id:'large', label:'Large', requests_per_month:1000000, data_gb:1000, events_per_month:1000000},
+  {id:'extra-large', label:'Extra Large', requests_per_month:10000000, data_gb:10000, events_per_month:10000000},
+].map(size=>Object.freeze({...size,tokens_per_request:3000,endpoint_hours:730})));
+export function setProjectSize(project, id) {
+  if (!PROJECT_SIZES.some(size=>size.id===id)) throw Error('Choose a listed project size.');
+  return {...project,estimate:{...project.estimate,projectSize:id}};
+}
+
 // role/kind → how it is charged
 const DRIVERS = {
   llm: { name: "Model tokens", unit: "1k tokens", inputs: ["requests_per_month", "tokens_per_request"], qty: (u) => (u.requests_per_month * u.tokens_per_request) / 1000 },
@@ -41,6 +54,8 @@ export function usage(project) {
       const fromFact = i.fact && [...facts].reverse().find((f) => f.name === i.fact);
       if (Number.isFinite(entered) && entered >= 0) return [i.id, { value: entered, source: "entered" }];
       if (fromFact && Number.isFinite(fromFact.value) && fromFact.value >= 0) return [i.id, { value: fromFact.value, source: `discovery (${fromFact.madeAt})` }];
+      const preset = PROJECT_SIZES.find(size=>size.id===est.projectSize);
+      if (preset && Number.isFinite(preset[i.id])) return [i.id, {value:preset[i.id], source:`${preset.label} planning assumption`}];
       if (i.assumption != null) return [i.id, { value: i.assumption, source: `assumption: ${i.assumptionText}` }];
       return [i.id, { value: null, source: "needed" }];
     }),

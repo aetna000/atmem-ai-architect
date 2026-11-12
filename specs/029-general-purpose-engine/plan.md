@@ -601,3 +601,9 @@ GE-006 explicit operator validator placement implemented: named Unix-socket/prof
 ## Owner workflow review — 2026-11-12
 
 Follow [ui-journey-review.md](ui-journey-review.md) for the owner5288 navigation, checks and handoff repair. Review is complete at source/read-only smoke scope; unified navigation and artifact-bound end-to-end implementation remain required. Preserve the active generic-engine, original28, expertise-preload and ten-increment programme.
+
+
+Owner UI follow-up: project-size usage presets and one final Delivery download implemented;
+569JS/build and desktop/mobile component/full engineering fixture pass. No native engine
+work resumed. Cross-service automatic price coverage remains incomplete; do not hide this
+with fabricated ROM prices. Evidence:20261112-cost-delivery-clarity.

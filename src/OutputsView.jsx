@@ -42,12 +42,12 @@ export function OutputsView({project,run,environment,session,onDownload,onBack,e
  const readiness=bundle?.files['spec-kit/readiness.json']?JSON.parse(bundle.files['spec-kit/readiness.json']):null;
  const groups=bundle?[['Spec Kit',Object.keys(bundle.files).filter(n=>n.startsWith('spec-kit/')).sort((a,b)=>Number(b.includes('implementation-spec'))-Number(a.includes('implementation-spec')))],['Specification & handoff',Object.keys(bundle.files).filter(n=>!n.includes('/')&&!/^diagram\./.test(n))],['Design',Object.keys(bundle.files).filter(n=>/^diagram\./.test(n))],['Terraform',Object.keys(bundle.files).filter(n=>n.startsWith('terraform/'))]]:[];
  return <section className="doc outputs-view" aria-label="Outputs">
-  <header className="doc-head"><h2>Delivery</h2><p className="muted">Download the implementation with its design and check evidence, or inspect the design draft below.</p></header>
+  <header className="doc-head"><h2>Delivery</h2><p className="muted">Generate and check the implementation, review its evidence, then download one package containing the design, requirements, infrastructure and captured implementation.</p></header>
   <button className="link" onClick={onBack}>Back to architecture</button>
   {session?.engineeringEnabled&&<ImplementationDelivery key={project.id} project={project} session={session} onBuild={onBuild} onSave={onSave} contextBusy={discussionBusy}/>}
   <details open={!session?.engineeringEnabled}><summary>Design draft: requirements, Spec Kit and infrastructure</summary>
-  <p>This draft is generated from the current design. It is separate from the captured implementation above.</p>
-  <button className="btn" disabled={!bundle||loading||!!error} onClick={()=>onDownload(bundle)}>Download design handoff (ZIP)</button>
+  <p>Reference documents from the current design. The final package above retains both the submitted design and the latest saved design, with any differences identified.</p>
+  {!session?.engineeringEnabled&&<><p>Implementation generation is unavailable in this session. This package contains the design and engineering tasks; it does not contain a verified application.</p><button className="btn" disabled={!bundle||loading||!!error} onClick={()=>onDownload(bundle)}>Download design package (ZIP)</button></>}
   {!session?.engineeringEnabled&&<EmulationPanel project={project} environment={environment} session={session} emulation={emulation} onDiscuss={onDiscuss} discussionBusy={discussionBusy} onBuild={onBuild}/>}
   {loading&&<p role="status"><BrainActivity/> Preparing the current outputs…</p>}
   {error&&<div role="alert"><p>{error}</p><button className="btn" onClick={()=>setRetry(n=>n+1)}>Retry preparing outputs</button></div>}

@@ -1215,6 +1215,7 @@ function App() {
     if(text.length>8000){notify('Keep each message within 8,000 characters; your draft is unchanged.');return;}
     stopVoice();
     const message = text.trim() || "Please review the attached files and help me use them in this architecture.";
+    const estimateOnly=intakeOptions.estimateOnly===true;
     const sentAttachments=intakeOptions.attachments||(origin === "chat"?attachments:[]);
     if(sentAttachments.length>4){notify('Keep up to four files in one update; your draft and files are unchanged.');return;}
     if(sentAttachments.some(a=>!a.data)){notify('Attach the missing original files again before sending, or remove their references to continue with text.');return;}
@@ -1291,7 +1292,7 @@ function App() {
       }
       carryIntent.current=null;
       setRequestState(requestIds,'complete');
-      if (!["document","emulation","block-review"].includes(origin) && result.optionAssessment?.length) {
+      if (!estimateOnly && !["document","emulation","block-review"].includes(origin) && result.optionAssessment?.length) {
         const p = projectRef.current, a = p.assessment || defaultAssessment();
         const scores = structuredClone(a.scores), notes = { ...a.notes };
         for (const option of result.optionAssessment) {
@@ -1301,7 +1302,7 @@ function App() {
         updateEngagement({ ...p, assessment: { ...a, scores, notes } });
         signals.push("cloud comparison updated");
       }
-      if (!["document","emulation","block-review"].includes(origin) && result.usageUpdates?.length) {
+      if (!estimateOnly && !["document","emulation","block-review"].includes(origin) && result.usageUpdates?.length) {
         let next = projectRef.current;
         for (const update of result.usageUpdates) if (message.includes(update.sourceText)) next = setUsage(next, update.key, update.value);
         updateEngagement(next);
@@ -1309,7 +1310,7 @@ function App() {
       if (origin === "document" && result.requirementUpdates?.length) {
         updateEngagement(proposeCommentRevisions(projectRef.current,was,result.requirementUpdates));
         signals.push("suggested wording ready to review in Requirements");
-      } else if (origin!=="emulation" && result.requirementUpdates?.length) {
+      } else if (!estimateOnly && origin!=="emulation" && result.requirementUpdates?.length) {
         const p = projectRef.current;
         const updates = new Map(result.requirementUpdates.filter(u => message.includes(u.sourceText)).map(u => [u.id,u]));
         const applicable = new Map([...updates].filter(([id]) => was.needs?.find(r=>r.id===id)?.statement === p.needs?.find(r=>r.id===id)?.statement));
@@ -1317,7 +1318,7 @@ function App() {
           extensions: {...p.extensions,requirementComments:(p.extensions?.requirementComments || []).map(c=> applicable.has(c.requirementId) && applicable.get(c.requirementId).sourceText === c.text ? {...c,status:'reviewed',revisedStatement:applicable.get(c.requirementId).statement} : c)} });
         signals.push("requirements refined from your answer");
       }
-      if (!["document","emulation","block-review"].includes(origin) && result.decisionUpdates?.length) updateEngagement(applyDecisionUpdates(projectRef.current,result.decisionUpdates,message));
+      if (!estimateOnly && !["document","emulation","block-review"].includes(origin) && result.decisionUpdates?.length) updateEngagement(applyDecisionUpdates(projectRef.current,result.decisionUpdates,message));
       if (!["document","emulation","block-review"].includes(origin) && result.priceQuotes?.length) updateEngagement(applyPriceQuotes(projectRef.current, result.priceQuotes));
       if(['chat','workflow','block-review'].includes(origin)){
         const p=projectRef.current,q=result.followUp;
@@ -1329,14 +1330,14 @@ function App() {
       }
       setMessages((m) => [...m, { role: "assistant", ...(activityId?{activityId}:{}), text: origin==="emulation"?groundEmulationMessage(emulation.result,result.message,projectRef.current):result.message, live: true, signals, contextUsed: result.contextUsed }]);
       openaiVoice.current?.speak(origin==="emulation"?groundEmulationMessage(emulation.result,result.message,projectRef.current):result.message);
-      if (result.proposal && !["document","block-review"].includes(origin)) {
+      if (!estimateOnly && result.proposal && !["document","block-review"].includes(origin)) {
         const proposal = { ...result.proposal, next: validateImport(result.proposal.next), ...(origin==="emulation"?{emulationCorrection:true}:{}) };
         if(origin==="emulation")guardEmulationCorrection(was,proposal.next);
         // "Draw as we talk": the design evolves with the conversation; each step is undoable.
         if (drawLive && origin !== "preview") applyProposal(proposal, { live: true });
         else setPending(proposal);
       }
-      if (!["document","preview","emulation","block-review"].includes(origin) && result.requirementDrafts?.length) updateEngagement(applyRequirementDrafts(projectRef.current,result.requirementDrafts));
+      if (!estimateOnly && !["document","preview","emulation","block-review"].includes(origin) && result.requirementDrafts?.length) updateEngagement(applyRequirementDrafts(projectRef.current,result.requirementDrafts));
       return result.message;
     } catch (error) {
       if(projectRef.current.id!==requestProject)return;
@@ -2158,7 +2159,7 @@ function App() {
             }}
           />
         )}
-        {mode === "estimate" && <EstimateView project={project} result={costs} onChange={updateEngagement} />}
+        {mode === "estimate" && <EstimateView project={project} result={costs} onChange={updateEngagement} busy={busy||agentBusy||!!pending} onEstimate={(sized)=>{setChatOpen(true);send(`Prepare a rough monthly estimate for the saved design using the ${sized.estimate?.projectSize||'selected'} project-size planning assumptions. Preserve explicit business usage, requirements, provider and region. Use available sourced price tools automatically; never ask the client to research unit prices. Explain the subtotal and excluded charges, and ask at most one material unresolved question. Do not invent rates or treat logical security controls as separately billable services without evidence. Planning usage: ${JSON.stringify(estimate(sized).usage)}. Keep the design unchanged.`,"workflow",null,null,{estimateOnly:true});}} />}
         {mode === "deploy" && (
           <DeployView
             project={project}
@@ -2182,7 +2183,7 @@ function App() {
         {onBoard&&emulationOpen&&<div className="emulation-dock"><EmulationPanel project={project} session={session} emulation={emulation} onDiscuss={discussEmulation} onOpenComponent={id=>{reviewBlock(id);setEmulationOpen(false);}} discussionBusy={busy||agentBusy||!!pending} onClose={()=>setEmulationOpen(false)} onBuild={session?.engineeringEnabled?()=>{setEmulationOpen(false);buildCurrentDesign('test');}:undefined}/></div>}
 
         {mode === "design" && designView === "outputs" && <OutputsView onSave={expected=>saveEngineeringProject(project.id,expected)} project={project} run={run} environment={environment} session={session} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onDownload={downloadBundle} onBuild={session?.engineeringEnabled?()=>buildCurrentDesign('test'):undefined} onBack={()=>setDesignView("board")} />}
-        {mode === "design" && designView === "terraform" && <TerraformView project={project} environment={environment} session={session} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onDownload={exportTerraform} onBuild={session?.engineeringEnabled?()=>buildCurrentDesign('test'):undefined} onBack={()=>setDesignView("board")} />}
+        {mode === "design" && designView === "terraform" && <TerraformView project={project} environment={environment} session={session} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onDelivery={()=>visitJourney("delivery")} onBuild={session?.engineeringEnabled?()=>buildCurrentDesign('test'):undefined} onBack={()=>setDesignView("board")} />}
         {mode === "design" && ["options","decisions"].includes(designView) && (
           <OptionsView project={project} busy={busy||agentBusy||!!pending} onChoose={chooseCloud} onContinue={()=>visitJourney("location")} onPreview={(provider)=>{setDesignView("board");setLevel("flow");setChatOpen(true);send(`Preview a concrete ${OPTION_NAMES[provider]} implementation of our working scope, using actual named services in data.service and explicit connections. Keep existing systems and comments. Use the known country/residency constraints, or leave region undecided and ask the country question. This is an alternative preview, not a cloud choice or deployment. Return a graph proposal and explain key integration assumptions.`,"preview",{mode:"design",view:"board"});}} onDiscuss={(question) => { setChatOpen(true); send(question, "workflow"); }} />
         )}

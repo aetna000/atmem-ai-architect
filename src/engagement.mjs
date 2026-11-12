@@ -96,6 +96,7 @@ export function cleanEngagement(p) {
   if (p.estimate && typeof p.estimate === "object") {
     const num = (v) => (typeof v === "number" && Number.isFinite(v) && v >= 0 ? v : undefined);
     out.estimate = {
+      ...(["small","medium","large","extra-large"].includes(p.estimate.projectSize) ? {projectSize:p.estimate.projectSize} : {}),
       details: (Array.isArray(p.estimate.details) ? p.estimate.details : []).slice(0, 500).map((l, i) => ({
         id: text(l?.id || `charge-${i + 1}`, 100), componentId: text(l?.componentId, 100),
         description: text(l?.description, 200), quantity: num(l?.quantity), price: num(l?.price),

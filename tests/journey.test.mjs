@@ -5,6 +5,7 @@ import {understand,opening,nextQuestion,progress,sketch,extractFacts,extractRequ
 import {review,acceptRisk,blockers} from '../src/review.mjs';
 import {estimate,setPrice,setUsage,DISCLAIMER} from '../src/estimate.mjs';
 import {deploymentDocument} from '../src/document.mjs';
+import {setProjectSize,usage} from '../src/estimate.mjs';
 import {cleanEngagement} from '../src/engagement.mjs';
 import {toProjectFile,fromProjectFile} from '../src/project-file.mjs';
 const empty=()=>({version:1,revision:1,name:'New project',nodes:[],edges:[]});
@@ -148,4 +149,25 @@ test('the skill switches when the user\'s words clearly fit another one',()=>{
   r=understand('actually it should automate ticket triage and route tickets to the right team',r.project);
   assert.equal(r.project.workflow,'agentic-automation');assert.match(r.body,/switching skills/);
   const stay=understand('about 300 staff',r.project);assert.equal(stay.project.workflow,'agentic-automation');
+});
+
+
+test('project sizes supply transparent assumptions across domains without replacing facts or prices',()=>{
+  for(const domain of ['Document assistant','Event pipeline']){
+    let p={...empty(),name:domain,estimate:{usage:{data_gb:42},prices:{storage:{price:0.2,currency:'USD',source:'owner rate'}}},facts:[{name:'requests.per_month',value:123,madeAt:'2026-11-12'}]};
+    p=setProjectSize(p,'large');
+    assert.equal(usage(p).data_gb.value,42);
+    assert.equal(usage(p).requests_per_month.value,123);
+    assert.equal(usage(p).events_per_month.value,1000000);
+    assert.match(usage(p).events_per_month.source,/planning assumption/);
+    assert.equal(usage(p).training_hours.value,null);
+    const back=fromProjectFile(JSON.parse(JSON.stringify(toProjectFile({...p,...cleanEngagement(p)})))).project;
+    assert.equal(back.estimate.projectSize,'large');
+    assert.equal(usage(back).events_per_month.value,1000000);
+    assert.equal(back.estimate.prices.storage.price,0.2);
+    assert.equal(estimate(back).expected,null,'a size alone must not fabricate a dollar quote');
+    assert.equal(usage(setProjectSize(p,'small')).events_per_month.value,10000);
+    assert.throws(()=>setProjectSize(p,'made-up'),/listed/);
+    assert.equal(cleanEngagement({...p,estimate:{projectSize:'made-up'}}).estimate.projectSize,undefined);
+  }
 });

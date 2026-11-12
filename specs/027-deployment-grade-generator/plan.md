@@ -603,3 +603,8 @@ new combinations. Execution order, review findings and ten runnable release subg
 are tracked in `specs/029-general-purpose-engine/plan.md` and `review.md` from the
 repository root. Roadmap completion is distinct from measured quality; no release
 or 95% quality claim follows from planning or component test counts.
+
+
+2026-11-12 owner UI follow-up: project-size assumptions and one final Delivery package
+control;569JS/build and browser fixtures pass. Full automatic cross-service pricing is
+unfinished; no native/cloud programme resumed. See029/evidence/20261112-cost-delivery-clarity.

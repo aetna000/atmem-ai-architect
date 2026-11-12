@@ -1,6 +1,6 @@
 import {ArchitectureWorkPanel} from './ArchitectureWorkPanel.jsx';
 import React,{useEffect,useRef,useState} from 'react';
-import {engineeringCall,engineeringConversation,mergeEngineeringEvents,verifiedEngineeringDownload} from './engineering-client.mjs';
+import {engineeringCall,engineeringConversation,mergeEngineeringEvents} from './engineering-client.mjs';
 import './engineering.css';
 import {ArtifactChecks} from './ArtifactChecks.jsx';
 import {verifyArtifactWork} from './artifact-work.mjs';
@@ -138,8 +138,7 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
       {artifact&&<div className="engineering-artifact"><p>Implementation draft · {artifact.files.filter(file=>file.kind==='file').length} {artifact.files.filter(file=>file.kind==='file').length===1?'file':'files'} · work {artifact.turnStatus}. Capture does not establish full project acceptance.</p>
         {artifact.runId!==job?.run&&<p>This package is from an earlier turn. It does not cover the current work.</p>}
         {onDelivery&&<button disabled={busy} onClick={onDelivery}>Review and download handoff</button>}
-        <details><summary>Original implementation archive</summary>
-        <button disabled={busy} onClick={()=>act(async()=>{const blob=await verifiedEngineeringDownload(session,{projectId,sessionId:job.id,artifactId:artifact.id},artifact);const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download=`engineering-${artifact.id}.zip`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);})}>Download original implementation (ZIP)</button></details>
+
         {!running&&!uncertain&&job?.last_status==='completed'&&artifact.runId===job.run&&<button disabled={busy} onClick={()=>act(async()=>{await call('recheck',{runId:job.run,artifactId:artifact.id});const next=await call('state');if(live.current)setJob(next);})}>Recheck and repair</button>}
         {onWorkModelChange&&!running&&!uncertain&&job?.last_status==='completed'&&artifact.runId===job.run&&<button disabled={busy||contextBusy} onClick={()=>act(linkMappings)}>Link proposed mappings</button>}
         <ArtifactChecks key={artifact.id} session={session} projectId={projectId} sessionId={job.id} artifact={artifact}/>

@@ -1335,3 +1335,13 @@ UI-001 real native journey: frozen e63cd2d one actual browser start at gpt-6.1-s
 Operator storage/IBM UI preflight: preserve default/tmp and all old registrations; new trusted existing absolute workspace root can use a mounted external POSIX filesystem, never a browser path or missing-volume fallback.24 focused/488server tests include new placement/pin-reopen/invalid-root cases; actual short APFS sparse volume backed by MEM0 passes symlink/mode/Unix socket probes, existing80-byte native policy unchanged. Frozen original IBM22 criteria/3 natural updates only change provider; no architecture recipe supplied. Existing IBM image transferred unchanged to full AMD64, fresh SDK/SQL/process-control/browser observations pass with named workers. No native inference yet; original counts/releases unchanged. Next actual cloud-scoped UI/native generation and independent receiving. Evidence:20261112-original-ibm-ui.
 
 Owner pause: after one actual original IBM UI start/three updates on source2f52c96, explicitly interrupt same run ed209769-b792-457f-83d1-cfa9ea65b66b and verify idle/interrupted. Preserve native workspace/journal/inputs/draft on MEM0; no generation/test/acceptance continuation while the owner focuses on additional UI issues. Full28/ten increments/unfamiliar scope unchanged, not complete. Roughly1GB downloaded Playwright cache separately moved to MEM0 with416 file hashes/modes verified and original-path symlink; read-only browser startup passed. Evidence:20261112-original-ibm-ui.
+
+
+## 2026-11-12 — One final download and project-size cost assumptions
+
+Owner directed consolidation: each stage has one purpose and Delivery owns the package
+download. Preserve original ZIP within the combined artifact rather than another UI
+export. Sizes are transparent usage assumptions, overridden by known facts; no invented
+provider rates. Cost-only assistant responses cannot mutate scope/design/usage decisions.
+Full automatic service pricing remains a capability gap. Programme remains paused.
+Evidence: evidence/20261112-cost-delivery-clarity/README.md.
