@@ -9,6 +9,8 @@
 - Actual managed runtime HTTP response: AtMem 2.3.14 core SDK, ready. Installation used hash-locked AtMem 2.3.14 and AtFlows 0.1.8.
 - A synthetic SQLite store created through the original 2.3.10 worker was read through 2.3.14 with its record and identity preserved. No user database was migrated by this test.
 - Six locked runtime distributions’ actual wheel legal files regenerated; pip is not part of this uv-managed distributed memory runtime.
-- Original installed Orca integration: actual npm 0.2.0 startup, browser tab, saved-project API, complete ZIP, authenticated handoff, real CLI registration and real spec opening passed. Plugin release 0.1.0 is separate from this maintenance source and still pins published Architect 0.2.0.
+- Original installed Orca integration: actual npm 0.2.0 startup, browser tab, saved-project API, complete ZIP, authenticated handoff, real CLI registration and real spec opening passed. Plugin release 0.1.1 is separate from this maintenance source and still pins published Architect 0.2.0.
 
 Screenshots: checklist-opening.png, star-prompt.png, iowa-storage-live.png. Synthetic projects and public prices only. No cloud plan/deployment or paid model generation is established. This source candidate is not an npm release.
+
+Plugin 0.1.1 corrects shutdown: the actual created terminal was closed and port 5174 stopped responding. Published Git installation updated successfully to exact commit 39bdab4. Orca’s status page currently reports Waiting for the indexer; topic and v0.1.1 tag are public.
