@@ -40,6 +40,12 @@ jobs:
         shell: bash
     steps:
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            /package.json
+            /package-lock.json
+            /scripts/npm-installed-check.mjs
+          sparse-checkout-cone-mode: false
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
