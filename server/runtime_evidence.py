@@ -15,9 +15,15 @@ def digest(value):return hashlib.sha256(json.dumps(value,sort_keys=True,separato
 
 
 class RuntimeEvidence:
-    def __init__(self,encoded):self._encoded=encoded
+    def __init__(self,encoded,*,worker_identity=None,worker_policy=None,context_bound=False):
+        self._encoded=encoded
+        self._worker_identity,self._worker_policy=worker_identity,worker_policy
+        self.context_bound=context_bound
 
     def public(self):return json.loads(self._encoded)
+
+    def matches_worker(self,worker):
+        return self._worker_identity==worker.identity_digest and self._worker_policy==worker.policy_digest
 
     @classmethod
     def load(cls,reference,spec):
@@ -62,7 +68,7 @@ class RuntimeEvidence:
             result.update(executionContextSha256=receipt['executionContextSha256'],processControlProbeSha256=receipt['processControlProbeSha256'])
             result['scope']=result['scope'].replace('Observed immutable image runtime only;', 'Observed immutable image metadata and the last recorded execution context;')
             result['scope']+=' Process controls describe only the last observed execution context, not an image-only capability or current availability guarantee. Reobserve after worker, kernel, boot or policy changes. Null process controls are unobserved, not unsupported. Observation never grants permissions or changes safeguards.'
-        return cls(json.dumps(result,ensure_ascii=False,allow_nan=False))
+        return cls(json.dumps(result,ensure_ascii=False,allow_nan=False),worker_identity=receipt['workerIdentitySha256'],worker_policy=receipt['workerPolicySha256'],context_bound=version==2)
 
 
 def validate_process_observation(receipt,observed,probe,text):

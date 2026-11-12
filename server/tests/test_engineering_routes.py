@@ -129,7 +129,7 @@ class EngineeringRouteTests(unittest.TestCase):
             self.assertEqual(response.status_code,200)
             checks.start.assert_awaited_once_with(ProjectScope('local-owner',self.project),self.session,self.session,'python-tests',retry=False)
             checks.start.reset_mock()
-            for extra in [{'command':['sh','-c','anything']},{'image':'python:latest'},{'endpoint':'tcp://host:2375'},{'retry':'true'}]:
+            for extra in [{'command':['sh','-c','anything']},{'image':'python:latest'},{'endpoint':'tcp://host:2375'},{'workerId':'untrusted-executor'},{'retry':'true'}]:
                 self.assertEqual(self.client.post('/api/engineering/validation/start',json={**payload,**extra},headers=self.headers).status_code,422)
             checks.start.assert_not_awaited()
 

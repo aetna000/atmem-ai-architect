@@ -121,7 +121,7 @@ class ProcessObservationTests(unittest.TestCase):
         from server.validation_jobs import RegisteredValidator,ValidationJobs
         from types import SimpleNamespace
         jobs=ValidationJobs.__new__(ValidationJobs)
-        jobs.worker=SimpleNamespace(policy_digest='p',identity_digest='w')
+        jobs.worker=SimpleNamespace(policy_digest='b'*64,identity_digest='c'*64)
         original=process_observation(self.spec)
         first=RuntimeEvidence.load(self.reference(original),self.spec)
         jobs.validators={self.spec.name:RegisteredValidator('Observed Python',self.spec,runtime_evidence=first)}

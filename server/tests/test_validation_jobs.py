@@ -222,3 +222,123 @@ class ValidationJobTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(registered_validators([base])['python-tests'].label,'Python tests')
         for entries in [[{**base,'image':'python:latest'}],[base,base],[{**base,'privileged':True}],[{**base,'command':'sh -c anything'}]]:
             with self.assertRaises(ValueError):registered_validators(entries)
+
+    async def test_named_placement_runs_only_selected_worker_and_preserves_legacy_contract(self):
+        import hashlib
+        from dataclasses import asdict,replace
+        peer=Worker();peer.identity_digest='amd-worker';peer.policy_digest='amd-policy'
+        original=self.jobs._contract(self.catalog[self.spec.name])[0]
+        expected={'spec':asdict(self.spec),'workerIdentity':self.worker.identity_digest}
+        expected['spec'].pop('executable_scratch')
+        self.assertEqual(original,hashlib.sha256(json.dumps({**expected,'policy':self.worker.policy_digest},sort_keys=True).encode()).hexdigest())
+        self.jobs.workers={'arm-executor':self.worker,'amd-executor':peer}
+        self.assertEqual(self.jobs._contract(self.catalog[self.spec.name])[0],original)
+        spec=replace(self.spec,name='named-tests')
+        self.jobs.validators['named-tests']=RegisteredValidator('Named AMD checks',spec,worker_id='amd-executor')
+        state=await self.jobs.start(self.scope,self.session,self.artifact,'named-tests');await self.finish()
+        self.assertEqual(len(peer.calls),1);self.assertEqual(self.worker.calls,[])
+        self.assertEqual(state['placement'],{'workerId':'amd-executor'})
+        stored=json.loads(self.store.db.execute('SELECT spec FROM artifact_validation_jobs WHERE id=?',(state['id'],)).fetchone()[0])
+        self.assertEqual(stored['workerIdentity'],peer.identity_digest);self.assertEqual(stored['workerId'],'amd-executor')
+        self.jobs.worker=None
+        self.assertTrue(self.jobs.available());self.assertTrue(self.jobs.validator_available('named-tests'))
+        self.assertFalse(self.jobs.validator_available('python-tests'))
+
+    async def test_missing_named_worker_never_falls_back_to_configured_default(self):
+        self.jobs.validators['python-tests']=RegisteredValidator('Unavailable named check',self.spec,FileApplicability(('**/test_*.py',)),worker_id='missing-executor')
+        row=self.jobs.catalog()[0];self.assertFalse(row['available']);self.assertIsNone(row['contractSha256'])
+        self.assertEqual(row['placement']['status'],'worker_unavailable')
+        self.assertEqual(self.jobs.plan(self.scope,self.session,self.artifact)['decisions'][0]['state'],'unavailable')
+        with self.assertRaises(SessionError):await self.jobs.start(self.scope,self.session,self.artifact,'python-tests')
+        self.assertEqual(self.worker.calls,[]);self.assertEqual(self.store.db.execute('SELECT count(*) FROM artifact_validation_jobs').fetchone()[0],0)
+
+    async def test_named_observations_must_match_selected_identity_and_policy(self):
+        import hashlib
+        peer=Worker();peer.identity_digest='d'*64;peer.policy_digest='e'*64
+        self.jobs.workers={'observed-executor':peer}
+        def register(identity,policy):
+            receipt=observation(self.spec);receipt.update(workerIdentitySha256=identity,workerPolicySha256=policy)
+            path=self.root/'observed.json';path.write_text(json.dumps(receipt))
+            evidence=RuntimeEvidence.load({'path':str(path),'sha256':hashlib.sha256(path.read_bytes()).hexdigest()},self.spec)
+            self.jobs.validators['python-tests']=RegisteredValidator('Observed named runtime',self.spec,runtime_evidence=evidence,worker_id='observed-executor')
+        for identity,policy in [('f'*64,peer.policy_digest),(peer.identity_digest,'f'*64)]:
+            register(identity,policy);row=self.jobs.catalog()[0]
+            self.assertFalse(row['available']);self.assertIsNone(row['contractSha256']);self.assertNotIn('runtimeEvidence',row)
+            self.assertEqual(row['placement']['status'],'runtime_observation_mismatch')
+            with self.assertRaises(SessionError):await self.jobs.start(self.scope,self.session,self.artifact,'python-tests')
+        self.assertEqual(peer.calls,[]);self.assertEqual(self.worker.calls,[])
+        register(peer.identity_digest,peer.policy_digest)
+        self.assertTrue(self.jobs.catalog()[0]['available']);self.assertIn('runtimeEvidence',self.jobs.catalog()[0])
+        await self.jobs.start(self.scope,self.session,self.artifact,'python-tests');await self.finish()
+        self.assertEqual(len(peer.calls),1)
+
+    async def test_named_profile_unavailable_cannot_run_or_use_peer_profile(self):
+        peer=Worker();peer.identity_digest='no-browser-worker';peer.supports=lambda spec:False
+        self.jobs.workers={'limited-executor':peer}
+        self.jobs.validators['python-tests']=RegisteredValidator('No profile fallback',self.spec,worker_id='limited-executor')
+        self.assertEqual(self.jobs.catalog()[0]['placement']['status'],'isolation_profile_unavailable')
+        with self.assertRaises(SessionError):await self.jobs.start(self.scope,self.session,self.artifact,'python-tests')
+        self.assertEqual(peer.calls,[]);self.assertEqual(self.worker.calls,[])
+
+    async def test_legacy_context_bound_receipt_cannot_follow_changed_default_worker(self):
+        import hashlib
+        from server.tests.test_runtime_evidence import process_observation
+        value=process_observation(self.spec);value.update(workerIdentitySha256='a'*64,workerPolicySha256='b'*64)
+        path=self.root/'context.json';path.write_text(json.dumps(value))
+        evidence=RuntimeEvidence.load({'path':str(path),'sha256':hashlib.sha256(path.read_bytes()).hexdigest()},self.spec)
+        self.worker.identity_digest='a'*64;self.worker.policy_digest='b'*64
+        self.jobs.validators['python-tests']=RegisteredValidator('Observed legacy context',self.spec,runtime_evidence=evidence)
+        original=self.jobs.catalog()[0];self.assertTrue(original['available']);self.assertNotIn('placement',original)
+        self.worker.identity_digest='c'*64
+        changed=self.jobs.catalog()[0];self.assertFalse(changed['available']);self.assertNotIn('runtimeEvidence',changed)
+        self.assertEqual(changed['placement']['status'],'runtime_observation_mismatch');self.assertIsNone(changed['contractSha256'])
+        with self.assertRaises(SessionError):await self.jobs.start(self.scope,self.session,self.artifact,'python-tests')
+        self.assertEqual(self.worker.calls,[])
+
+    async def test_queued_execution_retains_admitted_worker_when_placement_changes(self):
+        peer=Worker();peer.identity_digest='replacement-worker'
+        self.jobs.workers={'selected-executor':self.worker}
+        self.jobs.validators['python-tests']=RegisteredValidator('Queued named runtime',self.spec,worker_id='selected-executor')
+        self.jobs.semaphore=asyncio.Semaphore(0)
+        state=await self.jobs.start(self.scope,self.session,self.artifact,'python-tests')
+        self.jobs.workers['selected-executor']=peer
+        self.jobs.semaphore.release();await self.finish()
+        self.assertEqual(len(self.worker.calls),1);self.assertEqual(peer.calls,[])
+        second=await self.jobs.start(self.scope,self.session,self.artifact,'python-tests');await self.finish()
+        self.assertNotEqual(state['contractSha256'],second['contractSha256']);self.assertEqual(len(peer.calls),1)
+
+    async def test_mutated_admitted_worker_fails_closed_before_execution(self):
+        self.jobs.semaphore=asyncio.Semaphore(0)
+        state=await self.jobs.start(self.scope,self.session,self.artifact,'python-tests')
+        self.worker.policy_digest='changed-after-admission'
+        self.jobs.semaphore.release();await self.finish()
+        self.assertEqual(self.worker.calls,[])
+        self.assertEqual(self.jobs.get(self.scope,self.session,state['id'])['result']['reason'],'validator_unavailable')
+
+    async def test_restart_cleanup_follows_saved_worker_even_after_validator_removed_and_default_changed(self):
+        peer=Worker();peer.identity_digest='peer-worker'
+        self.jobs.workers={'original-executor':self.worker}
+        self.jobs.validators['python-tests']=RegisteredValidator('Original placed check',self.spec,worker_id='original-executor')
+        state=await self.jobs.start(self.scope,self.session,self.artifact,'python-tests');await self.finish()
+        with self.store.db:self.store.db.execute("UPDATE artifact_validation_jobs SET state='running',result=NULL WHERE id=?",(state['id'],))
+        self.jobs=ValidationJobs(self.store,self.artifacts,peer,{},workers={'approved-original':self.worker})
+        result=await self.jobs.recover(self.scope,self.session,state['id'])
+        self.assertEqual(result['result']['reason'],'supervisor_restart');self.assertEqual(self.worker.recovered,[state['id']])
+        self.assertEqual(peer.recovered,[]);self.assertEqual(peer.calls,[]);self.assertEqual(len(self.worker.calls),1)
+
+    async def test_legacy_cleanup_can_use_exact_original_identity_after_default_reassignment(self):
+        peer=Worker();peer.identity_digest='new-default-worker'
+        state=await self.jobs.start(self.scope,self.session,self.artifact,'python-tests');await self.finish()
+        with self.store.db:self.store.db.execute("UPDATE artifact_validation_jobs SET state='running',result=NULL WHERE id=?",(state['id'],))
+        self.jobs=ValidationJobs(self.store,self.artifacts,peer,self.catalog)
+        with self.assertRaises(SessionError):await self.jobs.recover(self.scope,self.session,state['id'])
+        self.assertEqual(peer.recovered,[])
+        self.jobs.workers['approved-original']=self.worker
+        await self.jobs.recover(self.scope,self.session,state['id'])
+        self.assertEqual(self.worker.recovered,[state['id']]);self.assertEqual(peer.recovered,[])
+
+    def test_worker_assignment_is_operator_only_and_requires_exact_ids(self):
+        base={'id':'python-tests','label':'Placed tests','image':self.spec.image,'command':list(self.spec.command),'workerId':'approved-executor'}
+        self.assertEqual(registered_validators([base])['python-tests'].worker_id,'approved-executor')
+        for worker in [None,'','../worker','default:any',True]:
+            with self.subTest(worker=worker),self.assertRaises(ValueError):registered_validators([{**base,'workerId':worker}])

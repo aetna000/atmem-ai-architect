@@ -126,3 +126,31 @@ class LocalWorkerRegistrationTests(unittest.IsolatedAsyncioTestCase):
                     'ENGINEERING_TOOLCHAIN':json.dumps({'python':str(other)})}
             with patch('server.engineering_routes.home',return_value=root),patch('server.engineering_routes.setting',side_effect=config.get):
                 with self.assertRaisesRegex(RuntimeError,'qualified tool read root'):LocalEngineeringService()
+
+    async def test_named_only_service_native_catalog_and_working_checkpoint_need_no_default_worker(self):
+        import asyncio
+        from server.tests.test_validation_jobs import Worker
+        with tempfile.TemporaryDirectory()as folder:
+            root=Path(folder);context=root/'project.json';context.write_text('{"requirements":"Preserve source ownership"}')
+            entry={'id':'placed-tests','label':'Explicit placed check','image':'sha256:'+'a'*64,
+                   'command':['/usr/local/bin/python3','check.py'],'workerId':'approved-executor'}
+            config={'ENGINEERING_VALIDATORS':json.dumps([entry]),'ENGINEERING_VALIDATOR_WORKERS':json.dumps({'approved-executor':{'endpoint':'unix:///owned/unavailable.sock'}})}
+            executor=Worker()
+            with patch('server.engineering_routes.home',return_value=root),patch('server.engineering_routes.setting',side_effect=config.get),patch('server.validation_workers.WorkerRegistration.create',side_effect=[ValueError('not ready'),executor]):
+                worker=LocalEngineeringService();scope=ProjectScope('local-owner','project-one')
+                async def fake_create(scope,workspace,selection):return worker.sessions._public(worker.store.create(scope,workspace,worker.backend.name,'private-thread',selection))
+                worker.sessions.create=fake_create
+                state=await worker.create(scope,context,ModelSelection('exact-model','high'));row=worker.store.get(scope,state['id']);path=worker.backend._workspace(scope,row['workspace'])
+                worker.store.reserve(scope,state['id'],'run-one','Implement owned module');worker.store.attach_turn(scope,state['id'],'run-one','turn-one')
+                try:
+                    first=worker.validation_service();self.assertFalse(first.available());self.assertIsNone(first.worker)
+                    result=await worker.native_tools.invoke(scope,row['workspace'],'turn-one','catalog','atmem_check_catalog',{})
+                    catalog=json.loads(result['contentItems'][0]['text']);self.assertTrue(catalog['available'])
+                    self.assertEqual(catalog['validators'][0]['placement'],{'workerId':'approved-executor','status':'configured'})
+                    (path/'library.py').write_text('VALUE = 1')
+                    result=await worker.native_tools.invoke(scope,row['workspace'],'turn-one','check','atmem_check_working',{'validatorId':'placed-tests'})
+                    self.assertTrue(result['success']);await asyncio.gather(*list(worker.checks.tasks.values()))
+                    self.assertEqual(len(executor.calls),1);self.assertIsNone(worker.checks.worker)
+                    self.assertEqual(worker.store.get(scope,state['id'])['model'],'exact-model')
+                finally:
+                    await worker.close();shutil.rmtree(path)

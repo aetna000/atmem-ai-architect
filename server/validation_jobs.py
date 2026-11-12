@@ -14,6 +14,7 @@ from .engineering_sessions import SessionError
 from .local_validation import ValidationSpec,validation_test_runner
 from .validation_applicability import FileApplicability
 from .runtime_evidence import RuntimeEvidence
+from .validation_workers import worker_id
 
 
 @dataclass(frozen=True)
@@ -22,6 +23,7 @@ class RegisteredValidator:
     spec: ValidationSpec
     applicability: FileApplicability | None = None
     runtime_evidence: RuntimeEvidence | None = None
+    worker_id: str | None = None
 
     def __post_init__(self):
         if not isinstance(self.label,str) or not self.label.strip() or len(self.label)>120:
@@ -29,6 +31,7 @@ class RegisteredValidator:
         if self.applicability is not None and not isinstance(self.applicability,FileApplicability):
             raise ValueError('Use a reviewed file applicability contract')
         if self.runtime_evidence is not None and not isinstance(self.runtime_evidence,RuntimeEvidence):raise ValueError('Use pinned operator runtime evidence')
+        if self.worker_id is not None:worker_id(self.worker_id)
 
 
 def registered_validators(entries):
@@ -36,7 +39,7 @@ def registered_validators(entries):
     if not isinstance(entries,list):raise ValueError('Validator configuration must be a list')
     result={}
     for entry in entries:
-        if not isinstance(entry,dict) or set(entry)-{'id','label','image','command','platform','timeoutSeconds','bootstrapPython','isolationProfile','runtimeEnvironment','executableScratch','applicability','runtimeReceipt'}:
+        if not isinstance(entry,dict) or set(entry)-{'id','label','image','command','platform','timeoutSeconds','bootstrapPython','isolationProfile','runtimeEnvironment','executableScratch','applicability','runtimeReceipt','workerId'}:
             raise ValueError('Unrecognized validator registration')
         if not isinstance(entry.get('command'),list):raise ValueError('Register a validator argument vector')
         environment=entry.get('runtimeEnvironment',{})
@@ -45,14 +48,20 @@ def registered_validators(entries):
             platform=entry.get('platform','linux/amd64'),timeout_seconds=entry.get('timeoutSeconds',60),
             bootstrap_python=entry.get('bootstrapPython','/usr/local/bin/python3'),isolation_profile=entry.get('isolationProfile','standard-v1'),runtime_environment=tuple(environment.items()),executable_scratch=entry.get('executableScratch',False))
         if spec.name in result:raise ValueError('Validator IDs must be unique')
+        if 'workerId' in entry:worker_id(entry['workerId'])
         result[spec.name]=RegisteredValidator(entry.get('label',''),spec,FileApplicability.parse(entry['applicability']) if 'applicability' in entry else None,
-            RuntimeEvidence.load(entry['runtimeReceipt'],spec) if 'runtimeReceipt' in entry else None)
+            RuntimeEvidence.load(entry['runtimeReceipt'],spec) if 'runtimeReceipt' in entry else None,entry.get('workerId'))
     return result
 
 
 class ValidationJobs:
-    def __init__(self, store, artifacts, worker, validators):
+    def __init__(self, store, artifacts, worker, validators, *, workers=None):
         self.store,self.artifacts,self.worker=store,artifacts,worker
+        self.workers={} if workers is None else dict(workers)
+        for name,executor in self.workers.items():
+            worker_id(name)
+            if not all(callable(getattr(executor,method,None))for method in ['run','recover']) or not all(isinstance(getattr(executor,key,None),str)and getattr(executor,key)for key in ['identity_digest','policy_digest']):
+                raise ValueError('Supply explicit worker executor interfaces and identities')
         self.validators=dict(validators)
         if any(key!=value.spec.name for key,value in self.validators.items()):
             raise ValueError('Validator IDs must match their registered contract')
@@ -68,24 +77,59 @@ class ValidationJobs:
 
     def catalog(self):
         return [{'id':key,'label':value.label,'evidenceLevel':'local_container_check',
-                 'contractSha256':self._contract(value)[0] if self.worker else None,
+                 'contractSha256':self._public_contract(value),
                  'available':self._available(value),
                  'applicability':value.applicability.public() if value.applicability else None,
-                 **({'runtimeEvidence':value.runtime_evidence.public()} if value.runtime_evidence else {}),
+                 **({'runtimeEvidence':value.runtime_evidence.public()} if value.runtime_evidence and self._observation_matches(value) else {}),
+                 **self._placement(value),
                  'runtime':{'imageId':value.spec.image,'platform':value.spec.platform,'isolationProfile':value.spec.isolation_profile,'environment':dict(value.spec.runtime_environment),'executable':value.spec.command[0],'testRunner':validation_test_runner(value.spec),'executableScratchDirectories':['/dependencies']if value.spec.executable_scratch else []}} for key,value in self.validators.items()]
 
     def _contract(self,registered):
-        registration={'spec':asdict(registered.spec),'workerIdentity':self.worker.identity_digest}
+        worker=self._worker(registered)
+        if worker is None:raise SessionError('The explicitly registered validator worker is unavailable; no fallback was applied')
+        registration={'spec':asdict(registered.spec),'workerIdentity':worker.identity_digest}
+        if registered.worker_id is not None:registration['workerId']=registered.worker_id
         if not registered.spec.executable_scratch:registration['spec'].pop('executable_scratch')
         # Preserve historical manual-only contract hashes. Changing selection rules
         # invalidates evidence reuse even when the executable is unchanged.
         if registered.applicability is not None:registration['applicability']=registered.applicability.public()
         if registered.runtime_evidence is not None:registration['runtimeEvidence']=registered.runtime_evidence.public()
-        digest=hashlib.sha256(json.dumps({**registration,'policy':self.worker.policy_digest},sort_keys=True).encode()).hexdigest()
+        digest=hashlib.sha256(json.dumps({**registration,'policy':worker.policy_digest},sort_keys=True).encode()).hexdigest()
         return digest,registration
 
+    def _worker(self,registered):
+        return self.worker if registered.worker_id is None else getattr(self,'workers',{}).get(registered.worker_id)
+
+    def _observation_matches(self,registered):
+        # Preserve legacy image-only contracts. Context-bound observations and
+        # explicit placements cannot inherit facts from another worker/policy.
+        evidence=registered.runtime_evidence
+        return evidence is None or (registered.worker_id is None and not evidence.context_bound) or (self._worker(registered) is not None and evidence.matches_worker(self._worker(registered)))
+
+    def _placement(self,registered):
+        if registered.worker_id is not None or (registered.runtime_evidence is not None and registered.runtime_evidence.context_bound and not self._observation_matches(registered)):
+            return {'placement':{'workerId':registered.worker_id,'status':self._placement_status(registered)}}
+        return {}
+
+    def _placement_status(self,registered):
+        worker=self._worker(registered)
+        if worker is None:return 'worker_unavailable'
+        if not self._observation_matches(registered):return 'runtime_observation_mismatch'
+        if hasattr(worker,'supports')and not worker.supports(registered.spec):return 'isolation_profile_unavailable'
+        return 'configured'
+
+    def _public_contract(self,registered):
+        return self._contract(registered)[0] if self._worker(registered) is not None and self._observation_matches(registered) else None
+
+    def available(self):
+        return self.worker is not None or any(self._available(value)for value in self.validators.values())
+
+    def validator_available(self,ident):
+        registered=self.validators.get(ident)
+        return registered is not None and self._available(registered)
+
     def _available(self,registered):
-        return self.worker is not None and (not hasattr(self.worker,'supports') or self.worker.supports(registered.spec))
+        return self._placement_status(registered)=='configured'
 
     def plan(self,scope,session,artifact):
         """No execution or implicit pass; selection binds exact immutable bytes."""
@@ -98,7 +142,8 @@ class ValidationJobs:
             available=self._available(registered)
             state='manual_only' if assessment is None else 'not_applicable' if not assessment['applies'] else 'selected' if available else 'unavailable'
             decisions.append({'validatorId':ident,'label':registered.label,'state':state,
-                'contractSha256':self._contract(registered)[0] if self.worker else None,
+                'contractSha256':self._public_contract(registered),
+                **self._placement(registered),
                 'applicability':registered.applicability.public() if registered.applicability else None,
                 'assessment':assessment})
         return {'artifactId':manifest['id'],'artifactSha256':manifest['sha256'],'decisions':decisions,
@@ -113,10 +158,12 @@ class ValidationJobs:
 
     @staticmethod
     def _public(row):
+        registration=json.loads(row['spec'])
         return {'id':row['id'],'sessionId':row['session'],'artifactId':row['artifact'],
             'artifactSha256':row['artifact_sha256'],'validatorId':row['validator'],'label':row['label'],
             'contractSha256':row['contract_sha256'],'state':row['state'],
             'result':json.loads(row['result']) if row['result'] else None,
+            **({'placement':{'workerId':registration['workerId']}} if 'workerId' in registration else {}),
             'acceptance':'not_established_by_local_check'}
 
     def get(self,scope,session,job):return self._public(self._row(scope,session,job))
@@ -135,10 +182,11 @@ class ValidationJobs:
 
     async def start(self,scope,session,artifact,validator,*,retry=False):
         if self.closed:raise SessionError('The local check supervisor is closing')
-        if self.worker is None:raise SessionError('Local artifact checks are not configured on this server')
         self.store.get(scope,session)
         registered=self.validators.get(validator)
         if registered is None:raise SessionError('This validator is not registered by the server operator')
+        if not self._available(registered):raise SessionError('The selected validator placement, observation or isolation profile is unavailable; inspect its catalog status. No fallback was applied')
+        worker=self._worker(registered)
         manifest,content=self.artifacts.get(scope,session,artifact)
         digest=hashlib.sha256(content).hexdigest()
         if digest!=manifest['sha256']:raise SessionError('Stored artifact bytes do not match their receipt')
@@ -156,7 +204,7 @@ class ValidationJobs:
             self.db.execute('INSERT INTO artifact_validation_jobs VALUES (?,?,?,?,?,?,?,?,?,NULL)',
                 (ident,session,artifact,digest,validator,registered.label,contract,json.dumps(registration),'queued'))
         cancelled=threading.Event();self.cancellations[ident]=cancelled
-        task=asyncio.create_task(self._execute(ident,content,digest,registered.spec,cancelled))
+        task=asyncio.create_task(self._execute(ident,content,digest,registered.spec,cancelled,worker,worker.identity_digest,worker.policy_digest))
         self.tasks[ident]=task
         def settled(completed):
             self.tasks.pop(ident,None);self.cancellations.pop(ident,None)
@@ -164,14 +212,15 @@ class ValidationJobs:
         task.add_done_callback(settled)
         return self.get(scope,session,ident)
 
-    async def _execute(self,job,content,digest,spec,cancelled):
+    async def _execute(self,job,content,digest,spec,cancelled,worker,worker_identity,worker_policy):
         try:
             async with self.semaphore:
                 if cancelled.is_set():
                     result={'status':'failed','reason':'cancelled_before_execution','artifactSha256':digest}
                 else:
                     with self.db:self.db.execute("UPDATE artifact_validation_jobs SET state='running' WHERE id=?",(job,))
-                    result=await asyncio.to_thread(self.worker.run,content,digest,spec,execution_id=job,cancel_event=cancelled)
+                    if worker.identity_digest!=worker_identity or worker.policy_digest!=worker_policy:raise ValueError('Admitted worker identity or policy changed')
+                    result=await asyncio.to_thread(worker.run,content,digest,spec,execution_id=job,cancel_event=cancelled)
                     if not isinstance(result,dict) or result.get('artifactSha256')!=digest or result.get('status') not in {'passed','failed','incomplete'}:
                         raise ValueError('Validator receipt does not bind the requested artifact')
                 self._settle(job,result)
@@ -182,11 +231,14 @@ class ValidationJobs:
     async def recover(self,scope,session,job):
         row=self._row(scope,session,job)
         if row['state']!='recovery_required':return self._public(row)
-        if self.worker is None:raise SessionError('The recorded local validator worker is unavailable for cleanup')
-        if json.loads(row['spec']).get('workerIdentity')!=self.worker.identity_digest:
+        identity=json.loads(row['spec']).get('workerIdentity')
+        # Cleanup follows the recorded identity, even if validator/default/name
+        # assignments changed. Search only explicitly approved current executors.
+        worker=next((candidate for candidate in [self.worker,*getattr(self,'workers',{}).values()]if candidate is not None and candidate.identity_digest==identity),None)
+        if worker is None:
             raise SessionError('The original local validator worker is required for cleanup; no fallback was applied')
         try:
-            result=await asyncio.to_thread(self.worker.recover,job)
+            result=await asyncio.to_thread(worker.recover,job)
             if result!={'cleanupConfirmed':True,'workReplayed':False}:raise ValueError('Cleanup is uncertain')
         except Exception:
             raise SessionError('The prior check may still be running; cleanup was not confirmed and no check was replayed') from None

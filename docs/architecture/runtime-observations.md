@@ -50,3 +50,11 @@ changing the requested platform, or promotion of unexecuted tests into passes.
 Linux AMD64 userspace running on an ARM64 VM is not native AMD64 kernel evidence.
 Qualify a suitable execution context and then independently check the unchanged
 application against all of its original requirements.
+
+Explicit [validator placements](validator-placement.md) now verify private
+worker-identity/policy provenance before publishing their observations or admitting
+a check. Context-bound version2 receipts receive this guard even with legacy
+default configuration. A mismatch hides those runtime facts, reports
+runtime_observation_mismatch and requires a fresh operator registration; it does
+not reuse another worker. This guard preserves valid legacy public receipt/contract
+shapes and does not turn a snapshot into current kernel/boot attestation.

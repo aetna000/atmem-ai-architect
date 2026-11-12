@@ -27,6 +27,7 @@ from .engineering_tools import EngineeringTools
 from .engineering_sessions import EngineeringSessions, ModelSelection, ProjectScope, SessionError, SqliteSessionStore
 from .local_validation import DockerValidationWorker
 from .validation_jobs import ValidationJobs,registered_validators
+from .validation_workers import registered_workers
 from .settings import home, setting
 
 router = APIRouter(prefix='/api/engineering')
@@ -140,6 +141,7 @@ Keep final progress concise and explain any remaining work.''')
         self.checkpoints = WorkingCheckpoints(self.store)
         self.validator_endpoint=setting('ENGINEERING_VALIDATOR_ENDPOINT')
         self.validator_profiles=json.loads(setting('ENGINEERING_ISOLATION_PROFILES') or '{}')
+        self.validator_workers=registered_workers(json.loads(setting('ENGINEERING_VALIDATOR_WORKERS') or '{}'))
         self.checks=ValidationJobs(self.store,CheckSources(self.artifacts,self.checkpoints),None,validators)
         self.native_tools=EngineeringTools(self.store,self.artifacts,self.validation_service,working_check=self.check_working)
         self.backend.tools=self.native_tools
@@ -183,6 +185,10 @@ Keep final progress concise and explain any remaining work.''')
         if self.checks.worker is None and self.validator_endpoint:
             try:self.checks.worker=DockerValidationWorker(self.validator_endpoint,isolation_profiles=self.validator_profiles)
             except (ValueError,OSError):pass
+        for name,registration in self.validator_workers.items():
+            if name not in self.checks.workers:
+                try:self.checks.workers[name]=registration.create()
+                except (ValueError,OSError):pass
         return self.checks
 
     def pinned_inputs(self,scope,session):
@@ -198,7 +204,7 @@ Keep final progress concise and explain any remaining work.''')
     async def check_working(self,scope,workspace,session,validator):
         row=self.store.get(scope,session)
         checks=self.validation_service()
-        if row['workspace']!=workspace or checks.worker is None or validator not in checks.validators:
+        if row['workspace']!=workspace or not checks.validator_available(validator):
             raise SessionError('An owned workspace and available operator-registered check are required')
         root=self.backend._workspace(scope,workspace)
         manifest=self.checkpoints.capture(scope,session,root,expected_inputs=self.pinned_inputs(scope,session))
@@ -376,7 +382,7 @@ async def validation_action(payload,kind):
     try:
         worker.store.get(scope,payload.sessionId)
         checks=worker.validation_service()
-        if kind=='catalog':return {'validators':checks.catalog(),'available':checks.worker is not None}
+        if kind=='catalog':return {'validators':checks.catalog(),'available':checks.available()}
         if kind=='start':return await checks.start(scope,payload.sessionId,payload.artifactId,payload.validatorId,retry=payload.retry)
         if kind=='list':return {'checks':checks.list(scope,payload.sessionId,payload.artifactId)}
         if kind=='plan':return checks.plan(scope,payload.sessionId,payload.artifactId)
