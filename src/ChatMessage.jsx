@@ -1,5 +1,4 @@
-import {HelpNote} from './HelpNote.jsx';
-import React from 'react';
+import React, {useId, useState} from 'react';
 // Small, non-HTML Markdown renderer: no remote images, raw HTML or executable URLs.
 function inline(text){return text.split(/(\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\(https?:\/\/[^\s)]+\))/g).map((part,i)=>{
  if(part.startsWith('**')&&part.endsWith('**'))return <strong key={i}>{part.slice(2,-2)}</strong>;
@@ -14,7 +13,9 @@ export function messagePreview(text){
  return words.slice(0,20).join(' ')+'…';
 }
 export function ChatMessage({text='',concise=false}){
- if(concise&&text.trim().split(/\s+/).length>20)return <div className="concise-answer"><ChatMessage text={messagePreview(text)}/><HelpNote label="Full Architect response"><ChatMessage text={text}/></HelpNote></div>;
+ const [expanded,setExpanded]=useState(false);
+ const detailId=useId();
+ if(concise&&text.trim().split(/\s+/).length>20)return <div className="concise-answer"><div id={detailId}><ChatMessage text={expanded?text:messagePreview(text)}/></div><button type="button" className="link message-details" aria-expanded={expanded} aria-controls={detailId} onClick={()=>setExpanded(value=>!value)}>{expanded?'Less details':'More details'}</button></div>;
 
  const lines=text.split('\n'),blocks=[];let i=0;
  while(i<lines.length){

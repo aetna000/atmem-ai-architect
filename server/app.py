@@ -72,7 +72,7 @@ async def local_boundary(request:Request,call_next):
     if request.method=='POST':
         if not secrets.compare_digest(request.headers.get('authorization',''),f'Bearer {TOKEN}'):
             return JSONResponse({'detail':'Missing local session token'},status_code=401)
-        limit=12_000_000 if request.url.path=='/api/architect' else 2_100_000 if request.url.path in {'/api/projects/save','/api/memory/sync','/api/voice/transcribe'} else 250000
+        limit=43_000_000 if request.url.path=='/api/engineering/orca/open' else 12_000_000 if request.url.path=='/api/architect' else 2_100_000 if request.url.path in {'/api/projects/save','/api/memory/sync','/api/voice/transcribe'} else 250000
         if len(await request.body())>limit:
             return JSONResponse({'detail':'Request too large'},status_code=413)
     response=await call_next(request)

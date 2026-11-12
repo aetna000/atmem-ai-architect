@@ -1,4 +1,4 @@
-import {HelpNote} from './HelpNote.jsx';
+import {InlineNote} from './HelpNote.jsx';
 import {X,Volume2} from 'lucide-react';
 import {BrainActivity} from './BrainActivity.jsx';
 import React,{useEffect,useRef,useState} from 'react';
@@ -43,7 +43,7 @@ export function OpenAIVoicePanel({session,connection,transportRef,onTranscript,o
   {open&&<div className="backdrop" onMouseDown={event=>{if(event.target===event.currentTarget)setOpen(false)}}><section className="modal" role="dialog" aria-modal="true" aria-label="OpenAI voice" onKeyDown={event=>{if(event.key==='Escape'){event.stopPropagation();setOpen(false)}}}>
   <h2>Voice</h2><button type="button" className="icon modal-close" aria-label="Close voice settings" onClick={()=>setOpen(false)}><X size={18}/></button>
   <section aria-label="OpenAI voice settings">
-   <small>AI audio · OpenAI</small><HelpNote label="Voice privacy and models"><p>Audio and spoken reply text are sent to OpenAI. Architect does not save audio; written chat holds design decisions. Live audio qualification is pending.</p><p>Architect: {connection?.model||'Not selected'} · Audio: {status?.model||'Loading'}</p></HelpNote>
+   <small>AI audio · OpenAI</small><InlineNote>Audio and spoken replies go to OpenAI. Audio is not saved. Live verification pending.</InlineNote>
    {!connection&&<button type="button" className="btn" onClick={()=>{setOpen(false);onConnections()}}>Choose AI provider</button>}
    {status&&<details open={!status.available}><summary>API key</summary>
 

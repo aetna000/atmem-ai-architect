@@ -44,10 +44,9 @@ standard, established by the owner.
 ## Owner-directed UX rule
 
 **I will avoid word vomit.** Keep product UI copy short, concrete and actionable.
-Use at most 20 words per visible explanation or normal chat answer. Put longer
-explanations behind `?`; complete specifications and quoted user requirements are
+Use at most 20 words per visible explanation or normal chat answer. Use an explicit “More details” action for longer chat responses; complete specifications and quoted user requirements are
 exempt. Use visual states and a clear next action; remove narration that merely describes
-the controls. Put optional explanations behind working, accessible `?` controls.
+the controls. Do not use question-mark help controls. Put concise supporting text beside controls. Expand chat details inline through a working, accessible “More details” button.
 Keep complete requirements and technical detail in the specification and exported
 documents. Never remove meaningful failures, unresolved costs or scope to simplify
 the screen. Review this rule across all screens, not only the page being edited.

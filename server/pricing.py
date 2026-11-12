@@ -123,3 +123,68 @@ def lambda_quote(region,architecture='x86_64'):
     if not re.fullmatch(r'[a-z]{2}-(?:gov-)?[a-z]+-\d',region)or architecture not in {'x86_64','arm64'}:
         raise ValueError('Select an explicit AWS region and Lambda architecture')
     return dict(_lambda(region,architecture,int(time.time()//3600)))
+
+
+def _public_rows(html):
+    from html.parser import HTMLParser
+    class Rows(HTMLParser):
+        def __init__(self):
+            super().__init__();self.rows=[];self.row=None;self.cell=None
+        def handle_starttag(self,tag,attrs):
+            if tag=='tr':self.row=[]
+            if tag in {'td','th'} and self.row is not None:self.cell=[]
+        def handle_data(self,data):
+            if self.cell is not None:self.cell.append(data)
+        def handle_endtag(self,tag):
+            if tag in {'td','th'} and self.cell is not None:
+                self.row.append(' '.join(' '.join(self.cell).split()));self.cell=None
+            if tag=='tr' and self.row is not None:self.rows.append(self.row);self.row=None
+    parser=Rows();parser.feed(html);return parser.rows
+
+
+def parse_google_public(html,service,url):
+    import hashlib
+    if service=='cloud-run':
+        marker='Services (Requests-based billing)'
+        if marker not in html:raise ValueError('Cloud Run request-based pricing section is missing')
+        html=html[html.index(marker):]
+        expected={'cpu':'CPU (per vCPU-second)','memory':'Memory (per GiB-second)','requests':'Requests (per 1,000,000)'}
+        units={'cpu':'vCPU-seconds','memory':'GiB-seconds','requests':'million requests'}
+    elif service=='cloud-sql':
+        if 'Iowa (us-central1)' not in html or 'Enterprise Edition - N4' not in html:
+            raise ValueError('Cloud SQL reference region or edition is missing')
+        marker='Enterprise Edition - N4';html=html[html.index(marker):]
+        expected={'cpu':'vCPUs','memory':'Memory'};units={'cpu':'vCPU-hours','memory':'GiB-hours'}
+    else:raise ValueError('Unsupported Google pricing service')
+    meters={}
+    for row in _public_rows(html):
+        if not row:continue
+        for key,label in expected.items():
+            if key in meters or row[0]!=label:continue
+            value=next((re.search(r'\$([0-9]+(?:\.[0-9]+)?)',cell)for cell in row[1:]if '$' in cell),None)
+            if value:
+                price=float(value.group(1))
+                if not 0<price<10:raise ValueError('Unexpected Google public price')
+                meters[key]={'price':price,'unit':units[key]}
+        if len(meters)==len(expected):break
+    if len(meters)!=len(expected):raise ValueError('Google public pricing meters could not be verified')
+    return {'available':True,'provider':'gcp','service':service,'region':'us-central1','currency':'USD',
+            'source':'Google Cloud public pricing','url':url,'date':datetime.now(timezone.utc).date().isoformat(),
+            'sourceSha256':hashlib.sha256(html.encode()).hexdigest(),'meters':meters,
+            'coverage':'US reference on-demand rates. Excludes free tiers, commitments, taxes, networking, backups, storage, external APIs and payment fees.'}
+
+
+@lru_cache(maxsize=8)
+def _google_public(service,hour):
+    path={'cloud-run':'run','cloud-sql':'sql'}.get(service)
+    if not path:raise ValueError('Unsupported Google pricing service')
+    url=f'https://cloud.google.com/{path}/pricing'
+    with urllib.request.urlopen(urllib.request.Request(url,headers={'User-Agent':'AtMem Architect pricing'}),timeout=15)as response:raw=response.read(8_000_001)
+    if len(raw)>8_000_000:raise ValueError('Google price page exceeds its size bound')
+    return parse_google_public(raw.decode('utf-8'),service,url)
+
+
+def google_public_quote(service,region,planning_reference=False):
+    if region!='us-central1' and not (planning_reference and (not region or re.search('select|unknown|tbd',region,re.I))):
+        raise ValueError('This public quote supports Iowa only; the selected region is preserved.')
+    return {**_google_public(service,int(time.time()//3600)),'planningReference':region!='us-central1'}

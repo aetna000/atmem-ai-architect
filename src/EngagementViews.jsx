@@ -1,4 +1,4 @@
-import {HelpNote} from './HelpNote.jsx';
+import {InlineNote} from './HelpNote.jsx';
 import {BrainActivity} from "./BrainActivity.jsx";
 import {systemDescription,requirementExplanation} from './system-description.mjs';
 import { resolveCommentRevision } from "./consultation.mjs";
@@ -144,7 +144,7 @@ export function OptionsView({ project, onDiscuss, onPreview, onChoose, onContinu
     <h3>Cloud alternatives</h3>
 
     {['current','aws','azure','gcp','ibm'].filter(id => notes[id]).map(id => <article className="consultation-summary" key={id}>
-      <h3>{OPTION_NAMES[id]}{selected===id ? " · Selected" : ""}</h3><HelpNote label={`About ${OPTION_NAMES[id]}`}>{notes[id].replace(/^(?:AtMem AI Architect|At[Ff]orma) proposal — confirm: /,'')}</HelpNote>
+      <h3>{OPTION_NAMES[id]}{selected===id ? " · Selected" : ""}</h3><InlineNote label={`About ${OPTION_NAMES[id]}`}>{notes[id].replace(/^(?:AtMem AI Architect|At[Ff]orma) proposal — confirm: /,'')}</InlineNote>
       <button className="link" onClick={() => onDiscuss(`Explain how ${OPTION_NAMES[id]} fits our design and the main tradeoff. Ask one question to help me decide; keep this as a discussion until I explicitly choose.`)}>Discuss this option</button>
       {id!=="current" && <><button className="link" onClick={()=>onPreview(id)}>Preview service architecture</button><button className="btn primary" disabled={busy||selected===id} onClick={()=>onChoose(id)}>{selected===id ? `${OPTION_NAMES[id]} selected` : `${OPTION_NAMES[id]} →`}</button></>}
     </article>)}
@@ -164,7 +164,7 @@ export function DecisionsView({ project, onDiscuss, embedded=false }) {
     {current.map(d => <article className="consultation-summary" key={d.id}>
       <h3>{labels[d.subject] || d.title}</h3><p>{OPTION_NAMES[d.decision] || d.decision || 'Still being discussed'}</p>
       <small className="muted">{d.status === 'Accepted' ? 'Confirmed in our conversation' : 'Proposed — still to discuss'}</small>
-      {(d.context||d.consequences)&&<HelpNote label="Decision details"><p>{d.context}</p><p>{d.consequences}</p></HelpNote>}
+      {(d.context||d.consequences)&&<InlineNote label="Decision details"><p>{d.context}</p><p>{d.consequences}</p></InlineNote>}
       <button className="link" onClick={() => onDiscuss(`Let’s revisit our choice about ${labels[d.subject] || d.title}: ${d.decision}. Explain the tradeoff and ask what I would like to change before updating it.`)}>Revisit in chat</button>
       {choices.some(h => h.subject===d.subject && h.status==='Superseded') && <details className="extra"><summary>Earlier choices</summary>{choices.filter(h => h.subject===d.subject && h.status==='Superseded').map(h=><p key={h.id}>{h.decision} {h.reason && `— ${h.reason}`}</p>)}</details>}
     </article>)}
@@ -310,7 +310,7 @@ function RequirementComments({ requirement, comments, onSave, onRemove, target, 
   </aside>;
 }
 
-export function RequirementsView({onContinue, project, onDiscuss, onChange, onReview, reviewing, onUpload, onOpenProject }) {
+export function RequirementsView({checks,onContinue, project, onDiscuss, onChange, onReview, reviewing, onUpload, onOpenProject }) {
   const [commentMenu,setCommentMenu]=React.useState(null), [commentTarget,setCommentTarget]=React.useState(null);
   React.useEffect(()=>{
     if(!commentMenu)return;
@@ -380,6 +380,7 @@ export function RequirementsView({onContinue, project, onDiscuss, onChange, onRe
       {!needs.length && <section className="requirements-chapter"><h3>Requirements to develop</h3><p>As we discuss the idea and shape the board, AtMem AI Architect will summarise the functional requirements, constraints and acceptance targets here.</p></section>}
       {!!project.assumptions?.length && <section className="requirements-chapter"><h3>Assumptions to validate</h3>{project.assumptions.map(a=><p key={a.id}>{a.statement}</p>)}</section>}
       {!!questions.length && <section className="requirements-chapter"><h3>Open questions</h3>{questions.map(q=><p key={q.id}>{q.question}</p>)}<button className="link document-discuss" onClick={()=>onDiscuss(`Help resolve the open questions in our requirements document, one at a time. Start with the question that most affects the design.`)}>Let’s work through these in chat</button></section>}
+      {checks&&<section className="requirements-chapter"><h3>Design checks and decisions</h3>{checks}</section>}
       <footer className="document-footer">{onContinue&&<button className="btn primary" disabled={reviewing} onClick={onContinue}>Continue to Choices →</button>}</footer>
     </article>
   </section>;

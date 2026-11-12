@@ -13,12 +13,6 @@ function WorkPanel({project,onChange,busy=false}){
  const priority={changed:0,missing:0,unreviewed:1,current:2};
  const mappings=model.entities.filter(e=>['responsibility','delivery-unit','interface','implementation','assumption','decision','evidence','requirement','removed'].includes(e.kind)).sort((a,b)=>priority[a.contextStatus]-priority[b.contextStatus]);
  function apply(change){onChange(change,project.id);setError('');}
- async function importProposal(event){const file=event.target.files?.[0];event.target.value='';if(!file)return;try{
-  if(file.size>1_500_000)throw Error('Work proposal exceeds its storage limit. Nothing was imported.');
-  const value=JSON.parse(await file.text());
-  if(value.version!==1||!Array.isArray(value.records)||Object.keys(value).some(k=>!['version','records'].includes(k)))throw Error('Use a version1 work-record proposal.');
-  apply({kind:'propose',records:value.records});
- }catch(e){setError(e.message);}}
  return <details className="architecture-work"><summary>Architecture work context · {mappings.filter(e=>e.contextStatus==='changed'||e.contextStatus==='missing').length} need review</summary>
   <p>Requirements, responsibilities, interfaces and implementation mappings share their change context. A current context is a recorded review; it does not establish that an implementation or test passed.</p>
   <p>{intents} intent {intents===1?'source':'sources'} · {requirements} {requirements===1?'requirement':'requirements'}. Free-form engineering updates affect every mapping until reconciled.</p>
@@ -30,7 +24,6 @@ function WorkPanel({project,onChange,busy=false}){
    {e.missingRefs.length>0&&<p>Missing: {e.missingRefs.map(sourceName).join(', ')}</p>}
    {onChange&&e.contextStatus!=='missing'&&<button disabled={busy} onClick={()=>{try{apply({kind:'review',ref:e.id,expectedContext:workContextIdentity(project,e.id)});}catch(e){setError(e.message);}}}>Record context review: {e.title}</button>}
   </li>)}</ul>:<p>No responsibilities or implementation mappings recorded yet. Engineering can propose them without changing the existing diagram.</p>}
-  {onChange&&<label>Import proposed work mappings<input type="file" accept="application/json,.json" disabled={busy} onChange={importProposal}/></label>}
   {result.artifacts.mappings.length>0&&<section aria-label="Linked artifact mappings">
    <h3>Linked artifacts</h3><p>File and context references remain proposed. They do not establish that a test passed or that the implementation meets every requirement.</p>
    <ul>{result.artifacts.mappings.map(m=><li key={m.id} data-artifact-mapping={m.artifactId}>

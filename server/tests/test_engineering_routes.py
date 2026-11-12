@@ -28,9 +28,19 @@ class EngineeringRouteTests(unittest.TestCase):
         self.home.stop();self.settings.stop();self.temp.cleanup()
 
     def test_every_native_endpoint_requires_local_token(self):
-        for endpoint in ['create','list','state','events','start','recover','steer','interrupt','capture','download',
+        for endpoint in ['orca/open','create','list','state','events','start','recover','steer','interrupt','capture','download',
                          'artifacts','reconciliation','finalizations','recheck','validators','validation/start','validation/list','validation/plan','validation/get','validation/recover']:
             self.assertEqual(self.client.post('/api/engineering/'+endpoint,json={}).status_code,401)
+
+    def test_orca_handoff_uses_saved_project_and_rejects_command_injection(self):
+        payload={'projectId':self.project,'zipBase64':'dGVzdA=='}
+        with patch('server.orca_handoff.open_package',return_value={'opened':True,'path':'/fixture'}) as opened:
+            response=self.client.post('/api/engineering/orca/open',json=payload,headers=self.headers)
+            self.assertEqual(response.status_code,200)
+            opened.assert_called_once_with('dGVzdA==',self.root/'editor-handoffs',self.project)
+            for extra in ['path','command','tenant','workspace']:
+                self.assertEqual(self.client.post('/api/engineering/orca/open',json={**payload,extra:'untrusted'},headers=self.headers).status_code,422)
+            self.assertEqual(self.client.post('/api/engineering/orca/open',json={**payload,'projectId':'missing-project'},headers=self.headers).status_code,404)
 
     def test_recheck_is_project_bound_with_exact_run_and_artifact_only(self):
         run='00000000-0000-0000-0000-000000000002';artifact='00000000-0000-0000-0000-000000000003'

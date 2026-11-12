@@ -49,6 +49,7 @@ class MemoryService:
         with self.db() as db:
             db.executescript('''
               CREATE TABLE IF NOT EXISTS identity (id TEXT PRIMARY KEY);
+              CREATE TABLE IF NOT EXISTS profiles (id TEXT PRIMARY KEY,name TEXT NOT NULL);
               CREATE TABLE IF NOT EXISTS settings (project TEXT PRIMARY KEY, enabled INTEGER NOT NULL DEFAULT 1);
               CREATE TABLE IF NOT EXISTS snapshots (project TEXT PRIMARY KEY, revision INTEGER, entities TEXT, digest TEXT);
               CREATE TABLE IF NOT EXISTS queue (seq INTEGER PRIMARY KEY AUTOINCREMENT, event_id TEXT UNIQUE, project TEXT, scope TEXT, key TEXT, text TEXT, source TEXT, state TEXT, created TEXT);
@@ -61,6 +62,7 @@ class MemoryService:
             self.owner = row[0] if row else str(uuid.uuid4())
             if not row:
                 db.execute('INSERT INTO identity VALUES (?)', (self.owner,))
+            db.execute("INSERT OR IGNORE INTO profiles VALUES (?,?)",(self.owner,'Default profile'))
 
     @contextmanager
     def db(self):
@@ -94,6 +96,7 @@ class MemoryService:
         return {'enabled': enabled}
 
     def call(self, operations):
+        operations=[{**op,'owner':self.owner,'actor':'user:'+self.owner if (op.get('subject')==self.subject('user','') or op.get('action')=='forget') else 'atmem-project-sync','actorType':'user' if (op.get('subject')==self.subject('user','') or op.get('action')=='forget') else 'project-sync'}for op in operations]
         result = subprocess.run([self.worker, '-I', str(ROOT / 'server/memory_worker.py')],
             input=json.dumps({'database': str(self.home / 'memories.db'), 'operations': operations}),
             text=True, capture_output=True, timeout=25, cwd=str(self.home))
@@ -202,22 +205,49 @@ class MemoryService:
             self.flush()
             return self.status(project)
 
+    def overview(self,project):
+        from .memory_context import describe
+        self.project(project)
+        with self.lock,self.db()as db:
+            activity=[{'id':row[0],'createdAt':row[1],**json.loads(row[2])}for row in db.execute('SELECT id,created,payload FROM activity WHERE project=? ORDER BY created DESC LIMIT 20',(project,))]
+        return {**self.status(project),'activity':activity,'userProfile':self.user_profile(),'contextProviders':describe()}
+
     def inspect(self, project):
+        from .memory_context import describe
         self.project(project)
         with self.lock:
             if self.enabled(project):
                 self.flush()
             subjects = [self.subject('user', project), self.subject('project', project), self.subject('knowledge', project)]
             try:
-                results = self.call([{'action': 'list', 'subject': s} for s in subjects])
-                records = [[{k: r.get(k) for k in ('id','content','status','fact_key','created_at','supersedes_id')} for r in rows[-200:] if r.get('status') != 'tombstoned'] for rows in results]
+                results = self.call([{'action': 'page', 'subject': s,'status':'all','limit':50} for s in subjects])
+                records = [page['records'] for page in results]
             except (OSError, RuntimeError, subprocess.TimeoutExpired):
                 self.error = 'AtMem unavailable — using this project only; eligible changes queued'
                 records = [[], [], []]
             with self.db() as db:
                 activity = [{'id': r[0], 'createdAt': r[1], **json.loads(r[2])} for r in db.execute('SELECT id,created,payload FROM activity WHERE project=? ORDER BY created DESC LIMIT 20', (project,))]
                 events = [{'key':r[0],'status':r[1],'reason':r[2],'createdAt':r[3]} for r in db.execute("SELECT key,state,reason,created FROM queue WHERE project=? AND state IN ('pending','rejected') ORDER BY seq DESC LIMIT 20",(project,))]
-            return {**self.status(project), 'profile': records[0], 'project': records[1], 'knowledge': records[2], 'activity': activity, 'events':events}
+            return {**self.status(project), 'profile': records[0], 'project': records[1], 'knowledge': records[2], 'activity': activity, 'events':events,'userProfile':self.user_profile(),'contextProviders':describe()}
+
+    def user_profile(self):
+        with self.db()as db:name=db.execute('SELECT name FROM profiles WHERE id=?',(self.owner,)).fetchone()[0]
+        return {'id':self.owner,'name':name,'kind':'local','identitySource':'local-installation'}
+
+    def rename_profile(self,name):
+        if not isinstance(name,str)or not name.strip()or len(name)>80:raise ValueError('Enter a profile name up to 80 characters')
+        with self.lock,self.db()as db:db.execute('UPDATE profiles SET name=? WHERE id=?',(name.strip(),self.owner))
+        return self.user_profile()
+
+    def browse(self,project,scope='project',**options):
+        self.project(project)
+        if scope not in {'user','project','knowledge'}:raise ValueError('Invalid memory scope')
+        with self.lock:return self.call([{'action':'page','subject':self.subject(scope,project),**options}])[0]
+
+    def record_detail(self,project,scope,record_id,preview=False):
+        self.project(project)
+        if scope not in {'user','project'}:raise ValueError('Invalid memory scope')
+        with self.lock:return self.call([{'action':'forget-preview'if preview else 'record','subject':self.subject(scope,project),'recordId':record_id}])[0]
 
     def forget(self, project, scope, record_id):
         if scope not in {'user', 'project'}:
@@ -243,12 +273,15 @@ class MemoryService:
             try:
                 rows = self.call([{'action': 'recall', 'subject': self.subject(s, project), 'query': query, 'limit': 6} for s in ('user', 'project')])
                 context = [{'scope': scope, 'id': r['id'], 'text': r['content'], 'sourceDate': r['created_at'], 'key': r.get('fact_key')} for scope, records in zip(('user','project'), rows) for r in records]
-                return context, self.status(project)
+                from .memory_context import retrieve
+                external,provider_status=retrieve(project,self.owner,query,safe)
+                return context+external,{**self.status(project),'contextProviders':provider_status}
             except (OSError, RuntimeError, subprocess.TimeoutExpired):
                 self.error = 'AtMem unavailable — using this project only; eligible changes queued'
                 return [], self.status(project)
 
     def record_turn(self, project, payload):
+        payload={**payload,'userId':self.owner,'actor':'atmem-architect','actorType':'agent'}
         ident = str(uuid.uuid4())
         with self.lock, self.db() as db:
             db.execute('INSERT INTO activity VALUES (?,?,?,?)', (ident, project, timestamp(), json.dumps(payload)))

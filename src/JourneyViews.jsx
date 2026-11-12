@@ -1,5 +1,6 @@
 // Review, Estimate and Deploy steps of the AtMem AI Architect journey.
 import React from "react";
+import {Check} from "lucide-react";
 import { ATTRIBUTES, acceptRisk, blockers } from "./review.mjs";
 import { DISCLAIMER, INPUTS, PROJECT_SIZES, setProjectSize, setPrice, setUsage } from "./estimate.mjs";
 import { deploymentSteps } from "./document.mjs";
@@ -30,7 +31,8 @@ function Accept({ onAccept }) {
   );
 }
 
-export function ReviewView({ project, findings, onChange, onOpen, onAddRequirement }) {
+export function ReviewView({ project, findings, onChange, onOpen, onAddRequirement,expanded=false }) {
+  const ChoicesContainer=expanded?'section':'details',ChoicesHeading=expanded?'h3':'summary';
   const names = Object.fromEntries(project.nodes.map((n) => [n.id, n.data.label]));
   const block = blockers(findings);
   const open = findings.filter((f) => f.status === "open");
@@ -46,7 +48,7 @@ export function ReviewView({ project, findings, onChange, onOpen, onAddRequireme
               : "Nothing open. Rules run on every change."}
         </p>
       </header>
-      <details className="extra"><summary>Agreed choices and consequences</summary>{(project.decisions||[]).filter(d=>d.status==='Accepted').map(d=><article key={d.id||d.subject}><strong>{d.title||d.subject}</strong><p>{d.decision}</p>{d.context&&<p>{d.context}</p>}{d.consequences&&<p>{d.consequences}</p>}</article>)}</details>
+      <ChoicesContainer className="extra"><ChoicesHeading>Agreed choices and consequences</ChoicesHeading>{(project.decisions||[]).filter(d=>d.status==='Accepted').map(d=><article key={d.id||d.subject}><strong>{d.title||d.subject}</strong><p>{d.decision}</p>{d.context&&<p>{d.context}</p>}{d.consequences&&<p>{d.consequences}</p>}</article>)}</ChoicesContainer>
       {ATTRIBUTES.map(([id, label]) => {
         const fs = findings.filter((f) => f.attribute === id);
         if (!fs.length) return null;
@@ -90,20 +92,20 @@ export function ReviewView({ project, findings, onChange, onOpen, onAddRequireme
   );
 }
 
-export function EstimateView({ project, result, onChange, onEstimate, busy=false, pricing }) {
+export function EstimateView({ project, result, onChange, onEstimate, busy=false, pricing, onNext }) {
   const e = result;
   return (
     <section className="doc" aria-label="Estimate">
       <header className="doc-head">
-        <h2>1. Cost estimate</h2>
-        <p className="muted">Choose a size; usage and available regional prices are calculated for you. {DISCLAIMER}</p>
+        <div className="cost-heading"><h2>1. Cost estimate</h2>{onEstimate&&<button type="button" className="btn" disabled={!!pricing?.busy} onClick={()=>onEstimate(project)}>{pricing?.busy?'Calculating…':'Recalculate'}</button>}</div>
+        <p className="muted">Monthly planning estimate. {DISCLAIMER}</p>
       </header>
-      <fieldset disabled={busy||pricing?.busy}><legend>How large do you expect this project to be?</legend>
-        <div className="row">{PROJECT_SIZES.map(size=><button type="button" className="btn" key={size.id} aria-pressed={project.estimate?.projectSize===size.id} onClick={()=>{const next=setProjectSize(project,size.id);onChange(next);onEstimate?.(next);}}>{size.label}</button>)}</div>
+      <fieldset className="cost-size-selector"><legend>How large do you expect this project to be?</legend>
+        <div className="row">{PROJECT_SIZES.map(size=><button type="button" className={project.estimate?.projectSize===size.id?"btn primary":"btn"} key={size.id} aria-pressed={project.estimate?.projectSize===size.id} onClick={()=>{if(project.estimate?.projectSize===size.id)return;const next=setProjectSize(project,size.id);onChange(next);onEstimate?.(next);}}>{project.estimate?.projectSize===size.id&&<Check size={16} aria-hidden="true"/>}{size.label}</button>)}</div>
         <details className="cost-assumptions"><summary>Planning assumptions</summary><p className="muted small">Small: 10,000 requests / 10 GB; Medium: 100,000 / 100 GB; Large: 1 million / 1 TB; Extra Large: 10 million / 10 TB per month. Existing usage figures take priority. Model assumptions: 3,000 tokens per request and 730 endpoint hours; training usage needs separate agreement.</p></details>
       </fieldset>
-      {pricing?.busy&&<p role="status">Calculating costs…</p>}{pricing?.errors?.map((error,i)=><p className="warn-text" key={i}>{error.component&&`${error.component}: `}{error.reason} <button className="link" disabled={busy||pricing?.busy} onClick={()=>onEstimate?.(project)}>Retry pricing</button></p>)}
-      {onEstimate&&project.estimate?.projectSize&&<button className="link" disabled={busy||pricing?.busy} onClick={()=>onEstimate(project)}>Refresh prices</button>}
+      {project.estimate?.projectSize&&<p className="cost-selection-status" role="status">{PROJECT_SIZES.find(size=>size.id===project.estimate.projectSize)?.label} · {pricing?.busy?'Updating prices…':e.complete?'Estimate ready':e.lines.some(line=>line.cost!=null)?'Partial estimate':'Prices unavailable'}</p>}{pricing?.errors?.map((error,i)=><p className="warn-text" key={i}>{error.component&&`${error.component}: `}{error.reason} <button className="link" disabled={busy||pricing?.busy} onClick={()=>onEstimate?.(project)}>Retry pricing</button></p>)}
+
       <div className="totals">
         <div>
           <small className="muted">Estimated subtotal / month</small>
@@ -131,13 +133,14 @@ export function EstimateView({ project, result, onChange, onEstimate, busy=false
           </div>
         )}
       </div>
-      <p className="muted small">The subtotal includes priced charges only. Architect needs to resolve unpriced services before this becomes a full estimate.</p>
+      <p className="muted small">{e.lines.some(line=>line.price?.planningReference)?'US reference rates · cloud region undecided. Unpriced charges excluded.':'Unpriced charges are excluded.'}</p>
       {e.drivers.length > 0 && (
         <p className="small">
           Biggest drivers: {e.drivers.map((d) => `${d.component} (${money(d.cost, d.price.currency)})`).join(", ")}
         </p>
       )}
-      {e.lines.some(l=>l.cost==null)&&<p role="status">{e.lines.filter(l=>l.cost==null).length} charges await {e.lines.some(l=>l.quantity==null)?'usage assumptions or service pricing':'service pricing'}. {onEstimate?'Available prices are fetched automatically. Review the listed exclusions or retry pricing; you do not need to enter every charge.':'Service prices must be connected before these charges can be calculated.'}</p>}
+      {e.lines.some(l=>l.cost==null)&&<p role="status">{e.lines.filter(l=>l.cost==null).length} charges unpriced.</p>}
+      {onNext&&<button type="button" className="btn" onClick={onNext}>Project files ↓</button>}
       <details className="extra"><summary>Cost breakdown and price sources</summary><div className="resource-schedule" aria-label="Estimate breakdown">{e.lines.map(l=><article key={l.id}><strong>{l.component} · {l.driver}</strong><span>{l.cost==null?'Not yet estimated':money(l.cost,l.price.currency)+'/month'}</span><small>{l.note||l.price?.note}</small><small>{l.quantity??'Usage unresolved'} {l.unit}{l.price&&<> · {l.price.source}{l.price.url&&<> · <a href={l.price.url} target="_blank" rel="noreferrer">price source</a></>}</>}</small></article>)}</div></details>
       <details className="extra"><summary>Adjust usage assumptions and prices</summary>
       {e.lines.some((l) => !l.detailed) && <>

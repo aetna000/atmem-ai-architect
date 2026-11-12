@@ -1395,3 +1395,13 @@ not navigation. Requirements is generated/editable content; starting imports bel
 at project entry points. New memory requests require paginated/searchable tables,
 local default profiles, actor/user provenance and scoped external context providers.
 Million-record support and full Windows export remain unqualified until measured.
+
+
+## 2026-11-13 — Explicit inline chat details
+
+Owner rejects excessive question marks. Chat uses More details / Less details to expand the original response inline, without adding an agent turn or losing source text. Complete → names the final Review action; unresolved checks and costs remain visible. Optional help must stay sparse.
+
+
+## 2026-11-13 — Memory table, provenance and automatic partial estimates
+
+The owner prioritizes memory usability and reliable actions over narrative panels. Use SDK-bound indexed pages and a stable local Default profile, preserve legacy unknown creators, expose scoped external context without storing retrieval, and keep full generation/work records in exports. Terraform results must survive navigation while exact file hashes match. Costs run automatically from available facts, default to Small only when unspecified, and retain a Recalculate button. Public Google rates may form an explicitly labelled planning reference without selecting a deployment region or claiming a full quote. Country/residency and cloud region remain distinct. Qualification is limited to measured dashboard reads and local fixture/SDK checks; no hosted/cloud/Orca/native Windows acceptance follows.

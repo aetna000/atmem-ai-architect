@@ -467,3 +467,17 @@ async def plan_validations(payload: ArtifactRequest):return await validation_act
 async def get_validation(payload: ValidationJobRequest):return await validation_action(payload,'get')
 @router.post('/validation/recover')
 async def recover_validation(payload: ValidationJobRequest):return await validation_action(payload,'recover')
+
+
+class OrcaOpenRequest(ProjectRequest):
+    zipBase64: str = Field(min_length=4, max_length=42_666_668)
+
+
+@router.post('/orca/open')
+async def open_in_orca(payload: OrcaOpenRequest):
+    from .orca_handoff import open_package
+    local_scope(payload.projectId)
+    try:
+        return await asyncio.to_thread(open_package, payload.zipBase64, home()/'editor-handoffs', payload.projectId)
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from None

@@ -6,7 +6,7 @@ from typing import Literal
 from .contracts import Strict
 from .memory_service import service
 from . import skills
-from .pricing import aws_s3, storage_quote, lambda_quote
+from .pricing import aws_s3, storage_quote, lambda_quote, google_public_quote
 
 router=APIRouter()
 class Target(Strict):
@@ -28,8 +28,8 @@ class Price(Target):
     provider:Literal['aws','azure','gcp','ibm']='aws'
     region:str=Field(max_length=40)
 
-async def invoke(fn,*args):
-    try:return await asyncio.to_thread(fn,*args)
+async def invoke(fn,*args,**kwargs):
+    try:return await asyncio.to_thread(fn,*args,**kwargs)
     except ValueError as exc:raise HTTPException(422,str(exc))
     except Exception:raise HTTPException(503,'AtMem is unavailable; your project still works. Run npm run setup:memory if needed.')
 
@@ -54,11 +54,8 @@ async def profile(payload:Profile):
 
 @router.post('/api/memory/forget-preview')
 async def preview(payload:Forget):
-    report=await invoke(service().inspect,payload.projectId)
-    records=report['profile' if payload.scope=='user' else 'project']
-    record=next((r for r in records if r['id']==payload.recordId),None)
-    if not record:raise HTTPException(404,'Record not available in this scope')
-    return {'records':[r for r in records if r['fact_key']==record['fact_key']], 'notice':'Removes this memory and its earlier values. Project data is kept; edit the project itself to change requirements or decisions.'}
+    result=await invoke(service().record_detail,payload.projectId,payload.scope,payload.recordId,True)
+    return {**result,'notice':'Removes this memory and its history. Project files remain.'}
 
 @router.post('/api/memory/forget')
 async def forget(payload:Forget):
@@ -90,3 +87,55 @@ class LambdaPrice(Target):
 async def lambda_price(payload:LambdaPrice):
     try:return await asyncio.to_thread(lambda_quote,payload.region,payload.architecture)
     except Exception:raise HTTPException(503,'The regional Lambda price is unavailable. Retry pricing; no rate was invented.')
+
+
+class GooglePrice(Target):
+    service:Literal['cloud-run','cloud-sql']
+    region:str=Field(default='',max_length=40)
+    planningReference:StrictBool=False
+
+@router.post('/api/pricing/google')
+async def google_price(payload:GooglePrice):
+    try:return await asyncio.to_thread(google_public_quote,payload.service,payload.region,payload.planningReference)
+    except ValueError as error:raise HTTPException(422,str(error)) from None
+    except Exception:raise HTTPException(503,'Google pricing could not be verified. Retry pricing.') from None
+
+
+class MemoryPage(Target):
+    scope:Literal['user','project','knowledge']='project'
+    status:Literal['active','superseded','quarantined','all']='active'
+    query:str=Field(default='',max_length=200)
+    cursor:str|None=Field(default=None,max_length=500)
+    limit:int=Field(default=50,ge=1,le=100,strict=True)
+
+class ProfileName(Strict):
+    name:str=Field(min_length=1,max_length=80)
+
+@router.post('/api/memory/records')
+async def memory_records(payload:MemoryPage):
+    return await invoke(service().browse,payload.projectId,payload.scope,status=payload.status,query=payload.query,cursor=payload.cursor,limit=payload.limit)
+
+@router.post('/api/memory/record')
+async def memory_record(payload:Forget):
+    return await invoke(service().record_detail,payload.projectId,payload.scope,payload.recordId)
+
+@router.post('/api/memory/user-profile')
+async def user_profile(payload:ProfileName):
+    return await invoke(service().rename_profile,payload.name)
+
+
+class ContextRequest(Target):
+    query:str=Field(min_length=1,max_length=4000)
+
+@router.post('/api/memory/context')
+async def memory_context(payload:ContextRequest):
+    memory=service()
+    records,status=await invoke(memory.recall,payload.projectId,payload.query)
+    return {'records':records,'status':status,'userId':memory.owner,'projectId':payload.projectId,'boundary':'retrieval_only'}
+
+
+@router.post('/api/memory/overview')
+async def memory_overview(payload:Target):
+    memory=service();result=await invoke(memory.overview,payload.projectId)
+    result['skills']=skills.public(skills.catalogue(memory,payload.projectId))
+    return result

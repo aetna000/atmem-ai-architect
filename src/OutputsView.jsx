@@ -1,6 +1,5 @@
 import {FileTree} from './FileTree.jsx';
 import {strFromU8} from 'fflate';
-import {HelpNote} from './HelpNote.jsx';
 import {CodePreview} from './CodePreview.jsx';
 import {BrainActivity} from "./BrainActivity.jsx";
 import React,{useEffect,useState} from 'react';
@@ -36,7 +35,7 @@ function Preview({name,content}){
  if(name.endsWith('.md'))return <Document text={content}/>;
  return <CodePreview className="output-code" content={content} name={name}/>;
 }
-export function OutputsView({project,run,environment,session,onDownload,onBack,emulation,onDiscuss,discussionBusy,onBuild,onSave,onDownloaded,onReview,checkReceipt}){
+export function OutputsView({project,run,environment,session,onDownload,onBack,emulation,onDiscuss,discussionBusy,onBuild,onSave,onDownloaded,onReview,checkReceipt,onNavigate}){
  const [exploration,setExploration]=useState(null);
  const [bundle,setBundle]=useState(null),[error,setError]=useState(''),[loading,setLoading]=useState(true),[retry,setRetry]=useState(0),[selected,setSelected]=useState('spec-kit/implementation-spec.md');
  useEffect(()=>{
@@ -50,9 +49,9 @@ export function OutputsView({project,run,environment,session,onDownload,onBack,e
  const raw=fileValues[selectedPath],content=typeof raw==='string'?raw:raw&&/\.(?:md|txt|json|py|js|mjs|tf|sh|yaml|yml|toml|html|css)$/.test(selectedPath)?strFromU8(raw):raw;
 
  return <section className="doc outputs-view" aria-label="Outputs">
-  <header className="doc-head"><h2>Delivery</h2><HelpNote label="Open the package in Orca">Unzip the project ZIP, add the extracted folder in Orca, and open START_HERE.md. No editor plugin is required.</HelpNote></header>
+  <header className="doc-head"><h2>Delivery</h2></header>
   <button className="link" onClick={onReview||onBack}>Back to Review</button>
-  {session?.engineeringEnabled&&<ImplementationDelivery key={project.id} project={project} session={session} onBuild={onBuild} onSave={onSave} contextBusy={discussionBusy} designBundle={loading?null:bundle} onDesignDownload={onDownload} onDownloaded={onDownloaded} checkReceipt={checkReceipt} onExplore={setExploration}/>}
+  {session?.engineeringEnabled&&<ImplementationDelivery key={project.id} project={project} session={session} onBuild={onBuild} onSave={onSave} contextBusy={discussionBusy} designBundle={loading?null:bundle} onDesignDownload={onDownload} onDownloaded={onDownloaded} checkReceipt={checkReceipt} onExplore={setExploration} onNavigate={onNavigate}/>}
   <section aria-label="Project file explorer"><h3>Explore files</h3>
 
   {!session?.engineeringEnabled&&<><p>Design package · no implementation generated.</p><button className="btn" disabled={!bundle||loading||!!error} onClick={()=>onDownload(bundle)}>Download project ZIP</button></>}

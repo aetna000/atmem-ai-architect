@@ -146,6 +146,15 @@ class EngineeringHandoff:
             target.writestr('evidence/original-implementation.zip', archive)
             target.writestr('evidence/artifact-receipt.json', json.dumps(manifest, indent=2, ensure_ascii=False))
             target.writestr('evidence/local-checks.json', json.dumps(report['checks'], indent=2, ensure_ascii=False))
+            with target.open('evidence/generation-activity.json','w') as transcript:
+                transcript.write(b'[');transcript_bytes=2;first=True
+                for row in self.worker.store.db.execute('SELECT sequence,payload FROM engineering_events WHERE session=? ORDER BY sequence',(session,)):
+                    content=json.dumps({'sequence':row['sequence'],**json.loads(row['payload'])},ensure_ascii=False).encode('utf-8')
+                    transcript_bytes+=len(content)+1
+                    if transcript_bytes>50_000_000:raise SessionError('Generation history exceeds the receiving bound; no incomplete transcript was exported.')
+                    if not first:transcript.write(b',')
+                    transcript.write(content);first=False
+                transcript.write(b']')
             target.writestr('design/submitted-project.json', report['context']['content'])
             target.writestr('design/latest-saved-project.json', saved)
             target.writestr('evidence/delivery.json', json.dumps({key: report[key] for key in

@@ -1,2 +1,3 @@
 import React from 'react';
-export function HelpNote({label,children}){return <details className="help-note"><summary aria-label={label||'More information'} title={label||'More information'}>?</summary><div>{children}</div></details>;}
+function textContent(value){return React.Children.toArray(value).map(child=>typeof child==='string'||typeof child==='number'?String(child):React.isValidElement(child)?textContent(child.props.children):'').join(' ');}
+export function InlineNote({children}){const text=textContent(children).trim().replace(/\s+/g,' '),words=text.split(' ');return text?<small className="inline-note">{words.length>20?words.slice(0,20).join(' ')+'…':text}</small>:null;}

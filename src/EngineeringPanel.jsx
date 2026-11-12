@@ -1,5 +1,4 @@
 import {BrainActivity} from './BrainActivity.jsx';
-import {ArchitectureWorkPanel} from './ArchitectureWorkPanel.jsx';
 import React,{useEffect,useRef,useState} from 'react';
 import {engineeringCall,engineeringConversation,mergeEngineeringEvents} from './engineering-client.mjs';
 import './engineering.css';
@@ -11,7 +10,8 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
   const draftKey=`atmem-engineering-draft-v1:${projectId}`;
   const [job,setJob]=useState(null),[events,setEvents]=useState([]),[draft,setDraft]=useState(()=>{try{return localStorage.getItem(draftKey)||'';}catch{return '';}}),
     [busy,setBusy]=useState(false),[error,setError]=useState(''),[loading,setLoading]=useState(true),[artifact,setArtifact]=useState(null);
-  const [draftError,setDraftError]=useState('');
+  const [draftError,setDraftError]=useState(''),[mappingStatus,setMappingStatus]=useState('');
+ const mappedArtifacts=useRef(new Set());
   const [restoreBlocked,setRestoreBlocked]=useState(false),[restoreAttempt,setRestoreAttempt]=useState(0);
   useEffect(()=>{try{localStorage.setItem(draftKey,draft);setDraftError('');}catch{setDraftError('This draft could not be saved in your browser. Keep this view open or copy it before leaving.');}},[draftKey,draft]);
   const live=useRef(true),cursor=useRef(0),actionLock=useRef(false);
@@ -95,14 +95,17 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
   },[buildRequest,projectId,loading,restoreBlocked,contextBusy,uncertain,busy,exactSelection,job?.id]);
   async function linkMappings(){
     const result=await call('reconciliation',{artifactId:artifact.id});
-    if(result.status==='proposal_missing')throw Error(result.message);
+    if(result.status==='proposal_missing'){setMappingStatus('File links missing from package.');return;}
     const verified=await verifyArtifactWork(result);
     if(verified.payload.artifactId!==artifact.id||verified.payload.artifactSha256!==artifact.sha256||verified.payload.sessionId!==job.id)throw Error('The mapping receipt does not match this captured package.');
-    onWorkModelChange({kind:'artifact',verified},projectId);
+    onWorkModelChange({kind:'artifact',verified},projectId);setMappingStatus('Files connected to design blocks.');
   }
+  useEffect(()=>{
+    if(!onWorkModelChange||!artifact||running||uncertain||busy||contextBusy||job?.last_status!=='completed'||artifact.runId!==job.run||mappedArtifacts.current.has(artifact.id))return;
+    mappedArtifacts.current.add(artifact.id);setMappingStatus('Connecting files to design blocks…');void act(linkMappings);
+  },[artifact?.id,job?.run,job?.state,busy,contextBusy]);
   return <div className="engineering-panel">
-    <h2>2. Project files and checks</h2>
-    <p>Creates application code, infrastructure, tests and handoff documents from your saved design.</p>
+    <h2>2. Project files</h2>
     {onDesign&&<button onClick={onDesign}>Return to Design</button>}
 
     {buildRequest?.projectId===projectId&&<p role="status">{restoreBlocked?'Your implementation request is waiting. Retry loading earlier work before starting.':uncertain?'Your implementation request is waiting. Recover the existing request first to avoid duplicate work.':contextBusy?'Your implementation request is waiting for the current design changes.':!job&&!exactSelection?'Your implementation request is waiting here. Choose a model and reasoning level below; it will then start automatically.':'Your implementation request is queued.'} <button onClick={()=>onBuildRequestHandled?.(buildRequest.id)}>Cancel queued request</button></p>}
@@ -116,12 +119,6 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
         {!exactSelection&&<button onClick={onConnections}>Choose model</button>}
         {contextBusy&&<p role="status">Finish the current design changes before starting new work.</p>}
       </>}
-      {conversation.length>0&&<details className="generation-conversation"><summary>Generation activity</summary><section className="engineering-conversation" role="log" aria-label="Project conversation" aria-live="polite">{conversation.map(entry=><article key={entry.id} className={`engineering-entry ${entry.role}`}>
-        <strong>{entry.role==='user'?'You':'Architect'}</strong>
-        {entry.status==='pending'&&<span> · Sending update</span>}
-        {entry.status==='uncertain'&&<span> · Delivery uncertain; recover before resending</span>}
-        <pre>{entry.text}</pre>
-      </article>)}</section></details>}
       {!hasDesign&&!job?<p>Start with the Board or Requirements. Add the components or responsibilities before building an implementation.</p>:<form onSubmit={submitIntent}>
         <details open={running||undefined}><summary>{running?'Add an update':'Additional instructions (optional)'}</summary><label htmlFor="engineering-intent">{running?'Add an implementation update':hasDesign?'Additional instructions (optional)':'Continue implementation'}</label>
         <textarea id="engineering-intent" rows={2} value={draft} onChange={e=>setDraft(e.target.value)}/></details>
@@ -139,15 +136,15 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
         <details><summary>Engineering progress ({events.length})</summary><ol>{events.filter(event=>!['message','accepted','steering_submitted'].includes(event.kind)).map(event=><li key={event.sequence}>{event.kind}{event.text?` · ${event.text}`:''}</li>)}</ol></details>
       </>}
       {artifact&&<div className="engineering-artifact"><p>Project files · {artifact.files.filter(file=>file.kind==='file').length} {artifact.files.filter(file=>file.kind==='file').length===1?'file':'files'} · {artifact.turnStatus}.</p>
-        {artifact.runId!==job?.run&&<p>This package is from an earlier turn. It does not cover the current work.</p>}
+        {artifact.runId!==job?.run&&<p>Earlier package · regenerate for current changes.</p>}
         {onDelivery&&<button disabled={busy} onClick={onDelivery}>Review and download handoff</button>}
 
-        <details><summary>Check and mapping tools</summary>{!running&&!uncertain&&job?.last_status==='completed'&&artifact.runId===job.run&&<button disabled={busy} onClick={()=>act(async()=>{await call('recheck',{runId:job.run,artifactId:artifact.id});const next=await call('state');if(live.current)setJob(next);})}>Recheck and repair</button>}
-        {onWorkModelChange&&!running&&!uncertain&&job?.last_status==='completed'&&artifact.runId===job.run&&<button disabled={busy||contextBusy} onClick={()=>act(linkMappings)}>Link proposed mappings</button>}</details>
+        <p className="muted small" role="status">{mappingStatus||'File links pending.'}</p>
+        {mappingStatus==='File links missing from package.'&&<button disabled={busy||contextBusy} onClick={()=>submitIntent(null,'Add architecture-work-proposal.json binding the existing implementation files to the saved design blocks and requirements. Preserve the application and requirements. Run applicable local checks; retain failed or unexecuted checks explicitly.')}>Repair file links</button>}
+
 
       </div>}
     </>}
-    {(hasDesign||job)&&<ArchitectureWorkPanel project={project} onChange={onWorkModelChange} busy={busy||contextBusy}/>}
     {error&&<p role="alert">{error}</p>}
     {draftError&&<p role="alert">{draftError}</p>}
   </div>;
