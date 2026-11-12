@@ -1357,3 +1357,13 @@ never replay source queued work. Requirements paper stays light with local palet
 all surrounding controls follow theme tokens. Disabled controls remain readable, not
 enabled. Preserve the paused programme and original acceptance boundaries. See UI-002
 evidence/20261112-five-stage-journey/README.md for deliverables, checks and limitations.
+
+
+## 2026-11-12 — Frozen-preview freshness is an explicit UI verification requirement
+
+Owner continued to see contrast/overlap because Vite ignored source under the preview
+parent .local and served old transforms. Source audit/root200 were insufficient. Use
+workspace-relative generated-directory exclusions, same-URL invalidation checks and
+actual-address UI fixtures. Preserve existing idle sessions on the one preview restart.
+Project title expands to466px desktop and remains responsive. UI-003 evidence records
+28 live-asset states/1777 contrast checks; no native/cloud or programme promotion.

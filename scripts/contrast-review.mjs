@@ -5,9 +5,9 @@ import {createServer} from 'node:net';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {pdmTemplate} from '../src/core.mjs';
-const out='.local/external-artifacts/contrast-review';fs.mkdirSync(out,{recursive:true});
-const socket=createServer();await new Promise(r=>socket.listen(0,'127.0.0.1',r));const port=socket.address().port;await new Promise(r=>socket.close(r));const base=`http://127.0.0.1:${port}`;
-const server=spawn(process.execPath,['node_modules/vite/bin/vite.js','--host','127.0.0.1','--port',String(port),'--strictPort'],{stdio:'ignore'});let browser;
+const out=process.env.ATMEM_CONTRAST_EVIDENCE_DIR||'.local/external-artifacts/contrast-review';fs.mkdirSync(out,{recursive:true});
+const socket=createServer();await new Promise(r=>socket.listen(0,'127.0.0.1',r));const port=socket.address().port;await new Promise(r=>socket.close(r));const base=process.env.ATMEM_UI_BASE||`http://127.0.0.1:${port}`;
+const server=process.env.ATMEM_UI_BASE?null:spawn(process.execPath,['node_modules/vite/bin/vite.js','--host','127.0.0.1','--port',String(port),'--strictPort'],{stdio:'ignore'});let browser;
 try{
  for(let i=0;i<60;i++){try{if((await fetch(base)).ok)break;}catch{}await new Promise(r=>setTimeout(r,100));}
  browser=await chromium.launch({headless:true});const page=await browser.newPage({viewport:{width:1440,height:1050}});page.setDefaultTimeout(15000);
@@ -44,6 +44,17 @@ try{
   for(const stage of ['Board','Requirements','Choices','Review','Delivery']){
    await page.getByRole('tab',{name:stage,exact:true}).click();await page.waitForTimeout(200);
    await audit(`${theme}-${stage}`);
+   if(stage==='Board'){
+    const toggle=page.getByRole('button',{name:'Toggle components and layers'});if(await toggle.getAttribute('aria-expanded')!=='true')await toggle.click();
+    await audit(`${theme}-components`,'.board-components');
+    await page.locator('.react-flow__node').first().dblclick();
+    if(!await page.getByRole('region',{name:'Block detail'}).isVisible())await page.locator('.react-flow__node').first().dblclick();
+    await page.getByRole('region',{name:'Block detail'}).waitFor();assert.equal(await page.getByRole('complementary',{name:'Board components'}).count(),0);
+    const confirmation=page.getByRole('button',{name:'Looks good',exact:true});await confirmation.scrollIntoViewIfNeeded();
+    await audit(`${theme}-block-review`,'.component-review');
+    for(const button of await page.locator('.block-review-actions button:not(:disabled)').all()){await button.hover();await button.focus();await audit(`${theme}-block-review-focus`,'.component-review');}
+    await page.getByRole('button',{name:'Back to the board',exact:true}).click();
+   }
    if(stage==='Review'){
     await page.getByText('Costs and usage assumptions',{exact:true}).click();await audit(`${theme}-costs`);await page.getByText('Costs and usage assumptions',{exact:true}).click();
     await page.getByText('Generated infrastructure and configuration checks',{exact:true}).click();await audit(`${theme}-infrastructure`);await page.getByText('Generated infrastructure and configuration checks',{exact:true}).click();
@@ -56,4 +67,4 @@ try{
  }
  fs.writeFileSync(`${out}/results.json`,JSON.stringify({samples,errors},null,2)+'\n');
  console.log(JSON.stringify(samples.map(s=>({view:s.view,checked:s.checked,failures:s.failures})),null,2));assert.deepEqual(errors,[]);assert.equal(samples.reduce((n,s)=>n+s.failures.length,0),0,'all sampled text and controls must meet contrast thresholds');
-}finally{await browser?.close();server.kill('SIGTERM');}
+}finally{await browser?.close();server?.kill('SIGTERM');}

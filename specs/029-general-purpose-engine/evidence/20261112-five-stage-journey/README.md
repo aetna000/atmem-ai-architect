@@ -64,3 +64,9 @@ wanted. In Delivery inspect JSON/PDF and the captured package state. Repeat with
 Rollback: restore runtime files from the previous Git commit and restart only this preview
 with its preserved settings/home. MEM0 before-five-stages retains previous files; do not
 remove project data, sessions, artefacts or replace a completed native run.
+
+
+Subsequent correction: UI-003 found the frozen preview served cached pre-fix JSX/CSS
+despite current source files. The source audit and successful root/module load above
+did not prove transform freshness. See ../20261112-live-preview-cache/README.md for
+the relative watch fix, preserved restart and actual-address contrast/state checks.

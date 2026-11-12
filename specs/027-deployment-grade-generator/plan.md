@@ -616,3 +616,10 @@ Board sidebar and coherent light/dark palettes.571JS/8 attachment/build, desktop
 journey/lifecycle and20 contrast surfaces pass. Live5298 preserves project/session data.
 Original28/native programme stays paused; no pricing/native/cloud/voice promotion.
 Evidence:029/evidence/20261112-five-stage-journey (relative to specs).
+
+
+2026-11-12 actual-preview correction: parent.local ignore glob served stale JSX/CSS
+after source-only contrast fixes. Use relative watch exclusions, verify the same module
+URL invalidates, and test actual5298 assets.572JS/build/real Vite watch regression and
+28 contrast states/1777 checks pass; project title466px/responsive; data preserved.
+Evidence:029/evidence/20261112-live-preview-cache. Programme remains paused.
