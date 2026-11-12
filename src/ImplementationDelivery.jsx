@@ -18,11 +18,14 @@ export function ImplementationDelivery({project,session,onBuild,onSave,contextBu
   try{
    let current=report;
    if(!original&&onSave){
-    const saved=await onSave();
+    const saved=await onSave(project);
     if(!/^[a-f0-9]{64}$/.test(saved?.sha256||''))throw Error('The current design save was not confirmed. Nothing was downloaded.');
     current=await engineeringCall(session,'delivery',{projectId:project.id});
     setLoaded({project,report:current});
-    if(current.artifact?.id!==report.artifact.id||current.session?.id!==report.session.id||current.savedDesignSha256!==report.savedDesignSha256)
+    if(current.savedFileSha256!==saved.sha256)
+      throw Error('The saved design changed after confirmation. Review the refreshed Delivery information before downloading.');
+    const confirmedSameDesign=current.relation==='matches_saved_design'&&current.savedFileSha256===saved.sha256;
+    if(current.artifact?.id!==report.artifact.id||current.session?.id!==report.session.id||(current.savedDesignSha256!==report.savedDesignSha256&&!confirmedSameDesign))
       throw Error('The saved design or package changed. Review the refreshed Delivery information before downloading.');
    }
    const payload={projectId:project.id,sessionId:current.session.id,artifactId:current.artifact.id};

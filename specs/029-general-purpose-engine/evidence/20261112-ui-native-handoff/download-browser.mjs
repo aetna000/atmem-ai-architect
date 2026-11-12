@@ -9,7 +9,9 @@ const browser=await chromium.launch({headless:true}),page=await browser.newPage(
 await page.addInitScript(()=>{localStorage.setItem('atforma-draw-live','off');localStorage.setItem('atforma-connection-v1',JSON.stringify({provider:'codex',model:'gpt-6.1-sol',effort:'high'}))});
 try{
  await page.goto(base+'/');await page.locator('#project-file-input').setInputFiles({name:'saved-project.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(file))});await page.getByText('Project opened.',{exact:true}).waitFor();
- const map=page.locator('.journey-map');await map.locator('summary').click();await map.getByRole('button',{name:'Go to Delivery',exact:true}).click();
+ await page.getByRole('tab',{name:'Implementation',exact:true}).click();
+ await page.getByRole('log',{name:'Project conversation',exact:true}).getByText(/I’m using the composition skill/).waitFor();
+ await page.getByRole('button',{name:'Review and download handoff',exact:true}).click();
  const panel=page.getByRole('region',{name:'Implementation delivery',exact:true}),button=panel.getByRole('button',{name:'Download handoff package (ZIP)',exact:true});await button.waitFor();
  await panel.getByRole('heading',{name:'Package checks',exact:true}).waitFor();await page.screenshot({path:out+'/delivery-before-download.png',fullPage:true});
  const downloaded=page.waitForEvent('download',{timeout:45000});await button.click();const download=await downloaded;await download.saveAs(out+'/handoff.zip');

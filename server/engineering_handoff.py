@@ -24,6 +24,54 @@ def design_digest(content, project):
                              separators=(',', ':'), allow_nan=False).encode())
 
 
+def same_design(submitted, current, session, events):
+    """Ignore only exact acknowledged conversation mirrors, never new intent.
+
+    The UI records accepted requests after submission. Those entries already
+    belong to the native conversation; all source snapshots stay unmodified.
+    Preserve missing history, unresolved/forged entries, mappings and revisions.
+    """
+    if submitted == current:
+        return True
+    accepted = {e.get('requestId') for e in events if e.get('kind') == 'steering_accepted'}
+    trusted = {}
+    for event in events:
+        if ((event.get('kind') == 'accepted' and event.get('origin') != 'automatic_repair')
+                or (event.get('kind') == 'steering_submitted' and event.get('requestId') in accepted)):
+            if type(event.get('sequence')) is int and isinstance(event.get('text'), str):
+                ident = f'{session}:{event["sequence"]}'
+                trusted[ident] = {'id': ident, 'sessionId': session, 'sequence': event['sequence'],
+                                  'text': event['text'], 'status': 'accepted'}
+    def intents(value):
+        extensions = value.get('extensions', {})
+        work = extensions.get('architectureWork', {}) if isinstance(extensions, dict) else {}
+        return work.get('intents', []) if isinstance(work, dict) else None
+    before, after = intents(submitted), intents(current)
+    if not isinstance(before, list) or not isinstance(after, list) or len(before)>1000 or len(after)>1000:
+        return False
+    by_id = {}
+    for row in after:
+        if not isinstance(row, dict) or not isinstance(row.get('id'), str) or row['id'] in by_id:
+            return False
+        by_id[row['id']] = row
+    if any(not isinstance(row, dict) or not isinstance(row.get('id'), str) or by_id.get(row['id']) != row for row in before):
+        return False
+    def projection(value):
+        value = json.loads(json.dumps(value))
+        extensions = value.get('extensions')
+        work = extensions.get('architectureWork') if isinstance(extensions, dict) else None
+        if isinstance(work, dict) and isinstance(work.get('intents'), list):
+            work['intents'] = [row for row in work['intents'] if trusted.get(row['id']) != row]
+            empty = {'version': 2, 'records': [], 'intents': [], 'snapshots': [],
+                     'bindings': [], 'history': [], 'artifactMappings': []}
+            if work == empty:
+                del extensions['architectureWork']
+        if extensions == {}:
+            del value['extensions']
+        return value
+    return projection(submitted) == projection(current)
+
+
 class EngineeringHandoff:
     def __init__(self, worker):
         self.worker = worker
@@ -44,17 +92,18 @@ class EngineeringHandoff:
             raise SessionError('The captured package receipt is unavailable. Refresh Delivery.')
         job = worker.jobs.state(scope, row['session'])
         context = None
+        events = []
         current_run = (job['state'] == 'idle' and job['last_status'] == 'completed'
                        and job['run'] == manifest['runId'] and manifest.get('turnStatus') == 'completed'
                        and manifest.get('kind') == 'delivery')
         if current_run:
             try:
-                context, _ = worker.reconciliation.submitted_context(scope, row['session'])
+                context, events = worker.reconciliation.submitted_context(scope, row['session'])
             except SessionError:
                 pass
         relation = 'earlier_turn' if not current_run else 'unknown'
         if context:
-            relation = 'matches_saved_design' if design_value(context['content'].encode(), scope.project) == current else 'design_changed'
+            relation = 'matches_saved_design' if same_design(design_value(context['content'].encode(), scope.project), current, row['session'], events) else 'design_changed'
         checks = worker.checks.list(scope, row['session'], manifest['id'])
         if any(check.get('artifactSha256') != manifest['sha256'] for check in checks):
             raise SessionError('A check receipt does not match this package. No combined handoff was prepared.')

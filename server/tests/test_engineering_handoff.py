@@ -14,7 +14,7 @@ from server.app import app, TOKEN
 from server import engineering_routes as routes
 from server.engineering_artifacts import EngineeringArtifacts
 from server.engineering_contexts import EngineeringContexts
-from server.engineering_handoff import EngineeringHandoff, digest, design_digest
+from server.engineering_handoff import EngineeringHandoff, digest, design_digest, same_design
 from server.engineering_jobs import JobJournal
 from server.engineering_reconciliation import EngineeringReconciliation
 from server.engineering_sessions import SqliteSessionStore, ProjectScope, ModelSelection, SessionError
@@ -98,6 +98,45 @@ class HandoffTests(unittest.TestCase):
         foreign = ProjectScope('other-tenant', self.scope.project)
         self.assertIsNone(self.delivery.inspect(foreign, self.saved)['artifact'])
         self.assertEqual(self.store.get(self.scope, self.session)['state'], 'idle')
+
+    def test_acknowledged_ui_history_is_same_design_but_preserved_in_exact_download(self):
+        artifact = self.capture()
+        event = self.journal.read(self.scope, self.session)[0]
+        current = json.loads(self.saved)
+        current['extensions'] = {'architectureWork': {'version': 2, 'records': [], 'intents': [
+            {'id': f'{self.session}:{event["sequence"]}', 'sessionId': self.session, 'sequence': event['sequence'],
+             'text': event['text'], 'status': 'accepted'}], 'snapshots': [], 'bindings': [], 'history': [], 'artifactMappings': []}}
+        content = json.dumps(current).encode()
+        self.assertNotEqual(design_digest(content, self.scope.project), design_digest(self.saved, self.scope.project))
+        report = self.delivery.inspect(self.scope, content)
+        self.assertEqual(report['relation'], 'matches_saved_design')
+        package, _ = self.delivery.package(self.scope, content, self.session, artifact['id'], report['savedDesignSha256'])
+        with zipfile.ZipFile(io.BytesIO(package)) as archive:
+            self.assertEqual(archive.read('design/submitted-project.json'), self.saved)
+            self.assertEqual(archive.read('design/latest-saved-project.json'), content)
+        for mutate in [
+            lambda x: x['extensions']['architectureWork']['intents'][0].update(text='New unsubmitted scope'),
+            lambda x: x['extensions']['architectureWork']['intents'][0].update(status='pending'),
+            lambda x: x['extensions']['architectureWork']['intents'][0].update(sessionId='foreign-session'),
+            lambda x: x['extensions']['architectureWork']['intents'].append(dict(x['extensions']['architectureWork']['intents'][0])),
+            lambda x: x['extensions']['architectureWork']['records'].append({'id': 'new-responsibility'}),
+            lambda x: x['requirements'].append({'statement': 'New approval requirement'}),
+            lambda x: x['meta'].update(revision=4),
+        ]:
+            changed = json.loads(content); mutate(changed)
+            self.assertEqual(self.delivery.inspect(self.scope, json.dumps(changed).encode())['relation'], 'design_changed')
+
+    def test_history_projection_requires_acknowledged_exact_identity_and_never_loses_prior_intent(self):
+        original = json.loads(self.saved)
+        row = {'id': f'{self.session}:10', 'sessionId': self.session, 'sequence': 10, 'text': 'Preserve routing ownership', 'status': 'accepted'}
+        current = json.loads(self.saved)
+        current['extensions'] = {'architectureWork': {'version': 2, 'records': [], 'intents': [row], 'snapshots': [], 'bindings': [], 'history': [], 'artifactMappings': []}}
+        events = [{'kind': 'steering_submitted', 'sequence': 10, 'requestId': 'request', 'text': row['text']}]
+        self.assertFalse(same_design(original, current, self.session, events))
+        self.assertFalse(same_design(original, current, self.session, events+[{'kind': 'steering_delivery_uncertain', 'requestId': 'request'}]))
+        events.append({'kind': 'steering_accepted', 'requestId': 'request'})
+        self.assertTrue(same_design(original, current, self.session, events))
+        self.assertFalse(same_design(current, original, self.session, events))
 
     def test_earlier_turn_and_missing_context_cannot_be_repackaged_as_current_work(self):
         artifact = self.capture()

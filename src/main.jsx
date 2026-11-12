@@ -1581,10 +1581,14 @@ function App() {
     }, 800);
     return () => clearTimeout(t);
   }, [project, messages, session?.token]);
-  function saveEngineeringProject(owner){
+  async function saveEngineeringProject(owner,expected){
     const current=projectRef.current;
     if(current.id!==owner)throw Error('The project changed while opening engineering work. Return to that project before submitting its draft.');
-    return projectStore(session,'save',{id:owner,file:toProjectFile(withConversation(current,messagesRef.current))});
+    if(expected&&expected!==current)throw Error('The design changed before saving the handoff. Review Delivery again.');
+    const conversation=messagesRef.current;
+    const result=await projectStore(session,'save',{id:owner,file:toProjectFile(withConversation(current,conversation))});
+    if(expected&&(projectRef.current!==expected||messagesRef.current!==conversation))throw Error('The design changed while saving the handoff. Review Delivery again.');
+    return result;
   }
   async function refreshProjects() {
     if (!session) return;
@@ -2177,7 +2181,7 @@ function App() {
 
         {onBoard&&emulationOpen&&<div className="emulation-dock"><EmulationPanel project={project} session={session} emulation={emulation} onDiscuss={discussEmulation} onOpenComponent={id=>{reviewBlock(id);setEmulationOpen(false);}} discussionBusy={busy||agentBusy||!!pending} onClose={()=>setEmulationOpen(false)} onBuild={session?.engineeringEnabled?()=>{setEmulationOpen(false);buildCurrentDesign('test');}:undefined}/></div>}
 
-        {mode === "design" && designView === "outputs" && <OutputsView onSave={()=>saveEngineeringProject(project.id)} project={project} run={run} environment={environment} session={session} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onDownload={downloadBundle} onBuild={session?.engineeringEnabled?()=>buildCurrentDesign('test'):undefined} onBack={()=>setDesignView("board")} />}
+        {mode === "design" && designView === "outputs" && <OutputsView onSave={expected=>saveEngineeringProject(project.id,expected)} project={project} run={run} environment={environment} session={session} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onDownload={downloadBundle} onBuild={session?.engineeringEnabled?()=>buildCurrentDesign('test'):undefined} onBack={()=>setDesignView("board")} />}
         {mode === "design" && designView === "terraform" && <TerraformView project={project} environment={environment} session={session} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onDownload={exportTerraform} onBuild={session?.engineeringEnabled?()=>buildCurrentDesign('test'):undefined} onBack={()=>setDesignView("board")} />}
         {mode === "design" && ["options","decisions"].includes(designView) && (
           <OptionsView project={project} busy={busy||agentBusy||!!pending} onChoose={chooseCloud} onContinue={()=>visitJourney("location")} onPreview={(provider)=>{setDesignView("board");setLevel("flow");setChatOpen(true);send(`Preview a concrete ${OPTION_NAMES[provider]} implementation of our working scope, using actual named services in data.service and explicit connections. Keep existing systems and comments. Use the known country/residency constraints, or leave region undecided and ask the country question. This is an alternative preview, not a cloud choice or deployment. Return a graph proposal and explain key integration assumptions.`,"preview",{mode:"design",view:"board"});}} onDiscuss={(question) => { setChatOpen(true); send(question, "workflow"); }} />
