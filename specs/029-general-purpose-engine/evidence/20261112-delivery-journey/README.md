@@ -14,10 +14,16 @@ Validation:558 JS tests/no failures/skips;479 server tests pass; production buil
 
 Real prior Google native archive69bdacf7 independently receives through the product packager from a read-only SQLite backup:159 files rehashed, seven standard Spec Kit files retained, exact original archive verified, submitted/current context matches. Its one registered failed check remains failed. No original DB/source write, new native turn, application execution or full-system requalification. Earlier separate independent runtime successes remain separate; this wrapper does not replace failed history with those results.
 
-Failed evaluator attempts retained on MEM0: first receiving oracle assumed only spec-kit/ and was corrected to the actual standard specs/<feature>/spec.md, plan.md and tasks.md; ASGI fixture initially crossed SQLite threads via TestClient and was corrected to the production same-thread async transport. Neither required a generated-source fix or weakened receiving hash assertion. Bulk logs/archives/screenshots/database copy: .local/external-artifacts/delivery-journey/.
+Evaluator corrections (native receiving failure log retained on MEM0; initial ASGI thread error recorded in the session): first receiving oracle assumed only spec-kit/ and was corrected to the actual standard specs/<feature>/spec.md, plan.md and tasks.md; ASGI fixture initially crossed SQLite threads via TestClient and was corrected to the production same-thread async transport. Neither required a generated-source fix or weakened receiving hash assertion. Bulk logs/archives/screenshots/database copy: .local/external-artifacts/delivery-journey/.
 
 Reproduce real receiving from repo root with a fresh MEM0 output directory:
 
     .venv/bin/python -c "import runpy; runpy.run_path('specs/029-general-purpose-engine/evidence/20261112-delivery-journey/check-native-receiving.py', run_name='__main__')" /absolute/MEM0/fresh-directory
 
 UI-001 remains in progress: finish remaining navigation/menu duplication, real fresh generation-to-handoff usability and OpenAI voice. No alpha.5, original28, owner acceptance or measured-quality promotion. Existing owner5288 untouched.
+
+## Verified preview and manual card
+
+http://localhost:5296 now runs exact frozen1af3111 on both frontend/backend, replacing only the confirmed empty isolated UI preview. Owner5288 unchanged; no CSS changes. Actual root/canvas and missing-project authorization probe pass; synthetic delivery/download/navigation fixtures pass on the exact address. No native validators are registered in this UI preview: configure qualified operator registrations before a fresh native full-check demonstration. Voice remains local dictation. This is not alpha.5 or a complete end-to-end release.
+
+Manual: open Delivery from the section menu; a project without an implementation gets an explicit implementation action and optional design draft. After actual native work, choose Review and download handoff; inspect relationship/checks/files, then download. Read START_HERE.md and the implementation's actual Spec Kit/run instructions; retained failed checks remain unresolved. Save failures and changed context require review/retry. To roll back, stop only this UI preview parent and launch the previous2741ad2 frontend-patched worktree with the same empty home/5296/8889 configuration; never restart owner5288.
