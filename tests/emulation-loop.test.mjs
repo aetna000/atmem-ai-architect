@@ -66,7 +66,7 @@ test('readiness catches missing code before a test, while supported provider des
   const missing=structuredClone(project);missing.nodes.push({id:'new-app',data:{label:'Email sign-in',provider:project.nodes[0].data.provider,kind:'resource',origin:'proposed'}});
   const before=JSON.stringify(missing);const guidance=emulationPreflight(missing);
   assert.equal(guidance.action,'build-and-test');assert.equal(guidance.componentId,'new-app');
-  assert.match(guidance.next,/Implement and test this design/);assert.match(guidance.next,/Nothing is deployed/);
+  assert.match(guidance.next,/Implement and check/);assert.match(guidance.next,/Nothing is deployed/);
   assert.equal(JSON.stringify(missing),before);assert.equal(guidance.checks,undefined);
  }
 });

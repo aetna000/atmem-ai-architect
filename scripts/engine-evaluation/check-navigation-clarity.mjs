@@ -34,7 +34,7 @@ try{
   if(label==='Choices'){await page.getByRole('heading',{name:'Choices',exact:true}).waitFor();await page.getByRole('heading',{name:'Choices we’ve made',exact:true}).waitFor();assert.equal(await page.getByRole('tab',{name:'Design choices',exact:true}).count(),0);}
   if(label==='Country & region'){const region=page.getByRole('region',{name:'Country and region'});await region.waitFor();assert.match(await region.innerText(),/Not yet agreed/);}
   if(label==='Infrastructure')await page.getByRole('heading',{name:'Terraform deployment draft',exact:true}).waitFor();
-  if(label==='Delivery')await page.getByRole('heading',{name:'Outputs',exact:true}).waitFor();
+  if(label==='Delivery')await page.getByRole('heading',{name:'Delivery',exact:true}).waitFor();
  }
  await visit('Choices',3);await page.screenshot({path:out+'/choices-desktop.png'});await page.setViewportSize({width:390,height:844});await visit('Country & region',4);await page.screenshot({path:out+'/region-mobile.png'});const overflow=await page.evaluate(()=>({width:innerWidth,scroll:document.documentElement.scrollWidth,elements:[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>innerWidth+1&&getComputedStyle(e).position!=='absolute').slice(0,12).map(e=>({tag:e.tagName,cls:e.className,right:e.getBoundingClientRect().right,text:e.textContent.slice(0,90)}))}));if(overflow.scroll>overflow.width+1)console.log(JSON.stringify(overflow));assert.equal(overflow.scroll>overflow.width+1,false);
  await visit('Board',1);assert.deepEqual(errors,[]);assert.equal(calls.length,0);assert.equal(emulationCalls,0);

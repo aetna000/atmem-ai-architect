@@ -11,14 +11,14 @@ export function emulationGuidance(project,report,{beforeRun=false}={}){
  if(plan&&!plan.rows.length)return {...base,reason:'There is no system drawn yet.',next:'Describe what you want to build so Architect can draw a first design.',owner:'user'};
  const browserIds=new Set((project?.nodes||[]).filter(n=>n.data.origin==='existing'&&n.data.provider==='tools'&&!n.data.binding&&/\bbrowser\b/i.test(n.data.label)).map(n=>n.id));
  const missing=plan?.rows.find(r=>!r.implemented&&!browserIds.has(r.id));
- if(missing)return {...base,title:'Application code is needed before testing',reason:`${missing.label} is in your design, but runnable application code is not available for this test.`,next:'Choose “Implement and test this design”. Architect will generate code and connections, attempt local tests, and show results in Build. Nothing is deployed to the cloud.',action:'build-and-test',componentId:missing.id};
+ if(missing)return {...base,title:'Application code is needed before testing',reason:`${missing.label} is in your design, but runnable application code is not available for this test.`,next:'Choose “Implement and check”. Architect will generate code and connections, attempt local tests, and show results in Implementation. Nothing is deployed to the cloud.',action:'build-and-test',componentId:missing.id};
  if(browserIds.size)return {...base,reason:'The browser needs to be marked as an external client.',next:'Architect can propose that small correction, then try the test again.',owner:'architect',needsModel:true,componentId:[...browserIds][0]};
  const access=plan?.gapDetails.find(g=>g.id.startsWith('access-'));
  if(access)return {...base,reason:'An access rule is missing.',next:'Confirm who should be allowed to use this block; Architect can add the rule.',owner:'user',needsModel:true,componentId:access.componentIds?.[0]};
  const connection=plan?.connections.find(e=>!e.generated);
- if(connection)return {...base,reason:'The connections between the application’s parts are not implemented yet.',next:'Choose “Implement and test this design” to generate its connections and run local checks.',action:'build-and-test',componentId:connection.source};
+ if(connection)return {...base,reason:'The connections between the application’s parts are not implemented yet.',next:'Choose “Implement and check” to generate its connections and run local checks.',action:'build-and-test',componentId:connection.source};
  const container=project?.nodes.find(containerContract);
- if(container&&!beforeRun)return {...base,reason:`${container.data.label} has infrastructure defined, but no supported local application test yet.`,next:'Choose “Implement and test this design” to use its supplied image and run local checks.',action:'build-and-test',componentId:container.id};
+ if(container&&!beforeRun)return {...base,reason:`${container.data.label} has infrastructure defined, but no supported local application test yet.`,next:'Choose “Implement and check” to use its supplied image and run local checks.',action:'build-and-test',componentId:container.id};
  return beforeRun?null:base;
 }
 export function guidanceMessage(guidance){

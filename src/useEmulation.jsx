@@ -4,7 +4,7 @@ import {terraformSketch} from './terraform.mjs';
 import {toProjectFile} from './project-file.mjs';
 
 export function useEmulation(project,environment,session){
- const [last,setLast]=useState(null),[running,setRunning]=useState(false),[autoRetest,setAutoRetest]=useState(true),[coach,setCoach]=useState(true),[retestLimitReached,setRetestLimitReached]=useState(false);
+ const [last,setLast]=useState(null),[running,setRunning]=useState(false),[autoRetest,setAutoRetest]=useState(false),[coach,setCoach]=useState(false),[retestLimitReached,setRetestLimitReached]=useState(false);
  const preflight=useMemo(()=>emulationPreflight(project),[project]);
  const controller=useRef(null),retest=useRef(null),runRef=useRef(null),automaticRounds=useRef(0);
  const key=useMemo(()=>JSON.stringify([project.id,environment,terraformSketch(project,environment)]),[project,environment]);

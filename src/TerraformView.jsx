@@ -7,7 +7,7 @@ import {terraformSketch} from './terraform.mjs';
 import {resourcePlan} from './resources.mjs';
 import {toProjectFile} from './project-file.mjs';
 
-export function TerraformView({project,environment,session,onDownload,onBack,emulation,onDiscuss,discussionBusy}){
+export function TerraformView({project,environment,session,onDownload,onBack,emulation,onDiscuss,discussionBusy,onBuild}){
   const files=useMemo(()=>terraformSketch(project,environment),[project,environment]);
   const plan=useMemo(()=>resourcePlan(project),[project]);
   const [file,setFile]=useState('main.tf.json'),[step,setStep]=useState('code'),[result,setResult]=useState(null),[running,setRunning]=useState(false);
@@ -33,7 +33,7 @@ export function TerraformView({project,environment,session,onDownload,onBack,emu
     <header className="doc-head"><h2>Terraform deployment draft</h2><p className="muted">Review generated resources, required integrations and the evidence for this configuration. Provider-specific capabilities and their limits are recorded in the export.</p></header>
     <div className="row"><button className="link" onClick={onBack}>Back to architecture</button><button className="btn" onClick={()=>onDownload(result?.filesKey===key?result:null)}>Download Terraform</button></div>
     <aside aria-label="Export quality"><strong>{quality.infrastructureComplete?'Infrastructure generated — validation required':'Implementation work remains'}</strong><p>{quality.providers.join(', ')||'No deployment provider selected'} · {quality.components.length} components · {quality.findings.length} coverage findings</p><p className="small">{result?.status==='passed'&&result.filesKey===key?'Current configuration checks passed. Matching evidence will accompany the Terraform download.':'No current validation receipt is attached. Run Terraform checks to generate evidence for these files.'} Application behavior and account deployment require their own tests.</p></aside>
-    <EmulationPanel project={project} environment={environment} session={session} emulation={emulation} onDiscuss={onDiscuss} discussionBusy={discussionBusy}/>
+    <EmulationPanel project={project} environment={environment} session={session} emulation={emulation} onDiscuss={onDiscuss} discussionBusy={discussionBusy} onBuild={onBuild}/>
     <div className="seg" role="tablist" aria-label="Terraform steps"><button role="tab" aria-selected={step==='code'} onClick={()=>setStep('code')}>1. Resources & code</button><button role="tab" aria-selected={step==='test'} onClick={()=>setStep('test')}>2. Test Terraform</button></div>
     {step==='code'?<>
       <h3>Resource coverage</h3>

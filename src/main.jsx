@@ -717,6 +717,7 @@ function App() {
   useEffect(()=>{if(!treeOpen)return;const close=e=>{if(e.type==="keydown"?e.key==="Escape":!e.target.closest(".component-navigator"))setTreeOpen(false);};document.addEventListener("pointerdown",close);document.addEventListener("keydown",close);return()=>{document.removeEventListener("pointerdown",close);document.removeEventListener("keydown",close);};},[treeOpen]);
   const consultationAttempts = useRef(new Set());
   const agentAbort = useRef(null);
+  const messageInput = useRef(null);
   const intakeRef=useRef(restoreQueuedMessages(messages,project.id));
   const [intake,setIntake]=useState(intakeRef.current),[intakePaused,setIntakePausedState]=useState(()=>restoreIntakePaused(messages)||intakeRef.current.length>0);
   const [intakeIssue,setIntakeIssue]=useState(null);
@@ -1195,6 +1196,7 @@ function App() {
 
   async function discussEmulation(report,intent){
     if(busy||agentBusy||pending||report!==emulation.result)return;
+    if(intent==='question'){setChatOpen(true);setInput(current=>current||'Help me understand these local check results: ');requestAnimationFrame(()=>messageInput.current?.focus());return;}
     coachedReports.current.set(report,new Set([...(coachedReports.current.get(report)||[]),emulationMentorKey]));
     setChatOpen(true);
     const guidance=emulationGuidance(projectRef.current,report);
@@ -1844,7 +1846,7 @@ function App() {
         )}
         <div className="journey-current"><div><strong>{guidance.title}</strong><p>{guidance.reason}</p><p className="journey-next"><span>Next</span> {guidance.checkpoint?guidance.continueLabel:guidance.action}</p></div>
           <div className="record-row">
-            {session?.engineeringEnabled&&hasDesign&&<button className="btn primary build-design-button" disabled={busy||agentBusy||!!pending} onClick={buildCurrentDesign}><Package size={18}/>Build this design</button>}
+            {session?.engineeringEnabled&&hasDesign&&<button className="btn primary build-design-button" disabled={busy||agentBusy||!!pending} onClick={buildCurrentDesign}><Package size={18}/>Implement and check</button>}
             <button className="btn primary" disabled={busy||agentBusy||!!pending} aria-label={guidance.checkpoint?guidance.continueLabel+' →':guidance.action} title={guidance.checkpoint?guidance.continueLabel:guidance.action} onClick={()=>guidance.checkpoint?continueJourney():followJourney()}>{agentBusy?<BrainActivity size={26}/>:<BrainCircuit size={20}/>} {guidance.checkpoint?guidance.continueLabel:guidance.action}</button>
 
             {project.nodes.length>0&&<><button className="btn primary" disabled={busy||!!pending} aria-label={emulation.preflight?"Prepare local tests":"Run local checks"} aria-busy={emulationWorking} title={emulation.running?"Emulation running — show progress":emulationWorking?"Architect is reviewing — show progress":"Open local implementation checks and their next step"} onClick={()=>{setMode("design");setDesignView("board");setEmulationOpen(true);if(!emulation.preflight&&!emulation.running&&!emulation.result&&!emulation.previous)void emulation.run();}}>{emulationWorking?<BrainActivity size={24}/>:<Play size={20}/>} {emulation.preflight?"Prepare tests":"Local checks"}</button><button className="btn" aria-label="Outputs" title="Inspect and download generated outputs" onClick={()=>{setMode("design");setDesignView("outputs");}}><Package size={20}/></button></>}
@@ -2170,8 +2172,8 @@ function App() {
 
         {onBoard&&emulationOpen&&<div className="emulation-dock"><EmulationPanel project={project} session={session} emulation={emulation} onDiscuss={discussEmulation} onOpenComponent={id=>{reviewBlock(id);setEmulationOpen(false);}} discussionBusy={busy||agentBusy||!!pending} onClose={()=>setEmulationOpen(false)} onBuild={session?.engineeringEnabled?()=>{setEmulationOpen(false);buildCurrentDesign('test');}:undefined}/></div>}
 
-        {mode === "design" && designView === "outputs" && <OutputsView project={project} run={run} environment={environment} session={session} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onDownload={downloadBundle} onBack={()=>setDesignView("board")} />}
-        {mode === "design" && designView === "terraform" && <TerraformView project={project} environment={environment} session={session} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onDownload={exportTerraform} onBack={()=>setDesignView("board")} />}
+        {mode === "design" && designView === "outputs" && <OutputsView project={project} run={run} environment={environment} session={session} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onDownload={downloadBundle} onBuild={session?.engineeringEnabled?()=>buildCurrentDesign('test'):undefined} onBack={()=>setDesignView("board")} />}
+        {mode === "design" && designView === "terraform" && <TerraformView project={project} environment={environment} session={session} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onDownload={exportTerraform} onBuild={session?.engineeringEnabled?()=>buildCurrentDesign('test'):undefined} onBack={()=>setDesignView("board")} />}
         {mode === "design" && ["options","decisions"].includes(designView) && (
           <OptionsView project={project} busy={busy||agentBusy||!!pending} onChoose={chooseCloud} onContinue={()=>visitJourney("location")} onPreview={(provider)=>{setDesignView("board");setLevel("flow");setChatOpen(true);send(`Preview a concrete ${OPTION_NAMES[provider]} implementation of our working scope, using actual named services in data.service and explicit connections. Keep existing systems and comments. Use the known country/residency constraints, or leave region undecided and ask the country question. This is an alternative preview, not a cloud choice or deployment. Return a graph proposal and explain key integration assumptions.`,"preview",{mode:"design",view:"board"});}} onDiscuss={(question) => { setChatOpen(true); send(question, "workflow"); }} />
         )}
@@ -2334,6 +2336,7 @@ function App() {
           >
             <textarea
               onPaste={e=>{const files=[...e.clipboardData.files];if(files.length){e.preventDefault();void attachFiles(files);}}}
+              ref={messageInput}
               aria-label="Your message"
               placeholder={brief(project) ? "Reply in your own words…" : "Describe what you want to build…"}
               rows={2}
