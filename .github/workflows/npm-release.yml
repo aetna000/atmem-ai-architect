@@ -23,6 +23,15 @@ jobs:
         with:
           node-version: '24'
           cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: server/requirements.lock
+      - name: Prepare the pinned test runtime
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install --require-hashes -r server/requirements.lock
       - run: npm ci --ignore-scripts
       - run: npm test
       - run: npm run package:npm
