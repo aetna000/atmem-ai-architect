@@ -1,0 +1,75 @@
+{
+   "blockdevices": [
+      {
+         "name": "sr0",
+         "size": "20.5M",
+         "fstype": "iso9660",
+         "label": "cidata",
+         "mountpoints": [
+             "/mnt/lima-cidata"
+         ]
+      },{
+         "name": "vda",
+         "size": "8G",
+         "fstype": null,
+         "label": null,
+         "mountpoints": [
+             null
+         ],
+         "children": [
+            {
+               "name": "vda1",
+               "size": "7G",
+               "fstype": "ext4",
+               "label": "cloudimg-rootfs",
+               "mountpoints": [
+                   "/"
+               ]
+            },{
+               "name": "vda14",
+               "size": "4M",
+               "fstype": null,
+               "label": null,
+               "mountpoints": [
+                   null
+               ]
+            },{
+               "name": "vda15",
+               "size": "106M",
+               "fstype": "vfat",
+               "label": "UEFI",
+               "mountpoints": [
+                   "/boot/efi"
+               ]
+            },{
+               "name": "vda16",
+               "size": "913M",
+               "fstype": "ext4",
+               "label": "BOOT",
+               "mountpoints": [
+                   "/boot"
+               ]
+            }
+         ]
+      },{
+         "name": "vdb",
+         "size": "32G",
+         "fstype": null,
+         "label": null,
+         "mountpoints": [
+             null
+         ],
+         "children": [
+            {
+               "name": "vdb1",
+               "size": "32G",
+               "fstype": "ext4",
+               "label": "lima-colima-amd6",
+               "mountpoints": [
+                   "/var/lib/ramalama", "/var/lib/cni", "/var/lib/rancher", "/var/lib/containerd", "/var/lib/docker", "/mnt/lima-colima-amd64"
+               ]
+            }
+         ]
+      }
+   ]
+}
