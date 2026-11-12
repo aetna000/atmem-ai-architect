@@ -1405,3 +1405,8 @@ Owner rejects excessive question marks. Chat uses More details / Less details to
 ## 2026-11-13 — Memory table, provenance and automatic partial estimates
 
 The owner prioritizes memory usability and reliable actions over narrative panels. Use SDK-bound indexed pages and a stable local Default profile, preserve legacy unknown creators, expose scoped external context without storing retrieval, and keep full generation/work records in exports. Terraform results must survive navigation while exact file hashes match. Costs run automatically from available facts, default to Small only when unspecified, and retain a Recalculate button. Public Google rates may form an explicitly labelled planning reference without selecting a deployment region or claiming a full quote. Country/residency and cloud region remain distinct. Qualification is limited to measured dashboard reads and local fixture/SDK checks; no hosted/cloud/Orca/native Windows acceptance follows.
+
+
+## 2026-11-13 — Owner-directed 0.2.0 release and main integration
+
+Owner explicitly requests a release without alpha/beta labels, npm/GitHub package visibility, README demo link, and a PR merged to main. Use 0.2.0/latest and preserve qualification limits in release documentation. Fix relative tarball parsing before publication; require installed checks on Windows/macOS/Linux. Mirror only the qualified payload to the repository owner's GitHub npm namespace. This is release/integration authorization, not permission for cloud deployment or resuming the separate engine evaluation.

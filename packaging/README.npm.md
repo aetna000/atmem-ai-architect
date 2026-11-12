@@ -1,34 +1,32 @@
-# AtMem AI Architect — local preview
+# AtMem AI Architect
 
-Design an application, review requirements and choices, generate and verify locally,
-and download a project handoff. AtMem memory is included in an isolated runtime.
+Design an application, review requirements, generate project files, run local checks, and download one complete handoff.
+
+[Watch the demo →](https://x.com/AtMemAi/status/2119386028108910659)
 
 ```sh
-npx @atmem/architect@preview
+npx @atmem/architect
 ```
+
+Requires Node.js 22+. First run installs checksum-verified Python and the pinned AtMem runtime in your private application directory.
 
 For a persistent command:
 
 ```sh
-npm install -g @atmem/architect@preview
+npm install -g @atmem/architect
 atmem-architect
 ```
 
-Requires Node.js 22 or newer and internet access for first setup. First run downloads a
-checksum-verified uv release, managed Python 3.13 and the application/AtMem dependencies.
-No system Python, Git checkout, administrator privileges or Docker is required to open
-the app. Choose a model/login in Connections. Model usage may incur your provider's costs.
+Choose your model under **AI providers**. Model usage may incur provider costs.
 
 Options: `--port 5174`, `--no-open`, `--data-dir PATH`, `--setup`, `--doctor`, `--version`.
-Runtime tools and project data live in `~/.atmem-ai-architect`, respecting existing
-`~/.atforma` installations and `ATMEM_ARCHITECT_HOME`. Package upgrades do not delete them.
-Use `--data-dir` for an external disk. Stop the local service with Ctrl+C.
 
-This is an alpha preview. Cloud deployment is not included. Native coding needs an
-installed/signed-in supported agent; independent container/Terraform checks need explicit
-local tools/validator configuration. Missing checks remain visible. Provider pricing does
-not yet cover every service. Windows/Linux installers must pass the release matrix;
-local Mac checks alone do not establish support on the other systems.
+Data defaults to `~/.atmem-ai-architect`, respecting existing `~/.atforma` installations and `ATMEM_ARCHITECT_HOME`. Upgrades preserve project data.
 
-Bundled third-party licences are in `public/licenses` and `agent-skills/upstream`.
-AtMem-owned code is licensed under Apache-2.0. Third-party portions retain their original notices.
+Packaged UI and AtMem startup are checked on Windows, macOS, and Linux. Full native Windows generation/export remains unqualified.
+
+Native generation needs a supported signed-in agent. Independent Terraform/container checks require local tools and configuration.
+
+Costs remain partial where prices or usage are missing. Cloud deployment is not automatic. Actual Orca desktop launch remains unverified.
+
+AtMem-owned code is Apache-2.0. Bundled third-party licences and notices are retained.
