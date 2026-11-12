@@ -1,0 +1,25 @@
+{
+  "validator": "independent-lambda-sdk",
+  "artifactSha256": "444af6c5f704b05a323ffec29d7c2b4f7479cf55580d039edca3d1bdb09205db",
+  "imageId": "sha256:cdb746c1eb56b61de56e1b5e78f6194392eb00494a1bb257a592852e72d8314b",
+  "runtimeConfigImageId": "sha256:efb920a19905e2b73c3e56eb22d52b052026b62050ec32eb3c7b28aba449cfc7",
+  "platform": "linux/arm64",
+  "command": [
+    "/var/lang/bin/python3.12",
+    "-c",
+    "\nimport hashlib,json,os,pathlib,sys,time,zipfile\nos.environ.update(AWS_ACCESS_KEY_ID='SYNTHETIC-ONLY-NOT-A-KEY',AWS_SECRET_ACCESS_KEY='SYNTHETIC-ONLY-NOT-A-SECRET',AWS_REGION='ap-southeast-2',MODEL_ID='amazon.nova-lite-v1:0',COGNITO_ISSUER='https://cognito-idp.ap-southeast-2.amazonaws.com/ap-southeast-2_Independent',CLIENT_ID='independent-client',COGNITO_DOMAIN='https://independent.auth.ap-southeast-2.amazoncognito.com')\nwith zipfile.ZipFile('/work/source/build/support-review.zip') as archive:archive.extractall('/tmp/delivery')\nsys.path.insert(0,'/tmp/delivery')\nimport handler,boto3,botocore,platform\nfrom botocore.stub import Stubber\nfrom botocore.exceptions import ReadTimeoutError\nfrom urllib.parse import urlsplit\nassert sys.version_info[:2]==(3,12)\nassert platform.machine()=='aarch64'\nclient=handler._bedrock()\nassert urlsplit(client.meta.endpoint_url).hostname=='bedrock-runtime.ap-southeast-2.amazonaws.com'\nassert client.meta.config.retries['total_max_attempts']==1\nassert client.meta.config.connect_timeout==2 and client.meta.config.read_timeout==20\nassert 'Converse' in client.meta.service_model.operation_names\nclaims={'iss':os.environ['COGNITO_ISSUER'],'client_id':os.environ['CLIENT_ID'],'token_use':'access','sub':'synthetic-staff','exp':time.time()+60,'cognito:groups':['Reviewers']}\nevent={'rawPath':'/api/suggest','body':json.dumps({'ticket':'Synthetic SDK contract case'}),'headers':{'content-type':'application/json'},'requestContext':{'http':{'method':'POST'},'authorizer':{'jwt':{'claims':claims}}}}\ngood={'summary':'Synthetic SDK response.','topic':'other','urgency':'normal','uncertainty':{'level':'high','reason':'Local transport fixture, not model quality.'}}\nstub=Stubber(client)\nstub.add_response('converse',{'output':{'message':{'role':'assistant','content':[{'text':json.dumps(good)}]}},'stopReason':'end_turn','usage':{'inputTokens':10,'outputTokens':10,'totalTokens':20},'metrics':{'latencyMs':1}})\nstub.add_client_error('converse',service_error_code='AccessDeniedException',service_message='PRIVATE-SYNTHETIC-SDK-DIAGNOSTIC',http_status_code=403)\nhandler._bedrock=lambda:client\nwith stub:\n result=handler.handler(event,None);assert result['statusCode']==200 and json.loads(result['body'])==good\n denied=handler.handler(event,None);assert denied['statusCode']==503 and 'PRIVATE-SYNTHETIC' not in denied['body']\n stub.assert_no_pending_responses()\nsent=[]\ndef timeout(request):\n assert urlsplit(request.url).hostname=='bedrock-runtime.ap-southeast-2.amazonaws.com'\n sent.append(True)\n raise ReadTimeoutError(endpoint_url=request.url,error='SYNTHETIC-TIMEOUT-NO-NETWORK')\nclient._endpoint.http_session.send=timeout\nresult=handler.handler(event,None);assert result['statusCode']==503 and len(sent)==1\nprint('INDEPENDENT_LAMBDA_SDK_CONTRACT_PASSED')\nprint(json.dumps({'python':sys.version,'architecture':platform.machine(),'boto3':boto3.__version__,'botocore':botocore.__version__,'endpoint':client.meta.endpoint_url,'converseInputAndResponseShape':'validated by actual runtime botocore','providerDenial':'safe failure','transportTimeoutAttempts':len(sent),'networkCalls':0}))\n"
+  ],
+  "status": "passed",
+  "exitCode": 0,
+  "skipped": 0,
+  "testsReported": null,
+  "reason": null,
+  "output": "INDEPENDENT_LAMBDA_SDK_CONTRACT_PASSED\n{\"python\": \"3.12.16 (main, Nov  5 2026, 08:07:58) [GCC 11.5.0 20240719 (Red Hat 11.5.0-5)]\", \"architecture\": \"aarch64\", \"boto3\": \"1.42.97\", \"botocore\": \"1.42.97\", \"endpoint\": \"https://bedrock-runtime.ap-southeast-2.amazonaws.com\", \"converseInputAndResponseShape\": \"validated by actual runtime botocore\", \"providerDenial\": \"safe failure\", \"transportTimeoutAttempts\": 1, \"networkCalls\": 0}\n",
+  "outputTruncated": false,
+  "durationSeconds": 0.442,
+  "evidenceLevel": "local_container_check",
+  "cloudOperations": false,
+  "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance.",
+  "oracleSha256": "3ddceeea78eda84600afafbdc66c67f1783e1375e114f97ec4c27aab5a14b122",
+  "semanticBoundary": "Actual declared Python 3.12/ARM64 AWS-maintained image and included boto3/botocore execute the captured deployment ZIP, validate Converse shapes and regional/no-retry configuration, and handle synthetic service denial and SDK transport timeout. No real credentials, socket request, account entitlement, cloud authorization, deployment or model quality proof."
+}

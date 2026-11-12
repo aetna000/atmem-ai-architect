@@ -1,0 +1,42 @@
+Job wurbfj4g2fj4btpkxiu.dispatch[3435](operation_id='0e8cbc2c-2c09-4bfe-ae81-b03ece19e1bd') ended with status: Error, lasted 0.161 s
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/external-artifacts/application-contracts/locked-test-runtime-v1/lib/python3.13/site-packages/procrastinate/worker.py", line 328, in _process_job
+    job_result.result = await middleware.compose(
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^
+        self.worker_middleware, run_job, context, self
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )()
+    ^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/external-artifacts/application-contracts/locked-test-runtime-v1/lib/python3.13/site-packages/procrastinate/worker.py", line 326, in run_job
+    return await ensure_async()
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/external-artifacts/application-contracts/locked-test-runtime-v1/lib/python3.13/site-packages/procrastinate/worker.py", line 303, in ensure_async
+    task_result = await middleware.compose(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+        middlewares, run_async_task, context, self
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )()
+    ^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/external-artifacts/application-contracts/locked-test-runtime-v1/lib/python3.13/site-packages/procrastinate/worker.py", line 301, in run_async_task
+    return await task(*job_args, **job.task_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/external-artifacts/native-runtime-access/v1/unpacked/application/workflow_worker.py", line 92, in _dispatch
+    raise PermanentWork('External outcome requires reconciliation before another attempt')from None
+workflow_errors.PermanentWork: External outcome requires reconciliation before another attempt
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/specs/029-general-purpose-engine/evidence/20261112-native-runtime-access/check-equipment-journey.py", line 118, in <module>
+    try:asyncio.run(main())
+        ~~~~~~~~~~~^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 196, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 119, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/specs/029-general-purpose-engine/evidence/20261112-native-runtime-access/check-equipment-journey.py", line 98, in main
+    retry=await client.post('/api/operations/'+second+'/approve',json={'revision':1},headers=headers(reviewer));assert retry.status_code==409,retry.text
+                                                                                                                       ^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: {"operation":{"id":"0e8cbc2c-2c09-4bfe-ae81-b03ece19e1bd","state":"unknown","revision":1,"source":{"itemId":"glassware","fragile":true,"memberId":"member-1","requestedDays":30},"result":{"loanDays":3,"inspectionRequired":true},"receipt":null,"createdAt":"2026-11-11T18:53:24.554114+00:00","updatedAt":"2026-11-11T18:53:24.987650+00:00"}}

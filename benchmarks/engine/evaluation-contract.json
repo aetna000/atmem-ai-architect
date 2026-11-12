@@ -1,0 +1,163 @@
+{
+  "format": "atmem.generic-engine.evaluation",
+  "version": 1,
+  "status": "frozen_engineering_protocol_v1",
+  "ownerTarget": "Generic engine; original 28 projects plus unfamiliar combinations; target 95% quality without critical failures",
+  "scope": "Local generated application, Terraform, blocks, connections and whole-system behavior. No cloud deployment required.",
+  "originalCorpus": "benchmarks/convergence/scenarios.json",
+  "providers": [
+    "aws",
+    "azure",
+    "gcp",
+    "ibm"
+  ],
+  "difficultyCountsPerProvider": {
+    "simple": 2,
+    "medium": 3,
+    "hard": 2
+  },
+  "expectedOriginalCases": 28,
+  "maxUserExchangesTarget": 10,
+  "pairedBaseline": {
+    "model": "gpt-6.1-sol",
+    "effort": "high",
+    "arms": [
+      "native",
+      "specialized"
+    ],
+    "identical": [
+      "client brief and ordered updates",
+      "model and effort",
+      "native app-server transport",
+      "local toolchain and provider cache",
+      "workspace and network policy",
+      "turn and repair time budget",
+      "independent assessors"
+    ],
+    "allowedDifference": "Specialized arm adds reviewed infrastructure knowledge/skills and product context. Neither arm receives hidden expected outputs or evaluation-case identifiers.",
+    "retain": [
+      "exact source and skill digests",
+      "full input/output event transcript",
+      "actual artifacts and hashes",
+      "executed checks and failure output",
+      "timing and usage when reported",
+      "unknown cost instead of invented prices"
+    ]
+  },
+  "requiredChecks": [
+    {
+      "id": "scope",
+      "dimension": "constraint_retention",
+      "critical": true,
+      "levels": [
+        "independent-review"
+      ]
+    },
+    {
+      "id": "ownership",
+      "dimension": "security_ownership",
+      "critical": true,
+      "levels": [
+        "independent-static",
+        "independent-review"
+      ]
+    },
+    {
+      "id": "provider",
+      "dimension": "architecture_interfaces",
+      "critical": true,
+      "levels": [
+        "provider-schema",
+        "independent-static"
+      ]
+    },
+    {
+      "id": "secrets",
+      "dimension": "security_ownership",
+      "critical": true,
+      "levels": [
+        "independent-static"
+      ]
+    },
+    {
+      "id": "build",
+      "dimension": "executable_package",
+      "critical": true,
+      "levels": [
+        "local-runtime"
+      ]
+    },
+    {
+      "id": "access",
+      "dimension": "security_ownership",
+      "critical": true,
+      "levels": [
+        "local-runtime"
+      ]
+    },
+    {
+      "id": "connections",
+      "dimension": "architecture_interfaces",
+      "critical": true,
+      "levels": [
+        "local-runtime"
+      ]
+    },
+    {
+      "id": "journey",
+      "dimension": "executable_package",
+      "critical": true,
+      "levels": [
+        "local-runtime"
+      ]
+    },
+    {
+      "id": "failure_recovery",
+      "dimension": "operational_evidence",
+      "critical": true,
+      "levels": [
+        "local-runtime"
+      ]
+    },
+    {
+      "id": "terraform",
+      "dimension": "executable_package",
+      "critical": true,
+      "levels": [
+        "provider-schema"
+      ]
+    },
+    {
+      "id": "runbook",
+      "dimension": "operational_evidence",
+      "critical": false,
+      "levels": [
+        "independent-static",
+        "independent-review"
+      ]
+    },
+    {
+      "id": "interaction",
+      "dimension": "interaction_burden",
+      "critical": false,
+      "levels": [
+        "observed-interaction"
+      ]
+    }
+  ],
+  "scoring": {
+    "critical": "Every required critical check must pass for each complete project. A skip, block, unsupported or untested status is not a pass.",
+    "noncriticalThreshold": 0.95,
+    "aggregation": "Report original complete-project acceptance and each provider/difficulty stratum; do not hide broken cases behind a global average.",
+    "denominator": "All required applicable checks; this protocol requires every listed check. Exceptions require an explicit versioned protocol change, never an evaluator-side omission.",
+    "generality": "Report composition/constraint variants separately. Internally generated holdouts are not blinded independent-family evidence; disclose exposure and replace contaminated sets. No score over all possible systems is inferred."
+  },
+  "evidenceRules": {
+    "artifactBinding": "Every passing receipt must bind the exact artifact SHA-256 and a nonempty evidence file SHA-256 within the case directory.",
+    "independence": "The assessor identity and version/digest must be recorded; generator-owned tests alone cannot satisfy independent acceptance.",
+    "declarations": "Agent completion, source/provider mocks and static checks do not establish runtime semantics. Missing live external-vendor behavior must be described precisely; local API-contract emulation cannot be labelled cloud proof.",
+    "holdoutIsolation": "Production modules must not import benchmark prompts, identifiers, assessor answers or holdout stores. Skills carry general engineering knowledge and applicability, never case answers."
+  },
+  "changes": "Version protocol and retain prior contract/source digests before changing checks or budgets. This is an engineering measurement protocol, not a new customer SLA or an attained quality claim.",
+  "originalCorpusSha256": "13432a42a796ac03b02993a05e7bfade1d822194bb4da68adcfe52083a6bc990"
+}

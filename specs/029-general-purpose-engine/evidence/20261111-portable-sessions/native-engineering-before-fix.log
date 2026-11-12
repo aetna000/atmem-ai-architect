@@ -1,0 +1,112 @@
+progress userMessage
+progress userMessage
+progress agentMessage
+message I
+message ’ll
+message  create
+message  the
+message  function
+message  and
+message  tests
+message ,
+message  then
+message  run
+message  `
+message python
+message 3
+message  -
+message m
+message  unittest
+message  -
+message v
+message `.
+
+progress agentMessage
+progress commandExecution
+progress commandExecution
+progress reasoning
+progress reasoning
+progress reasoning
+progress reasoning
+progress commandExecution
+progress commandExecution
+progress fileChange
+progress fileChange
+progress commandExecution
+progress commandExecution
+progress agentMessage
+message Created
+message  `
+message reserv
+message ations
+message .py
+message `
+message  and
+message  `
+message test
+message _res
+message erv
+message ations
+message .py
+message `
+message  using
+message  only
+message  the
+message  standard
+message  library
+message .
+
+
+message `
+message python
+message 3
+message  -
+message m
+message  unittest
+message  -
+message v
+message `
+message  passed
+message  all
+message  
+message 4
+message  tests
+message :
+message  success
+message ,
+message  full
+message  capacity
+message ,
+message  invalid
+message  input
+message ,
+message  and
+message  over
+message  capacity
+message .
+progress agentMessage
+completed 
+Traceback (most recent call last):
+  File "/tmp/atmem-real-session-probe.py", line 59, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py", line 205, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py", line 128, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py", line 719, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/tmp/atmem-real-session-probe.py", line 33, in main
+    engine=EngineeringSessions(store,backend);resumed=await engine.resume(scope,session)
+                                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/server/engineering_sessions.py", line 171, in resume
+    await self.backend.resume(scope,row['handle'],row['workspace'],ModelSelection(row['model'],row['effort']))
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/server/codex_engineering_backend.py", line 92, in resume
+    if self._verify(result,root,selection)!=handle:
+       ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/server/codex_engineering_backend.py", line 39, in _verify
+    raise SessionError('Codex did not confirm the selected workspace, model and reasoning effort')
+server.engineering_sessions.SessionError: Codex did not confirm the selected workspace, model and reasoning effort

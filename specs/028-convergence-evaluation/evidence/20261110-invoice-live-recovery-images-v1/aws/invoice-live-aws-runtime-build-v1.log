@@ -1,0 +1,59 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.89kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.13-slim-trixie@sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 985B done
+#3 DONE 0.0s
+
+#4 [2/9] ADD --checksum=sha256:8c27c342230503b73dfde629642c3b352e87b554e06d60cf58772f236a305ceb https://deb.debian.org/debian-security/pool/updates/main/z/zlib/zlib1g_1.3.dfsg%2breally1.3.1-1%2bdeb13u1_amd64.deb /tmp/runtime-security.deb
+#4 DONE 0.0s
+
+#5 [internal] load build context
+#5 transferring context: 469.94kB done
+#5 DONE 0.0s
+
+#6 [1/9] FROM docker.io/library/python:3.13-slim-trixie@sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90
+#6 resolve docker.io/library/python:3.13-slim-trixie@sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90 0.0s done
+#6 DONE 0.0s
+
+#7 [2/9] ADD --checksum=sha256:8c27c342230503b73dfde629642c3b352e87b554e06d60cf58772f236a305ceb https://deb.debian.org/debian-security/pool/updates/main/z/zlib/zlib1g_1.3.dfsg%2breally1.3.1-1%2bdeb13u1_amd64.deb /tmp/runtime-security.deb
+#7 CACHED
+
+#8 [4/9] WORKDIR /app
+#8 CACHED
+
+#9 [5/9] COPY requirements.lock .
+#9 CACHED
+
+#10 [3/9] RUN dpkg -i /tmp/runtime-security.deb && rm /tmp/runtime-security.deb
+#10 CACHED
+
+#11 [6/9] RUN python -I -m pip --isolated install --no-cache-dir --only-binary=:all: --require-hashes -r requirements.lock && python -I -m pip --isolated uninstall --yes pip && rm -rf /usr/local/lib/python3.13/ensurepip
+#11 CACHED
+
+#12 [7/9] COPY durable_workflow.py workflow_connection.py workflow_contract.py workflow_database.py workflow_errors.py workflow_process_stage.py workflow_role_bootstrap.py workflow_worker.py invoice_document.py invoice_extraction.py invoice_object_store.py invoice_http.py invoice_identity.py invoice_native.py invoice_runtime_secrets.py invoice_processing.py invoice_parser_transport.py invoice_stage.py invoice_worker.py invoice_web.py approved_http_destination.py structured_output.py structured_http.py policy_review.py aws_json_model.py azure_structured.py gcp_structured.py ibm_structured.py invoice_parser_identity.py invoice_retention.py invoice_operations.py invoice_operator.py invoice_operator_core.py invoice_configuration.py invoice_maintenance.py invoice_operator_job.py ./
+#12 DONE 0.2s
+
+#13 [8/9] COPY invoice-deployment.json ./
+#13 DONE 0.0s
+
+#14 [9/9] COPY workflow_schema.sql invoice-web.html invoice-web.css invoice-web.js rds-global-ca.pem ./
+#14 DONE 0.0s
+
+#15 exporting to image
+#15 exporting layers 0.1s done
+#15 exporting manifest sha256:b2adb77d0b3e081bf9f3887573527732d8962591fb2c858346f9d28fdb5c0f54
+#15 exporting manifest sha256:b2adb77d0b3e081bf9f3887573527732d8962591fb2c858346f9d28fdb5c0f54 done
+#15 exporting config sha256:ce1db05ce04c6854ae104eeba51370a1c30aeb4ea47ad557574a351a5df0bc0a done
+#15 exporting attestation manifest sha256:ef2eb24693ebec85b773572bd7945c2cd22fdb0ccd25920be997454d16ed2ac1 done
+#15 exporting manifest list sha256:01aeef165076886ccc16f02334a45eb30ddc7b5ea34693123593e8cd81a97a79 done
+#15 naming to moby-dangling@sha256:01aeef165076886ccc16f02334a45eb30ddc7b5ea34693123593e8cd81a97a79 done
+#15 DONE 0.2s
+
+View build details: docker-desktop://dashboard/build/default/default/3ibmi1vg2u2oexg54ak9029vm

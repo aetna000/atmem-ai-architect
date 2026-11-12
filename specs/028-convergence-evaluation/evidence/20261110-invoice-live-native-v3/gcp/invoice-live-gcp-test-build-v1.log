@@ -1,0 +1,137 @@
+#0 building with "default" instance using docker driver
+
+#1 [ 2/10] ADD --checksum=sha256:8c27c342230503b73dfde629642c3b352e87b554e06d60cf58772f236a305ceb https://deb.debian.org/debian-security/pool/updates/main/z/zlib/zlib1g_1.3.dfsg%2breally1.3.1-1%2bdeb13u1_amd64.deb /tmp/runtime-security.deb
+#1 DONE 0.0s
+
+#2 [ 1/10] FROM docker.io/library/python:3.13-slim-trixie@sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90
+#2 resolve docker.io/library/python:3.13-slim-trixie@sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90 0.0s done
+#2 DONE 0.0s
+
+#3 [ 3/10] RUN dpkg -i /tmp/runtime-security.deb && rm /tmp/runtime-security.deb
+#3 CACHED
+
+#4 [ 2/10] ADD --checksum=sha256:8c27c342230503b73dfde629642c3b352e87b554e06d60cf58772f236a305ceb https://deb.debian.org/debian-security/pool/updates/main/z/zlib/zlib1g_1.3.dfsg%2breally1.3.1-1%2bdeb13u1_amd64.deb /tmp/runtime-security.deb
+#4 CACHED
+
+#5 [ 4/10] WORKDIR /app
+#5 CACHED
+
+#6 [internal] load build definition from Dockerfile.tests
+#6 transferring dockerfile: 1.07kB done
+#6 DONE 0.0s
+
+#7 [internal] load metadata for docker.io/library/python:3.13-slim-trixie@sha256:e48f59cdba69a3cbd9ed2cf0f348d90d45a8d350d98134cf1070bc106ee9ed90
+#7 DONE 0.0s
+
+#8 [internal] load build context
+#8 transferring context: 631.06kB 0.0s done
+#8 DONE 0.0s
+
+#9 [ 5/10] COPY test-requirements.lock ./
+#9 DONE 0.0s
+
+#10 [ 6/10] RUN python -I -m pip --isolated install --no-cache-dir --only-binary=:all: --require-hashes -r test-requirements.lock
+#10 2.869 Collecting annotated-doc==0.0.5 (from -r test-requirements.lock (line 1))
+#10 2.922   Downloading annotated_doc-0.0.5-py3-none-any.whl (5.3 kB)
+#10 2.942 Collecting annotated-types==0.8.0 (from -r test-requirements.lock (line 3))
+#10 2.951   Downloading annotated_types-0.8.0-py3-none-any.whl (13 kB)
+#10 2.979 Collecting anyio==4.16.0 (from -r test-requirements.lock (line 5))
+#10 2.989   Downloading anyio-4.16.0-py3-none-any.whl (134 kB)
+#10 3.027 Collecting asgiref==3.13.0 (from -r test-requirements.lock (line 7))
+#10 3.037   Downloading asgiref-3.13.0-py3-none-any.whl (27 kB)
+#10 3.051 Collecting attrs==26.1.0 (from -r test-requirements.lock (line 9))
+#10 3.065   Downloading attrs-26.1.0-py3-none-any.whl (67 kB)
+#10 3.086 Collecting certifi==2026.10.23 (from -r test-requirements.lock (line 11))
+#10 3.097   Downloading certifi-2026.10.23-py3-none-any.whl (135 kB)
+#10 3.242 Collecting cffi==2.1.1 (from -r test-requirements.lock (line 13))
+#10 3.255   Downloading cffi-2.1.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (221 kB)
+#10 3.454 Collecting charset-normalizer==3.5.2 (from -r test-requirements.lock (line 113))
+#10 3.469   Downloading charset_normalizer-3.5.2-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (254 kB)
+#10 3.583 Collecting click==8.5.1 (from -r test-requirements.lock (line 285))
+#10 3.595   Downloading click-8.5.1-py3-none-any.whl (126 kB)
+#10 3.623 Collecting croniter==7.0.0 (from -r test-requirements.lock (line 287))
+#10 3.634   Downloading croniter-7.0.0-py3-none-any.whl (63 kB)
+#10 3.909 Collecting cryptography==50.0.2 (from -r test-requirements.lock (line 289))
+#10 3.923   Downloading cryptography-50.0.2-cp311-abi3-manylinux_2_34_x86_64.whl (4.8 MB)
+#10 4.035      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.8/4.8 MB 45.6 MB/s  0:00:00
+#10 4.130 Collecting fastapi==0.162.0 (from -r test-requirements.lock (line 348))
+#10 4.142   Downloading fastapi-0.162.0-py3-none-any.whl (148 kB)
+#10 4.167 Collecting h11==0.16.0 (from -r test-requirements.lock (line 350))
+#10 4.176   Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+#10 4.198 Collecting httpcore==1.0.9 (from -r test-requirements.lock (line 352))
+#10 4.206   Downloading httpcore-1.0.9-py3-none-any.whl (78 kB)
+#10 4.237 Collecting httpx==0.28.1 (from -r test-requirements.lock (line 354))
+#10 4.248   Downloading httpx-0.28.1-py3-none-any.whl (73 kB)
+#10 4.270 Collecting idna==3.20 (from -r test-requirements.lock (line 356))
+#10 4.280   Downloading idna-3.20-py3-none-any.whl (69 kB)
+#10 4.311 Collecting opentelemetry-api==1.45.2 (from -r test-requirements.lock (line 358))
+#10 4.321   Downloading opentelemetry_api-1.45.2-py3-none-any.whl (60 kB)
+#10 4.345 Collecting packaging==26.3 (from -r test-requirements.lock (line 360))
+#10 4.353   Downloading packaging-26.3-py3-none-any.whl (129 kB)
+#10 4.385 Collecting procrastinate==3.10.0 (from -r test-requirements.lock (line 362))
+#10 4.398   Downloading procrastinate-3.10.0-py3-none-any.whl (155 kB)
+#10 4.425 Collecting psycopg==3.3.8 (from -r test-requirements.lock (line 364))
+#10 4.436   Downloading psycopg-3.3.8-py3-none-any.whl (216 kB)
+#10 4.695 Collecting psycopg-binary==3.3.8 (from -r test-requirements.lock (line 366))
+#10 4.713   Downloading psycopg_binary-3.3.8-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (5.2 MB)
+#10 4.892      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.2/5.2 MB 29.2 MB/s  0:00:00
+#10 4.927 Collecting psycopg-pool==3.3.3 (from -r test-requirements.lock (line 433))
+#10 4.939   Downloading psycopg_pool-3.3.3-py3-none-any.whl (40 kB)
+#10 4.956 Collecting pycparser==3.12 (from -r test-requirements.lock (line 435))
+#10 4.964   Downloading pycparser-3.12-py3-none-any.whl (62 kB)
+#10 5.098 Collecting pydantic==2.14.3 (from -r test-requirements.lock (line 437))
+#10 5.109   Downloading pydantic-2.14.3-py3-none-any.whl (494 kB)
+#10 6.222 Collecting pydantic-core==2.50.4 (from -r test-requirements.lock (line 439))
+#10 6.236   Downloading pydantic_core-2.50.4-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (2.3 MB)
+#10 6.307      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.3/2.3 MB 31.6 MB/s  0:00:00
+#10 6.352 Collecting pyjwt==2.15.1 (from -r test-requirements.lock (line 579))
+#10 6.364   Downloading pyjwt-2.15.1-py3-none-any.whl (33 kB)
+#10 6.381 Collecting python-dateutil==2.9.0.post0 (from -r test-requirements.lock (line 581))
+#10 6.394   Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+#10 6.426 Collecting requests==2.34.2 (from -r test-requirements.lock (line 583))
+#10 6.437   Downloading requests-2.34.2-py3-none-any.whl (73 kB)
+#10 6.453 Collecting six==1.17.0 (from -r test-requirements.lock (line 585))
+#10 6.463   Downloading six-1.17.0-py2.py3-none-any.whl (11 kB)
+#10 6.498 Collecting starlette==1.10.0 (from -r test-requirements.lock (line 587))
+#10 6.510   Downloading starlette-1.10.0-py3-none-any.whl (80 kB)
+#10 6.535 Collecting typing-extensions==4.16.0 (from -r test-requirements.lock (line 589))
+#10 6.549   Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+#10 6.566 Collecting typing-inspection==0.4.5 (from -r test-requirements.lock (line 591))
+#10 6.577   Downloading typing_inspection-0.4.5-py3-none-any.whl (14 kB)
+#10 6.609 Collecting urllib3==2.8.0 (from -r test-requirements.lock (line 593))
+#10 6.618   Downloading urllib3-2.8.0-py3-none-any.whl (135 kB)
+#10 6.653 Collecting uvicorn==0.54.0 (from -r test-requirements.lock (line 595))
+#10 6.666   Downloading uvicorn-0.54.0-py3-none-any.whl (87 kB)
+#10 6.893 Installing collected packages: urllib3, typing-extensions, six, pyjwt, pycparser, psycopg-binary, psycopg, packaging, idna, h11, click, charset-normalizer, certifi, attrs, asgiref, annotated-types, annotated-doc, uvicorn, typing-inspection, requests, python-dateutil, pydantic-core, psycopg-pool, opentelemetry-api, httpcore, cffi, anyio, starlette, pydantic, httpx, cryptography, croniter, procrastinate, fastapi
+#10 9.551 
+#10 9.553 Successfully installed annotated-doc-0.0.5 annotated-types-0.8.0 anyio-4.16.0 asgiref-3.13.0 attrs-26.1.0 certifi-2026.10.23 cffi-2.1.1 charset-normalizer-3.5.2 click-8.5.1 croniter-7.0.0 cryptography-50.0.2 fastapi-0.162.0 h11-0.16.0 httpcore-1.0.9 httpx-0.28.1 idna-3.20 opentelemetry-api-1.45.2 packaging-26.3 procrastinate-3.10.0 psycopg-3.3.8 psycopg-binary-3.3.8 psycopg-pool-3.3.3 pycparser-3.12 pydantic-2.14.3 pydantic-core-2.50.4 pyjwt-2.15.1 python-dateutil-2.9.0.post0 requests-2.34.2 six-1.17.0 starlette-1.10.0 typing-extensions-4.16.0 typing-inspection-0.4.5 urllib3-2.8.0 uvicorn-0.54.0
+#10 9.553 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#10 9.554 
+#10 9.554 [notice] A new release of pip is available: 26.2.2 -> 26.3
+#10 9.554 [notice] To update, run: pip install --upgrade pip
+#10 DONE 9.8s
+
+#11 [ 7/10] COPY *.py *.sql invoice-deployment.json invoice-web.* ./
+#11 DONE 0.1s
+
+#12 [ 8/10] COPY parser/*.py ./parser/
+#12 DONE 0.0s
+
+#13 [ 9/10] COPY tests/ ./tests/
+#13 DONE 0.0s
+
+#14 [10/10] COPY test-fixtures/ ./test-fixtures/
+#14 DONE 0.0s
+
+#15 exporting to image
+#15 exporting layers
+#15 exporting layers 2.1s done
+#15 exporting manifest sha256:0f6a8092cec5dc9b00a8336922e1e8e72ad66e19348e97f59d970abe161461fc
+#15 exporting manifest sha256:0f6a8092cec5dc9b00a8336922e1e8e72ad66e19348e97f59d970abe161461fc done
+#15 exporting config sha256:f3362266d00f9add6525ae809d48fbb37d65e1cf8ae7191e26a2799cfc3cc893 done
+#15 exporting attestation manifest sha256:538f64276b079d0d0f2f041867812cad75270adac50c0b5523860cd3efa816c4 done
+#15 exporting manifest list sha256:aed20c13af916bc7c03661bd67064fdc89fc61d224f341ef5eb5f37d018f0b66 done
+#15 naming to moby-dangling@sha256:aed20c13af916bc7c03661bd67064fdc89fc61d224f341ef5eb5f37d018f0b66 done
+#15 DONE 2.2s
+
+View build details: docker-desktop://dashboard/build/default/default/yh301uh1n3g386fh8fn2ujkdc

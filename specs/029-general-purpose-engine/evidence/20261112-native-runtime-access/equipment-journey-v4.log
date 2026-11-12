@@ -1,0 +1,26 @@
+Job w2sqcue2qbhrify2nke.dispatch[3443](operation_id='1fc20f25-05db-4226-a9a1-afdced0babb5') ended with status: Error, lasted 0.172 s
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/external-artifacts/application-contracts/locked-test-runtime-v1/lib/python3.13/site-packages/procrastinate/worker.py", line 328, in _process_job
+    job_result.result = await middleware.compose(
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^
+        self.worker_middleware, run_job, context, self
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )()
+    ^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/external-artifacts/application-contracts/locked-test-runtime-v1/lib/python3.13/site-packages/procrastinate/worker.py", line 326, in run_job
+    return await ensure_async()
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/external-artifacts/application-contracts/locked-test-runtime-v1/lib/python3.13/site-packages/procrastinate/worker.py", line 303, in ensure_async
+    task_result = await middleware.compose(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+        middlewares, run_async_task, context, self
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )()
+    ^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/external-artifacts/application-contracts/locked-test-runtime-v1/lib/python3.13/site-packages/procrastinate/worker.py", line 301, in run_async_task
+    return await task(*job_args, **job.task_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/external-artifacts/native-runtime-access/v2/unpacked/application/workflow_worker.py", line 92, in _dispatch
+    raise PermanentWork('External outcome requires reconciliation before another attempt')from None
+workflow_errors.PermanentWork: External outcome requires reconciliation before another attempt
+{"passed": true, "checks": 9, "sourcesUnchanged": true}

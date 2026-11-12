@@ -1,0 +1,29 @@
+test_disconnect_during_extraction_withholds_cache_and_model (__main__.QueuedHttp.test_disconnect_during_extraction_withholds_cache_and_model) ... Executing <Task pending name='Task-1' coro=<QueuedHttp.asyncSetUp() running at /Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_queries_http_postgres.py:43> cb=[_run_until_complete_cb() at /opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/base_events.py:181] created at /opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py:101> took 0.126 seconds
+FAIL
+
+======================================================================
+FAIL: test_disconnect_during_extraction_withholds_cache_and_model (__main__.QueuedHttp.test_disconnect_during_extraction_withholds_cache_and_model)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 119, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_queries_http_postgres.py", line 214, in test_disconnect_during_extraction_withholds_cache_and_model
+    self.assertEqual(self.f.model_calls,[])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [True] != []
+
+First list contains 1 additional elements.
+First extra element 0:
+True
+
+- [True]
++ []
+
+----------------------------------------------------------------------
+Ran 1 test in 0.642s
+
+FAILED (failures=1)

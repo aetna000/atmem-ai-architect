@@ -1,0 +1,35 @@
+{
+  "status": "unqualified_checkpoint",
+  "reason": "Owner requires comprehensive general-purpose engine review before specialized workflow expansion",
+  "tests": [
+    {
+      "suite": "enterprise_azure_pool_acceptance.py",
+      "exitCode": 0,
+      "observedTests": 7
+    },
+    {
+      "suite": "enterprise_azure_host_acceptance.py",
+      "exitCode": 0,
+      "observedTests": 21
+    },
+    {
+      "suite": "enterprise_azure_cleanup_receipts.py",
+      "exitCode": 0,
+      "observedTests": 11
+    },
+    {
+      "suite": "enterprise_azure_job_recovery.py",
+      "exitCode": 0,
+      "observedTests": 8
+    }
+  ],
+  "totalComponentTests": 47,
+  "nativeDockerRequalification": false,
+  "fullApplicationQualified": false,
+  "cloudOperations": false,
+  "remaining": [
+    "Native qualifier adjustments and rerun after node-specific receipt protocol",
+    "Remote in-flight object writes require settlement/fencing; local cleanup receipts alone do not establish final deletion",
+    "Controller/durable ownership composition and complete generated artifact qualification"
+  ]
+}

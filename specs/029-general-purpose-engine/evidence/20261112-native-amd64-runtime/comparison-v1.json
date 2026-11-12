@@ -1,0 +1,52 @@
+{
+  "format": "atmem.execution-context-comparison",
+  "version": 1,
+  "sameRuntimeBinding": true,
+  "sameRuntimeSha256": true,
+  "sameWorkerPolicySha256": true,
+  "sameProcessProbeSha256": true,
+  "sameObserverSha256": true,
+  "before": {
+    "controls": {
+      "noNewPrivileges": {
+        "supported": true,
+        "returnCode": 0,
+        "errno": 0
+      },
+      "seccompFilter": {
+        "supported": false,
+        "returnCode": -1,
+        "errno": 22
+      }
+    },
+    "executionContext": {
+      "processMachine": "x86_64",
+      "kernelRelease": "6.8.0-117-generic",
+      "kernelBootSha256": "301799edae64b968a31befdd6e5f85e6cf18045e28ebe3c05de7fcd6e1799958",
+      "uid": 65532
+    }
+  },
+  "after": {
+    "controls": {
+      "noNewPrivileges": {
+        "supported": true,
+        "returnCode": 0,
+        "errno": 0
+      },
+      "seccompFilter": {
+        "supported": true,
+        "returnCode": 0,
+        "errno": 0
+      }
+    },
+    "executionContext": {
+      "processMachine": "x86_64",
+      "kernelRelease": "6.8.0-117-generic",
+      "kernelBootSha256": "1d5aaedd83a706f6c83576209a739a6ac3d363f21b8923d61bc5de2a82b0e844",
+      "uid": 65532
+    }
+  },
+  "applicationSourceChanged": false,
+  "nativeInferenceRequests": 0,
+  "wholeSystemAccepted": false
+}

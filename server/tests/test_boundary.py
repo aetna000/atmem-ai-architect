@@ -104,6 +104,14 @@ class ProjectStoreTests(unittest.TestCase):
         self.assertEqual(len(self.post('/api/projects/list',{}).json()['projects']),1)
         self.post('/api/projects/trash',{'id':'project-0001'});self.assertEqual(self.post('/api/projects/purge',{'id':'project-0001'}).status_code,200)
         listed=self.post('/api/projects/list',{}).json();self.assertEqual(listed['projects']+listed['bin'],[])
+    def test_save_digest_binds_exact_utf8_file_bytes(self):
+        import hashlib
+        from pathlib import Path
+        result=self.post('/api/projects/save',{'id':'project-unicode','file':self.file('Gauge 🛰️ — centimetres')})
+        self.assertEqual(result.status_code,200)
+        content=(Path(self.dir.name)/'projects/project-unicode.atforma.json').read_bytes()
+        self.assertEqual(result.json()['sha256'],hashlib.sha256(content).hexdigest())
+        self.assertIn('🛰️'.encode(),content)
     def test_ids_and_files_are_validated_and_token_required(self):
         self.assertEqual(self.post('/api/projects/get',{'id':'../../etc/passwd'}).status_code,422)
         self.assertEqual(self.post('/api/projects/save',{'id':'project-0002','file':{'format':'other'}}).status_code,422)

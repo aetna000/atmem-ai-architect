@@ -1,0 +1,11 @@
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/invoice-cloud-ibm-v5-operator-tasks-20261110/scripts/run-operator.py", line 57, in <module>
+    if __name__=='__main__':main()
+                            ~~~~^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/invoice-cloud-ibm-v5-operator-tasks-20261110/scripts/run-operator.py", line 55, in main
+    for index,command in enumerate(plan):subprocess.run(command,cwd=ROOT,env=env,check=True,timeout=1100 if index==2 else 120)
+                                         ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/subprocess.py", line 578, in run
+    raise CalledProcessError(retcode, process.args,
+                             output=stdout, stderr=stderr)
+subprocess.CalledProcessError: Command '['ibmcloud', 'ce', 'project', 'select', '--id', '11111111-1111-4111-8111-111111111111', '--quiet']' returned non-zero exit status 9.

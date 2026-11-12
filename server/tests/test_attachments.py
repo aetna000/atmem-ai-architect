@@ -38,9 +38,11 @@ class AttachmentTests(unittest.TestCase):
         asyncio.run(run())
     def test_cli_images_use_native_blocks_and_ephemeral_files(self):
         async def run():
-            async def claude_capture(args,body,cwd,*rest):
+            async def claude_capture(args,body,cwd,*rest,timeout=150):
+                self.assertEqual(timeout,150)
                 self.assertIn('--input-format',args);content=json.loads(body)['message']['content'];self.assertEqual(content[1]['type'],'image');return json.dumps({'structured_output':{'message':'Saw image'}})
-            async def codex_capture(args,body,cwd,*rest):
+            async def codex_capture(args,body,cwd,*rest,timeout=150):
+                self.assertEqual(timeout,150)
                 from pathlib import Path
                 path=Path(args[args.index('--image')+1]);self.assertEqual(path.read_bytes(),png());self.assertEqual(path.stat().st_mode&0o777,0o600);self.image_path=path;return '{"message":"Saw image"}'
             for provider,handler in [('claude-code',claude_capture),('codex',codex_capture)]:
@@ -51,3 +53,21 @@ class AttachmentTests(unittest.TestCase):
     def test_unsupported_connector_explains_without_sending(self):
         with self.assertRaisesRegex(RuntimeError,'cannot send images'):
             asyncio.run(AtMemArchitect().call(request([item(png(),'diagram.png','image/png')],'gemini-cli'),lambda:False))
+
+class DiagramInputTests(unittest.TestCase):
+    def test_plain_and_compressed_diagrams_keep_nodes_edges_and_page(self):
+        import base64,zlib
+        from urllib.parse import quote
+        from server.attachments import diagram_text
+        model='<mxGraphModel><root><mxCell id="a" value="API"/><mxCell id="b" value="Database"/><mxCell id="e" source="a" target="b" value="Writes"/></root></mxGraphModel>'
+        for text in [model,'<mxfile><diagram name="System">'+model+'</diagram></mxfile>']:
+            result=diagram_text(text.encode());self.assertIn('source="a"',result);self.assertIn('Database',result)
+        compressor=zlib.compressobj(wbits=-15);encoded=base64.b64encode(compressor.compress(quote(model,safe='').encode())+compressor.flush()).decode()
+        self.assertIn('Writes',diagram_text(('<mxfile><diagram name="System">'+encoded+'</diagram></mxfile>').encode()))
+    def test_external_entities_and_expansion_are_rejected(self):
+        import base64,zlib
+        from server.attachments import diagram_text
+        with self.assertRaises(ValueError):diagram_text(b'<!DOCTYPE x [<!ENTITY x SYSTEM "file:///etc/passwd">]><mxGraphModel/>')
+        with self.assertRaises(ValueError):diagram_text(b'<html/>')
+        compressor=zlib.compressobj(wbits=-15);encoded=base64.b64encode(compressor.compress(b'x'*200000)+compressor.flush()).decode()
+        with self.assertRaises(ValueError):diagram_text(('<mxfile><diagram>'+encoded+'</diagram></mxfile>').encode())

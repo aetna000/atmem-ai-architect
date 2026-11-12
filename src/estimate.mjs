@@ -14,6 +14,19 @@ export const INPUTS = [
   { id: "training_hours", label: "Training hours per month", unit: "hours" },
 ];
 
+// Planning assumptions, not provider prices or capacity guarantees. Explicit inputs
+// and discovered business facts always take precedence over these presets.
+export const PROJECT_SIZES = Object.freeze([
+  {id:'small', label:'Small', requests_per_month:10000, data_gb:10, events_per_month:10000},
+  {id:'medium', label:'Medium', requests_per_month:100000, data_gb:100, events_per_month:100000},
+  {id:'large', label:'Large', requests_per_month:1000000, data_gb:1000, events_per_month:1000000},
+  {id:'extra-large', label:'Extra Large', requests_per_month:10000000, data_gb:10000, events_per_month:10000000},
+].map(size=>Object.freeze({...size,tokens_per_request:3000,endpoint_hours:730})));
+export function setProjectSize(project, id) {
+  if (!PROJECT_SIZES.some(size=>size.id===id)) throw Error('Choose a listed project size.');
+  return {...project,estimate:{...project.estimate,projectSize:id}};
+}
+
 // role/kind → how it is charged
 const DRIVERS = {
   llm: { name: "Model tokens", unit: "1k tokens", inputs: ["requests_per_month", "tokens_per_request"], qty: (u) => (u.requests_per_month * u.tokens_per_request) / 1000 },
@@ -41,6 +54,8 @@ export function usage(project) {
       const fromFact = i.fact && [...facts].reverse().find((f) => f.name === i.fact);
       if (Number.isFinite(entered) && entered >= 0) return [i.id, { value: entered, source: "entered" }];
       if (fromFact && Number.isFinite(fromFact.value) && fromFact.value >= 0) return [i.id, { value: fromFact.value, source: `discovery (${fromFact.madeAt})` }];
+      const preset = PROJECT_SIZES.find(size=>size.id===est.projectSize);
+      if (preset && Number.isFinite(preset[i.id])) return [i.id, {value:preset[i.id], source:`${preset.label} planning assumption`}];
       if (i.assumption != null) return [i.id, { value: i.assumption, source: `assumption: ${i.assumptionText}` }];
       return [i.id, { value: null, source: "needed" }];
     }),
@@ -64,8 +79,8 @@ export function estimate(project, now = new Date()) {
         const priced = validNumber(l.price) && /^[A-Z]{3}$/.test(l.currency || "") && l.source?.trim() && l.unit?.trim();
         lines.push({ id: l.id, component: n.data.label, componentId: n.id, detailed: true,
           driver: l.description || "Charge", unit: l.unit, inputs: [], quantity: missing.length ? null : l.quantity,
-          missing, price: priced ? l : null,
-          cost: !missing.length && priced ? Math.round(l.quantity * l.price * 100) / 100 : null,
+          missing, note:l.note, price: priced ? l : null,
+          cost: !missing.length && priced ? l.quantity * l.price : null,
           status: missing.length ? "input needed" : priced ? "priced" : "price needed" });
       }
       continue;
@@ -88,7 +103,7 @@ export function estimate(project, now = new Date()) {
       quantity,
       missing,
       price: priced ? price : null,
-      cost: quantity != null && priced ? Math.round(quantity * price.price * 100) / 100 : null,
+      cost: quantity != null && priced ? quantity * price.price : null,
       status: missing.length ? "input needed" : priced ? "priced" : "price needed",
     });
   }
@@ -100,6 +115,7 @@ export function estimate(project, now = new Date()) {
   const gaps = [
     ...(est.details || []).filter((l) => !project.nodes.some((n) => n.id === l.componentId && n.data.kind !== "note")).map((l) => `${l.description || l.id}: linked component was removed; reassign this charge (excluded from totals).`),
     ...lines.filter((l) => l.status !== "priced").map((l) => `${l.component} / ${l.driver}: ${l.status}${l.missing.length ? ` (${l.missing.join(", ")})` : ""}.`),
+    ...lines.filter(l=>l.price?.coverageIncomplete).map(l=>`${l.component}: additional charges are excluded from this estimate.`),
     ...notCosted.map((name) => `${name}: no cost lines; add charges or an explicit zero-cost line with a reason.`),
     ...(currencies.length > 1 ? ["Choose one currency; different currencies cannot be added."] : []),
     ...lines.filter((l) => l.price && (!l.price.region?.trim() || !l.price.service?.trim() || !l.price.date || !Number.isFinite(Date.parse(l.price.date)))).map((l) => `${l.component} / ${l.driver}: confirm region, service/SKU and price date.`),
@@ -109,6 +125,7 @@ export function estimate(project, now = new Date()) {
   return {
     lines,
     notCosted,
+    preciseExpected:costed.length&&currencies.length===1?total:null,
     usage: u,
     currency: currencies.length === 1 ? currencies[0] : null,
     mixedCurrencies: currencies.length > 1,

@@ -1,0 +1,137 @@
+{
+  "passed": true,
+  "cases": [
+    {
+      "name": "rainfall-positive",
+      "state": "local_checks_passed",
+      "checks": [
+        {
+          "validator": "python-tests",
+          "status": "passed",
+          "testsReported": 1,
+          "skipped": 0
+        }
+      ],
+      "artifactSha256": "1c52ed5255f60dbdc322919123b7ee1887861afa6ac4b407fb93f276e64ae181",
+      "repeatedCaptureRetainsCheckIdentity": true
+    },
+    {
+      "name": "museum-browser",
+      "state": "local_checks_passed",
+      "checks": [
+        {
+          "validator": "node-browser-tests",
+          "status": "passed",
+          "testsReported": 1,
+          "skipped": 0
+        }
+      ],
+      "artifactSha256": "a460e21535c283d6c1834a6666fd4ad6fc7665a6563a346f934cfbf2ddadc1e2",
+      "repeatedCaptureRetainsCheckIdentity": true
+    },
+    {
+      "name": "retained-failure",
+      "state": "needs_attention",
+      "checks": [
+        {
+          "validator": "python-tests",
+          "status": "failed",
+          "testsReported": 1,
+          "skipped": 0
+        }
+      ],
+      "artifactSha256": "c57ce4fd733b6496c3e7a93b7d5d182897e65732df740a25a820fc2826d2a065",
+      "repeatedCaptureRetainsCheckIdentity": true
+    },
+    {
+      "name": "zero-tests",
+      "state": "needs_attention",
+      "checks": [
+        {
+          "validator": "python-tests",
+          "status": "failed",
+          "testsReported": 0,
+          "skipped": 0
+        }
+      ],
+      "artifactSha256": "16aa9cc01eaf2aea002c0854cc6af5494776fd0b3b5da62319561edb00e51113",
+      "repeatedCaptureRetainsCheckIdentity": true
+    },
+    {
+      "name": "skipped-tests",
+      "state": "needs_attention",
+      "checks": [
+        {
+          "validator": "python-tests",
+          "status": "incomplete",
+          "testsReported": 1,
+          "skipped": 1
+        }
+      ],
+      "artifactSha256": "c2b189add6881b3b76908a7d85cf0ec20bb4b69d7f76a5400611b223ecb23dd8",
+      "repeatedCaptureRetainsCheckIdentity": true
+    },
+    {
+      "name": "no-applicable-checks",
+      "state": "needs_attention",
+      "checks": [],
+      "artifactSha256": "ca5e46b7a29482d8da5a47da2024c88c9644d1832e2437a46fc296e5dbfdd361",
+      "repeatedCaptureRetainsCheckIdentity": true
+    }
+  ],
+  "sourceSha256": {
+    "server/engineering_finalization.py": "9414ad7f579a72f1ef2dc35337dfe3eb1ba7450f80f797cbb8f3a66f0330bc98",
+    "server/validation_applicability.py": "3e9d429470d1c41a41f2593399c379ae8d7e10a063843101cfaee6a8bb3e4a62",
+    "server/validation_jobs.py": "d92de3773fe3b28489a7cd75dbebdf071a20f90c5dc8789aee508baf897e1555",
+    "server/engineering_jobs.py": "db473095246db9cd6bd72bad8349deec99e142bd67ddec32402d5ae71b238810",
+    "server/local_validation.py": "e610c301abfb3e8611215704b8d00ce5ca96781aa3ebb2c8eee7855d66207900",
+    "scripts/engine-evaluation/check-finalization.py": "8208bcc893fb764396410d0a470c73dbf8fa22f61a0a39af79ba0ef6c8229da0"
+  },
+  "workerIdentitySha256": "310c6b537856ef87248abfae0b239c3a5d068dfefefec205358b7dd83dddd2e5",
+  "policySha256": "acc6cbd46678d4a44152f16d484b2538f322cd6c8ba087812250e1d310bbd27b",
+  "registrations": [
+    {
+      "id": "python-tests",
+      "label": "Local Python tests",
+      "image": "sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20",
+      "command": [
+        "/usr/local/bin/python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-v"
+      ],
+      "timeoutSeconds": 60,
+      "applicability": {
+        "anyOf": [
+          "test_*.py"
+        ]
+      }
+    },
+    {
+      "id": "node-browser-tests",
+      "label": "Node and Chromium tests (Playwright 1.64.1)",
+      "image": "sha256:df7f71a8588253403dfa833c5c4aacc95ca340204a88d5483edd58131c7f1128",
+      "command": [
+        "/usr/bin/node",
+        "--test",
+        "--test-reporter=tap",
+        "--test-concurrency=1"
+      ],
+      "platform": "linux/arm64",
+      "bootstrapPython": "/usr/bin/python3",
+      "isolationProfile": "chromium-userns-v1",
+      "runtimeEnvironment": {
+        "ATMEM_PLAYWRIGHT_MODULE": "/opt/atmem/playwright-core/index.mjs"
+      },
+      "timeoutSeconds": 120,
+      "applicability": {
+        "anyOf": [
+          "**/*.test.mjs"
+        ]
+      }
+    }
+  ],
+  "cloudOperations": false,
+  "boundary": "Explicit completed-lifecycle fixture, actual immutable capture/applicability/durable supervisor and isolated Python/Chromium execution. No native inference, independent client requirement coverage, original-project or release acceptance."
+}

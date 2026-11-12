@@ -1,0 +1,426 @@
+{
+  "message": "We\u2019re building an Azure borrowing website for member reservations, volunteer checkouts and returns, and overdue emails, alongside your existing website and member spreadsheet. Let\u2019s sketch the application and its connections; these workflows need custom application engineering, with no AI required.\n\n**Should website access be limited to approved members, or can anyone join online?** This determines how we handle registration\u2014for example, \u201conly members already approved in our spreadsheet\u201d; \u201cnot sure\u201d is fine.",
+  "followUp": {
+    "question": "Should website access be limited to approved members, or can anyone join online?",
+    "why": "This determines registration and how sign-in connects to approved membership.",
+    "example": "Only members already approved in our spreadsheet; not sure is also fine.",
+    "topic": "users"
+  },
+  "phase": "Architecture",
+  "proposal": {
+    "baseRevision": 1,
+    "title": "First sketch of the equipment borrowing service",
+    "body": "Preserves the existing public website and member spreadsheet. Proposes a separate borrowing application linked from the public website, with member/volunteer authorization, durable loan records and scheduled email reminders. Australia East is a proposed placement based on the stated country, not an accepted residency policy or verified destination. Identity and email processing geography require review. All new services and connections need custom application/infrastructure implementation; no matching end-to-end generator contract currently implements this workload. Initial scope includes reservations, checkout, return and overdue email; payments, fines and other features are outside this proposed first version unless requested. Membership admission remains open.",
+    "next": {
+      "version": 1,
+      "revision": 1,
+      "name": "Community equipment library",
+      "provider": "azure",
+      "requirements": "I run a community equipment library. I need a website where members reserve tools, volunteers check them out and back in, and overdue reminders go by email. We already have a public website and a spreadsheet of members. We are in Australia. Please help me build this on Azure.",
+      "nodes": [
+        {
+          "id": "existing-website",
+          "type": "resource",
+          "position": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "data": {
+            "label": "Existing public website",
+            "kind": "resource",
+            "provider": "tools",
+            "description": "Existing externally managed website, preserved outside provisioning scope. Propose adding a link to the borrowing application; hosting platform and change ownership remain unknown.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Public",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "deploymentMode": "reference",
+            "poc": false,
+            "role": "app",
+            "topologyGroup": "Existing systems",
+            "service": "Existing public website",
+            "binding": "existing-service"
+          }
+        },
+        {
+          "id": "member-spreadsheet",
+          "type": "resource",
+          "position": {
+            "x": 0.0,
+            "y": 440.0
+          },
+          "data": {
+            "label": "Existing member spreadsheet",
+            "kind": "source",
+            "provider": "tools",
+            "description": "Existing member records; file platform, fields and permissions are unknown. Propose an operator-reviewed initial import with validation and duplicate detection, rather than assuming continuous spreadsheet synchronization. Membership authority after import remains to be agreed.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "deploymentMode": "reference",
+            "poc": false,
+            "role": "data",
+            "topologyGroup": "Existing systems",
+            "service": "Member spreadsheet"
+          }
+        },
+        {
+          "id": "library-users",
+          "type": "resource",
+          "position": {
+            "x": 0.0,
+            "y": 220.0
+          },
+          "data": {
+            "label": "Members and volunteers",
+            "kind": "resource",
+            "provider": "tools",
+            "description": "Existing people accessing the application through browsers, outside provisioning scope. Members reserve equipment; authorized volunteers record checkout and return. People may hold both roles.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "deploymentMode": "reference",
+            "poc": false,
+            "role": "human",
+            "topologyGroup": "People",
+            "service": "Web browser",
+            "binding": "web-browser"
+          }
+        },
+        {
+          "id": "borrowing-app",
+          "type": "resource",
+          "position": {
+            "x": 440.0,
+            "y": 220.0
+          },
+          "data": {
+            "label": "Equipment borrowing website",
+            "kind": "resource",
+            "provider": "azure",
+            "description": "Proposed Azure App Service hosts the new browser interface and server API. Owns inventory, reservations, checkout/return, server-side member/volunteer permissions, reviewed member import and audit events. Transactions prevent overlapping confirmed reservations. A scheduled WebJob within this deployment processes a durable SQL reminder outbox with bounded retries and duplicate suppression. Reminder timing and loan rules remain open. Custom source, deployment, identity integration and tests are required; no supplied application image or generated workload exists. Australia East is proposed; availability and residency require review.",
+            "config": {
+              "region": "australiaeast",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "deploymentMode": "create",
+            "poc": true,
+            "role": "app",
+            "topologyGroup": "Borrowing service",
+            "service": "Azure App Service"
+          }
+        },
+        {
+          "id": "library-database",
+          "type": "resource",
+          "position": {
+            "x": 880.0,
+            "y": 0.0
+          },
+          "data": {
+            "label": "Members, equipment and loans",
+            "kind": "resource",
+            "provider": "azure",
+            "description": "Proposed Azure SQL Database stores member-to-login mappings, volunteer permissions, equipment, reservations, loan history, audit events and reminder outbox. Application access uses a narrowly scoped managed identity; browsers receive no database access. Transactional booking checks and idempotent loan changes require implementation. Backup, restore, retention and operating ownership remain design work. Australia East proposed, unverified.",
+            "config": {
+              "region": "australiaeast",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "deploymentMode": "create",
+            "poc": true,
+            "role": "data",
+            "topologyGroup": "Borrowing service",
+            "service": "Azure SQL Database"
+          }
+        },
+        {
+          "id": "member-signin",
+          "type": "resource",
+          "position": {
+            "x": 880.0,
+            "y": 220.0
+          },
+          "data": {
+            "label": "Member and volunteer sign-in",
+            "kind": "resource",
+            "provider": "azure",
+            "description": "Proposed Microsoft Entra External ID handles member-facing sign-in. The application separately enforces approved membership and volunteer permissions; successful sign-in never grants volunteer access by itself. Admission model awaits the user's decision. Tenant geography, recovery and supported sign-in configuration require review and custom integration.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "deploymentMode": "create",
+            "poc": true,
+            "role": "guard",
+            "topologyGroup": "Access",
+            "service": "Microsoft Entra External ID"
+          }
+        },
+        {
+          "id": "reminder-email",
+          "type": "resource",
+          "position": {
+            "x": 880.0,
+            "y": 440.0
+          },
+          "data": {
+            "label": "Overdue reminder email",
+            "kind": "resource",
+            "provider": "azure",
+            "description": "Proposed Azure Communication Services Email sends overdue reminders requested by the application worker. Requires verified sender/domain, supported data location and delivery-status handling. Exact provisioning resources and API authorization require engineering. Provider acceptance is distinct from inbox delivery; uncertain sends require reconciliation before retry. No service availability or Australian-only processing is established.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "deploymentMode": "create",
+            "poc": true,
+            "role": "output",
+            "topologyGroup": "Notifications",
+            "service": "Azure Communication Services Email"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "website-app-link",
+          "source": "existing-website",
+          "target": "borrowing-app",
+          "type": "smoothstep",
+          "label": "Proposed link to borrowing website"
+        },
+        {
+          "id": "users-app",
+          "source": "library-users",
+          "target": "borrowing-app",
+          "type": "smoothstep",
+          "label": "HTTPS reservations, checkout and return",
+          "integration": "browser-https"
+        },
+        {
+          "id": "spreadsheet-import",
+          "source": "member-spreadsheet",
+          "target": "borrowing-app",
+          "type": "smoothstep",
+          "label": "Reviewed member import \u2014 custom implementation"
+        },
+        {
+          "id": "app-database",
+          "source": "borrowing-app",
+          "target": "library-database",
+          "type": "smoothstep",
+          "label": "SQL transactions using managed identity \u2014 to implement"
+        },
+        {
+          "id": "app-signin",
+          "source": "borrowing-app",
+          "target": "member-signin",
+          "type": "smoothstep",
+          "label": "OpenID Connect sign-in and token validation \u2014 to implement"
+        },
+        {
+          "id": "app-email",
+          "source": "borrowing-app",
+          "target": "reminder-email",
+          "type": "smoothstep",
+          "label": "Email send API and delivery status \u2014 to implement"
+        }
+      ]
+    }
+  },
+  "requirementDrafts": [
+    {
+      "rationale": "Prevents conflicting bookings and lost loan records; transactional conflict handling is an engineering proposal.",
+      "basis": "\u201cmembers reserve tools, volunteers check them out and back in\u201d",
+      "id": "ai-loan-lifecycle",
+      "statement": "Members can reserve available equipment; volunteers can record checkout and return against durable loan records. Proposed acceptance includes rejecting conflicting confirmed reservations and safely handling repeated submissions.",
+      "kind": "functional",
+      "category": "reliability",
+      "priority": "must",
+      "links": [
+        "borrowing-app",
+        "library-database"
+      ]
+    },
+    {
+      "rationale": "Member information and volunteer operations require distinct permissions; the exact admission model remains unconfirmed.",
+      "basis": "\u201cmembers reserve tools, volunteers check them out and back in\u201d and \u201ca spreadsheet of members\u201d",
+      "id": "ai-member-volunteer-access",
+      "statement": "Proposed access boundary: authenticate users, restrict members to their permitted reservations and loan information, and enforce volunteer checkout/return permissions on the server. Import existing members through a reviewed process; membership admission remains open.",
+      "kind": "nonfunctional",
+      "category": "security",
+      "priority": "must",
+      "links": [
+        "borrowing-app",
+        "member-signin",
+        "library-database",
+        "member-spreadsheet"
+      ]
+    },
+    {
+      "rationale": "Email failures must remain recoverable without repeatedly notifying members; reminder timing needs later agreement.",
+      "basis": "\u201coverdue reminders go by email\u201d",
+      "id": "ai-overdue-reminders",
+      "statement": "Send email reminders for overdue loans and record send outcomes. Proposed behavior includes durable pending work, bounded retries, duplicate suppression and rechecking loan status before sending so returned equipment does not trigger new reminders.",
+      "kind": "functional",
+      "category": "reliability",
+      "priority": "must",
+      "links": [
+        "borrowing-app",
+        "library-database",
+        "reminder-email"
+      ]
+    }
+  ],
+  "decisionUpdates": [
+    {
+      "subject": "platform.cloud",
+      "value": "azure",
+      "sourceText": "Please help me build this on Azure."
+    },
+    {
+      "subject": "data.country",
+      "value": "Australia",
+      "sourceText": "We are in Australia."
+    }
+  ],
+  "contextUsed": {
+    "status": "ready",
+    "enabled": true,
+    "engine": "AtMem 2.3.10 core SDK",
+    "recordsUsed": [],
+    "knowledgeRecordIds": [
+      "rec_815581500ba14c2a96b78ad36d2b6ad3",
+      "rec_7ec26e97caab40659b89f72829c0c630",
+      "rec_65ac184d3b84407ea06dbd9cbccbdb10",
+      "rec_ab339db416b44dd89250d0d0c2f5fd79",
+      "rec_837010b4c7734cf3bf9d4d0570aa9180",
+      "rec_2ac910aa7c004abd971fd95be7c0abe5",
+      "rec_6a73641ca05a44d28dc69ba31d4af97b",
+      "rec_06696b1a73144edfa8d3ebb3e293b516"
+    ],
+    "skills": [
+      {
+        "id": "composition",
+        "name": "Architecture composition and engineering judgment",
+        "provider": "all",
+        "stages": [
+          "discover",
+          "design",
+          "review",
+          "deploy"
+        ],
+        "version": "1.0.0",
+        "digest": "df2291a4e0d48a979d4f7c6e99da046bdedfc0e54d41e0b5379b2bc8086b5be6",
+        "summary": "Choose and compose blocks through responsibility, contracts, state, identity, failure modes and trade-offs; verify the complete system.",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "architecture",
+        "name": "AI architecture and discovery",
+        "provider": "all",
+        "stages": [
+          "discover",
+          "design",
+          "review"
+        ],
+        "version": "1.3.0",
+        "digest": "c5cc1056e3ed9a00799882f3a7f4ff2e957e4941fe10e4fd865f5c02ceb01058",
+        "summary": "Clarify outcome, users, existing systems, data ownership and constraints. Evolve the diagram incrementally. Derive functional requirements and propose measurable quality targets as assumptions needing confirmation. Compare clouds against the actual requirements; do not assume an enterprise identity provider or a vendor. Keep proposed and accepted decisions distinct.",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "azure",
+        "name": "Azure architecture guidance",
+        "provider": "azure",
+        "stages": [
+          "design",
+          "review",
+          "estimate",
+          "deploy"
+        ],
+        "version": "1.0.0",
+        "digest": "74e6109d663b16e00202c05700dd4bcb9f7ea379f6561806610392af67762145",
+        "summary": "Check Microsoft 365/Entra integration only when relevant to the user. Match model, retrieval, data and runtime services to requirements. Evaluate redundancy, regional availability, identity and recovery separately. The pinned Azure reliability reference specifically covers Functions and App Service; do not extend its validation claims to other services.",
+        "source": "https://raw.githubusercontent.com/microsoft/azure-skills/3c89228484f4a9241d255ec7c703976d13277c2d/skills/azure-reliability/SKILL.md",
+        "reference": {
+          "id": "azure",
+          "repository": "microsoft/azure-skills",
+          "commit": "3c89228484f4a9241d255ec7c703976d13277c2d",
+          "sourcePath": "skills/azure-reliability/SKILL.md",
+          "url": "https://raw.githubusercontent.com/microsoft/azure-skills/3c89228484f4a9241d255ec7c703976d13277c2d/skills/azure-reliability/SKILL.md",
+          "sha256": "a70f0a799c8f3cf805ada741e82af31a149b57cb1e2388d7805036492cdceb71",
+          "file": "agent-skills/upstream/azure/SKILL.md",
+          "status": "reference-only",
+          "note": "Imported source reference, not an enabled script/tool package. AtMem AI Architect specialist guidance is reviewed separately; referenced upstream companion files are not bundled.",
+          "integrity": true
+        },
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      }
+    ],
+    "tools": [],
+    "boundary": "AtMem AI Architect \u2192 native client",
+    "contextDigest": "e7b79d81f5a2378984cf155de41bdfb6ed7ee2ecd316990e0eb8ae1c538f3cc5",
+    "projectId": "generality-community-library",
+    "responseRepairAttempts": 0,
+    "modelResponseEncodings": [
+      "compact_patch"
+    ],
+    "modelResponseJsonBytes": 13046
+  },
+  "priceQuotes": []
+}

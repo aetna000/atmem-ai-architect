@@ -1,3 +1,4 @@
+import {prefillAcceptedSettings} from './engineering-defaults.mjs';
 // Small, grounded working requirements. Unknown targets become conversation topics,
 // not invented company policies or a large list of fields for the user to complete.
 import { roleOf } from './review.mjs';
@@ -14,6 +15,7 @@ export function deriveRequirements(project) {
   return out.map(r=>({...r,rationale:r.id==='drv-data-access' ? 'The design uses information that people may have different rights to access. Clarifying this early helps prevent inappropriate disclosure.' : 'The design processes and stores information. We need to establish any location constraints before choosing services and regions.',basis:'Inferred from the data and AI components on the board; this is a question to validate, not an established company policy.'}));
 }
 export function withDerived(project){
+ project=prefillAcceptedSettings(project);
  const mine=(project.needs||[]).filter(r=>!(r.source==='agent'&&r.id.startsWith('drv-')));
  const excluded=new Set([...(project.extensions?.dismissedRequirements||[]),...mine.map(r=>r.id)]);
  const needs=[...mine,...(mine.some(r=>r.id.startsWith("ai-")) ? [] : deriveRequirements(project)).filter(r=>!excluded.has(r.id))].slice(0,300);

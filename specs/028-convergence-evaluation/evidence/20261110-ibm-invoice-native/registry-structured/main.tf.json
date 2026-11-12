@@ -1,0 +1,464 @@
+{
+  "terraform": {
+    "required_version": ">= 1.17.1, < 2.0.0",
+    "required_providers": {
+      "ibm": {
+        "source": "IBM-Cloud/ibm",
+        "version": "1.89.0"
+      }
+    }
+  },
+  "provider": {
+    "ibm": {
+      "region": "${var.region}"
+    }
+  },
+  "data": {
+    "ibm_code_engine_project": {
+      "destination": {
+        "project_id": "${var.code_engine_project_id}"
+      }
+    }
+  },
+  "variable": {
+    "review_approved": {
+      "type": "bool",
+      "default": false
+    },
+    "account_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing destination IBM account. The referenced Code Engine project must belong to it.",
+      "validation": {
+        "condition": "${can(regex(\"^[0-9a-f]{32}$\", var.account_id))}",
+        "error_message": "Supply the reviewed account_id value."
+      }
+    },
+    "region": {
+      "type": "string",
+      "nullable": false,
+      "description": "Reviewed region with Code Engine, App ID and the selected watsonx model. Verify availability, identity processing and terms; no global fallback.",
+      "validation": {
+        "condition": "${contains([\"au-syd\",\"br-sao\",\"ca-mon\",\"ca-tor\",\"eu-de\",\"eu-es\",\"eu-gb\",\"in-che\",\"in-mum\",\"jp-osa\",\"jp-tok\",\"us-south\"],var.region)}",
+        "error_message": "Use a reviewed regional Container Registry location; an invented region hostname or implicit global fallback is not supported."
+      },
+      "default": "au-syd"
+    },
+    "code_engine_project_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing Code Engine project; never recreate or import it.",
+      "validation": {
+        "condition": "${can(regex(\"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$\", var.code_engine_project_id))}",
+        "error_message": "Supply the reviewed code_engine_project_id value."
+      }
+    },
+    "registry_namespace": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing regional IBM Container Registry namespace.",
+      "validation": {
+        "condition": "${can(regex(\"^[a-z0-9]+(?:[-_][a-z0-9]+)*$\", var.registry_namespace))}",
+        "error_message": "Supply the reviewed registry_namespace value."
+      }
+    },
+    "registry_pull_secret": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing authorized registry-pull secret NAME in that Code Engine project. No credential values are exported or written to state.",
+      "validation": {
+        "condition": "${can(regex(\"^[a-z][a-z0-9-]{1,61}[a-z0-9]$\", var.registry_pull_secret))}",
+        "error_message": "Supply the reviewed registry_pull_secret value."
+      }
+    },
+    "block_776f726b7370616365_name": {
+      "type": "string",
+      "nullable": false,
+      "description": "Application and App ID registration name.",
+      "validation": {
+        "condition": "${can(regex(\"^[a-z][a-z0-9-]{2,48}[a-z0-9]$\", var.block_776f726b7370616365_name))}",
+        "error_message": "Supply the reviewed block_776f726b7370616365_name value."
+      }
+    },
+    "block_776f726b7370616365_image_repository": {
+      "type": "string",
+      "nullable": false,
+      "description": "Reviewed path for the emitted application image in the existing registry namespace.",
+      "validation": {
+        "condition": "${can(regex(\"^[a-z0-9]+(?:[._/-][a-z0-9]+)*$\", var.block_776f726b7370616365_image_repository))}",
+        "error_message": "Supply the reviewed block_776f726b7370616365_image_repository value."
+      }
+    },
+    "block_776f726b7370616365_image_digest": {
+      "type": "string",
+      "nullable": false,
+      "description": "Exact built, scanned and tested emitted image digest. Publishing requires authorization.",
+      "validation": {
+        "condition": "${can(regex(\"^sha256:[0-9a-f]{64}$\", var.block_776f726b7370616365_image_digest))}",
+        "error_message": "Supply the reviewed block_776f726b7370616365_image_digest value."
+      }
+    },
+    "block_776f726b7370616365_watsonx_project_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing watsonx data-platform project; associate the reviewed runtime instance and add this generated trusted profile as an authorized collaborator. IAM access alone does not establish project membership.",
+      "validation": {
+        "condition": "${can(regex(\"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$\", var.block_776f726b7370616365_watsonx_project_id))}",
+        "error_message": "Supply the reviewed block_776f726b7370616365_watsonx_project_id value."
+      }
+    },
+    "block_776f726b7370616365_runtime_instance_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing associated watsonx.ai Runtime service instance GUID, scoped by the generated IAM policy. Not a Cloud Projects deployment ID.",
+      "validation": {
+        "condition": "${can(regex(\"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$\", var.block_776f726b7370616365_runtime_instance_id))}",
+        "error_message": "Supply the reviewed block_776f726b7370616365_runtime_instance_id value."
+      }
+    },
+    "block_776f726b7370616365_model_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Reviewed regional Text Chat model with JSON-object output support; verify lifecycle, model terms and quotas.",
+      "validation": {
+        "condition": "${can(regex(\"^[a-z0-9][a-z0-9_.-]{0,79}/[a-z0-9][a-z0-9_.-]{0,99}$\", var.block_776f726b7370616365_model_id))}",
+        "error_message": "Supply the reviewed block_776f726b7370616365_model_id value."
+      }
+    },
+    "block_776f726b7370616365_appid_plan": {
+      "type": "string",
+      "nullable": false,
+      "description": "Current App ID service plan reviewed by the implementing engineer against the catalog and accepted budget. No price is invented.",
+      "validation": {
+        "condition": "${can(regex(\"^[a-z][a-z0-9-]{1,79}$\", var.block_776f726b7370616365_appid_plan))}",
+        "error_message": "Supply the reviewed block_776f726b7370616365_appid_plan value."
+      }
+    },
+    "block_776f726b7370616365_authorized_user_subjects": {
+      "type": "set(string)",
+      "default": [],
+      "nullable": false,
+      "description": "Admin-enrolled Cloud Directory user subjects from this NEW owned App ID tenant. Initially empty denies everyone. Enroll staff securely, then review and add exact subjects. This authoritative role assignment must not target a shared/existing tenant.",
+      "validation": {
+        "condition": "${alltrue([for subject in var.block_776f726b7370616365_authorized_user_subjects : can(regex(\"^[A-Za-z0-9|:_@.-]{1,200}$\", subject))])}",
+        "error_message": "Supply exact administrator-reviewed user subjects."
+      }
+    },
+    "block_776f726b7370616365_policy_review": {
+      "type": "object({ accountId = string, projectId = string, runtimeInstanceId = string, region = string, model = string, retentionReview = string, approvedBy = string, evidenceSha256 = string, expiresAt = string })",
+      "nullable": false,
+      "description": "Scoped destination-owner review of actual model/provider retention and data-processing terms. Evidence digest and expiry within 31 days; operator attestation, not a fabricated approval API."
+    }
+  },
+  "locals": {
+    "unfinished_work": []
+  },
+  "resource": {
+    "terraform_data": {
+      "review_gate": {
+        "input": {
+          "design_revision": 1,
+          "environment": "staging"
+        },
+        "lifecycle": {
+          "precondition": [
+            {
+              "condition": "${var.review_approved && length(local.unfinished_work) == 0}",
+              "error_message": "Review destination, code, access, model policy, costs and unresolved scope before planning deployment."
+            },
+            {
+              "condition": "${data.ibm_code_engine_project.destination.account_id == var.account_id && data.ibm_code_engine_project.destination.region == var.region}",
+              "error_message": "Preserve the existing Code Engine project: account and region must match the reviewed destination."
+            }
+          ]
+        }
+      }
+    },
+    "ibm_resource_instance": {
+      "block_776f726b7370616365": {
+        "name": "${var.block_776f726b7370616365_name}",
+        "service": "appid",
+        "plan": "${var.block_776f726b7370616365_appid_plan}",
+        "location": "${var.region}",
+        "resource_group_id": "${data.ibm_code_engine_project.destination.resource_group_id}",
+        "lifecycle": {
+          "prevent_destroy": true,
+          "postcondition": [
+            {
+              "condition": "${self.account_id == var.account_id}",
+              "error_message": "App ID tenant must belong to the reviewed account."
+            }
+          ]
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_appid_application": {
+      "block_776f726b7370616365": {
+        "tenant_id": "${ibm_resource_instance.block_776f726b7370616365.guid}",
+        "name": "${var.block_776f726b7370616365_name}",
+        "type": "singlepageapp",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_appid_application_scopes": {
+      "block_776f726b7370616365": {
+        "tenant_id": "${ibm_resource_instance.block_776f726b7370616365.guid}",
+        "client_id": "${ibm_appid_application.block_776f726b7370616365.client_id}",
+        "scopes": [
+          "process"
+        ],
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_appid_role": {
+      "block_776f726b7370616365": {
+        "tenant_id": "${ibm_resource_instance.block_776f726b7370616365.guid}",
+        "name": "WorkspaceUser",
+        "access": [
+          {
+            "application_id": "${ibm_appid_application.block_776f726b7370616365.client_id}",
+            "scopes": [
+              "process"
+            ]
+          }
+        ],
+        "depends_on": [
+          "terraform_data.review_gate",
+          "ibm_appid_application_scopes.block_776f726b7370616365"
+        ]
+      }
+    },
+    "ibm_appid_user_roles": {
+      "block_776f726b7370616365": {
+        "for_each": "${var.block_776f726b7370616365_authorized_user_subjects}",
+        "tenant_id": "${ibm_resource_instance.block_776f726b7370616365.guid}",
+        "subject": "${each.value}",
+        "role_ids": [
+          "${ibm_appid_role.block_776f726b7370616365.role_id}"
+        ],
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_appid_idp_cloud_directory": {
+      "block_776f726b7370616365": {
+        "tenant_id": "${ibm_resource_instance.block_776f726b7370616365.guid}",
+        "is_active": true,
+        "signup_enabled": false,
+        "self_service_enabled": false,
+        "welcome_enabled": false,
+        "reset_password_enabled": true,
+        "reset_password_notification_enabled": true,
+        "identity_field": "email",
+        "identity_confirm_access_mode": "FULL",
+        "identity_confirm_methods": [
+          "email"
+        ],
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_appid_idp_facebook": {
+      "block_776f726b7370616365": {
+        "tenant_id": "${ibm_resource_instance.block_776f726b7370616365.guid}",
+        "is_active": false,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_appid_idp_google": {
+      "block_776f726b7370616365": {
+        "tenant_id": "${ibm_resource_instance.block_776f726b7370616365.guid}",
+        "is_active": false,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_appid_idp_saml": {
+      "block_776f726b7370616365": {
+        "tenant_id": "${ibm_resource_instance.block_776f726b7370616365.guid}",
+        "is_active": false,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_iam_trusted_profile": {
+      "block_776f726b7370616365": {
+        "name": "${var.block_776f726b7370616365_name}",
+        "description": "Keyless Code Engine model runtime; no end-user login authority",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_iam_trusted_profile_link": {
+      "block_776f726b7370616365": {
+        "profile_id": "${ibm_iam_trusted_profile.block_776f726b7370616365.profile_id}",
+        "cr_type": "CE",
+        "link": {
+          "crn": "${data.ibm_code_engine_project.destination.crn}",
+          "component_name": "${ibm_code_engine_app.block_776f726b7370616365.name}",
+          "component_type": "app"
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_iam_trusted_profile_policy": {
+      "block_776f726b7370616365": {
+        "iam_id": "${ibm_iam_trusted_profile.block_776f726b7370616365.iam_id}",
+        "roles": [
+          "Writer"
+        ],
+        "resources": {
+          "service": "pm-20",
+          "resource_instance_id": "${var.block_776f726b7370616365_runtime_instance_id}",
+          "region": "${var.region}"
+        },
+        "description": "Instance-scoped watsonx Runtime access. Writer includes broader instance operations; it is not an invented prediction-only IAM permission.",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_code_engine_app": {
+      "block_776f726b7370616365": {
+        "project_id": "${var.code_engine_project_id}",
+        "name": "${var.block_776f726b7370616365_name}",
+        "image_reference": "${lookup({\"au-syd\":\"au.icr.io\",\"br-sao\":\"br.icr.io\",\"ca-mon\":\"ca2.icr.io\",\"ca-tor\":\"ca.icr.io\",\"eu-de\":\"de.icr.io\",\"eu-es\":\"es.icr.io\",\"eu-gb\":\"uk.icr.io\",\"in-che\":\"in.icr.io\",\"in-mum\":\"in2.icr.io\",\"jp-osa\":\"jp2.icr.io\",\"jp-tok\":\"jp.icr.io\",\"us-south\":\"us.icr.io\"},var.region)}/${var.registry_namespace}/${var.block_776f726b7370616365_image_repository}@${var.block_776f726b7370616365_image_digest}",
+        "image_secret": "${var.registry_pull_secret}",
+        "image_port": 8080,
+        "managed_domain_mappings": "local_public",
+        "run_as_user": 10001,
+        "run_compute_resource_token_enabled": true,
+        "scale_cpu_limit": "0.5",
+        "scale_memory_limit": "1G",
+        "scale_min_instances": 0,
+        "scale_max_instances": 2,
+        "scale_concurrency": 5,
+        "scale_concurrency_target": 5,
+        "scale_request_timeout": 30,
+        "run_env_variables": [
+          {
+            "name": "ACCOUNT_ID",
+            "value": "${var.account_id}",
+            "type": "literal"
+          },
+          {
+            "name": "WATSONX_PROJECT_ID",
+            "value": "${var.block_776f726b7370616365_watsonx_project_id}",
+            "type": "literal"
+          },
+          {
+            "name": "RUNTIME_INSTANCE_ID",
+            "value": "${var.block_776f726b7370616365_runtime_instance_id}",
+            "type": "literal"
+          },
+          {
+            "name": "MODEL_REGION",
+            "value": "${var.region}",
+            "type": "literal"
+          },
+          {
+            "name": "MODEL_ID",
+            "value": "${var.block_776f726b7370616365_model_id}",
+            "type": "literal"
+          },
+          {
+            "name": "IAM_PROFILE_ID",
+            "value": "${ibm_iam_trusted_profile.block_776f726b7370616365.profile_id}",
+            "type": "literal"
+          },
+          {
+            "name": "APPID_TENANT_ID",
+            "value": "${ibm_resource_instance.block_776f726b7370616365.guid}",
+            "type": "literal"
+          },
+          {
+            "name": "APPID_CLIENT_ID",
+            "value": "${ibm_appid_application.block_776f726b7370616365.client_id}",
+            "type": "literal"
+          },
+          {
+            "name": "APPID_ISSUER",
+            "value": "${ibm_appid_application.block_776f726b7370616365.oauth_server_url}",
+            "type": "literal"
+          },
+          {
+            "name": "AUTH_SCOPE",
+            "value": "${var.block_776f726b7370616365_name}/process",
+            "type": "literal"
+          },
+          {
+            "name": "OUTPUT_CONTRACT_BASE64",
+            "value": "eyJpbnN0cnVjdGlvbiI6IkNsYXNzaWZ5IHRoZSB0aWNrZXQgYW5kIGZsYWcgdW5jZXJ0YWludHk7IG5ldmVyIHRha2UgYWN0aW9uLiIsImZpZWxkcyI6W3sibmFtZSI6InRvcGljIiwidHlwZSI6InN0cmluZyIsImRlc2NyaXB0aW9uIjoiVG9waWMiLCJ2YWx1ZXMiOlsiYmlsbGluZyIsIm90aGVyIl19LHsibmFtZSI6InVuY2VydGFpbiIsInR5cGUiOiJib29sZWFuIiwiZGVzY3JpcHRpb24iOiJOZWVkcyBodW1hbiByZXZpZXcifV19",
+            "type": "literal"
+          },
+          {
+            "name": "MAX_INPUT_BYTES",
+            "value": "20000",
+            "type": "literal"
+          },
+          {
+            "name": "MAX_OUTPUT_TOKENS",
+            "value": "1024",
+            "type": "literal"
+          },
+          {
+            "name": "POLICY_REVIEW_BASE64",
+            "value": "${base64encode(jsonencode(var.block_776f726b7370616365_policy_review))}",
+            "type": "literal"
+          }
+        ],
+        "probe_readiness": {
+          "type": "http",
+          "path": "/healthz",
+          "port": 8080,
+          "initial_delay": 2,
+          "interval": 5,
+          "timeout": 2,
+          "failure_threshold": 12
+        },
+        "depends_on": [
+          "terraform_data.review_gate",
+          "ibm_iam_trusted_profile_policy.block_776f726b7370616365"
+        ]
+      }
+    },
+    "ibm_appid_redirect_urls": {
+      "block_776f726b7370616365": {
+        "tenant_id": "${ibm_resource_instance.block_776f726b7370616365.guid}",
+        "urls": [
+          "${ibm_code_engine_app.block_776f726b7370616365.endpoint}/"
+        ],
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    }
+  },
+  "output": {
+    "block_776f726b7370616365_url": {
+      "value": "${ibm_code_engine_app.block_776f726b7370616365.endpoint}"
+    },
+    "block_776f726b7370616365_appid_tenant_id": {
+      "value": "${ibm_resource_instance.block_776f726b7370616365.guid}"
+    },
+    "block_776f726b7370616365_trusted_profile_iam_id": {
+      "value": "${ibm_iam_trusted_profile.block_776f726b7370616365.iam_id}"
+    }
+  }
+}

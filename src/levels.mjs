@@ -1,5 +1,5 @@
 // Zoom levels for AtMem AI Architect: System (layers) → Flow (blocks) → Block (detail).
-// Layers are derived from block behaviour, so projects need no extra data.
+// Explicit responsibility groups share the same underlying component graph; legacy behavior groups remain supported.
 import { orderProject } from "./core.mjs";
 
 export const LAYERS = [
@@ -12,6 +12,9 @@ export const LAYERS = [
 ];
 
 export function layerOf(node) {
+  const group=String(node.data.topologyGroup||'').trim();
+  if(group)return {id:'responsibility:'+encodeURIComponent(group),label:group,explicit:true};
+  if(node.id&&node.data.kind==='resource'&&!node.data.category)return {id:'component:'+node.id,label:node.data.label,ungrouped:true};
   const layer = LAYERS.find((l) => l.kinds.includes(node.data.kind));
   if (layer) return { id: layer.id, label: layer.label };
   const category = String(node.data.category || "Infrastructure").trim();
@@ -81,6 +84,8 @@ export function systemView(p, runStates = {}) {
         data: {
           layer: g.id,
           label: g.label,
+          explicit:!!g.explicit,
+          ungrouped:!!g.ungrouped,
           blocks: g.blocks,
           providers: [...g.providers],
           status: aggregate(states),
@@ -108,10 +113,7 @@ export function systemView(p, runStates = {}) {
   }
   const edges = [...wires.values()].map((w) => ({
     ...w,
-    label:
-      w.data.labels.length > 1
-        ? `${w.data.labels.length} wires`
-        : w.data.labels[0] || "",
+    label: [...new Set(w.data.labels)].slice(0,2).join(' · ') + (new Set(w.data.labels).size>2?' …':''),
   }));
   return { nodes, edges };
 }

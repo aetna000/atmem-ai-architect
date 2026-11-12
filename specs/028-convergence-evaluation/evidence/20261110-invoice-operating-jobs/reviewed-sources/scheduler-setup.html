@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+    <html xmlns="http://www.w3.org/1999/xhtml" lang="en-US"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>Setting up Amazon EventBridge Scheduler - EventBridge Scheduler</title><meta name="viewport" content="width=device-width,initial-scale=1" /><meta name="assets_root" content="/assets" /><meta name="target_state" content="setting-up" /><meta name="default_state" content="setting-up" /><link rel="icon" type="image/ico" href="/assets/images/favicon.ico" /><link rel="shortcut icon" type="image/ico" href="/assets/images/favicon.ico" /><link rel="canonical" href="https://docs.aws.amazon.com/scheduler/latest/UserGuide/setting-up.html" /><link rel="alternate" type="text/markdown" href="https://docs.aws.amazon.com/scheduler/latest/UserGuide/setting-up.md" title="Markdown version" /><meta name="description" content="Describes the steps you must complete to set up Amazon EventBridge Scheduler, including IAM permissions, the service execution role, and Amazon SQS target queue." /><meta name="deployment_region" content="IAD" /><meta name="product" content="EventBridge Scheduler" /><meta name="guide" content="User Guide" /><meta name="abstract" content="Describes key concepts and features of Amazon EventBridge Scheduler and provides instructions on data security, authentication, authorization, and examples of interacting with the EventBridge Scheduler API using the console, the AWS CLI, and the EventBridge Scheduler SDKs." /><meta name="guide-locale" content="en_us" /><meta name="tocs" content="toc-contents.json" /><link rel="canonical" href="https://docs.aws.amazon.com/scheduler/latest/UserGuide/setting-up.html" /><link rel="alternate" href="https://docs.aws.amazon.com/id_id/scheduler/latest/UserGuide/setting-up.html" hreflang="id-id" /><link rel="alternate" href="https://docs.aws.amazon.com/id_id/scheduler/latest/UserGuide/setting-up.html" hreflang="id" /><link rel="alternate" href="https://docs.aws.amazon.com/de_de/scheduler/latest/UserGuide/setting-up.html" hreflang="de-de" /><link rel="alternate" href="https://docs.aws.amazon.com/de_de/scheduler/latest/UserGuide/setting-up.html" hreflang="de" /><link rel="alternate" href="https://docs.aws.amazon.com/scheduler/latest/UserGuide/setting-up.html" hreflang="en-us" /><link rel="alternate" href="https://docs.aws.amazon.com/scheduler/latest/UserGuide/setting-up.html" hreflang="en" /><link rel="alternate" href="https://docs.aws.amazon.com/es_es/scheduler/latest/UserGuide/setting-up.html" hreflang="es-es" /><link rel="alternate" href="https://docs.aws.amazon.com/es_es/scheduler/latest/UserGuide/setting-up.html" hreflang="es" /><link rel="alternate" href="https://docs.aws.amazon.com/fr_fr/scheduler/latest/UserGuide/setting-up.html" hreflang="fr-fr" /><link rel="alternate" href="https://docs.aws.amazon.com/fr_fr/scheduler/latest/UserGuide/setting-up.html" hreflang="fr" /><link rel="alternate" href="https://docs.aws.amazon.com/it_it/scheduler/latest/UserGuide/setting-up.html" hreflang="it-it" /><link rel="alternate" href="https://docs.aws.amazon.com/it_it/scheduler/latest/UserGuide/setting-up.html" hreflang="it" /><link rel="alternate" href="https://docs.aws.amazon.com/ja_jp/scheduler/latest/UserGuide/setting-up.html" hreflang="ja-jp" /><link rel="alternate" href="https://docs.aws.amazon.com/ja_jp/scheduler/latest/UserGuide/setting-up.html" hreflang="ja" /><link rel="alternate" href="https://docs.aws.amazon.com/ko_kr/scheduler/latest/UserGuide/setting-up.html" hreflang="ko-kr" /><link rel="alternate" href="https://docs.aws.amazon.com/ko_kr/scheduler/latest/UserGuide/setting-up.html" hreflang="ko" /><link rel="alternate" href="https://docs.aws.amazon.com/pt_br/scheduler/latest/UserGuide/setting-up.html" hreflang="pt-br" /><link rel="alternate" href="https://docs.aws.amazon.com/pt_br/scheduler/latest/UserGuide/setting-up.html" hreflang="pt" /><link rel="alternate" href="https://docs.aws.amazon.com/zh_cn/scheduler/latest/UserGuide/setting-up.html" hreflang="zh-cn" /><link rel="alternate" href="https://docs.aws.amazon.com/zh_tw/scheduler/latest/UserGuide/setting-up.html" hreflang="zh-tw" /><link rel="alternate" href="https://docs.aws.amazon.com/scheduler/latest/UserGuide/setting-up.html" hreflang="x-default" /><meta name="feedback-item" content="EventBridge" /><meta name="this_doc_product" content="EventBridge Scheduler" /><meta name="this_doc_guide" content="User Guide" /><head xmlns="http://www.w3.org/1999/xhtml"> <script defer="" src="/assets/r/awsdocs-doc-page.2.0.0.js"></script><link href="/assets/r/awsdocs-doc-page.2.0.0.css" rel="stylesheet"/></head>
+<script defer="" id="awsc-panorama-bundle" type="text/javascript" src="https://prod.pa.cdn.uis.awsstatic.com/panorama-nav-init.js" data-config="{'appEntity':'aws-documentation','region':'us-east-1','service':'eventbridge'}"></script><meta id="panorama-serviceSubSection" value="User Guide" /><meta id="panorama-serviceConsolePage" value="Setting up Amazon EventBridge Scheduler" /></head><body class="awsdocs awsui"><div class="awsdocs-container"><p><a href="setting-up.md">View a markdown version of this page</a></p><awsdocs-header></awsdocs-header><awsui-app-layout id="app-layout" class="awsui-util-no-gutters" ng-controller="ContentController as $ctrl" header-selector="awsdocs-header" navigation-hide="false" navigation-width="$ctrl.navWidth" navigation-open="$ctrl.navOpen" navigation-change="$ctrl.onNavChange($event)" tools-hide="$ctrl.hideTools" tools-width="$ctrl.toolsWidth" tools-open="$ctrl.toolsOpen" tools-change="$ctrl.onToolsChange($event)"><div id="guide-toc" dom-region="navigation"><awsdocs-toc></awsdocs-toc></div><div id="main-column" dom-region="content" tabindex="-1"><awsdocs-view class="awsdocs-view"><div id="awsdocs-content"><head><title>Setting up Amazon EventBridge Scheduler - EventBridge Scheduler</title><meta name="pdf" content="/pdfs/scheduler/latest/UserGuide/scheduler-user-guide.pdf.pdf#setting-up" /><meta name="rss" content="scheduler-user-guide.pdf.rss" /><meta name="forums" content="https://repost.aws/tags/TAMOBQOnOWQCagAKR2zrk8xg" /><meta name="feedback" content="https://docs.aws.amazon.com/forms/aws-doc-feedback?hidden_service_name=EventBridge&amp;topic_url=https://docs.aws.amazon.com/en_us/scheduler/latest/UserGuide/setting-up.html" /><meta name="feedback-yes" content="feedbackyes.html?topic_url=https://docs.aws.amazon.com/en_us/scheduler/latest/UserGuide/setting-up.html" /><meta name="feedback-no" content="feedbackno.html?topic_url=https://docs.aws.amazon.com/en_us/scheduler/latest/UserGuide/setting-up.html" /><meta name="keywords" content="EventBridge Scheduler,scheduler,Amazon EventBridge Scheduler,Permissions,Execution role,Target,Schedule,Setting up,IAM users,IAM roles" /><script type="application/ld+json">
+{
+    "@context" : "https://schema.org",
+    "@type" : "BreadcrumbList",
+    "itemListElement" : [
+      {
+        "@type" : "ListItem",
+        "position" : 1,
+        "name" : "AWS",
+        "item" : "https://aws.amazon.com"
+      },
+      {
+        "@type" : "ListItem",
+        "position" : 2,
+        "name" : "Amazon EventBridge Scheduler",
+        "item" : "https://docs.aws.amazon.com/eventbridge/index.html"
+      },
+      {
+        "@type" : "ListItem",
+        "position" : 3,
+        "name" : "User Guide",
+        "item" : "https://docs.aws.amazon.com/scheduler/latest/UserGuide"
+      },
+      {
+        "@type" : "ListItem",
+        "position" : 4,
+        "name" : "Setting up Amazon EventBridge Scheduler",
+        "item" : "https://docs.aws.amazon.com/scheduler/latest/UserGuide/setting-up.html"
+      }
+    ]
+}
+</script></head><body><div id="main"><div style="display: none"><a href="/pdfs/scheduler/latest/UserGuide/scheduler-user-guide.pdf.pdf#setting-up" target="_blank" rel="noopener noreferrer" title="Open PDF"></a></div><div id="breadcrumbs" class="breadcrumb"><a href="/index.html">Documentation</a><a href="/eventbridge/index.html">Amazon EventBridge Scheduler</a><a href="what-is-scheduler.html">User Guide</a></div><div id="page-toc-src"><a href="#setting-up-aws-sign-up">Sign up for AWS</a><a href="#setting-up-managed-policies">Use managed policies</a><a href="#setting-up-execution-role">Set up the execution role</a><a href="#setting-up-target">Set up a target</a><a href="#setting-up-whats-next">What's next?</a></div><div id="main-content" class="awsui-util-container"><div id="main-col-body"><awsdocs-language-banner data-service="$ctrl.pageService"></awsdocs-language-banner><h1 class="topictitle" id="setting-up">Setting up Amazon EventBridge Scheduler</h1><div class="awsdocs-page-header-container"><awsdocs-page-header></awsdocs-page-header><awsdocs-filter-selector id="awsdocs-filter-selector"></awsdocs-filter-selector></div><p>Before you can use EventBridge Scheduler, you must complete the following steps.</p><div class="highlights" id="inline-topiclist"><h6>Topics</h6><ul><li><p><a href="#setting-up-aws-sign-up">Sign up for AWS</a></p></li><li><p><a href="#setting-up-managed-policies">Use managed policies</a></p></li><li><p><a href="#setting-up-execution-role">Set up the execution role</a></p></li><li><p><a href="#setting-up-target">Set up a target</a></p></li><li><p><a href="#setting-up-whats-next">What's next?</a></p></li></ul></div>
+  <h2 id="setting-up-aws-sign-up">Sign up for AWS</h2>
+
+	
+
+
+   
+    <h3 id="sign-up-for-aws">Sign up for an AWS account</h3> 
+    <p>To get started with AWS, you need an AWS account. There are two ways to sign up for AWS. If you want complete control over account configuration and where your content is stored, or if you have regulated workloads such as HIPAA or FedRAMP, use <a href="https://docs.aws.amazon.com/accounts/latest/reference/getting-started.html">Sign up for AWS (advanced)</a>. If you are a new user and want to use a login you already own to sign in to AWS and create an AWS environment with preconfigured defaults in select <a href="https://docs.aws.amazon.com/accounts/latest/reference/project-regions.html">AWS Regions</a>, use <a href="https://docs.aws.amazon.com/accounts/latest/reference/sign-in-new.html">Sign up for AWS</a>.</p>
+   
+
+
+  
+
+
+
+
+	 
+        <h2 id="setting-up-managed-policies">Use managed policies</h2>
+        <p>After you set up your AWS account and administrative user, we recommend that
+            you create separate users, groups, or roles with only the necessary permissions to use EventBridge Scheduler. EventBridge Scheduler supports the following managed policies for common use cases.</p>
+        <div class="itemizedlist">
+             
+             
+        <ul class="itemizedlist"><li class="listitem">
+                <p>
+                    AmazonEventBridgeSchedulerFullAccess – Grants full access to EventBridge Scheduler using the console and the API.
+                </p>
+            </li><li class="listitem">
+                <p>
+                    AmazonEventBridgeSchedulerReadOnlyAccess – Grants read-only access to EventBridge Scheduler.
+                </p>
+            </li></ul></div>
+        <p>You can attach these managed policies to your IAM principals. For more
+            information about managing access to EventBridge Scheduler using identity-based IAM policies, see
+                <a href="./security_iam_id-based-policy-examples.html">Using identity-based policies in EventBridge Scheduler</a>. </p>
+     
+  <h2 id="setting-up-execution-role">Set up the execution role</h2>
+  <p>An <em>execution role</em> is an IAM role that EventBridge Scheduler assumes in order to
+            interact with other AWS services on your behalf. You attach permission policies to
+            this role to grant EventBridge Scheduler access to invoke targets.</p>
+     <p>
+         You can also create a new execution role when you use the console to <a href="./getting-started.html#getting-started-console">create a new schedule</a>. If you use the console,
+         EventBridge Scheduler creates a role on your behalf with permissions based on the target you choose. When EventBridge Scheduler creates a role for you,
+         the role's trust policy includes <a href="https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_condition-keys.html">condition keys</a> that limit which principals can assume the role on your behalf.
+         This guards against the potential <a href="./cross-service-confused-deputy-prevention.html">confused deputy security issue</a>.
+     </p>
+     <p>
+         The following steps describe how to create a new execution role and how to grant EventBridge Scheduler access to invoke a target. This topic describes permissions for popular templated targets.
+         For information on adding permissions for other targets, see <a href="./managing-targets-templated.html">Using templated targets in EventBridge Scheduler</a>.
+     </p>
+  <div class="procedure"><h6>To create an execution role using the AWS CLI</h6><ol><li>
+    <p>Copy the following assume role JSON policy and save it locally as
+                        <code class="code">Scheduler-Execution-Role.json</code>. This trust policy allows EventBridge Scheduler
+                    to assume the role on your behalf. </p>
+    <awsdocs-tabs><dl style="display: none">
+    <dt>JSON</dt><dd tab-id="json">
+            <div class="variablelist">
+     
+<dl>
+        <dt><b><span class="term"></span></b></dt>
+        <dd>
+            
+                
+                <pre class="programlisting" data-example-id="e3a4627928adf0647a7f4e06596ab2ad7af66c323bfd5bed03c70f2e218e04f4"><div class="code-btn-container"><div class="btn-copy-code" title="Copy"><awsui-icon name="copy"></awsui-icon></div></div><!--DEBUG: cli (json)--><code class="json "><code class="userinput"><span>{</span>
+    "Version":"2012-10-17",
+    "Statement": [
+        <span>{</span>
+            "Effect": "Allow",
+            "Principal": <span>{</span>
+                "Service": "scheduler.amazonaws.com"
+            },
+            "Action": "sts:AssumeRole"
+        }
+    ]
+}</code>
+</code></pre>
+            
+        </dd>
+    </dl></div>
+        </dd>
+</dl></awsdocs-tabs>
+       <div class="awsdocs-note awsdocs-important"><div class="awsdocs-note-title"><awsui-icon name="status-warning" variant="error"></awsui-icon><h6>Important</h6></div><div class="awsdocs-note-text"><p>
+              To set up an execution role in a production environment, we recommend implementing additional safeguards for preventing confused deputy issues. For more information and an example policy, see
+               <a href="./cross-service-confused-deputy-prevention.html">Confused deputy prevention in EventBridge Scheduler</a>.
+           </p></div></div>
+   </li><li>
+                <p>From the AWS Command Line Interface (AWS CLI), enter the following command to create a new role.
+                    Replace <code class="code"><code class="replaceable">SchedulerExecutionRole</code></code> with the
+                    name you want to give this role. </p>
+                <pre class="programlisting"><div class="code-btn-container"><div class="btn-copy-code" title="Copy"><awsui-icon name="copy"></awsui-icon></div></div><!--DEBUG: cli (bash)--><code class="bash "><code class="prompt" copy="false">$ </code><code class="userinput">aws iam create-role --role-name <code class="replaceable">SchedulerExecutionRole</code> --assume-role-policy-document file://Scheduler-Execution-Role.json</code></code></pre>
+                <p>If successful, you'll see the following output:</p>
+                <pre class="screen"><span>{</span>
+    "Role": <span>{</span>
+        "Path": "/",
+        "RoleName": "Scheduler-Execution-Role",
+        "RoleId": "BR1L2DZK3K4CTL5ZF9EIL",
+        "Arn": "arn:aws:iam::123456789012:role/SchedulerExecutionRole",
+        "CreateDate": "2022-03-10T18:45:01+00:00",
+        "AssumeRolePolicyDocument": <span>{</span>
+            "Version": "2012-10-17",		 	 	 
+            "Statement": [
+                <span>{</span>
+                    "Effect": "Allow",
+                    "Principal": <span>{</span>
+                        "Service": "scheduler.amazonaws.com"
+                    },
+                    "Action": "sts:AssumeRole"
+                }
+            ]
+        }
+    }
+}</pre>
+            </li><li>
+    <p>To create a new policy that allows EventBridge Scheduler to invoke a target, choose one of the following common targets. Copy the JSON permission policy and save it locally as a <code class="code">.json</code> file.</p>
+       <awsdocs-tabs><dl style="display: none">
+           <dt>Amazon SQS – SendMessage</dt><dd tab-id="amazon-sqs-–-sendmessage">
+                   <p>
+                       The following allows EventBridge Scheduler to call the <code class="code">sqs:SendMessage</code> action on all Amazon SQS queues in your account.
+                   </p>
+                   <div class="option container"><div class="optionselector"><span class="optionanchor" id=""><span class="option  selected" data-tab="json">JSON</span></span></div><dl><dt>JSON</dt><dd class="selected" data-tab="json"><div class="variablelist">
+     
+<dl>
+        <dt><b><span class="term"></span></b></dt>
+        <dd>
+            
+                
+                <pre class="programlisting" data-example-id="26a03b5c2577fc31351efd7108866929f06398f86b9eb56b7c21759dd5f3094a"><div class="code-btn-container"><div class="btn-copy-code" title="Copy"><awsui-icon name="copy"></awsui-icon></div></div><!--DEBUG: cli (json)--><code class="json "><code class="userinput"><span>{</span>
+    "Version":"2012-10-17",
+    "Statement": [
+        <span>{</span>
+            "Action": [
+                "sqs:SendMessage"
+            ],
+            "Effect": "Allow",
+            "Resource": "*"
+        }
+    ]
+}</code>
+</code></pre>
+            
+        </dd>
+    </dl></div></dd></dl></div>
+               </dd>
+           <dt>Amazon SNS – Publish</dt><dd tab-id="amazon-sns-–-publish">
+                   <p>
+                       The following allows EventBridge Scheduler to call the <code class="code">sns:Publish</code> action on all Amazon SNS topics in your account.
+                   </p>
+                   <div class="option container"><div class="optionselector"><span class="optionanchor" id=""><span class="option  selected" data-tab="json">JSON</span></span></div><dl><dt>JSON</dt><dd class="selected" data-tab="json"><div class="variablelist">
+     
+<dl>
+        <dt><b><span class="term"></span></b></dt>
+        <dd>
+            
+                
+                <pre class="programlisting" data-example-id="3c10cd04d9676b3c961f89176478a593b1a9290ec285d708601fae8b05c1f088"><div class="code-btn-container"><div class="btn-copy-code" title="Copy"><awsui-icon name="copy"></awsui-icon></div></div><!--DEBUG: cli (json)--><code class="json "><code class="userinput"><span>{</span>
+    "Version":"2012-10-17",
+    "Statement": [
+        <span>{</span>
+            "Action": [
+                "sns:Publish"
+            ],
+            "Effect": "Allow",
+            "Resource": "*"
+        }
+    ]
+}</code>
+</code></pre>
+            
+        </dd>
+    </dl></div></dd></dl></div>
+               </dd>
+           <dt>Lambda – Invoke</dt><dd tab-id="lambda-–-invoke">
+                   <p>
+                       The following allows EventBridge Scheduler to call the <code class="code">lambda:InvokeFunction</code> action on all Lambda functions in your account.
+                   </p>
+                   <div class="option container"><div class="optionselector"><span class="optionanchor" id=""><span class="option  selected" data-tab="json">JSON</span></span></div><dl><dt>JSON</dt><dd class="selected" data-tab="json"><div class="variablelist">
+     
+<dl>
+        <dt><b><span class="term"></span></b></dt>
+        <dd>
+            
+                
+                <pre class="programlisting" data-example-id="bf7644aef6f0ddddfd4038d152f419e80900c09c56d065e26b0e9a6597c0b274"><div class="code-btn-container"><div class="btn-copy-code" title="Copy"><awsui-icon name="copy"></awsui-icon></div></div><!--DEBUG: cli (json)--><code class="json "><code class="userinput"><span>{</span>
+    "Version":"2012-10-17",
+    "Statement": [
+        <span>{</span>
+            "Action": [
+                "lambda:InvokeFunction"
+            ],
+            "Effect": "Allow",
+            "Resource": "*"
+        }
+    ]
+}</code>
+</code></pre>
+            
+        </dd>
+    </dl></div></dd></dl></div>
+               </dd>
+       </dl></awsdocs-tabs>
+   </li><li>
+    <p>Run the following command to create the new permission policy. Replace
+                            <code class="code"><code class="replaceable">PolicyName</code></code> with
+                    the name you want to give this policy. </p>
+    <pre class="programlisting"><div class="code-btn-container"><div class="btn-copy-code" title="Copy"><awsui-icon name="copy"></awsui-icon></div></div><!--DEBUG: cli (bash)--><code class="bash "><code class="prompt" copy="false">$ </code><code class="userinput">aws iam create-policy --policy-name <code class="replaceable">PolicyName</code> --policy-document file://PermissionPolicy.json</code></code></pre>
+    <p>If successful, you'll see the following output. Note the policy ARN. You use this ARN
+                    in the next step to attach the policy to our execution role.</p>
+    <pre class="screen"><span>{</span>
+    "Policy": <span>{</span>
+        "PolicyName": "PolicyName",
+        "CreateDate": "2022-03-015T19:31:18.620Z",
+        "AttachmentCount": 0,
+        "IsAttachable": true,
+        "PolicyId": "ZXR6A36LTYANPAI7NJ5UV",
+        "DefaultVersionId": "v1",
+        "Path": "/",
+        "Arn": "arn:aws:iam::123456789012:policy/PolicyName",
+        "UpdateDate": "2022-03-015T19:31:18.620Z"
+    }
+}
+</pre>
+   </li><li>
+    <p>Run the following command to attach the policy to your execution role. Replace
+                            <code class="code"><code class="replaceable">your-policy-arn</code></code> with the ARN of
+                    the policy you created in the previous step. Replace
+                            <code class="code"><code class="replaceable">SchedulerExecutionRole</code></code> with
+                    the name of your execution role. </p>
+    <pre class="programlisting"><div class="code-btn-container"><div class="btn-copy-code" title="Copy"><awsui-icon name="copy"></awsui-icon></div></div><!--DEBUG: cli (bash)--><code class="bash "><code class="prompt" copy="false">$ </code><code class="userinput">aws iam attach-role-policy --policy-arn <code class="replaceable">your-policy-arn</code> --role-name <code class="replaceable">SchedulerExecutionRole</code></code></code></pre>
+    <p>The <code class="code">attach-role-policy</code> operation doesn't return a response on the command
+                    line.</p>
+   </li></ol></div>
+  
+  <h2 id="setting-up-target">Set up a target</h2>
+  <p>Before you create an EventBridge Scheduler schedule, you need at least one target for your schedule to
+            invoke. You can use an existing AWS resource, or create a new one. The following steps
+            show how to create a new standard Amazon SQS queue with CloudFormation. </p>
+  <div class="procedure"><h6>To create a new Amazon SQS queue</h6><ol><li>
+    <p>Copy the following JSON CloudFormation template and save it locally as <code class="code">Scheduler-Target-SQS.json</code>.</p>
+    <pre class="programlisting"><div class="code-btn-container"><div class="btn-copy-code" title="Copy"><awsui-icon name="copy"></awsui-icon></div></div><!--DEBUG: cli (json)--><code class="json "><span>{</span>
+   "AWSTemplateFormatVersion": "2010-09-09",
+   "Resources": <span>{</span>
+      "MyQueue": <span>{</span>
+         "Type": "AWS::SQS::Queue",
+         "Properties": <span>{</span>
+            "QueueName": "<code class="replaceable">MyQueue</code>"
+             }
+         }
+      },
+   "Outputs": <span>{</span>
+      "QueueName": <span>{</span>
+         "Description": "The name of the queue",
+         "Value": <span>{</span>
+            "Fn::GetAtt": [
+               "MyQueue",
+               "QueueName"
+            ]
+         }
+      },
+      "QueueURL": <span>{</span>
+         "Description": "The URL of the queue",
+         "Value": <span>{</span>
+            "Ref": "MyQueue"
+         }
+      },
+      "QueueARN": <span>{</span>
+         "Description": "The ARN of the queue",
+         "Value": <span>{</span>
+            "Fn::GetAtt": [
+               "MyQueue",
+               "Arn"
+            ]
+         }
+      }
+   }
+}</code></pre>
+   </li><li>
+                <p>From the AWS CLI, run the following command to create an CloudFormation stack from the
+                        <code class="code">Scheduler-Target-SQS.json</code> template. </p>
+                <pre class="programlisting"><div class="code-btn-container"><div class="btn-copy-code" title="Copy"><awsui-icon name="copy"></awsui-icon></div></div><!--DEBUG: cli (bash)--><code class="bash "><code class="prompt" copy="false">$ </code><code class="userinput">aws cloudformation create-stack --stack-name <code class="replaceable">Scheduler-Target-SQS</code> --template-body file://Scheduler-Target-SQS.json</code></code></pre>
+                <p>If successful, you'll see the following output:</p>
+                <pre class="screen"><span>{</span>
+    "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/Scheduler-Target-SQS/1d2af345-a121-12eb-abc1-012e34567890"
+}</pre>
+            </li><li>
+    <p>Run the following command to view summary information for your CloudFormation stack. This
+                    information includes the status of the stack and the outputs specified in the
+                    template. </p>
+    <pre class="programlisting"><div class="code-btn-container"><div class="btn-copy-code" title="Copy"><awsui-icon name="copy"></awsui-icon></div></div><!--DEBUG: cli (bash)--><code class="bash "><code class="prompt" copy="false">$ </code><code class="userinput">aws cloudformation describe-stacks --stack-name <code class="replaceable">Scheduler-Target-SQS</code></code></code></pre>
+    <p>If successful, the command creates the Amazon SQS queue and returns the following
+                    output:</p>
+    <pre class="screen"><span>{</span>
+    "Stacks": [
+        <span>{</span>
+            "StackId": "arn:aws:cloudformation:us-west-2:123456789012:stack/Scheduler-Target-SQS/1d2af345-a121-12eb-abc1-012e34567890",
+            "StackName": "Scheduler-Target-SQS",
+            "CreationTime": "2022-03-17T16:21:29.442000+00:00",
+            "RollbackConfiguration": <span>{</span>},
+            "StackStatus": "CREATE_COMPLETE",
+            "DisableRollback": false,
+            "NotificationARNs": [],
+            "Outputs": [
+                <span>{</span>
+                    "OutputKey": "QueueName",
+                    "OutputValue": "MyQueue",
+                    "Description": "The name of the queue"
+                },
+                <span>{</span>
+                    "OutputKey": "QueueARN",
+                    "OutputValue": "arn:aws:sqs:us-west-2:123456789012:MyQueue",
+                    "Description": "The ARN of the queue"
+                },
+                <span>{</span>
+                    "OutputKey": "QueueURL",
+                    "OutputValue": "https://sqs.us-west-2.amazonaws.com/123456789012/MyQueue",
+                    "Description": "The URL of the queue"
+                }
+            ],
+            "Tags": [],
+            "EnableTerminationProtection": false,
+            "DriftInformation": <span>{</span>
+                "StackDriftStatus": "NOT_CHECKED"
+            }
+        }
+    ]
+}</pre>
+    <p>Later in this guide, you'll use the value for <code class="code">QueueARN</code> to set up the queue as a target for EventBridge Scheduler.</p>
+   </li></ol></div>
+  
+        <h2 id="setting-up-whats-next">What's next?</h2>
+        <p>After you've completed the set up step, use the <a href="./getting-started.html">Getting started</a> guide to create your first
+            EventBridge Scheduler scheduler and invoke a target.</p>
+    <awsdocs-copyright class="copyright-print"></awsdocs-copyright><awsdocs-thumb-feedback right-edge="{{$ctrl.thumbFeedbackRightEdge}}"></awsdocs-thumb-feedback></div><noscript><div><div><div><div id="js_error_message"><p><img src="https://d1ge0kk1l5kms0.cloudfront.net/images/G/01/webservices/console/warning.png" alt="Warning" /> <strong>Javascript is disabled or is unavailable in your browser.</strong></p><p>To use the Amazon Web Services Documentation, Javascript must be enabled. Please refer to your browser's Help pages for instructions.</p></div></div></div></div></noscript><div id="main-col-footer" class="awsui-util-font-size-0"><div id="doc-conventions"><a target="_top" href="/general/latest/gr/docconventions.html">Document Conventions</a></div><div class="prev-next"><div id="previous" class="prev-link" accesskey="p" href="./what-is-scheduler.html">What is EventBridge Scheduler?</div><div id="next" class="next-link" accesskey="n" href="./getting-started.html">Getting started</div></div></div><awsdocs-page-utilities></awsdocs-page-utilities></div><div id="quick-feedback-yes" style="display: none;"><div class="title">Did this page help you? - Yes</div><div class="content"><p>Thanks for letting us know we're doing a good job!</p><p>If you've got a moment, please tell us what we did right so we can do more of it.</p><p><awsui-button id="fblink" rel="noopener noreferrer" target="_blank" text="Feedback" click="linkClick($event)" href="https://docs.aws.amazon.com/forms/aws-doc-feedback?hidden_service_name=EventBridge&amp;topic_url=https://docs.aws.amazon.com/en_us/scheduler/latest/UserGuide/setting-up.html"></awsui-button></p></div></div><div id="quick-feedback-no" style="display: none;"><div class="title">Did this page help you? - No</div><div class="content"><p>Thanks for letting us know this page needs work. We're sorry we let you down.</p><p>If you've got a moment, please tell us how we can make the documentation better.</p><p><awsui-button id="fblink" rel="noopener noreferrer" target="_blank" text="Feedback" click="linkClick($event)" href="https://docs.aws.amazon.com/forms/aws-doc-feedback?hidden_service_name=EventBridge&amp;topic_url=https://docs.aws.amazon.com/en_us/scheduler/latest/UserGuide/setting-up.html"></awsui-button></p></div></div></div></body></div></awsdocs-view><div class="page-loading-indicator" id="page-loading-indicator"><awsui-spinner size="large"></awsui-spinner></div></div><div id="tools-panel" dom-region="tools"><awsdocs-tools-panel id="awsdocs-tools-panel"></awsdocs-tools-panel></div></awsui-app-layout><awsdocs-cookie-banner class="doc-cookie-banner"></awsdocs-cookie-banner></div></body></html>

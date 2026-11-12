@@ -1,3 +1,8 @@
+import {approvalProfiles} from './approval-applications.mjs';
+import {validateArchitectureWork} from './architecture-work.mjs';
+import {validateStateCustody} from './state-custody.mjs';
+import {validateExternalReferences} from './external-identities.mjs';
+import {validateDeploymentOwnership} from './deployment-ownership.mjs';
 import { runtimeSettings } from "./runtime-settings.mjs";
 import { UPSTREAM_DESCRIPTIONS } from "./upstream-catalog.mjs";
 import { cleanEngagement, cleanMeasures } from "./engagement.mjs";
@@ -620,6 +625,11 @@ export function validateImport(p) {
     p.edges.length > 600
   )
     throw Error("Unsupported or oversized project file.");
+  if(String(p.requirements||"").length>64000)throw Error("Project requirements exceed 64,000 characters; no content was truncated.");
+  if(p.extensions?.architectureWork!==undefined)validateArchitectureWork(p.extensions.architectureWork);
+  validateStateCustody(p.extensions?.terraformState);
+  validateExternalReferences(p);
+  approvalProfiles(p);
   const ids = new Set();
   for (const n of p.nodes) {
     if (
@@ -629,10 +639,14 @@ export function validateImport(p) {
       !Object.hasOwn(PROVIDERS, n.data.provider) ||
       !KINDS.includes(n.data.kind) ||
       typeof n.data.label !== "string" ||
+      n.data.label.length > (n.data.kind === "note" ? 16000 : 150) ||
       !Number.isFinite(n.position?.x) ||
       !Number.isFinite(n.position?.y)
     )
       throw Error("Invalid component in project.");
+    if(String(n.data.description||"").length>16000)throw Error("Component description exceeds 16,000 characters; split it into linked requirements. Nothing was truncated.");
+    if(n.data.topologyGroup!=null&&(typeof n.data.topologyGroup!=="string"||n.data.topologyGroup.length>100))throw Error("Topology responsibility names must have at most 100 characters; no content was truncated.");
+    validateDeploymentOwnership(n.data);
     ids.add(n.id);
   }
   const edgeIds = new Set();
@@ -665,10 +679,10 @@ export function validateImport(p) {
         )
           ? n.data.outputPosition
           : "right",
-        label: n.data.label.slice(0, 150),
+        label: n.data.label,
         provider: n.data.provider,
         kind: n.data.kind,
-        description: String(n.data.description || "").slice(0, 500),
+        description: String(n.data.description || ""),
         config: {
           ...runtimeSettings(n.data.config),
           region: String(n.data.config?.region || "To be selected").slice(
@@ -680,10 +694,13 @@ export function validateImport(p) {
           ).slice(0, 100),
           timeout: 5000,
         },
+        ...(n.data.approvalProfile!=null ? {approvalProfile:structuredClone(n.data.approvalProfile)}:{}),
+        ...(n.data.topologyGroup ? {topologyGroup:String(n.data.topologyGroup)}:{}),
+        ...(["reference","create"].includes(n.data.deploymentMode)?{deploymentMode:n.data.deploymentMode}:{}),
         origin: String(n.data.origin || "proposed").slice(0, 100),
         ...(n.data.poc ? { poc: true } : {}),
-        ...(["cloud-storage-principal","aws-iam-principal","aws-bedrock-model","normalized-source-contract","web-browser"].includes(n.data.binding) ? { binding: n.data.binding } : {}),
-        ...(["private-object-storage","rag-web-app","rag-user-pool","bounded-keyword-rag","iam-rag-api","bounded-rag-catalog","text-statistics","bedrock-summary","async-word-count","sqs-standard","sqs-dead-letter","word-count-results"].includes(n.data.implementation) ? { implementation: n.data.implementation } : {}),
+        ...(["public-catalog-editor","cloud-storage-principal","aws-iam-principal","aws-bedrock-model","normalized-source-contract","web-browser","existing-service"].includes(n.data.binding) ? { binding: n.data.binding } : {}),
+        ...(["approval-workflow","invoice-workflow","public-faq-app","ibm-structured-app","gcp-structured-app","azure-structured-app","container-service","private-object-storage","rag-web-app","rag-user-pool","bounded-keyword-rag","iam-rag-api","bounded-rag-catalog","text-statistics","bedrock-summary","bedrock-structured","structured-api","structured-web-app","structured-user-pool","async-word-count","sqs-standard","sqs-dead-letter","word-count-results"].includes(n.data.implementation) ? { implementation: n.data.implementation } : {}),
         ...(ROLES.includes(n.data.role) ? { role: n.data.role } : {}),
         ...(Array.isArray(n.data.measures) ? { measures: cleanMeasures(n.data.measures) } : {}),
         ...(n.data.service
@@ -717,7 +734,7 @@ export function validateImport(p) {
       type: "smoothstep",
       label: String(e.label || "data").slice(0, 80),
       ...(["storage-object-admin","s3-read", "s3-read-write", "lambda-invoke", "api-invoke"].includes(e.access) ? { access: e.access } : {}),
-      ...(["browser-https","web-rag-api","oauth-pkce","jwt-authorizer","source-catalog-sync","http-api-lambda","lambda-catalog-read","bedrock-converse","s3-object-created","sqs-lambda","lambda-s3-read","lambda-dynamodb-write","sqs-redrive"].includes(e.integration) ? { integration: e.integration } : {}),
+      ...(["approved-accounting-api","public-catalog-edit","browser-https","web-rag-api","oauth-pkce","jwt-authorizer","source-catalog-sync","http-api-lambda","lambda-catalog-read","bedrock-converse","s3-object-created","sqs-lambda","lambda-s3-read","lambda-dynamodb-write","sqs-redrive"].includes(e.integration) ? { integration: e.integration } : {}),
     })),
   };
 }

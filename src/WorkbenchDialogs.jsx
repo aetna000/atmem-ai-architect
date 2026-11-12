@@ -34,6 +34,13 @@ const MONO = {
 };
 export const EFFORT_LABEL = { none: "Instant", minimal: "Instant", low: "Fast", medium: "Balanced", high: "Deep", xhigh: "Deeper", max: "Max", ultra: "Ultra" };
 
+// Pick the readable foreground for each solid provider badge background.
+function badgeInk(hex){
+ const channels=hex.replace('#','').match(/../g).map(v=>parseInt(v,16)/255).map(v=>v<=.04045?v/12.92:((v+.055)/1.055)**2.4);
+ const luminance=.2126*channels[0]+.7152*channels[1]+.0722*channels[2];
+ return luminance>.179?'#000':'#fff';
+}
+
 // Check your connection: pick a provider, sign in from here if needed, check, continue.
 export function Connections({ session, connection, onCheck, onSave, onRetry, welcome = false }) {
   const [choice, setChoice] = useState(connection?.provider || "claude-code"),
@@ -147,7 +154,7 @@ export function Connections({ session, connection, onCheck, onSave, onRetry, wel
     (kind === "aws" && !capability?.available);
   return (
     <div className="connect">
-      <h2>{welcome ? "Check your connection" : "Connection"}</h2>
+      <h2>{welcome ? "AI providers" : "AI providers"}</h2>
       {!session && (
         <p className="error-box">
           Looks like AtMem AI Architect's helper isn't running. Start it with <code>npm run local</code>, then{" "}
@@ -177,7 +184,7 @@ export function Connections({ session, connection, onCheck, onSave, onRetry, wel
                 setState("idle");
               }}
             >
-              <span className="mono" style={{ background: MONO[id][1] }}>
+              <span className="mono" style={{ background: MONO[id][1], color:badgeInk(MONO[id][1]) }}>
                 {MONO[id][0]}
               </span>
               <span>

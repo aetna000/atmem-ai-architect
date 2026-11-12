@@ -1,8 +1,14 @@
+import {approvalProfiles} from './approval-applications.mjs';
+import {validateArchitectureWork} from './architecture-work.mjs';
+import {validateStateCustody} from './state-custody.mjs';
+import {validateExternalReferences} from './external-identities.mjs';
 // The durable project file: atforma.project 2.0.0. See specs/002-project-model.
 import { validateImport } from "./core.mjs";
 
 export const FORMAT = "atmem.ai-architect.project";
 export const FORMAT_VERSION = "2.3.0";
+export const APPROVAL_FORMAT_VERSION = "3.0.0";
+const approvalFormat=nodes=>Array.isArray(nodes)&&nodes.some(n=>n.data?.implementation==='approval-workflow'||n.data?.approvalProfile!=null);
 export const MAX_FILE_BYTES = 2_000_000;
 const GENERATOR = "atmem-ai-architect 0.2.0";
 
@@ -49,6 +55,9 @@ function unknown(section, allowed) {
 }
 
 export function toProjectFile(project, now = new Date()) {
+  validateStateCustody(project.extensions?.terraformState);
+  validateExternalReferences(project);
+  approvalProfiles(project);
   const {
     version, revision, name, provider, domain, requirements, nodes, edges,
     brief, useCases, gate, needs, assumptions, openQuestions, decisions, assessment,
@@ -57,7 +66,7 @@ export function toProjectFile(project, now = new Date()) {
   } = project;
   const file = {
     format: FORMAT,
-    formatVersion: FORMAT_VERSION,
+    formatVersion: approvalFormat(nodes)?APPROVAL_FORMAT_VERSION:FORMAT_VERSION,
     meta: {
       id: id || crypto.randomUUID(),
       name,
@@ -89,7 +98,9 @@ export function toProjectFile(project, now = new Date()) {
     // Browser-only fields the file format doesn't name yet are preserved, not dropped.
     extensions: { ...(extensions || {}), ...rest },
   };
+  if(file.extensions.architectureWork!==undefined)validateArchitectureWork(file.extensions.architectureWork);
   refuseCredentials(file, "Export");
+  if(new TextEncoder().encode(JSON.stringify(file)).length>MAX_FILE_BYTES)throw Error("Project files must be 2 MB or smaller; no content was truncated.");
   return file;
 }
 
@@ -101,7 +112,7 @@ export function fromProjectFile(raw) {
     return { project: validateImport(raw), migrated: true, from: "workbench v1" };
   if (![FORMAT,"atforma.project"].includes(raw.format)) throw Error("Not an AtMem AI Architect project file.");
   const [major] = String(raw.formatVersion || "").split(".").map(Number);
-  if (major !== 2)
+  if (major !== 2 && !(raw.formatVersion===APPROVAL_FORMAT_VERSION&&approvalFormat(raw.design?.nodes)))
     throw Error(`This file is format ${raw.formatVersion}; this version of AtMem AI Architect reads ${FORMAT_VERSION}. Update AtMem AI Architect to open it.`);
   const meta = raw.meta || {},
     design = raw.design || {},
@@ -140,10 +151,10 @@ export function fromProjectFile(raw) {
     ...(raw.options ? { assessment: raw.options } : {}),
     ...(Object.keys(extensions).length ? { extensions } : {}),
   });
-  return { project, migrated: raw.format !== FORMAT || raw.formatVersion !== FORMAT_VERSION, from: raw.formatVersion };
+  return { project, migrated: raw.format !== FORMAT || raw.formatVersion !== (approvalFormat(project.nodes)?APPROVAL_FORMAT_VERSION:FORMAT_VERSION), from: raw.formatVersion };
 }
 
 export function parseProjectFile(textContent) {
-  if (textContent.length > MAX_FILE_BYTES) throw Error("Project files must be 2 MB or smaller.");
+  if (new TextEncoder().encode(textContent).length > MAX_FILE_BYTES) throw Error("Project files must be 2 MB or smaller.");
   return fromProjectFile(JSON.parse(textContent));
 }

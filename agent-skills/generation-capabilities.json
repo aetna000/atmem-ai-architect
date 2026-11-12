@@ -1,0 +1,760 @@
+{
+  "version": 7,
+  "providers": [
+    "aws",
+    "azure",
+    "gcp",
+    "ibm"
+  ],
+  "skills": [
+    "architecture",
+    "composition",
+    "terraform",
+    "security",
+    "devops",
+    "finops"
+  ],
+  "contracts": [
+    {
+      "id": "aws-s3",
+      "provider": "aws",
+      "service": "Amazon S3",
+      "implementation": null,
+      "resources": [
+        "aws_s3_bucket"
+      ]
+    },
+    {
+      "id": "aws-text-statistics",
+      "provider": "aws",
+      "implementation": "text-statistics",
+      "resources": [
+        "aws_lambda_function"
+      ]
+    },
+    {
+      "id": "aws-async-worker",
+      "provider": "aws",
+      "implementation": "async-word-count",
+      "resources": [
+        "aws_lambda_function"
+      ]
+    },
+    {
+      "id": "aws-summary",
+      "provider": "aws",
+      "implementation": "bedrock-summary",
+      "resources": [
+        "aws_lambda_function"
+      ]
+    },
+    {
+      "id": "aws-rag-worker",
+      "provider": "aws",
+      "implementation": "bounded-keyword-rag",
+      "resources": [
+        "aws_lambda_function"
+      ]
+    },
+    {
+      "id": "aws-rag-api",
+      "provider": "aws",
+      "implementation": "iam-rag-api",
+      "resources": [
+        "aws_apigatewayv2_api"
+      ]
+    },
+    {
+      "id": "aws-rag-catalog",
+      "provider": "aws",
+      "implementation": "bounded-rag-catalog",
+      "resources": [
+        "aws_dynamodb_table"
+      ]
+    },
+    {
+      "id": "aws-rag-web",
+      "provider": "aws",
+      "implementation": "rag-web-app",
+      "resources": [
+        "aws_cloudfront_distribution"
+      ]
+    },
+    {
+      "id": "aws-rag-users",
+      "provider": "aws",
+      "implementation": "rag-user-pool",
+      "resources": [
+        "aws_cognito_user_pool"
+      ]
+    },
+    {
+      "id": "azure-private-storage",
+      "provider": "azure",
+      "service": "Azure Blob Storage",
+      "implementation": "private-object-storage",
+      "resources": [
+        "azurerm_storage_account",
+        "azurerm_storage_container"
+      ]
+    },
+    {
+      "id": "gcp-private-storage",
+      "provider": "gcp",
+      "service": "Google Cloud Storage",
+      "implementation": "private-object-storage",
+      "resources": [
+        "google_storage_bucket"
+      ]
+    },
+    {
+      "id": "ibm-private-storage",
+      "provider": "ibm",
+      "service": "IBM Cloud Object Storage",
+      "implementation": "private-object-storage",
+      "resources": [
+        "ibm_cos_bucket"
+      ]
+    },
+    {
+      "id": "aws-container",
+      "provider": "aws",
+      "service": "Amazon ECS Fargate",
+      "implementation": "container-service",
+      "resources": [
+        "aws_ecs_service"
+      ],
+      "deliveryUnit": {
+        "proposedOnly": false,
+        "requiredFiles": [
+          "README.md",
+          "tests/container.tftest.hcl"
+        ]
+      }
+    },
+    {
+      "id": "azure-container",
+      "provider": "azure",
+      "service": "Azure Container Apps",
+      "implementation": "container-service",
+      "resources": [
+        "azurerm_container_app"
+      ],
+      "deliveryUnit": {
+        "proposedOnly": false,
+        "requiredFiles": [
+          "README.md",
+          "tests/container.tftest.hcl"
+        ]
+      }
+    },
+    {
+      "id": "gcp-container",
+      "provider": "gcp",
+      "service": "Google Cloud Run",
+      "implementation": "container-service",
+      "resources": [
+        "google_cloud_run_v2_service"
+      ],
+      "deliveryUnit": {
+        "proposedOnly": false,
+        "requiredFiles": [
+          "README.md",
+          "tests/container.tftest.hcl"
+        ]
+      }
+    },
+    {
+      "id": "ibm-container",
+      "provider": "ibm",
+      "service": "IBM Code Engine",
+      "implementation": "container-service",
+      "resources": [
+        "ibm_code_engine_app"
+      ],
+      "deliveryUnit": {
+        "proposedOnly": false,
+        "requiredFiles": [
+          "README.md",
+          "tests/container.tftest.hcl"
+        ]
+      }
+    },
+    {
+      "id": "aws-sqs-standard",
+      "provider": "aws",
+      "implementation": "sqs-standard",
+      "resources": [
+        "aws_sqs_queue"
+      ]
+    },
+    {
+      "id": "aws-sqs-dead-letter",
+      "provider": "aws",
+      "implementation": "sqs-dead-letter",
+      "resources": [
+        "aws_sqs_queue"
+      ]
+    },
+    {
+      "id": "aws-word-count-results",
+      "provider": "aws",
+      "implementation": "word-count-results",
+      "resources": [
+        "aws_dynamodb_table"
+      ]
+    },
+    {
+      "id": "aws-structured-generation",
+      "provider": "aws",
+      "implementation": "bedrock-structured",
+      "resources": [
+        "aws_lambda_function"
+      ],
+      "limitations": [
+        "Flat bounded output schema only; does not prove semantic model accuracy. Requires explicit outputContract, existing direct regional Bedrock model and authenticated caller. No web, tenancy, payment or arbitrary nested workflow implementation implied."
+      ],
+      "configuration": {
+        "outputContract": {
+          "instruction": "Bounded proposed operation, max 2000 characters",
+          "fields": "1\u201324 unique named string/boolean/number fields with descriptions; optional string values enumeration and maxLength"
+        },
+        "maxInputBytes": "Explicit bounded UTF-8 input size"
+      }
+    },
+    {
+      "id": "aws-structured-api",
+      "provider": "aws",
+      "implementation": "structured-api",
+      "resources": [
+        "aws_apigatewayv2_api"
+      ]
+    },
+    {
+      "id": "aws-structured-web-app",
+      "provider": "aws",
+      "implementation": "structured-web-app",
+      "resources": [
+        "aws_cloudfront_distribution"
+      ],
+      "composition": "Browser(existing tools binding web-browser) --browser-https--> CloudFront(structured-web-app) --web-rag-api--> API Gateway(structured-api) --http-api-lambda--> Lambda(bedrock-structured with outputContract) --bedrock-converse--> regional model(existing aws-bedrock-model). Web --oauth-pkce--> Cognito(structured-user-pool) --jwt-authorizer--> API. No durable input storage or automated actions; human-reviewed schema-checked output. CloudFront edge processing needs residency review. IAM caller-only structured operation also supported without a web composition."
+    },
+    {
+      "id": "aws-structured-user-pool",
+      "provider": "aws",
+      "implementation": "structured-user-pool",
+      "resources": [
+        "aws_cognito_user_pool"
+      ]
+    },
+    {
+      "id": "azure-structured-app",
+      "provider": "azure",
+      "service": "Azure App Service",
+      "implementation": "azure-structured-app",
+      "resources": [
+        "azurerm_linux_web_app",
+        "azurerm_service_plan",
+        "azurerm_cognitive_account",
+        "azurerm_cognitive_deployment",
+        "azuread_application_registration"
+      ],
+      "composition": "A composed application module: Python 3.13 API and browser, two single-tenant Entra app registrations, delegated API scope and WorkspaceUser role, existing group assignment, user-assigned workload identity, regional Standard Azure OpenAI account/deployment. Existing browser --browser-https--> module. Do not also draw its internal managed services as separately provisioned duplicates. Independent extra blocks and integrations remain required scope.",
+      "configuration": {
+        "outputContract": "Same bounded flat contract as bedrock-structured: instruction and 1\u201324 string/number/boolean fields; no automated actions.",
+        "maxInputBytes": "1\u201320000 UTF-8 bytes, default 20000",
+        "maxOutputTokens": "32\u20134096, default 1024"
+      },
+      "limitations": [
+        "Local cryptographic/ASGI/scripted transport tests and native provider schema/mock plans are separate from destination verification. Container image startup, model quality and Azure account tests not established.",
+        "Requires an existing company Entra group (P1/P2 group assignment), existing RBAC-mode ACR with ARM audience acceptance, reviewed tenant/subscription and structured-output-compatible regional model/version/quota. Build emitted source, push an immutable image with authorization, supply its digest.",
+        "ContentLogging=false must already be approved for the model account before inference. No policy writes or automatic approvals. JWT role authorization persists until token expiry; immediate user/group revocation, Conditional Access/MFA, private networks, persistence, tenancy, payments and workflows require additional implementation/policy."
+      ]
+    },
+    {
+      "id": "gcp-structured-app",
+      "provider": "gcp",
+      "service": "Google Cloud Run",
+      "implementation": "gcp-structured-app",
+      "resources": [
+        "google_cloud_run_v2_service",
+        "google_service_account",
+        "google_project_iam_custom_role",
+        "google_iap_web_cloud_run_service_iam_member"
+      ],
+      "composition": "A composed application module: generated Python 3.13 browser/API, organization IAP with company-group access and real signed-header verification, dedicated keyless runtime identity, narrow model/policy-reader role, regional Gemini transport. Existing browser --browser-https--> module. Internal managed resources belong to this module; do not duplicate them as independently provisioned blocks. Preserve unrelated scope and its implementation gaps.",
+      "configuration": {
+        "outputContract": "Same bounded instruction plus 1\u201324 flat string/number/boolean fields, no automated actions.",
+        "maxInputBytes": "1\u201320000 UTF-8 bytes, default 20000",
+        "maxOutputTokens": "32\u20134096, default 1024"
+      },
+      "limitations": [
+        "Local ES256/ASGI/scripted Google-transport tests and provider schemas/mock plans are separate from live IAP, model, image and destination evidence.",
+        "Requires an organization-owned project, existing company group, existing Artifact Registry Docker repository, built/tested immutable emitted image and compatible reviewed regional Gemini model. Nonorganization or external IdP OAuth configuration is not included.",
+        "Scoped expiring destination-owner abuse-logging review is operator-attested, not a fabricated provider API approval; runtime separately requires disabled project caching and model logging/sharing. No automatic project policy writes.",
+        "IAP headers remain valid until expiry/skew; no independent continuous directory revocation, proven MFA, persistence, tenancy, payments, public anonymous inference or durable workflows is implied. Production state/operations remain gated."
+      ]
+    },
+    {
+      "id": "ibm-structured-app",
+      "provider": "ibm",
+      "service": "IBM Code Engine",
+      "implementation": "ibm-structured-app",
+      "resources": [
+        "ibm_code_engine_app",
+        "ibm_resource_instance",
+        "ibm_appid_application",
+        "ibm_iam_trusted_profile",
+        "ibm_iam_trusted_profile_link"
+      ],
+      "composition": "Composed Python 3.13 browser/API on Code Engine with NEW owned App ID tenant, admin-enrolled Cloud Directory users, scoped role access, PKCE and signed JWT verification; dedicated trusted profile linked to the exact compute app, regional watsonx Text Chat. Existing browser --browser-https--> module. Do not duplicate internal managed resources; preserve unrelated scope and gaps.",
+      "configuration": {
+        "outputContract": "Instruction and 1\u201324 bounded flat string/number/boolean fields, no automated actions.",
+        "maxInputBytes": "1\u201320000 UTF-8 bytes, default 20000",
+        "maxOutputTokens": "32\u20134096, default 1024"
+      },
+      "limitations": [
+        "Existing Code Engine project, authorized private-registry pull-secret NAME, registry namespace, watsonx data-platform project and runtime instance are prerequisites. Build/test/scan emitted image and publish only with authorization. Verify current regional model/plan/quotas/costs.",
+        "App ID tenant initially admits no application users. Engineer/admin enrolls staff securely and adds exact subjects. No existing company SSO, MFA, immediate JWT revocation or global logout is implemented. Do not select for an existing-SSO requirement without its separate adapter.",
+        "Trusted-profile instance-scoped pm-20 Writer includes broader runtime operations; project collaborator membership is separate. No account-wide Manager/Admin or static API key. Scoped expiring retention review is operator-attested, not a provider approval API.",
+        "Local cryptographic/HTTP/SDK/scripted transport tests and provider mocks do not prove live sign-in, IAM exchange, model quality or deployment. Persistence, tenancy, credits and workflows are separate required work."
+      ]
+    },
+    {
+      "id": "aws-public-faq-app",
+      "provider": "aws",
+      "service": "AWS Lambda",
+      "implementation": "public-faq-app",
+      "resources": [
+        "aws_lambda_function",
+        "aws_apigatewayv2_api",
+        "aws_s3_bucket",
+        "aws_iam_role"
+      ],
+      "composition": "Composed public-only browser/API, private regional object-store catalog, separate existing authorized editor and read-only runtime identities, regional model transport. Existing tools browser binding web-browser --browser-https--> module. Internal catalog/model/role resources belong to this module: do not provision duplicates. Choose this for small public UTF-8 help-article websites needing cited answers, abstention, authorized updates/deletions; never use it to imply private enterprise access, tenancy or general workflows. Preserve extra requirements and implementation gaps. If showing the editor as a diagram actor, use existing tools binding public-catalog-editor --public-catalog-edit--> this module. Do not invent an untyped editor edge or give the editor a browser-https visitor link; the operator CLI is a distinct implemented interface. AWS uses the complete generated Lambda Python 3.13 + HTTP API v2 composition with five reserved concurrent executions and deterministic hash-locked ZIP build, not a supplied-image footprint. App Runner is closed to new customers; do not propose it or ask about account eligibility. No ECR or image input is needed for this AWS module.",
+      "configuration": {
+        "outputContract": "Omit: owned nested answer/citations/abstained contract; no client-defined flat outputContract.",
+        "limits": "Built-in maximum 100 public UTF-8 articles, 30000 bytes each; 2000-byte questions, 2 complete retrieved articles, 5 concurrent admitted requests per instance. Omit these config values rather than inventing incompatible limits.",
+        "region": "Reviewed destination region; verify model support and processing geography."
+      },
+      "limitations": [
+        "Local catalog/HTTP/scripted storage checks and native provider schema/mock plans are separate from real cloud permissions, model semantics, exact Lambda ZIP/Linux runtime and deployed-system evidence.",
+        "Only genuinely public files may be published through the operator CLI. No arbitrary URL fetch, private document connector, editor HTTP endpoint or application login is implemented.",
+        "Authorized native editor identity conditionally rewrites the versioned catalog; stale edits conflict and in-flight source changes withhold answers. No cached-source fallback. Exact supporting quotes and source membership do not prove factual entailment.",
+        "Model policy must be verified before inference. AWS JSON is independently postvalidated, not constrained Bedrock grammar. IBM/Google policy approval evidence is operator-attested, not a fabricated provider approval API.",
+        "Build, scan and locally test the emitted hash-locked Lambda ZIP in Python 3.13 Linux. Cloud access/plans/deployment need authorization. Review actual model availability, price evidence, budgets/abuse controls, inherited IAM and operations. Bounds are not an invoice cap."
+      ]
+    },
+    {
+      "id": "azure-public-faq-app",
+      "provider": "azure",
+      "service": "Azure App Service",
+      "implementation": "public-faq-app",
+      "resources": [
+        "azurerm_linux_web_app",
+        "azurerm_storage_account",
+        "azurerm_storage_container"
+      ],
+      "composition": "Composed public-only browser/API, private regional object-store catalog, separate existing authorized editor and read-only runtime identities, regional model transport. Existing tools browser binding web-browser --browser-https--> module. Internal catalog/model/role resources belong to this module: do not provision duplicates. Choose this for small public UTF-8 help-article websites needing cited answers, abstention, authorized updates/deletions; never use it to imply private enterprise access, tenancy or general workflows. Preserve extra requirements and implementation gaps. If showing the editor as a diagram actor, use existing tools binding public-catalog-editor --public-catalog-edit--> this module. Do not invent an untyped editor edge or give the editor a browser-https visitor link; the operator CLI is a distinct implemented interface.",
+      "configuration": {
+        "outputContract": "Omit: owned nested answer/citations/abstained contract; no client-defined flat outputContract.",
+        "limits": "Built-in maximum 100 public UTF-8 articles, 30000 bytes each; 2000-byte questions, 2 complete retrieved articles, 5 concurrent admitted requests per instance. Omit these config values rather than inventing incompatible limits.",
+        "region": "Reviewed destination region; verify model support and processing geography."
+      },
+      "limitations": [
+        "Local catalog/HTTP/scripted storage checks and native provider schema/mock plans are separate from real cloud permissions, model semantics, exact Linux image and deployed-system evidence.",
+        "Only genuinely public files may be published through the operator CLI. No arbitrary URL fetch, private document connector, editor HTTP endpoint or application login is implemented.",
+        "Authorized native editor identity conditionally rewrites the versioned catalog; stale edits conflict and in-flight source changes withhold answers. No cached-source fallback. Exact supporting quotes and source membership do not prove factual entailment.",
+        "Model policy must be verified before inference. AWS JSON is independently postvalidated, not constrained Bedrock grammar. IBM/Google policy approval evidence is operator-attested, not a fabricated provider approval API.",
+        "Build, scan and locally test emitted pinned Python 3.13 image; publication/cloud plans/deployment need authorization. Review actual model availability, price evidence, budgets/abuse controls, inherited IAM and operations. Bounds are not an invoice cap."
+      ]
+    },
+    {
+      "id": "gcp-public-faq-app",
+      "provider": "gcp",
+      "service": "Google Cloud Run",
+      "implementation": "public-faq-app",
+      "resources": [
+        "google_cloud_run_v2_service",
+        "google_storage_bucket",
+        "google_service_account"
+      ],
+      "composition": "Composed public-only browser/API, private regional object-store catalog, separate existing authorized editor and read-only runtime identities, regional model transport. Existing tools browser binding web-browser --browser-https--> module. Internal catalog/model/role resources belong to this module: do not provision duplicates. Choose this for small public UTF-8 help-article websites needing cited answers, abstention, authorized updates/deletions; never use it to imply private enterprise access, tenancy or general workflows. Preserve extra requirements and implementation gaps. If showing the editor as a diagram actor, use existing tools binding public-catalog-editor --public-catalog-edit--> this module. Do not invent an untyped editor edge or give the editor a browser-https visitor link; the operator CLI is a distinct implemented interface.",
+      "configuration": {
+        "outputContract": "Omit: owned nested answer/citations/abstained contract; no client-defined flat outputContract.",
+        "limits": "Built-in maximum 100 public UTF-8 articles, 30000 bytes each; 2000-byte questions, 2 complete retrieved articles, 5 concurrent admitted requests per instance. Omit these config values rather than inventing incompatible limits.",
+        "region": "Reviewed destination region; verify model support and processing geography."
+      },
+      "limitations": [
+        "Local catalog/HTTP/scripted storage checks and native provider schema/mock plans are separate from real cloud permissions, model semantics, exact Linux image and deployed-system evidence.",
+        "Only genuinely public files may be published through the operator CLI. No arbitrary URL fetch, private document connector, editor HTTP endpoint or application login is implemented.",
+        "Authorized native editor identity conditionally rewrites the versioned catalog; stale edits conflict and in-flight source changes withhold answers. No cached-source fallback. Exact supporting quotes and source membership do not prove factual entailment.",
+        "Model policy must be verified before inference. AWS JSON is independently postvalidated, not constrained Bedrock grammar. IBM/Google policy approval evidence is operator-attested, not a fabricated provider approval API.",
+        "Build, scan and locally test emitted pinned Python 3.13 image; publication/cloud plans/deployment need authorization. Review actual model availability, price evidence, budgets/abuse controls, inherited IAM and operations. Bounds are not an invoice cap."
+      ]
+    },
+    {
+      "id": "ibm-public-faq-app",
+      "provider": "ibm",
+      "service": "IBM Code Engine",
+      "implementation": "public-faq-app",
+      "resources": [
+        "ibm_code_engine_app",
+        "ibm_cos_bucket",
+        "ibm_iam_trusted_profile"
+      ],
+      "composition": "Composed public-only browser/API, private regional object-store catalog, separate existing authorized editor and read-only runtime identities, regional model transport. Existing tools browser binding web-browser --browser-https--> module. Internal catalog/model/role resources belong to this module: do not provision duplicates. Choose this for small public UTF-8 help-article websites needing cited answers, abstention, authorized updates/deletions; never use it to imply private enterprise access, tenancy or general workflows. Preserve extra requirements and implementation gaps. If showing the editor as a diagram actor, use existing tools binding public-catalog-editor --public-catalog-edit--> this module. Do not invent an untyped editor edge or give the editor a browser-https visitor link; the operator CLI is a distinct implemented interface.",
+      "configuration": {
+        "outputContract": "Omit: owned nested answer/citations/abstained contract; no client-defined flat outputContract.",
+        "limits": "Built-in maximum 100 public UTF-8 articles, 30000 bytes each; 2000-byte questions, 2 complete retrieved articles, 5 concurrent admitted requests per instance. Omit these config values rather than inventing incompatible limits.",
+        "region": "Reviewed destination region; verify model support and processing geography."
+      },
+      "limitations": [
+        "Local catalog/HTTP/scripted storage checks and native provider schema/mock plans are separate from real cloud permissions, model semantics, exact Linux image and deployed-system evidence.",
+        "Only genuinely public files may be published through the operator CLI. No arbitrary URL fetch, private document connector, editor HTTP endpoint or application login is implemented.",
+        "Authorized native editor identity conditionally rewrites the versioned catalog; stale edits conflict and in-flight source changes withhold answers. No cached-source fallback. Exact supporting quotes and source membership do not prove factual entailment.",
+        "Model policy must be verified before inference. AWS JSON is independently postvalidated, not constrained Bedrock grammar. IBM/Google policy approval evidence is operator-attested, not a fabricated provider approval API.",
+        "Build, scan and locally test emitted pinned Python 3.13 image; publication/cloud plans/deployment need authorization. Review actual model availability, price evidence, budgets/abuse controls, inherited IAM and operations. Bounds are not an invoice cap."
+      ]
+    },
+    {
+      "id": "aws-invoice-workflow",
+      "provider": "aws",
+      "service": "Amazon ECS",
+      "implementation": "invoice-workflow",
+      "resources": [
+        "aws_vpc",
+        "aws_db_instance",
+        "aws_s3_bucket",
+        "aws_ecs_cluster"
+      ],
+      "composition": "One composed staff invoice delivery unit owns browser/API, background worker, isolated PDF/OCR parser, durable transactional PostgreSQL queue/outbox, private versioned original store, separate native workload identities, staff sign-in, SQL user/reviewer membership, bounded retries/recovery, guarded approved accounting adapter and separate operating tasks/monitoring. Draw it as one proposed app component (implementation invoice-workflow) with this exact service. Its internal SQL/storage/parser/model/identity/queue resources are already generated: do not provision duplicates. Existing tools browser binding web-browser --browser-https--> module --approved-accounting-api--> existing accounting service binding existing-service. Preserve every additional component/flow/requirement as explicit scope; unsupported extra scope remains a generator gap. Do not replace existing accounting or label an existing source repository as a running deployment.",
+      "configuration": {
+        "limits": "Omit defaults or preserve explicit maxPdfBytes=10000000, maxPdfPages=100, retentionDays=90. Other explicit values remain gaps and must be implemented, never silently ignored. Runtime Python 3.13, API port 8080, worker/parser commands, bounded parser and operator deadlines are already provided; do not ask the user to invent them.",
+        "outputContract": "Omit: owned invoice supplier/date/total/currency, review state and evidence contract; no flat custom outputContract.",
+        "region": "Propose a region within accepted residency; verify native service/model/private-network availability. Endpoint/account/identity/model/policy/notification inputs are reviewed destination inputs, not reasons to ask a novice infrastructure trivia."
+      },
+      "limitations": [
+        "Source/provider-mock/local image/SQL/parser tests do not establish real cloud identity, private routing, model extraction quality, managed restore or deployment. Build/scan the exact two images and retain evidence; known high-severity dependency findings remain open until reviewed.",
+        "Existing accounting must implement and independently pass normalized-action-v1 contract/idempotency acceptance. A canonical approval digest, stable operation ID and uncertain-outcome fence are generated; no claim of compatibility with arbitrary accounting APIs.",
+        "Staff authentication and native infrastructure permission are separate from live SQL membership/reviewer admission. No public signup or grant from document/user-body claims. Native user/group revocation is not instantaneous JWT revocation.",
+        "Only parser sees untrusted PDF bytes, without model/database/object/accounting identity. Model results require strict fields and exact source evidence; this does not prove factual extraction quality. Destination model-processing policy reviews are explicit, scoped and expiring.",
+        "Retention eligibility is 90 days, periodic SQL/object cleanup and native backup/version windows require destination review; no exact universal erasure deadline is promised. Restore/reconciliation use separate authorized operator procedures.",
+        "Operator jobs are not app/model tools. Scheduled retention/monitoring and native alerts need actual first-sample/delivery acceptance. IBM cron sources are explicit supported Knative operations outside Terraform, never hidden provisioners.",
+        "Production state uses the reviewed provider-specific backend (AWS S3 locks, Azure Blob leases, Google GCS locks; IBM references an existing protected HTTP state/lock platform) under the required custody/residency. No backend is deployed or silently borrowed from another provider. Staging/qualification local state is for local checks only."
+      ],
+      "resourceInstances": [
+        {
+          "type": "aws_ecs_service",
+          "suffix": "_api"
+        },
+        {
+          "type": "aws_ecs_service",
+          "suffix": "_worker"
+        },
+        {
+          "type": "aws_ecs_service",
+          "suffix": "_parser"
+        },
+        {
+          "type": "aws_ecs_task_definition",
+          "suffix": "_operator_initialize"
+        },
+        {
+          "type": "aws_ecs_task_definition",
+          "suffix": "_operator_maintain"
+        },
+        {
+          "type": "aws_ecs_task_definition",
+          "suffix": "_operator_monitor"
+        }
+      ],
+      "deliveryUnit": {
+        "proposedOnly": true,
+        "requiredFiles": [
+          "README.md",
+          "tests/invoice.tftest.hcl",
+          "invoice-contract.json",
+          "OPERATING_JOBS.md",
+          "OPERATIONS.md"
+        ]
+      }
+    },
+    {
+      "id": "azure-invoice-workflow",
+      "provider": "azure",
+      "service": "Azure Container Apps",
+      "implementation": "invoice-workflow",
+      "resources": [
+        "azurerm_resource_group",
+        "azurerm_postgresql_flexible_server",
+        "azurerm_storage_account",
+        "azurerm_container_app_environment"
+      ],
+      "composition": "One composed staff invoice delivery unit owns browser/API, background worker, isolated PDF/OCR parser, durable transactional PostgreSQL queue/outbox, private versioned original store, separate native workload identities, staff sign-in, SQL user/reviewer membership, bounded retries/recovery, guarded approved accounting adapter and separate operating tasks/monitoring. Draw it as one proposed app component (implementation invoice-workflow) with this exact service. Its internal SQL/storage/parser/model/identity/queue resources are already generated: do not provision duplicates. Existing tools browser binding web-browser --browser-https--> module --approved-accounting-api--> existing accounting service binding existing-service. Preserve every additional component/flow/requirement as explicit scope; unsupported extra scope remains a generator gap. Do not replace existing accounting or label an existing source repository as a running deployment.",
+      "configuration": {
+        "limits": "Omit defaults or preserve explicit maxPdfBytes=10000000, maxPdfPages=100, retentionDays=90. Other explicit values remain gaps and must be implemented, never silently ignored. Runtime Python 3.13, API port 8080, worker/parser commands, bounded parser and operator deadlines are already provided; do not ask the user to invent them.",
+        "outputContract": "Omit: owned invoice supplier/date/total/currency, review state and evidence contract; no flat custom outputContract.",
+        "region": "Propose a region within accepted residency; verify native service/model/private-network availability. Endpoint/account/identity/model/policy/notification inputs are reviewed destination inputs, not reasons to ask a novice infrastructure trivia."
+      },
+      "limitations": [
+        "Source/provider-mock/local image/SQL/parser tests do not establish real cloud identity, private routing, model extraction quality, managed restore or deployment. Build/scan the exact two images and retain evidence; known high-severity dependency findings remain open until reviewed.",
+        "Existing accounting must implement and independently pass normalized-action-v1 contract/idempotency acceptance. A canonical approval digest, stable operation ID and uncertain-outcome fence are generated; no claim of compatibility with arbitrary accounting APIs.",
+        "Staff authentication and native infrastructure permission are separate from live SQL membership/reviewer admission. No public signup or grant from document/user-body claims. Native user/group revocation is not instantaneous JWT revocation.",
+        "Only parser sees untrusted PDF bytes, without model/database/object/accounting identity. Model results require strict fields and exact source evidence; this does not prove factual extraction quality. Destination model-processing policy reviews are explicit, scoped and expiring.",
+        "Retention eligibility is 90 days, periodic SQL/object cleanup and native backup/version windows require destination review; no exact universal erasure deadline is promised. Restore/reconciliation use separate authorized operator procedures.",
+        "Operator jobs are not app/model tools. Scheduled retention/monitoring and native alerts need actual first-sample/delivery acceptance. IBM cron sources are explicit supported Knative operations outside Terraform, never hidden provisioners.",
+        "Production state uses the reviewed provider-specific backend (AWS S3 locks, Azure Blob leases, Google GCS locks; IBM references an existing protected HTTP state/lock platform) under the required custody/residency. No backend is deployed or silently borrowed from another provider. Staging/qualification local state is for local checks only."
+      ],
+      "resourceInstances": [
+        {
+          "type": "azapi_resource",
+          "suffix": "_api"
+        },
+        {
+          "type": "azapi_resource",
+          "suffix": "_worker"
+        },
+        {
+          "type": "azapi_resource",
+          "suffix": "_parser"
+        },
+        {
+          "type": "azapi_resource",
+          "suffix": "_operator_initialize"
+        },
+        {
+          "type": "azapi_resource",
+          "suffix": "_operator_maintain"
+        },
+        {
+          "type": "azapi_resource",
+          "suffix": "_operator_monitor"
+        }
+      ],
+      "deliveryUnit": {
+        "proposedOnly": true,
+        "requiredFiles": [
+          "README.md",
+          "tests/invoice.tftest.hcl",
+          "invoice-contract.json",
+          "OPERATING_JOBS.md",
+          "OPERATIONS.md"
+        ]
+      }
+    },
+    {
+      "id": "gcp-invoice-workflow",
+      "provider": "gcp",
+      "service": "Google Cloud Run",
+      "implementation": "invoice-workflow",
+      "resources": [
+        "google_compute_network",
+        "google_sql_database_instance",
+        "google_storage_bucket",
+        "google_artifact_registry_repository"
+      ],
+      "composition": "One composed staff invoice delivery unit owns browser/API, background worker, isolated PDF/OCR parser, durable transactional PostgreSQL queue/outbox, private versioned original store, separate native workload identities, staff sign-in, SQL user/reviewer membership, bounded retries/recovery, guarded approved accounting adapter and separate operating tasks/monitoring. Draw it as one proposed app component (implementation invoice-workflow) with this exact service. Its internal SQL/storage/parser/model/identity/queue resources are already generated: do not provision duplicates. Existing tools browser binding web-browser --browser-https--> module --approved-accounting-api--> existing accounting service binding existing-service. Preserve every additional component/flow/requirement as explicit scope; unsupported extra scope remains a generator gap. Do not replace existing accounting or label an existing source repository as a running deployment.",
+      "configuration": {
+        "limits": "Omit defaults or preserve explicit maxPdfBytes=10000000, maxPdfPages=100, retentionDays=90. Other explicit values remain gaps and must be implemented, never silently ignored. Runtime Python 3.13, API port 8080, worker/parser commands, bounded parser and operator deadlines are already provided; do not ask the user to invent them.",
+        "outputContract": "Omit: owned invoice supplier/date/total/currency, review state and evidence contract; no flat custom outputContract.",
+        "region": "Propose a region within accepted residency; verify native service/model/private-network availability. Endpoint/account/identity/model/policy/notification inputs are reviewed destination inputs, not reasons to ask a novice infrastructure trivia."
+      },
+      "limitations": [
+        "Source/provider-mock/local image/SQL/parser tests do not establish real cloud identity, private routing, model extraction quality, managed restore or deployment. Build/scan the exact two images and retain evidence; known high-severity dependency findings remain open until reviewed.",
+        "Existing accounting must implement and independently pass normalized-action-v1 contract/idempotency acceptance. A canonical approval digest, stable operation ID and uncertain-outcome fence are generated; no claim of compatibility with arbitrary accounting APIs.",
+        "Staff authentication and native infrastructure permission are separate from live SQL membership/reviewer admission. No public signup or grant from document/user-body claims. Native user/group revocation is not instantaneous JWT revocation.",
+        "Only parser sees untrusted PDF bytes, without model/database/object/accounting identity. Model results require strict fields and exact source evidence; this does not prove factual extraction quality. Destination model-processing policy reviews are explicit, scoped and expiring.",
+        "Retention eligibility is 90 days, periodic SQL/object cleanup and native backup/version windows require destination review; no exact universal erasure deadline is promised. Restore/reconciliation use separate authorized operator procedures.",
+        "Operator jobs are not app/model tools. Scheduled retention/monitoring and native alerts need actual first-sample/delivery acceptance. IBM cron sources are explicit supported Knative operations outside Terraform, never hidden provisioners.",
+        "Production state uses the reviewed provider-specific backend (AWS S3 locks, Azure Blob leases, Google GCS locks; IBM references an existing protected HTTP state/lock platform) under the required custody/residency. No backend is deployed or silently borrowed from another provider. Staging/qualification local state is for local checks only."
+      ],
+      "resourceInstances": [
+        {
+          "type": "google_cloud_run_v2_service",
+          "suffix": "_api"
+        },
+        {
+          "type": "google_cloud_run_v2_service",
+          "suffix": "_worker"
+        },
+        {
+          "type": "google_cloud_run_v2_service",
+          "suffix": "_parser"
+        },
+        {
+          "type": "google_cloud_run_v2_job",
+          "suffix": "_operator_initialize"
+        },
+        {
+          "type": "google_cloud_run_v2_job",
+          "suffix": "_operator_maintain"
+        },
+        {
+          "type": "google_cloud_run_v2_job",
+          "suffix": "_operator_monitor"
+        }
+      ],
+      "deliveryUnit": {
+        "proposedOnly": true,
+        "requiredFiles": [
+          "README.md",
+          "tests/invoice.tftest.hcl",
+          "invoice-contract.json",
+          "OPERATING_JOBS.md",
+          "OPERATIONS.md"
+        ]
+      }
+    },
+    {
+      "id": "ibm-invoice-workflow",
+      "provider": "ibm",
+      "service": "IBM Code Engine",
+      "implementation": "invoice-workflow",
+      "resources": [
+        "ibm_code_engine_project",
+        "ibm_database",
+        "ibm_cos_bucket",
+        "ibm_appid_application"
+      ],
+      "composition": "One composed staff invoice delivery unit owns browser/API, background worker, isolated PDF/OCR parser, durable transactional PostgreSQL queue/outbox, private versioned original store, separate native workload identities, staff sign-in, SQL user/reviewer membership, bounded retries/recovery, guarded approved accounting adapter and separate operating tasks/monitoring. Draw it as one proposed app component (implementation invoice-workflow) with this exact service. Its internal SQL/storage/parser/model/identity/queue resources are already generated: do not provision duplicates. Existing tools browser binding web-browser --browser-https--> module --approved-accounting-api--> existing accounting service binding existing-service. Preserve every additional component/flow/requirement as explicit scope; unsupported extra scope remains a generator gap. Do not replace existing accounting or label an existing source repository as a running deployment.",
+      "configuration": {
+        "limits": "Omit defaults or preserve explicit maxPdfBytes=10000000, maxPdfPages=100, retentionDays=90. Other explicit values remain gaps and must be implemented, never silently ignored. Runtime Python 3.13, API port 8080, worker/parser commands, bounded parser and operator deadlines are already provided; do not ask the user to invent them.",
+        "outputContract": "Omit: owned invoice supplier/date/total/currency, review state and evidence contract; no flat custom outputContract.",
+        "region": "Propose a region within accepted residency; verify native service/model/private-network availability. Endpoint/account/identity/model/policy/notification inputs are reviewed destination inputs, not reasons to ask a novice infrastructure trivia."
+      },
+      "limitations": [
+        "Source/provider-mock/local image/SQL/parser tests do not establish real cloud identity, private routing, model extraction quality, managed restore or deployment. Build/scan the exact two images and retain evidence; known high-severity dependency findings remain open until reviewed.",
+        "Existing accounting must implement and independently pass normalized-action-v1 contract/idempotency acceptance. A canonical approval digest, stable operation ID and uncertain-outcome fence are generated; no claim of compatibility with arbitrary accounting APIs.",
+        "Staff authentication and native infrastructure permission are separate from live SQL membership/reviewer admission. No public signup or grant from document/user-body claims. Native user/group revocation is not instantaneous JWT revocation.",
+        "Only parser sees untrusted PDF bytes, without model/database/object/accounting identity. Model results require strict fields and exact source evidence; this does not prove factual extraction quality. Destination model-processing policy reviews are explicit, scoped and expiring.",
+        "Retention eligibility is 90 days, periodic SQL/object cleanup and native backup/version windows require destination review; no exact universal erasure deadline is promised. Restore/reconciliation use separate authorized operator procedures.",
+        "Operator jobs are not app/model tools. Scheduled retention/monitoring and native alerts need actual first-sample/delivery acceptance. IBM cron sources are explicit supported Knative operations outside Terraform, never hidden provisioners.",
+        "Production state uses the reviewed provider-specific backend (AWS S3 locks, Azure Blob leases, Google GCS locks; IBM references an existing protected HTTP state/lock platform) under the required custody/residency. No backend is deployed or silently borrowed from another provider. Staging/qualification local state is for local checks only."
+      ],
+      "resourceInstances": [
+        {
+          "type": "ibm_code_engine_app",
+          "suffix": "_api"
+        },
+        {
+          "type": "ibm_code_engine_app",
+          "suffix": "_worker"
+        },
+        {
+          "type": "ibm_code_engine_app",
+          "suffix": "_parser"
+        },
+        {
+          "type": "ibm_code_engine_job",
+          "suffix": "_operator_initialize"
+        },
+        {
+          "type": "ibm_code_engine_job",
+          "suffix": "_operator_maintain"
+        },
+        {
+          "type": "ibm_code_engine_job",
+          "suffix": "_operator_monitor"
+        }
+      ],
+      "deliveryUnit": {
+        "proposedOnly": true,
+        "requiredFiles": [
+          "README.md",
+          "tests/invoice.tftest.hcl",
+          "invoice-contract.json",
+          "OPERATING_JOBS.md",
+          "OPERATIONS.md"
+        ]
+      }
+    }
+  ],
+  "evidenceBoundary": "A matching contract identifies compiler capability only. Resources, edges, application behavior and destination configuration require independent validation.",
+  "applicationAssemblies": [
+    {
+      "id": "typed-approval-application-v1",
+      "implementation": "approval-workflow",
+      "providers": [
+        "aws",
+        "azure",
+        "gcp",
+        "ibm"
+      ],
+      "selection": "Explicit proposed non-note component with data.approvalProfile matching node.id and provider; fits durable human-reviewed typed workflows on PostgreSQL. Do not apply this as a universal business application recipe.",
+      "profileFields": [
+        "format",
+        "provider",
+        "componentId",
+        "environment",
+        "accountId",
+        "publicOrigin",
+        "operationKind",
+        "identitySettings",
+        "payloadContract",
+        "destinationContract"
+      ],
+      "format": "approval-application-v1",
+      "environment": [
+        "staging",
+        "production",
+        "qualification"
+      ],
+      "operationKind": [
+        "document",
+        "draft",
+        "account_change"
+      ],
+      "accountId": "Canonical logical application-account UUID; not a cloud account ID",
+      "identitySettings": {
+        "aws": [
+          "REGION",
+          "POOL_ID",
+          "CLIENT_ID",
+          "AUTH_ORIGIN",
+          "AUTH_SCOPE"
+        ],
+        "azure": [
+          "TENANT_ID",
+          "API_CLIENT_ID",
+          "SPA_CLIENT_ID"
+        ],
+        "gcp": [
+          "PROJECT_NUMBER",
+          "REGION",
+          "SERVICE_NAME"
+        ],
+        "ibm": [
+          "APPID_TENANT_ID",
+          "APPID_CLIENT_ID",
+          "APPID_ISSUER",
+          "AUTH_SCOPE"
+        ]
+      },
+      "payloadContract": "Exactly version=1,id (lowercase identifier),source,result; source/result are closed object schemas with type/properties/required. Fields support bounded string(minBytes,maxBytes), integer(minimum,maximum), boolean, enum(values), array(items,maxItems) and nested object. No JSON Schema extensions/coercion.",
+      "destinationContract": "Reviewed id,endpointSha256,scope,mappingVersion; never a credential or invented vendor mapping.",
+      "emitted": "Shared API source, profile, exact provider lock, Dockerfile and explicit missing-work/task record",
+      "boundary": "Source assembly only. Resources, domain processor/worker, identity/database/environment wiring and full tests remain required; never clear work gates or claim application completion. Retain an absent profile while real choices are unresolved; do not invent provider/client identifiers or acceptance.",
+      "projectFileVersion": "3.0.0 only for approval-workflow projects, so older readers reject instead of dropping this intent",
+      "deferredBinding": {
+        "format": "approval-application-template-v1",
+        "fields": [
+          "publicOrigin",
+          "identitySettings.*",
+          "destinationContract.endpointSha256",
+          "destinationContract.scope"
+        ],
+        "reference": {
+          "nativeOutput": {
+            "componentId": "exact graph component",
+            "provider": "exact source provider",
+            "environment": "same as application",
+            "name": "reviewed public output name"
+          }
+        },
+        "resolver": "resolve-profile.py --outputs /ABSOLUTE/PUBLIC-OUTPUT-LEDGER.json --out /ABSOLUTE/FRESH-BINDING-DIRECTORY",
+        "boundary": "Public values only. No cloud lookup or source attestation; unresolved, partial or mismatched bundles cannot start. Fixed ownership, operation and policy cannot be deferred."
+      }
+    }
+  ]
+}

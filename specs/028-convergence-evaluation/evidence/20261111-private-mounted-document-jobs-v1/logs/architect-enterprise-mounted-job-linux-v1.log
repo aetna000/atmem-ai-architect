@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/scripts/qualify-enterprise-documents.py", line 190, in <module>
+    qualify(parser.parse_args())
+    ~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/scripts/qualify-enterprise-documents.py", line 147, in qualify
+    run(label + '-setup', ['run', '--rm', '--network', 'none', '--read-only', '--user', '0:0', '--cap-drop', 'ALL',
+    ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        '--cap-add', 'CHOWN', '--security-opt', 'no-new-privileges:true', *mounts, '-i', image['Id'], 'python', '-I', '-c', setup],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+        data=json.dumps({'metadata': metadata, 'raw': base64.b64encode(raw).decode()}).encode())
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/scripts/qualify-enterprise-documents.py", line 61, in run
+    raise RuntimeError('Document qualification failed: ' + label)
+RuntimeError: Document qualification failed: mounted-job-policy.docx-setup

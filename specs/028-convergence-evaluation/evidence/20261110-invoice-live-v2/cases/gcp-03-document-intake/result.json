@@ -1,0 +1,93 @@
+{
+  "case": "gcp-03-document-intake",
+  "scenario": "03-document-intake",
+  "difficulty": "medium",
+  "provider": "gcp",
+  "userExchanges": 4,
+  "clarificationQuestions": 2,
+  "technicalQuestions": 0,
+  "repeatedQuestions": 0,
+  "convergedWithoutQuestion": true,
+  "durationSeconds": 217.29,
+  "clientFactKeysDelivered": [
+    "data",
+    "integrations",
+    "location",
+    "quality",
+    "scale",
+    "users"
+  ],
+  "clientBriefComplete": true,
+  "turns": [
+    {
+      "turn": 1,
+      "question": "Which country should store and process the invoices?",
+      "repeatedQuestion": false,
+      "scopePreserved": true,
+      "proposal": true,
+      "internalResponseRepairs": 0,
+      "modelResponseEncodings": [
+        "compact_patch"
+      ],
+      "modelResponseJsonBytes": 8584,
+      "technicalQuestion": false
+    },
+    {
+      "turn": 2,
+      "question": "Does your existing accounting API also store and process invoice data only in Australia?",
+      "repeatedQuestion": false,
+      "scopePreserved": true,
+      "proposal": true,
+      "internalResponseRepairs": 0,
+      "modelResponseEncodings": [
+        "compact_patch"
+      ],
+      "modelResponseJsonBytes": 5651,
+      "technicalQuestion": false
+    },
+    {
+      "turn": 3,
+      "question": null,
+      "repeatedQuestion": false,
+      "scopePreserved": true,
+      "proposal": true,
+      "internalResponseRepairs": 0,
+      "modelResponseEncodings": [
+        "compact_patch"
+      ],
+      "modelResponseJsonBytes": 7335,
+      "clientFactCompletionQueued": true
+    },
+    {
+      "turn": 4,
+      "question": null,
+      "repeatedQuestion": false,
+      "scopePreserved": true,
+      "proposal": true,
+      "internalResponseRepairs": 0,
+      "modelResponseEncodings": [
+        "compact_patch"
+      ],
+      "modelResponseJsonBytes": 10968
+    }
+  ],
+  "error": null,
+  "package": {
+    "staticCandidate": true,
+    "implementationRequired": 0,
+    "connectionGaps": 0,
+    "fatalFindings": [],
+    "wrongProviderNodes": [],
+    "files": 134,
+    "tasks": 37,
+    "runtime": "not_yet_qualified",
+    "nearDeploymentQualified": false
+  },
+  "acceptance": [
+    "PDF upload reaches a reviewable extraction result.",
+    "Concurrent duplicate deliveries and worker restarts do not duplicate records.",
+    "Unauthorized approvals fail; approved outbound retries are idempotent.",
+    "Poison jobs remain recoverable with audit evidence."
+  ],
+  "status": "requires_independent_review_and_runtime_qualification"
+}

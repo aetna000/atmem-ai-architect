@@ -1,3 +1,5 @@
+import {architectureWork} from './architecture-work.mjs';
+import {consultationContext} from './consultation-context.mjs';
 import { runtimeSettings } from "./runtime-settings.mjs";
 import { handoffAssessment } from './handoff.mjs';
 import { journey } from "./journey.mjs";
@@ -13,7 +15,7 @@ export function toAgentProject(p) {
     name: p.name.slice(0, 200),
     provider: p.provider || "tools",
     ...(p.domain ? { domain: p.domain } : {}),
-    requirements: String(p.requirements || "").slice(0, 8000),
+    requirements: String(p.requirements || ""),
     nodes: p.nodes.map((n) => ({
       id: n.id,
       type: "resource",
@@ -23,7 +25,7 @@ export function toAgentProject(p) {
         label: n.data.kind === "note" && !n.data.label ? " " : n.data.label,
         kind: n.data.kind,
         provider: n.data.provider,
-        description: String(n.data.description || "").slice(0, 1000),
+        description: String(n.data.description || ""),
         config: {
           ...runtimeSettings(n.data.config),
           region: n.data.config?.region || "To be selected",
@@ -36,10 +38,12 @@ export function toAgentProject(p) {
         },
         inputPosition: n.data.inputPosition || "left",
         outputPosition: n.data.outputPosition || "right",
+        ...(n.data.topologyGroup ? {topologyGroup:String(n.data.topologyGroup)}:{}),
+        ...(["reference","create"].includes(n.data.deploymentMode)?{deploymentMode:n.data.deploymentMode}:{}),
         origin: String(n.data.origin || "proposed").slice(0, 100),
         ...(n.data.service ? { service: n.data.service } : {}),
-        ...(["cloud-storage-principal","aws-iam-principal","aws-bedrock-model","normalized-source-contract","web-browser"].includes(n.data.binding) ? { binding: n.data.binding } : {}),
-        ...(["private-object-storage","rag-web-app","rag-user-pool","bounded-keyword-rag","iam-rag-api","bounded-rag-catalog","text-statistics","bedrock-summary","async-word-count","sqs-standard","sqs-dead-letter","word-count-results"].includes(n.data.implementation) ? { implementation: n.data.implementation } : {}),
+        ...(["public-catalog-editor","cloud-storage-principal","aws-iam-principal","aws-bedrock-model","normalized-source-contract","web-browser","existing-service"].includes(n.data.binding) ? { binding: n.data.binding } : {}),
+        ...(["invoice-workflow","public-faq-app","ibm-structured-app","gcp-structured-app","azure-structured-app","container-service","private-object-storage","rag-web-app","rag-user-pool","bounded-keyword-rag","iam-rag-api","bounded-rag-catalog","text-statistics","bedrock-summary","bedrock-structured","structured-api","structured-web-app","structured-user-pool","async-word-count","sqs-standard","sqs-dead-letter","word-count-results"].includes(n.data.implementation) ? { implementation: n.data.implementation } : {}),
         ...(n.data.category ? { category: n.data.category } : {}),
         ...(n.data.poc ? { poc: true } : {}),
         ...(n.data.role ? { role: n.data.role } : {}),
@@ -53,35 +57,40 @@ export function toAgentProject(p) {
       type: "smoothstep",
       label: String(e.label || "data").slice(0, 150),
       ...(["storage-object-admin","s3-read", "s3-read-write", "lambda-invoke", "api-invoke"].includes(e.access) ? { access: e.access } : {}),
-      ...(["browser-https","web-rag-api","oauth-pkce","jwt-authorizer","source-catalog-sync","http-api-lambda","lambda-catalog-read","bedrock-converse","s3-object-created","sqs-lambda","lambda-s3-read","lambda-dynamodb-write","sqs-redrive"].includes(e.integration) ? { integration: e.integration } : {}),
+      ...(["approved-accounting-api","public-catalog-edit","browser-https","web-rag-api","oauth-pkce","jwt-authorizer","source-catalog-sync","http-api-lambda","lambda-catalog-read","bedrock-converse","s3-object-created","sqs-lambda","lambda-s3-read","lambda-dynamodb-write","sqs-redrive"].includes(e.integration) ? { integration: e.integration } : {}),
     })),
   };
 }
 // Read-only records for the architect: it may only change them through a proposal.
 export function agentContext(p) {
-  const item = (type, id, text) => ({ type, id: String(id).slice(0, 60), text: String(text).slice(0, 1000) });
+  const item = (type, id, text) => ({ type, id: String(id).slice(0, 60), text: String(text) });
   const measure = (m) => (m ? ` [${m.metric} ${m.op} ${m.target}${m.unit || ""}]` : "");
   const next = journey(p);
   const costs = estimate(p), work = consultingEstimate(p), resources = resourcePlan(p), handoff = handoffAssessment(p);
-  return [
-    item("discovery","guided-journey",`Current journey step: ${next.id} — ${next.title}. ${next.reason} Next action: ${next.action}. Lead with one useful question and update the board/document from the answer. Later stages remain hidden until the working draft progresses; never direct the user to a hidden tab. Named service mapping is not verified cloud compatibility.`),
+  const shared=p.extensions?.architectureWork?architectureWork(p):null;
+  const workContext=shared?shared.entities.filter(e=>e.id.startsWith('intent:')&&e.id!=='intent:project'||e.id.startsWith('work:')).map((e,i)=>item('discovery','shared-work-'+i,JSON.stringify({reference:e.id,kind:e.kind,contextStatus:e.contextStatus,changedRefs:e.changedRefs,missingRefs:e.missingRefs,value:e.value,boundary:'Recorded intent or proposed mapping; context review is not verified execution or business acceptance.'}))):[];
+  return consultationContext([
+    ...(p.extensions?.externalReferences?.references||[]).map((ref,index)=>item('discovery','external-reference-'+index,JSON.stringify({reference:ref,boundary:'Observed state metadata only. Preserve external ownership; the URN is not a native physical ID, verified behavior or permission to adopt/create/migrate.'}))),
+    ...(p.extensions?.terraformState?[item('discovery','terraform-state-custody',JSON.stringify({contract:p.extensions.terraformState,boundary:'Preserve this root state choice and linked owner/residency decisions. Selection is not backend verification, migration approval or deployment authorization.'}))]:[]),
+    ...workContext,
+    item("discovery","guided-journey",`Current journey step: ${next.id} — ${next.title}. ${next.reason} Next action: ${next.action}. Add or refine the needed components and their connections from known answers. Keep topology reasoning internal and explain components in plain language. Ask only a material question that unlocks the next design decision; defer packaging details. Later stages remain hidden until the working draft progresses; never direct the user to a hidden tab. Named service mapping is not verified cloud compatibility.`),
     item("discovery", "estimate-summary", `Current estimate stage: ${costs.maturity}. Monthly cloud subtotal ${costs.expected ?? "unknown"} ${costs.currency || "currency unresolved"}; range ${costs.low ?? "?"}–${costs.high ?? "?"}; ${costs.gaps.length} worksheet gaps. One-off consulting/build subtotal ${work.expected ?? "unknown"} ${work.currency}; ${work.complete ? "all phases entered" : "incomplete"}. Values are user inputs, not provider quotes. Later journey stages provide costs and a downloadable delivery draft with a Terraform sketch. Follow guided-journey before directing the user to those stages.`),
-    ...costs.gaps.slice(0, 5).map((g, i) => item("question", `cost-gap-${i}`, g)),
-    item("discovery", "infrastructure-coverage", `${resources.rows.length} diagram components; ${resources.gaps.length} infrastructure/integration gaps. Native Terraform coverage is AWS S3 foundations, typed text-statistics, asynchronous word counts, Bedrock summaries and explicit existing-IAM-principal access, plus typed private-object-storage with one existing cloud-storage-principal on Azure/GCP/IBM. Other AI application paths must retain their implementation gaps. Deployment is not connected.`),
-    item("discovery", "handoff-readiness", `Handoff: ${handoff.status}; ${handoff.counts.priorityDecisions} priority decisions. Next: ${handoff.nextAction} Preserve accepted design decisions, distinguish country from deployment region, and resolve one highest-impact gap at a time. Do not equate schema validation with deployed behavior.`),
+    ...costs.gaps.slice(0, 5).map((g, i) => item("discovery", `cost-gap-${i}`, g)),
+    item("discovery", "infrastructure-coverage", `${resources.rows.length} diagram components; ${resources.gaps.length} infrastructure/integration gaps. Use the server-supplied current compiler capability catalogue and actual selected contracts. Named services and supplied-image footprints do not establish application implementation. Preserve unsupported scope and treat missing implementation as engineering work; never replace a required system with a smaller demo or ask users to repair compiler gaps.`),
+    item("discovery", "handoff-readiness", `Handoff: ${handoff.status}; ${handoff.counts.priorityDecisions} priority decisions. Next: ${handoff.nextAction} Preserve accepted design decisions, distinguish country from deployment region, and advance connected workstreams together; ask only a consequential business decision while owning routine engineering choices. Do not equate schema validation with deployed behavior.`),
     ...handoff.findings.filter(f=>f.priority===1).slice(0,5).map(f=>item("question",`handoff-${f.id}`,`${f.message} ${f.action}`)),
     ...(p.needs || []).map((r) => item("requirement", r.id, `${requirementNumber(p,r.id)} — ${r.priority} ${r.kind} ${r.category}: ${r.statement}${measure(r.measure)} (${r.status})`)),
     ...(p.assumptions || []).map((a) => item("assumption", a.id, `${a.statement} (stated ${a.madeAt})`)),
-    ...(p.openQuestions || []).filter((q) => q.status === "open").map((q) => item("question", q.id, q.question)),
+    ...(p.openQuestions || []).filter(q=>q.status==='open'||q.answer?.trim()).map(q=>item('question',q.id,q.status==='answered'?`Answered: ${q.question} User-recorded answer: ${q.answer}`:q.question)),
     ...(p.decisions || [])
       .filter((d) => d.status !== "Superseded")
       .map((d) => item("decision", d.id, `${d.subject} — ${d.title}: ${d.decision} (${d.status}${d.owner ? `, owner ${d.owner}` : ""})`)),
-    ...(p.lastAsked?.question ? [item("discovery", "next-question", `Planner's next question (${p.lastAsked.topic}): ${p.lastAsked.question} Beginner wording: ${p.lastAsked.beginner || ""}`)] : []),
+    ...(p.lastAsked?.question ? [item("discovery", "next-question", `Optional planner candidate (${p.lastAsked.topic}; defer if a larger decision matters more): ${p.lastAsked.question} Beginner wording: ${p.lastAsked.beginner || ""}`)] : []),
     ...Object.entries(p.brief || {})
       .filter(([, v]) => String(v).trim())
       .map(([k, v]) => item("discovery", `brief-${k}`, `${k}: ${v}`)),
     ...(p.workflow ? [item("discovery", "workflow", `Detected workflow: ${p.workflow}`)] : []),
-  ].slice(0, 300);
+  ]);
 }
 export async function discoverLocalAgent() {
   const response = await fetch("/api/session", {
@@ -117,6 +126,7 @@ export async function requestArchitect({
   origin = "chat",
   extra = [],
   attachments = [],
+  activityId,
   signal,
 }) {
   const scoped = project.id && !/^Connection check/.test(message);
@@ -133,6 +143,7 @@ export async function requestArchitect({
     body: JSON.stringify({
       provider: connection.provider,
       ...(scoped ? { projectId: project.id } : {}),
+      ...(scoped&&session.architectureActivityEnabled&&activityId?{activityId}:{}),
       origin,
       model: connection.model,
       ...(connection.effort ? { effort: connection.effort } : {}),
@@ -140,7 +151,7 @@ export async function requestArchitect({
       ...(attachments.length?{attachments:attachments.map(({name,mime,data})=>({name,mime,data}))}:{}),
       project: toAgentProject(project),
       stage,
-      context: [...agentContext(project), ...extra].slice(0, 300),
+      context: consultationContext([...agentContext(project), ...extra]),
       history: history
         .slice(-12)
         .map((m) => ({ role: m.role, text: m.text.slice(0, 12000) })),

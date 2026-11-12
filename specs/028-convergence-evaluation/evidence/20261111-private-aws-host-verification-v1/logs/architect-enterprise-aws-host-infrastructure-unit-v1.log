@@ -1,0 +1,38 @@
+✔ AWS host probe source embedding is byte-identical to the owned inspected program (0.521209ms)
+✔ AWS host verifier module preserves project ownership and rejects location/provider substitution (1.456417ms)
+✔ AWS host verifier provisions only a fixed document and additive worker policy (1.113042ms)
+✔ AWS host verification config uses native document version/hash and retains complete-project boundary (0.491917ms)
+✖ AWS host verifier preserves hostile source IDs as literal evidence (0.905458ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 4
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 60.047084
+
+✖ failing tests:
+
+test at tests/enterprise-aws-host-infrastructure.test.mjs:33:1
+✖ AWS host verifier preserves hostile source IDs as literal evidence (0.905458ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + '$${file("owned-marker.txt")} %%{if true}marker%%{endif}'
+  - '$${file("owned-marker.txt")} %{if true}marker%{endif}'
+  
+      at TestContext.<anonymous> (file:///Users/javadtaghia/gitlab/ai-architect-workbench/tests/enterprise-aws-host-infrastructure.test.mjs:36:9)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: '$${file("owned-marker.txt")} %%{if true}marker%%{endif}',
+    expected: '$${file("owned-marker.txt")} %{if true}marker%{endif}',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

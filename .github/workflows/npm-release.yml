@@ -1,0 +1,122 @@
+name: npm Architect release
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish the checked release packages
+        type: boolean
+        default: false
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main, fix/existing-service-references]
+    paths: ['.github/workflows/npm-release.yml', 'cli/**', 'packaging/**', 'server/requirements.lock', 'server/memory-requirements.lock']
+    tags: ['v[0-9]*', 'npm-v*']
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+          cache: pip
+          cache-dependency-path: server/requirements.lock
+      - name: Prepare the pinned test runtime
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install --require-hashes -r server/requirements.lock
+      - run: npm ci --ignore-scripts
+      - run: npm test
+      - run: npm run package:npm
+      - uses: actions/upload-artifact@v4
+        with:
+          name: architect-npm-candidate
+          path: .local/npm-release/*.tgz
+          retention-days: 7
+  installed:
+    needs: package
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            /package.json
+            /package-lock.json
+            /scripts/npm-installed-check.mjs
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/download-artifact@v4
+        with:
+          name: architect-npm-candidate
+          path: .local/candidate
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps chromium
+      - name: Install the exact candidate with an empty npm config
+        run: |
+          mkdir -p .local/clean-install
+          touch .local/empty.npmrc
+          npm install --prefix .local/clean-install --userconfig .local/empty.npmrc --ignore-scripts .local/candidate/*.tgz
+      - name: Start installed UI and real isolated AtMem
+        run: node scripts/npm-installed-check.mjs .local/clean-install .local/install-home
+  publish:
+    needs: [package, installed]
+    if: startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/npm-v') || inputs.publish == true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: https://registry.npmjs.org
+      - uses: actions/download-artifact@v4
+        with:
+          name: architect-npm-candidate
+          path: candidate
+      - run: npm install --global npm@11.17.0
+      - run: npm publish ./candidate/*.tgz --access public --tag latest --provenance
+
+  github-package:
+    needs: [package, installed]
+    if: startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/npm-v') || inputs.publish == true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            /scripts/github-package.mjs
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: https://npm.pkg.github.com
+          scope: '@aetna000'
+      - uses: actions/download-artifact@v4
+        with:
+          name: architect-npm-candidate
+          path: candidate
+      - run: node scripts/github-package.mjs candidate .local/github-package
+      - run: npm publish ./.local/github-package/package --registry=https://npm.pkg.github.com --access public --tag latest --ignore-scripts
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

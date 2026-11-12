@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "status": "passed",
+  "scope": "configuration_and_available_generated_local_tests",
+  "cloudPlan": "not_run",
+  "deployment": "not_run",
+  "fileDigests": {
+    ".gitignore": "85402bfaa67a6497898afe98f9b65c3d8ce920bac1cdcf56b271b13fd9e54f71",
+    ".terraform.lock.hcl": "906549673977824e13194c95a1dac251f396e7b242c83c1879bb97baa2091f49",
+    "main.tf.json": "e8b37f6e3cfbc14c0e7e5a96b78cfcf5d923feb750c4268efddeb2b3f5d9498c",
+    "resource-schedule.json": "20af7f68c11afcabfea3393e4457fb832508c07903779b013018d896b5652cb0",
+    "deployment.tfvars.json.example": "8b814d3625dacdf8053847b1e49d83caefc910437be4e0d98337823b2a68299a",
+    "tests/container.tftest.hcl": "691076c0954187ee4c82223f5d40a0a78cf469065b3b4ab6fd480e6d5fa902d2",
+    "README.md": "f441fca7e503e9f0844dd5e518aa243a844f3675c512fdf87a150e2faeffacec"
+  },
+  "checks": [
+    {
+      "name": "Provider initialization",
+      "passed": true,
+      "output": "Initializing provider plugins...\n- terraform.io/builtin/terraform is built in to Terraform\n- Reusing version 7.46.2 of hashicorp/google from the dependency lock file\n- Using hashicorp/google v7.46.2 from the shared cache directory\n\nTerraform has been successfully initialized!\n\n"
+    },
+    {
+      "name": "Terraform schema validation",
+      "passed": true,
+      "output": "{\n  \"format_version\": \"1.0\",\n  \"valid\": true,\n  \"error_count\": 0,\n  \"warning_count\": 0,\n  \"diagnostics\": []\n}\n\n"
+    },
+    {
+      "name": "Independent Terraform lint",
+      "passed": true,
+      "status": "completed",
+      "issues": [],
+      "errors": [],
+      "output": "{\"issues\":[],\"errors\":[]}"
+    },
+    {
+      "name": "Generated mock-provider plans",
+      "passed": true,
+      "output": "tests/container.tftest.hcl... in progress\n  run \"block_617070_security\"... pass\n  run \"block_617070_reject_mutable_image\"... pass\n  run \"block_617070_footprint\"... pass\n  run \"unapproved_blocked\"... pass\ntests/container.tftest.hcl... tearing down\ntests/container.tftest.hcl... pass\n\nSuccess! 4 passed, 0 failed.\n\n"
+    }
+  ],
+  "message": "Provider schema and available generated local tests passed. Mock plans are not account plans. No cloud deployment was run.",
+  "generatedAt": "2026-11-09T14:43:54.219Z"
+}

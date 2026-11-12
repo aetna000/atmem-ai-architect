@@ -1,0 +1,30 @@
+tests/container.tftest.hcl... in progress
+  run "block_696e737472756d656e742dc2b5_reject_foreign_repository_partition"... pass
+  run "block_696e737472756d656e742dc2b5_reject_foreign_provider_partition"... fail
+
+Error: Missing expected failure
+
+  on tests/container.tftest.hcl line 29, in run "block_696e737472756d656e742dc2b5_reject_foreign_provider_partition":
+  29:  expect_failures = [aws_ecs_service.block_696e737472756d656e742dc2b5,aws_iam_role_policy.block_696e737472756d656e742dc2b5]
+
+The checkable object, aws_ecs_service.block_696e737472756d656e742dc2b5, was
+expected to report an error but did not.
+  run "block_696e737472756d656e742dc2b5_reject_foreign_aws_subnet"... skip
+  run "block_696e737472756d656e742dc2b5_reject_foreign_aws_security_group"... skip
+  run "block_696e737472756d656e742dc2b5_security"... skip
+  run "block_696e737472756d656e742dc2b5_reject_mutable_image"... skip
+  run "block_696e737472756d656e742dc2b5_footprint"... skip
+  run "invalid_region_blocked"... skip
+  run "changed_accepted_region_blocked"... skip
+  run "unapproved_blocked"... skip
+tests/container.tftest.hcl... tearing down
+tests/container.tftest.hcl... fail
+tests/independent-partition.tftest.hcl... in progress
+  run "independent_exact_partition_trust"... pass
+  run "independent_native_partition_value"... pass
+  run "independent_cross_partition_repository_denied"... pass
+  run "independent_repository_region_family_denied"... pass
+tests/independent-partition.tftest.hcl... tearing down
+tests/independent-partition.tftest.hcl... pass
+
+Failure! 5 passed, 1 failed, 8 skipped.

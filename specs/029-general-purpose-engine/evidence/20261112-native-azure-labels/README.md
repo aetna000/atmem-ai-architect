@@ -1,0 +1,153 @@
+# Exposed native Azure exhibit-label transfer
+
+## Inputs and native execution
+
+`client-brief.txt`, `acceptance-contract.json` and `requirements-cases-v1.json`
+freeze the requested domain/ownership/byte/policy/recovery behavior before artifact
+inspection. This is an evaluator-authored integration diagnostic, not original28,
+a blinded holdout, paired comparison or a release acceptance workload.
+
+The product runs from a detached immutablede77256 source worktree on MEM0, with
+separate home/API5288/8881. Existing owner previews and projects are untouched.
+The fresh session uses exact gpt-6.1-sol/high, the normal backend/native tools and
+the Azure public dependency mirror plus observed AMD64 SQL/runtime catalogue.
+Original full requirements, SDK/fixture contract and selected Python environment
+are verified in `native-input-binding-v1.json`. Terminal pins remain identical in
+`native-input-binding-v2-terminal.json`.
+
+`native-history-v1.json` confirms the original turn and one automatic bounded
+repair both completed. One explicit operator clarification explained the noexec
+environment constraint without changing domain requirements or restarting inference;
+its request/reply are retained. Two observation windows expired while the actual
+run continued; subsequent observation followed the same job. `settled-v1.json`
+records exact model/effort, original and repaired run IDs and unchanged frozen
+engine source. The final archive is09b99166-b825-4a66-91ca-ba44b3dec128, SHA256
+`22d35c9d11612c91094b4b1e89b1a429000e5ae0be9dc3a6697758ab8843f7ab`.
+
+## Evidence and honest failures
+
+`native-tools-v1.json` retains40 successful callbacks and3 rejected requests with
+report-page metadata. Rejections are not inferred successes or assigned an invented
+cause. `original-check-history-v1.json` retains every original local result.
+
+Initial13-test execution exposed an administrative recovery-fixture search-path
+error. An expanded16-test attempt timed out; later attempts completed the database
+restart/recovery tests and exposed receiving CLI standard-library shadowing and
+the noexec native-extension limit. Source was repaired by the native engineer;
+the evaluator did not patch an export. Scope/receiving assertions remain present.
+
+One intermediate generated16-pass report used global native-package/hash equivalence
+in its receiving assertion. That is invalid clean-install evidence. The operator
+clarification forbids this substitution; the final source explicitly withdraws the
+claim and restores fresh-site imports, all38 distribution versions/origins and key
+native module-origin checks. Preserve the intermediate report as withdrawn, not as
+a qualification. The original frozen checker correctly leaves the final package
+`needs_attention` because its writable paths are noexec. Its incomplete capability
+does not justify deleting assertions, bypassing policy or claiming a receiving pass.
+
+The engine now has a separately qualified, explicit executable-scratch capability;
+see `../20261112-executable-dependency-scratch/`. The exact final archive passes all16
+tests/no skips with that capability, same immutable image/platform/command and
+120-second budget. The independent controller did not change any code/test file.
+This is actual generated-suite execution, not independent whole-client acceptance.
+Its tests exercise real executable HTTP API/worker, PostgreSQL17, restricted SQL
+roles, queue, processing/publication children, synthetic signed Entra JWTs, TLS,
+concurrency/revision/inspection/contract guards, revocation, worker/database restart,
+lease fencing, unknown no-replay and clean receiving dependency imports.
+
+## Remaining independent work
+
+The native package adapts seven supplied shared modules: workflow_application,
+workflow_http, workflow_database, workflow_worker, durable_workflow,
+workflow_process_stage and workflow_schema.sql. This is generated client source,
+not a global SDK change. Review inspection receipts, domain-policy hooks, JSON versus
+JSONB Unicode persistence, distinct child identities and readiness/error behavior
+before extracting reusable mechanisms. Do not copy `labels` domain imports into
+the shared engine. The other provider variants and existing consumers need their
+own invariant/regression checks. A passing generated suite does not complete this
+review or establish the supplied SDK's corresponding behavior.
+
+Independent frozen client-case oracles, actual receiving OCI build/startup/child UID
+behavior and full Azure resource/identity/SQL/configuration binding remain pending.
+The native report's provider schema/three mock plans are producer evidence until
+independently replayed/assessed. Synthetic keys/native IDs/SQL/CA are explicit local
+fixtures; native cloud authentication, network, backups and actual catalogue behavior
+are not attested. No deployment/account access occurred or is needed for authorized
+local qualification.
+
+Heavy immutable archives, events, working snapshots/deltas and reports remain on
+MEM0 under `.local/external-artifacts/native-azure-labels/v1`. `start.mjs` submits
+once and refuses existing output; `observe.mjs` never starts/replays/interrupts a
+turn. Next activate the qualified capability only after the synthetic service is
+verified idle, recheck its exact saved package retaining prior history, and continue
+independent client/shared-runtime/receiving/provider assessment before alpha.5.
+Four offered increments/1-of28/owner0 and measured quality unknown remain unchanged.
+
+## Independent component follow-up
+
+The isolated service now runs frozen6c71fb7. Its saved artifact recheck and retained
+old failure are recorded in the executable-scratch API activation receipt. No
+new native turn occurred; the original generation baseline remains de77256.
+
+`probe-client-cases.py` executes the pre-generation frozen inputs against the
+unchanged archive in the pinned Linux AMD64 image. The evaluator imports no
+generated tests and modifies no source. `independent-client-cases-v1.json` records
+8 valid inputs,13 invalid inputs plus whitespace-only denial,8 valid caption edits
+and40 invalid edits (including both curator-flag directions). It also runs the
+actual isolated processing child for all8 valid/14 invalid sources with exact
+expected result/permanent outcomes. Module hashes bind the observed bytes.
+
+This establishes domain/child components only. Revision persistence, HTTP/live
+identity/SQL/queue/publication/recovery/provider composition and receiving OCI
+startup still require independent connected checks. The preceding pending steps
+are narrowed only by this evidence; no whole-system/original28/release promotion.
+
+## Independent receiving image and connected checkpoint
+
+The receiving engineer's unchanged Dockerfile now builds offline against the
+reviewed pinned Python3.13.18 Linux AMD64 descriptor, using only its shipped wheels
+and exact hashes. `receiving-image-v1.json` identifies actual image de096e0e. All
+172 exported files still match archive22d35c9d; all172 build inputs are unchanged.
+The actual image verifies36 installed runtime pins and exact Python/schema/locks.
+
+`check-image.py` and `run-image.py` are independent evaluator source, not generated
+tests. `connected-image-v1.json` records10 connected groups: real production
+API/worker assembly, Uvicorn HTTP, restricted PostgreSQL17 roles, durable queue,
+processing/publication children,8 frozen valid/14 invalid inputs, concurrent4
+idempotency/conflicts, identity/role/ownership denials, reviewer edit/revision/
+inspection binding and exact TLS payload, unknown no-replay across worker restart,
+and live membership revocation. An additional trusted ProcessStage probe observes
+distinct65534/65533 child identities, no supplementary groups/effective capabilities,
+no-new-privileges, denied supervisor-environment reads, no SQL keys and dispatch-only
+publication credentials. It does not replace the real app processing child.
+
+Only native JWKS, disposable local SQL connections and a synthetic loopback CA are
+injected at the owned constructor boundary; actual factories and child source run.
+The image's root supervisor is retained as exported; this is not a nonroot-image
+claim. The evaluator grants only SETUID/SETGID/KILL after cap-drop ALL, with
+read-only root/no-new-privileges and bounded tmp/memory/process/CPU. PostgreSQL and
+app use a fresh private internal network without published ports/host source/socket
+mounts. All fixture containers/network are confirmed removed on both failure/pass.
+This qualifies the observed subprocess mechanism, not a hostile-code sandbox.
+
+`check-terraform.py` independently copies only unchanged configuration/lockfiles,
+uses the receiving-host cached AzureRM4.81.0 mirror and Terraform1.17.1, validates
+the schema and executes5 mock plans. Checks cover pre-bootstrap runtime-off,
+private resources/region/native auth/config/entrypoints/separate SQL logins,
+worker-only catalogue secret, readiness/health/worker ingress and disjoint default
+subnets; invalid images/HTTP destinations/environments fail as expected. Mocked
+computed environment/ID values are explicitly synthetic, known during plan. No
+account plan/state/apply or Linux Terraform provider qualification is inferred.
+
+`receiving-attempts-v1.json` retains the unsuccessful evaluator setup iterations
+and their reasons; no application code or assertion was weakened. The full build,
+stdout/stderr, provider cache and all attempted receipts remain on MEM0. Latest
+physical runs are connected-image-v5 and terraform-independent-v6; committed v1
+receipts name the first complete qualified scope, not the first attempted run.
+`assessment-v2.json` retains all seven frozen criteria with explicit remaining
+independent evidence. This does not accept the whole project or promote original28.
+
+Next repair/review the generic SDK adaptations (not domain imports), beginning with
+accepted Unicode persistence, then complete missing independent failure/config/
+receiving checks and Google/IBM native transfers before alpha.5. Existing owner
+previews/UI and the original native session/requirements/pins are untouched.

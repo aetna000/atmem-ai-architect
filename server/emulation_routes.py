@@ -34,7 +34,9 @@ def emulate(payload):
     if setting('EMULATION_ENABLED')=='0':
         return {'version':1,'status':'unavailable','checks':[],'message':'Local emulation is disabled on this server.'}
     declared_clouds={n.get('data',{}).get('provider') for n in payload.project.get('nodes',[]) if n.get('data',{}).get('implementation')=='private-object-storage'}
-    if not declared_clouds.intersection({'azure','gcp'}) and importlib.util.find_spec('moto') is None:
+    declared_faq=any(n.get('data',{}).get('implementation')=='public-faq-app' for n in payload.project.get('nodes',[]))
+    declared_structured=any((n.get('data',{}).get('provider'),n.get('data',{}).get('implementation')) in {('azure','azure-structured-app'),('gcp','gcp-structured-app'),('ibm','ibm-structured-app')} for n in payload.project.get('nodes',[]))
+    if not declared_faq and not declared_structured and not declared_clouds.intersection({'azure','gcp'}) and importlib.util.find_spec('moto') is None:
         return {'version':1,'status':'unavailable','checks':[],'message':'The emulation worker is not installed on this server. Ask the server operator to enable the optional Moto backend.'}
     node=shutil.which('node')
     if not node:return {'version':1,'status':'unavailable','checks':[],'message':'The server-side generator is unavailable.'}
@@ -46,15 +48,19 @@ def emulate(payload):
         files=json.loads(generated.stdout)
         digests={name:hashlib.sha256(content.encode()).hexdigest() for name,content in files.items()}
         fingerprint=hashlib.sha256(json.dumps(digests,sort_keys=True,separators=(',',':')).encode()).hexdigest()
-        cloud=json.loads(files.get('resource-schedule.json','{}')).get('provider')
-        worker='storage_emulation_worker.py' if cloud in ('azure','gcp','ibm') else 'emulation_worker.py'
+        schedule=json.loads(files.get('resource-schedule.json','{}'))
+        cloud=schedule.get('provider')
+        faq=bool(schedule.get('publicFaqPlan',{}).get('entries'))
+        structured=bool(schedule.get('azureStructuredPlan',{}).get('entries') or schedule.get('gcpStructuredPlan',{}).get('entries') or schedule.get('ibmStructuredPlan',{}).get('entries'))
+        worker='public_faq_emulation_worker.py' if faq else 'structured_emulation_worker.py' if structured else 'storage_emulation_worker.py' if cloud in ('azure','gcp','ibm') else 'emulation_worker.py'
         prerequisites={'azure':('azure.storage.blob',ROOT/'.local/cloud-emulators/node_modules/.bin/azurite-blob'),'gcp':('google.cloud.storage',ROOT/'.local/cloud-emulators/fake-gcs/fake-gcs-server')}
-        worker_digest=hashlib.sha256((ROOT/'server'/worker).read_bytes()+(ROOT/'server/emulation_adapters.py').read_bytes()).hexdigest()
+        dependency='emulation_worker.py' if structured or faq else 'emulation_adapters.py'
+        worker_digest=hashlib.sha256((ROOT/'server'/worker).read_bytes()+(ROOT/'server'/dependency).read_bytes()).hexdigest()
         metadata={'version':1,'generatedAt':datetime.now(timezone.utc).isoformat(),'workerDigest':worker_digest,'designRevision':payload.project.get('revision'),'environment':payload.environment,'artifactDigest':fingerprint,'fileDigests':digests,'cloudOperations':False,'terraformApply':'not_run'}
         tf=json.loads(files['main.tf.json'])
         if tf.get('locals',{}).get('unfinished_work'):
             return {**metadata,'status':'blocked','checks':[],'message':'Resolve the generated implementation gaps before emulation.','blockers':tf['locals']['unfinished_work']}
-        if cloud in prerequisites:
+        if not faq and not structured and cloud in prerequisites:
             module,binary=prerequisites[cloud]
             try:installed=importlib.util.find_spec(module) is not None
             except ModuleNotFoundError:installed=False
@@ -64,7 +70,13 @@ def emulate(payload):
             if relative.is_absolute() or '..' in relative.parts or '\\' in name or not isinstance(content,str):raise ValueError('Unsafe generated path')
             target=Path(folder)/relative;target.parent.mkdir(parents=True,exist_ok=True);target.write_text(content)
         # Kill the entire worker process group on timeout, including local API servers.
-        process=subprocess.Popen([sys.executable,'-I',str(ROOT/'server'/worker),folder],cwd=folder,env=env,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,start_new_session=True)
+        interpreter=sys.executable
+        if structured and schedule.get('ibmStructuredPlan',{}).get('entries'):
+            # IBM's current SDK/dateutil closure conflicts with the AWS SDK. Never
+            # mutate the server environment or pretend the omitted SDK test passed.
+            interpreter=setting('IBM_EMULATION_PYTHON') or str(ROOT/'.local/ibm-structured-runtime/bin/python')
+            if not Path(interpreter).is_file():return {**metadata,'status':'unavailable','checks':[],'message':'The isolated IBM Python 3.13 runtime is not installed. The server operator can run python3 scripts/setup-structured-runtime.py ibm.'}
+        process=subprocess.Popen([interpreter,'-I',str(ROOT/'server'/worker),folder],cwd=folder,env=env,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,start_new_session=True)
         try:stdout,stderr=process.communicate(timeout=90)
         except subprocess.TimeoutExpired:
             os.killpg(process.pid,signal.SIGKILL);process.communicate();raise

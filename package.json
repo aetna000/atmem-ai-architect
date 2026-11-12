@@ -1,6 +1,6 @@
 {
   "name": "atmem-ai-architect",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -23,19 +23,29 @@
     "test:emulation:browser": "node scripts/emulation-browser-check.mjs",
     "setup:emulation:clouds": "python3 scripts/setup-cloud-emulators.py",
     "test:emulation:clouds": "node scripts/cloud-storage-check.mjs",
-    "test:mentor:live": "node scripts/cloud-mentor-live.mjs"
+    "test:mentor:live": "node scripts/cloud-mentor-live.mjs",
+    "test:enterprise": ".local/durable-runtime/bin/python -I -m unittest discover -s tests/runtime -p \"enterprise_*_acceptance.py\" -v",
+    "test:enterprise:postgres": ".local/durable-runtime/bin/python -I tests/runtime/enterprise_auth_postgres.py -v",
+    "test:enterprise:http": ".local/durable-runtime/bin/python -I tests/runtime/enterprise_http_postgres.py -v",
+    "test:enterprise:sessions": ".local/durable-runtime/bin/python -I tests/runtime/enterprise_sessions_postgres.py -v",
+    "test:enterprise:browser": "node scripts/enterprise-browser-check.mjs",
+    "build:enterprise:web": "node scripts/build-enterprise-web.mjs",
+    "package:npm": "npm run build && node scripts/package-npm.mjs"
   },
   "dependencies": {
+    "@noble/hashes": "2.4.0",
     "@xyflow/react": "12.10.0",
     "dagre": "0.8.5",
     "fflate": "0.8.3",
     "jspdf": "4.2.1",
     "lucide-react": "0.468.0",
+    "oidc-client-ts": "3.5.0",
     "react": "19.2.0",
     "react-dom": "19.2.0"
   },
   "devDependencies": {
     "@playwright/test": "1.64.1",
     "vite": "6.4.5"
-  }
+  },
+  "license": "Apache-2.0"
 }

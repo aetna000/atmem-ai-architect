@@ -1,0 +1,71 @@
+{
+  "format_version": "1.0",
+  "valid": false,
+  "error_count": 2,
+  "warning_count": 0,
+  "diagnostics": [
+    {
+      "severity": "error",
+      "summary": "Incorrect attribute value type",
+      "detail": "Inappropriate value for attribute \"route\": element 0: attributes \"carrier_gateway_id\", \"core_network_arn\", \"destination_prefix_list_id\", \"egress_only_gateway_id\", \"ipv6_cidr_block\", \"local_gateway_id\", \"nat_gateway_id\", \"network_interface_id\", \"odb_network_arn\", \"transit_gateway_id\", \"vpc_endpoint_id\", and \"vpc_peering_connection_id\" are required.",
+      "range": {
+        "filename": "main.tf.json",
+        "start": {
+          "line": 251,
+          "column": 18,
+          "byte": 9522
+        },
+        "end": {
+          "line": 256,
+          "column": 10,
+          "byte": 9672
+        }
+      },
+      "snippet": {
+        "context": "resource.aws_route_table.block_696e766f696365_public",
+        "code": "        \"route\": [\n          {\n            \"cidr_block\": \"0.0.0.0/0\",\n            \"gateway_id\": \"${aws_internet_gateway.block_696e766f696365.id}\"\n          }\n        ],",
+        "start_line": 251,
+        "highlight_start_offset": 17,
+        "highlight_end_offset": 167,
+        "values": [
+          {
+            "traversal": "aws_internet_gateway.block_696e766f696365.id",
+            "statement": "is a string"
+          }
+        ]
+      }
+    },
+    {
+      "severity": "error",
+      "summary": "Incorrect attribute value type",
+      "detail": "Inappropriate value for attribute \"route\": element 0: attributes \"carrier_gateway_id\", \"core_network_arn\", \"destination_prefix_list_id\", \"egress_only_gateway_id\", \"gateway_id\", \"ipv6_cidr_block\", \"local_gateway_id\", \"network_interface_id\", \"odb_network_arn\", \"transit_gateway_id\", \"vpc_endpoint_id\", and \"vpc_peering_connection_id\" are required.",
+      "range": {
+        "filename": "main.tf.json",
+        "start": {
+          "line": 263,
+          "column": 18,
+          "byte": 9869
+        },
+        "end": {
+          "line": 268,
+          "column": 10,
+          "byte": 10018
+        }
+      },
+      "snippet": {
+        "context": "resource.aws_route_table.block_696e766f696365_private",
+        "code": "        \"route\": [\n          {\n            \"cidr_block\": \"0.0.0.0/0\",\n            \"nat_gateway_id\": \"${aws_nat_gateway.block_696e766f696365.id}\"\n          }\n        ],",
+        "start_line": 263,
+        "highlight_start_offset": 17,
+        "highlight_end_offset": 166,
+        "values": [
+          {
+            "traversal": "aws_nat_gateway.block_696e766f696365.id",
+            "statement": "is a string"
+          }
+        ]
+      }
+    }
+  ]
+}
+

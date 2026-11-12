@@ -1,0 +1,273 @@
+{
+  "attachments": [],
+  "origin": "chat",
+  "projectId": "evaluation-ibm-03-document-intake",
+  "message": "Here are the remaining project facts before we finalize the handoff. Preserve these requirements and update the system as needed. Twenty signed-in staff and three reviewers; ordinary uploaders cannot approve. 500 uploads per day, bursts of twenty. Jobs may take several minutes. The accounting system already exists. An administrator will supply its endpoint and credentials; treat it as external, not a new system to provision. Use a durable job queue, stable invoice/job identity, bounded retries, a dead-letter/recovery path, approval checks and an idempotent outbound operation.",
+  "provider": "codex",
+  "model": "default",
+  "effort": "medium",
+  "project": {
+    "version": 1,
+    "revision": 3,
+    "name": "Asynchronous document intake",
+    "provider": "ibm",
+    "requirements": "Users upload PDF invoices. Extract the supplier, invoice date, total and currency into a review queue. Delivery can repeat; retries must not create duplicate invoices. A reviewer approves a result before it is sent to our existing accounting API. Use IBM Cloud. Recommend a coherent system and the engineering choices. Ask only a small material business question when needed; do not make me configure the system.",
+    "nodes": [
+      {
+        "id": "staff-browser",
+        "type": "resource",
+        "position": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "data": {
+          "label": "Staff upload and review",
+          "kind": "tool",
+          "provider": "tools",
+          "description": "Existing staff browsers upload PDF invoices, inspect extracted fields alongside source evidence, correct results and submit approval. Browser controls do not grant reviewer authorization; the application enforces membership and permissions.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "origin": "existing",
+          "deploymentMode": "reference",
+          "poc": false,
+          "role": "app",
+          "topologyGroup": "Staff access",
+          "service": "Web browser",
+          "binding": "web-browser"
+        }
+      },
+      {
+        "id": "invoice-workflow",
+        "type": "resource",
+        "position": {
+          "x": 480.0,
+          "y": 0.0
+        },
+        "data": {
+          "label": "Invoice intake and approval",
+          "kind": "agent",
+          "provider": "ibm",
+          "description": "Proposed composed invoice-workflow delivery unit on IBM Code Engine, with Sydney (au-syd) proposed within the accepted Australian data boundary. Owns browser/API, background worker, isolated PDF/OCR parser, IBM Cloud Databases for PostgreSQL transactional queue/outbox and review state, private versioned IBM Cloud Object Storage originals, IBM Cloud App ID staff sign-in, separate workload identities and regional watsonx extraction. Accepts PDF invoices up to 10,000,000 bytes, interpreting 10 MB as decimal, for an expected workload of around 500 invoices per day; burst capacity remains unmeasured. Invoices may contain personal data and are Confidential. Extracts supplier, invoice date, total and currency with source evidence; failed, uncertain or invalid extraction remains visible in review. Only the parser handles untrusted PDF bytes, without model, database, object-store or accounting identity. Server-side reviewer membership gates approval of the exact result revision and destination operation; edits require renewed approval. Durable operation identities and bounded retries protect repeated delivery; uncertain accounting outcomes are held for reconciliation rather than blindly resent. Retain originals and extraction audit history for 90 days, with scheduled cleanup and reviewed backup/version expiry; the retention clock and final deletion timing remain explicit acceptance details. Documents, extracted data and copies containing them must remain in Australia, including model processing, recovery copies and sensitive diagnostics; no silent overseas fallback. Owns audit history, maintenance, recovery procedures and monitoring tasks. Initial scope remains staff-uploaded PDF invoices, extraction, review and approved accounting submission. Operating ownership remains unresolved. Regional availability of Code Engine, PostgreSQL, object storage, App ID, the selected watsonx model and private connectivity is unverified. Artifact/registry replication geography, model-processing policy, retention behavior, restore, alert delivery, accounting compatibility and the accounting destination's Australian processing boundary require independent acceptance.",
+          "config": {
+            "maxPdfBytes": 10000000,
+            "retentionDays": 90,
+            "region": "au-syd",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "origin": "proposed",
+          "deploymentMode": "create",
+          "poc": false,
+          "role": "app",
+          "topologyGroup": "Invoice processing",
+          "service": "IBM Code Engine",
+          "implementation": "invoice-workflow"
+        }
+      },
+      {
+        "id": "existing-accounting",
+        "type": "resource",
+        "position": {
+          "x": 960.0,
+          "y": 0.0
+        },
+        "data": {
+          "label": "Existing accounting API",
+          "kind": "tool",
+          "provider": "tools",
+          "description": "Client-owned existing accounting service, preserved outside provisioning scope. Receives only reviewer-approved invoice fields through the guarded accounting adapter. Its actual API, authorization, processing/storage country, idempotency durability and reconciliation behavior are unknown. Before sending extracted personal data, establish that the destination and its processing/storage paths satisfy the Australian residency requirement. The destination must implement and independently pass the normalized-action-v1 contract and idempotency acceptance; this diagram does not establish native compatibility. Ambiguous outcomes require reconciliation before another send.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "origin": "existing",
+          "deploymentMode": "reference",
+          "poc": false,
+          "role": "app",
+          "topologyGroup": "Accounting delivery",
+          "service": "Existing accounting API",
+          "binding": "existing-service"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "staff-to-invoice-workflow",
+        "source": "staff-browser",
+        "target": "invoice-workflow",
+        "type": "smoothstep",
+        "label": "HTTPS: sign in, upload PDF, review fields and approve",
+        "integration": "browser-https"
+      },
+      {
+        "id": "workflow-to-accounting",
+        "source": "invoice-workflow",
+        "target": "existing-accounting",
+        "type": "smoothstep",
+        "label": "HTTPS: approved invoice, stable operation ID and receipt reconciliation",
+        "integration": "approved-accounting-api"
+      }
+    ]
+  },
+  "stage": "design",
+  "context": [
+    {
+      "type": "discovery",
+      "id": "guided-journey",
+      "text": "Current journey step: scope \u2014 Sketch and document. We have a first design. Let\u2019s check that the document captures what you want before choosing cloud services. Next action: Work through this design. Add or refine the needed components and their connections from known answers. Keep topology reasoning internal and explain components in plain language. Ask only a material question that unlocks the next design decision; defer packaging details. Later stages remain hidden until the working draft progresses; never direct the user to a hidden tab. Named service mapping is not verified cloud compatibility."
+    },
+    {
+      "type": "discovery",
+      "id": "estimate-summary",
+      "text": "Current estimate stage: Not estimated. Monthly cloud subtotal unknown currency unresolved; range ?\u2013?; 3 worksheet gaps. One-off consulting/build subtotal unknown USD; incomplete. Values are user inputs, not provider quotes. Later journey stages provide costs and a downloadable delivery draft with a Terraform sketch. Follow guided-journey before directing the user to those stages."
+    },
+    {
+      "type": "discovery",
+      "id": "cost-gap-0",
+      "text": "Staff upload and review: no cost lines; add charges or an explicit zero-cost line with a reason."
+    },
+    {
+      "type": "discovery",
+      "id": "cost-gap-1",
+      "text": "Invoice intake and approval: no cost lines; add charges or an explicit zero-cost line with a reason."
+    },
+    {
+      "type": "discovery",
+      "id": "cost-gap-2",
+      "text": "Existing accounting API: no cost lines; add charges or an explicit zero-cost line with a reason."
+    },
+    {
+      "type": "discovery",
+      "id": "infrastructure-coverage",
+      "text": "3 diagram components; 0 infrastructure/integration gaps. Use the server-supplied current compiler capability catalogue and actual selected contracts. Named services and supplied-image footprints do not establish application implementation. Preserve unsupported scope and treat missing implementation as engineering work; never replace a required system with a smaller demo or ask users to repair compiler gaps."
+    },
+    {
+      "type": "discovery",
+      "id": "handoff-readiness",
+      "text": "Handoff: engineering_required; 8 priority decisions. Next: Record included and excluded use cases before sizing or implementation. Preserve accepted design decisions, distinguish country from deployment region, and advance connected workstreams together; ask only a consequential business decision while owning routine engineering choices. Do not equate schema validation with deployed behavior."
+    },
+    {
+      "type": "question",
+      "id": "handoff-scope-boundary",
+      "text": "No explicit scope boundary is recorded. Record included and excluded use cases before sizing or implementation."
+    },
+    {
+      "type": "question",
+      "id": "handoff-decision-cloud.region",
+      "text": "The deployment region is not independently confirmed. Record an explicit cloud.region decision. Proposed diagram placement is not approval."
+    },
+    {
+      "type": "question",
+      "id": "handoff-requirement-proposed-61692d696e766f6963652d617070726",
+      "text": "REQ-002 remains proposed. Confirm, revise or explicitly defer this requirement; do not promote it through generation."
+    },
+    {
+      "type": "question",
+      "id": "handoff-requirement-proposed-61692d696e766f6963652d657874726",
+      "text": "REQ-001 remains proposed. Confirm, revise or explicitly defer this requirement; do not promote it through generation."
+    },
+    {
+      "type": "question",
+      "id": "handoff-requirement-proposed-61692d696e766f6963652d6964656d7",
+      "text": "REQ-003 remains proposed. Confirm, revise or explicitly defer this requirement; do not promote it through generation."
+    },
+    {
+      "type": "requirement",
+      "id": "ai-invoice-extraction",
+      "text": "REQ-001 \u2014 must functional other: The system shall accept PDF invoices and persist supplier, invoice date, total and currency in a review queue, linked to the original document; failed or uncertain extraction shall remain visible for staff resolution. (open)"
+    },
+    {
+      "type": "requirement",
+      "id": "ai-invoice-approval",
+      "text": "REQ-002 \u2014 must functional security: Accounting submission shall require an authorized reviewer\u2019s recorded approval of the exact result revision and destination operation; changing the result shall require renewed approval, and extraction alone shall never authorize submission. (open)"
+    },
+    {
+      "type": "requirement",
+      "id": "ai-invoice-idempotency",
+      "text": "REQ-003 \u2014 must nonfunctional reliability: Repeated delivery and worker retries shall not create duplicate invoice records or accounting submissions. Persist workflow state and operation identity durably, retry only under a tested destination idempotency contract, and hold ambiguous outcomes for reconciliation before resubmission. (open)"
+    },
+    {
+      "type": "requirement",
+      "id": "ai-invoice-residency",
+      "text": "REQ-004 \u2014 must nonfunctional compliance: Documents and extracted data shall be stored and processed in Australia. Apply this boundary to inference, recovery copies, diagnostics containing those data and accounting delivery. Flag unverified service/model availability and processing geography; do not enable an overseas fallback. (open)"
+    },
+    {
+      "type": "requirement",
+      "id": "ai-invoice-retention",
+      "text": "REQ-005 \u2014 must nonfunctional compliance: The system shall retain invoice originals and extraction audit history for 90 days and implement scheduled retention cleanup. Document and test the retention clock, object-version handling and backup expiry before claiming a final deletion deadline. [Original and extraction audit retention period == 90days] (open)"
+    },
+    {
+      "type": "requirement",
+      "id": "ai-invoice-volume",
+      "text": "REQ-006 \u2014 must nonfunctional scalability: Design and qualify asynchronous intake for approximately 500 invoices per day, using durable queueing and recoverable processing. Establish tested burst capacity and processing completion times without treating the daily average as a peak-rate guarantee. (open)"
+    },
+    {
+      "type": "decision",
+      "id": "adr-001",
+      "text": "platform.cloud \u2014 platform.cloud: ibm (Accepted)"
+    },
+    {
+      "type": "decision",
+      "id": "adr-002",
+      "text": "data.country \u2014 data.country: Australia (Accepted)"
+    },
+    {
+      "type": "discovery",
+      "id": "next-question",
+      "text": "Optional planner candidate (data; defer if a larger decision matters more): What kinds of documents arrive, and how many a month? Beginner wording: For example \u201cinvoices, about 3,000 a month, mostly PDF\u201d."
+    },
+    {
+      "type": "discovery",
+      "id": "brief-application",
+      "text": "application: Users upload PDF invoices. Extract the supplier, invoice date, total and currency into a review queue. Delivery can repeat; retries must not create duplicate invoices. A reviewer approves a result before it is sent to our existing accounting API. Use IBM Cloud. Recommend a coherent system and the engineering choices. Ask only a small material business question when needed; do not make me configure the system."
+    },
+    {
+      "type": "discovery",
+      "id": "brief-data",
+      "text": "data: PDF invoices up to 10 MB, around 500 per day; they may contain personal data. Keep originals and extraction audit history for 90 days. Keep documents and extracted data in Australia; flag unverified service availability."
+    },
+    {
+      "type": "discovery",
+      "id": "brief-users",
+      "text": "users: Here are the remaining project facts before we finalize the handoff. Preserve these requirements and update the system as needed. Twenty signed-in staff and three reviewers; ordinary uploaders cannot approve. 500 uploads per day, bursts of twenty. Jobs may take several minutes. The accounting system already exists. An administrator will supply its endpoint and credentials; treat it as external, not a new system to provision. Use a durable job queue, stable invoice/job identity, bounded retries, a dead-letter/recovery path, approval checks and an idempotent outbound operation."
+    },
+    {
+      "type": "discovery",
+      "id": "brief-cloud",
+      "text": "cloud: IBM"
+    },
+    {
+      "type": "discovery",
+      "id": "workflow",
+      "text": "Detected workflow: document-processing"
+    }
+  ],
+  "history": [
+    {
+      "role": "user",
+      "text": "Users upload PDF invoices. Extract the supplier, invoice date, total and currency into a review queue. Delivery can repeat; retries must not create duplicate invoices. A reviewer approves a result before it is sent to our existing accounting API. Use IBM Cloud. Recommend a coherent system and the engineering choices. Ask only a small material business question when needed; do not make me configure the system."
+    },
+    {
+      "role": "assistant",
+      "text": "We\u2019ll build an IBM Cloud invoice workflow that extracts the four fields, queues them for review and protects accounting submissions against duplicate retries. I\u2019ve sketched the application and existing accounting connection; accounting compatibility still needs testing.\n\n**Which country must invoice data stay in?** This determines storage and AI processing locations; for example, \u201cAustralia\u201d, \u201cno restriction\u201d or \u201cnot sure\u201d."
+    },
+    {
+      "role": "user",
+      "text": "PDF invoices up to 10 MB, around 500 per day; they may contain personal data. Keep originals and extraction audit history for 90 days. Keep documents and extracted data in Australia; flag unverified service availability."
+    },
+    {
+      "role": "assistant",
+      "text": "We\u2019ll design for around 500 PDF invoices a day, up to 10 MB each, with personal data kept in Australia and originals plus extraction audit history retained for 90 days. I\u2019ve proposed Sydney (`au-syd`) for the IBM workflow; service/model availability, backup locations and the accounting API\u2019s processing location remain unverified."
+    }
+  ]
+}

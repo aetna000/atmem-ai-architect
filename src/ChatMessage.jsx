@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {useId, useState} from 'react';
 // Small, non-HTML Markdown renderer: no remote images, raw HTML or executable URLs.
 function inline(text){return text.split(/(\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\(https?:\/\/[^\s)]+\))/g).map((part,i)=>{
  if(part.startsWith('**')&&part.endsWith('**'))return <strong key={i}>{part.slice(2,-2)}</strong>;
@@ -6,7 +6,17 @@ function inline(text){return text.split(/(\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\(http
  const link=part.match(/^\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)$/);if(link)return <a key={i} href={link[2]} target="_blank" rel="noopener noreferrer">{link[1]}</a>;
  return part;
 });}
-export function ChatMessage({text=''}){
+export function messagePreview(text){
+ const words=text.trim().split(/\s+/);if(words.length<=20)return text;
+ const questions=text.split(/\n+/).map(line=>line.trim()).filter(line=>line.includes('?')).map(line=>line.match(/(?:^|[.!]\s+)([^.!]*\?)/)?.[1]||line.slice(0,line.indexOf('?')+1));
+ const question=questions.at(-1);if(question&&question.split(/\s+/).length<=20)return question;
+ return words.slice(0,20).join(' ')+'…';
+}
+export function ChatMessage({text='',concise=false}){
+ const [expanded,setExpanded]=useState(false);
+ const detailId=useId();
+ if(concise&&text.trim().split(/\s+/).length>20)return <div className="concise-answer"><div id={detailId}><ChatMessage text={expanded?text:messagePreview(text)}/></div><button type="button" className="link message-details" aria-expanded={expanded} aria-controls={detailId} onClick={()=>setExpanded(value=>!value)}>{expanded?'Less details':'More details'}</button></div>;
+
  const lines=text.split('\n'),blocks=[];let i=0;
  while(i<lines.length){
   if(!lines[i].trim()){i++;continue;}

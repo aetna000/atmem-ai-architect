@@ -1,0 +1,27 @@
+{
+  "validator": "reading-contract-independent",
+  "artifactSha256": "a1cebd7c20ad8e15c30d381778812093256e9e5b8507f8941745ba3031601040",
+  "imageId": "sha256:df7f71a8588253403dfa833c5c4aacc95ca340204a88d5483edd58131c7f1128",
+  "runtimeConfigImageId": "sha256:df7f71a8588253403dfa833c5c4aacc95ca340204a88d5483edd58131c7f1128",
+  "platform": "linux/arm64",
+  "isolationProfile": "standard-v1",
+  "runtimeEnvironment": {},
+  "command": [
+    "/usr/bin/node",
+    "-e",
+    "\nconst assert=require('node:assert/strict'),m=require('/work/source/readings.cjs');let n=0;\nassert.equal(m.unit,\"m\");n++;\nfor(const value of [0,0.001,0.5,12.25,2000,Number.MAX_VALUE,-0]){\n const actual=m.normalize(value),expected=value*0.001;\n assert.equal(typeof actual,'number');assert.ok(Number.isFinite(actual));\n assert.ok(Math.abs(actual-expected)<=Math.max(1,Math.abs(expected))*1e-12);n++;\n}\nfor(const value of [true,false,'1','',null,undefined,{},[],NaN,Infinity,-Infinity,-1]){assert.throws(()=>m.normalize(value),TypeError);n++;}\nconsole.log('Independent assertions executed: '+n);\n"
+  ],
+  "status": "failed",
+  "exitCode": 1,
+  "skipped": 0,
+  "testsReported": null,
+  "reason": null,
+  "output": "node:internal/assert/utils:146\n  throw error;\n  ^\n\nAssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n'cm' !== 'm'\n\n    at [eval]:3:8\n    at runScriptInThisContext (node:internal/vm:219:10)\n    at node:internal/process/execution:485:12\n    at [eval]-wrapper:6:24\n    at runScriptInContext (node:internal/process/execution:483:60)\n    at evalFunction (node:internal/process/execution:317:30)\n    at evalTypeScript (node:internal/process/execution:329:3)\n    at node:internal/main/eval_string:71:3 {\n  generatedMessage: true,\n  code: 'ERR_ASSERTION',\n  actual: 'cm',\n  expected: 'm',\n  operator: 'strictEqual',\n  diff: 'simple'\n}\n\nNode.js v26.13.0\n",
+  "outputTruncated": false,
+  "durationSeconds": 0.233,
+  "evidenceLevel": "local_container_check",
+  "cloudOperations": false,
+  "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance.",
+  "independentAssertions": null,
+  "oracleBoundary": "Evaluator-authored module API/units/finite-domain/denial assertions in a real isolated Linux Node runtime. Relative tolerance1e-12 accommodates floating point representation; no graph/service/cloud/system acceptance inferred."
+}

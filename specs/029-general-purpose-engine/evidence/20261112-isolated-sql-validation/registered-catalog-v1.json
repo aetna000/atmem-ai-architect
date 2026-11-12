@@ -1,0 +1,52 @@
+{
+  "passed": true,
+  "catalog": [
+    {
+      "id": "python-sql-aws-tests",
+      "label": "Python3.13/AWS SDK and private PostgreSQL17 tests",
+      "evidenceLevel": "local_container_check",
+      "contractSha256": "fed91bcb31c45ae9bb1581ce764e66b2e4ea9e2595d2fdfb58616f2a7efd24aa",
+      "available": true,
+      "applicability": {
+        "anyOf": [
+          "**/test_*.py"
+        ],
+        "allOf": [
+          "**/workflow_schema.sql"
+        ],
+        "noneOf": []
+      },
+      "runtimeEvidence": {
+        "receiptSha256": "98ef4aa6c9a275c620ebadf780eda6e1665431267c18aa83147de1183f64da76",
+        "runtimeSha256": "1dafc022d93c49f0a1bc6b0f1b37e03456755628309fe7f73ed01b36daceb4be",
+        "observed": {
+          "kind": "python",
+          "executableVersion": "3.13.18",
+          "packages": {
+            "psycopg": "3.3.8",
+            "procrastinate": "3.10.0",
+            "fastapi": "0.162.0",
+            "PyJWT": "2.15.1",
+            "cryptography": "50.0.2",
+            "boto3": "1.43.123",
+            "postgresql-server": "17.11"
+          },
+          "serviceOperations": {}
+        },
+        "observedAt": "2026-11-11T20:00:14.666721+00:00",
+        "evidenceLevel": "operator_pinned_local_runtime_observation",
+        "scope": "Observed immutable image runtime only; artifact-vendored dependencies can differ. Null package versions mean unobserved distribution metadata, not proof an import is impossible. Null service operations are unknown; an actual operation list describes only the installed SDK model. Not application, account, cloud or requirement acceptance."
+      },
+      "runtime": {
+        "imageId": "sha256:d2f7bcb589a14c4dac1ed2bb4d839eb97906ea4202e3b9a48862be04a0bdc948",
+        "platform": "linux/arm64",
+        "isolationProfile": "postgresql-local-v1",
+        "environment": {},
+        "executable": "/usr/local/bin/python3",
+        "testRunner": "unittest"
+      }
+    }
+  ],
+  "previewRestarted": false,
+  "scope": "Actual operator registry and backend catalogue using pinned observed image; no native session or owner preview mutation."
+}

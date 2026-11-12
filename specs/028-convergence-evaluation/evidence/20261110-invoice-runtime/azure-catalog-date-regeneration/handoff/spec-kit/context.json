@@ -1,0 +1,858 @@
+{
+  "snapshotId": "9e56b56c-f354-4d86-9089-eba95a5c71e8",
+  "revision": 4,
+  "environment": "staging",
+  "goal": "Build a public website assistant that answers questions from our twenty public help articles, cites the articles it used, and says when it does not know. We need to update and remove articles. It must not answer from private sources. Use Azure. Recommend a coherent system and the engineering choices. Ask only a small material business question when needed; do not make me configure the system.",
+  "conversationProvenance": "Build a public website assistant that answers questions from our twenty public help articles, cites the articles it used, and says when it does not know. We need to update and remove articles. It must not answer from private sources. Use Azure. Recommend a coherent system and the engineering choices. Ask only a small material business question when needed; do not make me configure the system.",
+  "acceptedDecisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-10",
+      "context": "User statement: Use Azure.",
+      "options": "",
+      "decision": "azure",
+      "consequences": "",
+      "revision": 2,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    }
+  ],
+  "readiness": {
+    "format": "atmem.handoff-assessment",
+    "version": 1,
+    "designRevision": 4,
+    "status": "engineering_required",
+    "stages": {
+      "design": "decisions_required",
+      "infrastructure": "generated_implementation_unverified",
+      "localValidation": "not_attached",
+      "cloudPlan": "not_run",
+      "staging": "not_verified",
+      "production": "approval_not_attached"
+    },
+    "counts": {
+      "components": 3,
+      "generatedFoundations": 0,
+      "connections": 2,
+      "priorityDecisions": 10
+    },
+    "nextAction": "Record included and excluded use cases before sizing or implementation.",
+    "findings": [
+      {
+        "id": "scope-boundary",
+        "priority": 1,
+        "area": "scope",
+        "message": "No explicit scope boundary is recorded.",
+        "action": "Record included and excluded use cases before sizing or implementation.",
+        "taskIds": [
+          "TASK-SCOPE"
+        ],
+        "componentIds": [],
+        "requirementIds": [],
+        "status": "open"
+      },
+      {
+        "id": "decision-cloud.region",
+        "priority": 1,
+        "area": "placement",
+        "message": "The deployment region is not independently confirmed.",
+        "action": "Record an explicit cloud.region decision. Proposed diagram placement is not approval.",
+        "taskIds": [
+          "TASK-SCOPE"
+        ],
+        "componentIds": [],
+        "requirementIds": [],
+        "status": "open"
+      },
+      {
+        "id": "decision-data.country",
+        "priority": 1,
+        "area": "placement",
+        "message": "The data country and processing boundary is not independently confirmed.",
+        "action": "Record an explicit data.country decision. Proposed diagram placement is not approval.",
+        "taskIds": [
+          "TASK-SCOPE"
+        ],
+        "componentIds": [],
+        "requirementIds": [],
+        "status": "open"
+      },
+      {
+        "id": "requirement-proposed-61692d61727469636c652d6c6966656379636c65",
+        "priority": 1,
+        "area": "acceptance",
+        "message": "REQ-004 remains proposed.",
+        "action": "Confirm, revise or explicitly defer this requirement; do not promote it through generation.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-61692d61727469636c652d6c6966656379636c65"
+        ],
+        "componentIds": [],
+        "requirementIds": [
+          "ai-article-lifecycle"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "requirement-proposed-61692d6661712d6361706163697479",
+        "priority": 1,
+        "area": "acceptance",
+        "message": "REQ-007 remains proposed.",
+        "action": "Confirm, revise or explicitly defer this requirement; do not promote it through generation.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-61692d6661712d6361706163697479"
+        ],
+        "componentIds": [],
+        "requirementIds": [
+          "ai-faq-capacity"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "requirement-proposed-61692d6661712d66696c652d696e67657374696f6e",
+        "priority": 1,
+        "area": "acceptance",
+        "message": "REQ-008 remains proposed.",
+        "action": "Confirm, revise or explicitly defer this requirement; do not promote it through generation.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-61692d6661712d66696c652d696e67657374696f6e"
+        ],
+        "componentIds": [],
+        "requirementIds": [
+          "ai-faq-file-ingestion"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "requirement-proposed-61692d6c6f636174696f6e2d7472616e73706172656e6379",
+        "priority": 1,
+        "area": "acceptance",
+        "message": "REQ-005 remains proposed.",
+        "action": "Confirm, revise or explicitly defer this requirement; do not promote it through generation.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-61692d6c6f636174696f6e2d7472616e73706172656e6379"
+        ],
+        "componentIds": [],
+        "requirementIds": [
+          "ai-location-transparency"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "requirement-proposed-61692d7075626c69632d6163636573732d656469746f722d626f756e64617279",
+        "priority": 1,
+        "area": "acceptance",
+        "message": "REQ-006 remains proposed.",
+        "action": "Confirm, revise or explicitly defer this requirement; do not promote it through generation.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-61692d7075626c69632d6163636573732d656469746f722d626f756e64617279"
+        ],
+        "componentIds": [],
+        "requirementIds": [
+          "ai-public-access-editor-boundary"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "requirement-proposed-61692d7075626c69632d736f757263652d626f756e64617279",
+        "priority": 1,
+        "area": "acceptance",
+        "message": "REQ-002 remains proposed.",
+        "action": "Confirm, revise or explicitly defer this requirement; do not promote it through generation.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-61692d7075626c69632d736f757263652d626f756e64617279"
+        ],
+        "componentIds": [],
+        "requirementIds": [
+          "ai-public-source-boundary"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "requirement-proposed-61692d737570706f727465642d616e737765722d6f722d6162737461696e",
+        "priority": 1,
+        "area": "acceptance",
+        "message": "REQ-003 remains proposed.",
+        "action": "Confirm, revise or explicitly defer this requirement; do not promote it through generation.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-61692d737570706f727465642d616e737765722d6f722d6162737461696e"
+        ],
+        "componentIds": [],
+        "requirementIds": [
+          "ai-supported-answer-or-abstain"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "budget-target",
+        "priority": 2,
+        "area": "cost",
+        "message": "No budget constraint is recorded.",
+        "action": "Agree a budget or explicitly document that no budget limit was specified; do not invent a price target.",
+        "taskIds": [
+          "TASK-COST-BASELINE"
+        ],
+        "componentIds": [],
+        "requirementIds": [],
+        "status": "open"
+      },
+      {
+        "id": "cost-coverage",
+        "priority": 2,
+        "area": "cost",
+        "message": "3 cost worksheet gaps remain; unpriced resources are not free.",
+        "action": "Complete usage assumptions and dated regional price sources; reconcile all billable dimensions with the reviewed plan.",
+        "taskIds": [
+          "TASK-COST-BASELINE",
+          "TASK-COST"
+        ],
+        "componentIds": [],
+        "requirementIds": [],
+        "status": "open"
+      },
+      {
+        "id": "acceptance-61692d61727469636c652d6c6966656379636c65",
+        "priority": 2,
+        "area": "acceptance",
+        "message": "REQ-004: executable acceptance evidence is not supplied.",
+        "action": "Agree an observable pass/fail criterion, fixtures and evidence location.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-61692d61727469636c652d6c6966656379636c65"
+        ],
+        "componentIds": [
+          "faq-editor",
+          "faq-app"
+        ],
+        "requirementIds": [
+          "ai-article-lifecycle"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "acceptance-61692d6661712d6361706163697479",
+        "priority": 2,
+        "area": "acceptance",
+        "message": "REQ-007: executable acceptance evidence is not supplied.",
+        "action": "Define workload, measurement window, first-output versus completed-response boundary and repeatable positive/negative cases.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-61692d6661712d6361706163697479"
+        ],
+        "componentIds": [
+          "faq-app"
+        ],
+        "requirementIds": [
+          "ai-faq-capacity"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "acceptance-61692d6661712d66696c652d696e67657374696f6e",
+        "priority": 2,
+        "area": "acceptance",
+        "message": "REQ-008: executable acceptance evidence is not supplied.",
+        "action": "Agree an observable pass/fail criterion, fixtures and evidence location.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-61692d6661712d66696c652d696e67657374696f6e"
+        ],
+        "componentIds": [
+          "faq-editor",
+          "faq-app"
+        ],
+        "requirementIds": [
+          "ai-faq-file-ingestion"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "acceptance-61692d6c6f636174696f6e2d7472616e73706172656e6379",
+        "priority": 2,
+        "area": "acceptance",
+        "message": "REQ-005: executable acceptance evidence is not supplied.",
+        "action": "Agree an observable pass/fail criterion, fixtures and evidence location.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-61692d6c6f636174696f6e2d7472616e73706172656e6379"
+        ],
+        "componentIds": [
+          "faq-app"
+        ],
+        "requirementIds": [
+          "ai-location-transparency"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "acceptance-61692d7075626c69632d6163636573732d656469746f722d626f756e64617279",
+        "priority": 2,
+        "area": "acceptance",
+        "message": "REQ-006: executable acceptance evidence is not supplied.",
+        "action": "Agree an observable pass/fail criterion, fixtures and evidence location.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-61692d7075626c69632d6163636573732d656469746f722d626f756e64617279"
+        ],
+        "componentIds": [
+          "faq-visitors",
+          "faq-editor",
+          "faq-app"
+        ],
+        "requirementIds": [
+          "ai-public-access-editor-boundary"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "acceptance-61692d7075626c69632d736f757263652d626f756e64617279",
+        "priority": 2,
+        "area": "acceptance",
+        "message": "REQ-002: executable acceptance evidence is not supplied.",
+        "action": "Agree an observable pass/fail criterion, fixtures and evidence location.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-61692d7075626c69632d736f757263652d626f756e64617279"
+        ],
+        "componentIds": [
+          "faq-app",
+          "faq-editor"
+        ],
+        "requirementIds": [
+          "ai-public-source-boundary"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "acceptance-61692d737570706f727465642d616e737765722d6f722d6162737461696e",
+        "priority": 2,
+        "area": "acceptance",
+        "message": "REQ-003: executable acceptance evidence is not supplied.",
+        "action": "Agree an observable pass/fail criterion, fixtures and evidence location.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-61692d737570706f727465642d616e737765722d6f722d6162737461696e"
+        ],
+        "componentIds": [
+          "faq-app"
+        ],
+        "requirementIds": [
+          "ai-supported-answer-or-abstain"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "acceptance-7265712d6261646434613632",
+        "priority": 2,
+        "area": "acceptance",
+        "message": "REQ-001: executable acceptance evidence is not supplied.",
+        "action": "Agree an observable pass/fail criterion, fixtures and evidence location.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-7265712d6261646434613632"
+        ],
+        "componentIds": [],
+        "requirementIds": [
+          "req-badd4a62"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "traceability-7265712d6261646434613632",
+        "priority": 2,
+        "area": "traceability",
+        "message": "REQ-001 has no component links.",
+        "action": "Map the requirement to relevant components or record why it is project-wide; do not guess the mapping.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-7265712d6261646434613632"
+        ],
+        "componentIds": [],
+        "requirementIds": [
+          "req-badd4a62"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "existing-6661712d656469746f72",
+        "priority": 2,
+        "area": "integration",
+        "message": "Authorized article editor: existing-system contract and access are unverified.",
+        "action": "Identify system owner, tenant/location, supported APIs and permitted read scopes; document a reference contract instead of recreating the system.",
+        "taskIds": [
+          "TASK-RESOURCE-6661712d656469746f72"
+        ],
+        "componentIds": [
+          "faq-editor"
+        ],
+        "requirementIds": [],
+        "status": "open"
+      },
+      {
+        "id": "existing-6661712d76697369746f7273",
+        "priority": 2,
+        "area": "integration",
+        "message": "Website visitors: existing-system contract and access are unverified.",
+        "action": "Preserve the external browser; no resource or import is required.",
+        "taskIds": [
+          "TASK-RESOURCE-6661712d76697369746f7273"
+        ],
+        "componentIds": [
+          "faq-visitors"
+        ],
+        "requirementIds": [],
+        "status": "open"
+      }
+    ],
+    "evidencePolicy": "Generated documents and asserted decisions are design evidence only. Schema validation, mock tests, account plans and deployed-system tests require separate receipts tied to the exact configuration. This export does not ingest implementation evidence."
+  },
+  "requirements": [
+    {
+      "id": "req-badd4a62",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Every answer shows its sources",
+      "priority": "should",
+      "status": "open",
+      "source": "user",
+      "links": [],
+      "number": "REQ-001",
+      "agreement": "Recorded from user discussion"
+    },
+    {
+      "id": "ai-public-source-boundary",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "The assistant must use only the approved public-help-article catalog for retrieval and answer grounding, with no private-source ingestion or arbitrary URL retrieval.",
+      "rationale": "Prevents private information or unrelated sources entering publicly accessible answers.",
+      "basis": "“It must not answer from private sources.”",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "faq-app",
+        "faq-editor"
+      ],
+      "number": "REQ-002",
+      "agreement": "Proposed; needs confirmation"
+    },
+    {
+      "id": "ai-supported-answer-or-abstain",
+      "kind": "functional",
+      "category": "reliability",
+      "statement": "When current approved articles do not adequately support an answer, the assistant must explicitly say it does not know rather than provide an unsupported answer.",
+      "rationale": "An explicit abstention avoids presenting unsupported generated content as an authoritative help answer; model behavior still needs acceptance testing.",
+      "basis": "“says when it does not know”",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "faq-app"
+      ],
+      "number": "REQ-003",
+      "agreement": "Proposed; needs confirmation"
+    },
+    {
+      "id": "ai-article-lifecycle",
+      "kind": "functional",
+      "category": "maintainability",
+      "statement": "Authorized editors must be able to publish, update and remove public articles through a separate management interface; conflicting edits must be rejected and answers must be withheld if their supporting sources change during processing.",
+      "rationale": "Keeps public answers aligned with current content and prevents conflicting edits or deleted content from being served through stale fallbacks.",
+      "basis": "“We need to update and remove articles.” The editor access boundary and conflict handling are proposed engineering choices.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "faq-editor",
+        "faq-app"
+      ],
+      "number": "REQ-004",
+      "agreement": "Proposed; needs confirmation"
+    },
+    {
+      "id": "ai-location-transparency",
+      "kind": "nonfunctional",
+      "category": "compliance",
+      "statement": "Prefer Australian application hosting, article storage and model processing. Before enabling inference, document the selected model deployment's processing geography, retention, logging and recovery locations, identify unverified limitations, and present any proposed processing outside Australia for review. The preference must not be represented as confirmed Australian-only residency.",
+      "rationale": "An Australian hosting region alone does not establish where inference, monitoring or recovery processes data; explicit evidence prevents an unsupported residency claim.",
+      "basis": "User statement: “Australia is preferred; make model/data-location limitations explicit.” Proposed placement applies to faq-app and its owned storage/model integration.",
+      "priority": "should",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "faq-app"
+      ],
+      "number": "REQ-005",
+      "agreement": "Proposed; needs confirmation"
+    },
+    {
+      "id": "ai-public-access-editor-boundary",
+      "kind": "functional",
+      "category": "security",
+      "statement": "Visitors must be able to ask questions without signing in; only an authorized editor may publish, update or remove catalog articles through the separate management interface.",
+      "rationale": "Preserves the intended public user journey while keeping catalog modification outside anonymous visitor access.",
+      "basis": "“Anonymous website visitors; an authorized editor manages the articles.” Existing components faq-visitors, faq-editor and faq-app.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "faq-visitors",
+        "faq-editor",
+        "faq-app"
+      ],
+      "number": "REQ-006",
+      "agreement": "Proposed; needs confirmation"
+    },
+    {
+      "id": "ai-faq-capacity",
+      "kind": "nonfunctional",
+      "category": "performance",
+      "statement": "The application must support the expected workload of approximately 1,000 questions daily and five simultaneous questions, subject to artifact-bound load tests and verified model quotas; excess concurrency must receive controlled overload handling.",
+      "rationale": "Provides a concrete capacity acceptance case without inventing a response-time or availability commitment.",
+      "basis": "“About 1,000 questions per day and five at once.”",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "faq-app"
+      ],
+      "measure": {
+        "metric": "simultaneous_questions_supported",
+        "op": ">=",
+        "target": 5,
+        "unit": "questions"
+      },
+      "number": "REQ-007",
+      "agreement": "Proposed; needs confirmation"
+    },
+    {
+      "id": "ai-faq-file-ingestion",
+      "kind": "functional",
+      "category": "maintainability",
+      "statement": "The editor workflow must accept the twenty supplied public UTF-8 article files, validate each against the implementation's exact 30000-byte limit, and reject invalid or oversized files explicitly without silent truncation.",
+      "rationale": "Defines the ingestion boundary and prevents unnecessary document extraction or connector infrastructure.",
+      "basis": "“Twenty public UTF-8 help articles under 30 KB each, supplied as files. No private content.”",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "faq-editor",
+        "faq-app"
+      ],
+      "number": "REQ-008",
+      "agreement": "Proposed; needs confirmation"
+    }
+  ],
+  "assumptions": [],
+  "questions": [
+    {
+      "id": "ai-public-source-boundary",
+      "text": "Confirm REQ-002: The assistant must use only the approved public-help-article catalog for retrieval and answer grounding, with no private-source ingestion or arbitrary URL retrieval."
+    },
+    {
+      "id": "ai-supported-answer-or-abstain",
+      "text": "Confirm REQ-003: When current approved articles do not adequately support an answer, the assistant must explicitly say it does not know rather than provide an unsupported answer."
+    },
+    {
+      "id": "ai-article-lifecycle",
+      "text": "Confirm REQ-004: Authorized editors must be able to publish, update and remove public articles through a separate management interface; conflicting edits must be rejected and answers must be withheld if their supporting sources change during processing."
+    },
+    {
+      "id": "ai-location-transparency",
+      "text": "Confirm REQ-005: Prefer Australian application hosting, article storage and model processing. Before enabling inference, document the selected model deployment's processing geography, retention, logging and recovery locations, identify unverified limitations, and present any proposed processing outside Australia for review. The preference must not be represented as confirmed Australian-only residency."
+    },
+    {
+      "id": "ai-public-access-editor-boundary",
+      "text": "Confirm REQ-006: Visitors must be able to ask questions without signing in; only an authorized editor may publish, update or remove catalog articles through the separate management interface."
+    },
+    {
+      "id": "ai-faq-capacity",
+      "text": "Confirm REQ-007: The application must support the expected workload of approximately 1,000 questions daily and five simultaneous questions, subject to artifact-bound load tests and verified model quotas; excess concurrency must receive controlled overload handling."
+    },
+    {
+      "id": "ai-faq-file-ingestion",
+      "text": "Confirm REQ-008: The editor workflow must accept the twenty supplied public UTF-8 article files, validate each against the implementation's exact 30000-byte limit, and reject invalid or oversized files explicitly without silent truncation."
+    },
+    {
+      "id": "acceptance-req-badd4a62",
+      "text": "Agree a measurable acceptance check for REQ-001: Every answer shows its sources"
+    },
+    {
+      "id": "acceptance-ai-public-source-boundary",
+      "text": "Agree a measurable acceptance check for REQ-002: The assistant must use only the approved public-help-article catalog for retrieval and answer grounding, with no private-source ingestion or arbitrary URL retrieval."
+    },
+    {
+      "id": "acceptance-ai-supported-answer-or-abstain",
+      "text": "Agree a measurable acceptance check for REQ-003: When current approved articles do not adequately support an answer, the assistant must explicitly say it does not know rather than provide an unsupported answer."
+    },
+    {
+      "id": "acceptance-ai-article-lifecycle",
+      "text": "Agree a measurable acceptance check for REQ-004: Authorized editors must be able to publish, update and remove public articles through a separate management interface; conflicting edits must be rejected and answers must be withheld if their supporting sources change during processing."
+    },
+    {
+      "id": "acceptance-ai-location-transparency",
+      "text": "Agree a measurable acceptance check for REQ-005: Prefer Australian application hosting, article storage and model processing. Before enabling inference, document the selected model deployment's processing geography, retention, logging and recovery locations, identify unverified limitations, and present any proposed processing outside Australia for review. The preference must not be represented as confirmed Australian-only residency."
+    },
+    {
+      "id": "acceptance-ai-public-access-editor-boundary",
+      "text": "Agree a measurable acceptance check for REQ-006: Visitors must be able to ask questions without signing in; only an authorized editor may publish, update or remove catalog articles through the separate management interface."
+    },
+    {
+      "id": "acceptance-ai-faq-file-ingestion",
+      "text": "Agree a measurable acceptance check for REQ-008: The editor workflow must accept the twenty supplied public UTF-8 article files, validate each against the implementation's exact 30000-byte limit, and reject invalid or oversized files explicitly without silent truncation."
+    },
+    {
+      "id": "data.country",
+      "text": "Confirm the country and data-residency boundary, including sources, logs and model processing."
+    },
+    {
+      "id": "cloud.region",
+      "text": "Engineering verification: choose and document a suitable proposed region within the accepted country, then verify service/model support, residency, quota and account policy before deployment. Escalate only a material business trade-off."
+    },
+    {
+      "id": "scope-boundary",
+      "text": "No explicit scope boundary is recorded. Record included and excluded use cases before sizing or implementation."
+    },
+    {
+      "id": "requirement-proposed-61692d61727469636c652d6c6966656379636c65",
+      "text": "REQ-004 remains proposed. Confirm, revise or explicitly defer this requirement; do not promote it through generation."
+    },
+    {
+      "id": "requirement-proposed-61692d6661712d6361706163697479",
+      "text": "REQ-007 remains proposed. Confirm, revise or explicitly defer this requirement; do not promote it through generation."
+    },
+    {
+      "id": "requirement-proposed-61692d6661712d66696c652d696e67657374696f6e",
+      "text": "REQ-008 remains proposed. Confirm, revise or explicitly defer this requirement; do not promote it through generation."
+    },
+    {
+      "id": "requirement-proposed-61692d6c6f636174696f6e2d7472616e73706172656e6379",
+      "text": "REQ-005 remains proposed. Confirm, revise or explicitly defer this requirement; do not promote it through generation."
+    },
+    {
+      "id": "requirement-proposed-61692d7075626c69632d6163636573732d656469746f722d626f756e64617279",
+      "text": "REQ-006 remains proposed. Confirm, revise or explicitly defer this requirement; do not promote it through generation."
+    },
+    {
+      "id": "requirement-proposed-61692d7075626c69632d736f757263652d626f756e64617279",
+      "text": "REQ-002 remains proposed. Confirm, revise or explicitly defer this requirement; do not promote it through generation."
+    },
+    {
+      "id": "requirement-proposed-61692d737570706f727465642d616e737765722d6f722d6162737461696e",
+      "text": "REQ-003 remains proposed. Confirm, revise or explicitly defer this requirement; do not promote it through generation."
+    }
+  ],
+  "resources": {
+    "revision": 4,
+    "rows": [
+      {
+        "id": "faq-visitors",
+        "address": "block_6661712d76697369746f7273",
+        "label": "Website visitors",
+        "provider": "tools",
+        "service": "Web browser",
+        "sourceExisting": true,
+        "selection": "Needs service confirmation",
+        "existing": true,
+        "region": "External client",
+        "resources": [],
+        "costDrivers": "Confirm service, capacity and billable dimensions",
+        "dependencies": [],
+        "terraform": "External browser — no infrastructure to provision; connection behavior still requires validation",
+        "foundation": false,
+        "compute": false,
+        "api": false,
+        "structured": false,
+        "summary": false,
+        "settings": {},
+        "reference": false,
+        "externalReference": true,
+        "existingServiceReference": null,
+        "containerContract": null,
+        "implemented": true
+      },
+      {
+        "id": "faq-app",
+        "address": "block_6661712d617070",
+        "label": "Public help assistant",
+        "provider": "azure",
+        "service": "Azure App Service",
+        "sourceExisting": false,
+        "selection": "Needs service confirmation",
+        "existing": false,
+        "region": "australiaeast",
+        "resources": [
+          "azurerm_linux_web_app",
+          "azurerm_storage_account",
+          "azurerm_storage_container"
+        ],
+        "costDrivers": "Compute and HTTP requests, model input/output tokens, catalog read/write/versioned storage, logs and transfer; verify current regional service/model prices and quotas. Capacity limits are not invoice caps.",
+        "dependencies": [
+          "faq-visitors",
+          "faq-editor"
+        ],
+        "terraform": "Public-only cited FAQ source, browser, private catalog, separate editor/runtime roles and regional model transport generated; destination behavior unverified",
+        "foundation": false,
+        "compute": false,
+        "api": false,
+        "structured": false,
+        "summary": false,
+        "settings": {},
+        "reference": false,
+        "externalReference": false,
+        "existingServiceReference": null,
+        "containerContract": null,
+        "implemented": true
+      },
+      {
+        "id": "faq-editor",
+        "address": "block_6661712d656469746f72",
+        "label": "Authorized article editor",
+        "provider": "tools",
+        "service": "Existing authorized operator",
+        "sourceExisting": true,
+        "selection": "Needs service confirmation",
+        "existing": true,
+        "region": "External operator",
+        "resources": [],
+        "costDrivers": "Confirm service, capacity and billable dimensions",
+        "dependencies": [],
+        "terraform": "Existing public catalog editor — provider-native role/group input and separate conditional editor CLI generated; actual access unverified",
+        "foundation": false,
+        "compute": false,
+        "api": false,
+        "structured": false,
+        "summary": false,
+        "settings": {},
+        "reference": false,
+        "externalReference": false,
+        "existingServiceReference": null,
+        "containerContract": null,
+        "implemented": true
+      }
+    ],
+    "connections": [
+      {
+        "id": "faq-visitors-to-app",
+        "source": "faq-visitors",
+        "target": "faq-app",
+        "data": "HTTPS questions → cited answers or “I don’t know”",
+        "generated": true,
+        "status": "Scoped access policy generated; account and runtime verification required"
+      },
+      {
+        "id": "faq-editor-to-app",
+        "source": "faq-editor",
+        "target": "faq-app",
+        "data": "Authorized CLI: publish, update and remove public articles",
+        "generated": true,
+        "status": "Scoped access policy generated; account and runtime verification required"
+      }
+    ],
+    "accessPlan": {
+      "connections": [],
+      "bindings": []
+    },
+    "asyncPlan": {
+      "pipelines": [],
+      "componentIds": [],
+      "edgeIds": []
+    },
+    "publicFaqPlan": {
+      "entries": [
+        {
+          "row": {
+            "id": "faq-app",
+            "address": "block_6661712d617070",
+            "label": "Public help assistant",
+            "provider": "azure",
+            "service": "Azure App Service",
+            "sourceExisting": false,
+            "selection": "Needs service confirmation",
+            "existing": false,
+            "region": "australiaeast",
+            "resources": [
+              "azurerm_linux_web_app",
+              "azurerm_storage_account",
+              "azurerm_storage_container"
+            ],
+            "costDrivers": "Compute and HTTP requests, model input/output tokens, catalog read/write/versioned storage, logs and transfer; verify current regional service/model prices and quotas. Capacity limits are not invoice caps.",
+            "dependencies": [
+              "faq-visitors",
+              "faq-editor"
+            ],
+            "terraform": "Public-only cited FAQ source, browser, private catalog, separate editor/runtime roles and regional model transport generated; destination behavior unverified",
+            "foundation": false,
+            "compute": false,
+            "api": false,
+            "structured": false,
+            "summary": false,
+            "settings": {},
+            "reference": false,
+            "externalReference": false,
+            "existingServiceReference": null,
+            "containerContract": null,
+            "implemented": true
+          },
+          "provider": "azure"
+        }
+      ],
+      "componentIds": [
+        "faq-app"
+      ],
+      "editorIds": [
+        "faq-editor"
+      ],
+      "edgeIds": [
+        "faq-visitors-to-app",
+        "faq-editor-to-app"
+      ]
+    },
+    "azureStructuredPlan": {
+      "entries": [],
+      "componentIds": [],
+      "edgeIds": []
+    },
+    "gcpStructuredPlan": {
+      "entries": [],
+      "componentIds": [],
+      "edgeIds": []
+    },
+    "ibmStructuredPlan": {
+      "entries": [],
+      "componentIds": [],
+      "edgeIds": []
+    },
+    "summaryPlan": {
+      "entries": [],
+      "modelIds": [],
+      "edgeIds": []
+    },
+    "structuredApiPlan": {
+      "entries": [],
+      "componentIds": [],
+      "edgeIds": []
+    },
+    "ragPlan": {
+      "entries": [],
+      "componentIds": [],
+      "edgeIds": []
+    },
+    "sourceContractPlan": {
+      "sources": [],
+      "connections": []
+    },
+    "webPlan": {
+      "entries": [],
+      "componentIds": [],
+      "edgeIds": []
+    },
+    "gaps": [],
+    "gapDetails": [],
+    "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+    "sources": [
+      "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+      "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+      "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+      "https://aws.amazon.com/bedrock/pricing/"
+    ]
+  },
+  "comments": [],
+  "requirementFeedback": [],
+  "implementationStatus": "Plan generated; implementation and validation have not been performed by this kit."
+}

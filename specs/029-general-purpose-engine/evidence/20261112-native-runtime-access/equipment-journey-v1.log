@@ -1,0 +1,28 @@
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/specs/029-general-purpose-engine/evidence/20261112-native-runtime-access/check-equipment-journey.py", line 118, in <module>
+    try:asyncio.run(main())
+        ~~~~~~~~~~~^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 196, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 119, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/specs/029-general-purpose-engine/evidence/20261112-native-runtime-access/check-equipment-journey.py", line 50, in main
+    app=equipment_api.app()
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/external-artifacts/native-runtime-access/v1/unpacked/application/equipment_api.py", line 7, in app
+    return create_native_api(profile(),os.environ)
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/external-artifacts/native-runtime-access/v1/unpacked/application/workflow_application.py", line 39, in create_native_api
+    identity=native_staff_identity(provider,data['identitySettings'],jwks=jwks)
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1169, in __call__
+    return self._mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1173, in _mock_call
+    return self._execute_mock_call(*args, **kwargs)
+           ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 1240, in _execute_mock_call
+    result = effect(*args, **kwargs)
+TypeError: main.<locals>.<lambda>() got an unexpected keyword argument 'jwks'

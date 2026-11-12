@@ -1,0 +1,93 @@
+{
+  "case": "aws-03-document-intake",
+  "scenario": "03-document-intake",
+  "difficulty": "medium",
+  "provider": "aws",
+  "userExchanges": 4,
+  "clarificationQuestions": 2,
+  "technicalQuestions": 0,
+  "repeatedQuestions": 0,
+  "convergedWithoutQuestion": true,
+  "durationSeconds": 182.32,
+  "clientFactKeysDelivered": [
+    "data",
+    "integrations",
+    "location",
+    "quality",
+    "scale",
+    "users"
+  ],
+  "clientBriefComplete": true,
+  "turns": [
+    {
+      "turn": 1,
+      "question": "Which country must invoice data stay in?",
+      "repeatedQuestion": false,
+      "scopePreserved": true,
+      "proposal": true,
+      "internalResponseRepairs": 0,
+      "modelResponseEncodings": [
+        "compact_patch"
+      ],
+      "modelResponseJsonBytes": 8711,
+      "technicalQuestion": false
+    },
+    {
+      "turn": 2,
+      "question": "Can your existing accounting API keep invoice data in Australia too?",
+      "repeatedQuestion": false,
+      "scopePreserved": true,
+      "proposal": true,
+      "internalResponseRepairs": 0,
+      "modelResponseEncodings": [
+        "compact_patch"
+      ],
+      "modelResponseJsonBytes": 7546,
+      "technicalQuestion": false
+    },
+    {
+      "turn": 3,
+      "question": null,
+      "repeatedQuestion": false,
+      "scopePreserved": true,
+      "proposal": true,
+      "internalResponseRepairs": 0,
+      "modelResponseEncodings": [
+        "compact_patch"
+      ],
+      "modelResponseJsonBytes": 5752,
+      "clientFactCompletionQueued": true
+    },
+    {
+      "turn": 4,
+      "question": null,
+      "repeatedQuestion": false,
+      "scopePreserved": true,
+      "proposal": true,
+      "internalResponseRepairs": 0,
+      "modelResponseEncodings": [
+        "compact_patch"
+      ],
+      "modelResponseJsonBytes": 9372
+    }
+  ],
+  "error": null,
+  "package": {
+    "staticCandidate": true,
+    "implementationRequired": 0,
+    "connectionGaps": 0,
+    "fatalFindings": [],
+    "wrongProviderNodes": [],
+    "files": 130,
+    "tasks": 36,
+    "runtime": "not_yet_qualified",
+    "nearDeploymentQualified": false
+  },
+  "acceptance": [
+    "PDF upload reaches a reviewable extraction result.",
+    "Concurrent duplicate deliveries and worker restarts do not duplicate records.",
+    "Unauthorized approvals fail; approved outbound retries are idempotent.",
+    "Poison jobs remain recoverable with audit evidence."
+  ],
+  "status": "requires_independent_review_and_runtime_qualification"
+}

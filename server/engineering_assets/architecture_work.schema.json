@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AtMem proposed architecture work records",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "records"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "records": {
+      "type": "array",
+      "maxItems": 200,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "kind",
+          "title",
+          "description",
+          "dependsOn",
+          "data"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "kind": {
+            "enum": [
+              "responsibility",
+              "delivery-unit",
+              "interface",
+              "implementation",
+              "decision",
+              "evidence",
+              "assumption",
+              "requirement"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 16000
+          },
+          "source": {
+            "const": "agent"
+          },
+          "agreement": {
+            "const": "proposed"
+          },
+          "dependsOn": {
+            "type": "array",
+            "maxItems": 100,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 240
+            }
+          },
+          "data": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  },
+  "description": "Proposal format1 is separate from the saved architecture work state version. Use stable mapping IDs: a later artifact can propose explicit revisions of its own previous agent-proposed mappings, retaining prior artifact values. Proposals cannot overwrite client requirements, diagram, ownership, imported/user mappings or accepted decisions. References use block:, requirement:, assumption:, question:, decision:, interface:, work: prefixes plus exact IDs. Implementation records name nonempty data.files of actual relative delivered files; evidence records may name their test files the same way. Supplied pinned inputs and the proposal file are not implementation/evidence files. All records remain unreviewed proposals on import. Evidence data is a claim/reference, never authenticated execution or acceptance."
+}

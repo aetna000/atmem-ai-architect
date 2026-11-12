@@ -1,0 +1,4138 @@
+{
+  "ibm_compute_monitor": {
+    "version": 0,
+    "block": {
+      "attributes": {
+        "guest_id": {
+          "type": "number",
+          "description": "Guest ID",
+          "description_kind": "plain",
+          "required": true
+        },
+        "id": {
+          "type": "string",
+          "description_kind": "plain",
+          "optional": true,
+          "computed": true
+        },
+        "ip_address": {
+          "type": "string",
+          "description": "IP Address",
+          "description_kind": "plain",
+          "optional": true
+        },
+        "notified_users": {
+          "type": [
+            "set",
+            "number"
+          ],
+          "description": "List of users notified",
+          "description_kind": "plain",
+          "optional": true,
+          "computed": true
+        },
+        "query_type_id": {
+          "type": "number",
+          "description": "Query Type ID",
+          "description_kind": "plain",
+          "required": true
+        },
+        "response_action_id": {
+          "type": "number",
+          "description": "Response action ID",
+          "description_kind": "plain",
+          "required": true
+        },
+        "tags": {
+          "type": [
+            "set",
+            "string"
+          ],
+          "description": "List of tags",
+          "description_kind": "plain",
+          "optional": true
+        },
+        "wait_cycles": {
+          "type": "number",
+          "description": "wait cycles count",
+          "description_kind": "plain",
+          "optional": true
+        }
+      },
+      "description_kind": "plain"
+    }
+  },
+  "ibm_dns_glb_monitor": {
+    "version": 0,
+    "block": {
+      "attributes": {
+        "allow_insecure": {
+          "type": "bool",
+          "description": "Do not validate the certificate when monitor use HTTPS. This parameter is currently only valid for HTTPS monitors.",
+          "description_kind": "plain",
+          "optional": true,
+          "computed": true
+        },
+        "created_on": {
+          "type": "string",
+          "description": "GLB Monitor creation date",
+          "description_kind": "plain",
+          "computed": true
+        },
+        "description": {
+          "type": "string",
+          "description": "Descriptive text of the load balancer monitor",
+          "description_kind": "plain",
+          "optional": true
+        },
+        "expected_body": {
+          "type": "string",
+          "description": "A case-insensitive sub-string to look for in the response body",
+          "description_kind": "plain",
+          "optional": true
+        },
+        "expected_codes": {
+          "type": "string",
+          "description": "The expected HTTP response code or code range of the health check. This parameter is only valid for HTTP and HTTPS",
+          "description_kind": "plain",
+          "optional": true,
+          "computed": true
+        },
+        "id": {
+          "type": "string",
+          "description_kind": "plain",
+          "optional": true,
+          "computed": true
+        },
+        "instance_id": {
+          "type": "string",
+          "description": "Instance Id",
+          "description_kind": "plain",
+          "required": true
+        },
+        "interval": {
+          "type": "number",
+          "description": "The interval between each health check",
+          "description_kind": "plain",
+          "optional": true
+        },
+        "method": {
+          "type": "string",
+          "description": "The method to use for the health check",
+          "description_kind": "plain",
+          "optional": true,
+          "computed": true
+        },
+        "modified_on": {
+          "type": "string",
+          "description": "GLB Monitor Modification date",
+          "description_kind": "plain",
+          "computed": true
+        },
+        "monitor_id": {
+          "type": "string",
+          "description": "Monitor Id",
+          "description_kind": "plain",
+          "computed": true
+        },
+        "name": {
+          "type": "string",
+          "description": "The unique identifier of a service instance.",
+          "description_kind": "plain",
+          "required": true
+        },
+        "path": {
+          "type": "string",
+          "description": "The endpoint path to health check against",
+          "description_kind": "plain",
+          "optional": true,
+          "computed": true
+        },
+        "port": {
+          "type": "number",
+          "description": "Port number to connect to for the health check",
+          "description_kind": "plain",
+          "optional": true,
+          "computed": true
+        },
+        "retries": {
+          "type": "number",
+          "description": "The number of retries to attempt in case of a timeout before marking the origin as unhealthy",
+          "description_kind": "plain",
+          "optional": true
+        },
+        "timeout": {
+          "type": "number",
+          "description": "The timeout (in seconds) before marking the health check as failed",
+          "description_kind": "plain",
+          "optional": true
+        },
+        "type": {
+          "type": "string",
+          "description": "The protocol to use for the health check",
+          "description_kind": "plain",
+          "optional": true
+        }
+      },
+      "block_types": {
+        "headers": {
+          "nesting_mode": "set",
+          "block": {
+            "attributes": {
+              "name": {
+                "type": "string",
+                "description": "The name of HTTP request header",
+                "description_kind": "plain",
+                "required": true
+              },
+              "value": {
+                "type": [
+                  "list",
+                  "string"
+                ],
+                "description": "The value of HTTP request header",
+                "description_kind": "plain",
+                "required": true
+              }
+            },
+            "description": "The HTTP request headers to send in the health check",
+            "description_kind": "plain"
+          }
+        },
+        "timeouts": {
+          "nesting_mode": "single",
+          "block": {
+            "attributes": {
+              "create": {
+                "type": "string",
+                "description_kind": "plain",
+                "optional": true
+              },
+              "delete": {
+                "type": "string",
+                "description_kind": "plain",
+                "optional": true
+              },
+              "update": {
+                "type": "string",
+                "description_kind": "plain",
+                "optional": true
+              }
+            },
+            "description_kind": "plain"
+          }
+        }
+      },
+      "description_kind": "plain"
+    }
+  },
+  "ibm_lbaas_health_monitor": {
+    "version": 0,
+    "block": {
+      "attributes": {
+        "id": {
+          "type": "string",
+          "description_kind": "plain",
+          "optional": true,
+          "computed": true
+        },
+        "interval": {
+          "type": "number",
+          "description": "Interval value",
+          "description_kind": "plain",
+          "optional": true
+        },
+        "lbaas_id": {
+          "type": "string",
+          "description": "LBAAS id",
+          "description_kind": "plain",
+          "required": true
+        },
+        "max_retries": {
+          "type": "number",
+          "description": "Maximum retry counts",
+          "description_kind": "plain",
+          "optional": true
+        },
+        "monitor_id": {
+          "type": "string",
+          "description": "Monitor ID",
+          "description_kind": "plain",
+          "required": true
+        },
+        "port": {
+          "type": "number",
+          "description": "Port number",
+          "description_kind": "plain",
+          "required": true
+        },
+        "protocol": {
+          "type": "string",
+          "description": "Protocol value",
+          "description_kind": "plain",
+          "required": true
+        },
+        "timeout": {
+          "type": "number",
+          "description": "Timeout in seconds",
+          "description_kind": "plain",
+          "optional": true
+        },
+        "url_path": {
+          "type": "string",
+          "description": "URL Path",
+          "description_kind": "plain",
+          "optional": true
+        }
+      },
+      "description_kind": "plain"
+    }
+  },
+  "ibm_logs_alert": {
+    "version": 0,
+    "block": {
+      "attributes": {
+        "alert_id": {
+          "type": "string",
+          "description": "Alert Id.",
+          "description_kind": "plain",
+          "computed": true
+        },
+        "description": {
+          "type": "string",
+          "description": "Alert description.",
+          "description_kind": "plain",
+          "optional": true
+        },
+        "endpoint_type": {
+          "type": "string",
+          "description": "public or private.",
+          "description_kind": "plain",
+          "optional": true
+        },
+        "id": {
+          "type": "string",
+          "description_kind": "plain",
+          "optional": true,
+          "computed": true
+        },
+        "instance_id": {
+          "type": "string",
+          "description": "The ID of the logs instance.",
+          "description_kind": "plain",
+          "required": true
+        },
+        "is_active": {
+          "type": "bool",
+          "description": "Alert is active.",
+          "description_kind": "plain",
+          "required": true
+        },
+        "meta_labels_strings": {
+          "type": [
+            "list",
+            "string"
+          ],
+          "description": "The Meta labels to add to the alert as string with ':' separator.",
+          "description_kind": "plain",
+          "deprecated": true,
+          "deprecation_message": "Use 'meta_labels' instead.",
+          "optional": true
+        },
+        "name": {
+          "type": "string",
+          "description": "Alert name.",
+          "description_kind": "plain",
+          "required": true
+        },
+        "notification_payload_filters": {
+          "type": [
+            "list",
+            "string"
+          ],
+          "description": "JSON keys to include in the alert notification, if left empty get the full log text in the alert notification.",
+          "description_kind": "plain",
+          "optional": true
+        },
+        "region": {
+          "type": "string",
+          "description": "The region of the logs instance.",
+          "description_kind": "plain",
+          "optional": true,
+          "computed": true
+        },
+        "severity": {
+          "type": "string",
+          "description": "Alert severity.",
+          "description_kind": "plain",
+          "required": true
+        },
+        "unique_identifier": {
+          "type": "string",
+          "description": "Alert unique identifier.",
+          "description_kind": "plain",
+          "computed": true
+        }
+      },
+      "block_types": {
+        "active_when": {
+          "nesting_mode": "list",
+          "block": {
+            "block_types": {
+              "timeframes": {
+                "nesting_mode": "list",
+                "block": {
+                  "attributes": {
+                    "days_of_week": {
+                      "type": [
+                        "list",
+                        "string"
+                      ],
+                      "description": "Days of the week for activity.",
+                      "description_kind": "plain",
+                      "required": true
+                    }
+                  },
+                  "block_types": {
+                    "range": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "block_types": {
+                          "end": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "hours": {
+                                  "type": "number",
+                                  "description": "Hours of the day.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "minutes": {
+                                  "type": "number",
+                                  "description": "Minutes of the hour.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "seconds": {
+                                  "type": "number",
+                                  "description": "Seconds of the minute.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "description": "Start time.",
+                              "description_kind": "plain"
+                            },
+                            "min_items": 1,
+                            "max_items": 1
+                          },
+                          "start": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "hours": {
+                                  "type": "number",
+                                  "description": "Hours of the day.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "minutes": {
+                                  "type": "number",
+                                  "description": "Minutes of the hour.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "seconds": {
+                                  "type": "number",
+                                  "description": "Seconds of the minute.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "description": "Start time.",
+                              "description_kind": "plain"
+                            },
+                            "min_items": 1,
+                            "max_items": 1
+                          }
+                        },
+                        "description": "Time range in the day of the week.",
+                        "description_kind": "plain"
+                      },
+                      "min_items": 1,
+                      "max_items": 1
+                    }
+                  },
+                  "description": "Activity timeframes of the alert.",
+                  "description_kind": "plain"
+                },
+                "min_items": 1
+              }
+            },
+            "description": "When should the alert be active.",
+            "description_kind": "plain"
+          },
+          "max_items": 1
+        },
+        "condition": {
+          "nesting_mode": "list",
+          "block": {
+            "block_types": {
+              "flow": {
+                "nesting_mode": "list",
+                "block": {
+                  "attributes": {
+                    "enforce_suppression": {
+                      "type": "bool",
+                      "description": "Should suppression be enforced on the flow alert.",
+                      "description_kind": "plain",
+                      "optional": true
+                    }
+                  },
+                  "block_types": {
+                    "parameters": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "attributes": {
+                          "cardinality_fields": {
+                            "type": [
+                              "list",
+                              "string"
+                            ],
+                            "description": "Cardinality fields for unique count alert.",
+                            "description_kind": "plain",
+                            "optional": true
+                          },
+                          "group_by": {
+                            "type": [
+                              "list",
+                              "string"
+                            ],
+                            "description": "The group by fields for the alert condition.",
+                            "description_kind": "plain",
+                            "optional": true
+                          },
+                          "ignore_infinity": {
+                            "type": "bool",
+                            "description": "Should the evaluation ignore infinity value.",
+                            "description_kind": "plain",
+                            "optional": true
+                          },
+                          "relative_timeframe": {
+                            "type": "string",
+                            "description": "The relative timeframe for time relative alerts.",
+                            "description_kind": "plain",
+                            "optional": true
+                          },
+                          "threshold": {
+                            "type": "number",
+                            "description": "The threshold for the alert condition.",
+                            "description_kind": "plain",
+                            "required": true
+                          },
+                          "timeframe": {
+                            "type": "string",
+                            "description": "The timeframe for the alert condition.",
+                            "description_kind": "plain",
+                            "required": true
+                          }
+                        },
+                        "block_types": {
+                          "metric_alert_parameters": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "arithmetic_operator": {
+                                  "type": "string",
+                                  "description": "The arithmetic operator of the metric promql alert.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "arithmetic_operator_modifier": {
+                                  "type": "number",
+                                  "description": "The arithmetic operator modifier of the metric promql alert.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "metric_field": {
+                                  "type": "string",
+                                  "description": "The metric field of the metric alert.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "metric_source": {
+                                  "type": "string",
+                                  "description": "The metric source of the metric alert.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "non_null_percentage": {
+                                  "type": "number",
+                                  "description": "Non null percentage of the evaluation.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "sample_threshold_percentage": {
+                                  "type": "number",
+                                  "description": "The threshold percentage.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "swap_null_values": {
+                                  "type": "bool",
+                                  "description": "Should we swap null values with zero.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "description": "The lucene metric alert parameters if it is a lucene metric alert.",
+                              "description_kind": "plain"
+                            },
+                            "max_items": 1
+                          },
+                          "metric_alert_promql_parameters": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "arithmetic_operator_modifier": {
+                                  "type": "number",
+                                  "description": "The arithmetic operator of the metric promql alert.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "non_null_percentage": {
+                                  "type": "number",
+                                  "description": "Non null percentage of the evaluation.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "promql_text": {
+                                  "type": "string",
+                                  "description": "The promql text of the metric alert by fields for the alert condition.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "sample_threshold_percentage": {
+                                  "type": "number",
+                                  "description": "The threshold percentage.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "swap_null_values": {
+                                  "type": "bool",
+                                  "description": "Should we swap null values with zero.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "description": "The promql metric alert parameters if is is a promql metric alert.",
+                              "description_kind": "plain"
+                            },
+                            "max_items": 1
+                          },
+                          "related_extended_data": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "cleanup_deadman_duration": {
+                                  "type": "string",
+                                  "description": "Cleanup deadman duration.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "should_trigger_deadman": {
+                                  "type": "bool",
+                                  "description": "Should we trigger deadman.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "description": "Deadman configuration.",
+                              "description_kind": "plain"
+                            },
+                            "max_items": 1
+                          }
+                        },
+                        "description": "The Less than alert condition parameters.",
+                        "description_kind": "plain"
+                      },
+                      "max_items": 1
+                    },
+                    "stages": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "block_types": {
+                          "groups": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "next_op": {
+                                  "type": "string",
+                                  "description": "Operator for the alerts.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "block_types": {
+                                "alerts": {
+                                  "nesting_mode": "list",
+                                  "block": {
+                                    "attributes": {
+                                      "op": {
+                                        "type": "string",
+                                        "description": "Operator for the alerts.",
+                                        "description_kind": "plain",
+                                        "optional": true
+                                      }
+                                    },
+                                    "block_types": {
+                                      "values": {
+                                        "nesting_mode": "list",
+                                        "block": {
+                                          "attributes": {
+                                            "id": {
+                                              "type": "string",
+                                              "description": "The alert ID.",
+                                              "description_kind": "plain",
+                                              "optional": true
+                                            },
+                                            "not": {
+                                              "type": "bool",
+                                              "description": "The alert not.",
+                                              "description_kind": "plain",
+                                              "optional": true
+                                            }
+                                          },
+                                          "description": "List of alerts.",
+                                          "description_kind": "plain"
+                                        }
+                                      }
+                                    },
+                                    "description": "List of alerts.",
+                                    "description_kind": "plain"
+                                  },
+                                  "max_items": 1
+                                }
+                              },
+                              "description": "List of groups of alerts.",
+                              "description_kind": "plain"
+                            }
+                          },
+                          "timeframe": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "ms": {
+                                  "type": "number",
+                                  "description": "Timeframe in milliseconds.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "description": "Timeframe for the flow.",
+                              "description_kind": "plain"
+                            },
+                            "max_items": 1
+                          }
+                        },
+                        "description": "The Flow alert condition parameters.",
+                        "description_kind": "plain"
+                      }
+                    }
+                  },
+                  "description": "Condition for flow alert.",
+                  "description_kind": "plain"
+                },
+                "max_items": 1
+              },
+              "immediate": {
+                "nesting_mode": "list",
+                "block": {
+                  "description": "Condition for immediate standard alert.",
+                  "description_kind": "plain"
+                },
+                "max_items": 1
+              },
+              "less_than": {
+                "nesting_mode": "list",
+                "block": {
+                  "block_types": {
+                    "parameters": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "attributes": {
+                          "cardinality_fields": {
+                            "type": [
+                              "list",
+                              "string"
+                            ],
+                            "description": "Cardinality fields for unique count alert.",
+                            "description_kind": "plain",
+                            "optional": true
+                          },
+                          "group_by": {
+                            "type": [
+                              "list",
+                              "string"
+                            ],
+                            "description": "The group by fields for the alert condition.",
+                            "description_kind": "plain",
+                            "optional": true
+                          },
+                          "ignore_infinity": {
+                            "type": "bool",
+                            "description": "Should the evaluation ignore infinity value.",
+                            "description_kind": "plain",
+                            "optional": true
+                          },
+                          "relative_timeframe": {
+                            "type": "string",
+                            "description": "The relative timeframe for time relative alerts.",
+                            "description_kind": "plain",
+                            "optional": true
+                          },
+                          "threshold": {
+                            "type": "number",
+                            "description": "The threshold for the alert condition.",
+                            "description_kind": "plain",
+                            "required": true
+                          },
+                          "timeframe": {
+                            "type": "string",
+                            "description": "The timeframe for the alert condition.",
+                            "description_kind": "plain",
+                            "required": true
+                          }
+                        },
+                        "block_types": {
+                          "metric_alert_parameters": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "arithmetic_operator": {
+                                  "type": "string",
+                                  "description": "The arithmetic operator of the metric promql alert.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "arithmetic_operator_modifier": {
+                                  "type": "number",
+                                  "description": "The arithmetic operator modifier of the metric promql alert.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "metric_field": {
+                                  "type": "string",
+                                  "description": "The metric field of the metric alert.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "metric_source": {
+                                  "type": "string",
+                                  "description": "The metric source of the metric alert.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "non_null_percentage": {
+                                  "type": "number",
+                                  "description": "Non null percentage of the evaluation.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "sample_threshold_percentage": {
+                                  "type": "number",
+                                  "description": "The threshold percentage.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "swap_null_values": {
+                                  "type": "bool",
+                                  "description": "Should we swap null values with zero.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "description": "The lucene metric alert parameters if it is a lucene metric alert.",
+                              "description_kind": "plain"
+                            },
+                            "max_items": 1
+                          },
+                          "metric_alert_promql_parameters": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "arithmetic_operator_modifier": {
+                                  "type": "number",
+                                  "description": "The arithmetic operator of the metric promql alert.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "non_null_percentage": {
+                                  "type": "number",
+                                  "description": "Non null percentage of the evaluation.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "promql_text": {
+                                  "type": "string",
+                                  "description": "The promql text of the metric alert by fields for the alert condition.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "sample_threshold_percentage": {
+                                  "type": "number",
+                                  "description": "The threshold percentage.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "swap_null_values": {
+                                  "type": "bool",
+                                  "description": "Should we swap null values with zero.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "description": "The promql metric alert parameters if is is a promql metric alert.",
+                              "description_kind": "plain"
+                            },
+                            "max_items": 1
+                          },
+                          "related_extended_data": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "cleanup_deadman_duration": {
+                                  "type": "string",
+                                  "description": "Cleanup deadman duration.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "should_trigger_deadman": {
+                                  "type": "bool",
+                                  "description": "Should we trigger deadman.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "description": "Deadman configuration.",
+                              "description_kind": "plain"
+                            },
+                            "max_items": 1
+                          }
+                        },
+                        "description": "The Less than alert condition parameters.",
+                        "description_kind": "plain"
+                      },
+                      "min_items": 1,
+                      "max_items": 1
+                    }
+                  },
+                  "description": "Condition for less than alert.",
+                  "description_kind": "plain"
+                },
+                "max_items": 1
+              },
+              "less_than_usual": {
+                "nesting_mode": "list",
+                "block": {
+                  "block_types": {
+                    "parameters": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "attributes": {
+                          "cardinality_fields": {
+                            "type": [
+                              "list",
+                              "string"
+                            ],
+                            "description": "Cardinality fields for unique count alert.",
+                            "description_kind": "plain",
+                            "optional": true
+                          },
+                          "group_by": {
+                            "type": [
+                              "list",
+                              "string"
+                            ],
+                            "description": "The group by fields for the alert condition.",
+                            "description_kind": "plain",
+                            "optional": true
+                          },
+                          "ignore_infinity": {
+                            "type": "bool",
+                            "description": "Should the evaluation ignore infinity value.",
+                            "description_kind": "plain",
+                            "optional": true
+                          },
+                          "relative_timeframe": {
+                            "type": "string",
+                            "description": "The relative timeframe for time relative alerts.",
+                            "description_kind": "plain",
+                            "optional": true
+                          },
+                          "threshold": {
+                            "type": "number",
+                            "description": "The threshold for the alert condition.",
+                            "description_kind": "plain",
+                            "required": true
+                          },
+                          "timeframe": {
+                            "type": "string",
+                            "description": "The timeframe for the alert condition.",
+                            "description_kind": "plain",
+                            "required": true
+                          }
+                        },
+                        "block_types": {
+                          "metric_alert_parameters": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "arithmetic_operator": {
+                                  "type": "string",
+                                  "description": "The arithmetic operator of the metric promql alert.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "arithmetic_operator_modifier": {
+                                  "type": "number",
+                                  "description": "The arithmetic operator modifier of the metric promql alert.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "metric_field": {
+                                  "type": "string",
+                                  "description": "The metric field of the metric alert.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "metric_source": {
+                                  "type": "string",
+                                  "description": "The metric source of the metric alert.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "non_null_percentage": {
+                                  "type": "number",
+                                  "description": "Non null percentage of the evaluation.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "sample_threshold_percentage": {
+                                  "type": "number",
+                                  "description": "The threshold percentage.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "swap_null_values": {
+                                  "type": "bool",
+                                  "description": "Should we swap null values with zero.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "description": "The lucene metric alert parameters if it is a lucene metric alert.",
+                              "description_kind": "plain"
+                            },
+                            "max_items": 1
+                          },
+                          "metric_alert_promql_parameters": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "arithmetic_operator_modifier": {
+                                  "type": "number",
+                                  "description": "The arithmetic operator of the metric promql alert.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "non_null_percentage": {
+                                  "type": "number",
+                                  "description": "Non null percentage of the evaluation.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "promql_text": {
+                                  "type": "string",
+                                  "description": "The promql text of the metric alert by fields for the alert condition.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "sample_threshold_percentage": {
+                                  "type": "number",
+                                  "description": "The threshold percentage.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "swap_null_values": {
+                                  "type": "bool",
+                                  "description": "Should we swap null values with zero.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "description": "The promql metric alert parameters if is is a promql metric alert.",
+                              "description_kind": "plain"
+                            },
+                            "max_items": 1
+                          },
+                          "related_extended_data": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "cleanup_deadman_duration": {
+                                  "type": "string",
+                                  "description": "Cleanup deadman duration.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "should_trigger_deadman": {
+                                  "type": "bool",
+                                  "description": "Should we trigger deadman.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "description": "Deadman configuration.",
+                              "description_kind": "plain"
+                            },
+                            "max_items": 1
+                          }
+                        },
+                        "description": "The Less than alert condition parameters.",
+                        "description_kind": "plain"
+                      },
+                      "min_items": 1,
+                      "max_items": 1
+                    }
+                  },
+                  "description": "Condition for less than usual alert.",
+                  "description_kind": "plain"
+                },
+                "max_items": 1
+              },
+              "more_than": {
+                "nesting_mode": "list",
+                "block": {
+                  "attributes": {
+                    "evaluation_window": {
+                      "type": "string",
+                      "description": "The evaluation window for the alert condition.",
+                      "description_kind": "plain",
+                      "optional": true
+                    }
+                  },
+                  "block_types": {
+                    "parameters": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "attributes": {
+                          "cardinality_fields": {
+                            "type": [
+                              "list",
+                              "string"
+                            ],
+                            "description": "Cardinality fields for unique count alert.",
+                            "description_kind": "plain",
+                            "optional": true
+                          },
+                          "group_by": {
+                            "type": [
+                              "list",
+                              "string"
+                            ],
+                            "description": "The group by fields for the alert condition.",
+                            "description_kind": "plain",
+                            "optional": true
+                          },
+                          "ignore_infinity": {
+                            "type": "bool",
+                            "description": "Should the evaluation ignore infinity value.",
+                            "description_kind": "plain",
+                            "optional": true
+                          },
+                          "relative_timeframe": {
+                            "type": "string",
+                            "description": "The relative timeframe for time relative alerts.",
+                            "description_kind": "plain",
+                            "optional": true
+                          },
+                          "threshold": {
+                            "type": "number",
+                            "description": "The threshold for the alert condition.",
+                            "description_kind": "plain",
+                            "required": true
+                          },
+                          "timeframe": {
+                            "type": "string",
+                            "description": "The timeframe for the alert condition.",
+                            "description_kind": "plain",
+                            "required": true
+                          }
+                        },
+                        "block_types": {
+                          "metric_alert_parameters": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "arithmetic_operator": {
+                                  "type": "string",
+                                  "description": "The arithmetic operator of the metric promql alert.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "arithmetic_operator_modifier": {
+                                  "type": "number",
+                                  "description": "The arithmetic operator modifier of the metric promql alert.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "metric_field": {
+                                  "type": "string",
+                                  "description": "The metric field of the metric alert.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "metric_source": {
+                                  "type": "string",
+                                  "description": "The metric source of the metric alert.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "non_null_percentage": {
+                                  "type": "number",
+                                  "description": "Non null percentage of the evaluation.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "sample_threshold_percentage": {
+                                  "type": "number",
+                                  "description": "The threshold percentage.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "swap_null_values": {
+                                  "type": "bool",
+                                  "description": "Should we swap null values with zero.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "description": "The lucene metric alert parameters if it is a lucene metric alert.",
+                              "description_kind": "plain"
+                            },
+                            "max_items": 1
+                          },
+                          "metric_alert_promql_parameters": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "arithmetic_operator_modifier": {
+                                  "type": "number",
+                                  "description": "The arithmetic operator of the metric promql alert.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "non_null_percentage": {
+                                  "type": "number",
+                                  "description": "Non null percentage of the evaluation.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "promql_text": {
+                                  "type": "string",
+                                  "description": "The promql text of the metric alert by fields for the alert condition.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "sample_threshold_percentage": {
+                                  "type": "number",
+                                  "description": "The threshold percentage.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "swap_null_values": {
+                                  "type": "bool",
+                                  "description": "Should we swap null values with zero.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "description": "The promql metric alert parameters if is is a promql metric alert.",
+                              "description_kind": "plain"
+                            },
+                            "max_items": 1
+                          },
+                          "related_extended_data": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "cleanup_deadman_duration": {
+                                  "type": "string",
+                                  "description": "Cleanup deadman duration.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "should_trigger_deadman": {
+                                  "type": "bool",
+                                  "description": "Should we trigger deadman.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "description": "Deadman configuration.",
+                              "description_kind": "plain"
+                            },
+                            "max_items": 1
+                          }
+                        },
+                        "description": "The Less than alert condition parameters.",
+                        "description_kind": "plain"
+                      },
+                      "min_items": 1,
+                      "max_items": 1
+                    }
+                  },
+                  "description": "Condition for more than alert.",
+                  "description_kind": "plain"
+                },
+                "max_items": 1
+              },
+              "more_than_usual": {
+                "nesting_mode": "list",
+                "block": {
+                  "block_types": {
+                    "parameters": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "attributes": {
+                          "cardinality_fields": {
+                            "type": [
+                              "list",
+                              "string"
+                            ],
+                            "description": "Cardinality fields for unique count alert.",
+                            "description_kind": "plain",
+                            "optional": true
+                          },
+                          "group_by": {
+                            "type": [
+                              "list",
+                              "string"
+                            ],
+                            "description": "The group by fields for the alert condition.",
+                            "description_kind": "plain",
+                            "optional": true
+                          },
+                          "ignore_infinity": {
+                            "type": "bool",
+                            "description": "Should the evaluation ignore infinity value.",
+                            "description_kind": "plain",
+                            "optional": true
+                          },
+                          "relative_timeframe": {
+                            "type": "string",
+                            "description": "The relative timeframe for time relative alerts.",
+                            "description_kind": "plain",
+                            "optional": true
+                          },
+                          "threshold": {
+                            "type": "number",
+                            "description": "The threshold for the alert condition.",
+                            "description_kind": "plain",
+                            "required": true
+                          },
+                          "timeframe": {
+                            "type": "string",
+                            "description": "The timeframe for the alert condition.",
+                            "description_kind": "plain",
+                            "required": true
+                          }
+                        },
+                        "block_types": {
+                          "metric_alert_parameters": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "arithmetic_operator": {
+                                  "type": "string",
+                                  "description": "The arithmetic operator of the metric promql alert.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "arithmetic_operator_modifier": {
+                                  "type": "number",
+                                  "description": "The arithmetic operator modifier of the metric promql alert.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "metric_field": {
+                                  "type": "string",
+                                  "description": "The metric field of the metric alert.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "metric_source": {
+                                  "type": "string",
+                                  "description": "The metric source of the metric alert.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "non_null_percentage": {
+                                  "type": "number",
+                                  "description": "Non null percentage of the evaluation.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "sample_threshold_percentage": {
+                                  "type": "number",
+                                  "description": "The threshold percentage.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "swap_null_values": {
+                                  "type": "bool",
+                                  "description": "Should we swap null values with zero.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "description": "The lucene metric alert parameters if it is a lucene metric alert.",
+                              "description_kind": "plain"
+                            },
+                            "max_items": 1
+                          },
+                          "metric_alert_promql_parameters": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "arithmetic_operator_modifier": {
+                                  "type": "number",
+                                  "description": "The arithmetic operator of the metric promql alert.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "non_null_percentage": {
+                                  "type": "number",
+                                  "description": "Non null percentage of the evaluation.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "promql_text": {
+                                  "type": "string",
+                                  "description": "The promql text of the metric alert by fields for the alert condition.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "sample_threshold_percentage": {
+                                  "type": "number",
+                                  "description": "The threshold percentage.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "swap_null_values": {
+                                  "type": "bool",
+                                  "description": "Should we swap null values with zero.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "description": "The promql metric alert parameters if is is a promql metric alert.",
+                              "description_kind": "plain"
+                            },
+                            "max_items": 1
+                          },
+                          "related_extended_data": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "cleanup_deadman_duration": {
+                                  "type": "string",
+                                  "description": "Cleanup deadman duration.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "should_trigger_deadman": {
+                                  "type": "bool",
+                                  "description": "Should we trigger deadman.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "description": "Deadman configuration.",
+                              "description_kind": "plain"
+                            },
+                            "max_items": 1
+                          }
+                        },
+                        "description": "The Less than alert condition parameters.",
+                        "description_kind": "plain"
+                      },
+                      "min_items": 1,
+                      "max_items": 1
+                    }
+                  },
+                  "description": "Condition for more than usual alert.",
+                  "description_kind": "plain"
+                },
+                "max_items": 1
+              },
+              "new_value": {
+                "nesting_mode": "list",
+                "block": {
+                  "block_types": {
+                    "parameters": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "attributes": {
+                          "cardinality_fields": {
+                            "type": [
+                              "list",
+                              "string"
+                            ],
+                            "description": "Cardinality fields for unique count alert.",
+                            "description_kind": "plain",
+                            "optional": true
+                          },
+                          "group_by": {
+                            "type": [
+                              "list",
+                              "string"
+                            ],
+                            "description": "The group by fields for the alert condition.",
+                            "description_kind": "plain",
+                            "optional": true
+                          },
+                          "ignore_infinity": {
+                            "type": "bool",
+                            "description": "Should the evaluation ignore infinity value.",
+                            "description_kind": "plain",
+                            "optional": true
+                          },
+                          "relative_timeframe": {
+                            "type": "string",
+                            "description": "The relative timeframe for time relative alerts.",
+                            "description_kind": "plain",
+                            "optional": true
+                          },
+                          "threshold": {
+                            "type": "number",
+                            "description": "The threshold for the alert condition.",
+                            "description_kind": "plain",
+                            "required": true
+                          },
+                          "timeframe": {
+                            "type": "string",
+                            "description": "The timeframe for the alert condition.",
+                            "description_kind": "plain",
+                            "required": true
+                          }
+                        },
+                        "block_types": {
+                          "metric_alert_parameters": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "arithmetic_operator": {
+                                  "type": "string",
+                                  "description": "The arithmetic operator of the metric promql alert.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "arithmetic_operator_modifier": {
+                                  "type": "number",
+                                  "description": "The arithmetic operator modifier of the metric promql alert.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "metric_field": {
+                                  "type": "string",
+                                  "description": "The metric field of the metric alert.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "metric_source": {
+                                  "type": "string",
+                                  "description": "The metric source of the metric alert.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "non_null_percentage": {
+                                  "type": "number",
+                                  "description": "Non null percentage of the evaluation.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "sample_threshold_percentage": {
+                                  "type": "number",
+                                  "description": "The threshold percentage.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "swap_null_values": {
+                                  "type": "bool",
+                                  "description": "Should we swap null values with zero.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "description": "The lucene metric alert parameters if it is a lucene metric alert.",
+                              "description_kind": "plain"
+                            },
+                            "max_items": 1
+                          },
+                          "metric_alert_promql_parameters": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "arithmetic_operator_modifier": {
+                                  "type": "number",
+                                  "description": "The arithmetic operator of the metric promql alert.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "non_null_percentage": {
+                                  "type": "number",
+                                  "description": "Non null percentage of the evaluation.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "promql_text": {
+                                  "type": "string",
+                                  "description": "The promql text of the metric alert by fields for the alert condition.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "sample_threshold_percentage": {
+                                  "type": "number",
+                                  "description": "The threshold percentage.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "swap_null_values": {
+                                  "type": "bool",
+                                  "description": "Should we swap null values with zero.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "description": "The promql metric alert parameters if is is a promql metric alert.",
+                              "description_kind": "plain"
+                            },
+                            "max_items": 1
+                          },
+                          "related_extended_data": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "cleanup_deadman_duration": {
+                                  "type": "string",
+                                  "description": "Cleanup deadman duration.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "should_trigger_deadman": {
+                                  "type": "bool",
+                                  "description": "Should we trigger deadman.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "description": "Deadman configuration.",
+                              "description_kind": "plain"
+                            },
+                            "max_items": 1
+                          }
+                        },
+                        "description": "The Less than alert condition parameters.",
+                        "description_kind": "plain"
+                      },
+                      "min_items": 1,
+                      "max_items": 1
+                    }
+                  },
+                  "description": "Condition for new value alert.",
+                  "description_kind": "plain"
+                },
+                "max_items": 1
+              },
+              "unique_count": {
+                "nesting_mode": "list",
+                "block": {
+                  "block_types": {
+                    "parameters": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "attributes": {
+                          "cardinality_fields": {
+                            "type": [
+                              "list",
+                              "string"
+                            ],
+                            "description": "Cardinality fields for unique count alert.",
+                            "description_kind": "plain",
+                            "optional": true
+                          },
+                          "group_by": {
+                            "type": [
+                              "list",
+                              "string"
+                            ],
+                            "description": "The group by fields for the alert condition.",
+                            "description_kind": "plain",
+                            "optional": true
+                          },
+                          "ignore_infinity": {
+                            "type": "bool",
+                            "description": "Should the evaluation ignore infinity value.",
+                            "description_kind": "plain",
+                            "optional": true
+                          },
+                          "relative_timeframe": {
+                            "type": "string",
+                            "description": "The relative timeframe for time relative alerts.",
+                            "description_kind": "plain",
+                            "optional": true
+                          },
+                          "threshold": {
+                            "type": "number",
+                            "description": "The threshold for the alert condition.",
+                            "description_kind": "plain",
+                            "required": true
+                          },
+                          "timeframe": {
+                            "type": "string",
+                            "description": "The timeframe for the alert condition.",
+                            "description_kind": "plain",
+                            "required": true
+                          }
+                        },
+                        "block_types": {
+                          "metric_alert_parameters": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "arithmetic_operator": {
+                                  "type": "string",
+                                  "description": "The arithmetic operator of the metric promql alert.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "arithmetic_operator_modifier": {
+                                  "type": "number",
+                                  "description": "The arithmetic operator modifier of the metric promql alert.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "metric_field": {
+                                  "type": "string",
+                                  "description": "The metric field of the metric alert.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "metric_source": {
+                                  "type": "string",
+                                  "description": "The metric source of the metric alert.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "non_null_percentage": {
+                                  "type": "number",
+                                  "description": "Non null percentage of the evaluation.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "sample_threshold_percentage": {
+                                  "type": "number",
+                                  "description": "The threshold percentage.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "swap_null_values": {
+                                  "type": "bool",
+                                  "description": "Should we swap null values with zero.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "description": "The lucene metric alert parameters if it is a lucene metric alert.",
+                              "description_kind": "plain"
+                            },
+                            "max_items": 1
+                          },
+                          "metric_alert_promql_parameters": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "arithmetic_operator_modifier": {
+                                  "type": "number",
+                                  "description": "The arithmetic operator of the metric promql alert.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "non_null_percentage": {
+                                  "type": "number",
+                                  "description": "Non null percentage of the evaluation.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "promql_text": {
+                                  "type": "string",
+                                  "description": "The promql text of the metric alert by fields for the alert condition.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "sample_threshold_percentage": {
+                                  "type": "number",
+                                  "description": "The threshold percentage.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "swap_null_values": {
+                                  "type": "bool",
+                                  "description": "Should we swap null values with zero.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "description": "The promql metric alert parameters if is is a promql metric alert.",
+                              "description_kind": "plain"
+                            },
+                            "max_items": 1
+                          },
+                          "related_extended_data": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "cleanup_deadman_duration": {
+                                  "type": "string",
+                                  "description": "Cleanup deadman duration.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "should_trigger_deadman": {
+                                  "type": "bool",
+                                  "description": "Should we trigger deadman.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "description": "Deadman configuration.",
+                              "description_kind": "plain"
+                            },
+                            "max_items": 1
+                          }
+                        },
+                        "description": "The Less than alert condition parameters.",
+                        "description_kind": "plain"
+                      },
+                      "min_items": 1,
+                      "max_items": 1
+                    }
+                  },
+                  "description": "Condition for unique count alert.",
+                  "description_kind": "plain"
+                },
+                "max_items": 1
+              }
+            },
+            "description": "Alert condition.",
+            "description_kind": "plain"
+          },
+          "min_items": 1,
+          "max_items": 1
+        },
+        "expiration": {
+          "nesting_mode": "list",
+          "block": {
+            "attributes": {
+              "day": {
+                "type": "number",
+                "description": "Day of the month.",
+                "description_kind": "plain",
+                "optional": true
+              },
+              "month": {
+                "type": "number",
+                "description": "Month of the year.",
+                "description_kind": "plain",
+                "optional": true
+              },
+              "year": {
+                "type": "number",
+                "description": "Year.",
+                "description_kind": "plain",
+                "optional": true
+              }
+            },
+            "description": "Alert expiration date.",
+            "description_kind": "plain"
+          },
+          "max_items": 1
+        },
+        "filters": {
+          "nesting_mode": "list",
+          "block": {
+            "attributes": {
+              "alias": {
+                "type": "string",
+                "description": "The alias of the filter.",
+                "description_kind": "plain",
+                "optional": true
+              },
+              "filter_type": {
+                "type": "string",
+                "description": "The type of the filter.",
+                "description_kind": "plain",
+                "optional": true,
+                "computed": true
+              },
+              "severities": {
+                "type": [
+                  "list",
+                  "string"
+                ],
+                "description": "The severity of the logs to filter.",
+                "description_kind": "plain",
+                "optional": true
+              },
+              "text": {
+                "type": "string",
+                "description": "The text to filter.",
+                "description_kind": "plain",
+                "optional": true
+              }
+            },
+            "block_types": {
+              "metadata": {
+                "nesting_mode": "list",
+                "block": {
+                  "attributes": {
+                    "applications": {
+                      "type": [
+                        "list",
+                        "string"
+                      ],
+                      "description": "The applications to filter.",
+                      "description_kind": "plain",
+                      "optional": true
+                    },
+                    "subsystems": {
+                      "type": [
+                        "list",
+                        "string"
+                      ],
+                      "description": "The subsystems to filter.",
+                      "description_kind": "plain",
+                      "optional": true
+                    }
+                  },
+                  "description": "The metadata filters.",
+                  "description_kind": "plain"
+                },
+                "max_items": 1
+              },
+              "ratio_alerts": {
+                "nesting_mode": "list",
+                "block": {
+                  "attributes": {
+                    "alias": {
+                      "type": "string",
+                      "description": "The alias of the filter.",
+                      "description_kind": "plain",
+                      "required": true
+                    },
+                    "applications": {
+                      "type": [
+                        "list",
+                        "string"
+                      ],
+                      "description": "The applications to filter.",
+                      "description_kind": "plain",
+                      "optional": true
+                    },
+                    "group_by": {
+                      "type": [
+                        "list",
+                        "string"
+                      ],
+                      "description": "The group by fields.",
+                      "description_kind": "plain",
+                      "optional": true
+                    },
+                    "severities": {
+                      "type": [
+                        "list",
+                        "string"
+                      ],
+                      "description": "The severities to filter.",
+                      "description_kind": "plain",
+                      "optional": true
+                    },
+                    "subsystems": {
+                      "type": [
+                        "list",
+                        "string"
+                      ],
+                      "description": "The subsystems to filter.",
+                      "description_kind": "plain",
+                      "optional": true
+                    },
+                    "text": {
+                      "type": "string",
+                      "description": "The text to filter.",
+                      "description_kind": "plain",
+                      "optional": true
+                    }
+                  },
+                  "description": "The ratio alerts.",
+                  "description_kind": "plain"
+                }
+              }
+            },
+            "description": "Alert filters.",
+            "description_kind": "plain"
+          },
+          "min_items": 1,
+          "max_items": 1
+        },
+        "incident_settings": {
+          "nesting_mode": "list",
+          "block": {
+            "attributes": {
+              "notify_on": {
+                "type": "string",
+                "description": "Notify on setting.",
+                "description_kind": "plain",
+                "optional": true,
+                "computed": true
+              },
+              "retriggering_period_seconds": {
+                "type": "number",
+                "description": "The retriggering period of the alert in seconds.",
+                "description_kind": "plain",
+                "optional": true,
+                "computed": true
+              },
+              "use_as_notification_settings": {
+                "type": "bool",
+                "description": "Use these settings for all notificaion webhook.",
+                "description_kind": "plain",
+                "optional": true
+              }
+            },
+            "description": "Incident settings, will create the incident based on this configuration.",
+            "description_kind": "plain"
+          },
+          "max_items": 1
+        },
+        "meta_labels": {
+          "nesting_mode": "set",
+          "block": {
+            "attributes": {
+              "key": {
+                "type": "string",
+                "description": "The key of the label.",
+                "description_kind": "plain",
+                "optional": true
+              },
+              "value": {
+                "type": "string",
+                "description": "The value of the label.",
+                "description_kind": "plain",
+                "optional": true
+              }
+            },
+            "description": "The Meta labels to add to the alert.",
+            "description_kind": "plain"
+          }
+        },
+        "notification_groups": {
+          "nesting_mode": "list",
+          "block": {
+            "attributes": {
+              "group_by_fields": {
+                "type": [
+                  "list",
+                  "string"
+                ],
+                "description": "Group by fields to group the values by.",
+                "description_kind": "plain",
+                "optional": true
+              }
+            },
+            "block_types": {
+              "notifications": {
+                "nesting_mode": "list",
+                "block": {
+                  "attributes": {
+                    "integration_id": {
+                      "type": "number",
+                      "description": "Integration ID.",
+                      "description_kind": "plain",
+                      "optional": true
+                    },
+                    "notify_on": {
+                      "type": "string",
+                      "description": "Notify on setting.",
+                      "description_kind": "plain",
+                      "optional": true,
+                      "computed": true
+                    },
+                    "retriggering_period_seconds": {
+                      "type": "number",
+                      "description": "Retriggering period of the alert in seconds.",
+                      "description_kind": "plain",
+                      "optional": true,
+                      "computed": true
+                    }
+                  },
+                  "block_types": {
+                    "recipients": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "attributes": {
+                          "emails": {
+                            "type": [
+                              "list",
+                              "string"
+                            ],
+                            "description": "Email addresses.",
+                            "description_kind": "plain",
+                            "optional": true
+                          }
+                        },
+                        "description": "Recipients.",
+                        "description_kind": "plain"
+                      },
+                      "max_items": 1
+                    }
+                  },
+                  "description": "Webhook target settings for the the notification.",
+                  "description_kind": "plain"
+                }
+              }
+            },
+            "description": "Alert notification groups.",
+            "description_kind": "plain"
+          }
+        }
+      },
+      "description_kind": "plain"
+    }
+  },
+  "ibm_logs_alert_definition": {
+    "version": 0,
+    "block": {
+      "attributes": {
+        "alert_def_id": {
+          "type": "string",
+          "description": "Alert Definition Id.",
+          "description_kind": "plain",
+          "computed": true
+        },
+        "alert_version_id": {
+          "type": "string",
+          "description": "The old alert ID.",
+          "description_kind": "plain",
+          "computed": true
+        },
+        "created_time": {
+          "type": "string",
+          "description": "The time when the alert definition was created.",
+          "description_kind": "plain",
+          "computed": true
+        },
+        "deleted": {
+          "type": "bool",
+          "description": "Whether the alert has been marked as deleted.",
+          "description_kind": "plain",
+          "optional": true
+        },
+        "description": {
+          "type": "string",
+          "description": "A detailed description of what the alert monitors and when it triggers.",
+          "description_kind": "plain",
+          "optional": true
+        },
+        "enabled": {
+          "type": "bool",
+          "description": "Whether the alert is currently active and monitoring. If true, alert is active.",
+          "description_kind": "plain",
+          "optional": true
+        },
+        "endpoint_type": {
+          "type": "string",
+          "description": "public or private.",
+          "description_kind": "plain",
+          "optional": true
+        },
+        "entity_labels": {
+          "type": [
+            "map",
+            "string"
+          ],
+          "description": "Labels used to identify and categorize the alert entity.",
+          "description_kind": "plain",
+          "optional": true
+        },
+        "group_by_keys": {
+          "type": [
+            "list",
+            "string"
+          ],
+          "description": "Keys used to group and aggregate alert data.",
+          "description_kind": "plain",
+          "optional": true
+        },
+        "id": {
+          "type": "string",
+          "description_kind": "plain",
+          "optional": true,
+          "computed": true
+        },
+        "instance_id": {
+          "type": "string",
+          "description": "The ID of the logs instance.",
+          "description_kind": "plain",
+          "required": true
+        },
+        "name": {
+          "type": "string",
+          "description": "The name of the alert definition.",
+          "description_kind": "plain",
+          "required": true
+        },
+        "phantom_mode": {
+          "type": "bool",
+          "description": "Whether the alert is in phantom mode (creating incidents or not).",
+          "description_kind": "plain",
+          "optional": true
+        },
+        "priority": {
+          "type": "string",
+          "description": "The priority of the alert definition.",
+          "description_kind": "plain",
+          "optional": true
+        },
+        "region": {
+          "type": "string",
+          "description": "The region of the logs instance.",
+          "description_kind": "plain",
+          "optional": true,
+          "computed": true
+        },
+        "type": {
+          "type": "string",
+          "description": "Alert type.",
+          "description_kind": "plain",
+          "required": true
+        },
+        "updated_time": {
+          "type": "string",
+          "description": "The time when the alert definition was last updated.",
+          "description_kind": "plain",
+          "computed": true
+        }
+      },
+      "block_types": {
+        "active_on": {
+          "nesting_mode": "list",
+          "block": {
+            "attributes": {
+              "day_of_week": {
+                "type": [
+                  "list",
+                  "string"
+                ],
+                "description": "Days of the week when the alert is active.",
+                "description_kind": "plain",
+                "required": true
+              }
+            },
+            "block_types": {
+              "end_time": {
+                "nesting_mode": "list",
+                "block": {
+                  "attributes": {
+                    "hours": {
+                      "type": "number",
+                      "description": "The hour of the day in 24-hour format. Must be an integer between 0 and 23.",
+                      "description_kind": "plain",
+                      "optional": true
+                    },
+                    "minutes": {
+                      "type": "number",
+                      "description": "Minute of the hour of the day. Must be an integer between 0 and 59.",
+                      "description_kind": "plain",
+                      "optional": true
+                    }
+                  },
+                  "description": "Start time of the alert activity.",
+                  "description_kind": "plain"
+                },
+                "min_items": 1,
+                "max_items": 1
+              },
+              "start_time": {
+                "nesting_mode": "list",
+                "block": {
+                  "attributes": {
+                    "hours": {
+                      "type": "number",
+                      "description": "The hour of the day in 24-hour format. Must be an integer between 0 and 23.",
+                      "description_kind": "plain",
+                      "optional": true
+                    },
+                    "minutes": {
+                      "type": "number",
+                      "description": "Minute of the hour of the day. Must be an integer between 0 and 59.",
+                      "description_kind": "plain",
+                      "optional": true
+                    }
+                  },
+                  "description": "Start time of the alert activity.",
+                  "description_kind": "plain"
+                },
+                "min_items": 1,
+                "max_items": 1
+              }
+            },
+            "description": "Defining when the alert is active.",
+            "description_kind": "plain"
+          },
+          "max_items": 1
+        },
+        "flow": {
+          "nesting_mode": "list",
+          "block": {
+            "attributes": {
+              "enforce_suppression": {
+                "type": "bool",
+                "description": "Whether to enforce suppression for the flow alert.",
+                "description_kind": "plain",
+                "optional": true
+              }
+            },
+            "block_types": {
+              "stages": {
+                "nesting_mode": "list",
+                "block": {
+                  "attributes": {
+                    "timeframe_ms": {
+                      "type": "string",
+                      "description": "The timeframe for the flow alert in milliseconds.",
+                      "description_kind": "plain",
+                      "required": true
+                    },
+                    "timeframe_type": {
+                      "type": "string",
+                      "description": "The type of timeframe for the flow alert.",
+                      "description_kind": "plain",
+                      "required": true
+                    }
+                  },
+                  "block_types": {
+                    "flow_stages_groups": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "block_types": {
+                          "groups": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "alerts_op": {
+                                  "type": "string",
+                                  "description": "The logical operation to apply to the alerts in the group.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                },
+                                "next_op": {
+                                  "type": "string",
+                                  "description": "The logical operation to apply to the next stage.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                }
+                              },
+                              "block_types": {
+                                "alert_defs": {
+                                  "nesting_mode": "list",
+                                  "block": {
+                                    "attributes": {
+                                      "id": {
+                                        "type": "string",
+                                        "description": "The alert definition ID.",
+                                        "description_kind": "plain",
+                                        "required": true
+                                      },
+                                      "not": {
+                                        "type": "bool",
+                                        "description": "Whether or not to negate the alert definition. If true, flow checks for the negate condition of the respective alert.",
+                                        "description_kind": "plain",
+                                        "optional": true
+                                      }
+                                    },
+                                    "description": "The alert definitions for the flow stage group.",
+                                    "description_kind": "plain"
+                                  },
+                                  "min_items": 1
+                                }
+                              },
+                              "description": "The definition of an array of groups with alerts and logical operation among those alerts in the flow alert.",
+                              "description_kind": "plain"
+                            },
+                            "min_items": 1
+                          }
+                        },
+                        "description": "The definition of groups in the flow alert.",
+                        "description_kind": "plain"
+                      },
+                      "min_items": 1,
+                      "max_items": 1
+                    }
+                  },
+                  "description": "The definition of stages of the flow alert.",
+                  "description_kind": "plain"
+                },
+                "min_items": 1
+              }
+            },
+            "description": "Configuration for flow alerts.",
+            "description_kind": "plain"
+          },
+          "max_items": 1
+        },
+        "incidents_settings": {
+          "nesting_mode": "list",
+          "block": {
+            "attributes": {
+              "minutes": {
+                "type": "number",
+                "description": "The time in minutes before the alert can be triggered again.",
+                "description_kind": "plain",
+                "optional": true
+              },
+              "notify_on": {
+                "type": "string",
+                "description": "Indicate if the alert should be triggered or triggered and resolved.",
+                "description_kind": "plain",
+                "optional": true
+              }
+            },
+            "description": "Incident creation and management settings.",
+            "description_kind": "plain"
+          },
+          "max_items": 1
+        },
+        "logs_anomaly": {
+          "nesting_mode": "list",
+          "block": {
+            "attributes": {
+              "condition_type": {
+                "type": "string",
+                "description": "The condition type for the alert.",
+                "description_kind": "plain",
+                "required": true
+              },
+              "evaluation_delay_ms": {
+                "type": "number",
+                "description": "The delay in milliseconds before evaluating the alert condition.",
+                "description_kind": "plain",
+                "optional": true
+              },
+              "notification_payload_filter": {
+                "type": [
+                  "list",
+                  "string"
+                ],
+                "description": "The notification payload filter to specify which fields are included in the notification.",
+                "description_kind": "plain",
+                "optional": true
+              }
+            },
+            "block_types": {
+              "anomaly_alert_settings": {
+                "nesting_mode": "list",
+                "block": {
+                  "attributes": {
+                    "percentage_of_deviation": {
+                      "type": "number",
+                      "description": "The percentage of deviation from the baseline when the alert is triggered.",
+                      "description_kind": "plain",
+                      "optional": true
+                    }
+                  },
+                  "description": "The anomaly alert settings configuration.",
+                  "description_kind": "plain"
+                },
+                "max_items": 1
+              },
+              "logs_filter": {
+                "nesting_mode": "list",
+                "block": {
+                  "block_types": {
+                    "simple_filter": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "attributes": {
+                          "lucene_query": {
+                            "type": "string",
+                            "description": "The Lucene query to filter logs.",
+                            "description_kind": "plain",
+                            "optional": true
+                          }
+                        },
+                        "block_types": {
+                          "label_filters": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "severities": {
+                                  "type": [
+                                    "list",
+                                    "string"
+                                  ],
+                                  "description": "Filter by log severities.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "block_types": {
+                                "application_name": {
+                                  "nesting_mode": "list",
+                                  "block": {
+                                    "attributes": {
+                                      "operation": {
+                                        "type": "string",
+                                        "description": "The operation to perform on the label value.",
+                                        "description_kind": "plain",
+                                        "required": true
+                                      },
+                                      "value": {
+                                        "type": "string",
+                                        "description": "The value used to filter the label.",
+                                        "description_kind": "plain",
+                                        "optional": true
+                                      }
+                                    },
+                                    "description": "Filter by application names.",
+                                    "description_kind": "plain"
+                                  }
+                                },
+                                "subsystem_name": {
+                                  "nesting_mode": "list",
+                                  "block": {
+                                    "attributes": {
+                                      "operation": {
+                                        "type": "string",
+                                        "description": "The operation to perform on the label value.",
+                                        "description_kind": "plain",
+                                        "required": true
+                                      },
+                                      "value": {
+                                        "type": "string",
+                                        "description": "The value used to filter the label.",
+                                        "description_kind": "plain",
+                                        "optional": true
+                                      }
+                                    },
+                                    "description": "Filter by subsystem names.",
+                                    "description_kind": "plain"
+                                  }
+                                }
+                              },
+                              "description": "The label filters to filter logs.",
+                              "description_kind": "plain"
+                            },
+                            "max_items": 1
+                          }
+                        },
+                        "description": "A simple filter that uses a Lucene query and label filters.",
+                        "description_kind": "plain"
+                      },
+                      "max_items": 1
+                    }
+                  },
+                  "description": "The filter to match log entries for immediate alerts.",
+                  "description_kind": "plain"
+                },
+                "max_items": 1
+              },
+              "rules": {
+                "nesting_mode": "list",
+                "block": {
+                  "block_types": {
+                    "condition": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "attributes": {
+                          "minimum_threshold": {
+                            "type": "number",
+                            "description": "The threshold value for the alert condition.",
+                            "description_kind": "plain",
+                            "required": true
+                          }
+                        },
+                        "block_types": {
+                          "time_window": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "logs_time_window_specific_value": {
+                                  "type": "string",
+                                  "description": "The time window defined for an alert to be triggered.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                }
+                              },
+                              "description": "The time window for the alert condition.",
+                              "description_kind": "plain"
+                            },
+                            "min_items": 1,
+                            "max_items": 1
+                          }
+                        },
+                        "description": "The condition for the anomaly alert.",
+                        "description_kind": "plain"
+                      },
+                      "min_items": 1,
+                      "max_items": 1
+                    }
+                  },
+                  "description": "The condition rules for the log anomaly alert.",
+                  "description_kind": "plain"
+                },
+                "min_items": 1
+              }
+            },
+            "description": "Configuration for the log-based anomaly detection alerts.",
+            "description_kind": "plain"
+          },
+          "max_items": 1
+        },
+        "logs_immediate": {
+          "nesting_mode": "list",
+          "block": {
+            "attributes": {
+              "notification_payload_filter": {
+                "type": [
+                  "list",
+                  "string"
+                ],
+                "description": "The filter to specify which fields are included in the notification payload.",
+                "description_kind": "plain",
+                "optional": true
+              }
+            },
+            "block_types": {
+              "logs_filter": {
+                "nesting_mode": "list",
+                "block": {
+                  "block_types": {
+                    "simple_filter": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "attributes": {
+                          "lucene_query": {
+                            "type": "string",
+                            "description": "The Lucene query to filter logs.",
+                            "description_kind": "plain",
+                            "optional": true
+                          }
+                        },
+                        "block_types": {
+                          "label_filters": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "severities": {
+                                  "type": [
+                                    "list",
+                                    "string"
+                                  ],
+                                  "description": "Filter by log severities.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "block_types": {
+                                "application_name": {
+                                  "nesting_mode": "list",
+                                  "block": {
+                                    "attributes": {
+                                      "operation": {
+                                        "type": "string",
+                                        "description": "The operation to perform on the label value.",
+                                        "description_kind": "plain",
+                                        "required": true
+                                      },
+                                      "value": {
+                                        "type": "string",
+                                        "description": "The value used to filter the label.",
+                                        "description_kind": "plain",
+                                        "optional": true
+                                      }
+                                    },
+                                    "description": "Filter by application names.",
+                                    "description_kind": "plain"
+                                  }
+                                },
+                                "subsystem_name": {
+                                  "nesting_mode": "list",
+                                  "block": {
+                                    "attributes": {
+                                      "operation": {
+                                        "type": "string",
+                                        "description": "The operation to perform on the label value.",
+                                        "description_kind": "plain",
+                                        "required": true
+                                      },
+                                      "value": {
+                                        "type": "string",
+                                        "description": "The value used to filter the label.",
+                                        "description_kind": "plain",
+                                        "optional": true
+                                      }
+                                    },
+                                    "description": "Filter by subsystem names.",
+                                    "description_kind": "plain"
+                                  }
+                                }
+                              },
+                              "description": "The label filters to filter logs.",
+                              "description_kind": "plain"
+                            },
+                            "max_items": 1
+                          }
+                        },
+                        "description": "A simple filter that uses a Lucene query and label filters.",
+                        "description_kind": "plain"
+                      },
+                      "max_items": 1
+                    }
+                  },
+                  "description": "The filter to match log entries for immediate alerts.",
+                  "description_kind": "plain"
+                },
+                "max_items": 1
+              }
+            },
+            "description": "Configuration for immediate log-based alerts.",
+            "description_kind": "plain"
+          },
+          "max_items": 1
+        },
+        "logs_new_value": {
+          "nesting_mode": "list",
+          "block": {
+            "attributes": {
+              "notification_payload_filter": {
+                "type": [
+                  "list",
+                  "string"
+                ],
+                "description": "The filter to specify which fields are included in the notification payload.",
+                "description_kind": "plain",
+                "optional": true
+              }
+            },
+            "block_types": {
+              "logs_filter": {
+                "nesting_mode": "list",
+                "block": {
+                  "block_types": {
+                    "simple_filter": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "attributes": {
+                          "lucene_query": {
+                            "type": "string",
+                            "description": "The Lucene query to filter logs.",
+                            "description_kind": "plain",
+                            "optional": true
+                          }
+                        },
+                        "block_types": {
+                          "label_filters": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "severities": {
+                                  "type": [
+                                    "list",
+                                    "string"
+                                  ],
+                                  "description": "Filter by log severities.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "block_types": {
+                                "application_name": {
+                                  "nesting_mode": "list",
+                                  "block": {
+                                    "attributes": {
+                                      "operation": {
+                                        "type": "string",
+                                        "description": "The operation to perform on the label value.",
+                                        "description_kind": "plain",
+                                        "required": true
+                                      },
+                                      "value": {
+                                        "type": "string",
+                                        "description": "The value used to filter the label.",
+                                        "description_kind": "plain",
+                                        "optional": true
+                                      }
+                                    },
+                                    "description": "Filter by application names.",
+                                    "description_kind": "plain"
+                                  }
+                                },
+                                "subsystem_name": {
+                                  "nesting_mode": "list",
+                                  "block": {
+                                    "attributes": {
+                                      "operation": {
+                                        "type": "string",
+                                        "description": "The operation to perform on the label value.",
+                                        "description_kind": "plain",
+                                        "required": true
+                                      },
+                                      "value": {
+                                        "type": "string",
+                                        "description": "The value used to filter the label.",
+                                        "description_kind": "plain",
+                                        "optional": true
+                                      }
+                                    },
+                                    "description": "Filter by subsystem names.",
+                                    "description_kind": "plain"
+                                  }
+                                }
+                              },
+                              "description": "The label filters to filter logs.",
+                              "description_kind": "plain"
+                            },
+                            "max_items": 1
+                          }
+                        },
+                        "description": "A simple filter that uses a Lucene query and label filters.",
+                        "description_kind": "plain"
+                      },
+                      "max_items": 1
+                    }
+                  },
+                  "description": "The filter to match log entries for immediate alerts.",
+                  "description_kind": "plain"
+                },
+                "max_items": 1
+              },
+              "rules": {
+                "nesting_mode": "list",
+                "block": {
+                  "block_types": {
+                    "condition": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "attributes": {
+                          "keypath_to_track": {
+                            "type": "string",
+                            "description": "The keypath to track for new values.",
+                            "description_kind": "plain",
+                            "required": true
+                          }
+                        },
+                        "block_types": {
+                          "time_window": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "logs_new_value_time_window_specific_value": {
+                                  "type": "string",
+                                  "description": "A time window defined by a specific value.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                }
+                              },
+                              "description": "The time window for detecting new values.",
+                              "description_kind": "plain"
+                            },
+                            "min_items": 1,
+                            "max_items": 1
+                          }
+                        },
+                        "description": "The condition for detecting new values in logs.",
+                        "description_kind": "plain"
+                      },
+                      "min_items": 1,
+                      "max_items": 1
+                    }
+                  },
+                  "description": "The condition rules for the log new value alert.",
+                  "description_kind": "plain"
+                },
+                "min_items": 1
+              }
+            },
+            "description": "Configuration for alerts triggered by new log values.",
+            "description_kind": "plain"
+          },
+          "max_items": 1
+        },
+        "logs_ratio_threshold": {
+          "nesting_mode": "list",
+          "block": {
+            "attributes": {
+              "condition_type": {
+                "type": "string",
+                "description": "The condition type for the alert.",
+                "description_kind": "plain",
+                "required": true
+              },
+              "denominator_alias": {
+                "type": "string",
+                "description": "The alias for the denominator filter, used for display purposes.",
+                "description_kind": "plain",
+                "optional": true
+              },
+              "evaluation_delay_ms": {
+                "type": "number",
+                "description": "The delay in milliseconds before evaluating the alert condition.",
+                "description_kind": "plain",
+                "optional": true
+              },
+              "group_by_for": {
+                "type": "string",
+                "description": "The group by settings for the numerator and denominator filters.",
+                "description_kind": "plain",
+                "required": true
+              },
+              "ignore_infinity": {
+                "type": "bool",
+                "description": "Determine whether to ignore an infinity result or not. If true, alert is not triggered. When the value of second query is 0, the result of the ratio will be infinity.",
+                "description_kind": "plain",
+                "optional": true
+              },
+              "notification_payload_filter": {
+                "type": [
+                  "list",
+                  "string"
+                ],
+                "description": "The filter to specify which fields are included in the notification payload.",
+                "description_kind": "plain",
+                "optional": true
+              },
+              "numerator_alias": {
+                "type": "string",
+                "description": "The alias for the numerator filter, used for display purposes.",
+                "description_kind": "plain",
+                "optional": true
+              }
+            },
+            "block_types": {
+              "denominator": {
+                "nesting_mode": "list",
+                "block": {
+                  "block_types": {
+                    "simple_filter": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "attributes": {
+                          "lucene_query": {
+                            "type": "string",
+                            "description": "The Lucene query to filter logs.",
+                            "description_kind": "plain",
+                            "optional": true
+                          }
+                        },
+                        "block_types": {
+                          "label_filters": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "severities": {
+                                  "type": [
+                                    "list",
+                                    "string"
+                                  ],
+                                  "description": "Filter by log severities.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "block_types": {
+                                "application_name": {
+                                  "nesting_mode": "list",
+                                  "block": {
+                                    "attributes": {
+                                      "operation": {
+                                        "type": "string",
+                                        "description": "The operation to perform on the label value.",
+                                        "description_kind": "plain",
+                                        "required": true
+                                      },
+                                      "value": {
+                                        "type": "string",
+                                        "description": "The value used to filter the label.",
+                                        "description_kind": "plain",
+                                        "optional": true
+                                      }
+                                    },
+                                    "description": "Filter by application names.",
+                                    "description_kind": "plain"
+                                  }
+                                },
+                                "subsystem_name": {
+                                  "nesting_mode": "list",
+                                  "block": {
+                                    "attributes": {
+                                      "operation": {
+                                        "type": "string",
+                                        "description": "The operation to perform on the label value.",
+                                        "description_kind": "plain",
+                                        "required": true
+                                      },
+                                      "value": {
+                                        "type": "string",
+                                        "description": "The value used to filter the label.",
+                                        "description_kind": "plain",
+                                        "optional": true
+                                      }
+                                    },
+                                    "description": "Filter by subsystem names.",
+                                    "description_kind": "plain"
+                                  }
+                                }
+                              },
+                              "description": "The label filters to filter logs.",
+                              "description_kind": "plain"
+                            },
+                            "max_items": 1
+                          }
+                        },
+                        "description": "A simple filter that uses a Lucene query and label filters.",
+                        "description_kind": "plain"
+                      },
+                      "max_items": 1
+                    }
+                  },
+                  "description": "The filter to match log entries for immediate alerts.",
+                  "description_kind": "plain"
+                },
+                "min_items": 1,
+                "max_items": 1
+              },
+              "numerator": {
+                "nesting_mode": "list",
+                "block": {
+                  "block_types": {
+                    "simple_filter": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "attributes": {
+                          "lucene_query": {
+                            "type": "string",
+                            "description": "The Lucene query to filter logs.",
+                            "description_kind": "plain",
+                            "optional": true
+                          }
+                        },
+                        "block_types": {
+                          "label_filters": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "severities": {
+                                  "type": [
+                                    "list",
+                                    "string"
+                                  ],
+                                  "description": "Filter by log severities.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "block_types": {
+                                "application_name": {
+                                  "nesting_mode": "list",
+                                  "block": {
+                                    "attributes": {
+                                      "operation": {
+                                        "type": "string",
+                                        "description": "The operation to perform on the label value.",
+                                        "description_kind": "plain",
+                                        "required": true
+                                      },
+                                      "value": {
+                                        "type": "string",
+                                        "description": "The value used to filter the label.",
+                                        "description_kind": "plain",
+                                        "optional": true
+                                      }
+                                    },
+                                    "description": "Filter by application names.",
+                                    "description_kind": "plain"
+                                  }
+                                },
+                                "subsystem_name": {
+                                  "nesting_mode": "list",
+                                  "block": {
+                                    "attributes": {
+                                      "operation": {
+                                        "type": "string",
+                                        "description": "The operation to perform on the label value.",
+                                        "description_kind": "plain",
+                                        "required": true
+                                      },
+                                      "value": {
+                                        "type": "string",
+                                        "description": "The value used to filter the label.",
+                                        "description_kind": "plain",
+                                        "optional": true
+                                      }
+                                    },
+                                    "description": "Filter by subsystem names.",
+                                    "description_kind": "plain"
+                                  }
+                                }
+                              },
+                              "description": "The label filters to filter logs.",
+                              "description_kind": "plain"
+                            },
+                            "max_items": 1
+                          }
+                        },
+                        "description": "A simple filter that uses a Lucene query and label filters.",
+                        "description_kind": "plain"
+                      },
+                      "max_items": 1
+                    }
+                  },
+                  "description": "The filter to match log entries for immediate alerts.",
+                  "description_kind": "plain"
+                },
+                "min_items": 1,
+                "max_items": 1
+              },
+              "rules": {
+                "nesting_mode": "list",
+                "block": {
+                  "block_types": {
+                    "condition": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "attributes": {
+                          "threshold": {
+                            "type": "number",
+                            "description": "The threshold value for the alert condition.",
+                            "description_kind": "plain",
+                            "required": true
+                          }
+                        },
+                        "block_types": {
+                          "time_window": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "logs_ratio_time_window_specific_value": {
+                                  "type": "string",
+                                  "description": "Specifies the time window for the ratio alert.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                }
+                              },
+                              "description": "The time window for the alert condition.",
+                              "description_kind": "plain"
+                            },
+                            "min_items": 1,
+                            "max_items": 1
+                          }
+                        },
+                        "description": "The condition for the ratio alert.",
+                        "description_kind": "plain"
+                      },
+                      "min_items": 1,
+                      "max_items": 1
+                    },
+                    "override": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "attributes": {
+                          "priority": {
+                            "type": "string",
+                            "description": "The priority of the alert definition.",
+                            "description_kind": "plain",
+                            "required": true
+                          }
+                        },
+                        "description": "The override settings for the alert.",
+                        "description_kind": "plain"
+                      },
+                      "min_items": 1,
+                      "max_items": 1
+                    }
+                  },
+                  "description": "The condition rules for the ratio alert.",
+                  "description_kind": "plain"
+                },
+                "min_items": 1
+              },
+              "undetected_values_management": {
+                "nesting_mode": "list",
+                "block": {
+                  "attributes": {
+                    "auto_retire_timeframe": {
+                      "type": "string",
+                      "description": "The timeframe for auto-retiring the alert when undetected values are detected.",
+                      "description_kind": "plain",
+                      "required": true
+                    },
+                    "trigger_undetected_values": {
+                      "type": "bool",
+                      "description": "Should trigger the alert when undetected values are detected. If true, alert is triggered.",
+                      "description_kind": "plain",
+                      "required": true
+                    }
+                  },
+                  "description": "Configuration for handling the undetected values in the alert.",
+                  "description_kind": "plain"
+                },
+                "max_items": 1
+              }
+            },
+            "description": "Configuration for the log-based ratio threshold alerts.",
+            "description_kind": "plain"
+          },
+          "max_items": 1
+        },
+        "logs_threshold": {
+          "nesting_mode": "list",
+          "block": {
+            "attributes": {
+              "condition_type": {
+                "type": "string",
+                "description": "The condition type for the alert.",
+                "description_kind": "plain",
+                "required": true
+              },
+              "evaluation_delay_ms": {
+                "type": "number",
+                "description": "The delay in milliseconds before evaluating the alert condition.",
+                "description_kind": "plain",
+                "optional": true
+              },
+              "notification_payload_filter": {
+                "type": [
+                  "list",
+                  "string"
+                ],
+                "description": "The filter to specify which fields are included in the notification payload.",
+                "description_kind": "plain",
+                "optional": true
+              }
+            },
+            "block_types": {
+              "logs_filter": {
+                "nesting_mode": "list",
+                "block": {
+                  "block_types": {
+                    "simple_filter": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "attributes": {
+                          "lucene_query": {
+                            "type": "string",
+                            "description": "The Lucene query to filter logs.",
+                            "description_kind": "plain",
+                            "optional": true
+                          }
+                        },
+                        "block_types": {
+                          "label_filters": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "severities": {
+                                  "type": [
+                                    "list",
+                                    "string"
+                                  ],
+                                  "description": "Filter by log severities.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "block_types": {
+                                "application_name": {
+                                  "nesting_mode": "list",
+                                  "block": {
+                                    "attributes": {
+                                      "operation": {
+                                        "type": "string",
+                                        "description": "The operation to perform on the label value.",
+                                        "description_kind": "plain",
+                                        "required": true
+                                      },
+                                      "value": {
+                                        "type": "string",
+                                        "description": "The value used to filter the label.",
+                                        "description_kind": "plain",
+                                        "optional": true
+                                      }
+                                    },
+                                    "description": "Filter by application names.",
+                                    "description_kind": "plain"
+                                  }
+                                },
+                                "subsystem_name": {
+                                  "nesting_mode": "list",
+                                  "block": {
+                                    "attributes": {
+                                      "operation": {
+                                        "type": "string",
+                                        "description": "The operation to perform on the label value.",
+                                        "description_kind": "plain",
+                                        "required": true
+                                      },
+                                      "value": {
+                                        "type": "string",
+                                        "description": "The value used to filter the label.",
+                                        "description_kind": "plain",
+                                        "optional": true
+                                      }
+                                    },
+                                    "description": "Filter by subsystem names.",
+                                    "description_kind": "plain"
+                                  }
+                                }
+                              },
+                              "description": "The label filters to filter logs.",
+                              "description_kind": "plain"
+                            },
+                            "max_items": 1
+                          }
+                        },
+                        "description": "A simple filter that uses a Lucene query and label filters.",
+                        "description_kind": "plain"
+                      },
+                      "max_items": 1
+                    }
+                  },
+                  "description": "The filter to match log entries for immediate alerts.",
+                  "description_kind": "plain"
+                },
+                "max_items": 1
+              },
+              "rules": {
+                "nesting_mode": "list",
+                "block": {
+                  "block_types": {
+                    "condition": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "attributes": {
+                          "threshold": {
+                            "type": "number",
+                            "description": "The threshold value for the alert condition.",
+                            "description_kind": "plain",
+                            "required": true
+                          }
+                        },
+                        "block_types": {
+                          "time_window": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "logs_time_window_specific_value": {
+                                  "type": "string",
+                                  "description": "The time window defined for an alert to be triggered.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                }
+                              },
+                              "description": "The time window for the alert condition.",
+                              "description_kind": "plain"
+                            },
+                            "min_items": 1,
+                            "max_items": 1
+                          }
+                        },
+                        "description": "The condition for the threshold alert.",
+                        "description_kind": "plain"
+                      },
+                      "min_items": 1,
+                      "max_items": 1
+                    },
+                    "override": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "attributes": {
+                          "priority": {
+                            "type": "string",
+                            "description": "The priority of the alert definition.",
+                            "description_kind": "plain",
+                            "required": true
+                          }
+                        },
+                        "description": "The override settings for the alert.",
+                        "description_kind": "plain"
+                      },
+                      "min_items": 1,
+                      "max_items": 1
+                    }
+                  },
+                  "description": "The condition rules for the threshold alert.",
+                  "description_kind": "plain"
+                },
+                "min_items": 1
+              },
+              "undetected_values_management": {
+                "nesting_mode": "list",
+                "block": {
+                  "attributes": {
+                    "auto_retire_timeframe": {
+                      "type": "string",
+                      "description": "The timeframe for auto-retiring the alert when undetected values are detected.",
+                      "description_kind": "plain",
+                      "required": true
+                    },
+                    "trigger_undetected_values": {
+                      "type": "bool",
+                      "description": "Should trigger the alert when undetected values are detected. If true, alert is triggered.",
+                      "description_kind": "plain",
+                      "required": true
+                    }
+                  },
+                  "description": "Configuration for handling the undetected values in the alert.",
+                  "description_kind": "plain"
+                },
+                "max_items": 1
+              }
+            },
+            "description": "Configuration for the log-based threshold alerts.",
+            "description_kind": "plain"
+          },
+          "max_items": 1
+        },
+        "logs_time_relative_threshold": {
+          "nesting_mode": "list",
+          "block": {
+            "attributes": {
+              "condition_type": {
+                "type": "string",
+                "description": "The delay in milliseconds before evaluating the alert condition.",
+                "description_kind": "plain",
+                "required": true
+              },
+              "evaluation_delay_ms": {
+                "type": "number",
+                "description": "The delay in milliseconds before evaluating the alert condition.",
+                "description_kind": "plain",
+                "optional": true
+              },
+              "ignore_infinity": {
+                "type": "bool",
+                "description": "Ignore infinity values in the alert.",
+                "description_kind": "plain",
+                "optional": true
+              },
+              "notification_payload_filter": {
+                "type": [
+                  "list",
+                  "string"
+                ],
+                "description": "The filter to specify which fields are included in the notification payload.",
+                "description_kind": "plain",
+                "optional": true
+              }
+            },
+            "block_types": {
+              "logs_filter": {
+                "nesting_mode": "list",
+                "block": {
+                  "block_types": {
+                    "simple_filter": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "attributes": {
+                          "lucene_query": {
+                            "type": "string",
+                            "description": "The Lucene query to filter logs.",
+                            "description_kind": "plain",
+                            "optional": true
+                          }
+                        },
+                        "block_types": {
+                          "label_filters": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "severities": {
+                                  "type": [
+                                    "list",
+                                    "string"
+                                  ],
+                                  "description": "Filter by log severities.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "block_types": {
+                                "application_name": {
+                                  "nesting_mode": "list",
+                                  "block": {
+                                    "attributes": {
+                                      "operation": {
+                                        "type": "string",
+                                        "description": "The operation to perform on the label value.",
+                                        "description_kind": "plain",
+                                        "required": true
+                                      },
+                                      "value": {
+                                        "type": "string",
+                                        "description": "The value used to filter the label.",
+                                        "description_kind": "plain",
+                                        "optional": true
+                                      }
+                                    },
+                                    "description": "Filter by application names.",
+                                    "description_kind": "plain"
+                                  }
+                                },
+                                "subsystem_name": {
+                                  "nesting_mode": "list",
+                                  "block": {
+                                    "attributes": {
+                                      "operation": {
+                                        "type": "string",
+                                        "description": "The operation to perform on the label value.",
+                                        "description_kind": "plain",
+                                        "required": true
+                                      },
+                                      "value": {
+                                        "type": "string",
+                                        "description": "The value used to filter the label.",
+                                        "description_kind": "plain",
+                                        "optional": true
+                                      }
+                                    },
+                                    "description": "Filter by subsystem names.",
+                                    "description_kind": "plain"
+                                  }
+                                }
+                              },
+                              "description": "The label filters to filter logs.",
+                              "description_kind": "plain"
+                            },
+                            "max_items": 1
+                          }
+                        },
+                        "description": "A simple filter that uses a Lucene query and label filters.",
+                        "description_kind": "plain"
+                      },
+                      "max_items": 1
+                    }
+                  },
+                  "description": "The filter to match log entries for immediate alerts.",
+                  "description_kind": "plain"
+                },
+                "max_items": 1
+              },
+              "rules": {
+                "nesting_mode": "list",
+                "block": {
+                  "block_types": {
+                    "condition": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "attributes": {
+                          "compared_to": {
+                            "type": "string",
+                            "description": "The time frame to compare the current value against.",
+                            "description_kind": "plain",
+                            "required": true
+                          },
+                          "threshold": {
+                            "type": "number",
+                            "description": "The threshold value for the alert condition.",
+                            "description_kind": "plain",
+                            "required": true
+                          }
+                        },
+                        "description": "The condition for the time-relative alert.",
+                        "description_kind": "plain"
+                      },
+                      "min_items": 1,
+                      "max_items": 1
+                    },
+                    "override": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "attributes": {
+                          "priority": {
+                            "type": "string",
+                            "description": "The priority of the alert definition.",
+                            "description_kind": "plain",
+                            "required": true
+                          }
+                        },
+                        "description": "The override settings for the alert.",
+                        "description_kind": "plain"
+                      },
+                      "min_items": 1,
+                      "max_items": 1
+                    }
+                  },
+                  "description": "The condition rules for the time-relative alert.",
+                  "description_kind": "plain"
+                },
+                "min_items": 1
+              },
+              "undetected_values_management": {
+                "nesting_mode": "list",
+                "block": {
+                  "attributes": {
+                    "auto_retire_timeframe": {
+                      "type": "string",
+                      "description": "The timeframe for auto-retiring the alert when undetected values are detected.",
+                      "description_kind": "plain",
+                      "required": true
+                    },
+                    "trigger_undetected_values": {
+                      "type": "bool",
+                      "description": "Should trigger the alert when undetected values are detected. If true, alert is triggered.",
+                      "description_kind": "plain",
+                      "required": true
+                    }
+                  },
+                  "description": "Configuration for handling the undetected values in the alert.",
+                  "description_kind": "plain"
+                },
+                "max_items": 1
+              }
+            },
+            "description": "Configuration for time-relative log threshold alerts.",
+            "description_kind": "plain"
+          },
+          "max_items": 1
+        },
+        "logs_unique_count": {
+          "nesting_mode": "list",
+          "block": {
+            "attributes": {
+              "max_unique_count_per_group_by_key": {
+                "type": "string",
+                "description": "The maximum unique count per group by key.",
+                "description_kind": "plain",
+                "optional": true
+              },
+              "notification_payload_filter": {
+                "type": [
+                  "list",
+                  "string"
+                ],
+                "description": "The filter to specify which fields are included in the notification payload.",
+                "description_kind": "plain",
+                "optional": true
+              },
+              "unique_count_keypath": {
+                "type": "string",
+                "description": "The keypath in the logs to be used for unique count.",
+                "description_kind": "plain",
+                "required": true
+              }
+            },
+            "block_types": {
+              "logs_filter": {
+                "nesting_mode": "list",
+                "block": {
+                  "block_types": {
+                    "simple_filter": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "attributes": {
+                          "lucene_query": {
+                            "type": "string",
+                            "description": "The Lucene query to filter logs.",
+                            "description_kind": "plain",
+                            "optional": true
+                          }
+                        },
+                        "block_types": {
+                          "label_filters": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "severities": {
+                                  "type": [
+                                    "list",
+                                    "string"
+                                  ],
+                                  "description": "Filter by log severities.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "block_types": {
+                                "application_name": {
+                                  "nesting_mode": "list",
+                                  "block": {
+                                    "attributes": {
+                                      "operation": {
+                                        "type": "string",
+                                        "description": "The operation to perform on the label value.",
+                                        "description_kind": "plain",
+                                        "required": true
+                                      },
+                                      "value": {
+                                        "type": "string",
+                                        "description": "The value used to filter the label.",
+                                        "description_kind": "plain",
+                                        "optional": true
+                                      }
+                                    },
+                                    "description": "Filter by application names.",
+                                    "description_kind": "plain"
+                                  }
+                                },
+                                "subsystem_name": {
+                                  "nesting_mode": "list",
+                                  "block": {
+                                    "attributes": {
+                                      "operation": {
+                                        "type": "string",
+                                        "description": "The operation to perform on the label value.",
+                                        "description_kind": "plain",
+                                        "required": true
+                                      },
+                                      "value": {
+                                        "type": "string",
+                                        "description": "The value used to filter the label.",
+                                        "description_kind": "plain",
+                                        "optional": true
+                                      }
+                                    },
+                                    "description": "Filter by subsystem names.",
+                                    "description_kind": "plain"
+                                  }
+                                }
+                              },
+                              "description": "The label filters to filter logs.",
+                              "description_kind": "plain"
+                            },
+                            "max_items": 1
+                          }
+                        },
+                        "description": "A simple filter that uses a Lucene query and label filters.",
+                        "description_kind": "plain"
+                      },
+                      "max_items": 1
+                    }
+                  },
+                  "description": "The filter to match log entries for immediate alerts.",
+                  "description_kind": "plain"
+                },
+                "max_items": 1
+              },
+              "rules": {
+                "nesting_mode": "list",
+                "block": {
+                  "block_types": {
+                    "condition": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "attributes": {
+                          "max_unique_count": {
+                            "type": "string",
+                            "description": "The maximum unique count for the alert condition.",
+                            "description_kind": "plain",
+                            "required": true
+                          }
+                        },
+                        "block_types": {
+                          "time_window": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "logs_unique_value_time_window_specific_value": {
+                                  "type": "string",
+                                  "description": "A time window defined by a specific value.",
+                                  "description_kind": "plain",
+                                  "required": true
+                                }
+                              },
+                              "description": "The time window for the unique count alert.",
+                              "description_kind": "plain"
+                            },
+                            "min_items": 1,
+                            "max_items": 1
+                          }
+                        },
+                        "description": "The condition for detecting unique counts in logs.",
+                        "description_kind": "plain"
+                      },
+                      "min_items": 1,
+                      "max_items": 1
+                    }
+                  },
+                  "description": "Rules defining the conditions for the unique count alert.",
+                  "description_kind": "plain"
+                },
+                "min_items": 1
+              }
+            },
+            "description": "Configuration for alerts based on unique log value counts.",
+            "description_kind": "plain"
+          },
+          "max_items": 1
+        },
+        "metric_anomaly": {
+          "nesting_mode": "list",
+          "block": {
+            "attributes": {
+              "condition_type": {
+                "type": "string",
+                "description": "The condition type for the alert.",
+                "description_kind": "plain",
+                "required": true
+              },
+              "evaluation_delay_ms": {
+                "type": "number",
+                "description": "The delay in milliseconds before evaluating the alert condition.",
+                "description_kind": "plain",
+                "optional": true
+              }
+            },
+            "block_types": {
+              "anomaly_alert_settings": {
+                "nesting_mode": "list",
+                "block": {
+                  "attributes": {
+                    "percentage_of_deviation": {
+                      "type": "number",
+                      "description": "The percentage of deviation from the baseline when the alert is triggered.",
+                      "description_kind": "plain",
+                      "optional": true
+                    }
+                  },
+                  "description": "The anomaly alert settings configuration.",
+                  "description_kind": "plain"
+                },
+                "max_items": 1
+              },
+              "metric_filter": {
+                "nesting_mode": "list",
+                "block": {
+                  "attributes": {
+                    "promql": {
+                      "type": "string",
+                      "description": "The filter is a PromQL expression.",
+                      "description_kind": "plain",
+                      "required": true
+                    }
+                  },
+                  "description": "The filter to match metric entries for the alert.",
+                  "description_kind": "plain"
+                },
+                "min_items": 1,
+                "max_items": 1
+              },
+              "rules": {
+                "nesting_mode": "list",
+                "block": {
+                  "block_types": {
+                    "condition": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "attributes": {
+                          "for_over_pct": {
+                            "type": "number",
+                            "description": "The percentage of the metric values that must exceed the threshold to trigger the alert.",
+                            "description_kind": "plain",
+                            "optional": true
+                          },
+                          "min_non_null_values_pct": {
+                            "type": "number",
+                            "description": "The percentage of non-null values required to trigger the alert.",
+                            "description_kind": "plain",
+                            "required": true
+                          },
+                          "threshold": {
+                            "type": "number",
+                            "description": "The threshold value for the alert condition.",
+                            "description_kind": "plain",
+                            "required": true
+                          }
+                        },
+                        "block_types": {
+                          "of_the_last": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "metric_time_window_dynamic_duration": {
+                                  "type": "string",
+                                  "description": "The time window as a dynamic value.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "metric_time_window_specific_value": {
+                                  "type": "string",
+                                  "description": "The time window as a specific value.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "description": "The time window for the alert condition.",
+                              "description_kind": "plain"
+                            },
+                            "min_items": 1,
+                            "max_items": 1
+                          }
+                        },
+                        "description": "The condition for the metric anomaly alert.",
+                        "description_kind": "plain"
+                      },
+                      "min_items": 1,
+                      "max_items": 1
+                    }
+                  },
+                  "description": "The condition rules for the metric anomaly alert.",
+                  "description_kind": "plain"
+                },
+                "min_items": 1
+              }
+            },
+            "description": "Configuration for metric-based anomaly detection alerts.",
+            "description_kind": "plain"
+          },
+          "max_items": 1
+        },
+        "metric_threshold": {
+          "nesting_mode": "list",
+          "block": {
+            "attributes": {
+              "condition_type": {
+                "type": "string",
+                "description": "The type of the alert condition.",
+                "description_kind": "plain",
+                "required": true
+              },
+              "evaluation_delay_ms": {
+                "type": "number",
+                "description": "The delay in milliseconds before evaluating the alert condition.",
+                "description_kind": "plain",
+                "optional": true
+              }
+            },
+            "block_types": {
+              "metric_filter": {
+                "nesting_mode": "list",
+                "block": {
+                  "attributes": {
+                    "promql": {
+                      "type": "string",
+                      "description": "The filter is a PromQL expression.",
+                      "description_kind": "plain",
+                      "required": true
+                    }
+                  },
+                  "description": "The filter to match metric entries for the alert.",
+                  "description_kind": "plain"
+                },
+                "min_items": 1,
+                "max_items": 1
+              },
+              "missing_values": {
+                "nesting_mode": "list",
+                "block": {
+                  "attributes": {
+                    "min_non_null_values_pct": {
+                      "type": "number",
+                      "description": "If set, specifies the minimum percentage of non-null values required for the alert to be triggered.",
+                      "description_kind": "plain",
+                      "optional": true
+                    },
+                    "replace_with_zero": {
+                      "type": "bool",
+                      "description": "If set to true, missing values will be replaced with zero.",
+                      "description_kind": "plain",
+                      "optional": true
+                    }
+                  },
+                  "description": "Configuration for handling missing values in the alert. Only one of `replace_with_zero` or `min_non_null_value_pct` is supported.",
+                  "description_kind": "plain"
+                },
+                "min_items": 1,
+                "max_items": 1
+              },
+              "rules": {
+                "nesting_mode": "list",
+                "block": {
+                  "block_types": {
+                    "condition": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "attributes": {
+                          "for_over_pct": {
+                            "type": "number",
+                            "description": "The percentage of values that must exceed the threshold to trigger the alert.",
+                            "description_kind": "plain",
+                            "required": true
+                          },
+                          "threshold": {
+                            "type": "number",
+                            "description": "The threshold value for the alert condition.",
+                            "description_kind": "plain",
+                            "required": true
+                          }
+                        },
+                        "block_types": {
+                          "of_the_last": {
+                            "nesting_mode": "list",
+                            "block": {
+                              "attributes": {
+                                "metric_time_window_dynamic_duration": {
+                                  "type": "string",
+                                  "description": "The time window as a dynamic value.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                },
+                                "metric_time_window_specific_value": {
+                                  "type": "string",
+                                  "description": "The time window as a specific value.",
+                                  "description_kind": "plain",
+                                  "optional": true
+                                }
+                              },
+                              "description": "The time window for the alert condition.",
+                              "description_kind": "plain"
+                            },
+                            "min_items": 1,
+                            "max_items": 1
+                          }
+                        },
+                        "description": "The condition for the metric threshold alert.",
+                        "description_kind": "plain"
+                      },
+                      "min_items": 1,
+                      "max_items": 1
+                    },
+                    "override": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "attributes": {
+                          "priority": {
+                            "type": "string",
+                            "description": "The priority of the alert definition.",
+                            "description_kind": "plain",
+                            "required": true
+                          }
+                        },
+                        "description": "The override settings for the alert.",
+                        "description_kind": "plain"
+                      },
+                      "min_items": 1,
+                      "max_items": 1
+                    }
+                  },
+                  "description": "The condition rules for the metric threshold alert.",
+                  "description_kind": "plain"
+                },
+                "min_items": 1
+              },
+              "undetected_values_management": {
+                "nesting_mode": "list",
+                "block": {
+                  "attributes": {
+                    "auto_retire_timeframe": {
+                      "type": "string",
+                      "description": "The timeframe for auto-retiring the alert when undetected values are detected.",
+                      "description_kind": "plain",
+                      "required": true
+                    },
+                    "trigger_undetected_values": {
+                      "type": "bool",
+                      "description": "Should trigger the alert when undetected values are detected. If true, alert is triggered.",
+                      "description_kind": "plain",
+                      "required": true
+                    }
+                  },
+                  "description": "Configuration for handling the undetected values in the alert.",
+                  "description_kind": "plain"
+                },
+                "max_items": 1
+              }
+            },
+            "description": "Configuration for metric-based threshold alerts.",
+            "description_kind": "plain"
+          },
+          "max_items": 1
+        },
+        "notification_group": {
+          "nesting_mode": "list",
+          "block": {
+            "attributes": {
+              "group_by_keys": {
+                "type": [
+                  "list",
+                  "string"
+                ],
+                "description": "Group the alerts by these keys.",
+                "description_kind": "plain",
+                "optional": true
+              }
+            },
+            "block_types": {
+              "webhooks": {
+                "nesting_mode": "list",
+                "block": {
+                  "attributes": {
+                    "minutes": {
+                      "type": "number",
+                      "description": "The time in minutes before the notification is sent.",
+                      "description_kind": "plain",
+                      "optional": true
+                    },
+                    "notify_on": {
+                      "type": "string",
+                      "description": "Indicate if the alert should be triggered or triggered and resolved.",
+                      "description_kind": "plain",
+                      "optional": true
+                    }
+                  },
+                  "block_types": {
+                    "integration": {
+                      "nesting_mode": "list",
+                      "block": {
+                        "attributes": {
+                          "integration_id": {
+                            "type": "number",
+                            "description": "The integration ID for the notification.",
+                            "description_kind": "plain",
+                            "optional": true
+                          }
+                        },
+                        "description": "The integration type for webhook notifications.",
+                        "description_kind": "plain"
+                      },
+                      "min_items": 1,
+                      "max_items": 1
+                    }
+                  },
+                  "description": "The settings for webhooks associated with the alert definition.",
+                  "description_kind": "plain"
+                }
+              }
+            },
+            "description": "Primary notification group for alert events.",
+            "description_kind": "plain"
+          },
+          "max_items": 1
+        }
+      },
+      "description_kind": "plain"
+    }
+  }
+}

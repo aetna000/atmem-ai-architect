@@ -1,0 +1,51 @@
+{
+  "case": "aws-06-metered-saas",
+  "scenario": "06-metered-saas",
+  "difficulty": "hard",
+  "provider": "aws",
+  "userExchanges": 2,
+  "clarificationQuestions": 1,
+  "technicalQuestions": 0,
+  "repeatedQuestions": 0,
+  "convergedWithoutQuestion": true,
+  "durationSeconds": 366.77,
+  "turns": [
+    {
+      "turn": 1,
+      "question": "Which country should hold project data and run AI processing?",
+      "repeatedQuestion": false,
+      "scopePreserved": true,
+      "proposal": true,
+      "internalResponseRepairs": 1,
+      "technicalQuestion": false
+    },
+    {
+      "turn": 2,
+      "question": null,
+      "repeatedQuestion": false,
+      "scopePreserved": true,
+      "proposal": true,
+      "internalResponseRepairs": 0
+    }
+  ],
+  "error": null,
+  "package": {
+    "staticCandidate": false,
+    "implementationRequired": 9,
+    "connectionGaps": 13,
+    "fatalFindings": [],
+    "wrongProviderNodes": [],
+    "files": 41,
+    "tasks": 68,
+    "runtime": "not_yet_qualified",
+    "nearDeploymentQualified": false
+  },
+  "acceptance": [
+    "Signed-out generation/download requests fail at the backend even if the UI is bypassed.",
+    "Cross-account/project reads, searches, jobs and artifacts are denied.",
+    "Memory survives replica replacement and concurrent writes.",
+    "Duplicate/concurrent webhooks and spend requests do not double-credit or overspend.",
+    "The existing website is referenced and integrated without destructive recreation."
+  ],
+  "status": "requires_independent_review_and_runtime_qualification"
+}

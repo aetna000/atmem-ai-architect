@@ -1,0 +1,197 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.29kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.13-slim-trixie@sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20
+#2 DONE 1.2s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [wheels 1/3] FROM docker.io/library/python:3.13-slim-trixie@sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20
+#4 resolve docker.io/library/python:3.13-slim-trixie@sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20 done
+#4 CACHED
+
+#5 [internal] load build context
+#5 transferring context: 281.61kB done
+#5 DONE 0.0s
+
+#6 [stage-1 2/5] WORKDIR /app
+#6 DONE 0.0s
+
+#7 [wheels 2/3] COPY requirements.lock /build/requirements.lock
+#7 DONE 0.0s
+
+#8 [stage-1 3/5] COPY requirements.lock /app/requirements.lock
+#8 DONE 0.0s
+
+#9 [wheels 3/3] RUN python -I -m pip --isolated download --only-binary=:all: --require-hashes --dest /wheels -r /build/requirements.lock
+#9 1.676 Collecting annotated-doc==0.0.5 (from -r /build/requirements.lock (line 1))
+#9 1.731   Downloading annotated_doc-0.0.5-py3-none-any.whl (5.3 kB)
+#9 1.751 Collecting annotated-types==0.8.0 (from -r /build/requirements.lock (line 3))
+#9 1.760   Downloading annotated_types-0.8.0-py3-none-any.whl (13 kB)
+#9 1.782 Collecting anyio==4.16.0 (from -r /build/requirements.lock (line 5))
+#9 1.790   Downloading anyio-4.16.0-py3-none-any.whl (134 kB)
+#9 1.835 Collecting asgiref==3.13.0 (from -r /build/requirements.lock (line 7))
+#9 1.843   Downloading asgiref-3.13.0-py3-none-any.whl (27 kB)
+#9 1.862 Collecting attrs==26.1.0 (from -r /build/requirements.lock (line 9))
+#9 1.870   Downloading attrs-26.1.0-py3-none-any.whl (67 kB)
+#9 1.894 Collecting certifi==2026.10.23 (from -r /build/requirements.lock (line 11))
+#9 1.903   Downloading certifi-2026.10.23-py3-none-any.whl (135 kB)
+#9 2.017 Collecting cffi==2.1.1 (from -r /build/requirements.lock (line 13))
+#9 2.024   Downloading cffi-2.1.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (221 kB)
+#9 2.135 Collecting charset-normalizer==3.5.2 (from -r /build/requirements.lock (line 113))
+#9 2.144   Downloading charset_normalizer-3.5.2-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (254 kB)
+#9 2.174 Collecting click==8.5.1 (from -r /build/requirements.lock (line 285))
+#9 2.182   Downloading click-8.5.1-py3-none-any.whl (126 kB)
+#9 2.206 Collecting croniter==7.0.0 (from -r /build/requirements.lock (line 287))
+#9 2.216   Downloading croniter-7.0.0-py3-none-any.whl (63 kB)
+#9 2.362 Collecting cryptography==50.0.2 (from -r /build/requirements.lock (line 289))
+#9 2.373   Downloading cryptography-50.0.2-cp311-abi3-manylinux_2_34_x86_64.whl (4.8 MB)
+#9 2.486      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 4.8/4.8 MB 42.4 MB/s  0:00:00
+#9 2.547 Collecting fastapi==0.162.0 (from -r /build/requirements.lock (line 348))
+#9 2.556   Downloading fastapi-0.162.0-py3-none-any.whl (148 kB)
+#9 2.579 Collecting h11==0.16.0 (from -r /build/requirements.lock (line 350))
+#9 2.589   Downloading h11-0.16.0-py3-none-any.whl (37 kB)
+#9 2.607 Collecting idna==3.20 (from -r /build/requirements.lock (line 352))
+#9 2.615   Downloading idna-3.20-py3-none-any.whl (69 kB)
+#9 2.639 Collecting msal==1.39.0 (from -r /build/requirements.lock (line 354))
+#9 2.648   Downloading msal-1.39.0-py3-none-any.whl (131 kB)
+#9 2.674 Collecting opentelemetry-api==1.45.2 (from -r /build/requirements.lock (line 356))
+#9 2.682   Downloading opentelemetry_api-1.45.2-py3-none-any.whl (60 kB)
+#9 2.704 Collecting packaging==26.3 (from -r /build/requirements.lock (line 358))
+#9 2.713   Downloading packaging-26.3-py3-none-any.whl (129 kB)
+#9 2.964 Collecting procrastinate==3.10.0 (from -r /build/requirements.lock (line 360))
+#9 2.974   Downloading procrastinate-3.10.0-py3-none-any.whl (155 kB)
+#9 3.003 Collecting psycopg==3.3.8 (from -r /build/requirements.lock (line 362))
+#9 3.012   Downloading psycopg-3.3.8-py3-none-any.whl (216 kB)
+#9 3.156 Collecting psycopg-binary==3.3.8 (from -r /build/requirements.lock (line 364))
+#9 3.166   Downloading psycopg_binary-3.3.8-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (5.2 MB)
+#9 3.296      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 5.2/5.2 MB 41.0 MB/s  0:00:00
+#9 3.327 Collecting psycopg-pool==3.3.3 (from -r /build/requirements.lock (line 431))
+#9 3.335   Downloading psycopg_pool-3.3.3-py3-none-any.whl (40 kB)
+#9 3.359 Collecting pycparser==3.12 (from -r /build/requirements.lock (line 433))
+#9 3.368   Downloading pycparser-3.12-py3-none-any.whl (62 kB)
+#9 3.454 Collecting pydantic==2.14.3 (from -r /build/requirements.lock (line 435))
+#9 3.464   Downloading pydantic-2.14.3-py3-none-any.whl (494 kB)
+#9 4.047 Collecting pydantic_core==2.50.4 (from -r /build/requirements.lock (line 437))
+#9 4.057   Downloading pydantic_core-2.50.4-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (2.3 MB)
+#9 4.114      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.3/2.3 MB 39.8 MB/s  0:00:00
+#9 4.140 Collecting PyJWT==2.15.1 (from -r /build/requirements.lock (line 577))
+#9 4.148   Downloading pyjwt-2.15.1-py3-none-any.whl (33 kB)
+#9 4.165 Collecting python-dateutil==2.9.0.post0 (from -r /build/requirements.lock (line 579))
+#9 4.173   Downloading python_dateutil-2.9.0.post0-py2.py3-none-any.whl (229 kB)
+#9 4.202 Collecting requests==2.34.2 (from -r /build/requirements.lock (line 581))
+#9 4.211   Downloading requests-2.34.2-py3-none-any.whl (73 kB)
+#9 4.230 Collecting six==1.17.0 (from -r /build/requirements.lock (line 583))
+#9 4.237   Downloading six-1.17.0-py2.py3-none-any.whl (11 kB)
+#9 4.263 Collecting starlette==1.10.0 (from -r /build/requirements.lock (line 585))
+#9 4.271   Downloading starlette-1.10.0-py3-none-any.whl (80 kB)
+#9 4.297 Collecting typing_extensions==4.16.0 (from -r /build/requirements.lock (line 587))
+#9 4.305   Downloading typing_extensions-4.16.0-py3-none-any.whl (45 kB)
+#9 4.325 Collecting typing-inspection==0.4.5 (from -r /build/requirements.lock (line 589))
+#9 4.333   Downloading typing_inspection-0.4.5-py3-none-any.whl (14 kB)
+#9 4.353 Collecting urllib3==2.8.0 (from -r /build/requirements.lock (line 591))
+#9 4.363   Downloading urllib3-2.8.0-py3-none-any.whl (135 kB)
+#9 4.390 Collecting uvicorn==0.54.0 (from -r /build/requirements.lock (line 593))
+#9 4.401   Downloading uvicorn-0.54.0-py3-none-any.whl (87 kB)
+#9 4.434 Saved ./wheels/annotated_doc-0.0.5-py3-none-any.whl
+#9 4.435 Saved ./wheels/annotated_types-0.8.0-py3-none-any.whl
+#9 4.435 Saved ./wheels/anyio-4.16.0-py3-none-any.whl
+#9 4.435 Saved ./wheels/asgiref-3.13.0-py3-none-any.whl
+#9 4.436 Saved ./wheels/attrs-26.1.0-py3-none-any.whl
+#9 4.436 Saved ./wheels/certifi-2026.10.23-py3-none-any.whl
+#9 4.437 Saved ./wheels/cffi-2.1.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
+#9 4.437 Saved ./wheels/charset_normalizer-3.5.2-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl
+#9 4.437 Saved ./wheels/click-8.5.1-py3-none-any.whl
+#9 4.438 Saved ./wheels/croniter-7.0.0-py3-none-any.whl
+#9 4.439 Saved ./wheels/cryptography-50.0.2-cp311-abi3-manylinux_2_34_x86_64.whl
+#9 4.439 Saved ./wheels/fastapi-0.162.0-py3-none-any.whl
+#9 4.440 Saved ./wheels/h11-0.16.0-py3-none-any.whl
+#9 4.440 Saved ./wheels/idna-3.20-py3-none-any.whl
+#9 4.440 Saved ./wheels/msal-1.39.0-py3-none-any.whl
+#9 4.441 Saved ./wheels/pyjwt-2.15.1-py3-none-any.whl
+#9 4.441 Saved ./wheels/requests-2.34.2-py3-none-any.whl
+#9 4.441 Saved ./wheels/urllib3-2.8.0-py3-none-any.whl
+#9 4.442 Saved ./wheels/opentelemetry_api-1.45.2-py3-none-any.whl
+#9 4.442 Saved ./wheels/packaging-26.3-py3-none-any.whl
+#9 4.442 Saved ./wheels/procrastinate-3.10.0-py3-none-any.whl
+#9 4.443 Saved ./wheels/psycopg-3.3.8-py3-none-any.whl
+#9 4.445 Saved ./wheels/psycopg_binary-3.3.8-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
+#9 4.445 Saved ./wheels/psycopg_pool-3.3.3-py3-none-any.whl
+#9 4.445 Saved ./wheels/pycparser-3.12-py3-none-any.whl
+#9 4.446 Saved ./wheels/pydantic-2.14.3-py3-none-any.whl
+#9 4.446 Saved ./wheels/pydantic_core-2.50.4-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl
+#9 4.447 Saved ./wheels/python_dateutil-2.9.0.post0-py2.py3-none-any.whl
+#9 4.447 Saved ./wheels/six-1.17.0-py2.py3-none-any.whl
+#9 4.448 Saved ./wheels/starlette-1.10.0-py3-none-any.whl
+#9 4.448 Saved ./wheels/typing_extensions-4.16.0-py3-none-any.whl
+#9 4.448 Saved ./wheels/typing_inspection-0.4.5-py3-none-any.whl
+#9 4.449 Saved ./wheels/uvicorn-0.54.0-py3-none-any.whl
+#9 4.449 Successfully downloaded annotated-doc annotated-types anyio asgiref attrs certifi cffi charset-normalizer click croniter cryptography fastapi h11 idna msal PyJWT requests urllib3 opentelemetry-api packaging procrastinate psycopg psycopg-binary psycopg-pool pycparser pydantic pydantic_core python-dateutil six starlette typing_extensions typing-inspection uvicorn
+#9 4.450 
+#9 4.450 [notice] A new release of pip is available: 26.2.2 -> 26.3
+#9 4.450 [notice] To update, run: pip install --upgrade pip
+#9 DONE 4.6s
+
+#10 [stage-1 4/5] RUN --mount=type=bind,from=wheels,source=/wheels,target=/wheels,readonly python -I -m pip --isolated install --no-index --find-links=/wheels --only-binary=:all: --no-cache-dir --require-hashes -r /app/requirements.lock && python -I -m pip --isolated check && python -I -m pip --isolated uninstall --yes pip && rm -rf /usr/local/lib/python3.13/ensurepip
+#10 1.408 Looking in links: /wheels
+#10 1.417 Processing /wheels/annotated_doc-0.0.5-py3-none-any.whl (from -r /app/requirements.lock (line 1))
+#10 1.426 Processing /wheels/annotated_types-0.8.0-py3-none-any.whl (from -r /app/requirements.lock (line 3))
+#10 1.428 Processing /wheels/anyio-4.16.0-py3-none-any.whl (from -r /app/requirements.lock (line 5))
+#10 1.432 Processing /wheels/asgiref-3.13.0-py3-none-any.whl (from -r /app/requirements.lock (line 7))
+#10 1.434 Processing /wheels/attrs-26.1.0-py3-none-any.whl (from -r /app/requirements.lock (line 9))
+#10 1.437 Processing /wheels/certifi-2026.10.23-py3-none-any.whl (from -r /app/requirements.lock (line 11))
+#10 1.439 Processing /wheels/cffi-2.1.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (from -r /app/requirements.lock (line 13))
+#10 1.442 Processing /wheels/charset_normalizer-3.5.2-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (from -r /app/requirements.lock (line 113))
+#10 1.448 Processing /wheels/click-8.5.1-py3-none-any.whl (from -r /app/requirements.lock (line 285))
+#10 1.450 Processing /wheels/croniter-7.0.0-py3-none-any.whl (from -r /app/requirements.lock (line 287))
+#10 1.453 Processing /wheels/cryptography-50.0.2-cp311-abi3-manylinux_2_34_x86_64.whl (from -r /app/requirements.lock (line 289))
+#10 1.476 Processing /wheels/fastapi-0.162.0-py3-none-any.whl (from -r /app/requirements.lock (line 348))
+#10 1.482 Processing /wheels/h11-0.16.0-py3-none-any.whl (from -r /app/requirements.lock (line 350))
+#10 1.484 Processing /wheels/idna-3.20-py3-none-any.whl (from -r /app/requirements.lock (line 352))
+#10 1.487 Processing /wheels/msal-1.39.0-py3-none-any.whl (from -r /app/requirements.lock (line 354))
+#10 1.491 Processing /wheels/opentelemetry_api-1.45.2-py3-none-any.whl (from -r /app/requirements.lock (line 356))
+#10 1.493 Processing /wheels/packaging-26.3-py3-none-any.whl (from -r /app/requirements.lock (line 358))
+#10 1.495 Processing /wheels/procrastinate-3.10.0-py3-none-any.whl (from -r /app/requirements.lock (line 360))
+#10 1.499 Processing /wheels/psycopg-3.3.8-py3-none-any.whl (from -r /app/requirements.lock (line 362))
+#10 1.504 Processing /wheels/psycopg_binary-3.3.8-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (from -r /app/requirements.lock (line 364))
+#10 1.528 Processing /wheels/psycopg_pool-3.3.3-py3-none-any.whl (from -r /app/requirements.lock (line 431))
+#10 1.530 Processing /wheels/pycparser-3.12-py3-none-any.whl (from -r /app/requirements.lock (line 433))
+#10 1.533 Processing /wheels/pydantic-2.14.3-py3-none-any.whl (from -r /app/requirements.lock (line 435))
+#10 1.541 Processing /wheels/pydantic_core-2.50.4-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (from -r /app/requirements.lock (line 437))
+#10 1.553 Processing /wheels/pyjwt-2.15.1-py3-none-any.whl (from -r /app/requirements.lock (line 577))
+#10 1.555 Processing /wheels/python_dateutil-2.9.0.post0-py2.py3-none-any.whl (from -r /app/requirements.lock (line 579))
+#10 1.558 Processing /wheels/requests-2.34.2-py3-none-any.whl (from -r /app/requirements.lock (line 581))
+#10 1.560 Processing /wheels/six-1.17.0-py2.py3-none-any.whl (from -r /app/requirements.lock (line 583))
+#10 1.562 Processing /wheels/starlette-1.10.0-py3-none-any.whl (from -r /app/requirements.lock (line 585))
+#10 1.565 Processing /wheels/typing_extensions-4.16.0-py3-none-any.whl (from -r /app/requirements.lock (line 587))
+#10 1.567 Processing /wheels/typing_inspection-0.4.5-py3-none-any.whl (from -r /app/requirements.lock (line 589))
+#10 1.569 Processing /wheels/urllib3-2.8.0-py3-none-any.whl (from -r /app/requirements.lock (line 591))
+#10 1.572 Processing /wheels/uvicorn-0.54.0-py3-none-any.whl (from -r /app/requirements.lock (line 593))
+#10 1.780 Installing collected packages: urllib3, typing_extensions, six, PyJWT, pycparser, psycopg-binary, psycopg, packaging, idna, h11, click, charset-normalizer, certifi, attrs, asgiref, annotated-types, annotated-doc, uvicorn, typing-inspection, requests, python-dateutil, pydantic_core, psycopg-pool, opentelemetry-api, cffi, anyio, starlette, pydantic, cryptography, croniter, procrastinate, fastapi, msal
+#10 3.398 
+#10 3.401 Successfully installed PyJWT-2.15.1 annotated-doc-0.0.5 annotated-types-0.8.0 anyio-4.16.0 asgiref-3.13.0 attrs-26.1.0 certifi-2026.10.23 cffi-2.1.1 charset-normalizer-3.5.2 click-8.5.1 croniter-7.0.0 cryptography-50.0.2 fastapi-0.162.0 h11-0.16.0 idna-3.20 msal-1.39.0 opentelemetry-api-1.45.2 packaging-26.3 procrastinate-3.10.0 psycopg-3.3.8 psycopg-binary-3.3.8 psycopg-pool-3.3.3 pycparser-3.12 pydantic-2.14.3 pydantic_core-2.50.4 python-dateutil-2.9.0.post0 requests-2.34.2 six-1.17.0 starlette-1.10.0 typing-inspection-0.4.5 typing_extensions-4.16.0 urllib3-2.8.0 uvicorn-0.54.0
+#10 3.402 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#10 3.744 No broken requirements found.
+#10 4.135 Found existing installation: pip 26.2.2
+#10 4.162 Uninstalling pip-26.2.2:
+#10 4.260   Successfully uninstalled pip-26.2.2
+#10 4.270 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#10 DONE 4.5s
+
+#11 [stage-1 5/5] COPY runtime/ /app/
+#11 DONE 0.0s
+
+#12 exporting to image
+#12 exporting layers
+#12 exporting layers 1.6s done
+#12 exporting manifest sha256:12565b8c78568cab910589c6e3608abd9f65328bae8d20a0a3968154cc8f0a1b done
+#12 exporting config sha256:01a76efb644f9b21cc656d2cc0ce780c3eff9193ccab55fd8c096b76014de7e6 done
+#12 exporting attestation manifest sha256:9ff572ff88c1e5287f42c4d8b79bcf7420215e0b24086494c214941d23fc378d done
+#12 exporting manifest list sha256:31cfa3501faf10a4eade0a5d319953bebe6b07788dc57791248d7912a04032ad done
+#12 naming to docker.io/library/atmem-private-core:qualification-9679a19c62f06d5e done
+#12 DONE 1.6s

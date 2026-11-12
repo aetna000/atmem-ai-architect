@@ -1,0 +1,58 @@
+{
+  "artifactId": "4dffe295-64fe-4408-a77e-78f3c3f6471d",
+  "artifactSha256": "ad0bd37c6a3a06663e7154f76e152c6e43450f0459af4353c219f62754b5cb2a",
+  "decisions": [
+    {
+      "validatorId": "placed-browser-tests",
+      "label": "Sandboxed ARM browser tests",
+      "state": "selected",
+      "contractSha256": "87efff981ea60754bd9b20f838c923cf0749509e3ba454de863c91a413df628c",
+      "placement": {
+        "workerId": "arm-browser",
+        "status": "configured"
+      },
+      "applicability": {
+        "anyOf": [
+          "tests/browser.test.mjs"
+        ],
+        "allOf": [],
+        "noneOf": []
+      },
+      "assessment": {
+        "applies": true,
+        "matchedAnyOf": [
+          "tests/browser.test.mjs"
+        ],
+        "missingAllOf": [],
+        "matchedNoneOf": []
+      }
+    },
+    {
+      "validatorId": "placed-process-tests",
+      "label": "Full AMD64 process controls and SQL",
+      "state": "selected",
+      "contractSha256": "d3ae7029f129d9d7f752df2e1e89a0fefc40598da8de29e6437f10c0ff0b8e45",
+      "placement": {
+        "workerId": "full-amd64",
+        "status": "configured"
+      },
+      "applicability": {
+        "anyOf": [
+          "checks/test_amd64.py"
+        ],
+        "allOf": [],
+        "noneOf": []
+      },
+      "assessment": {
+        "applies": true,
+        "matchedAnyOf": [
+          "checks/test_amd64.py"
+        ],
+        "missingAllOf": [],
+        "matchedNoneOf": []
+      }
+    }
+  ],
+  "selectionStatus": "checks_selected",
+  "acceptance": "not_established_by_file_applicability"
+}

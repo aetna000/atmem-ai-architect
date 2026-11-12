@@ -1,0 +1,27 @@
+tests/container.tftest.hcl... in progress
+  run "block_696e737472756d656e742dc2b5_security"... pass
+  run "block_696e737472756d656e742dc2b5_reject_mutable_image"... pass
+  run "block_696e737472756d656e742dc2b5_footprint"... pass
+  run "unapproved_blocked"... pass
+tests/container.tftest.hcl... tearing down
+tests/container.tftest.hcl... pass
+tests/independent-before.tftest.hcl... in progress
+  run "independent_accepted_placement"... fail
+
+Error: Test assertion failed
+
+  on tests/independent-before.tftest.hcl line 16, in run "independent_accepted_placement":
+  16:  condition = var.region == "eu-west-1"
+    ├────────────────
+    │ Diff:
+    │ --- actual
+    │ +++ expected
+    │ - "ap-southeast-2"
+    │ + "eu-west-1"
+
+
+Accepted placement was not retained.
+tests/independent-before.tftest.hcl... tearing down
+tests/independent-before.tftest.hcl... fail
+
+Failure! 4 passed, 1 failed.

@@ -1,0 +1,28 @@
+{
+  "validator": "native-extension-probe",
+  "artifactSha256": "8739c76e681f900923b900c9df0ef75cf421d39cabb54650c4b9ad19b6a76d85",
+  "imageId": "sha256:63164e32f99523d8b2f108ee05095d51de7a951934cdc6bd3c99ee78993e8f5f",
+  "runtimeConfigImageId": "sha256:63164e32f99523d8b2f108ee05095d51de7a951934cdc6bd3c99ee78993e8f5f",
+  "platform": "linux/amd64",
+  "isolationProfile": "standard-v1",
+  "runtimeEnvironment": {},
+  "command": [
+    "/usr/local/bin/python3",
+    "-I",
+    "-c",
+    "\nimport errno,importlib,importlib.util,json,os,pathlib,shutil,socket,sys,tempfile\nenabled=json.loads(sys.argv[1]);assert os.getuid()==65532\nassert os.statvfs('/tmp').f_flag&os.ST_NOEXEC\nassert os.statvfs('/work/source').f_flag&os.ST_NOEXEC\nassert not pathlib.Path('/var/run/docker.sock').exists()\nassert {p.name for p in pathlib.Path('/sys/class/net').iterdir()}=={'lo'}\ntry:os.setuid(0)\nexcept PermissionError:pass\nelse:raise AssertionError('Regained root')\ntry:pathlib.Path('/etc/scratch-probe').write_text('MUTATED')\nexcept OSError as error:assert error.errno in {errno.EACCES,errno.EROFS}\nelse:raise AssertionError('Image root writable')\nstatus=pathlib.Path('/proc/self/status').read_text();assert 'CapEff:\\t0000000000000000'in status and 'NoNewPrivs:\\t1'in status\nrows=[]\nfor domain,name in [('museum','_csv'),('weather','_json')]:\n module=importlib.import_module(name);original=pathlib.Path(module.__file__)\n with tempfile.TemporaryDirectory(prefix=domain+'-')as folder:\n  target=pathlib.Path(folder)/original.name;shutil.copyfile(original,target)\n  assert bool(os.statvfs(folder).f_flag&os.ST_NOEXEC)==(not enabled)\n  try:\n   spec=importlib.util.spec_from_file_location(name,target);loaded=importlib.util.module_from_spec(spec);spec.loader.exec_module(loaded)\n  except ImportError:\n   assert not enabled;rows.append({'domain':domain,'extension':name,'loaded':False})\n  else:\n   assert enabled and pathlib.Path(loaded.__file__).resolve()==target.resolve()\n   if name=='_csv':assert list(loaded.reader(['station,reading']))==[['station','reading']]\n   else:assert loaded.scanstring('\"clear\"',1)[0]=='clear'\n   rows.append({'domain':domain,'extension':name,'loaded':True})\nassert len(rows)==2\nif enabled:assert os.environ['ATMEM_TEST_DEPENDENCY_ROOT']=='/dependencies'\nprint(json.dumps({'passed':True,'executableScratch':enabled,'cases':rows,'sourceAndOrdinaryTmpNoexec':True,'rootReadonlyUidCapabilitiesAndNetworkDenials':True}))\n",
+    "true"
+  ],
+  "status": "passed",
+  "exitCode": 0,
+  "executableScratch": true,
+  "skipped": 0,
+  "testsReported": null,
+  "reason": null,
+  "output": "{\"passed\": true, \"executableScratch\": true, \"cases\": [{\"domain\": \"museum\", \"extension\": \"_csv\", \"loaded\": true}, {\"domain\": \"weather\", \"extension\": \"_json\", \"loaded\": true}], \"sourceAndOrdinaryTmpNoexec\": true, \"rootReadonlyUidCapabilitiesAndNetworkDenials\": true}\n",
+  "outputTruncated": false,
+  "durationSeconds": 0.807,
+  "evidenceLevel": "local_container_check",
+  "cloudOperations": false,
+  "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+}

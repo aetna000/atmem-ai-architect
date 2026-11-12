@@ -85,10 +85,10 @@ class QualificationSkillTests(unittest.TestCase):
         self.assertIn('Stop retrying a model',catalog['devops']['instructions'])
 
     def test_published_skill_entries_fit_the_memory_boundary(self):
-        from server.skills import registry
+        from server.skills import registry, publication_text
         from server.memory_service import safe
         for skill in registry():
-            text=f'Skill {skill["id"]} v{skill["version"]}: {skill["instructions"]}\nSource: {skill["source"]}; artifact SHA256: {skill["digest"]}'
+            text=publication_text(skill)
             self.assertLessEqual(len(text),1900,skill['id'])
             self.assertTrue(safe(text),skill['id'])
 

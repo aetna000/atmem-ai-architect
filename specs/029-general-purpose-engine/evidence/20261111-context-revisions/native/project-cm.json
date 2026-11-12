@@ -1,0 +1,47 @@
+{
+  "format": "atmem.ai-architect.project",
+  "formatVersion": "2.3.0",
+  "meta": {
+    "id": "context-river-9b49415a-3232-4df7-99a4-9165f7ce8235",
+    "name": "River gauge adapter",
+    "revision": 2
+  },
+  "design": {
+    "provider": "tools",
+    "nodes": [
+      {
+        "id": "gauge",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "data": {
+          "kind": "resource",
+          "provider": "tools",
+          "origin": "existing",
+          "label": "Client river gauge",
+          "description": "Keep the existing client-owned gauge unchanged."
+        }
+      }
+    ],
+    "edges": []
+  },
+  "discovery": {
+    "problem": "An independent local river depth conversion library, no network or cloud services."
+  },
+  "requirements": [
+    {
+      "id": "depth",
+      "status": "accepted",
+      "source": "user",
+      "priority": "must",
+      "links": [
+        "gauge"
+      ],
+      "statement": "Provide CommonJS depth.cjs exporting normalize(metres) and unit. normalize accepts only finite nonnegative number primitives, rejects all other inputs with TypeError, returns depth in centimetres (multiply by 100). Export unit as cm. Preserve the existing client-owned gauge. Keep Unicode labels such as 🛰️ intact in documentation."
+    }
+  ],
+  "assumptions": [],
+  "decisions": [],
+  "extensions": {}
+}

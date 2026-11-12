@@ -1,0 +1,25 @@
+{
+  "timestampUtc": "2026-11-10T22:22:16.408459+00:00",
+  "receiptSha256": "02bbd2922db81e39bfa13d1f30dda2360868bdb502eede9b0ed45aedebce41f6",
+  "artifactDigestsVerified": true,
+  "generatedSuite": {
+    "command": [
+      "/Users/javadtaghia/gitlab/ai-architect-workbench/.venv/bin/python",
+      "-m",
+      "unittest",
+      "discover",
+      "-v"
+    ],
+    "exitCode": 0,
+    "stdout": "",
+    "stderr": "test_invalid_input (test_reservations.ReleaseTests.test_invalid_input) ... ok\ntest_release_all (test_reservations.ReleaseTests.test_release_all) ... ok\ntest_release_exceeds_booked (test_reservations.ReleaseTests.test_release_exceeds_booked) ... ok\ntest_success (test_reservations.ReleaseTests.test_success) ... ok\ntest_zero_release (test_reservations.ReleaseTests.test_zero_release) ... ok\ntest_full_capacity (test_reservations.ReserveTests.test_full_capacity) ... ok\ntest_invalid_input (test_reservations.ReserveTests.test_invalid_input) ... ok\ntest_over_capacity (test_reservations.ReserveTests.test_over_capacity) ... ok\ntest_success (test_reservations.ReserveTests.test_success) ... ok\n\n----------------------------------------------------------------------\nRan 9 tests in 0.000s\n\nOK\n"
+  },
+  "independentOracle": {
+    "source": "import reservations as r\nassert r.reserve(8, 2, 6) == 8\nassert r.reserve(0, 0, 0) == 0\nassert r.release(8, 8) == 0\nassert r.release(8, 0) == 8\nchecks = 4\nfor args in [(8,7,2),(8,9,0),(-1,0,0),(8,0,-1),(8,True,1),(8,0,1.5),('8',0,1)]:\n try: r.reserve(*args)\n except ValueError: pass\n else: raise AssertionError(('reserve', args))\n checks += 1\nfor args in [(1,2),(True,0),(1,-1),(1,0.2),('2',1)]:\n try: r.release(*args)\n except ValueError: pass\n else: raise AssertionError(('release', args))\n checks += 1\nprint(f'{checks} independent behavioral checks passed')\n",
+    "exitCode": 0,
+    "stdout": "16 independent behavioral checks passed\n",
+    "stderr": ""
+  },
+  "passed": true,
+  "boundary": "Local captured Python artifact behavior only; no Terraform, hosted isolation or cloud proof."
+}

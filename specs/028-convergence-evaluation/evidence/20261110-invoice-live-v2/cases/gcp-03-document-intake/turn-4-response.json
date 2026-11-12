@@ -1,0 +1,297 @@
+{
+  "message": "We\u2019ll preserve 500 daily uploads, bursts of twenty and jobs lasting several minutes, with your accounting system remaining external. Let\u2019s strengthen the design with durable job identities, bounded retries and a recoverable failure queue; handoff still needs regional availability, identity, accounting residency and adapter acceptance evidence.",
+  "phase": "Architecture",
+  "proposal": {
+    "baseRevision": 4,
+    "title": "Strengthen asynchronous processing and external accounting delivery",
+    "body": "Preserve all components, positions, existing requirements and Australian residency constraints. Refine the composed workflow's internal PostgreSQL queue, recovery states and accounting interface without duplicating its owned infrastructure. Twenty-upload bursts are an intake planning requirement, not twenty concurrent extraction workers. Several-minute jobs run independently of browser requests. Sydney remains proposed; service availability, identity configuration, accounting residency and destination compatibility remain unverified.",
+    "next": {
+      "version": 1,
+      "revision": 4,
+      "name": "Asynchronous document intake",
+      "provider": "gcp",
+      "requirements": "Users upload PDF invoices. Extract the supplier, invoice date, total and currency into a review queue. Delivery can repeat; retries must not create duplicate invoices. A reviewer approves a result before it is sent to our existing accounting API. Use Google Cloud. Recommend a coherent system and the engineering choices. Ask only a small material business question when needed; do not make me configure the system.",
+      "nodes": [
+        {
+          "id": "staff-browser",
+          "type": "resource",
+          "position": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "data": {
+            "label": "Staff uploaders and reviewers",
+            "kind": "tool",
+            "provider": "tools",
+            "description": "Existing browsers used by 20 signed-in staff, with three reviewers identified; whether reviewers are included in the 20 is unspecified. Staff upload PDFs and inspect permitted processing results. Only authorized reviewers may approve the exact reviewed revision; ordinary uploaders cannot approve. The server enforces membership and permissions on every relevant request. Client reference outside provisioning scope; staff identity provider and access geography remain unresolved.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "deploymentMode": "reference",
+            "poc": true,
+            "role": "human",
+            "topologyGroup": "Staff access",
+            "service": "Web browser",
+            "binding": "web-browser"
+          }
+        },
+        {
+          "id": "invoice-workflow",
+          "type": "resource",
+          "position": {
+            "x": 440.0,
+            "y": 0.0
+          },
+          "data": {
+            "label": "Invoice intake, review and approved delivery",
+            "kind": "resource",
+            "provider": "gcp",
+            "description": "Proposed composed delivery unit on Google Cloud Run: browser/API, background worker and isolated PDF/OCR parser. Owns Cloud SQL for PostgreSQL transactional durable job queue/outbox and review state, private versioned Google Cloud Storage originals, regional Vertex AI extraction, staff sign-in, SQL user/reviewer membership and separate keyless workload identities. Supports 20 signed-in staff and three reviewers; whether reviewers are included in the 20 remains unspecified. Ordinary uploaders cannot approve; the server enforces membership and permissions on every relevant request. Staff identity provider and access geography remain unresolved. Scope includes PDF intake, extraction of supplier/invoice date/total/currency with source evidence, durable review, authorized approval and approved accounting delivery. Planning workload is 500 uploads daily with bursts of twenty, PDFs up to 10,000,000 bytes and jobs that may take several minutes; this is not a completion-time guarantee. Proposed parser bound remains 100 pages. Accept uploads durably and return a stable job ID/status without holding the browser request open for extraction. Repeated delivery of the same intake identity resolves to the same invoice/job; independently submitted business duplicates require a separately agreed matching policy. Persist exact source object-version identity, invoice/job identity and processing results. Commit business state and queued work in one PostgreSQL transaction. Propose leased PostgreSQL workers with fencing, heartbeats, bounded processing deadlines, bounded exponential-backoff retries and stalled/orphaned-job recovery. Exhausted or permanent failures enter durable dead-letter/quarantine records with failure reason, attempts and audit history; authorized recovery reuses the original identity and cannot bypass approval or accounting outcome fences. Queue admission and worker concurrency are independently bounded so bursts need not start twenty extraction workers. Validate burst intake, several-minute execution, duplicate delivery, worker termination, retry exhaustion and controlled recovery against emitted artifacts before claiming capacity or reliability. Documents may contain personal data: restrict originals, extracted fields and audit access to authorized staff, exclude document contents from operational logs and clean up temporary parser data. Parser alone sees untrusted PDF bytes and has no database, model or accounting identity. Return extracted fields, source evidence and processing/review/delivery status through the review UI. Bind approval to the exact source/result revision and destination contract; edits invalidate approval. Only an authorized reviewer can approve. Send only approved payloads through the external accounting adapter with a durable operation ID and stable payload identity. Persist delivery intent and receipt/outcome. Retry only under a verified destination idempotency contract using the same operation and payload identity; uncertain outcomes pause for reconciliation, never a fresh send identity or automatic reapproval. Administrator supplies the existing accounting endpoint and credentials through reviewed destination configuration and secret handling, outside the diagram; do not provision or modify the accounting service. Own audit events, monitoring, alerts, retention and restore/reconciliation operating tasks. Retain originals and extraction audit history for 90 days; propose intake time as retention clock pending lifecycle confirmation. Cleanup covers processing state, object versions, database records, backups and restored copies; backup/version windows and deletion timing require destination review, with no exact universal erasure deadline claimed. Required boundary: documents and extracted data remain stored and processed in Australia, including temporary parser data, model requests/results, sensitive logs, database backups, object versions and recovery copies. Sydney (australia-southeast1) remains proposed, not accepted or verified. Verify Cloud Run, Cloud SQL, storage, selected Vertex AI model, private networking, quotas, processing geography and zonal recovery before implementation approval. No silent global model endpoints, overseas replication or overseas failover. Model retention/caching/logging policy, staff identity/access geography and accounting residency/adapter acceptance remain unresolved. Compiler capability and reviewed practices do not establish deployment or combined-system validation.",
+            "config": {
+              "maxPdfBytes": 10000000,
+              "retentionDays": 90,
+              "region": "australia-southeast1",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "deploymentMode": "create",
+            "poc": true,
+            "role": "app",
+            "topologyGroup": "Invoice processing",
+            "service": "Google Cloud Run",
+            "implementation": "invoice-workflow"
+          }
+        },
+        {
+          "id": "existing-accounting",
+          "type": "resource",
+          "position": {
+            "x": 880.0,
+            "y": 0.0
+          },
+          "data": {
+            "label": "Existing accounting API",
+            "kind": "tool",
+            "provider": "tools",
+            "description": "Client-owned existing accounting service; external reference only, outside provisioning scope and never recreated or modified by this design. An administrator will supply its endpoint and credentials through reviewed destination inputs and secret handling, never in the diagram or chat. Receives only reviewer-approved invoice payloads tied to the exact approved revision. The workflow-owned adapter must independently pass normalized-action-v1 acceptance for authentication, schema, durable idempotency, stable operation/payload identity, receipts and outcome reconciliation. Repeated outbound attempts must retain the same operation and payload identity. Uncertain delivery outcomes pause for reconciliation unless verified destination behavior permits safe replay. Supplying an endpoint and credentials does not prove compatibility or idempotency. Vendor compatibility and deployment location remain unknown. Australian storage and processing of submitted invoice data must be established before enabling delivery; do not assume the existing service satisfies the residency boundary.",
+            "config": {
+              "region": "Existing location unknown",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "deploymentMode": "reference",
+            "poc": true,
+            "role": "app",
+            "topologyGroup": "Accounting integration",
+            "service": "Existing accounting API",
+            "binding": "existing-service"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "staff-to-invoice-workflow",
+          "source": "staff-browser",
+          "target": "invoice-workflow",
+          "type": "smoothstep",
+          "label": "HTTPS: upload \u2192 durable job ID; status/review; authorized revision approval",
+          "integration": "browser-https"
+        },
+        {
+          "id": "approved-invoices-to-accounting",
+          "source": "invoice-workflow",
+          "target": "existing-accounting",
+          "type": "smoothstep",
+          "label": "HTTPS: approved payload + stable operation ID; idempotent replay, receipt/reconciliation",
+          "integration": "approved-accounting-api"
+        }
+      ]
+    }
+  },
+  "requirementDrafts": [
+    {
+      "rationale": "A crashed worker or exhausted retry must leave recoverable work rather than lose an invoice or restart an unsafe accounting submission. The proposed PostgreSQL dead-letter path stays inside the composed workflow.",
+      "basis": "User: \u201cUse a durable job queue, stable invoice/job identity, bounded retries, a dead-letter/recovery path, approval checks and an idempotent outbound operation.\u201d",
+      "id": "ai-invoice-job-recovery",
+      "statement": "Processing shall use durable queued jobs, stable invoice/job identities and bounded retries. Proposed fenced leases and stalled-job recovery shall prevent obsolete workers committing results. Exhausted or permanent failures shall enter durable dead-letter records with reason and attempt history; authorized recovery shall preserve identity, approval and uncertain-outcome safeguards. Acceptance shall cover worker termination, duplicate delivery, retry exhaustion and recovery without lost jobs or duplicate accounting effects.",
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "priority": "must",
+      "links": [
+        "invoice-workflow",
+        "existing-accounting"
+      ]
+    },
+    {
+      "rationale": "The accounting system already exists; treating it as a provisioning target would change ownership and scope. Secure destination configuration and contract tests are necessary before enabling delivery.",
+      "basis": "User: \u201cAn administrator will supply its endpoint and credentials; treat it as external, not a new system to provision.\u201d",
+      "id": "ai-invoice-accounting-boundary",
+      "statement": "The accounting system shall remain an externally owned reference outside provisioning scope. An administrator shall supply its endpoint and credentials through secure destination configuration. Proposed adapter acceptance shall establish authentication, payload compatibility, durable idempotency and reconciliation before delivery is enabled; endpoint availability alone shall not establish compatibility or Australian residency.",
+      "kind": "functional",
+      "category": "security",
+      "priority": "must",
+      "links": [
+        "invoice-workflow",
+        "existing-accounting"
+      ]
+    }
+  ],
+  "requirementUpdates": [
+    {
+      "rationale": "Record burst intake separately from processing concurrency and avoid turning an allowed job duration into an invented response-time guarantee.",
+      "id": "ai-invoice-intake-limits",
+      "statement": "The workflow shall accept PDF invoices up to 10 MB and reject oversized uploads before extraction. Capacity planning and acceptance shall cover 500 uploads per day and bursts of twenty. Jobs may take several minutes and shall execute independently of browser request lifetimes. Burst timing and completion-time guarantees remain unspecified; twenty simultaneous extraction workers are not implied.",
+      "sourceText": "500 uploads per day, bursts of twenty. Jobs may take several minutes."
+    },
+    {
+      "rationale": "Preserve the no-duplicate accounting outcome and make stable job and outbound identities explicit across retries and recovery.",
+      "id": "ai-invoice-idempotency",
+      "statement": "Repeated delivery and retries shall not create duplicate invoices. Durable invoice/job identity, transactional queued state and stable outbound operation/payload identity shall survive worker failure and recovery. Proposed accounting contract tests shall verify safe replay; uncertain outcomes shall pause for reconciliation rather than create a new operation. Detecting independently submitted copies of the same business invoice remains an unresolved matching-policy boundary.",
+      "sourceText": "Use a durable job queue, stable invoice/job identity, bounded retries, a dead-letter/recovery path, approval checks and an idempotent outbound operation."
+    }
+  ],
+  "contextUsed": {
+    "status": "ready",
+    "enabled": true,
+    "engine": "AtMem 2.3.10 core SDK",
+    "recordsUsed": [],
+    "knowledgeRecordIds": [
+      "rec_646317615895417a8b59e704b491681f",
+      "rec_dd035bbc30284433b8e93b0047414c74",
+      "rec_4b6eebe375ca4f65b20a0f96e5cb6b48",
+      "rec_1f0d71dcccd9402cb44ffe0f8016d8b7",
+      "rec_5ea8453e66b045feb0d264ad083137a5",
+      "rec_aa826b5fbd514988af8aaf13e5030b6f",
+      "rec_c61d0de924474d429b23753a9cc98552",
+      "rec_cfcd23ef27ad41e18ab19654ae5cb161"
+    ],
+    "skills": [
+      {
+        "id": "composition",
+        "name": "Architecture composition and engineering judgment",
+        "provider": "all",
+        "stages": [
+          "discover",
+          "design",
+          "review",
+          "deploy"
+        ],
+        "version": "1.0.0",
+        "digest": "df2291a4e0d48a979d4f7c6e99da046bdedfc0e54d41e0b5379b2bc8086b5be6",
+        "summary": "Choose and compose blocks through responsibility, contracts, state, identity, failure modes and trade-offs; verify the complete system.",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "architecture",
+        "name": "AI architecture and discovery",
+        "provider": "all",
+        "stages": [
+          "discover",
+          "design",
+          "review"
+        ],
+        "version": "1.3.0",
+        "digest": "c5cc1056e3ed9a00799882f3a7f4ff2e957e4941fe10e4fd865f5c02ceb01058",
+        "summary": "Clarify outcome, users, existing systems, data ownership and constraints. Evolve the diagram incrementally. Derive functional requirements and propose measurable quality targets as assumptions needing confirmation. Compare clouds against the actual requirements; do not assume an enterprise identity provider or a vendor. Keep proposed and accepted decisions distinct.",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "security",
+        "name": "Security and reliability",
+        "provider": "all",
+        "stages": [
+          "design",
+          "review",
+          "deploy"
+        ],
+        "version": "1.0.0",
+        "digest": "c75cf46b29eb786b27d88d36604f521d6d287182d47df7d5c03845585d64f914",
+        "summary": "Check data classification, residency, access boundaries, encryption choices, approval of automated actions, reliability and recovery. A drawn control is not enforcement evidence. Explain missing controls and tests. Propose requirements from the components and paths; mark default targets as suggestions, never existing company policy.",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "gcp",
+        "name": "Google Cloud AI architecture guidance",
+        "provider": "gcp",
+        "stages": [
+          "design",
+          "review",
+          "estimate",
+          "deploy"
+        ],
+        "version": "1.0.0",
+        "digest": "55ff77e0dd1d1ac7e3b826aa8bd0b2dfc4ee93f0439f457c581abfcafb766705",
+        "summary": "Match model runtime, retrieval, storage, identity and network boundaries to the project. Distinguish architecture guidance from validated commands. Verify regional model availability, quotas and residency before estimating/deploying. The pinned platform architecture reference has additional companion manuals; those commands are not enabled in AtMem AI Architect.",
+        "source": "https://raw.githubusercontent.com/google/skills/a1a942f058366f70e11e36fda390ac4019272c9c/skills/cloud/agent-platform-architecture/SKILL.md",
+        "reference": {
+          "id": "gcp",
+          "repository": "google/skills",
+          "commit": "a1a942f058366f70e11e36fda390ac4019272c9c",
+          "sourcePath": "skills/cloud/agent-platform-architecture/SKILL.md",
+          "url": "https://raw.githubusercontent.com/google/skills/a1a942f058366f70e11e36fda390ac4019272c9c/skills/cloud/agent-platform-architecture/SKILL.md",
+          "sha256": "db60e7b5d1128403132720c1445cfc2e26049f0651db14e71e94de074d175d48",
+          "file": "agent-skills/upstream/gcp/SKILL.md",
+          "status": "reference-only",
+          "note": "Imported source reference, not an enabled script/tool package. AtMem AI Architect specialist guidance is reviewed separately; referenced upstream companion files are not bundled.",
+          "integrity": true
+        },
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      }
+    ],
+    "tools": [],
+    "boundary": "AtMem AI Architect \u2192 native client",
+    "contextDigest": "c46a7f3cb6d2154375edf427017ab377b5778e647ff81710f86ac3b94d6e9588",
+    "projectId": "evaluation-gcp-03-document-intake",
+    "responseRepairAttempts": 0,
+    "modelResponseEncodings": [
+      "compact_patch"
+    ],
+    "modelResponseJsonBytes": 10968
+  },
+  "priceQuotes": []
+}

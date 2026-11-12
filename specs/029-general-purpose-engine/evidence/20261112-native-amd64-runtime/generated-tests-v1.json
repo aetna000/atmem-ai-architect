@@ -1,0 +1,30 @@
+{
+  "validator": "python-sql-gcp-tests",
+  "artifactSha256": "69bdacf7d6813bfdd977b007abe7c94d8c3308cb2e09f9fd09c6cb39cf61031d",
+  "imageId": "sha256:bafc5723ac59b025d42337e4c965e6d7b89a07da3d18b49a9384cfa70274f8e2",
+  "runtimeConfigImageId": "sha256:bafc5723ac59b025d42337e4c965e6d7b89a07da3d18b49a9384cfa70274f8e2",
+  "platform": "linux/amd64",
+  "isolationProfile": "postgresql-local-v1",
+  "runtimeEnvironment": {},
+  "command": [
+    "/usr/local/bin/python3",
+    "-I",
+    "/opt/atmem/sql_validation.py",
+    "-m",
+    "unittest",
+    "discover",
+    "-v"
+  ],
+  "status": "failed",
+  "exitCode": 137,
+  "executableScratch": true,
+  "skipped": 0,
+  "testsReported": null,
+  "reason": "timeout",
+  "output": "test_exact_arithmetic_and_both_policies (tests.test_domain.DomainContract.test_exact_arithmetic_and_both_policies) ... ok\ntest_scalar_utf8_and_escaped_transport_boundaries (tests.test_domain.DomainContract.test_scalar_utf8_and_escaped_transport_boundaries) ... ok\ntest_required_environment (tests.test_runtime_prerequisites.RuntimePrerequisites.test_required_environment) ... Required runtime observation: 3.13.18 x86_64 uid 65532\nKernel observation: 6.8.0-117-generic self executable /usr/local/bin/python3.13\nKernel process controls: ['NoNewPrivs:\\t1', 'Seccomp:\\t2', 'Seccomp_filters:\\t1']\nKernel API probe: {\"layout\": {\"pointerBytes\": 8, \"instructionBytes\": 8, \"programBytes\": 16, \"filterPointerOffset\": 8}, \"no_new_privs\": {\"return\": 0, \"errno\": 0}, \"prctl_allow_filter\": {\"return\": 0, \"errno\": 0}, \"seccomp_allow_filter\": {\"return\": 0, \"errno\": 0}}\nok\ntest_required_filter_installation (tests.test_runtime_prerequisites.RuntimePrerequisites.test_required_filter_installation) ... ok\nClean vendored Linux AMD64 dependency qualification: {'psycopg': '3.3.8', 'PyJWT': '2.15.1', 'cryptography': '50.0.2', 'uvicorn': '0.54.0', 'procrastinate': '3.10.0'}\nReal PostgreSQL server_version_num: 170011\nReal processing child startup diagnostic: 0 {\"result\":{\"dutyPriority\":\"normal\",\"readingNgPerL\":4999999,\"reviewNote\":\"  note\\u0000\ud83e\udd98\\n\"},\"status\":\"ok\"} \nFixture native number/service, ES256 keys, SQL passwords and loopback CA are SYNTHETIC; no native login/cloud acceptance.\ntest_01_arithmetic_and_unicode_through_real_children (tests.test_sample_routing.SampleJourneys.test_01_arithmetic_and_unicode_through_real_children) ... ",
+  "outputTruncated": false,
+  "durationSeconds": 121.665,
+  "evidenceLevel": "local_container_check",
+  "cloudOperations": false,
+  "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+}

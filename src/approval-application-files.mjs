@@ -1,0 +1,32 @@
+import {WORKFLOW_API_FILES} from './workflow-runtime-inventory.mjs';
+import sources from './runtime/invoice-sources.json' with {type:'json'};
+import {approvalProfiles} from './approval-applications.mjs';
+import {resourceAddress} from './identifiers.mjs';
+import {invoiceDependencies as workflowDependencies} from './invoice-dependencies.mjs';
+import {pythonContainer} from './python-container.mjs';
+const modules=WORKFLOW_API_FILES;
+export function approvalApplicationFiles(project,environment){
+ const files={},records=[];
+ for(const {node,profile}of approvalProfiles(project)){
+  const root='applications/'+resourceAddress(node.id)+'/';
+  for(const name of modules){if(typeof sources[name]!=='string')throw Error('Shared application runtime inventory is incomplete: '+name);files[root+name]=sources[name];}
+  files[root+'workflow_schema.sql']=sources['workflow_schema.sql'];
+  const deferred=profile.format==='approval-application-template-v1',metadata=deferred?'application-template.json':'application-profile.json';
+  files[root+metadata]=JSON.stringify(profile,null,2)+'\n';
+  files[root+'api.py']='"""Owned API entrypoint; unresolved bindings never start a runtime."""\nimport os\nfrom pathlib import Path\nfrom workflow_application import load_profile,create_native_api\nfrom workflow_bindings import load_bound_profile\n\ndef app_factory(*,connection=None,jwks=None,binding_directory=None):\n    root=Path(__file__).parent\n    profile=load_bound_profile(root/"application-template.json",binding_directory or root/"runtime-binding") if (root/"application-template.json").exists() else load_profile(root/"application-profile.json")\n    return create_native_api(profile,os.environ,connection=connection,jwks=jwks)\n';
+  if(deferred)files[root+'resolve-profile.py']='"""Resolve reviewed public output records offline; never query a cloud."""\nimport argparse\nfrom pathlib import Path\nimport sys\nsys.path.insert(0,str(Path(__file__).resolve().parent))\nfrom workflow_bindings import write_binding\nif __name__=="__main__":\n    parser=argparse.ArgumentParser();parser.add_argument("--outputs",required=True);parser.add_argument("--out",required=True);args=parser.parse_args()\n    write_binding(Path(__file__).with_name("application-template.json"),args.outputs,args.out)\n    print("Public bindings resolved structurally; cloud and operating acceptance remain unverified.")\n';
+  const runtime=workflowDependencies(profile.provider),testing=workflowDependencies(profile.provider,{tests:true});
+  files[root+'requirements.lock']=runtime.requirements;files[root+'test-requirements.lock']=testing.requirements;
+  files[root+'dependency-sources.json']=JSON.stringify({sources:runtime.sources,resolutions:runtime.resolutions},null,2)+'\n';
+  files[root+'Dockerfile']=pythonContainer('api',[...modules,'api.py'],[metadata],{web:false,contract:false,assets:['workflow_schema.sql'],concurrency:32});
+  files[root+'.dockerignore']='*\n!requirements.lock\n!'+metadata+'\n!workflow_schema.sql\n'+[...modules,'api.py'].map(name=>'!'+name+'\n').join('');
+  const pending=['Provider API/worker/database/identity resource and environment linkage','Domain processor and reviewed destination mapping with real application acceptance','Explicit SQL initialization, role/membership admission, recovery/retention and operating acceptance'];
+  if(deferred)pending.push('Resolve the public native-output references into a fresh profile/receipt bundle before runtime startup');
+  if(profile.environment!==environment)pending.push('Profile environment '+profile.environment+' differs from export environment '+environment+'; retain and reconcile this choice');
+  const record={componentId:node.id,provider:profile.provider,profileEnvironment:profile.environment,exportEnvironment:environment,path:root,apiEntrypoint:'api:app_factory',workerEntrypoint:null,bindingStatus:deferred?'unresolved':'declared',sourceStatus:'shared-api-assembly-generated',infrastructureStatus:'not_implemented',applicationStatus:'not_verified',pending,cloudOperations:false};
+  records.push(record);files[root+'assembly-status.json']=JSON.stringify(record,null,2)+'\n';
+  files[root+'BUILD.md']='# Typed approval application source\n\nRead the application profile or template and assembly-status.json. For a template, run python -I resolve-profile.py --outputs /ABSOLUTE/PUBLIC-OUTPUT-LEDGER.json --out /ABSOLUTE/FRESH-BINDING-DIRECTORY. Supply that owned directory as the runtime-binding mount; a matching receipt is required before startup. The resolver performs no cloud lookup or verification. The shared API entrypoint and exact locked runtime are emitted from this component contract. Build the API image with the included Dockerfile; do not publish/deploy without authorization.\n\nThis does not implement the domain processor or generate provider resources. Preserve all requirements and existing systems. Write the domain stage from the full brief, then use create_native_worker(profile, environment, processor, deliver) in a concrete worker entrypoint. It must retain fixed profile/role/kind/realm/destination bindings; no metadata-driven imports, no dummy processor or unconditional acceptance. Run positive/negative local end-to-end checks before recording implementation.\n\nInitialize SQL only through the reviewed operator role. Enroll approved native users using membership_key(profile, complete_verified_subject); token role claims do not grant membership. Keep API and worker credentials separate and outside source. Verify provider transport/IAM/network, image/source identity, retention/recovery and target environment independently. Schema/compilation or an importable API is not application acceptance. No work gate is cleared by these files.\n';
+ }
+ if(records.length)files['approval-applications.json']=JSON.stringify({version:1,applications:records,boundary:'Component-selected shared source and explicit pending work; no whole application, infrastructure, account or deployment acceptance'},null,2)+'\n';
+ return files;
+}

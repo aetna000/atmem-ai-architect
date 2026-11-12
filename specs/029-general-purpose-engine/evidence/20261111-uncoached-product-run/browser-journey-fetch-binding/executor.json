@@ -1,0 +1,23 @@
+{
+  "validator": "independent-browser-app",
+  "artifactSha256": "444af6c5f704b05a323ffec29d7c2b4f7479cf55580d039edca3d1bdb09205db",
+  "imageId": "sha256:cdb746c1eb56b61de56e1b5e78f6194392eb00494a1bb257a592852e72d8314b",
+  "runtimeConfigImageId": "sha256:efb920a19905e2b73c3e56eb22d52b052026b62050ec32eb3c7b28aba449cfc7",
+  "platform": "linux/arm64",
+  "command": [
+    "/var/lang/bin/python3.12",
+    "-c",
+    "\nimport json,os,sys,time,zipfile,http.server\nos.environ.update(AWS_REGION='ap-southeast-2',MODEL_ID='amazon.nova-lite-v1:0',COGNITO_ISSUER='LOCAL-EMULATED-ISSUER',CLIENT_ID='local-review-client',COGNITO_DOMAIN='http://127.0.0.1:55881')\nwith zipfile.ZipFile('/work/source/build/support-review.zip') as z:z.extractall('/tmp/app')\nsys.path.insert(0,'/tmp/app');import handler\nclass Model:\n def converse(self,**kw):\n  ticket=kw['messages'][0]['content'][0]['text']\n  if ticket=='model-timeout':raise TimeoutError('PRIVATE-SYNTHETIC')\n  if ticket=='slow-clear':time.sleep(2)\n  value={'summary':'Synthetic reviewed suggestion.','topic':'technical','urgency':'normal','uncertainty':{'level':'high','reason':'Local emulated model; human review required.'}}\n  if ticket=='unsafe-output':value['extra']='rejected'\n  return {'stopReason':'end_turn','output':{'message':{'role':'assistant','content':[{'text':json.dumps(value)}]}}}\nhandler._bedrock=lambda:Model()\nclass Adapter(http.server.BaseHTTPRequestHandler):\n def do_POST(self):\n  event=json.loads(self.rfile.read(int(self.headers['Content-Length'])))\n  result=handler.handler(event,None);body=json.dumps(result).encode()\n  self.send_response(200);self.send_header('Content-Length',str(len(body)));self.end_headers();self.wfile.write(body)\n def log_message(self,*args):pass\nhttp.server.ThreadingHTTPServer(('127.0.0.1',8091),Adapter).serve_forever()\n"
+  ],
+  "status": "failed",
+  "exitCode": 137,
+  "skipped": 0,
+  "testsReported": null,
+  "reason": "cancelled",
+  "output": "",
+  "outputTruncated": false,
+  "durationSeconds": 16.787,
+  "evidenceLevel": "local_container_check",
+  "cloudOperations": false,
+  "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+}

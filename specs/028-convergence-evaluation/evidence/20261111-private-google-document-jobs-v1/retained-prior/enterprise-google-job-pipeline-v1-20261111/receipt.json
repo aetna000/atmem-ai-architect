@@ -1,0 +1,50 @@
+{
+  "recordedAt": "2026-11-10T15:13:02.767157+00:00",
+  "passed": false,
+  "checks": [
+    {
+      "check": "transfer-image",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "parser-image",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "policy.docx-volume",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "policy.docx-mountpoint",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "policy.docx-download",
+      "passed": false,
+      "exitCode": 1
+    },
+    {
+      "check": "policy.docx-cleanup",
+      "passed": true,
+      "exitCode": 0
+    }
+  ],
+  "sourceHashes": {
+    "scripts/qualify-enterprise-google-jobs.py": "327ecc2083c70436eab7e36c6b9ade4485f995ac382f6365b1bb3e040fd5d2c6",
+    "tests/runtime/enterprise_google_jobs_acceptance.py": "1edca89bc5349fd9d9bac275f5718fb2fdd58caaf8c6f72c854c6fd8f6239ac4",
+    "src/runtime/enterprise_google_jobs.py": "92c5b0c3683c6de375617705d27188d82d076ec49fb3bbe4bd1647c0188da29d",
+    "src/runtime/enterprise_google_transfer.py": "00c723531ffef0e928492ec771a8d3ba1bc2fc97934e6449e32ce1840b119395",
+    "src/runtime/enterprise_document_job.py": "d56dfb04a9189623392f35b68987ec96288e2ba75120ce4488c71eef0ebd2d4a",
+    "src/runtime/enterprise_document_contract.py": "a751fd81979884b1d3023c2527248f2da99f823348dfe81236488f9ea31bfe42",
+    "tests/fixtures/providers/google-batch-v1-discovery-20261111.json": "5d1d75cf13459b7099d00250db786c13edea9cabb6852b32c521cbd16afdc2f6",
+    "benchmarks/convergence/fixtures/enterprise-documents/policy.docx": "79fb19e7ad90a74a671728612d2415f5e0834f797cd5f7d9ba31ce9e6ebd9a49"
+  },
+  "coreImageId": "sha256:e5f89269bed81419b6bc81c1bb8d0b38117e031242be1553d7374b6ecad10f50",
+  "parserImageId": "sha256:0e6089395cc36c96986ef500026af794dd07f2a8c97196e7c0df726fbe465c82",
+  "scope": "Actual emitted sequential transfer CLI/UID/POSIX mounts/Office/PDF consumer in owned Linux. Native Google HTTP responses are fixtures; all local containers use network none. Not Batch agent semantics, IAM/network, account execution, latency, security or whole-project acceptance.",
+  "cloudOperations": false
+}

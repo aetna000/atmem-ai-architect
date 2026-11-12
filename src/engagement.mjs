@@ -23,7 +23,7 @@ export const GATE = [
   { id: "risks", label: "Residual risk", hint: "Open risks and who accepted them" },
 ];
 
-const text = (value, max = 2000) => String(value ?? "").slice(0, max);
+const text = (value, max = 2000) => {const result=String(value??"");if(result.length>max)throw Error(`A project field exceeds ${max.toLocaleString('en')} characters. Split it into linked requirements; no content was truncated.`);return result;};
 const score = (value) => (Number.isInteger(value) && value >= 1 && value <= 5 ? value : null);
 
 export function defaultAssessment() {
@@ -49,6 +49,7 @@ export function cleanMeasures(list) {
 }
 
 export function cleanEngagement(p) {
+  for(const name of ['needs','assumptions','openQuestions','facts'])if(Array.isArray(p[name])&&p[name].length>300)throw Error(`The project has more than 300 ${name}; no records were truncated.`);
   const out = {};
   if (["maintenance", "churn"].includes(p.domain)) out.domain = p.domain;
   if (typeof p.id === "string" && p.id) out.id = text(p.id, 100);
@@ -95,6 +96,7 @@ export function cleanEngagement(p) {
   if (p.estimate && typeof p.estimate === "object") {
     const num = (v) => (typeof v === "number" && Number.isFinite(v) && v >= 0 ? v : undefined);
     out.estimate = {
+      ...(["small","medium","large","extra-large"].includes(p.estimate.projectSize) ? {projectSize:p.estimate.projectSize} : {}),
       details: (Array.isArray(p.estimate.details) ? p.estimate.details : []).slice(0, 500).map((l, i) => ({
         id: text(l?.id || `charge-${i + 1}`, 100), componentId: text(l?.componentId, 100),
         description: text(l?.description, 200), quantity: num(l?.quantity), price: num(l?.price),
@@ -230,7 +232,7 @@ export function recommendationDecision(project, option, names) {
 // Proposals and templates replace the design, never the engagement record.
 export function keepEngagement(next, current) {
   const kept = {};
-  for (const key of ["id", "createdAt", "brief", "useCases", "assessment", "decisions", "gate", "needs", "assumptions", "openQuestions", "extensions", "facts", "workflow", "asked", "lastAsked", "sketchOffered", "estimate", "reviewAccepted", "conceptSig", "choices"]) if (current[key] !== undefined) kept[key] = current[key];
+  for (const key of ["id", "createdAt", "requirements", "brief", "useCases", "assessment", "decisions", "gate", "needs", "assumptions", "openQuestions", "extensions", "facts", "workflow", "asked", "lastAsked", "sketchOffered", "estimate", "reviewAccepted", "conceptSig", "choices"]) if (current[key] !== undefined) kept[key] = current[key];
   // The problem statement is the client's, not the design's.
   if (current.requirements?.trim()) kept.requirements = current.requirements;
   return { ...next, ...kept };

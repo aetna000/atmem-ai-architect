@@ -1,0 +1,87 @@
+{
+  "observedAt": "2026-11-11T23:41:21.402Z",
+  "state": {
+    "id": "5ee06d2e-4b08-4f96-8457-dc6758e0a96f",
+    "model": "gpt-6.1-sol",
+    "effort": "high",
+    "state": "running",
+    "run": "fdaf0460-7be9-437f-88d3-bf5a431d6f9b",
+    "last_status": "completed"
+  },
+  "finalizations": {
+    "finalizations": [
+      {
+        "id": "92c524bf-bec5-4c86-838c-5c07f947d364",
+        "sessionId": "5ee06d2e-4b08-4f96-8457-dc6758e0a96f",
+        "runId": "c319c8c8-9f9c-4863-8f59-c6e8c4d1e36b",
+        "state": "repair_submitted",
+        "artifact": {
+          "id": "cc094dc8-08f5-47ed-9b45-69b82332b068",
+          "sha256": "287d33fc5426804f9005059621fd17bc9c2a4f8e6a72f384748ea42af311c89c"
+        },
+        "plan": {
+          "artifactId": "cc094dc8-08f5-47ed-9b45-69b82332b068",
+          "artifactSha256": "287d33fc5426804f9005059621fd17bc9c2a4f8e6a72f384748ea42af311c89c",
+          "decisions": [
+            {
+              "validatorId": "python-sql-gcp-tests",
+              "label": "Python3.13/Google/PostgreSQL17 with native dependency scratch",
+              "state": "selected",
+              "contractSha256": "ef07b7ab61cbd66aa4bb2d311edb243b041bcbd7797b316c478b11b7b0d2afc7",
+              "applicability": {
+                "anyOf": [
+                  "**/test_*.py"
+                ],
+                "allOf": [
+                  "**/workflow_schema.sql"
+                ],
+                "noneOf": [],
+                "anyFileSha256": [
+                  {
+                    "pattern": "**/test-requirements.lock",
+                    "sha256": "872663ae3c96d4c74141eace1d05c076b257ae08751ae0bb11f4da3ed8ab6260"
+                  }
+                ]
+              },
+              "assessment": {
+                "applies": true,
+                "matchedAnyFileSha256": [
+                  {
+                    "path": "application/test-requirements.lock",
+                    "pattern": "**/test-requirements.lock",
+                    "sha256": "872663ae3c96d4c74141eace1d05c076b257ae08751ae0bb11f4da3ed8ab6260"
+                  }
+                ],
+                "requiredAnyFileSha256": [
+                  {
+                    "pattern": "**/test-requirements.lock",
+                    "sha256": "872663ae3c96d4c74141eace1d05c076b257ae08751ae0bb11f4da3ed8ab6260"
+                  }
+                ],
+                "matchedAnyOf": [
+                  "**/test_*.py"
+                ],
+                "missingAllOf": [],
+                "matchedNoneOf": []
+              }
+            }
+          ],
+          "selectionStatus": "checks_selected",
+          "acceptance": "not_established_by_file_applicability"
+        },
+        "checks": [
+          "66de8239-f886-4e86-b50a-f64c3a37ab79"
+        ],
+        "repair": {
+          "runId": "fdaf0460-7be9-437f-88d3-bf5a431d6f9b",
+          "rootRunId": "c319c8c8-9f9c-4863-8f59-c6e8c4d1e36b",
+          "attempt": 1,
+          "maximumAttempts": 1
+        },
+        "acceptance": "not_established_by_local_checks"
+      }
+    ]
+  },
+  "noInferenceSubmitted": true,
+  "operatorSteering": 0
+}

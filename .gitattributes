@@ -1,0 +1,22 @@
+# PDF fixtures retain exact binary/xref bytes, including format-required spaces.
+*.pdf binary
+
+# Qualification snapshots and terminal output are immutable observed evidence.
+# Keep whitespace checks on implementation source; do not rewrite recorded bytes.
+specs/**/evidence/**/handoff/** -whitespace
+specs/**/evidence/**/qualification/** -whitespace
+specs/**/evidence/**/*.log -whitespace
+specs/**/evidence/**/*.stderr -whitespace
+specs/**/evidence/**/*.stdout -whitespace
+specs/**/evidence/**/source-snapshot/** -text -whitespace
+specs/**/evidence/**/image-sources/** -text -whitespace
+specs/**/evidence/**/native-*/artifact/** -text -whitespace
+specs/**/evidence/**/native-*/applications/** -text -whitespace
+# Preserve exact failed/native and public vendor review snapshots as observed.
+specs/**/evidence/**/failure-native-*/applications/** -text -whitespace
+specs/**/evidence/**/registry-*/applications/** -text -whitespace
+specs/**/evidence/**/reviewed-sources/** -text -whitespace
+
+# Preserve exact upstream license notices, including their original whitespace.
+src/runtime/enterprise-web-notices.txt -whitespace
+specs/**/evidence/**/source/src/runtime/enterprise-web-notices.txt -whitespace

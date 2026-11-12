@@ -53,7 +53,7 @@ class ScriptedBedrock:
     def __init__(self,mode='rag'):
         import botocore.session
         self.model=botocore.session.get_session().get_service_model('bedrock-runtime')
-        self.mode=mode;self.calls=[];self.failure=None;self.after=None
+        self.mode=mode;self.calls=[];self.failure=None;self.after=None;self.result={}
     def converse(self,**kwargs):
         from botocore.validate import validate_parameters
         from botocore.exceptions import ClientError
@@ -63,6 +63,7 @@ class ScriptedBedrock:
         if self.mode=='rag':
             payload=json.loads(kwargs['messages'][0]['content'][0]['text']);evidence=payload['evidence']
             text=json.dumps({'answer':evidence[0]['text'],'citations':[evidence[0]['id']]})
+        elif self.mode=='structured':text=json.dumps(self.result)
         else:text='Synthetic fixture summary.'
         if self.after:self.after()
         return {'output':{'message':{'role':'assistant','content':[{'text':text}]}},'stopReason':'end_turn'}
@@ -78,11 +79,11 @@ class Worker:
         for k in self.tf.get('variable',{}):
             if k.endswith('_model_id'):self.variables[k]='emulated-model'
         self.report={'version':1,'kind':'local-aws-emulation','backend':'moto','status':'running','cloudOperations':False,'terraformApply':'not_run','modelMode':'scripted-fixture','checks':self.checks,'capabilities':self.capabilities,'limitations':LIMITATIONS,'cleanup':'not_run'}
-    def check(self,name,fn):
+    def check(self,name,fn,evidence='stateful-emulation'):
         try:
-            fn();self.checks.append({'name':name,'passed':True,'evidence':'stateful-emulation'})
+            fn();self.checks.append({'name':name,'passed':True,'evidence':evidence})
         except Exception as exc:
-            self.checks.append({'name':name,'passed':False,'evidence':'stateful-emulation','errorType':type(exc).__name__,'message':str(exc)[:400] if isinstance(exc,EmulationFailure) else 'Generated code or emulator API failed; inspect local diagnostic evidence.'})
+            self.checks.append({'name':name,'passed':False,'evidence':evidence,'errorType':type(exc).__name__,'message':str(exc)[:400] if isinstance(exc,EmulationFailure) else 'Generated code or emulator API failed; inspect local diagnostic evidence.'})
             raise
     def resolve(self,value):
         if not isinstance(value,str):return value
@@ -186,6 +187,60 @@ class Worker:
         except ValueError:pass
         else:raise EmulationFailure('Oversized model input accepted')
         require(len(model.calls)==before,'Oversized input reached model boundary')
+    def structured(self,address):
+        from botocore.validate import validate_parameters
+        import botocore.session
+        class PolicyFixture:
+            mode='none';logging={};failure=False
+            def get_account_data_retention(self):
+                if self.failure:raise RuntimeError('Synthetic read denial')
+                return {'mode':self.mode}
+            def get_model_invocation_logging_configuration(self):return {'loggingConfig':self.logging}
+        class IdentityFixture:
+            enabled=True
+            def admin_get_user(self,**kwargs):
+                shape=botocore.session.get_session().get_service_model('cognito-idp').operation_model('AdminGetUser').input_shape
+                validate_parameters(kwargs,shape)
+                return {'Enabled':self.enabled,'UserStatus':'CONFIRMED','UserAttributes':[{'Name':'sub','Value':'fixture-subject'}]}
+        module=self.module(address);model=ScriptedBedrock('structured');policy=PolicyFixture();identity=IdentityFixture()
+        module._client=model;module._retention=policy;module._identity=identity
+        model.result={f['name']:False if f['type']=='boolean' else 0 if f['type']=='number' else f.get('values',['x'])[0] for f in module.OUTPUT_FIELDS}
+        valid=copy.deepcopy(model.result)
+        http='COGNITO_USER_POOL_ID' in self.resources['aws_lambda_function'][address]['environment']['variables']
+        def event(text):
+            if not http:return {'text':text}
+            return {'version':'2.0','requestContext':{'apiId':os.environ['EXPECTED_API_ID'],'routeKey':'POST /api/ask','authorizer':{'jwt':{'claims':{'iss':os.environ['COGNITO_ISSUER'],'client_id':os.environ['COGNITO_CLIENT_ID'],'token_use':'access','scope':'atmem/ask','sub':'fixture-subject','username':'fixture-user'}}}},'isBase64Encoded':False,'body':json.dumps({'text':text})}
+        def invoke(text):
+            result=module.handler(event(text),None)
+            return (result['statusCode'],json.loads(result['body'])) if http else (200,result)
+        status,result=invoke('Synthetic bounded request')
+        require(status==200 and result=={'result':valid,'requiresHumanReview':True},'Structured result failed its declared schema or review contract')
+        model.result={'unexpected':'not a declared output'}
+        require(invoke('Synthetic input')[1].get('error')=='invalid_model_output','Invalid structured model output was accepted')
+        model.result=valid
+        before=len(model.calls)
+        for mode in ['default','inherit','aws_review',None]:
+            policy.mode=mode;require(invoke('Synthetic input')[1].get('error')=='data_retention_unverified','Unverified model retention reached inference')
+        policy.mode='none';policy.logging={'textDataDeliveryEnabled':True}
+        require(invoke('Synthetic input')[1].get('error')=='data_retention_unverified','Enabled prompt logging reached inference')
+        policy.logging={};policy.failure=True
+        require(invoke('Synthetic input')[1].get('error')=='data_retention_unverified','Unavailable retention policy reached inference')
+        require(len(model.calls)==before,'A failed data policy check sent input to the model')
+        policy.failure=False
+        if http:
+            require(module.handler({},None)['statusCode']==403,'Unverified direct invocation accepted')
+            identity.enabled=False;require(invoke('Synthetic input')[0]==403,'Disabled user accepted')
+            require(len(model.calls)==before,'Disabled user reached inference')
+            identity.enabled=True;model.after=lambda:setattr(identity,'enabled',False)
+            require(invoke('Synthetic input')[0]==403,'Revoked user received an in-flight result')
+            model.after=None;identity.enabled=True
+        before=len(model.calls)
+        try:status,result=invoke('x'*(int(os.environ['MAX_INPUT_BYTES'])+1))
+        except ValueError:status=400
+        require(status==400,'Oversized structured input accepted')
+        require(len(model.calls)==before,'Oversized input reached inference')
+        self.capabilities.append({'service':'Structured operation','mode':'emitted Python execution, SDK-validated Converse request, scripted model/identity/policy state; real account settings, JWT verification and model accuracy unverified'})
+
     def rag(self,address):
         from boto3.dynamodb.types import TypeSerializer
         from botocore.exceptions import ClientError
@@ -275,6 +330,7 @@ class Worker:
                     if 'CATALOG_TABLE' in env:
                         self.check('Generated retrieval, conditional writes, ACLs, updates, deletion and revocation',lambda a=address:self.rag(a))
                         if self.plan['sourceContractPlan']['sources']:self.check('Generated source synchronization, interruption recovery, ACLs and deletes',lambda:self.connectors(os.environ['CATALOG_TABLE']))
+                    elif any(r.get('address')==address and r.get('structured') for r in self.plan['rows']):self.check('Generated structured operation, authorization, revocation and fail-closed data policy',lambda a=address:self.structured(a),evidence='host-runtime-with-scripted-policy-identity-model-fixtures')
                     elif 'MODEL_ARN' in env:self.check('Generated summary handler, token bounds and simulated model faults',lambda a=address:self.summary(a))
                 require(set(self.resources.get('aws_lambda_function',{}))==set(self.modules),'Some generated functions lack an emulator scenario')
                 require(len(self.checks)>1,'No supported executable scenario in this design')

@@ -12,7 +12,7 @@ import {toProjectFile} from '../src/project-file.mjs';
 const root=path.resolve(import.meta.dirname,'..'),out=path.join(root,'.local/emulation-browser',new Date().toISOString().replaceAll(':','-'));fs.mkdirSync(out,{recursive:true});
 // Freeze tested code so concurrent development cannot HMR away an in-flight report.
 const source=path.join(out,'source');fs.mkdirSync(source,{recursive:true});
-for(const name of ['src','server','scripts','agent-skills','.specify','public','index.html','vite.config.mjs','package.json'])if(fs.existsSync(path.join(root,name)))fs.cpSync(path.join(root,name),path.join(source,name),{recursive:true,filter:p=>!p.split(path.sep).includes('__pycache__')});
+for(const name of ['CONSTITUTION.md','knowledge','src','server','scripts','agent-skills','.specify','public','index.html','vite.config.mjs','package.json'])if(fs.existsSync(path.join(root,name)))fs.cpSync(path.join(root,name),path.join(source,name),{recursive:true,filter:p=>!p.split(path.sep).includes('__pycache__')});
 for(const name of ['node_modules','.venv','.memory-venv'])if(fs.existsSync(path.join(root,name)))fs.symlinkSync(path.join(root,name),path.join(source,name),'dir');
 fs.mkdirSync(path.join(source,'.local'),{recursive:true});fs.symlinkSync(path.join(root,'.local/cloud-emulators'),path.join(source,'.local/cloud-emulators'),'dir');
 async function port(){const server=createServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));const p=server.address().port;await new Promise(r=>server.close(r));return p;}
@@ -24,7 +24,7 @@ try{
  start(path.join(root,'.venv/bin/python'),['-m','uvicorn','server.app:app','--host','127.0.0.1','--port',String(api),'--no-access-log']);
  start(process.execPath,['node_modules/vite/bin/vite.js','--host','127.0.0.1','--port',String(ui),'--strictPort']);
  for(const url of [base,`http://127.0.0.1:${api}/api/session`])for(let i=0;i<200;i++){try{if((await fetch(url)).ok)break;}catch{}if(i===199)throw Error('Service failed to start');await new Promise(r=>setTimeout(r,100));}
- browser=await chromium.launch({headless:true});page=await browser.newPage({viewport:{width:1440,height:1000}});page.setDefaultTimeout(30000);const errors=[];page.on('pageerror',e=>errors.push(e.message));
+ browser=await chromium.launch({headless:true,...(process.env.ATMEM_ARCHITECT_BROWSER_BIN?{executablePath:process.env.ATMEM_ARCHITECT_BROWSER_BIN}:{})});page=await browser.newPage({viewport:{width:1440,height:1000}});page.setDefaultTimeout(30000);const errors=[];page.on('pageerror',e=>errors.push(e.message));
  page.on('response',async r=>{if(r.url().endsWith('/api/emulation/run')){try{fs.appendFileSync(path.join(out,'http-results.jsonl'),JSON.stringify(await r.json())+'\n');}catch{}}});
  await page.addInitScript(()=>localStorage.setItem('atforma-connection-v1',JSON.stringify({provider:'claude-code',model:'default'})));
  await page.route('**/api/session',async route=>{const response=await route.fetch();const body=await response.json();await route.fulfill({json:{...body,providers:{...body.providers,'claude-code':{available:true,signedIn:true}}}});});

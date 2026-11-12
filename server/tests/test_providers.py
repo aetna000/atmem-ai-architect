@@ -19,7 +19,8 @@ class ProviderTests(unittest.TestCase):
                 self.assertIn('--ephemeral',args);self.assertIn('--ignore-user-config',args);self.assertIn('read-only',args);self.assertNotIn('--dangerously-bypass-approvals-and-sandbox',args);self.assertEqual(result['message'],'ok')
         asyncio.run(check())
     def test_gemini_adapter_disables_tools_extensions_and_hooks(self):
-        async def fake(args,prompt,cwd,disconnected,env):
+        async def fake(args,prompt,cwd,disconnected,env,timeout=150):
+            self.assertEqual(timeout,150)
             from pathlib import Path
             settings=json.loads(Path(env['GEMINI_CLI_SYSTEM_SETTINGS_PATH']).read_text())
             self.assertEqual(settings['tools']['core'],[]);self.assertFalse(settings['hooksConfig']['enabled']);self.assertIn('plan',args)

@@ -1,6 +1,6 @@
 from .settings import setting, home as product_home
 """Loopback-only AtMem AI Architect sidecar. No cloud discovery or deployment endpoints."""
-import asyncio, os, secrets, shutil
+import asyncio, os, secrets, shutil, hashlib
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 from .architect import AtMemArchitect
@@ -9,11 +9,32 @@ from .local_providers import capabilities, models, start_login
 from .memory_routes import router as memory_router
 from .agent_runtime import run as run_architect
 from .memory_service import service as memory_service, safe as memory_safe
+from .architecture_activity import ArchitectureActivity
+from pydantic import BaseModel,ConfigDict,Field
+
+_architecture_activity=None
+_architecture_activity_path=None
+def architecture_activity():
+    global _architecture_activity,_architecture_activity_path
+    path=product_home()/'architecture-activity.sqlite'
+    if _architecture_activity is None or path!=_architecture_activity_path:
+        if _architecture_activity is not None:_architecture_activity.close()
+        path.parent.mkdir(parents=True,exist_ok=True)
+        _architecture_activity=ArchitectureActivity(path);_architecture_activity_path=path
+    return _architecture_activity
+
+class ArchitectureActivityRequest(BaseModel):
+    model_config=ConfigDict(extra='forbid')
+    projectId:str=Field(pattern=r'^[A-Za-z0-9-]{8,64}$')
+    activityId:str=Field(pattern=r'^[a-f0-9-]{36}$')
+    after:int=Field(default=0,ge=0,strict=True)
 
 app=FastAPI(title='AtMem AI Architect helper',docs_url=None,redoc_url=None,openapi_url=None)
 app.include_router(memory_router)
 from .voice_routes import router as voice_router, engine as voice_engine
+from .openai_voice import router as openai_voice_router
 app.include_router(voice_router)
+app.include_router(openai_voice_router)
 
 @app.on_event("shutdown")
 async def shutdown_voice():
@@ -23,6 +44,12 @@ from .terraform_routes import router as terraform_router
 app.include_router(terraform_router)
 from .emulation_routes import router as emulation_router
 app.include_router(emulation_router)
+from .engineering_routes import router as engineering_router, close as close_engineering
+app.include_router(engineering_router)
+
+@app.on_event('shutdown')
+async def shutdown_engineering():
+    await close_engineering()
 TOKEN=secrets.token_urlsafe(32)
 ARCHITECT=AtMemArchitect()
 ALLOWED_HOSTS={'127.0.0.1:5174','localhost:5174','127.0.0.1:8766','localhost:8766','testserver'}
@@ -45,7 +72,7 @@ async def local_boundary(request:Request,call_next):
     if request.method=='POST':
         if not secrets.compare_digest(request.headers.get('authorization',''),f'Bearer {TOKEN}'):
             return JSONResponse({'detail':'Missing local session token'},status_code=401)
-        limit=12_000_000 if request.url.path=='/api/architect' else 2_100_000 if request.url.path in {'/api/projects/save','/api/memory/sync','/api/voice/transcribe'} else 250000
+        limit=43_000_000 if request.url.path=='/api/engineering/orca/open' else 12_000_000 if request.url.path=='/api/architect' else 2_100_000 if request.url.path in {'/api/projects/save','/api/memory/sync','/api/voice/transcribe'} else 250000
         if len(await request.body())>limit:
             return JSONResponse({'detail':'Request too large'},status_code=413)
     response=await call_next(request)
@@ -62,7 +89,13 @@ async def session():
         'gemini-api':{'available':bool(ARCHITECT.keys.get('gemini-api') or os.getenv('GEMINI_API_KEY')),'description':'Ephemeral API key or GEMINI_API_KEY'},
         'xai':{'available':bool(ARCHITECT.keys.get('xai') or os.getenv('XAI_API_KEY')),'description':'xAI API key for Grok'},
         'bedrock':{'available':bool(setting('ENABLE_BEDROCK')),'description':'Explicit opt-in plus AWS SDK credential chain; credentials not probed'},
-    },'cloudExecution':False,'mcpEnabled':False,'sdkTimeoutNote':'Stopping a submitted remote model request may not stop provider-side computation or billing.'}
+    },'cloudExecution':False,'mcpEnabled':False,'architectureActivityEnabled':True,'engineeringEnabled':setting('ENABLE_ENGINEERING')=='1','sdkTimeoutNote':'Stopping a submitted remote model request may not stop provider-side computation or billing.'}
+
+@app.post('/api/architect/activity')
+async def architect_activity(payload:ArchitectureActivityRequest):
+    try:return architecture_activity().read(payload.projectId,payload.activityId,payload.after)
+    except LookupError:raise HTTPException(404,'Architecture activity is unavailable for this project.') from None
+    except ValueError:raise HTTPException(422,'Invalid activity cursor.') from None
 
 @app.post('/api/architect')
 async def architect(payload:ChatRequest,request:Request):
@@ -70,9 +103,26 @@ async def architect(payload:ChatRequest,request:Request):
         raise HTTPException(409,'Bedrock is disabled. Explicitly enable it in the local sidecar environment.')
     if TURN_LOCK.locked():raise HTTPException(409,"We're still working on your last message — give it a moment.")
     async with TURN_LOCK:
+        trace=None;activity_ok=True;state='failed'
+        if payload.activityId:
+            if not payload.projectId:raise HTTPException(422,'Project-scoped activity is required.')
+            try:
+                trace=architecture_activity()
+                trace.start(payload.projectId,payload.activityId,{'provider':payload.provider,'model':payload.model,'effort':payload.effort,'origin':payload.origin,'revision':payload.project.revision})
+            except ValueError as exc:raise HTTPException(409,str(exc)) from None
+            except Exception:raise HTTPException(503,'Activity history could not be reserved. No model request was submitted.') from None
+        def observe(event):
+            nonlocal activity_ok
+            if not trace or not activity_ok:return
+            try:trace.append(payload.projectId,payload.activityId,event)
+            except Exception:activity_ok=False
         try:
-            return await run_architect(ARCHITECT,payload,request.is_disconnected)
+            output=await run_architect(ARCHITECT,payload,request.is_disconnected,**({'activity':observe} if trace else {}))
+            state='response_ready'
+            if trace:output['architectureActivity']={'id':payload.activityId,'detailsAvailable':activity_ok}
+            return output
         except asyncio.CancelledError:
+            state='cancelled';observe({'kind':'cancelled','text':'Request stopped. A submitted model call may still finish remotely.'})
             return JSONResponse({'detail':'Request cancelled'},status_code=499)
         except (ValueError,TimeoutError) as exc:
             # Model output may contain user content: do not return validation dumps.
@@ -82,6 +132,11 @@ async def architect(payload:ChatRequest,request:Request):
             raise HTTPException(409,str(exc))
         except Exception:
             raise HTTPException(502,"The model didn't answer. Let's check the connection — sign-in, model or usage limits.")
+        finally:
+            if trace:
+                if state=='failed':observe({'kind':'failed','text':'The architecture request did not return a usable response.'})
+                try:trace.finish(payload.projectId,payload.activityId,state if activity_ok else 'details_unavailable')
+                except Exception:pass
 
 @app.post('/api/credentials')
 async def credentials(request:Request):
@@ -174,10 +229,11 @@ async def projects_save(request:Request):
     if not memory_safe(file):raise HTTPException(422,'Project content looks like a credential; remove it before saving.')
     if (_home()/'bin'/f'{pid}.atforma.json').exists():raise HTTPException(409,'This project is in the bin. Restore it first.')
     target=_home()/'projects'/f'{pid}.atforma.json';tmp=target.with_suffix('.tmp')
-    tmp.write_text(_json.dumps(file,ensure_ascii=False),encoding='utf-8');tmp.replace(target)
+    content=_json.dumps(file,ensure_ascii=False,allow_nan=False).encode('utf-8')
+    tmp.write_bytes(content);tmp.replace(target)
     try:memory=await asyncio.to_thread(memory_service().sync,pid,file)
     except Exception:memory={'status':'unavailable'}
-    return {'saved':True,'memory':memory}
+    return {'saved':True,'sha256':hashlib.sha256(content).hexdigest(),'memory':memory}
 
 @app.post('/api/projects/trash')
 async def projects_trash(request:Request):

@@ -1,0 +1,48 @@
+{
+  "passed": true,
+  "artifactSha256": "4b352878fd8555d87f28f6c06a642ebf4752c95575fa9f3abdfcb1ca875aa0e3",
+  "oracleSha256": "06cca47309f536b8f910747ef8d1b77c2c6ba2dbc3f7e273862b288ababb6c9b",
+  "assertions": 12,
+  "sourceChanged": [],
+  "checks": [
+    {
+      "name": "public-offline-setup",
+      "exitCode": 0,
+      "stdout": "{\n  \"configured\": [\n    \"python\",\n    \"node\",\n    \"terraform\",\n    \"providerMirror\"\n  ],\n  \"missingOptional\": [],\n  \"cloudAccess\": false,\n  \"downloads\": false,\n  \"environmentFiles\": {\n    \"OPENSSL_CONF\": \".worker-tmp/openssl.cnf\",\n    \"TF_CLI_CONFIG_FILE\": \".worker-tmp/terraform.rc\"\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "rebuild-runtime-package",
+      "exitCode": 0,
+      "stdout": "Built dist/function.zip (application and browser assets only).\n",
+      "stderr": ""
+    },
+    {
+      "name": "terraform-format",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "offline-init",
+      "exitCode": 0,
+      "stdout": "Initializing provider plugins...\n- Reusing version 6.72.0 of hashicorp/aws from the dependency lock file\n- Installing hashicorp/aws v6.72.0...\n- Installed hashicorp/aws v6.72.0 (unauthenticated)\n\nTerraform has been successfully initialized!\n",
+      "stderr": ""
+    },
+    {
+      "name": "provider-schema",
+      "exitCode": 0,
+      "stdout": "Success! The configuration is valid.\n\n",
+      "stderr": ""
+    },
+    {
+      "name": "independent-mock-plans",
+      "exitCode": 0,
+      "stdout": "tests/independent.tftest.hcl... in progress\n  run \"independent_boundaries\"... pass\n  run \"staff_count_is_not_a_business_quota\"... pass\ntests/independent.tftest.hcl... tearing down\ntests/independent.tftest.hcl... pass\n\nSuccess! 2 passed, 0 failed.\n",
+      "stderr": ""
+    }
+  ],
+  "inferenceTurns": 0,
+  "cloudOperations": false,
+  "boundary": "Clean receiving copy/public offline setup/deterministic runtime rebuild/format/real provider schema plus independent evaluator overlay: twelve assertions in two offline-provider mock plans. Original captured client files remain byte-identical. No account plan/apply, effective cloud IAM, service capacity or deployed-system claim."
+}

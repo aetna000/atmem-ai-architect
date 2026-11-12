@@ -6,6 +6,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 GUIDANCE = [
+ ('composition','Architecture composition and engineering judgment','all',['discover','design','review','deploy'],'Choose and compose blocks through responsibility, contracts, state, identity, failure modes and trade-offs; verify the complete system.'),
  ('architecture','AI architecture and discovery','all',['discover','design','review'], 'Clarify outcome, users, existing systems, data ownership and constraints. Evolve the diagram incrementally. Derive functional requirements and propose measurable quality targets as assumptions needing confirmation. Compare clouds against the actual requirements; do not assume an enterprise identity provider or a vendor. Keep proposed and accepted decisions distinct.'),
  ('security','Security and reliability','all',['design','review','deploy'], 'Check data classification, residency, access boundaries, encryption choices, approval of automated actions, reliability and recovery. A drawn control is not enforcement evidence. Explain missing controls and tests. Propose requirements from the components and paths; mark default targets as suggestions, never existing company policy.'),
  ('finops','FinOps and progressive estimation','all',['estimate','design'], 'Populate a bill of resources from the diagram. Separate monthly cloud charges from one-off build effort. Use pricing.lookup for supported current list pricing, and project.read for usage. Ask the largest missing usage/model/region question. Input and output tokens, storage, requests, duration, networking and observability can have separate charges. Never invent prices or effort. Options cost scores are qualitative judgements, not price quotes.'),
@@ -17,6 +18,14 @@ GUIDANCE = [
  ('terraform','Terraform delivery guidance','all',['deploy','design'], 'Keep provider versions and configurable inputs explicit, use stable resource addresses, declare references and dependencies, and review state/import and destructive changes. Run validation before claiming a valid sketch. Current generated S3 foundations are partial; application resources and integrations remain engineering work.'),
  ('pulumi','Pulumi delivery guidance','all',['deploy','design'], 'Declare resources predictably and pass Outputs through dependencies; do not create resources inside apply callbacks. Plan aliases and protection before refactors. Keep secrets in supported secret/config stores. Explain import versus refresh limits. AtMem AI Architect Pulumi output remains a metadata scaffold, not deployed provider resources.'),
 ]
+
+
+def generation_guidance():
+    catalogue = json.loads((ROOT / 'agent-skills/generation-capabilities.json').read_text())
+    return ('Compiler capability catalogue v' + str(catalogue['version']) + ': ' +
+            json.dumps(catalogue['contracts'], separators=(',', ':')) + '. ' + catalogue['evidenceBoundary'] +
+            ' Application source assembly contracts: ' + json.dumps(catalogue.get('applicationAssemblies', []), separators=(',', ':')) + '. ' +
+            ' Preserve required unsupported scope and identify missing compiler work; never substitute a different provider or present references as generated infrastructure.')
 
 
 def registry():
@@ -34,7 +43,7 @@ def registry():
             reference = {**reference, 'integrity': hashlib.sha256((ROOT / reference['file']).read_bytes()).hexdigest() == reference['sha256']}
             valid = valid and reference['integrity']
         result.append({'id': ident, 'name': name, 'provider': provider, 'stages': stages, 'version': version_match.group(1) if version_match else 'unknown', 'digest': expected,
-            'instructions': data.decode(), 'source': reference['url'] if reference else 'AtMem AI Architect reviewed specialist guidance',
+            'instructions': data.decode(), 'summary': content, 'source': reference['url'] if reference else 'AtMem AI Architect reviewed specialist guidance',
             'reference': reference, 'integrity': valid, 'coverage': 'guidance; no cloud execution', 'tools': ['memory.lookup','project.read','skills.lookup'] + (['pricing.lookup'] if ident in {'aws','finops'} else [])})
     return result
 
@@ -51,15 +60,15 @@ def catalogue(memory, project):
 def select(memory, project, request, recalled):
     skills = catalogue(memory, project)
     text = request.message.lower()
-    providers = {request.project.provider}
+    providers = {request.project.provider, *(n.data.provider for n in request.project.nodes)}
     if re.search(r'compar|versus|alternative|\bvs\b', text):
         providers.update({'aws','azure','gcp','ibm'})
     for provider, pattern in [('aws',r'\baws\b'),('azure',r'\bazure\b'),('gcp',r'google cloud|\bgcp\b'),('ibm',r'\bibm\b|watsonx')]:
         if re.search(pattern,text): providers.add(provider)
     selected = []
     for skill in skills:
-        choose = skill['id'] == 'architecture' or ((request.stage in skill['stages'] or request.stage == 'discover') and skill['provider'] in providers)
-        choose |= skill['id'] == 'security' and bool(request.project.nodes)
+        choose = skill['id'] in {'architecture','composition'} or ((request.stage in skill['stages'] or request.stage == 'discover') and skill['provider'] in providers)
+        choose |= skill['id'] == 'security' and (bool(request.project.nodes) or bool(re.search(r'authenticat|authoriz|sign.in|tenant|permission|access.boundary|security|private.memory|webhook', text)))
         choose |= skill['id'] == 'finops' and (request.stage == 'estimate' or bool(re.search(r'cost|pric|estimat|budget', text)))
         choose |= skill['id'] == 'devops' and (request.stage == 'deploy' or bool(re.search(r'deploy|devops|rollback|pipeline', text)))
         if skill['id'] in {'terraform','pulumi'}:
@@ -69,13 +78,24 @@ def select(memory, project, request, recalled):
     return selected[:8]
 
 
+def publication_text(skill):
+    """Publish bounded guidance or an explicit index; never silently clip instructions."""
+    text = f'Skill {skill["id"]} v{skill["version"]}: {skill["instructions"]}\nSource: {skill["source"]}; artifact SHA256: {skill["digest"]}'
+    if len(text) > 1900:
+        text = f'Skill {skill["id"]} v{skill["version"]}: {skill["summary"]}\nIndex record only; full reviewed instructions are loaded by the skill registry.\nSource: {skill["source"]}; artifact SHA256: {skill["digest"]}'
+    if len(text) > 1900:
+        raise ValueError(f'Skill {skill["id"]} publication exceeds the AtMem boundary')
+    return text
+
+
 def publish(memory, project):
     if not memory.enabled(project): return
     for skill in catalogue(memory, project):
         if not skill['integrity']: continue
-        # Actual source-linked procedure guidance lives in the knowledge scope of AtMem.
-        text = f'Skill {skill["id"]} v{skill["version"]}: {skill["instructions"]}\nSource: {skill["source"]}; artifact SHA256: {skill["digest"]}'
+        text = publication_text(skill)
         memory.enqueue(project,'knowledge','skill.'+skill['id'],text,event_id='skill-'+skill['digest'],source=skill['source'])
+    from .engineering_knowledge import publish as publish_practices
+    publish_practices(memory,project)
     memory.flush()
 
 

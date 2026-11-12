@@ -1,0 +1,70 @@
+✔ legacy projects project lossless sources without inventing deployment units or execution evidence (3.846625ms)
+✔ transitive requirement change affects mapped units/files/evidence and decisions; old scope/history remains (8.117375ms)
+✔ explicitly scoped dependencies avoid invalidation from unrelated requirements and diagram layout (1.643625ms)
+✔ missing and removed references remain visible, including after save/reopen; missing cannot be reviewed (2.990167ms)
+✔ versioned state round-trips and export projection equals the live model without upgrading proposed claims (32.202625ms)
+✔ project identity, owner, provider, interface and implementation edits invalidate their dependent context (2.220666ms)
+✔ engineering intent is lossless, ordered, monotonic across partial replay and excludes internal repairs/model replies (2.72825ms)
+✔ cycles are bounded context relationships, never circular evidence of successful execution (0.710416ms)
+✔ invalid/future/colliding/oversized/lossy states and path escapes fail without mutating the original (5.797458ms)
+✔ real credentials in mapping data still block export rather than expanding the credential boundary (0.429292ms)
+✔ native proposal schema and JavaScript reader agree on non-BMP text units (159.850791ms)
+✔ late/out-of-order event pages preserve per-session client sequence order (0.320958ms)
+✔ context snapshots deduplicate shared long intent without deleting prior review associations (17.521541ms)
+✔ non-JSON proposal values and UTF-8 oversized project files are refused without normalization or clipping (20.007083ms)
+✔ Design consultation receives complete native intent/proposed work with uncertainty and no internal repair text (6.15475ms)
+✔ late project callbacks cannot contaminate another project or overwrite newer requirements (0.372125ms)
+✔ recording review rejects a context that changed after the displayed source snapshot (0.981041ms)
+✖ artifact reconciliation preserves design/ownership and links exact files without trusting pass claims (57.82275ms)
+✔ structured brief changes invalidate both reviews and generated mapping context (5.932625ms)
+✔ requirement/provider/ownership/interface and newer client changes reject stale asynchronous imports atomically (4.079083ms)
+✔ layout-only movement remains compatible and a switched-project callback changes nothing (1.515917ms)
+✔ a second generation explicitly revises only its own proposed mappings and retains prior values and hashes (7.296375ms)
+✖ unbound/manual/accepted or locally edited mapping collisions cannot be overwritten (4.476333ms)
+✔ missing source or file references and duplicate identities are rejected without scope deletion (3.503292ms)
+✔ receipt and saved context tampering is rejected before model application (0.993209ms)
+✔ version1 state migrates without dropping review history and future versions remain explicit failures (0.767ms)
+✔ save/reopen, Design/Build projection, delivery and compiler/Spec Kit exports agree without clearing gaps (21.333791ms)
+ℹ tests 27
+ℹ suites 0
+ℹ pass 25
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 409.982208
+
+✖ failing tests:
+
+test at tests/artifact-work.test.mjs:29:1
+✖ artifact reconciliation preserves design/ownership and links exact files without trusting pass claims (57.82275ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  + actual - expected
+  
+  + 'file_reference_linked'
+  - 'unmapped'
+  
+      at TestContext.<anonymous> (file:///Users/javadtaghia/gitlab/ai-architect-workbench/tests/artifact-work.test.mjs:36:105)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'file_reference_linked',
+    expected: 'unmapped',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at tests/artifact-work.test.mjs:68:1
+✖ unbound/manual/accepted or locally edited mapping collisions cannot be overwritten (4.476333ms)
+  AssertionError [ERR_ASSERTION]: Missing expected exception.
+      at TestContext.<anonymous> (file:///Users/javadtaghia/gitlab/ai-architect-workbench/tests/artifact-work.test.mjs:72:85)
+      at async Test.run (node:internal/test_runner/test:1389:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: undefined,
+    expected: /conflicts/,
+    operator: 'throws',
+    diff: 'simple'
+  }

@@ -1,0 +1,49 @@
+{
+  "passed": false,
+  "runtimeFilesByteIdentical": true,
+  "artifactSha256": "1b3bdaac06abece237c58fe5742aff6ef58d38ca3f54c35edb075c1c2cda6996",
+  "oracleSha256": "6a9ab9a824c2571cc3bdc5c54f2250bf7f5edf3f6a38975df9e5ef9d5237a250",
+  "assertions": 12,
+  "sourceChanged": [],
+  "checks": [
+    {
+      "name": "public-offline-setup",
+      "exitCode": 0,
+      "stdout": "{\n  \"configured\": [\n    \"python\",\n    \"node\",\n    \"terraform\",\n    \"providerMirror\"\n  ],\n  \"missingOptional\": [],\n  \"cloudAccess\": false,\n  \"downloads\": false,\n  \"environmentFiles\": {\n    \"OPENSSL_CONF\": \".worker-tmp/openssl.cnf\",\n    \"TF_CLI_CONFIG_FILE\": \".worker-tmp/terraform.rc\"\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "rebuild-runtime-package",
+      "exitCode": 0,
+      "stdout": "Built function.zip with verified dependencies and runtime files only\n",
+      "stderr": ""
+    },
+    {
+      "name": "terraform-format",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "offline-init",
+      "exitCode": 0,
+      "stdout": "Initializing provider plugins...\n- Reusing version 6.72.0 of hashicorp/aws from the dependency lock file\n- Installing hashicorp/aws v6.72.0...\n- Installed hashicorp/aws v6.72.0 (unauthenticated)\n\nTerraform has been successfully initialized!\n",
+      "stderr": ""
+    },
+    {
+      "name": "provider-schema",
+      "exitCode": 0,
+      "stdout": "Success! The configuration is valid.\n\n",
+      "stderr": ""
+    },
+    {
+      "name": "independent-mock-plans",
+      "exitCode": 1,
+      "stdout": "tests/independent.tftest.hcl... in progress\n  run \"independent_boundaries\"... fail\ntests/independent.tftest.hcl... tearing down\ntests/independent.tftest.hcl... fail\n\nFailure! 0 passed, 1 failed.\n",
+      "stderr": "\nError: Unknown condition value\n\n  on tests/independent.tftest.hcl line 23, in run \"independent_boundaries\":\n  23:   condition = aws_lambda_function.app.environment[0].variables.CLIENT_ID == aws_cognito_user_pool_client.browser.id && aws_lambda_function.app.environment[0].variables.REDIRECT_URI == \"${aws_apigatewayv2_api.app.api_endpoint}/\"\n    \u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n    \u2502 aws_apigatewayv2_api.app.api_endpoint is a string\n    \u2502 aws_cognito_user_pool_client.browser.id is a string\n    \u2502 aws_lambda_function.app.environment[0].variables.CLIENT_ID is a string\n    \u2502 aws_lambda_function.app.environment[0].variables.REDIRECT_URI is a string\n\nCondition expression could not be evaluated at this time. This means you have\nexecuted a `run` block with `command = plan` and one of the values your\ncondition depended on is not known until after the plan has been applied.\nEither remove this value from your condition, or execute an `apply` command\nfrom this `run` block. Alternatively, if there is an override for this value,\nyou can make it available during the plan phase by setting `override_during =\nplan` in the `override_` block.\n\nError: Unknown condition value\n\n  on tests/independent.tftest.hcl line 43, in run \"independent_boundaries\":\n  43:   condition = aws_cognito_user_group.reviewers.name == \"reviewers\" && aws_cognito_user_group.reviewers.user_pool_id == aws_cognito_user_pool.staff.id\n    \u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n    \u2502 aws_cognito_user_group.reviewers.name is \"reviewers\"\n    \u2502 aws_cognito_user_group.reviewers.user_pool_id is a string\n    \u2502 aws_cognito_user_pool.staff.id is a string\n\nCondition expression could not be evaluated at this time. This means you have\nexecuted a `run` block with `command = plan` and one of the values your\ncondition depended on is not known until after the plan has been applied.\nEither remove this value from your condition, or execute an `apply` command\nfrom this `run` block. Alternatively, if there is an override for this value,\nyou can make it available during the plan phase by setting `override_during =\nplan` in the `override_` block.\n\nError: Unknown condition value\n\n  on tests/independent.tftest.hcl line 47, in run \"independent_boundaries\":\n  47:   condition = jsondecode(aws_iam_role_policy.runtime.policy).Statement[0].Action == [\"bedrock:InvokeModel\"] && jsondecode(aws_iam_role_policy.runtime.policy).Statement[0].Resource == \"arn:aws:bedrock:ap-southeast-2::foundation-model/amazon.nova-lite-v1:0\"\n    \u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n    \u2502 aws_iam_role_policy.runtime.policy is a string\n\nCondition expression could not be evaluated at this time. This means you have\nexecuted a `run` block with `command = plan` and one of the values your\ncondition depended on is not known until after the plan has been applied.\nEither remove this value from your condition, or execute an `apply` command\nfrom this `run` block. Alternatively, if there is an override for this value,\nyou can make it available during the plan phase by setting `override_during =\nplan` in the `override_` block.\n\nError: Unknown condition value\n\n  on tests/independent.tftest.hcl line 51, in run \"independent_boundaries\":\n  51:   condition = length(jsondecode(aws_iam_role_policy.runtime.policy).Statement) == 3 && jsondecode(aws_iam_role_policy.runtime.policy).Statement[1].Action == [\"bedrock:GetAccountDataRetention\", \"bedrock:GetModelInvocationLoggingConfiguration\"] && jsondecode(aws_iam_role_policy.runtime.policy).Statement[1].Condition.StringEquals[\"aws:RequestedRegion\"] == \"ap-southeast-2\"\n    \u251c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\n    \u2502 aws_iam_role_policy.runtime.policy is a string\n\nCondition expression could not be evaluated at this time. This means you have\nexecuted a `run` block with `command = plan` and one of the values your\ncondition depended on is not known until after the plan has been applied.\nEither remove this value from your condition, or execute an `apply` command\nfrom this `run` block. Alternatively, if there is an override for this value,\nyou can make it available during the plan phase by setting `override_during =\nplan` in the `override_` block.\n"
+    }
+  ],
+  "inferenceTurns": 0,
+  "cloudOperations": false,
+  "boundary": "Clean receiving copy/public offline setup/runtime-content reproducible rebuild/format/real provider schema plus independent evaluator overlay: independent assertions in an offline-provider mock plan. Original captured source/dependencies and built runtime file contents match independently enumerated included source and wheel member bytes; ZIP timestamps may differ. No requirement for byte-identical archive metadata is invented. No account plan/apply, effective cloud IAM, service capacity or deployed-system claim."
+}

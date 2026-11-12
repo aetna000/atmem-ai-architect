@@ -1,0 +1,48 @@
+{
+  "format": "atmem.real-validator-placement",
+  "version": 1,
+  "attempt": "v2",
+  "checks": [
+    {
+      "name": "Actual arm-browser check passed",
+      "tests": 1,
+      "artifactSha256": "ad0bd37c6a3a06663e7154f76e152c6e43450f0459af4353c219f62754b5cb2a"
+    },
+    {
+      "name": "Actual full-amd64 check passed",
+      "tests": 3,
+      "artifactSha256": "ad0bd37c6a3a06663e7154f76e152c6e43450f0459af4353c219f62754b5cb2a"
+    },
+    {
+      "name": "Wrong-worker named facts, legacy changed-default context and missing placement rejected before execution",
+      "checkRows": 2,
+      "unexpectedChecks": 0
+    },
+    {
+      "name": "Actual receiver SIGKILL recovers only original AMD64 container with default changed and validator removed",
+      "receiverExitCode": -9,
+      "originalRemoved": true,
+      "peerSameUuidRetained": true,
+      "recordedArtifactUnchanged": true,
+      "checkRows": 1,
+      "workReplayed": false
+    }
+  ],
+  "cloudOperations": false,
+  "nativeModelRequests": 0,
+  "ownerProjectWrites": 0,
+  "resourcesCleaned": true,
+  "passed": true,
+  "positiveArtifactSha256": "ad0bd37c6a3a06663e7154f76e152c6e43450f0459af4353c219f62754b5cb2a",
+  "sourceHashes": {
+    "specs/029-general-purpose-engine/evidence/20261112-validator-placement/run-real.py": "bc22fe3a9981dbe643994deb91e4e6997f0b45cbd4cdd114f9103b79f00c2f6d",
+    "specs/029-general-purpose-engine/evidence/20261112-validator-placement/crash-receiver.py": "ec634e68b575236546ca78b56c636d30dccf5676ac0c38f6935b15a55e12d06c",
+    "server/validation_jobs.py": "b4069f065f039aa021ab1caac27bda7994f224d6059f601da613aa5ab7192d11",
+    "server/validation_workers.py": "927f5fe3aa86ab6f4705653238ca4a50e37eaf4f3c02e4124b469ff0c02cddbb",
+    "server/runtime_evidence.py": "17bed4a098f9b40e69c952be5bffa178fc44bae4c3dfde4f9e96dfee60f11068",
+    "server/local_validation.py": "d784f83ca3497a520f8574ad4821406037364f06f23bdcdecaa9f1a695db0764",
+    "server/engineering_routes.py": "0ad8e97c052b31045608fa198de4d55feed147a3c97f32b379f331744cd32a35",
+    "server/engineering_tools.py": "809fabffa05b297c8aab2283883f63aa0ccce2363d414770c2522ec0252c81f7"
+  },
+  "sourcesUnchangedDuringRun": true
+}

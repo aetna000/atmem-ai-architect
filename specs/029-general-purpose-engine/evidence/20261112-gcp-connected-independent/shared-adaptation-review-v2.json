@@ -1,0 +1,84 @@
+{
+  "format": "atmem.cross-domain-shared-adaptation-review",
+  "version": 2,
+  "domains": [
+    "Azure museum accession/caption (prior review)",
+    "Google community sample routing (this captured artifact)"
+  ],
+  "googleArtifactSha256": "69bdacf7d6813bfdd977b007abe7c94d8c3308cb2e09f9fd09c6cb39cf61031d",
+  "previousReview": "../20261112-native-azure-labels/shared-adaptation-review-v1.json",
+  "moduleBindings": [
+    {
+      "module": "workflow_http.py",
+      "sharedSourceSha256": "7b827ba4af62d0ac18bb9dc58949bab0c2e65b649ee2cd5c1d39a97bce346371",
+      "nativeSourceSha256": "0aaccb2abc79886f845f58e4bfac0d1186f71aea1209e3cf96aaeb8c58f3a05b",
+      "identical": false,
+      "nativePresent": true,
+      "diffSha256": "3a6c426d1e418261f11391ff63ce0778bf1884eb2f3eaf5b7522d7916d3b3786"
+    },
+    {
+      "module": "workflow_database.py",
+      "sharedSourceSha256": "9db6e837172638388e4a708d31958d7ed019f90be64eb62e5025423f2c658601",
+      "nativeSourceSha256": "bab12afffbfe550db575343affe005057b4c33e7554d46ff96f2c67888d05599",
+      "identical": false,
+      "nativePresent": true,
+      "diffSha256": "893c05e7ab37fb94d00e9684ce3974b8575de7086c5d5bb81cd978e61b9c82e2"
+    },
+    {
+      "module": "durable_workflow.py",
+      "sharedSourceSha256": "422cd7e5c1ec8650faacfde2703c0e54f92b715ef737a3b8d7c90cfbba347a09",
+      "nativeSourceSha256": "db4f8fc2b9cb628eb34825f965721ae5901fa1de3d5655f7875ad63e7d5acded",
+      "identical": false,
+      "nativePresent": true,
+      "diffSha256": "eb629b382d3e85dc486d824ba3fba140ca4b3dca7fb331480f3d6c517fb8da1b"
+    },
+    {
+      "module": "workflow_worker.py",
+      "sharedSourceSha256": "cb30bdfdf56602c4bafefd2847b10b59bb700dbdd3d379c551eaeeb32ccc75fb",
+      "nativeSourceSha256": "f63d8494bf630d8c503d8676533f14311f41899090df7d5f89bd35797b10fedd",
+      "identical": false,
+      "nativePresent": true,
+      "diffSha256": "e88ef6c554d6fa00f855063d89b6e73bb3a6368f455e9414174b7337e7423587"
+    },
+    {
+      "module": "workflow_application.py",
+      "sharedSourceSha256": "15d091df2841f2bb70611d07c69dfe73814159f6efe3b70adcaeb91004c4247a",
+      "nativeSourceSha256": null,
+      "identical": false,
+      "nativePresent": false,
+      "diffSha256": "abb54cb558bbfe3d244c3a5253296820ed7aa38c505625480f84967df09b9090"
+    }
+  ],
+  "finding": "Successful native custom assembly does not establish that the shared SDK expresses its required policy. Both artifacts adapt generic-looking shared modules; never copy museum or sample field names/imports into production shared factories. Preserve previous public interfaces and source evidence.",
+  "requiredReusableInterfaces": [
+    {
+      "seam": "HTTP source/edit representation",
+      "contract": "Trusted bootstrap supplies explicit typed intake/result/edit policy; no field-name, workload or provider dispatch. Default legacy interface remains supported. Bounds retain declared UTF8 byte units.",
+      "transferAndCounterexamples": "Two distinct deterministic domains plus prior model workflow; extra fields, immutable derived values edited up/down, empty Unicode note and scalar boundary denials."
+    },
+    {
+      "seam": "Read authorization and inspection",
+      "contract": "Explicit owner-only staff reads and account-scoped reviewer reads; inspection is actor/account/revision/source/result/current-policy bound, with live authority and explicit POST. A GET representation is not human acknowledgement.",
+      "transferAndCounterexamples": "Foreign account/owner and revoked reviewer; stale or policy/destination/trust-changed inspection must not approve or dispatch."
+    },
+    {
+      "seam": "Semantic result validation",
+      "contract": "Owned source/result consistency policy runs on worker result recording, reviewer edits and dispatch eligibility, bound into immutable application contract. Caller cannot choose validator or executable.",
+      "transferAndCounterexamples": "Deterministic source-derived outputs versus editable model drafts; reject weakened inputs and both directions of forbidden derived-number changes."
+    },
+    {
+      "seam": "Schema and grants",
+      "contract": "Version schema and policy-specific optional inspection storage/grants together. Fresh initialization refuses existing schemas; runtime admits exact source/version/queue without migration.",
+      "transferAndCounterexamples": "No-op legacy path plus new policy schema; incompatible/altered binding fails closed, runtime roles cannot enroll/erase history/migrate."
+    },
+    {
+      "seam": "Child execution and credential boundary",
+      "contract": "Explicit operator-qualified requested-platform process controls; retain trusted owned launcher and mandatory credential/supervisor isolation, never fixed privileged UID assumptions or capability fallback.",
+      "transferAndCounterexamples": "SameUID nonroot independent file/fd/env/memory/signal/socket denials and positive parent controls; incompatible observed runtime rejected."
+    }
+  ],
+  "implementationStatus": "not_implemented_by_this_evidence_checkpoint",
+  "nextEngineAction": "Implement versioned reusable policy interfaces with legacy compatibility and cross-domain failure tests; explicit operator-owned validator placement must preserve per-worker evidence/cleanup identities. No case routing or hidden target-platform fallback.",
+  "releasePromotion": false,
+  "original28Promotion": false
+}

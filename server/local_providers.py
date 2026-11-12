@@ -4,6 +4,10 @@ from pathlib import Path
 
 SIGN_IN={'claude-code':('claude','claude auth login'),'codex':('codex','codex login'),'gemini-cli':('gemini','gemini'),'copilot':('copilot','copilot login')}
 
+def cli_command(argv):
+    """Resolve PATHEXT shims explicitly; CreateProcess does not search .cmd names."""
+    return [shutil.which(argv[0]) or argv[0], *argv[1:]]
+
 def account_environment():
     env=dict(os.environ)
     for key in ['ANTHROPIC_API_KEY','ANTHROPIC_AUTH_TOKEN','OPENAI_API_KEY','CODEX_API_KEY','GEMINI_API_KEY','GOOGLE_API_KEY','GITHUB_TOKEN','GH_TOKEN','COPILOT_GITHUB_TOKEN']:
@@ -21,7 +25,7 @@ def signed_in(provider):
     if not argv or not shutil.which(argv[0]):return None
     import subprocess
     try:
-        done=subprocess.run(argv,capture_output=True,text=True,timeout=8,stdin=subprocess.DEVNULL,env=account_environment())
+        done=subprocess.run(cli_command(argv),capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=8,stdin=subprocess.DEVNULL,env=account_environment())
     except Exception:
         return None
     if provider=='claude-code':
@@ -40,7 +44,7 @@ async def start_login(provider):
     if not argv or not shutil.which(argv[0]):raise RuntimeError('This provider has no sign-in AtMem AI Architect can start. Use its API key instead.')
     running=LOGINS.get(provider)
     if running and running.returncode is None:return {'started':True,'url':None}
-    process=await asyncio.create_subprocess_exec(*argv,stdin=asyncio.subprocess.DEVNULL,stdout=asyncio.subprocess.PIPE,stderr=asyncio.subprocess.STDOUT,env=account_environment(),start_new_session=os.name!='nt')
+    process=await asyncio.create_subprocess_exec(*cli_command(argv),stdin=asyncio.subprocess.DEVNULL,stdout=asyncio.subprocess.PIPE,stderr=asyncio.subprocess.STDOUT,env=account_environment(),start_new_session=os.name!='nt')
     LOGINS[provider]=process
     url=None
     try:
@@ -128,7 +132,7 @@ def models(provider):
         return [{'id':i,'name':n,'efforts':CLAUDE_EFFORTS,'defaultEffort':'medium'} for i,n in CLAUDE_MODELS]
     if provider=='codex' and shutil.which('codex'):
         try:
-            done=subprocess.run(['codex','debug','models'],capture_output=True,text=True,timeout=15,stdin=subprocess.DEVNULL,env=account_environment())
+            done=subprocess.run(cli_command(['codex','debug','models']),capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=15,stdin=subprocess.DEVNULL,env=account_environment())
             data=json.loads(done.stdout)
             return [{'id':m['slug'],'name':m.get('display_name',m['slug']),'efforts':[e['effort'] for e in m.get('supported_reasoning_levels',[])],'defaultEffort':m.get('default_reasoning_level')}
                     for m in data.get('models',[]) if m.get('visibility','list')=='list']
@@ -141,7 +145,7 @@ def models(provider):
         return [{'id':'auto','name':'Auto (Copilot picks)','efforts':[],'defaultEffort':None}]
     return []
 
-async def call_cli(provider,model,prompt,system,schema,is_disconnected,effort=None,images=None):
+async def call_cli(provider,model,prompt,system,schema,is_disconnected,effort=None,images=None,timeout=150):
     binary=shutil.which(SIGN_IN[provider][0])
     if not binary:raise RuntimeError(f'Install and sign in with {SIGN_IN[provider][0]} first, or choose an API key.')
     with tempfile.TemporaryDirectory(prefix='atforma-agent-') as cwd:
@@ -154,7 +158,7 @@ async def call_cli(provider,model,prompt,system,schema,is_disconnected,effort=No
                 args+=['--input-format','stream-json']
                 content=[{'type':'text','text':prompt}]+[{'type':'image','source':{'type':'base64','media_type':i['mime'],'data':i['data']}} for i in images]
                 prompt=json.dumps({'type':'user','message':{'role':'user','content':content}})+'\n'
-            result=json.loads(await communicate(args,prompt,cwd,is_disconnected,env))
+            result=json.loads(await communicate(args,prompt,cwd,is_disconnected,env,timeout=timeout))
             if result.get('is_error'):raise RuntimeError(provider_failure(json.dumps(result)))
             return result.get('structured_output') or extract_json(result.get('result',''))
         if provider=='codex':
@@ -166,16 +170,16 @@ async def call_cli(provider,model,prompt,system,schema,is_disconnected,effort=No
                 args+=['--image',str(image_path)]
             if model not in ('default','auto'):args+=['--model',model]
             if effort:args+=['-c',f'model_reasoning_effort="{effort}"']
-            return extract_json(await communicate(args,system+'\n\n'+prompt,cwd,is_disconnected,env))
+            return extract_json(await communicate(args,system+'\n\n'+prompt,cwd,is_disconnected,env,timeout=timeout))
         if provider=='gemini-cli':
             settings=Path(cwd)/'settings.json';settings.write_text(json.dumps({'tools':{'core':[]},'hooksConfig':{'enabled':False},'mcp':{'allowed':['atforma-no-servers']},'telemetry':{'enabled':False},'general':{'enableAutoUpdate':False,'sessionRetention':{'enabled':False}}}))
             env['GEMINI_CLI_SYSTEM_SETTINGS_PATH']=str(settings)
             policy=Path(cwd)/'deny-tools.toml';policy.write_text('[[rule]]\ntoolName = "*"\ndecision = "deny"\npriority = 999\n')
             args=[binary,'--prompt',system,'--output-format','json','--approval-mode','plan','--extensions','none','--allowed-mcp-server-names','atforma-no-servers','--policy',str(policy)]
             if model not in ('default','auto'):args+=['--model',model]
-            result=json.loads(await communicate(args,prompt,cwd,is_disconnected,env))
+            result=json.loads(await communicate(args,prompt,cwd,is_disconnected,env,timeout=timeout))
             if result.get('error'):raise RuntimeError('Gemini request failed. Run gemini to sign in and check your model access.')
             return extract_json(result.get('response',''))
         # Official Copilot SDK provides tool exclusion and permission denial without --allow-all.
         worker=Path(__file__).with_name('copilot_worker.py')
-        return extract_json(await communicate([sys.executable,str(worker)],json.dumps({'prompt':prompt,'system':system,'schema':strict_schema(schema),'model':model,'cwd':cwd,'cli':binary,'images':images or []}),cwd,is_disconnected,env))
+        return extract_json(await communicate([sys.executable,str(worker)],json.dumps({'prompt':prompt,'system':system,'schema':strict_schema(schema),'model':model,'cwd':cwd,'cli':binary,'images':images or []}),cwd,is_disconnected,env,timeout=timeout))

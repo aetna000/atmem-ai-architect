@@ -1,0 +1,19 @@
+test_existing_company_api_identity_is_stable_but_account_scoped (__main__.CompanyIdentityPolicy.test_existing_company_api_identity_is_stable_but_account_scoped) ... ERROR
+test_wrong_issuer_audience_expiry_scope_and_id_tokens_deny (__main__.CompanyIdentityPolicy.test_wrong_issuer_audience_expiry_scope_and_id_tokens_deny) ... ok
+test_wrong_signature_algorithm_and_unknown_key_url_do_not_establish_identity (__main__.CompanyIdentityPolicy.test_wrong_signature_algorithm_and_unknown_key_url_do_not_establish_identity) ... ok
+
+======================================================================
+ERROR: test_existing_company_api_identity_is_stable_but_account_scoped (__main__.CompanyIdentityPolicy.test_existing_company_api_identity_is_stable_but_account_scoped)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_identity_acceptance.py", line 25, in test_existing_company_api_identity_is_stable_but_account_scoped
+    first=self.verifier().verify(self.token());second=self.verifier().verify(self.token());self.assertEqual(first.key,second.key);self.assertEqual(first.account_id,'company1');self.assertEqual(first.subject,'alice');self.assertNotIn(self.token(),repr(first))
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/enterprise_identity.py", line 51, in verify
+    except Exception:raise SourceDenied('company_identity_required')from None
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+enterprise_sources.SourceDenied: company_identity_required
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.073s
+
+FAILED (errors=1)

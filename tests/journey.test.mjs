@@ -5,6 +5,7 @@ import {understand,opening,nextQuestion,progress,sketch,extractFacts,extractRequ
 import {review,acceptRisk,blockers} from '../src/review.mjs';
 import {estimate,setPrice,setUsage,DISCLAIMER} from '../src/estimate.mjs';
 import {deploymentDocument} from '../src/document.mjs';
+import {setProjectSize,usage} from '../src/estimate.mjs';
 import {cleanEngagement} from '../src/engagement.mjs';
 import {toProjectFile,fromProjectFile} from '../src/project-file.mjs';
 const empty=()=>({version:1,revision:1,name:'New project',nodes:[],edges:[]});
@@ -44,6 +45,16 @@ test('numbers with units become facts; quality statements become measurable requ
   const r=extractRequirements('answers within 5 seconds, 99.9% uptime, data must stay in the EU, a manager approves refunds');
   assert.deepEqual(r.map(x=>x.category),['performance','availability','compliance','security']);
   assert.deepEqual(r[0].measure,{metric:'p95 response time',op:'<=',target:5,unit:'s'});
+});
+test('ambiguous dollar budgets keep currency unknown across unrelated client domains',()=>{
+ assert.equal(extractFacts('We check fraud 500 requests per day').some(f=>f.name==='budget.per_month'),false);
+ for(const brief of ['Library booking system in Australia, budget $500 per month','Warehouse intake in Canada, $500 per month','Member website in New Zealand, $500 per month']){
+  const budget=extractFacts(brief).find(f=>f.name==='budget.per_month');
+  assert.equal(budget.value,500);assert.equal(budget.currency,null);assert.equal(budget.unit,'currency unspecified/month');assert.equal(budget.text,brief);
+ }
+ for(const [symbol,currency]of [['A$','AUD'],['AU$','AUD'],['CAD','CAD'],['US$','USD'],['NZ$','NZD'],['£','GBP'],['€','EUR']]){
+  const budget=extractFacts(`Budget ${symbol}600 per year`).find(f=>f.name==='budget.per_month');assert.equal(budget.currency,currency);assert.equal(budget.value,50);
+ }
 });
 test('conflicting numbers keep both with dates and ask which is current',()=>{
   const {p,body}=talk(empty(),'chatbot for policies','100 staff','sorry, 250 staff');
@@ -138,4 +149,25 @@ test('the skill switches when the user\'s words clearly fit another one',()=>{
   r=understand('actually it should automate ticket triage and route tickets to the right team',r.project);
   assert.equal(r.project.workflow,'agentic-automation');assert.match(r.body,/switching skills/);
   const stay=understand('about 300 staff',r.project);assert.equal(stay.project.workflow,'agentic-automation');
+});
+
+
+test('project sizes supply transparent assumptions across domains without replacing facts or prices',()=>{
+  for(const domain of ['Document assistant','Event pipeline']){
+    let p={...empty(),name:domain,estimate:{usage:{data_gb:42},prices:{storage:{price:0.2,currency:'USD',source:'owner rate'}}},facts:[{name:'requests.per_month',value:123,madeAt:'2026-11-12'}]};
+    p=setProjectSize(p,'large');
+    assert.equal(usage(p).data_gb.value,42);
+    assert.equal(usage(p).requests_per_month.value,123);
+    assert.equal(usage(p).events_per_month.value,1000000);
+    assert.match(usage(p).events_per_month.source,/planning assumption/);
+    assert.equal(usage(p).training_hours.value,null);
+    const back=fromProjectFile(JSON.parse(JSON.stringify(toProjectFile({...p,...cleanEngagement(p)})))).project;
+    assert.equal(back.estimate.projectSize,'large');
+    assert.equal(usage(back).events_per_month.value,1000000);
+    assert.equal(back.estimate.prices.storage.price,0.2);
+    assert.equal(estimate(back).expected,null,'a size alone must not fabricate a dollar quote');
+    assert.equal(usage(setProjectSize(p,'small')).events_per_month.value,10000);
+    assert.throws(()=>setProjectSize(p,'made-up'),/listed/);
+    assert.equal(cleanEngagement({...p,estimate:{projectSize:'made-up'}}).estimate.projectSize,undefined);
+  }
 });

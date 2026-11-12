@@ -1,0 +1,22 @@
+test_company_registration_change_invalidates_cookie_and_old_queued_work (__main__.NativeFactories.test_company_registration_change_invalidates_cookie_and_old_queued_work) ... Executing <Task finished name='Task-1' coro=<NativeFactories.asyncSetUp() done, defined at /Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_native_postgres.py:40> result=None created at /opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py:101> took 0.102 seconds
+FAIL
+
+======================================================================
+FAIL: test_company_registration_change_invalidates_cookie_and_old_queued_work (__main__.NativeFactories.test_company_registration_change_invalidates_cookie_and_old_queued_work)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 119, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_native_postgres.py", line 157, in test_company_registration_change_invalidates_cookie_and_old_queued_work
+    self.assertEqual((await self.status(identity)).status_code,401)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 200 != 401
+
+----------------------------------------------------------------------
+Ran 1 test in 0.574s
+
+FAILED (failures=1)

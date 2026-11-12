@@ -1,0 +1,19 @@
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/scripts/engine-evaluation/check-ticket-infra-v2.py", line 89, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py", line 205, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py", line 128, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py", line 719, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/scripts/engine-evaluation/check-ticket-infra-v2.py", line 68, in main
+    original_zip=zipfile.ZipFile(workspace/'dist/function.zip');runtime_hashes={n:hashlib.sha256(original_zip.read(n)).hexdigest() for n in original_zip.namelist()};original_zip.close()
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/zipfile/__init__.py", line 1462, in __init__
+    self.fp = io.open(file, filemode)
+              ~~~~~~~^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/private/tmp/ati-244fg2gk/work/dist/function.zip'

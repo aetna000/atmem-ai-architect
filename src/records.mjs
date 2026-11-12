@@ -1,5 +1,6 @@
 // Project records beside the diagram: requirements, assumptions, open questions,
 // and decisions with supersession history. See specs/002-project-model.
+import { sha256 } from '@noble/hashes/sha2.js';
 
 export const REQUIREMENT_KINDS = ["functional", "nonfunctional"];
 export const CATEGORIES = [
@@ -18,10 +19,9 @@ export const REQUIREMENT_STATUSES = ["open", "met", "at-risk", "not-met"];
 export const SOURCES = ["user", "agent", "import"];
 export const OPS = [">=", "<=", "=="];
 
-const text = (value, max = 2000) => String(value ?? "").slice(0, max);
+const text = (value, max = 2000) => {const result=String(value??"");if(result.length>max)throw Error(`A project record exceeds ${max.toLocaleString('en')} characters; split it into linked records. No content was truncated.`);return result;};
 const pick = (value, allowed, fallback) => (allowed.includes(value) ? value : fallback);
-const links = (value) =>
-  Array.isArray(value) ? value.slice(0, 50).map((id) => text(id, 100)).filter(Boolean) : [];
+const links = (value) => {if(Array.isArray(value)&&value.length>50)throw Error("A record links more than 50 components; no links were truncated.");return Array.isArray(value)?value.map(id=>text(id,100)).filter(Boolean):[];};
 const today = () => new Date().toLocaleDateString("en-CA");
 const day = (value) => (/^\d{4}-\d{2}-\d{2}$/.test(value) ? value : today());
 const uid = (prefix) => `${prefix}-${crypto.randomUUID().slice(0, 8)}`;
@@ -108,11 +108,19 @@ export function linkedTo(project, componentId) {
 
 // ---- Decisions ----
 
-export const slugSubject = (title) =>
-  text(title, 80)
+export const slugSubject = (title) => {
+  const full = String(title ?? "");
+  const slug = full
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-|-$/g, "") || "general";
+  if (slug.length <= 80) return slug;
+  // This is a derived lookup key, not the decision title. Bind the suffix to
+  // the whole title so proposals sharing a long prefix keep distinct histories.
+  const digest = Array.from(sha256(new TextEncoder().encode(full)), byte =>
+    byte.toString(16).padStart(2, "0")).join("").slice(0, 16);
+  return `${slug.slice(0, 63).replace(/-+$/, "")}-${digest}`;
+};
 
 function nextDecisionId(decisions) {
   const max = Math.max(0, ...decisions.map((d) => Number(/^adr-(\d+)$/.exec(d.id)?.[1] || 0)));

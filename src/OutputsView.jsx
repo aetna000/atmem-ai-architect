@@ -1,7 +1,11 @@
+import {FileTree} from './FileTree.jsx';
+import {strFromU8} from 'fflate';
+import {CodePreview} from './CodePreview.jsx';
 import {BrainActivity} from "./BrainActivity.jsx";
 import React,{useEffect,useState} from 'react';
 import {EmulationPanel} from './EmulationPanel.jsx';
 import {outputBundle} from './output-bundle.mjs';
+import {ImplementationDelivery} from './ImplementationDelivery.jsx';
 
 // Render generated Markdown as text elements, never executable HTML.
 function Document({text}){
@@ -29,30 +33,39 @@ function Preview({name,content}){
  },[name,content,visual]);
  if(visual)return !url?<p role="status"><BrainActivity/> Preparing preview…</p>:name.endsWith('.pdf')?<iframe className="output-pdf" src={url} title={`Preview ${name}`}/>:<img className="output-image" src={url} alt={`Preview ${name}`}/>;
  if(name.endsWith('.md'))return <Document text={content}/>;
- return <pre className="output-code"><code>{content}</code></pre>;
+ return <CodePreview className="output-code" content={content} name={name}/>;
 }
-export function OutputsView({project,run,environment,session,onDownload,onBack,emulation,onDiscuss,discussionBusy}){
+export function OutputsView({project,run,environment,session,onDownload,onBack,emulation,onDiscuss,discussionBusy,onBuild,onSave,onDownloaded,onReview,checkReceipt,onNavigate}){
+ const [exploration,setExploration]=useState(null);
  const [bundle,setBundle]=useState(null),[error,setError]=useState(''),[loading,setLoading]=useState(true),[retry,setRetry]=useState(0),[selected,setSelected]=useState('spec-kit/implementation-spec.md');
  useEffect(()=>{
    let active=true;setLoading(true);setError('');
-   outputBundle(project,run,environment).then(value=>{if(active){setBundle(value);setLoading(false);}}).catch(e=>{if(active){setError(e.message);setLoading(false);}});
+   outputBundle(project,run,environment,checkReceipt).then(value=>{if(active){setBundle(value);setLoading(false);}}).catch(e=>{if(active){setError(e.message);setLoading(false);}});
    return ()=>{active=false;};
- },[project,run,environment,retry]);
+ },[project,run,environment,retry,checkReceipt]);
  const readiness=bundle?.files['spec-kit/readiness.json']?JSON.parse(bundle.files['spec-kit/readiness.json']):null;
- const groups=bundle?[['Spec Kit',Object.keys(bundle.files).filter(n=>n.startsWith('spec-kit/')).sort((a,b)=>Number(b.includes('implementation-spec'))-Number(a.includes('implementation-spec')))],['Specification & handoff',Object.keys(bundle.files).filter(n=>!n.includes('/')&&!/^diagram\./.test(n))],['Design',Object.keys(bundle.files).filter(n=>/^diagram\./.test(n))],['Terraform',Object.keys(bundle.files).filter(n=>n.startsWith('terraform/'))]]:[];
+ const fileValues=exploration?.project===project?exploration.files:bundle?.files||{};
+ const selectedPath=fileValues[selected]!==undefined?selected:fileValues['START_HERE.md']?'START_HERE.md':Object.keys(fileValues).find(name=>name.endsWith('implementation-spec.md'))||Object.keys(fileValues)[0];
+ const raw=fileValues[selectedPath],content=typeof raw==='string'?raw:raw&&/\.(?:md|txt|json|py|js|mjs|tf|sh|yaml|yml|toml|html|css)$/.test(selectedPath)?strFromU8(raw):raw;
+
  return <section className="doc outputs-view" aria-label="Outputs">
-  <header className="doc-head"><h2>Outputs</h2><p className="muted">Review the specification, Spec Kit, design and Terraform files before downloading the package.</p></header>
-  <div className="row"><button className="link" onClick={onBack}>Back to architecture</button><button className="btn primary" disabled={!bundle||loading||!!error} onClick={()=>onDownload(bundle)}>Download reviewed ZIP</button></div>
-  <EmulationPanel project={project} environment={environment} session={session} emulation={emulation} onDiscuss={onDiscuss} discussionBusy={discussionBusy}/>
+  <header className="doc-head"><h2>Delivery</h2></header>
+  <button className="link" onClick={onReview||onBack}>Back to Review</button>
+  {session?.engineeringEnabled&&<ImplementationDelivery key={project.id} project={project} session={session} onBuild={onBuild} onSave={onSave} contextBusy={discussionBusy} designBundle={loading?null:bundle} onDesignDownload={onDownload} onDownloaded={onDownloaded} checkReceipt={checkReceipt} onExplore={setExploration} onNavigate={onNavigate}/>}
+  <section aria-label="Project file explorer"><h3>Explore files</h3>
+
+  {!session?.engineeringEnabled&&<><p>Design package · no implementation generated.</p><button className="btn" disabled={!bundle||loading||!!error} onClick={()=>onDownload(bundle)}>Download project ZIP</button></>}
+
   {loading&&<p role="status"><BrainActivity/> Preparing the current outputs…</p>}
   {error&&<div role="alert"><p>{error}</p><button className="btn" onClick={()=>setRetry(n=>n+1)}>Retry preparing outputs</button></div>}
   {bundle&&!loading&&!error&&<>
-   <p className="muted small">Design r{bundle.manifest.designRevision} · {Object.keys(bundle.files).length} files · Generated {new Date(bundle.manifest.generatedAt).toLocaleString()}. Changes to the project refresh this directory. Download contains these exact files.</p>
-   {readiness&&<aside aria-label="Handoff readiness"><strong>Engineering handoff — decisions and implementation remain</strong><p>{readiness.counts.priorityDecisions} priority decisions · {readiness.counts.generatedFoundations} generated foundations / {readiness.counts.components} logical components</p><p>Next: {readiness.nextAction}</p><button className="link" onClick={()=>setSelected('spec-kit/readiness.md')}>Review handoff gaps</button></aside>}
+   <p className="muted small">r{bundle.manifest.designRevision} · {Object.keys(bundle.files).length} design files</p>
+   {readiness&&<details><summary>Remaining work</summary><aside aria-label="Handoff readiness"><strong>Engineering handoff — decisions and implementation remain</strong><p>{readiness.counts.priorityDecisions} priority decisions · {readiness.counts.generatedFoundations} generated foundations / {readiness.counts.components} logical components</p><p>Next: {readiness.nextAction}</p><button className="link" onClick={()=>setSelected('spec-kit/readiness.md')}>Review handoff gaps</button></aside></details>}
    <div className="outputs-browser" data-snapshot-id={bundle.manifest.snapshotId}>
-    <nav className="outputs-directory" aria-label="Output files">{groups.map(([title,names])=><details key={title} open><summary>{title}</summary>{names.map(name=><button type="button" key={name} aria-current={selected===name?'page':undefined} onClick={()=>setSelected(name)} title={name}>{name.includes('/')?name.split('/').at(-1):name}</button>)}</details>)}</nav>
-    <div className="output-preview" aria-label="Output preview"><h3>{selected}</h3>{bundle.files[selected]!==undefined&&<Preview key={selected} name={selected} content={bundle.files[selected]}/>}</div>
+    <FileTree files={fileValues} selected={selectedPath} onSelect={setSelected}/>
+    <div className="output-preview" aria-label="Output preview"><h3>{selectedPath}</h3>{content!==undefined&&(typeof content==='string'||/\.(?:pdf|png|svg)$/.test(selectedPath)?<Preview key={selectedPath} name={selectedPath} content={content}/>:<p>{content.byteLength} bytes</p>)}</div>
    </div>
   </>}
+  </section>
  </section>;
 }

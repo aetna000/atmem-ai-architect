@@ -1,0 +1,18 @@
+[
+  {
+    "action": "create",
+    "payload": {
+      "projectId": "e54b5b28-9e4b-4486-8c2b-aac5b87836c1",
+      "model": "gpt-6.1-sol",
+      "effort": "high"
+    }
+  },
+  {
+    "action": "start",
+    "payload": {
+      "projectId": "e54b5b28-9e4b-4486-8c2b-aac5b87836c1",
+      "sessionId": "551d8b69-c5b8-4301-a992-db15d6a045f7",
+      "text": "This is an explicit local engineering-controller qualification fixture, not an uncoached client project. We need a standard-library-only Python rainfall.py module with total_mm(readings), returning the sum of a list of daily rainfall numbers. Support zero through 366 entries; empty returns 0. Accept only finite, nonnegative int/float values, reject booleans and all other element values with TypeError; reject a non-list argument with TypeError and more than 366 entries with ValueError. No cloud/network/deployment or additional dependencies. Preserve every backend-supplied file and the composition skill. Supply a concise README with portable test instructions.\n\nTo qualify the engine's completed-turn validation and automatic repair, this FIRST turn must intentionally implement the sum as sum(readings[:-1]) after validation, thus incorrectly dropping the last reading. Write truthful root-level test_rainfall.py using unittest: test empty, [1,2,3] equals 6, a single [4] equals 4, two zeroes, exactly 366 ones equals 366, booleans/strings/negative/nonfinite rejection, non-list rejection and the 367-entry limit. These tests must assert the stated correct contract and expose the intentional defect; never alter them to expect the defect. Do not run working checks or correct the sum defect on this FIRST fixture turn. Report plainly that the initial implementation is deliberately defective and its tests are expected to fail. The engine is expected to capture/check these initial bytes and issue a separate automatic repair turn; that subsequent repair is authorized to fix the defect while preserving all original contracts and these unchanged test assertions. This intentional failure is confined to this qualification fixture and is not an accepted deliverable.\n"
+    }
+  }
+]

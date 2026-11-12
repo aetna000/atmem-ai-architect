@@ -1,0 +1,81 @@
+DEPRECATED: The legacy builder is deprecated and will be removed in a future release.
+            BuildKit is currently disabled; enable it by removing the DOCKER_BUILDKIT=0
+            environment-variable.
+
+Sending build context to Docker daemon  16.22MB
+Step 1/12 : ARG PYTHON_BASE
+Step 2/12 : FROM ${PYTHON_BASE}
+ ---> 48d884813cf4
+Step 3/12 : WORKDIR /app
+ ---> Running in 02146906ca92
+ ---> Removed intermediate container 02146906ca92
+ ---> 986e125a2603
+Step 4/12 : COPY vendor /wheelhouse
+ ---> 23314b27fc1d
+Step 5/12 : COPY application/test-requirements.lock /tmp/requirements.lock
+ ---> 869c7f28006b
+Step 6/12 : RUN python3 -I -m pip install --disable-pip-version-check --no-index --find-links=/wheelhouse --require-hashes -r /tmp/requirements.lock && rm -rf /wheelhouse /tmp/requirements.lock
+ ---> Running in 51447668444d
+Looking in links: /wheelhouse
+Processing /wheelhouse/annotated_doc-0.0.5-py3-none-any.whl (from -r /tmp/requirements.lock (line 1))
+Processing /wheelhouse/annotated_types-0.8.0-py3-none-any.whl (from -r /tmp/requirements.lock (line 3))
+Processing /wheelhouse/anyio-4.16.0-py3-none-any.whl (from -r /tmp/requirements.lock (line 5))
+Processing /wheelhouse/asgiref-3.13.0-py3-none-any.whl (from -r /tmp/requirements.lock (line 7))
+Processing /wheelhouse/attrs-26.1.0-py3-none-any.whl (from -r /tmp/requirements.lock (line 9))
+Processing /wheelhouse/certifi-2026.10.23-py3-none-any.whl (from -r /tmp/requirements.lock (line 11))
+Processing /wheelhouse/cffi-2.1.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (from -r /tmp/requirements.lock (line 13))
+Processing /wheelhouse/charset_normalizer-3.5.2-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (from -r /tmp/requirements.lock (line 113))
+Processing /wheelhouse/click-8.5.1-py3-none-any.whl (from -r /tmp/requirements.lock (line 285))
+Processing /wheelhouse/croniter-7.0.0-py3-none-any.whl (from -r /tmp/requirements.lock (line 287))
+Processing /wheelhouse/cryptography-50.0.2-cp311-abi3-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (from -r /tmp/requirements.lock (line 289))
+Processing /wheelhouse/fastapi-0.162.0-py3-none-any.whl (from -r /tmp/requirements.lock (line 348))
+Processing /wheelhouse/h11-0.16.0-py3-none-any.whl (from -r /tmp/requirements.lock (line 350))
+Processing /wheelhouse/httpcore-1.0.9-py3-none-any.whl (from -r /tmp/requirements.lock (line 352))
+Processing /wheelhouse/httpx-0.28.1-py3-none-any.whl (from -r /tmp/requirements.lock (line 354))
+Processing /wheelhouse/idna-3.20-py3-none-any.whl (from -r /tmp/requirements.lock (line 356))
+Processing /wheelhouse/opentelemetry_api-1.45.2-py3-none-any.whl (from -r /tmp/requirements.lock (line 358))
+Processing /wheelhouse/packaging-26.3-py3-none-any.whl (from -r /tmp/requirements.lock (line 360))
+Processing /wheelhouse/procrastinate-3.10.0-py3-none-any.whl (from -r /tmp/requirements.lock (line 362))
+Processing /wheelhouse/psycopg-3.3.8-py3-none-any.whl (from -r /tmp/requirements.lock (line 364))
+Processing /wheelhouse/psycopg_binary-3.3.8-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (from -r /tmp/requirements.lock (line 366))
+Processing /wheelhouse/psycopg_pool-3.3.3-py3-none-any.whl (from -r /tmp/requirements.lock (line 433))
+Processing /wheelhouse/pycparser-3.12-py3-none-any.whl (from -r /tmp/requirements.lock (line 435))
+Processing /wheelhouse/pydantic-2.14.3-py3-none-any.whl (from -r /tmp/requirements.lock (line 437))
+Processing /wheelhouse/pydantic_core-2.50.4-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (from -r /tmp/requirements.lock (line 439))
+Processing /wheelhouse/pyjwt-2.15.1-py3-none-any.whl (from -r /tmp/requirements.lock (line 579))
+Processing /wheelhouse/python_dateutil-2.9.0.post0-py2.py3-none-any.whl (from -r /tmp/requirements.lock (line 581))
+Processing /wheelhouse/requests-2.34.2-py3-none-any.whl (from -r /tmp/requirements.lock (line 583))
+Processing /wheelhouse/six-1.17.0-py2.py3-none-any.whl (from -r /tmp/requirements.lock (line 585))
+Processing /wheelhouse/starlette-1.10.0-py3-none-any.whl (from -r /tmp/requirements.lock (line 587))
+Processing /wheelhouse/typing_extensions-4.16.0-py3-none-any.whl (from -r /tmp/requirements.lock (line 589))
+Processing /wheelhouse/typing_inspection-0.4.5-py3-none-any.whl (from -r /tmp/requirements.lock (line 591))
+Processing /wheelhouse/urllib3-2.8.0-py3-none-any.whl (from -r /tmp/requirements.lock (line 593))
+Processing /wheelhouse/uvicorn-0.54.0-py3-none-any.whl (from -r /tmp/requirements.lock (line 595))
+Installing collected packages: urllib3, typing-extensions, six, pyjwt, pycparser, psycopg-binary, psycopg, packaging, idna, h11, click, charset-normalizer, certifi, attrs, asgiref, annotated-types, annotated-doc, uvicorn, typing-inspection, requests, python-dateutil, pydantic-core, psycopg-pool, opentelemetry-api, httpcore, cffi, anyio, starlette, pydantic, httpx, cryptography, croniter, procrastinate, fastapi
+
+Successfully installed annotated-doc-0.0.5 annotated-types-0.8.0 anyio-4.16.0 asgiref-3.13.0 attrs-26.1.0 certifi-2026.10.23 cffi-2.1.1 charset-normalizer-3.5.2 click-8.5.1 croniter-7.0.0 cryptography-50.0.2 fastapi-0.162.0 h11-0.16.0 httpcore-1.0.9 httpx-0.28.1 idna-3.20 opentelemetry-api-1.45.2 packaging-26.3 procrastinate-3.10.0 psycopg-3.3.8 psycopg-binary-3.3.8 psycopg-pool-3.3.3 pycparser-3.12 pydantic-2.14.3 pydantic-core-2.50.4 pyjwt-2.15.1 python-dateutil-2.9.0.post0 requests-2.34.2 six-1.17.0 starlette-1.10.0 typing-extensions-4.16.0 typing-inspection-0.4.5 urllib3-2.8.0 uvicorn-0.54.0
+[91mWARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+[0m ---> Removed intermediate container 51447668444d
+ ---> ab3d5b62ea11
+Step 7/12 : COPY application/sample_entry.py application/sample_bootstrap.py application/sample_domain.py application/sample_configuration.py application/sample_identity.py application/sample_isolation.py application/sample_child.py application/sample_payload.json /app/
+ ---> 17be5baec540
+Step 8/12 : COPY application/durable_workflow.py application/workflow_http.py application/workflow_worker.py application/workflow_process_stage.py application/workflow_payload.py application/workflow_contract.py application/workflow_configuration.py application/workflow_profile.py application/workflow_connection.py application/workflow_errors.py application/workflow_database.py application/workflow_schema.sql /app/
+ ---> c6923466e500
+Step 9/12 : USER 10001:10001
+ ---> Running in 5d42f16155c7
+ ---> Removed intermediate container 5d42f16155c7
+ ---> 61711113ce43
+Step 10/12 : ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1
+ ---> Running in 5f3937750c12
+ ---> Removed intermediate container 5f3937750c12
+ ---> c807c1d54b52
+Step 11/12 : EXPOSE 8080
+ ---> Running in 8f5657952738
+ ---> Removed intermediate container 8f5657952738
+ ---> 53198c47d7ef
+Step 12/12 : CMD ["python3", "-I", "/app/sample_entry.py", "api", "/run/config/config.json"]
+ ---> Running in 2844747e3e74
+ ---> Removed intermediate container 2844747e3e74
+ ---> 9bfe8fdcf3f9
+Successfully built 9bfe8fdcf3f9
+Successfully tagged atmem-native-gcp-receiving:qualification-v1
