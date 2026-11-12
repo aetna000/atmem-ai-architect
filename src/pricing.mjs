@@ -1,7 +1,8 @@
+import {prefillAcceptedSettings} from './engineering-defaults.mjs';
 import { setPrice, usage } from './estimate.mjs';
 const patterns = {aws:/\bs3\b/i,azure:/blob|data lake|azure storage/i,gcp:/cloud storage|storage bucket/i,ibm:/object storage|\bcos\b/i};
 export const storageNodes = p => p.nodes.filter(n=>patterns[n.data.provider]?.test(`${n.data.label} ${n.data.service || ''}`));
-const sources = {'AWS public Price List':'https://pricing.us-east-1.amazonaws.com/','Azure Retail Prices API':'https://prices.azure.com/','Google Cloud Billing Catalog':'https://cloud.google.com/'};
+const sources = {'AWS public Price List':'https://pricing.us-east-1.amazonaws.com/','Azure Retail Prices API':'https://prices.azure.com/','Google Cloud Billing Catalog':'https://cloud.google.com/','Google Cloud public pricing':'https://cloud.google.com/storage/pricing'};
 export function applyPriceQuotes(project, quotes) {
  let p=project;
  for(const quote of quotes||[]){
@@ -11,7 +12,7 @@ export function applyPriceQuotes(project, quotes) {
    if(n.data.provider!==quote.provider || n.data.config?.region!==quote.region || existing?.source && !sources[existing.source])continue;
    // Shared usage is decimal GB; preserve the conversion in the quote note.
    const factor=quote.unit==='GiB-month'?1e9/(1024**3):1;
-   p=setPrice(p,n.id,{price:quote.price*factor,currency:quote.currency,source:quote.source,url:quote.url,date:quote.date,region:quote.region,service:quote.service,tierLimit:quote.tierLimit,coverageIncomplete:true,note:quote.coverage+(factor!==1?`; provider GiB converted from decimal GB using ${factor}`:'')});
+   p=setPrice(p,n.id,{price:quote.price*factor,currency:quote.currency,source:quote.source,url:quote.url,date:quote.date,region:quote.region,service:quote.service,tierLimit:quote.tierLimit,coverageIncomplete:true,sourceSha256:quote.sourceSha256,hourlyPrice:quote.hourlyPrice,hoursPerMonth:quote.hoursPerMonth,note:quote.coverage+(factor!==1?`; provider GiB converted from decimal GB using ${factor}`:'')});
   }
  }
  return p;
@@ -49,9 +50,10 @@ export function applyLambdaQuote(project,node,quote){
  return {...project,estimate:{...project.estimate,details:[...current.filter(line=>!line.id.startsWith(prefix)),...generated]}};
 }
 export async function fetchPlanningPrices(session,project){
+ project=prefillAcceptedSettings(project);
  const storage=await fetchStoragePrices(session,project);let next=applyPriceQuotes(project,storage.quotes);const errors=[...storage.errors];
  for(const node of lambdaNodes(project)){
-  const region=node.data.config?.region;if(!region||!/^[a-z]{2}-(?:gov-)?[a-z]+-\d$/.test(region)){errors.push({component:node.data.label,reason:'Choose the AWS region in Choices to price this component.'});continue;}
+  const region=node.data.config?.region;if(!region||!/^[a-z]{2}-(?:gov-)?[a-z]+-\d$/.test(region)){errors.push({provider:'aws',action:'choose-region',reason:'Choose an AWS region in Choices.'});continue;}
   try{
    const architecture=node.data.config?.architecture==='arm64'?'arm64':'x86_64';
    const response=await fetch('/api/pricing/lambda',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.token}`},body:JSON.stringify({projectId:project.id,region,architecture}),signal:AbortSignal.timeout(20000)}),quote=await response.json();
@@ -63,7 +65,7 @@ export async function fetchPlanningPrices(session,project){
   const region=node.data.config?.region||'',service=/cloud run/i.test(`${node.data.service||''} ${node.data.label}`)?'cloud-run':'cloud-sql';
   try{const response=await fetch('/api/pricing/google',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.token}`},body:JSON.stringify({projectId:project.id,region,service,planningReference:!region||/select|unknown|tbd/i.test(region)}),signal:AbortSignal.timeout(20000)}),quote=await response.json();if(!response.ok)throw Error(quote.detail||'Google pricing could not be verified.');next=applyGoogleQuote(next,node,quote);}catch(error){errors.push({component:node.data.label,reason:error.message});}
  }
- return {project:next,errors};
+ return {project:next,errors:[...new Map(errors.map(error=>[`${error.provider||''}:${error.reason}:${error.action||''}`,error])).values()]};
 }
 
 export const googleNodes=p=>p.nodes.filter(n=>n.data.provider==='gcp'&&n.data.origin!=='existing'&&/cloud run|cloud sql/i.test(`${n.data.service||''} ${n.data.label}`));

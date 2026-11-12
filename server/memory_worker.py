@@ -5,6 +5,8 @@ import sqlite3
 import base64
 import re
 from importlib.metadata import version
+from pathlib import Path
+EXPECTED_ATMEM_VERSION = re.search(r"^atmem==(\d+\.\d+\.\d+)$", (Path(__file__).parent / "memory-requirements.txt").read_text(), re.M).group(1)
 from atmem import Memory
 
 
@@ -62,8 +64,8 @@ def keyed_records(memory,subject,record_id,limit=10001):
 
 
 def run(payload):
-    if version('atmem') != '2.3.10':
-        raise RuntimeError('AtMem AI Architect requires the tested AtMem 2.3.10 runtime')
+    if version('atmem') != EXPECTED_ATMEM_VERSION:
+        raise RuntimeError(f'AtMem AI Architect requires the tested AtMem {EXPECTED_ATMEM_VERSION} runtime')
     memory = Memory(payload['database'], auto_vectors=False)
     receipts = sqlite3.connect(payload['database'] + '.receipts.sqlite')
     receipts.execute('CREATE TABLE IF NOT EXISTS receipts (id TEXT PRIMARY KEY, result TEXT)')
