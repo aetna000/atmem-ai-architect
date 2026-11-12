@@ -20,6 +20,7 @@ try{
  });
  const project=CLOUD_STORAGE_SCENARIOS[0].project;
  await page.goto(base+'/');await page.locator('#project-file-input').setInputFiles({name:'checks.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(toProjectFile(project)))});
+ await page.getByText('Design draft tools',{exact:true}).click();
  await page.getByRole('region',{name:'Architecture journey'}).getByRole('button',{name:'Run local checks',exact:true}).click();
  const panel=page.getByRole('complementary',{name:'Local checks',exact:true});await panel.getByRole('heading',{name:'Local checks passed',exact:true}).waitFor();
  assert.equal(await panel.getByRole('button',{name:'Architect mentoring',exact:true}).count(),0);

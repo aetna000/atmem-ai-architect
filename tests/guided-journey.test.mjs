@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {journey,advanceJourney,cloudMapping,DESIGN_SECTIONS,designSection} from '../src/journey.mjs';
+import {journey,advanceJourney,cloudMapping,DESIGN_SECTIONS,designSection,journeyAction} from '../src/journey.mjs';
+import {emulationPreflight} from '../src/emulation-guidance.mjs';
 const p=()=>({id:'journey-test',requirements:'Answer staff policy questions',nodes:[],edges:[],needs:[],decisions:[]});
 const node=(id,label,provider='tools',region='To be selected')=>({id,data:{kind:'resource',label,provider,config:{region},description:'Serve policy questions',origin:'proposed'}});
 const choose=(project,subject,decision)=>({...project,decisions:[...project.decisions.filter(d=>d.subject!==subject),{subject,decision,status:'Accepted'}]});
@@ -39,4 +40,22 @@ test('generic boxes do not count as a cloud architecture, and all four providers
 test('scope changes reopen the document step; visits and unrelated checkpoint names do not advance it',()=>{
  let project=p();project.nodes=[node('a','Amazon S3','aws','ap-southeast-2')];assert.equal(advanceJourney(project,'review'),project);
  project=advanceJourney(project,'scope');project.needs=[{id:'r1',source:'user',statement:'Only HR can access documents'}];assert.equal(journey(project).id,'scope');
+});
+test('Board review actions navigate before acknowledging scope, risk or cost checkpoints',()=>{
+ for(const [id,label]of [['scope','Review requirements'],['review','Review design'],['estimate','Review costs'],['delivery','Review delivery']]){
+  const guidance={id,checkpoint:id,continueLabel:'Continue'};
+  assert.deepEqual(journeyAction(guidance),{kind:'navigate',section:id,label});
+  if(id!=='delivery')assert.deepEqual(journeyAction(guidance,id),{kind:'continue',label:'Continue'});
+  assert.equal(journeyAction(guidance,'location'),null);
+ }
+});
+test('unfamiliar named services can reach draft review while implementation and provider boundaries remain separate',()=>{
+ for(const [provider,service]of [['aws','AWS Batch'],['azure','Azure Batch'],['gcp','Dataproc'],['ibm','IBM Cloud Schematics']]){
+  let project=choose(p(),'platform.cloud',provider);
+  project.nodes=[{...node('batch','Processing service',provider,'Reviewed candidate region'),position:{x:0,y:0},data:{...node('batch','Processing service',provider,'Reviewed candidate region').data,service}}];
+  const mapping=cloudMapping(project);assert.equal(mapping.ready,true);assert.equal(mapping.boundary,'named_working_draft_only');
+  assert.equal(emulationPreflight(project)?.action,'build-and-test','a named draft cannot invent an implementation');
+  project.nodes[0].data.provider=provider==='aws'?'azure':'aws';assert.equal(cloudMapping(project).ready,false);
+ }
+ const unknown=choose(p(),'platform.cloud','unknown-provider');unknown.nodes=[{...node('a','Example','unknown-provider','somewhere'),data:{...node('a','Example','unknown-provider','somewhere').data,service:'Named service'}}];assert.equal(cloudMapping(unknown).ready,false);
 });

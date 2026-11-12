@@ -30,7 +30,7 @@ import {OpenAIVoicePanel} from './OpenAIVoicePanel.jsx';
 import { OutputsView } from "./OutputsView.jsx";
 import { outputBundle } from "./output-bundle.mjs";
 import { TerraformView } from "./TerraformView.jsx";
-import { journey, advanceJourney, DESIGN_SECTIONS, designSection } from "./journey.mjs";
+import { journey, advanceJourney, DESIGN_SECTIONS, designSection, journeyAction } from "./journey.mjs";
 import "@xyflow/react/dist/style.css";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
@@ -1687,6 +1687,7 @@ function App() {
   }
   const guidance = useMemo(()=>journey(project),[project]);
   const activeSection = designSection(mode,designView);
+  const nextAction = journeyAction(guidance,activeSection.id);
   function followJourney(next=guidance){
     if(busy||agentBusy)return;
     setChatOpen(true);
@@ -1709,7 +1710,8 @@ function App() {
   function continueJourney(){
     if(!guidance.checkpoint||busy||agentBusy)return;
     const next=advanceJourney(projectRef.current,guidance.checkpoint);
-    updateEngagement(next);followJourney(journey(next));
+    updateEngagement(next);const upcoming=journey(next);
+    if(upcoming.id==='delivery')visitJourney('delivery');else followJourney(upcoming);
   }
   const findings = useMemo(() => review(project), [project]);
   const costs = useMemo(() => estimate(project), [project]);
@@ -1819,10 +1821,9 @@ function App() {
             <button role="menuitem" onClick={() => setModal("templates")} disabled={busy}><LayoutTemplate size={16}/>Templates</button>
             <hr/><button role="menuitem" onClick={() => setModal("import")} disabled={busy}><GitBranch size={16}/>Import diagram</button>
             <button role="menuitem" onClick={() => fileRef.current.click()} disabled={busy}><FolderOpen size={16}/>Open project file</button>
-            <button role="menuitem" onClick={saveProjectFile}><Package size={16}/>Save project file</button>
-            {guidance.availableModes.includes("deploy") && <><button role="menuitem" onClick={exportDocument}>Deployment document</button>
-            <button role="menuitem" onClick={exportPack}>Download delivery pack</button></>}
-            <button role="menuitem" onClick={exportDecisions}><History size={16}/>Export decisions</button>
+            <button role="menuitem" onClick={saveProjectFile}><Package size={16}/>Save project backup (JSON)</button>
+            <button role="menuitem" onClick={()=>{chooseWorkspace('canvas');visitJourney('delivery');}}><Package size={16}/>Delivery</button>
+            <button role="menuitem" onClick={exportDecisions}><History size={16}/>Export decisions (Markdown)</button>
             <hr/><button role="menuitem" onClick={() => setModal("memory")} disabled={!session}><BrainCircuit size={16}/>AtMem dashboard</button>
             <button role="menuitem" onClick={() => setModal("start-over")} disabled={busy || agentBusy}><RotateCcw size={16}/>Start over</button>
             <hr />
@@ -1847,16 +1848,16 @@ function App() {
             ))}
           </div>
         )}
-        {(activeSection.id==='board'||(activeSection.id===guidance.id&&guidance.checkpoint&&activeSection.id!=='delivery'))&&<div className="journey-current"><div><strong>{guidance.title}</strong><p>{guidance.reason}</p><p className="journey-next"><span>Next</span> {guidance.checkpoint?guidance.continueLabel:guidance.action}</p></div>
+        {nextAction&&<div className="journey-current"><div><strong>{guidance.title}</strong><p>{guidance.reason}</p></div>
           <div className="record-row">
-            {session?.engineeringEnabled&&hasDesign&&<button className="btn primary build-design-button" disabled={busy||agentBusy||!!pending} onClick={buildCurrentDesign}><Package size={18}/>Implement and check</button>}
-            <button className="btn primary" disabled={busy||agentBusy||!!pending} aria-label={guidance.checkpoint?guidance.continueLabel+' →':guidance.action} title={guidance.checkpoint?guidance.continueLabel:guidance.action} onClick={()=>guidance.checkpoint?continueJourney():followJourney()}>{agentBusy?<BrainActivity size={26}/>:<BrainCircuit size={20}/>} {guidance.checkpoint?guidance.continueLabel:guidance.action}</button>
-
-            {project.nodes.length>0&&<><button className="btn primary" disabled={busy||!!pending} aria-label={emulation.preflight?"Prepare local tests":"Run local checks"} aria-busy={emulationWorking} title={emulation.running?"Emulation running — show progress":emulationWorking?"Architect is reviewing — show progress":"Open local implementation checks and their next step"} onClick={()=>{setMode("design");setDesignView("board");setEmulationOpen(true);if(!emulation.preflight&&!emulation.running&&!emulation.result&&!emulation.previous)void emulation.run();}}>{emulationWorking?<BrainActivity size={24}/>:<Play size={20}/>} {emulation.preflight?"Prepare tests":"Local checks"}</button><button className="btn" aria-label="Outputs" title="Inspect and download generated outputs" onClick={()=>{setMode("design");setDesignView("outputs");}}><Package size={20}/></button></>}
-            {(["architecture","review","estimate","delivery"].includes(guidance.id)||project.nodes.some(n=>n.data.kind!=="note"))&&<>
-              <button className="btn" aria-label="Terraform" title="Terraform" onClick={()=>{setMode("design");setDesignView("terraform");}}><TerraformIcon/></button>
-              <button className="btn" aria-label="Download" onClick={exportPack} title="Download the current architecture, requirements and infrastructure draft as a ZIP"><ArrowDownToLine size={18}/></button>
-              <button className="btn" disabled aria-label="Deploy (under development)" title="Cloud deployment is under development"><Rocket size={18}/></button>
+            <button className="btn primary" disabled={busy||agentBusy||!!pending} onClick={()=>nextAction.kind==='navigate'?visitJourney(nextAction.section):nextAction.kind==='continue'?continueJourney():followJourney()}>{agentBusy?<BrainActivity size={22}/>:<ChevronRight size={18}/>} {nextAction.label}</button>
+            {activeSection.id==='board'&&<>
+              {session?.engineeringEnabled&&hasDesign&&<button className="btn" disabled={busy||agentBusy||!!pending} onClick={buildCurrentDesign}>Implement and check</button>}
+              {hasDesign&&nextAction.section!=='delivery'&&<button className="btn" onClick={()=>visitJourney('delivery')}>Delivery</button>}
+              {hasDesign&&<details><summary>Design draft tools</summary><div className="record-row">
+                <button className="btn" disabled={busy||!!pending} aria-label={emulation.preflight?'Prepare local tests':'Run local checks'} aria-busy={emulationWorking} onClick={()=>{setEmulationOpen(true);if(!emulation.preflight&&!emulation.running&&!emulation.result&&!emulation.previous)void emulation.run();}}>Inspect draft checks</button>
+                <button className="btn" onClick={()=>visitJourney('architecture')}>Infrastructure draft</button>
+              </div></details>}
             </>}
           </div>
         </div>}
