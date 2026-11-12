@@ -12,14 +12,15 @@ export function ContextUsed({ value }) {
   </details>;
 }
 
-export function MemoryPanel({ session, project, onError }) {
+export function MemoryPanel({ session, project, onError, onStatus }) {
   const [report,setReport]=useState(null),[error,setError]=useState(''),[tab,setTab]=useState('profile'),[field,setField]=useState('explanation'),[value,setValue]=useState(''),[working,setWorking]=useState(false),[refreshing,setRefreshing]=useState(true),[preview,setPreview]=useState(null);
   const payload={projectId:project.id};
   async function refresh() {
     setRefreshing(true);setError('');
     try {
       await memoryCall(session,'sync',{...payload,file:toProjectFile(project)});
-      setReport(await memoryCall(session,'inspect',payload));
+      const inspected=await memoryCall(session,'inspect',payload);setReport(inspected);
+      onStatus?.({enabled:inspected.enabled,status:inspected.status,pending:inspected.pending,rejected:inspected.rejected,engine:inspected.engine});
     } catch(e) { setError(e.message); } finally {setRefreshing(false);}
   }
   useEffect(()=>{refresh();},[project.id,session?.token]);

@@ -135,10 +135,12 @@ export function OptionsView({ project, onDiscuss, onPreview, onChoose, onContinu
   const notes = project.assessment?.notes || {};
   const ready = Object.values(notes).some(Boolean);
   const selected = [...(project.decisions||[])].reverse().find(d=>d.subject==='platform.cloud'&&d.status==='Accepted')?.decision;
-  return <section className="doc" aria-label="Options">
-    <header className="doc-head"><h2>Cloud options</h2><p className="muted">Compare the approaches below, then choose a cloud to continue. Next we’ll discuss country and data residency.</p></header>
+  return <section className="doc" aria-label="Choices">
+    <header className="doc-head"><h2>Choices</h2><p className="muted">Compare the approaches below, then choose a cloud to continue. Next we’ll discuss country and data residency.</p></header>
     <button className="btn" onClick={() => onDiscuss('Help me compare AWS, Azure, Google Cloud and IBM for this design. Ask one useful question about my priorities, then refine the comparison from my answer. Populate optionAssessment when enough is known. Keep the diagram unchanged.')}>Discuss cloud options</button>
     {selected && <p className="cloud-selection" role="status"><strong>Selected: {OPTION_NAMES[selected]}</strong> · You can change your choice below. <button className="btn primary" disabled={busy} onClick={onContinue}>Continue with {OPTION_NAMES[selected]} →</button></p>}
+    <DecisionsView project={project} onDiscuss={onDiscuss} embedded/>
+    <h3>Cloud alternatives</h3>
     {!ready && <p className="muted">We’ll clarify what matters to you and explain the tradeoffs here as we go.</p>}
     {['current','aws','azure','gcp','ibm'].filter(id => notes[id]).map(id => <article className="consultation-summary" key={id}>
       <h3>{OPTION_NAMES[id]}{selected===id ? " · Selected" : ""}</h3><p>{notes[id].replace(/^(?:AtMem AI Architect|At[Ff]orma) proposal — confirm: /,'')}</p>
@@ -148,13 +150,13 @@ export function OptionsView({ project, onDiscuss, onPreview, onChoose, onContinu
   </section>;
 }
 
-export function DecisionsView({ project, onDiscuss }) {
+export function DecisionsView({ project, onDiscuss, embedded=false }) {
   const all = project.decisions || [];
   const choices = all.filter(d => !d.subject?.startsWith('design.'));
   const current = choices.filter(d => d.status !== 'Superseded');
   const sketches = all.filter(d => d.subject?.startsWith('design.'));
   const labels = {'platform.cloud':'Cloud provider','cloud.region':'Region','data.country':'Country / data residency','infrastructure.tool':'Infrastructure tool'};
-  return <section className="doc" aria-label="Decisions">
+  return <section className={embedded?undefined:"doc"} aria-label="Decisions">
     <header className="doc-head"><h2>Choices we’ve made</h2><p className="muted">AtMem AI Architect records your choices and explains why they fit. You can revisit them in chat.</p></header>
     <button className="btn" onClick={() => onDiscuss('Review our current design and explicit choices. Explain the next choice we need to make and ask me one useful question. Do not treat a sketch or a suggestion as an accepted decision.')}>Discuss the next choice</button>
     {!current.length && <p className="muted">No choices confirmed yet. We’ll work through them together as the design develops.</p>}

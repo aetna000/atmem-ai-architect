@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {componentReviews,markComponentReviewed,applyComponentReview} from '../src/component-review.mjs';
+import {componentReviews,markComponentReviewed,applyComponentReview,reviewIssueLabel} from '../src/component-review.mjs';
 import {validateImport} from '../src/core.mjs';import {toProjectFile,parseProjectFile} from '../src/project-file.mjs';
 const emptyProject=()=>({id:'review-project',version:1,revision:1,name:'Review project',provider:'tools',requirements:'',nodes:[],edges:[]});
 const node=(id)=>({id,type:'resource',position:{x:0,y:0},data:{label:id,description:'Existing external browser owned by the visitor.',kind:'resource',provider:'tools',origin:'existing',config:{region:'External client',classification:'Public'}}});
@@ -19,7 +19,7 @@ test('semantic changes invalidate review while moving nodes does not',()=>{
  const p=markComponentReviewed(project(),'browser');const moved=structuredClone(p);moved.nodes[0].position.x=500;assert.equal(componentReviews(moved)[0].status,'reviewed');
  for(const change of [p=>p.nodes[0].data.description+=' Changed.',p=>p.nodes[1].data.description+=' Changed neighbor.',p=>p.edges[0].label='Different contract',p=>p.needs=[{id:'req',statement:'New behavior',kind:'functional',links:['browser']}],p=>p.decisions=[{id:'decision',decision:'New ownership'}]]){const next=structuredClone(p);change(next);assert.equal(componentReviews(next)[0].status,'changed');}
 });
-test('notes are excluded; a cloud deployment needs a region; architecture blockers remain questions',()=>{
+test('notes are excluded; a cloud deployment needs a region; architecture findings remain design issues',()=>{
  const p=project();p.nodes.push({...node('note'),data:{kind:'note',label:''}});assert.equal(componentReviews(p).length,2);
  p.nodes[0].data={...p.nodes[0].data,provider:'aws',origin:'proposed',config:{region:'To be selected'}};assert.ok(componentReviews(p)[0].issues.some(i=>i.text.includes('region')));
  p.nodes[0].data={...p.nodes[0].data,provider:'tools',kind:'agent',origin:'existing'};p.nodes[1].data.kind='output';assert.ok(componentReviews(p)[0].issues.some(i=>i.kind==='finding'));
@@ -48,4 +48,13 @@ test('editing a linked requirement records user wording and invalidates all affe
  const {editBlockRequirement}=await import('../src/component-review.mjs');let p=project();p.needs=[{id:'req-shared',statement:'Original behavior',kind:'functional',category:'other',priority:'must',status:'open',source:'agent',links:['browser','site']}];p=markComponentReviewed(markComponentReviewed(p,'browser'),'site');
  const next=editBlockRequirement(p,'browser','req-shared','New behavior agreed by the user');assert.equal(next.needs[0].statement,'New behavior agreed by the user');assert.equal(next.needs[0].source,'user');assert.equal(next.extensions.requirementEditHistory[0].previousStatement,'Original behavior');assert.deepEqual(componentReviews(next).map(r=>r.status),['changed','changed']);assert.deepEqual(next.nodes,p.nodes);
  assert.throws(()=>editBlockRequirement(p,'browser','missing','Edit'));assert.throws(()=>editBlockRequirement(p,'browser','req-shared',' '));
+});
+
+test('monitoring findings are design issues, not questions or completed work',()=>{
+ const p=project();p.nodes[0].data.role='llm';const item=componentReviews(p)[0];
+ assert.ok(item.issues.some(i=>i.kind==='finding'&&i.text==='No monitoring for model quality or drift.'));
+ assert.equal(item.status,'issues');assert.equal(item.statusLabel,'Needs attention');assert.match(reviewIssueLabel(item.issues),/design issue/);assert.doesNotMatch(reviewIssueLabel(item.issues),/question/);assert.throws(()=>markComponentReviewed(p,item.id));
+ p.openQuestions=[{id:'owner',question:'Who receives alerts?',status:'open',links:[item.id]}];
+ const mixed=componentReviews(p)[0];assert.match(reviewIssueLabel(mixed.issues),/^1 question · \d+ design issues?$/);
+ assert.equal(reviewIssueLabel([{kind:'question'}]),'1 question');assert.equal(reviewIssueLabel([{kind:'finding'}]),'1 design issue');
 });

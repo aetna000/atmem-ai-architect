@@ -9,7 +9,7 @@ import {restoreQueuedMessages,nextIntakeBatch,restoreIntakePaused} from './work-
 import {emulationGuidance,guidanceMessage} from './emulation-guidance.mjs';
 import {readCanvasView,saveCanvasView,arrangeOverview} from './canvas-view.mjs';
 import {BlockRequirements} from './BlockRequirements.jsx';
-import {componentReviews,markComponentReviewed,applyComponentReview,editBlockRequirement} from './component-review.mjs';
+import {componentReviews,markComponentReviewed,applyComponentReview,editBlockRequirement,reviewIssueLabel} from './component-review.mjs';
 import {ComponentReview,ReviewBadge} from './ComponentReview.jsx';
 import {newQuestion} from './records.mjs';
 import {useChatScroll} from './useChatScroll.jsx';
@@ -29,7 +29,7 @@ import { VoiceDictation } from "./voice-conversation.mjs";
 import { OutputsView } from "./OutputsView.jsx";
 import { outputBundle } from "./output-bundle.mjs";
 import { TerraformView } from "./TerraformView.jsx";
-import { journey, advanceJourney } from "./journey.mjs";
+import { journey, advanceJourney, DESIGN_SECTIONS, designSection } from "./journey.mjs";
 import "@xyflow/react/dist/style.css";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
@@ -119,7 +119,7 @@ import { withDerived } from "./derive.mjs";
 import { MemoryPanel, ContextUsed } from "./MemoryPanel.jsx";
 import { defaultAssessment } from "./engagement.mjs";
 import { setUsage } from "./estimate.mjs";
-import { applyPriceQuotes, fetchStoragePrices, storageNodes } from "./pricing.mjs";
+import { applyPriceQuotes } from "./pricing.mjs";
 import { applyDecisionUpdates, applyRequirementDrafts, proposeCommentRevisions } from "./consultation.mjs";
 import { terraformSketch } from "./terraform.mjs";
 import { WORKFLOWS, conceptSignature, essentialsKnown, nextQuestion, opening, progress, sketch, understand } from "./discovery.mjs";
@@ -314,7 +314,7 @@ function LayerNode({ data, selected }) {
         {data.blocks.length} block{data.blocks.length === 1 ? "" : "s"}
         {data.status !== "idle" && ` · ${data.done}/${data.blocks.length} passed`}
       </small>
-      {data.reviewSummary&&<button className="topology-review-summary nodrag" onClick={e=>{e.stopPropagation();data.onReview?.();}} aria-label={`Open block review for ${data.label}`}>{data.reviewSummary.questions?`${data.reviewSummary.questions} open questions`:`${data.reviewSummary.reviewed}/${data.blocks.length} designs reviewed`}</button>}
+      {data.reviewSummary&&<button className="topology-review-summary nodrag" onClick={e=>{e.stopPropagation();data.onReview?.();}} aria-label={`Open block review for ${data.label}`}>{data.reviewSummary.issues.length?reviewIssueLabel(data.reviewSummary.issues):`${data.reviewSummary.reviewed}/${data.blocks.length} designs reviewed`}</button>}
       <button className="topology-drill-hint nodrag" onClick={e=>{e.stopPropagation();data.onExplore?.();}}>Explore components <ChevronRight size={12}/></button>
       <span className="layer-providers">
         {data.providers.map((id) => (
@@ -699,6 +699,9 @@ function App() {
     [connection, setConnection] = useState(readConnection),
     [agentBusy, setAgentBusy] = useState(false);
   const [workspaceView,setWorkspaceView]=useState('canvas'),[buildRequest,setBuildRequest]=useState(null);
+  const [memorySync,setMemorySync]=useState(null);
+  const currentMemory=memorySync?.projectId===project.id?memorySync:null;
+  const memoryLabel=!session?'AtMem memory':currentMemory?.enabled===false?'AtMem off':currentMemory?.status==='unavailable'?'AtMem unavailable':currentMemory?.pending>0||currentMemory?.status==='sync_failed'?'AtMem sync pending':currentMemory?.status==='ready'?'AtMem on':'AtMem memory';
   const buildView=!!session?.engineeringEnabled&&workspaceView==='build';
   const hasDesign=hasArchitectureDesign(project);
   function chooseWorkspace(value){setWorkspaceView(value);}
@@ -1483,7 +1486,7 @@ function App() {
     `wire ${runStates[source] === "failed" ? "wire-failed" : runStates[source] === "passed" ? "wire-passed" : ""}`;
   const canvasNodes =
     level === "system"
-      ? system.nodes.map((n) => ({ ...n, position:topologyPositions[n.id]||n.position, data:{...n.data,onExplore:()=>n.data.blocks.length===1?reviewBlock(n.data.blocks[0]):goFlow(n.data.layer),onReview:()=>reviewBlock(blockReviews.find(r=>n.data.blocks.includes(r.id)&&r.issues.length)?.id||n.data.blocks[0]),reviewSummary:{reviewed:blockReviews.filter(r=>n.data.blocks.includes(r.id)&&r.status==='reviewed').length,questions:blockReviews.filter(r=>n.data.blocks.includes(r.id)).reduce((sum,r)=>sum+r.issues.length,0)}}, measured: measured[n.id], className: previewing ? "preview" : "" }))
+      ? system.nodes.map((n) => ({ ...n, position:topologyPositions[n.id]||n.position, data:{...n.data,onExplore:()=>n.data.blocks.length===1?reviewBlock(n.data.blocks[0]):goFlow(n.data.layer),onReview:()=>reviewBlock(blockReviews.find(r=>n.data.blocks.includes(r.id)&&r.issues.length)?.id||n.data.blocks[0]),reviewSummary:{reviewed:blockReviews.filter(r=>n.data.blocks.includes(r.id)&&r.status==='reviewed').length,issues:blockReviews.filter(r=>n.data.blocks.includes(r.id)).flatMap(r=>r.issues)}}, measured: measured[n.id], className: previewing ? "preview" : "" }))
       : shown.nodes.map((n) => ({
           ...n,
           type: n.data.kind === "note" ? "note" : n.type,
@@ -1567,8 +1570,9 @@ function App() {
     if (!session || binned.current.has(project.id) || (!project.nodes.length && !project.brief?.application?.trim() && messages.length < 2)) return;
     const t = setTimeout(async () => {
       try {
-        await projectStore(session, "save", { id: project.id, file: toProjectFile(withConversation(project, messages)) });
-      } catch (error) { notify(`Project conversation could not be saved: ${error.message}`); }
+        const saved=await projectStore(session, "save", { id: project.id, file: toProjectFile(withConversation(project, messages)) });
+        if(saved.memory)setMemorySync({projectId:project.id,...saved.memory});
+      } catch (error) { setMemorySync(current=>({...((current?.projectId===project.id)?current:{}),projectId:project.id,status:'sync_failed'}));notify(`Project conversation could not be saved: ${error.message}`); }
     }, 800);
     return () => clearTimeout(t);
   }, [project, messages, session?.token]);
@@ -1677,10 +1681,7 @@ function App() {
     }
   }
   const guidance = useMemo(()=>journey(project),[project]);
-  useEffect(()=>{
-    if(!guidance.availableModes.includes(mode)){setMode(guidance.mode);setDesignView(guidance.view);}
-    if(guidance.id==='scope' && !project.extensions?.journey?.scope && designView==='options')setDesignView('requirements');
-  },[guidance.id,mode,designView]);
+  const activeSection = designSection(mode,designView);
   function followJourney(next=guidance){
     if(busy||agentBusy)return;
     setChatOpen(true);
@@ -1688,15 +1689,12 @@ function App() {
     setMode(next.mode);setDesignView(next.view);if(next.mode==='review')setReviewView('findings');
     send(next.prompt,'workflow',next);
   }
-  function visitJourney(id){
-    if(busy||agentBusy||pending)return;
-    if(id==='scope'){setMode('design');setDesignView('requirements');return;}
-    if(id==='cloud'){setMode('design');setDesignView('options');return;}
-    if(id==='location'){
-      setChatOpen(true);setMode('design');setDesignView('board');
-      send('Let’s revisit country and data residency for our chosen cloud. Summarise what we have agreed, then ask one useful question about where users and data should be. Keep the diagram unchanged until we agree a change.','workflow',{mode:'design',view:'board'});return;
-    }
-    setMode(id==='architecture'?'design':id==='delivery'?'deploy':id);setDesignView('board');
+  function visitJourney(id,event){
+    const section=DESIGN_SECTIONS.find(item=>item.id===id);
+    if(!section)return;
+    event?.currentTarget.closest("details")?.removeAttribute("open");
+    setMode(section.mode);setDesignView(section.view);
+    if(section.mode==='review')setReviewView('findings');
   }
   async function chooseCloud(provider){
     if(busy||agentBusy||pending)return;
@@ -1717,29 +1715,6 @@ function App() {
     const timer = setTimeout(() => send("The user changed the shared diagram: " + edits.join("; ") + ". Work with these edits, preserve their comments and blocks, refine only what follows from their intent, and ask one useful next question if needed.", "canvas"), 1200);
     return () => clearTimeout(timer);
   }, [buildView,project.nodes,project.edges,drawLive,session,connection,busy,agentBusy,input,mode,designView,modal]);
-  useEffect(() => {
-    if (buildView || !session || !connection || agentBusy || !project.nodes.length) return;
-    let active = true;
-    const key = `${project.id}:${project.revision}:${mode}:${designView}`;
-    if (consultationAttempts.current.has(key)) return;
-    if (mode === "design" && designView === "options" && !Object.values(project.assessment?.notes || {}).some(Boolean)) {
-      consultationAttempts.current.add(key);
-      send("Compare AWS, Azure, Google Cloud, IBM and the current approach for this diagram and requirements. Populate optionAssessment with provisional scores and explain the actual tradeoffs and uncertainties. Keep the diagram unchanged. Ask one question that would most improve the comparison.", "workflow");
-    } else if (mode === "estimate") {
-      consultationAttempts.current.add(key);
-      (async () => {
-        const id = project.id;
-        if (storageNodes(project).length) {
-          const prices = await fetchStoragePrices(session, project);
-          if (!active || projectRef.current.id !== id) return;
-          updateEngagement(applyPriceQuotes(projectRef.current, prices.quotes));
-        }
-        if (!active || projectRef.current.id !== id) return;
-        send("Help estimate this diagram on the selected cloud. Use current project usage, retrieve supported actual prices with tools, explain the major cost drivers and ask the single most important missing model, region or usage question. Treat AWS, Azure, Google Cloud and IBM fairly; do not invent prices or ask me to fill out a long form.", "workflow");
-      })();
-    }
-    return () => { active = false; };
-  }, [buildView,mode,designView,project.id,session,agentBusy]);
   const topics = progress(project);
   const blockerCount = findings.filter((f) => f.severity === "blocker" && f.status === "open").length;
   const ask = project.extensions?.activeConsultation ? (project.extensions.activeConsultation.hasQuestion ? project.lastAsked : null) : project.lastAsked?.question ? project.lastAsked : nextQuestion(project);
@@ -1794,20 +1769,20 @@ function App() {
           <span className="current-view"><Workflow size={14}/>{focusLabel||'Components'}</span>
         </nav>
         <div className="modes" role="tablist">
-          {MODES.filter(([id])=>guidance.availableModes.includes(id)).map(([id, label]) => (
+          {MODES.filter(([id])=>id==="design").map(([id, label]) => (
             <button
               key={id}
               role="tab"
-              aria-selected={!buildView&&mode === id}
-              className={!buildView&&mode === id ? "on" : ""}
-              onClick={() => {chooseWorkspace("canvas");setMode(id);}}
+              aria-selected={!buildView}
+              className={!buildView ? "on" : ""}
+              onClick={() => {chooseWorkspace("canvas");setMode(id);setDesignView("board");}}
             >
               {React.createElement(MODE_ICON[id], { size: 14 })}
               {label}
               {id === "review" && blockerCount > 0 && <span className="badge">{blockerCount}</span>}
             </button>
           ))}
-          {session?.engineeringEnabled&&<button role="tab" aria-selected={buildView} className={buildView?"on":""} title="Implementation and verification of your design" onClick={()=>chooseWorkspace('build')}><Package size={14}/>Build</button>}
+          {session?.engineeringEnabled&&<button role="tab" aria-selected={buildView} className={buildView?"on":""} title="Implementation and verification of your design" onClick={()=>chooseWorkspace('build')}><Package size={14}/>Implementation</button>}
         </div>
         <div className="bar-actions">
           {storageError && <span className="warn-text">Not saved</span>}
@@ -1853,34 +1828,26 @@ function App() {
       </header>
 
       {!buildView&&<section className="journey-wizard" aria-label="Architecture journey">
-        <details className="journey-map"><summary title={guidance.reason}>{({idea:"Define the idea",scope:"Define the idea",cloud:"Choose a cloud",location:"Choose a region",architecture:"Design the system",review:"Review",estimate:"Estimate costs",delivery:"Prepare delivery"})[guidance.id]}</summary><ol className="journey-steps">{[
-          ['scope','Sketch & document'],['cloud','Cloud options'],['location','Country & region'],['architecture','Cloud architecture'],
-          ['review','Review'],['estimate','Costs'],['delivery','Delivery draft']
-        ].map(([id,label],i)=>{
-          const current=guidance.id==='idea'?'scope':guidance.id;
-          const reached=['scope','cloud','location','architecture','review','estimate','delivery'].indexOf(id)<=['scope','cloud','location','architecture','review','estimate','delivery'].indexOf(current);
-          return <li key={id} aria-current={current===id?'step':undefined}><button type="button" disabled={!reached||busy||agentBusy||!!pending} onClick={()=>visitJourney(id)} aria-label={`Go to ${label}`}><span>{i+1}</span>{label}</button></li>;
-        })}</ol></details>
+        <details className="journey-map"><summary>{activeSection.label}</summary><ol className="journey-steps">{DESIGN_SECTIONS.map((section,i)=><li key={section.id} aria-current={activeSection.id===section.id?'page':undefined}><button type="button" onClick={event=>visitJourney(section.id,event)} aria-label={`Go to ${section.label}`}><span>{i+1}</span>{section.label}</button></li>)}</ol></details>
         {mode === "design" && (
           <div className="workspace-tabs seg" role="tablist" aria-label="Design views">
             {[
               ["board", "Board"],
               ["requirements", "Requirements"],
-              ["options", "Options"],
-              ["decisions", "Design choices"],
-            ].filter(([id])=>id!=="options" || !["idea","scope"].includes(guidance.id) || !!project.extensions?.journey?.scope).map(([id, label]) => (
-              <button key={id} role="tab" aria-selected={designView === id} className={designView === id ? "on" : ""} onClick={() => setDesignView(id)}>
+              ["options", "Choices"],
+            ].map(([id, label]) => (
+              <button key={id} role="tab" aria-selected={designView === id || (id==="options"&&designView==="decisions")} className={designView === id || (id==="options"&&designView==="decisions") ? "on" : ""} onClick={() => setDesignView(id)}>
                 {React.createElement({board:LayoutGrid,requirements:CheckCheck,options:Cloud,decisions:GitBranch}[id],{size:17,"aria-hidden":true})}{label}
               </button>
             ))}
           </div>
         )}
         <div className="journey-current"><div><strong>{guidance.title}</strong><p>{guidance.reason}</p><p className="journey-next"><span>Next</span> {guidance.checkpoint?guidance.continueLabel:guidance.action}</p></div>
-          <div className="journey-actions">
+          <div className="record-row">
             {session?.engineeringEnabled&&hasDesign&&<button className="btn primary build-design-button" disabled={busy||agentBusy||!!pending} onClick={buildCurrentDesign}><Package size={18}/>Build this design</button>}
-            <button className="btn primary" disabled={busy||agentBusy||!!pending} aria-label={guidance.checkpoint?guidance.continueLabel+' →':guidance.action} title={guidance.checkpoint?guidance.continueLabel:guidance.action} onClick={()=>guidance.checkpoint?continueJourney():followJourney()}>{agentBusy?<BrainActivity size={26}/>:<BrainCircuit size={20}/>}</button>
+            <button className="btn primary" disabled={busy||agentBusy||!!pending} aria-label={guidance.checkpoint?guidance.continueLabel+' →':guidance.action} title={guidance.checkpoint?guidance.continueLabel:guidance.action} onClick={()=>guidance.checkpoint?continueJourney():followJourney()}>{agentBusy?<BrainActivity size={26}/>:<BrainCircuit size={20}/>} {guidance.checkpoint?guidance.continueLabel:guidance.action}</button>
 
-            {project.nodes.length>0&&<><button className="btn primary" disabled={busy||!!pending} aria-label="Emulate & improve" aria-busy={emulationWorking} title={emulation.running?"Emulation running — show progress":emulationWorking?"Architect is reviewing — show progress":"Run local checks and improve this architecture"} onClick={()=>{setMode("design");setDesignView("board");setEmulationOpen(true);if(!emulation.preflight&&!emulation.running&&!emulation.result&&!emulation.previous)void emulation.run();}}>{emulationWorking?<BrainActivity size={24}/>:<Play size={20}/>}</button><button className="btn" aria-label="Outputs" title="Inspect and download generated outputs" onClick={()=>{setMode("design");setDesignView("outputs");}}><Package size={20}/></button></>}
+            {project.nodes.length>0&&<><button className="btn primary" disabled={busy||!!pending} aria-label={emulation.preflight?"Prepare local tests":"Run local checks"} aria-busy={emulationWorking} title={emulation.running?"Emulation running — show progress":emulationWorking?"Architect is reviewing — show progress":"Open local implementation checks and their next step"} onClick={()=>{setMode("design");setDesignView("board");setEmulationOpen(true);if(!emulation.preflight&&!emulation.running&&!emulation.result&&!emulation.previous)void emulation.run();}}>{emulationWorking?<BrainActivity size={24}/>:<Play size={20}/>} {emulation.preflight?"Prepare tests":"Local checks"}</button><button className="btn" aria-label="Outputs" title="Inspect and download generated outputs" onClick={()=>{setMode("design");setDesignView("outputs");}}><Package size={20}/></button></>}
             {(["architecture","review","estimate","delivery"].includes(guidance.id)||project.nodes.some(n=>n.data.kind!=="note"))&&<>
               <button className="btn" aria-label="Terraform" title="Terraform" onClick={()=>{setMode("design");setDesignView("terraform");}}><TerraformIcon/></button>
               <button className="btn" aria-label="Download" onClick={exportPack} title="Download the current architecture, requirements and infrastructure draft as a ZIP"><ArrowDownToLine size={18}/></button>
@@ -2066,7 +2033,7 @@ function App() {
             busy={busy||agentBusy||!!pending}
             reviewItems={componentReviews(project)}
             onReviewConfirm={()=>{updateEngagement(markComponentReviewed(project,selectedNode.id));notify(`${selectedNode.data.label}: design reviewed.`);}}
-            onReviewDiscuss={()=>reviewComponent(selectedNode.id)}
+            onReviewDiscuss={issue=>{if(issue?.kind!=='finding')return reviewComponent(selectedNode.id);setChatOpen(true);return send(`Help address this design issue for ${selectedNode.data.label}: ${issue.text} Suggested next step: ${issue.action||'Propose a concrete correction.'} Explain what is missing and why it matters here, then propose the design changes needed to resolve it. This is engineering work, not a question the user must solve. Ask only for a consequential business choice that cannot be inferred from the saved design. Preserve all requirements, existing systems and provider choices. Keep any change reviewable, and do not claim monitoring or other runtime behavior is already implemented.`,'workflow');}}
             onRequirementSave={async(id,text)=>{
               updateEngagement(editBlockRequirement(projectRef.current,selectedNode.id,id,text));
               if(connection&&session)await reviewComponent(selectedNode.id);
@@ -2157,7 +2124,7 @@ function App() {
             {[
               ["findings", "Findings"],
               ["test", "Test run"],
-            ].filter(([id])=>id!=="options" || !["idea","scope"].includes(guidance.id) || !!project.extensions?.journey?.scope).map(([id, label]) => (
+            ].map(([id, label]) => (
               <button key={id} role="tab" aria-selected={reviewView === id} className={reviewView === id ? "on" : ""} onClick={() => setReviewView(id)}>
                 {label}
               </button>
@@ -2205,12 +2172,10 @@ function App() {
 
         {mode === "design" && designView === "outputs" && <OutputsView project={project} run={run} environment={environment} session={session} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onDownload={downloadBundle} onBack={()=>setDesignView("board")} />}
         {mode === "design" && designView === "terraform" && <TerraformView project={project} environment={environment} session={session} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onDownload={exportTerraform} onBack={()=>setDesignView("board")} />}
-        {mode === "design" && designView === "options" && (
-          <OptionsView project={project} busy={busy||agentBusy||!!pending} onChoose={chooseCloud} onContinue={()=>{setChatOpen(true);setMode("design");setDesignView("board");followJourney();}} onPreview={(provider)=>{setDesignView("board");setLevel("flow");setChatOpen(true);send(`Preview a concrete ${OPTION_NAMES[provider]} implementation of our working scope, using actual named services in data.service and explicit connections. Keep existing systems and comments. Use the known country/residency constraints, or leave region undecided and ask the country question. This is an alternative preview, not a cloud choice or deployment. Return a graph proposal and explain key integration assumptions.`,"preview",{mode:"design",view:"board"});}} onDiscuss={(question) => { setChatOpen(true); send(question, "workflow"); }} />
+        {mode === "design" && ["options","decisions"].includes(designView) && (
+          <OptionsView project={project} busy={busy||agentBusy||!!pending} onChoose={chooseCloud} onContinue={()=>visitJourney("location")} onPreview={(provider)=>{setDesignView("board");setLevel("flow");setChatOpen(true);send(`Preview a concrete ${OPTION_NAMES[provider]} implementation of our working scope, using actual named services in data.service and explicit connections. Keep existing systems and comments. Use the known country/residency constraints, or leave region undecided and ask the country question. This is an alternative preview, not a cloud choice or deployment. Return a graph proposal and explain key integration assumptions.`,"preview",{mode:"design",view:"board"});}} onDiscuss={(question) => { setChatOpen(true); send(question, "workflow"); }} />
         )}
-        {mode === "design" && designView === "decisions" && (
-          <DecisionsView project={project} onDiscuss={(question) => { setChatOpen(true); send(question, "workflow"); }} />
-        )}
+        {mode === "design" && designView === "location" && <section className="doc" aria-label="Country and region"><header className="doc-head"><h2>Country &amp; region</h2><p className="muted">Where users and data are located affects residency, regional availability and cost. Proposed locations require review before they become decisions.</p></header>{['platform.cloud','data.country','cloud.region'].map(subject=>{const decision=[...(project.decisions||[])].reverse().find(d=>d.subject===subject&&d.status==='Accepted');return <p key={subject}><strong>{{'platform.cloud':'Cloud','data.country':'Country / data residency','cloud.region':'Region'}[subject]}:</strong> {decision?.decision||'Not yet agreed'}</p>;})}<button className="btn primary" disabled={busy||agentBusy||!!pending} onClick={()=>{setChatOpen(true);send('Review the accepted cloud, country and region choices for this project. Explain what is known, then ask one important unresolved location or data residency question. Keep the diagram unchanged until we agree a change. Do not silently choose a country or region.','workflow');}}>Discuss country and region</button><button className="link" onClick={()=>visitJourney('architecture')}>View infrastructure draft</button></section>}
         {mode === "design" && designView === "requirements" && (
           <RequirementsView project={project} onChange={updateEngagement} reviewing={agentBusy} onReview={(comments)=>{setChatOpen(true);send("Propose revisions for these user comments on the requirements document. The document will remain unchanged until the user applies each suggestion. Explain the proposed change; never say you have already changed the document. Return requirementUpdates for the existing IDs where the feedback is clear, quoting the user's comment exactly in sourceText. Preserve other requirements and the diagram. Ask one question if a comment is ambiguous.\n" + comments.map(c=>`Requirement ${c.requirementId}${c.selectedText ? ` (selected text: ${c.selectedText.slice(0,300)})` : ""} — comment: ${c.text}`).join("\n"), "document");}} onDiscuss={(question) => { setChatOpen(true); send(question, "workflow"); }} />
         )}
@@ -2243,6 +2208,7 @@ function App() {
             </button>
           </div>
           <div className="skills" aria-label="Active skills">
+            <button className="known-bar" disabled={!session} aria-label="AtMem memory" title="Open AtMem memory, confirmed decisions and sync activity" onClick={()=>setModal("memory")}><BrainCircuit size={15}/>{memoryLabel}<ChevronRight size={14}/></button>
             <button
               className={`known-bar ${peek === "known" ? "on" : ""}`}
               aria-label="Design context" aria-expanded={peek === "known"} title="Review what is known, assumed or still open"
@@ -2419,7 +2385,7 @@ function App() {
               <X size={16} />
             </button>}
             {modal === "memory" ? (
-              <MemoryPanel session={session} project={project} onError={notify} />
+              <MemoryPanel key={project.id} session={session} project={project} onError={notify} onStatus={status=>setMemorySync({projectId:project.id,...status})} />
             ) : modal === "templates" ? (
               <TemplateDialog onLoad={loadDesign} />
             ) : modal === "import" ? (

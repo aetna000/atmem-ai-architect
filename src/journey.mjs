@@ -1,4 +1,21 @@
 // Progress records acknowledge a working draft, never cloud validation or deployment permission.
+// Navigation is independent of completion: opening a section must not accept a
+// decision, advance a checkpoint or send a model request.
+export const DESIGN_SECTIONS=Object.freeze([
+ {id:'board',label:'Board',mode:'design',view:'board'},
+ {id:'scope',label:'Requirements',mode:'design',view:'requirements'},
+ {id:'cloud',label:'Choices',mode:'design',view:'options'},
+ {id:'location',label:'Country & region',mode:'design',view:'location'},
+ {id:'architecture',label:'Infrastructure',mode:'design',view:'terraform'},
+ {id:'review',label:'Review',mode:'review',view:'board'},
+ {id:'estimate',label:'Costs',mode:'estimate',view:'board'},
+ {id:'delivery',label:'Delivery',mode:'design',view:'outputs'},
+].map(Object.freeze));
+export function designSection(mode,view){
+ if(mode==='deploy')return DESIGN_SECTIONS.find(s=>s.id==='delivery');
+ if(mode==='design'&&view==='decisions')view='options';
+ return DESIGN_SECTIONS.find(s=>s.mode===mode&&s.view===view)||DESIGN_SECTIONS[0];
+}
 const clouds={aws:'AWS',azure:'Azure',gcp:'Google Cloud',ibm:'IBM Cloud'};
 export const CLOUD_SERVICES={
  aws:['Amazon S3','Amazon Bedrock','Bedrock Guardrails','AWS Lambda','Amazon API Gateway','Amazon Cognito','Amazon OpenSearch Serverless','Amazon OpenSearch Service','Amazon DynamoDB','Amazon RDS','Amazon ECS','AWS Fargate','Amazon CloudWatch','AWS IAM','IAM policy','Amazon VPC','AWS KMS','Amazon SageMaker AI','SageMaker AI','Amazon EventBridge','Amazon SQS'],

@@ -1,9 +1,22 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {journey,advanceJourney,cloudMapping} from '../src/journey.mjs';
+import {journey,advanceJourney,cloudMapping,DESIGN_SECTIONS,designSection} from '../src/journey.mjs';
 const p=()=>({id:'journey-test',requirements:'Answer staff policy questions',nodes:[],edges:[],needs:[],decisions:[]});
 const node=(id,label,provider='tools',region='To be selected')=>({id,data:{kind:'resource',label,provider,config:{region},description:'Serve policy questions',origin:'proposed'}});
 const choose=(project,subject,decision)=>({...project,decisions:[...project.decisions.filter(d=>d.subject!==subject),{subject,decision,status:'Accepted'}]});
+test('every design destination is uniquely reachable without advancing an incomplete project',()=>{
+ const project=p(),before=structuredClone(project);
+ assert.equal(new Set(DESIGN_SECTIONS.map(s=>s.id)).size,DESIGN_SECTIONS.length);
+ for(const section of DESIGN_SECTIONS){
+  assert.equal(designSection(section.mode,section.view),section);
+  assert.equal(journey(project).id,'idea');
+ }
+ assert.deepEqual(project,before);
+ assert.equal(designSection('design','decisions').id,'cloud');
+ assert.equal(designSection('deploy','board').id,'delivery');
+ assert.ok(Object.isFrozen(DESIGN_SECTIONS));
+ assert.ok(DESIGN_SECTIONS.every(Object.isFrozen));
+});
 test('journey reveals later stages only after scope, concrete mapping and working-draft checkpoints',()=>{
  let project=p();assert.equal(journey(project).id,'idea');assert.deepEqual(journey(project).availableModes,['design']);
  project.nodes=[node('a','Document store')];assert.equal(journey(project).id,'scope');

@@ -1,7 +1,11 @@
 import {newQuestion} from './records.mjs';
 import {review} from './review.mjs';
 
-export const REVIEW_LABELS={questions:'Questions',ready:'Needs review',reviewed:'Looks good',changed:'Review again'};
+export const REVIEW_LABELS={questions:'Questions',issues:'Needs attention',ready:'Needs review',reviewed:'Looks good',changed:'Review again'};
+export function reviewIssueLabel(issues){
+ const questions=issues.filter(i=>i.kind!=='finding').length,findings=issues.filter(i=>i.kind==='finding').length;
+ return [questions?`${questions} question${questions===1?'':'s'}`:'',findings?`${findings} design issue${findings===1?'':'s'}`:''].filter(Boolean).join(' · ');
+}
 const canonical=value=>JSON.stringify(value,(_,v)=>v&&typeof v==='object'&&!Array.isArray(v)?Object.fromEntries(Object.keys(v).sort().map(k=>[k,v[k]])):v);
 // UI change token, not a security signature or runtime evidence receipt.
 function token(value){let a=2166136261,b=5381;for(const c of canonical(value)){a=Math.imul(a^c.charCodeAt(0),16777619);b=Math.imul(b,33)^c.charCodeAt(0);}return (a>>>0).toString(16).padStart(8,'0')+(b>>>0).toString(16).padStart(8,'0');}
@@ -19,7 +23,7 @@ export function componentReviews(project){
   const questions=(project.openQuestions||[]).filter(q=>q.status!=='answered'&&q.links?.includes(node.id)).map(q=>({id:q.id,text:q.question,kind:'question'}));
   const issues=[...checks.filter(c=>!c.passed).map(c=>({id:'detail-'+c.label,text:c.label==='Purpose described'?'What is this block responsible for?':c.label==='Ownership recorded'?'Is this an existing system or a proposed component?':'Which cloud region should this block use?',kind:'detail'})),...questions,...findings.filter(f=>f.components?.includes(node.id)).map(f=>({id:f.key,text:f.statement,action:f.action,kind:'finding'}))];
   const fingerprint=signature(project,node),record=project.extensions?.componentReviews?.[node.id];
-  const status=issues.length?'questions':record?.fingerprint===fingerprint?'reviewed':record?'changed':'ready';
+  const status=issues.length?(issues.some(i=>i.kind==='finding')?'issues':'questions'):record?.fingerprint===fingerprint?'reviewed':record?'changed':'ready';
   const note=project.extensions?.componentReviewNotes?.[node.id];
   return {id:node.id,label:d.label,status,statusLabel:REVIEW_LABELS[status],checks,issues,fingerprint,reviewedAt:record?.reviewedAt,architectNote:note?.summary||null,architectNoteCurrent:note?.fingerprint===fingerprint};
  });
