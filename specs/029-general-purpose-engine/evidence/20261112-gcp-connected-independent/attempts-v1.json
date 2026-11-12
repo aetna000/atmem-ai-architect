@@ -66,6 +66,49 @@
         "control.py": "300bdb03b4ed5444972dbf39120ca1c7e8b2b164fe0f933f4ed8ae4dfd160e61",
         "destination.py": "b39d8ae5e3608a950911eb7e2f764e917864080cdedaf01fdaa9ca65b8cbc78d"
       }
+    },
+    {
+      "attempt": "v6",
+      "receiptSha256": "777a315aa89ad82b76b779b85c0b9b2768c260a93f72dd2514dcc265b188819e",
+      "groupsPassed": 10,
+      "connectedScopePassed": false,
+      "resourcesCleaned": true,
+      "fixtureOutcome": "All ten connected groups passed again; added recovery SQL snapshot used API revision instead of actual SQL result_revision. Evaluator query corrected; application untouched. Recovery not yet exercised.",
+      "failureType": "KeyError",
+      "failure": "'rows'",
+      "evaluatorSources": {
+        "run-recovery.py": "753e169c6714daf5b3a09b33613c1b198f21ef751d89191817283348842f7306",
+        "control.py": "300bdb03b4ed5444972dbf39120ca1c7e8b2b164fe0f933f4ed8ae4dfd160e61",
+        "destination.py": "b39d8ae5e3608a950911eb7e2f764e917864080cdedaf01fdaa9ca65b8cbc78d"
+      }
+    },
+    {
+      "attempt": "v7",
+      "receiptSha256": "fde9dc5dc410a9984727d23983bdac87a261a88dc25e6f2ca76c16b0c79531cc",
+      "groupsPassed": 10,
+      "connectedScopePassed": false,
+      "resourcesCleaned": true,
+      "fixtureOutcome": "Ten connected groups passed again; recovery SQL still used API source instead of SQL source_ref. Both SQL column names now checked against original schema; focused independent recovery driver avoids re-running established connected scope. Application untouched.",
+      "failureType": "KeyError",
+      "failure": "'rows'",
+      "evaluatorSources": {
+        "run-recovery.py": "9eed102ee33eb5ffdeff1fe02a08be096471939ed07cf17b2da72789feded6df",
+        "control.py": "300bdb03b4ed5444972dbf39120ca1c7e8b2b164fe0f933f4ed8ae4dfd160e61",
+        "destination.py": "b39d8ae5e3608a950911eb7e2f764e917864080cdedaf01fdaa9ca65b8cbc78d"
+      }
+    },
+    {
+      "attempt": "v8",
+      "receiptSha256": "52477b26243239a009df1ff5ba753ee3f27315c258a5875f154c0d560393a6c7",
+      "groupsPassed": 3,
+      "recoveryScopePassed": true,
+      "resourcesCleaned": true,
+      "fixtureOutcome": "Focused three-group recovery rehearsal passes clean startup, actual HTTP/queue/child/TLS preconditions and same-version replacement. Actual delivered operator refuses existing schema; mismatched schema prevents startup; durable source/history/sent/unknown preserved; pending approval delivers. No older-image or snapshot restore claim.",
+      "evaluatorSources": {
+        "run-recovery-only.py": "ed9da325019020a3217e097ea9fbdf20f2850226b67d1ddeb64265c018ac3850",
+        "control.py": "300bdb03b4ed5444972dbf39120ca1c7e8b2b164fe0f933f4ed8ae4dfd160e61",
+        "destination.py": "b39d8ae5e3608a950911eb7e2f764e917864080cdedaf01fdaa9ca65b8cbc78d"
+      }
     }
   ],
   "applicationSourceChanged": false,
