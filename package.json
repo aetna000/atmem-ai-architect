@@ -1,6 +1,6 @@
 {
   "name": "atmem-ai-architect",
-  "version": "0.2.0-alpha.3",
+  "version": "0.2.0-alpha.4.1",
   "private": true,
   "type": "module",
   "scripts": {
@@ -29,7 +29,8 @@
     "test:enterprise:http": ".local/durable-runtime/bin/python -I tests/runtime/enterprise_http_postgres.py -v",
     "test:enterprise:sessions": ".local/durable-runtime/bin/python -I tests/runtime/enterprise_sessions_postgres.py -v",
     "test:enterprise:browser": "node scripts/enterprise-browser-check.mjs",
-    "build:enterprise:web": "node scripts/build-enterprise-web.mjs"
+    "build:enterprise:web": "node scripts/build-enterprise-web.mjs",
+    "package:npm": "npm run build && node scripts/package-npm.mjs"
   },
   "dependencies": {
     "@noble/hashes": "2.4.0",

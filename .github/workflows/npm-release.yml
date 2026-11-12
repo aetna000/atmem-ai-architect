@@ -1,0 +1,77 @@
+name: npm Architect release
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish the checked preview package
+        type: boolean
+        default: false
+  push:
+    branches: [fix/existing-service-references]
+    paths: ['.github/workflows/npm-release.yml', 'cli/**', 'packaging/**', 'server/requirements.lock', 'server/memory-requirements.lock']
+    tags: ['npm-v*']
+permissions:
+  contents: read
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run package:npm
+      - uses: actions/upload-artifact@v4
+        with:
+          name: architect-npm-candidate
+          path: .local/npm-release/*.tgz
+          retention-days: 7
+  installed:
+    needs: package
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - uses: actions/download-artifact@v4
+        with:
+          name: architect-npm-candidate
+          path: .local/candidate
+      - run: npm ci --ignore-scripts
+      - run: npx playwright install --with-deps chromium
+      - name: Install the exact candidate with an empty npm config
+        run: |
+          mkdir -p .local/clean-install
+          touch .local/empty.npmrc
+          npm install --prefix .local/clean-install --userconfig .local/empty.npmrc --ignore-scripts .local/candidate/*.tgz
+      - name: Start installed UI and real isolated AtMem
+        run: node scripts/npm-installed-check.mjs .local/clean-install .local/install-home
+  publish:
+    needs: [package, installed]
+    if: startsWith(github.ref, 'refs/tags/npm-v') || inputs.publish == true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: https://registry.npmjs.org
+      - uses: actions/download-artifact@v4
+        with:
+          name: architect-npm-candidate
+          path: candidate
+      - run: npm install --global npm@11.17.0
+      - run: npm publish candidate/*.tgz --access public --tag preview --provenance

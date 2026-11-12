@@ -60,3 +60,13 @@
 .board-start-close{position:absolute;top:8px;right:8px}
 .board-start>h2{padding-right:24px}
 .palette-search>.icon{flex-shrink:0}
+
+.turn-state-icon.has-brain{width:24px;display:inline-flex;align-items:center;animation:none}
+.chat{position:relative}.chat-resize-handle{display:none}
+@media(min-width:901px){
+ .app:not(.chat-closed){grid-template-columns:minmax(0,1fr) clamp(320px,var(--chat-panel-width,360px),calc(100vw - 360px))}
+ .chat-resize-handle{display:block;position:absolute;top:0;bottom:0;left:-6px;width:12px;z-index:35;cursor:col-resize;touch-action:none}
+ .chat-resize-handle:hover,.chat-resize-handle:focus-visible{background:var(--accent-soft);outline:2px solid var(--accent);outline-offset:-3px}
+}
+
+.chat-width-toggle{display:none}@media(min-width:901px){.chat-width-toggle{display:inline-flex;margin-left:auto;padding:5px 8px}}

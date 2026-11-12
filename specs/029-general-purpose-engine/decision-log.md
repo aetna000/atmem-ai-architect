@@ -1377,3 +1377,8 @@ or AtMem memory. Hide help during selection and give both surfaces explicit clos
 controls. Picker receives pointer input above Board overlays; its filtering preserves
 the component sidebar. UI-004 actual5298 and source browser evidence records all4
 viewport/theme cases, no model work, data mutation or backend restart.
+
+
+## 2026-11-12 — npm installation preview under owner-created atmem organization
+
+Owner authorized publishing @atmem/architect and authenticated npm as organization owner. Package alpha.4.1 separately from engine milestones. Include the real AtMem runtime in isolated data-directory environments and hash-lock both dependency graphs. Publish only the artifact qualified by cross-platform installed-app checks. Keep provider credentials out of distribution; future releases use package-specific GitHub OIDC trust. Restore the working brain and allow chat resizing without a general UI redesign.

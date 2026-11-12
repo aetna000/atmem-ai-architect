@@ -1,3 +1,4 @@
+import {ChatResizeHandle} from './ChatResizeHandle.jsx';
 import {copyProject} from './project-copy.mjs';
 import './journey-workspace.css';
 import {synchronizeEngineeringIntent,applyArchitectureChange} from './architecture-work.mjs';
@@ -717,6 +718,8 @@ function App() {
   useEffect(()=>{saveCanvasView(project,{level,focus,selected,positions:topologyPositions});},[project.id,level,focus,selected,topologyPositions]);
   const emulation=useEmulation(project,environment,session);
   const emulationWorking=emulation.running||(agentBusy&&!!emulation.result);
+  const [chatWidth,setChatWidth]=useState(()=>{try{const n=Number(localStorage.getItem('atmem-architect-chat-width'));return Number.isFinite(n)&&n>=320&&n<=900?n:360;}catch{return 360;}});
+  function resizeChat(width){setChatWidth(width);try{localStorage.setItem('atmem-architect-chat-width',String(width));}catch{}}
   const [dismissedStarts,setDismissedStarts]=useState(()=>{try{const ids=JSON.parse(localStorage.getItem('atforma-dismissed-starts-v1')||'[]');return Array.isArray(ids)?ids.filter(id=>typeof id==='string').slice(-64):[];}catch{return [];}});
   function dismissStart(){setDismissedStarts(ids=>{const next=[...ids.filter(id=>id!==project.id),project.id].slice(-64);try{localStorage.setItem('atforma-dismissed-starts-v1',JSON.stringify(next));}catch{}return next;});}
   const [emulationOpen,setEmulationOpen]=useState(false),[treeOpen,setTreeOpen]=useState(false);
@@ -1762,7 +1765,7 @@ function App() {
   const diff = pending?.next ? proposalDiff(project, pending.next) : null;
 
   return (
-    <div className={`app ${chatOpen&&!buildView ? "" : "chat-closed"} ${buildView?"build-workspace":""}`}>
+    <div style={{"--chat-panel-width":`${chatWidth}px`}} className={`app ${chatOpen&&!buildView ? "" : "chat-closed"} ${buildView?"build-workspace":""}`}>
       <header className="bar">
         <button className="brand" onClick={() => setModal("about")} title="About AtMem AI Architect">
           <Mark />
@@ -2137,11 +2140,11 @@ function App() {
 
       {!chatOpen&&!buildView && <button className="icon chat-reopen" title="Show chat" aria-label="Show chat" onClick={()=>setChatOpen(true)}><PanelRightOpen size={18}/></button>}
       {chatOpen&&!buildView && (
-        <aside className="chat" aria-label="Chat">
+        <aside className="chat" aria-label="Chat"><ChatResizeHandle width={chatWidth} onChange={resizeChat}/>
           <div className="chat-head">
             <div className="chat-heading-row"><strong className="chat-title">
               <Mark size={18} /> AI Architect
-            </strong><button className="icon" title="Hide chat" aria-label="Hide chat" onClick={()=>setChatOpen(false)}><PanelRightClose size={16}/></button></div>
+            </strong><button className="link small chat-width-toggle" onClick={()=>resizeChat(chatWidth>360?360:Math.max(320,Math.min(720,window.innerWidth-360)))} title="You can also drag the left edge of the chat panel">{chatWidth>360?"Narrow":"Widen"}</button><button className="icon" title="Hide chat" aria-label="Hide chat" onClick={()=>setChatOpen(false)}><PanelRightClose size={16}/></button></div>
             <label className="live-toggle" title="On: changes are drawn as we talk, and you can undo any of them. Off: they wait as previews for you to apply.">
               <input
                 type="checkbox"

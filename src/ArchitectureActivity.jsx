@@ -1,3 +1,4 @@
+import {BrainActivity} from './BrainActivity.jsx';
 import React,{useEffect,useRef,useState,useId} from 'react';
 import {mergeArchitectureActivity,readArchitectureActivity} from './architecture-activity.mjs';
 import {architectureSteps,architectureActivityLabel} from './activity-presentation.mjs';
@@ -11,7 +12,7 @@ function TurnActivity({label,latest,steps=[],model,effort,working=false,failed=f
  return <div className={'turn-activity'+(failed?' has-error':'')}>
   <div className="turn-activity-row">
    <button type="button" className="turn-activity-toggle" aria-expanded={shown} aria-controls={id} title={[model,effort].filter(Boolean).join(' · ')} onClick={()=>{change(!shown);}}>
-    <span aria-hidden="true" className={'turn-state-icon'+(working?' is-working':'')}>{working?'◌':failed?'!':'›'}</span>
+    <span aria-hidden="true" className={'turn-state-icon'+(working?' has-brain':'')}>{working?<BrainActivity size={22}/>:failed?'!':'›'}</span>
     <span className="turn-activity-label" role="status" aria-live="polite">{label}</span>{latest&&<span className="turn-latest"> · {latest}</span>}
     <span className="turn-chevron" aria-hidden="true">{shown?'⌄':'›'}</span>
    </button>
