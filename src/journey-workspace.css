@@ -1,0 +1,52 @@
+/* Only the owner-requested stage navigation, board sidebar and consolidated review. */
+.stage-tabs{display:flex;gap:8px;overflow:auto;padding:8px 12px;width:100%;box-sizing:border-box}
+.stage-tabs>button{display:flex;align-items:center;gap:7px;white-space:nowrap;background:var(--paper,#fff);color:var(--ink,#263043);border:1px solid var(--line,#dce2e8);border-radius:8px;padding:10px 14px;cursor:pointer}
+.stage-tabs>button[aria-selected=true]{outline:2px solid var(--accent,#be5679);outline-offset:-2px;font-weight:600}
+.stage-tabs>button.stage-complete{background:#e7f4eb;color:#215d3b;border-color:#a9cdb4}
+.stage-tabs>button>span{font-size:.85em;border:1px solid currentColor;border-radius:50%;width:22px;height:22px;display:grid;place-items:center}
+.unified-journey{display:flex;flex-direction:column;align-items:stretch}
+.unified-journey .journey-current{padding:4px 14px;display:flex;gap:12px;align-items:center}
+.unified-journey .journey-current p{margin:4px 0;flex:1}
+.project-rename{display:flex;align-items:center;min-width:0}.project-rename>svg{opacity:0}.project-rename:hover>svg,.project-rename:focus-within>svg{opacity:1}
+.bar .projects-btn{display:inline-flex;align-items:center;gap:7px;width:auto;min-width:100px;padding:7px 10px}
+.board-surface{position:absolute;inset:0}.board-surface[hidden],.review-workspace[hidden]{display:none!important}
+.board-components{position:absolute;left:12px;top:12px;z-index:15;max-width:270px;max-height:calc(100% - 90px);overflow:auto;background:var(--paper,#fff);border:1px solid var(--line,#dce2e8);border-radius:10px;padding:8px}
+.board-component-tree{padding:10px 0;max-width:245px}.board-component-tree details{padding:8px 0}.board-component-tree button{display:flex;align-items:center;gap:7px;text-align:left;max-width:100%;margin:5px 0}.board-component-tree small{display:block;overflow-wrap:anywhere}
+.board-start{position:absolute;left:50%;top:42%;transform:translate(-50%,-50%);z-index:10;width:min(540px,calc(100% - 40px));background:var(--paper,#fff);border:1px solid var(--line,#dce2e8);border-radius:14px;padding:20px;box-sizing:border-box}.board-start .row{display:flex;flex-wrap:wrap;gap:8px}.board-start small{display:block;margin-top:12px;color:var(--ink-2,#627080)}
+.review-workspace{position:absolute;inset:0;overflow:auto;background:var(--paper,#fff);padding:20px;box-sizing:border-box}
+.review-workspace .doc{position:static;inset:auto;width:auto;max-width:none;overflow:visible;height:auto;box-shadow:none;margin:0 0 24px;padding:12px}
+.review-generation,.review-infrastructure{margin:20px 12px;padding:16px;border:1px solid var(--line,#dce2e8);border-radius:10px}.review-generation .engineering-panel{max-width:none;margin:0;padding:0}.review-infrastructure>summary{cursor:pointer;font-weight:600}.review-workspace .engineering-panel pre{white-space:pre-wrap;overflow-wrap:anywhere}
+.code-preview{white-space:pre;overflow:auto}.code-preview .code-string{color:#a33c31}.code-preview .code-number{color:#236c44}.code-preview .code-keyword{color:#7153ad}.code-preview .code-comment{color:#697780}
+@media(max-width:650px){.stage-tabs{gap:5px;padding:8px}.stage-tabs>button{padding:8px;font-size:12px}.stage-tabs>button>span{width:18px;height:18px}.unified-journey .journey-current{flex-wrap:wrap}.review-workspace{padding:6px}.board-components{max-width:220px}.project-rename .project-name{max-width:150px}}
+
+.choices-workspace{position:absolute;inset:0;overflow:auto;background:var(--paper,#fff);padding:16px}.choices-workspace[hidden]{display:none!important}.choices-workspace .doc{position:static;inset:auto;width:auto;max-width:none;height:auto;overflow:visible;box-shadow:none;margin-bottom:18px}
+
+.bar .projects-btn{color:var(--ink,#243047);border:1px solid var(--line,#cbd4df);border-radius:8px;background:var(--paper,#fff);font-weight:600}.board-surface>.board-components{position:absolute}.review-group{margin:12px;padding:14px;border:1px solid var(--line,#dce2e8);border-radius:10px}.review-group>summary{font-weight:600;cursor:pointer}.review-intro{margin:12px}.review-intro p{color:var(--ink-2,#627080)}
+
+.review-workspace fieldset{min-width:0;box-sizing:border-box}.review-workspace .row{flex-wrap:wrap}.board-component-tree button>svg{flex-shrink:0}.board-component-tree button>span{min-width:0}
+
+.board-surface{--component-sidebar-width:min(245px,45%)}
+.board-surface.has-component-sidebar>.react-flow{width:calc(100% - var(--component-sidebar-width));margin-left:var(--component-sidebar-width)}
+.board-surface>.board-components[data-expanded=true]{left:0;top:0;bottom:0;max-height:none;width:var(--component-sidebar-width);max-width:none;box-sizing:border-box;border-radius:0}
+.board-components .btn{max-width:100%;white-space:normal}
+.board-surface.has-component-sidebar>.toolbar{left:calc(var(--component-sidebar-width) + 12px)}
+.board-surface.has-component-sidebar>.board-start{left:calc(var(--component-sidebar-width) + (100% - var(--component-sidebar-width))/2);width:min(540px,calc(100% - var(--component-sidebar-width) - 24px))}
+
+.code-preview .code-key{color:light-dark(#175b91,#92cfff)}
+.code-preview .code-string{color:light-dark(#a33c31,#ffc0a6)}
+.code-preview .code-number{color:light-dark(#236c44,#9ce5b2)}
+.code-preview .code-keyword{color:light-dark(#7153ad,#d4b8ff)}
+.code-preview .code-comment{color:light-dark(#526171,#b3c0cb)}
+.memory-panel select,.memory-panel textarea{color:var(--ink);background:var(--paper);border:1px solid var(--line);opacity:1}
+.memory-panel textarea::placeholder{color:var(--ink-2);opacity:1}
+.memory-panel option{color:var(--ink);background:var(--paper)}
+.memory-panel button:disabled{background:light-dark(#e5e9ed,#273033);color:light-dark(#556171,#b9c9cc);opacity:1}
+/* A document remains a light paper surface even when the surrounding app is dark. */
+.requirements-paper{color-scheme:light;--ink:#172033;--ink-2:#52616c;--paper:#fffefa;--board:#fafbf9;--line:#7a8696;--accent:#873b50;color:#172033}
+.requirements-paper .btn,.requirements-paper input,.requirements-paper select,.requirements-paper textarea{color:#172033;background:#fffefa;border-color:#7a8696}
+.requirements-paper .btn.primary{background:#f4a4b8;color:#172033}
+.requirements-paper .muted{color:#52616c}
+.app button:disabled{opacity:1;background:light-dark(#e5e9ed,#273033);color:light-dark(#556171,#b9c9cc);cursor:not-allowed}
+.app :is(input,textarea,select):disabled{opacity:1;color:var(--ink-2);background:var(--board)}
+.app input::placeholder,.app textarea::placeholder{color:var(--ink-2);opacity:1}
+.app .resource-schedule article span,.app .resource-schedule article small{color:var(--ink-2)}

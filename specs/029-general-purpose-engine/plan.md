@@ -607,3 +607,11 @@ Owner UI follow-up: project-size usage presets and one final Delivery download i
 569JS/build and desktop/mobile component/full engineering fixture pass. No native engine
 work resumed. Cross-service automatic price coverage remains incomplete; do not hide this
 with fabricated ROM prices. Evidence:20261112-cost-delivery-clarity.
+
+
+2026-11-12 owner UI consolidation completed at browser/contrast scope: five stages,
+material intake/copy, generation/verification in Review, one Delivery package, reserved
+Board sidebar and coherent light/dark palettes.571JS/8 attachment/build, desktop/mobile
+journey/lifecycle and20 contrast surfaces pass. Live5298 preserves project/session data.
+Original28/native programme stays paused; no pricing/native/cloud/voice promotion.
+Evidence:029/evidence/20261112-five-stage-journey (relative to specs).

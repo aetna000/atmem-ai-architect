@@ -5,21 +5,27 @@ export const DESIGN_SECTIONS=Object.freeze([
  {id:'board',label:'Board',mode:'design',view:'board'},
  {id:'scope',label:'Requirements',mode:'design',view:'requirements'},
  {id:'cloud',label:'Choices',mode:'design',view:'options'},
- {id:'location',label:'Country & region',mode:'design',view:'location'},
- {id:'architecture',label:'Infrastructure',mode:'design',view:'terraform'},
  {id:'review',label:'Review',mode:'review',view:'board'},
- {id:'estimate',label:'Costs',mode:'estimate',view:'board'},
  {id:'delivery',label:'Delivery',mode:'design',view:'outputs'},
 ].map(Object.freeze));
+export function journeySectionId(id){return ({location:'cloud',architecture:'cloud',estimate:'review'})[id]||id;}
 export function designSection(mode,view){
- if(mode==='deploy')return DESIGN_SECTIONS.find(s=>s.id==='delivery');
- if(mode==='design'&&view==='decisions')view='options';
+ if(mode==='deploy')return DESIGN_SECTIONS[4];
+ if(mode==='estimate'||mode==='review'||view==='terraform')return DESIGN_SECTIONS[3];
+ if(view==='location'||view==='decisions')view='options';
  return DESIGN_SECTIONS.find(s=>s.mode===mode&&s.view===view)||DESIGN_SECTIONS[0];
 }
+export function completedStages(p){
+ const keys=journeyKeys(p),saved=p.extensions?.journey||{};
+ return {board:p.nodes.some(n=>n.data.kind!=='note'),scope:saved.scope===keys.scope,
+ cloud:cloudMapping(p).ready&&saved.architecture===keys.architecture,
+ review:saved.review===keys.architecture&&saved.estimate===keys.estimate,
+ delivery:false}; // A visit/download alone never proves successful delivery.
+}
 export function journeyAction(guidance,section='board'){
- if(section===guidance.id&&guidance.checkpoint&&section!=='board')return {kind:'continue',label:guidance.continueLabel};
+ if(section===journeySectionId(guidance.id)&&guidance.checkpoint&&section!=='board')return {kind:'continue',label:guidance.continueLabel};
  if(section!=='board')return null;
- const destination={scope:['scope','Review requirements'],location:['location','Choose country & region'],review:['review','Review design'],estimate:['estimate','Review costs'],delivery:['delivery','Review delivery']}[guidance.id];
+ const destination={scope:['scope','Review requirements'],location:['cloud','Choose country & region'],review:['review','Review design'],estimate:['review','Review costs'],delivery:['delivery','Review delivery']}[guidance.id];
  if(destination)return {kind:'navigate',section:destination[0],label:destination[1]};
  return {kind:guidance.checkpoint?'continue':'assist',label:guidance.checkpoint?guidance.continueLabel:guidance.action};
 }

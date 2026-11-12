@@ -1,5 +1,6 @@
 """Bounded, ephemeral attachment parsing. Content is evidence, never instructions."""
-import base64,io,json,subprocess,sys,zipfile
+import base64,io,json,subprocess,sys,zipfile,zlib
+from urllib.parse import unquote_to_bytes
 from pathlib import Path
 from xml.etree import ElementTree
 MAX_FILE=4*1024*1024
@@ -10,6 +11,35 @@ def decode(item):
     except Exception:raise ValueError('Attachment encoding is invalid.')
     if not data or len(data)>MAX_FILE:raise ValueError('Each attachment must be between 1 byte and 4 MB.')
     return data
+
+def diagram_text(data):
+    """Decode draw.io XML locally; never fetch external resources or execute markup."""
+    def parse(raw):
+        if len(raw)>100000:raise ValueError('Diagram text exceeds 100,000 bytes. Use a smaller diagram.')
+        if b'<!DOCTYPE' in raw.upper() or b'<!ENTITY' in raw.upper():raise ValueError('Unsupported diagram XML declarations.')
+        try:return ElementTree.fromstring(raw)
+        except ElementTree.ParseError:raise ValueError('Cannot read diagram XML. Export a standard draw.io file or image.')
+    root=parse(data)
+    if root.tag=='mxGraphModel':return ElementTree.tostring(root,encoding='unicode')
+    if root.tag!='mxfile':raise ValueError('Use a draw.io mxfile or mxGraphModel diagram.')
+    pages=root.findall('diagram')
+    if not pages or len(pages)>20:raise ValueError('Use a diagram with between 1 and 20 pages.')
+    result=[]
+    for page in pages:
+        model=page.find('mxGraphModel')
+        if model is None:
+            try:
+                encoded=base64.b64decode((page.text or '').strip(),validate=True)
+                decoder=zlib.decompressobj(-15)
+                raw=decoder.decompress(encoded,100001)
+                if len(raw)>100000 or not decoder.eof or decoder.unused_data:raise ValueError('Diagram expansion exceeds the limit or is invalid.')
+                model=parse(unquote_to_bytes(raw.decode('utf-8')))
+            except (UnicodeError,zlib.error,ValueError) as exc:raise ValueError('Cannot decode this draw.io page within the supported text limit.') from exc
+        if model.tag!='mxGraphModel':raise ValueError('A draw.io page must contain an mxGraphModel.')
+        result.append('[Diagram: '+page.get('name','Untitled')+']\n'+ElementTree.tostring(model,encoding='unicode'))
+    text='\n\n'.join(result)
+    if len(text)>100000:raise ValueError('Combined diagram text exceeds 100,000 characters.')
+    return text
 
 def extract(items):
     if len(items)>4:raise ValueError('Attach up to four files per message.')
@@ -42,6 +72,7 @@ def extract(items):
                 if b'<!DOCTYPE' in xml or b'<!ENTITY' in xml:raise ValueError('Unsupported document XML.')
                 root=ElementTree.fromstring(xml)
                 text='\n'.join(''.join(p.itertext()) for p in root.iter('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}p'))
+        elif mime=='text/plain' and name.lower().endswith(('.drawio','.xml')):text=diagram_text(data)
         elif mime in {'text/plain','text/markdown','text/csv','application/json'}:text=data.decode('utf-8-sig')
         else:raise ValueError('Use PNG, JPEG, WebP, PDF, DOCX, TXT, Markdown, CSV or JSON.')
         if not text.strip():raise ValueError('The document has no readable text.')

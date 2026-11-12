@@ -309,7 +309,7 @@ function RequirementComments({ requirement, comments, onSave, onRemove, target, 
   </aside>;
 }
 
-export function RequirementsView({ project, onDiscuss, onChange, onReview, reviewing }) {
+export function RequirementsView({ project, onDiscuss, onChange, onReview, reviewing, onUpload, onOpenProject }) {
   const [commentMenu,setCommentMenu]=React.useState(null), [commentTarget,setCommentTarget]=React.useState(null);
   React.useEffect(()=>{
     if(!commentMenu)return;
@@ -353,7 +353,7 @@ export function RequirementsView({ project, onDiscuss, onChange, onReview, revie
     <article className="requirements-paper" aria-label="Requirements document">
       <header className="requirements-cover">
         <p className="document-kicker">AtMem AI Architect · Working requirements</p>
-        <h2>{project.name || 'Solution requirements'}</h2>
+        <h2>{project.name || 'Solution requirements'}</h2><div className="row">{onUpload&&<button className="btn" onClick={onUpload}>Upload requirements or diagram</button>}{onOpenProject&&<button className="btn" onClick={onOpenProject}>Open saved project file</button>}</div><p className="muted small">Start from Word (.docx), PDF, text, Markdown, draw.io or images. Send the attached material in chat; Architect extracts requirements, proposes the diagram and asks about unclear points.</p>
         <p className="document-subtitle">Where we’ve reached</p>
         <p>This document brings together the requirements developed from our board and discussion. Proposed requirements remain open for review as the design evolves.</p>
         <p className="document-meta">Design revision {project.revision || 1} · Working draft</p>

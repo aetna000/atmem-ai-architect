@@ -1345,3 +1345,15 @@ export. Sizes are transparent usage assumptions, overridden by known facts; no i
 provider rates. Cost-only assistant responses cannot mutate scope/design/usage decisions.
 Full automatic service pricing remains a capability gap. Programme remains paused.
 Evidence: evidence/20261112-cost-delivery-clarity/README.md.
+
+
+## 2026-11-12 — Five stages, one operational home and complete contrast review
+
+Owner explicitly removed the Implementation workspace and eight-stage dropdown.
+Board/Requirements/Choices define intent; Review owns generation, configuration/application
+verification and costs; Delivery owns the final package. Keep existing worker/session and
+digest guards behind these views. Saved-project copies receive a separate identity and
+never replay source queued work. Requirements paper stays light with local palette;
+all surrounding controls follow theme tokens. Disabled controls remain readable, not
+enabled. Preserve the paused programme and original acceptance boundaries. See UI-002
+evidence/20261112-five-stage-journey/README.md for deliverables, checks and limitations.

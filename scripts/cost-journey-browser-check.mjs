@@ -16,7 +16,7 @@ try {
  for(const width of [1440,390]){
   const page=await browser.newPage({viewport:{width,height:950}});const errors=[];page.on('pageerror',e=>errors.push(e.message));
   let captured=false;
-  await page.route('**/api/**',route=>{const url=route.request().url();return route.fulfill({json:url.endsWith('/validators')?{validators:[],available:true}:url.endsWith('/validation/list')?{checks:[]}:{artifact:captured?{id:'artifact-fixture',sha256:'a'.repeat(64),files:[{path:'README.md',kind:'file'}],model:'fixture',effort:'high'}:null,canPackage:captured,relation:'matches_saved_design',session:{id:'session-fixture'}}});});
+  await page.route('**/api/**',route=>{const url=route.request().url();if(url.endsWith('/delivery')&&!captured)return route.fulfill({status:404,json:{detail:'Save or restore this project before opening its engineering job.'}});return route.fulfill({json:url.endsWith('/validators')?{validators:[],available:true}:url.endsWith('/validation/list')?{checks:[]}:{artifact:captured?{id:'artifact-fixture',sha256:'a'.repeat(64),files:[{path:'README.md',kind:'file'}],model:'fixture',effort:'high'}:null,canPackage:captured,relation:'matches_saved_design',session:{id:'session-fixture'}}});});
   await page.goto(base+'/.local/ui-cost-journey/index.html');
   await page.getByRole('button',{name:'Medium',exact:true}).click();
   assert.equal(await page.getByRole('button',{name:'Medium',exact:true}).getAttribute('aria-pressed'),'true');
@@ -26,12 +26,12 @@ try {
   await page.getByLabel('Data stored',{exact:true}).fill('42');
   await page.getByRole('button',{name:'Large',exact:true}).click();
   assert.match(await page.getByLabel('Data stored',{exact:true}).locator('..').innerText(),/42 GB · entered/);
-  await page.getByRole('button',{name:'Implement and check',exact:true}).click();
+  await page.getByRole('button',{name:'Go to Review',exact:true}).click();
   assert.equal(await page.evaluate(()=>window.builds),1);
   assert.equal(await page.getByRole('button',{name:/Download/}).count(),0);
   captured=true;
   await page.getByRole('button',{name:'Refresh delivery',exact:true}).click();
-  await page.getByRole('button',{name:'Download handoff package (ZIP)',exact:true}).waitFor();
+  await page.getByRole('button',{name:'Download project package (ZIP)',exact:true}).waitFor();
   await page.getByText('Package files and source receipt',{exact:true}).click();
   assert.equal(await page.getByRole('button',{name:/Download/}).count(),1);
   assert.deepEqual(errors,[]);console.log(JSON.stringify({width,preset:true,explicitOverride:true,noPrematureDownload:true,errors}));await page.close();

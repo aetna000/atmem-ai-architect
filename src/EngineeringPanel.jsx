@@ -99,8 +99,8 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
     onWorkModelChange({kind:'artifact',verified},projectId);
   }
   return <div className="engineering-panel">
-    <h2>{artifact?'Handoff package':'Implementation'}</h2>
-    <p>Architect implements your saved design, runs applicable local checks and prepares a downloadable package. Follow its progress below.</p>
+    <h2>Generate and verify</h2>
+    <p>Generate the agreed design and run applicable local checks here. Review results and corrections before opening Delivery.</p>
     {onDesign&&<button onClick={onDesign}>Return to Design</button>}
 
     {buildRequest?.projectId===projectId&&<p role="status">{restoreBlocked?'Your implementation request is waiting. Retry loading earlier work before starting.':uncertain?'Your implementation request is waiting. Recover the existing request first to avoid duplicate work.':contextBusy?'Your implementation request is waiting for the current design changes.':!job&&!exactSelection?'Your implementation request is waiting here. Choose a model and reasoning level below; it will then start automatically.':'Your implementation request is queued.'} <button onClick={()=>onBuildRequestHandled?.(buildRequest.id)}>Cancel queued request</button></p>}
@@ -120,11 +120,11 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
         {entry.status==='uncertain'&&<span> · Delivery uncertain; recover before resending</span>}
         <pre>{entry.text}</pre>
       </article>)}</section>}
-      {!hasDesign&&!job?<p>Start with the architecture in Design. Add the components or responsibilities before building an implementation.</p>:<form onSubmit={submitIntent}>
+      {!hasDesign&&!job?<p>Start with the Board or Requirements. Add the components or responsibilities before building an implementation.</p>:<form onSubmit={submitIntent}>
         <label htmlFor="engineering-intent">{running?'Add an implementation update':hasDesign?'Additional instructions (optional)':'Continue implementation'}</label>
         <textarea id="engineering-intent" rows={4} value={draft} onChange={e=>setDraft(e.target.value)}/>
         {draft.length>80000&&<p role="alert">This update exceeds 80,000 characters. Edit it before sending; your draft is retained.</p>}
-        <button disabled={busy||restoreBlocked||uncertain||contextBusy||!canSubmit||draft.length>80000||(!job&&!exactSelection)}>{running?'Send update':hasDesign?'Implement and check':'Continue implementation'}</button>
+        <button disabled={busy||restoreBlocked||uncertain||contextBusy||!canSubmit||draft.length>80000||(!job&&!exactSelection)}>{running?'Send update':hasDesign?'Generate and verify':'Continue implementation'}</button>
       </form>}
       {job&&<>
         {finalization&&<p role="status"><strong>Recorded verification update: </strong>{finalization.text}</p>}

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {journey,advanceJourney,cloudMapping,DESIGN_SECTIONS,designSection,journeyAction} from '../src/journey.mjs';
+import {journey,advanceJourney,cloudMapping,DESIGN_SECTIONS,designSection,journeyAction,journeySectionId,completedStages} from '../src/journey.mjs';
 import {emulationPreflight} from '../src/emulation-guidance.mjs';
 const p=()=>({id:'journey-test',requirements:'Answer staff policy questions',nodes:[],edges:[],needs:[],decisions:[]});
 const node=(id,label,provider='tools',region='To be selected')=>({id,data:{kind:'resource',label,provider,config:{region},description:'Serve policy questions',origin:'proposed'}});
@@ -44,8 +44,8 @@ test('scope changes reopen the document step; visits and unrelated checkpoint na
 test('Board review actions navigate before acknowledging scope, risk or cost checkpoints',()=>{
  for(const [id,label]of [['scope','Review requirements'],['review','Review design'],['estimate','Review costs'],['delivery','Review delivery']]){
   const guidance={id,checkpoint:id,continueLabel:'Continue'};
-  assert.deepEqual(journeyAction(guidance),{kind:'navigate',section:id,label});
-  if(id!=='delivery')assert.deepEqual(journeyAction(guidance,id),{kind:'continue',label:'Continue'});
+  assert.deepEqual(journeyAction(guidance),{kind:'navigate',section:journeySectionId(id),label});
+  if(id!=='delivery')assert.deepEqual(journeyAction(guidance,journeySectionId(id)),{kind:'continue',label:'Continue'});
   assert.equal(journeyAction(guidance,'location'),null);
  }
 });
@@ -58,4 +58,16 @@ test('unfamiliar named services can reach draft review while implementation and 
   project.nodes[0].data.provider=provider==='aws'?'azure':'aws';assert.equal(cloudMapping(project).ready,false);
  }
  const unknown=choose(p(),'platform.cloud','unknown-provider');unknown.nodes=[{...node('a','Example','unknown-provider','somewhere'),data:{...node('a','Example','unknown-provider','somewhere').data,service:'Named service'}}];assert.equal(cloudMapping(unknown).ready,false);
+});
+
+
+test('five stages group location, cost and generated infrastructure without marking visits complete',()=>{
+ assert.deepEqual(DESIGN_SECTIONS.map(s=>s.label),['Board','Requirements','Choices','Review','Delivery']);
+ assert.equal(designSection('design','location').id,'cloud');
+ assert.equal(designSection('design','terraform').id,'review');
+ assert.equal(designSection('estimate','board').id,'review');
+ const project=p();assert.deepEqual(completedStages(project),{board:false,scope:false,cloud:false,review:false,delivery:false});
+ project.nodes=[node('a','Storage')];assert.equal(completedStages(project).board,true);
+ const next=advanceJourney(project,'scope');assert.equal(completedStages(next).scope,true);
+ next.needs=[{id:'new',source:'user',statement:'Preserve regional data'}];assert.equal(completedStages(next).scope,false);
 });

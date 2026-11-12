@@ -46,6 +46,7 @@ export function ReviewView({ project, findings, onChange, onOpen, onAddRequireme
               : "Nothing open. Rules run on every change."}
         </p>
       </header>
+      <details className="extra"><summary>Agreed choices and consequences</summary>{(project.decisions||[]).filter(d=>d.status==='Accepted').map(d=><article key={d.id||d.subject}><strong>{d.title||d.subject}</strong><p>{d.decision}</p>{d.context&&<p>{d.context}</p>}{d.consequences&&<p>{d.consequences}</p>}</article>)}</details>
       {ATTRIBUTES.map(([id, label]) => {
         const fs = findings.filter((f) => f.attribute === id);
         if (!fs.length) return null;

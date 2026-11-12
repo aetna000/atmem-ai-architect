@@ -1,3 +1,4 @@
+import {CodePreview} from './CodePreview.jsx';
 import {moduleValidationCoverage} from './terraform-validation-coverage.mjs';
 import {generationQuality} from './generation-quality.mjs';
 import {BrainActivity} from "./BrainActivity.jsx";
@@ -30,17 +31,17 @@ export function TerraformView({project,environment,session,onDelivery,onBack,emu
   const quality=useMemo(()=>generationQuality(project,plan,files),[project,plan,files]);
   const gaps=JSON.parse(files['main.tf.json']).locals.unfinished_work;
   return <section className="doc terraform-view" aria-label="Terraform">
-    <header className="doc-head"><h2>Terraform deployment draft</h2><p className="muted">Review generated resources, required integrations and the evidence for this configuration. Provider-specific capabilities and their limits are recorded in the export.</p></header>
+    <header className="doc-head"><h2>Generated infrastructure</h2><p className="muted">Review generated resources, required integrations and the evidence for this configuration. Provider-specific capabilities and their limits are recorded in the export.</p></header>
     <div className="row"><button className="link" onClick={onBack}>Back to architecture</button><button className="btn" onClick={onDelivery}>Continue to Delivery</button></div>
     <aside aria-label="Export quality"><strong>{quality.infrastructureComplete?'Infrastructure generated — validation required':'Implementation work remains'}</strong><p>{quality.providers.join(', ')||'No deployment provider selected'} · {quality.components.length} components · {quality.findings.length} coverage findings</p><p className="small">{result?.status==='passed'&&result.filesKey===key?'Current configuration checks passed. These checks apply to this configuration.':'No current validation receipt is attached. Run Terraform checks to generate evidence for these files.'} Application behavior and account deployment require their own tests.</p></aside>
-    <EmulationPanel project={project} environment={environment} session={session} emulation={emulation} onDiscuss={onDiscuss} discussionBusy={discussionBusy} onBuild={onBuild}/>
+
     <div className="seg" role="tablist" aria-label="Terraform steps"><button role="tab" aria-selected={step==='code'} onClick={()=>setStep('code')}>1. Resources & code</button><button role="tab" aria-selected={step==='test'} onClick={()=>setStep('test')}>2. Test Terraform</button></div>
     {step==='code'?<>
       <h3>Resource coverage</h3>
       {plan.rows.map(r=><p key={r.id||r.address}><strong>{r.label||r.service}</strong> — {r.terraform}<br/><small>{r.provider} · {r.region}</small></p>)}
       {!!plan.gaps.length&&<details><summary>{plan.gaps.length} implementation gaps</summary><ul>{plan.gaps.map((g,i)=><li key={i}>{g}</li>)}</ul></details>}
       <div className="row" aria-label="Terraform files">{Object.keys(files).map(name=><button className="btn" key={name} aria-pressed={file===name} onClick={()=>setFile(name)}>{name}</button>)}</div>
-      <pre className="terraform-code" aria-label={file}><code>{files[file]}</code></pre>
+      <CodePreview className="terraform-code" name={file} content={files[file]}/>
       <button className="btn primary" onClick={()=>setStep('test')}>Continue to Test Terraform →</button>
     </>:<>
       <h3>Test this Terraform draft</h3>

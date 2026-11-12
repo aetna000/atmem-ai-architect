@@ -1,3 +1,4 @@
+import {CodePreview} from './CodePreview.jsx';
 import {BrainActivity} from "./BrainActivity.jsx";
 import React,{useEffect,useState} from 'react';
 import {EmulationPanel} from './EmulationPanel.jsx';
@@ -30,7 +31,7 @@ function Preview({name,content}){
  },[name,content,visual]);
  if(visual)return !url?<p role="status"><BrainActivity/> Preparing preview…</p>:name.endsWith('.pdf')?<iframe className="output-pdf" src={url} title={`Preview ${name}`}/>:<img className="output-image" src={url} alt={`Preview ${name}`}/>;
  if(name.endsWith('.md'))return <Document text={content}/>;
- return <pre className="output-code"><code>{content}</code></pre>;
+ return <CodePreview className="output-code" content={content} name={name}/>;
 }
 export function OutputsView({project,run,environment,session,onDownload,onBack,emulation,onDiscuss,discussionBusy,onBuild,onSave}){
  const [bundle,setBundle]=useState(null),[error,setError]=useState(''),[loading,setLoading]=useState(true),[retry,setRetry]=useState(0),[selected,setSelected]=useState('spec-kit/implementation-spec.md');
@@ -42,13 +43,13 @@ export function OutputsView({project,run,environment,session,onDownload,onBack,e
  const readiness=bundle?.files['spec-kit/readiness.json']?JSON.parse(bundle.files['spec-kit/readiness.json']):null;
  const groups=bundle?[['Spec Kit',Object.keys(bundle.files).filter(n=>n.startsWith('spec-kit/')).sort((a,b)=>Number(b.includes('implementation-spec'))-Number(a.includes('implementation-spec')))],['Specification & handoff',Object.keys(bundle.files).filter(n=>!n.includes('/')&&!/^diagram\./.test(n))],['Design',Object.keys(bundle.files).filter(n=>/^diagram\./.test(n))],['Terraform',Object.keys(bundle.files).filter(n=>n.startsWith('terraform/'))]]:[];
  return <section className="doc outputs-view" aria-label="Outputs">
-  <header className="doc-head"><h2>Delivery</h2><p className="muted">Generate and check the implementation, review its evidence, then download one package containing the design, requirements, infrastructure and captured implementation.</p></header>
+  <header className="doc-head"><h2>Delivery</h2><p className="muted">Browse the requirements, design, infrastructure and recorded checks. After generation in Review, download one complete project package here.</p></header>
   <button className="link" onClick={onBack}>Back to architecture</button>
   {session?.engineeringEnabled&&<ImplementationDelivery key={project.id} project={project} session={session} onBuild={onBuild} onSave={onSave} contextBusy={discussionBusy}/>}
   <details open={!session?.engineeringEnabled}><summary>Design draft: requirements, Spec Kit and infrastructure</summary>
   <p>Reference documents from the current design. The final package above retains both the submitted design and the latest saved design, with any differences identified.</p>
   {!session?.engineeringEnabled&&<><p>Implementation generation is unavailable in this session. This package contains the design and engineering tasks; it does not contain a verified application.</p><button className="btn" disabled={!bundle||loading||!!error} onClick={()=>onDownload(bundle)}>Download design package (ZIP)</button></>}
-  {!session?.engineeringEnabled&&<EmulationPanel project={project} environment={environment} session={session} emulation={emulation} onDiscuss={onDiscuss} discussionBusy={discussionBusy} onBuild={onBuild}/>}
+
   {loading&&<p role="status"><BrainActivity/> Preparing the current outputs…</p>}
   {error&&<div role="alert"><p>{error}</p><button className="btn" onClick={()=>setRetry(n=>n+1)}>Retry preparing outputs</button></div>}
   {bundle&&!loading&&!error&&<>

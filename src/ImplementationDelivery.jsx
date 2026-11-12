@@ -9,7 +9,7 @@ export function ImplementationDelivery({project,session,onBuild,onSave,contextBu
   const controller=new AbortController();setError('');setLoaded(null);
   engineeringCall(session,'delivery',{projectId:project.id},{signal:controller.signal}).then(value=>{
    if(!controller.signal.aborted)setLoaded({project,report:value});
-  }).catch(e=>{if(!controller.signal.aborted)setError(e.message)});
+  }).catch(e=>{if(!controller.signal.aborted){if(e.status===404&&e.message.startsWith('Save or restore this project'))setLoaded({project,report:{artifact:null}});else setError(e.message);}});
   return()=>controller.abort();
  },[project,session.token,retry]);
  async function download(){
@@ -35,16 +35,16 @@ export function ImplementationDelivery({project,session,onBuild,onSave,contextBu
   }catch(e){setError(e.message)}finally{setBusy(false)}
  }
  return <section aria-label="Implementation delivery">
-  <h3>Implementation package</h3>
+  <h3>Project package</h3>
   {!report&&!error&&<p role="status">Finding the captured implementation and its checks…</p>}
-  {report&&!report.artifact&&<><p>No implementation package has been captured for this project yet. Next: generate the implementation and run its local checks. Then download the combined package here.</p>{onBuild&&<button className="btn primary" disabled={contextBusy} onClick={onBuild}>Implement and check</button>}</>}
+  {report&&!report.artifact&&<><p>No implementation package has been captured for this project yet. Next: open Review to generate the project and inspect its checks. Return here for the final package.</p>{onBuild&&<button className="btn primary" disabled={contextBusy} onClick={onBuild}>Go to Review</button>}</>}
   {report?.artifact&&<>
    <p>{report.relation==='matches_saved_design'?'This package used the latest saved design.':report.relation==='design_changed'?'The saved design has changed since this implementation. New or changed requirements need implementation and checks.':report.relation==='earlier_turn'?'This is an earlier package. A later implementation turn has not produced a completed package yet.':'The submitted design receipt is unavailable. Its relationship to the current design is unknown.'} Capture and local checks do not establish full project acceptance.</p>
    <p>{report.artifact.files.filter(file=>file.kind==='file').length} files · {report.artifact.model} · {report.artifact.effort}</p>
-   {report.canPackage&&<button className="btn primary" disabled={busy||contextBusy} onClick={()=>download()}>Download handoff package (ZIP)</button>}
-   {report.relation!=='matches_saved_design'&&onBuild&&<button className="btn" disabled={busy||contextBusy} onClick={onBuild}>Implement and check latest design</button>}
+   {report.canPackage&&<button className="btn primary" disabled={busy||contextBusy} onClick={()=>download()}>Download project package (ZIP)</button>}
+   {report.relation!=='matches_saved_design'&&onBuild&&<button className="btn" disabled={busy||contextBusy} onClick={onBuild}>Review latest design</button>}
    <p>The handoff includes the captured files, their original ZIP, submitted and latest saved requirements/design, and recorded local checks. Missing implementation or Spec Kit content remains work to complete.</p>
-   <ArtifactChecks key={report.artifact.id} session={session} projectId={project.id} sessionId={report.session.id} artifact={report.artifact}/>
+   <ArtifactChecks key={report.artifact.id} session={session} projectId={project.id} sessionId={report.session.id} artifact={report.artifact} readOnly/>
    <details><summary>Package files and source receipt</summary><p>Artifact SHA-256: {report.artifact.sha256}</p><ul>{report.artifact.files.filter(file=>file.kind==='file').map(file=><li key={file.path}>{file.path}</li>)}</ul></details>
   </>}
   {busy&&<p role="status">Preparing and verifying your handoff download…</p>}
