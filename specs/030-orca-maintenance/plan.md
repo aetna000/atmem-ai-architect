@@ -16,3 +16,11 @@ Owner requests, 2026-11-13: install/test Orca and publish its Architect plugin; 
 ## Limits
 
 Public storage scraping currently verifies Iowa only; no other region is substituted. Full cost coverage still depends on service and usage inputs. Real-model generation, cloud deployment and Windows/Linux Orca plugin execution are not qualified here. Existing user data/runtimes and historical evidence remain intact.
+
+## Owner follow-up: normal estimate state and responsive navigation
+
+An available estimate is a normal Estimated state, with neutral exclusions. Numeric totals, missing charge details and complete-coverage semantics remain in the worksheet and exports; a mixed-currency result cannot become an estimate.
+
+Delivery was generating PDF/diagram exports on entry and recompressing captured source for previews. Prepare lightweight source documents first, defer visual generation to preview/download, and only build the complete ZIP on explicit export. Preserve the same full PDFs/PNG/SVG in downloads and Orca handoffs; guard against a design changing during preparation. Remove the unconditional frame delay from checklist clicks.
+
+Replace the combined Run checks action with Terraform validation / Run and Application tests / Run. Keep application tests disabled before files exist, with a hover/focus prerequisite. Each action starts only its named check family. Terraform validation can run independently of application generation.

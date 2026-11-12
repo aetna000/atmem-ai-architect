@@ -1582,7 +1582,9 @@ function App() {
   const exportFiles = (files, suffix) => {
     download(zipSync(Object.fromEntries(Object.entries(files).map(([name, content]) => [name, typeof content === "string" ? strToU8(content) : content]))), `${slug}-r${project.revision}-${suffix}.zip`, "application/zip");
   };
-  const downloadBundle = bundle => {
+  const downloadBundle = async bundle => {
+    bundle=await(bundle.prepare?.()||bundle);
+    if(bundle.project!==projectRef.current)throw Error('Design changed while preparing files. Download again.');
     download(zipSync(Object.fromEntries(Object.entries(bundle.files).map(([name,content])=>[name,typeof content === "string"?strToU8(content):content]))),bundle.filename,"application/zip");
     if(bundle.project?.id===projectRef.current.id)updateEngagement(acknowledgeStage(projectRef.current,'delivery'));
     notify("ZIP downloaded.");setStarOffer(value=>value+1);
@@ -1590,7 +1592,7 @@ function App() {
   const exportPack = async () => {
     try {
       notify("Preparing documents and diagram exports…");
-      downloadBundle(await outputBundle(project,run,environment));
+      await downloadBundle(await outputBundle(project,run,environment));
     } catch(e) { notify(e.message); }
   };
   const exportTerraform = async (validation = null) => {
@@ -2174,7 +2176,7 @@ function App() {
         {mode==='review'&&session?.engineeringEnabled&&<section className="review-generation" aria-label="Generation and verification"><EngineeringPanel key={project.id} project={project} onBusyChange={setGenerationPending} onWorkModelChange={changeArchitectureWork} onIntentContext={syncEngineeringIntent} projectId={project.id} session={session} connection={connection} contextBusy={busy||agentBusy||!!pending} saveProject={()=>saveEngineeringProject(project.id)} buildRequest={buildRequest} onBuildRequestHandled={id=>setBuildRequest(current=>current?.id===id?null:current)} onConnections={()=>setModal('connections')}/></section>}
         {mode==='review'&&!session?.engineeringEnabled&&<p>Generation and local checks require the engineering service. Your design is retained; Delivery can package the design and remaining tasks.</p>}
         {mode==='review'&&<ProjectChecks receipt={checkReceipt} project={project} environment={environment} session={session} onReceipt={setCheckReceipt} onBusy={setChecking}/>}
-        {mode==='review'&&<footer className="review-finish"><div><strong>3. Package and download</strong><p>Explore all files and download one project ZIP in Delivery.</p></div><button className="btn primary" onClick={()=>{const next=acknowledgeStage(projectRef.current,'review');updateEngagement(costs.complete?{...next,extensions:{...next.extensions,journey:{...next.extensions.journey,estimate:journey(next).keys.estimate}}}:next);visitJourney('delivery');}}>Complete →</button></footer>}
+        {mode==='review'&&<footer className="review-finish"><div><strong>3. Package and download</strong><p>Explore all files and download one project ZIP in Delivery.</p></div><button className="btn primary" onClick={()=>{const next=acknowledgeStage(projectRef.current,'review');updateEngagement(costs.expected!==null&&!costs.mixedCurrencies?{...next,extensions:{...next.extensions,journey:{...next.extensions.journey,estimate:journey(next).keys.estimate}}}:next);visitJourney('delivery');}}>Complete →</button></footer>}
         </div>
 
 

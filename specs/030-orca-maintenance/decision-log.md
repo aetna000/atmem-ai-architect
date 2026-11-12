@@ -8,3 +8,7 @@
 - Star prompts follow a successful ZIP action, not startup or every visit. Store only a local snooze/link-open preference, not tracking or an assertion that the user starred the repository.
 
 - Plugin 0.1.1 supersedes 0.1.0: real Stop testing showed Ctrl+C through the host API left the app running. Close only the created terminal through the CLI. Actual start, close and closed-port checks passed; the installed plugin was updated without additional capabilities.
+
+- Owner clarified that a best available estimate should not remain a warning. UI completion now means an estimate exists, while engine coverage and exclusions remain explicit in data/exports. No absent price is replaced with zero.
+- Profiling the Delivery path identified unconditional visual export and ZIP recompression on entry. Defer those operations to explicit previews/downloads rather than adding a mandatory waiting delay to every click.
+- Owner requested named check actions. Separate Terraform validation and application tests; only application tests require generated application files.
