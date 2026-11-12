@@ -14,6 +14,8 @@ parser.add_argument('--sidecar-port',type=int,default=8866)
 parser.add_argument('--tools',type=Path,help='Operator JSON with readRoots and tools; no credentials')
 parser.add_argument('--validator-endpoint',default=os.getenv('ATMEM_ARCHITECT_ENGINEERING_VALIDATOR_ENDPOINT'),help='Explicit owned local Docker Unix endpoint; no context discovery')
 parser.add_argument('--validators',type=Path,help='Operator registered local validator definitions')
+parser.add_argument('--validator-workers',type=Path,help='Operator named local worker registrations; no discovery')
+parser.add_argument('--workspace-root',type=Path,help='Operator directory for new native workspaces, e.g. a separate disk; existing workspaces stay in place')
 parser.add_argument('--isolation-profiles',type=Path,help='Operator named reviewed isolation-profile paths/digests')
 parser.add_argument('--vite-cache',type=Path)
 args=parser.parse_args()
@@ -22,6 +24,8 @@ def read(path,default):return json.loads(path.read_text())if path else default
 tools=read(args.tools,{'readRoots':[],'tools':{}})
 if not isinstance(tools,dict)or set(tools)!={'readRoots','tools'}:parser.error('Tool registration requires exactly readRoots and tools')
 settings={'ENABLE_ENGINEERING':'1','PORT':str(args.port),'SIDECAR_PORT':str(args.sidecar_port),'HOME':str(args.home.resolve()),'ENGINEERING_TOOL_ROOTS':json.dumps(tools['readRoots']),'ENGINEERING_TOOLCHAIN':json.dumps(tools['tools']),'ENGINEERING_VALIDATOR_ENDPOINT':args.validator_endpoint or '', 'ENGINEERING_VALIDATORS':json.dumps(read(args.validators,[])),'ENGINEERING_ISOLATION_PROFILES':json.dumps(read(args.isolation_profiles,{})),'VITE_CACHE_DIR':str((args.vite_cache or args.home/'vite-cache').resolve())}
+if args.validator_workers:settings['ENGINEERING_VALIDATOR_WORKERS']=json.dumps(read(args.validator_workers,{}))
+if args.workspace_root:settings['ENGINEERING_WORKSPACE_ROOT']=str(args.workspace_root.resolve())
 # Endpoint is an explicit operator argument/environment setting, never inferred
 # from the current Docker context. No Docker access is given to native commands.
 env=dict(os.environ)

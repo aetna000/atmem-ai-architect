@@ -48,7 +48,7 @@ class EngineeringRouteTests(unittest.TestCase):
             self.assertEqual(self.client.post('/api/engineering/list',json={'projectId':self.project},headers={**self.headers,**header}).status_code,403)
 
     def test_browser_cannot_select_tenant_workspace_native_handle_or_commands(self):
-        for field in ['tenant','workspace','handle','command','readRoots']:
+        for field in ['tenant','workspace','workspaceRoot','validatorWorkers','handle','command','readRoots']:
             payload = {**self.payload,field:'/private/secret'}
             self.assertEqual(self.client.post('/api/engineering/state',json=payload,headers=self.headers).status_code,422)
 

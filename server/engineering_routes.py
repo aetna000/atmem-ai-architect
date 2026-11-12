@@ -87,6 +87,13 @@ def local_scope(project):
 
 class LocalEngineeringService:
     def __init__(self):
+        workspace_root = setting('ENGINEERING_WORKSPACE_ROOT')
+        if workspace_root and not Path(workspace_root).is_absolute():
+            raise RuntimeError('The operator workspace root must be an absolute directory')
+        self.workspace_root = Path(workspace_root or '/tmp')
+        self.workspace_root = self.workspace_root.resolve(strict=True)
+        if not self.workspace_root.is_dir():
+            raise RuntimeError('The operator workspace root must be an existing directory')
         read_roots = json.loads(setting('ENGINEERING_TOOL_ROOTS') or '[]')
         if not isinstance(read_roots,list) or any(not isinstance(p,str) for p in read_roots):
             raise RuntimeError('Worker tool roots must be configured by the server operator')
@@ -224,7 +231,7 @@ Keep final progress concise and explain any remaining work.''')
             if current and current['sha256']!=self.dependencies['sha256']:raise SessionError('The operator dependency catalog changed; review/restart the worker configuration before creating work')
             import uuid
             workspace_id = str(uuid.uuid4())
-            workspace = Path(tempfile.mkdtemp(prefix='atm-job-',dir='/tmp')).resolve()
+            workspace = Path(tempfile.mkdtemp(prefix='atm-job-',dir=self.workspace_root)).resolve()
             context = project_path.read_bytes()
             (workspace/'project-context.json').write_bytes(context)
             tools = workspace/'.tools'

@@ -9,6 +9,36 @@ from server.engineering_sessions import ModelSelection, ProjectScope
 
 
 class LocalWorkerRegistrationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_operator_workspace_disk_persists_existing_paths_across_configuration_changes(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);context=root/'project.json';context.write_text('{"requirements":"Preserve the existing library"}')
+            configured=root/'separate-disk/workspaces';configured.mkdir(parents=True);config={'ENGINEERING_WORKSPACE_ROOT':str(configured)}
+            with patch('server.engineering_routes.home',return_value=root/'control'),patch('server.engineering_routes.setting',side_effect=config.get):
+                worker=LocalEngineeringService();scope=ProjectScope('local-owner','project-one')
+                async def fake_create(scope,workspace,selection):return worker.sessions._public(worker.store.create(scope,workspace,worker.backend.name,'fake-thread',selection))
+                worker.sessions.create=fake_create
+                state=await worker.create(scope,context,ModelSelection('exact-model','high'))
+                workspace=worker.store.get(scope,state['id'])['workspace'];path=worker.backend._workspace(scope,workspace)
+                self.assertEqual(path.parent,configured.resolve());self.assertEqual(path.stat().st_mode&0o777,0o700)
+                self.assertEqual((path/'project-context.json').read_bytes(),context.read_bytes())
+                pins=worker.pinned_inputs(scope,state['id']);await worker.close()
+                config['ENGINEERING_WORKSPACE_ROOT']=str(root/'another-disk/workspaces')
+                Path(config['ENGINEERING_WORKSPACE_ROOT']).mkdir(parents=True)
+                restarted=LocalEngineeringService()
+                try:
+                    self.assertEqual(restarted.backend._workspace(scope,workspace),path)
+                    self.assertEqual(restarted.pinned_inputs(scope,state['id']),pins)
+                    self.assertEqual(list(restarted.workspace_root.iterdir()),[])
+                finally:await restarted.close()
+
+    async def test_relative_or_unavailable_operator_workspace_root_never_falls_back(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);file=root/'not-a-directory';file.write_text('preserve')
+            for value in ['relative/workspaces',str(file),str(root/'unmounted/workspaces')]:
+                with patch('server.engineering_routes.home',return_value=root/'control'),patch('server.engineering_routes.setting',side_effect=lambda name:value if name=='ENGINEERING_WORKSPACE_ROOT'else None):
+                    with self.assertRaises((RuntimeError,OSError)):LocalEngineeringService()
+            self.assertFalse((root/'control').exists());self.assertEqual(file.read_text(),'preserve')
+
     async def test_context_updates_are_control_owned_without_rewriting_workspace_pins(self):
         import hashlib, uuid
         from server.engineering_sessions import SessionError

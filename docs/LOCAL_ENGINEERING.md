@@ -146,3 +146,11 @@ Rollback to the preserved owner alpha.3.1 at http://127.0.0.1:5285/dist/index.ht
 using its own app home; stop only alpha.4 if needed. Keep new project files,
 artifact receipts and uncertain requests unchanged. Do not strip fields or move
 Terraform state. Owner acceptance remains separate from automated qualification.
+
+## Operator workspace storage and named validators
+
+`scripts/engineering-preview.py --workspace-root /absolute/existing/workspaces` selects the disk for **new** native workspaces. The directory must already exist on the intended mounted filesystem; missing/unmounted, relative environment paths or files fail rather than falling back. The backend setting is `ATMEM_ARCHITECT_ENGINEERING_WORKSPACE_ROOT`. Without it, existing installations keep `/tmp`. Existing workspace paths and their immutable input receipts remain registered across configuration changes; this setting neither moves nor rewrites them. The browser cannot select this directory.
+
+Use a filesystem with native ownership modes, symlinks and Unix sockets. Keep the resolved workspace path short enough for the existing native worker's Unix-socket limit (its private `.worker-tmp` path must be at most80 bytes on POSIX). An exFAT drive or a long symlink alias does not satisfy those requirements. A separately mounted short-path APFS sparse volume backed by the external disk is one local development option; keep it mounted while work is active. Test modes, symlinks and private sockets before use. Large client artifacts and dependencies should remain on the external disk; do not move an active workspace behind a registered path.
+
+`--validator-workers /absolute/operator/workers.json` loads explicit named worker registrations. It uses the existing reviewed endpoint/profile contracts and does no context discovery, pulls or installations. When absent, an existing `ATMEM_ARCHITECT_ENGINEERING_VALIDATOR_WORKERS` environment setting is retained. Worker placement stays server-owned and independent of the target cloud/model backend.
