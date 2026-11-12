@@ -1,8 +1,14 @@
+import {unzipSync} from 'fflate';
+import {FinalChecklist} from './FinalChecklist.jsx';
+import {HelpNote} from './HelpNote.jsx';
+import {BrainActivity} from './BrainActivity.jsx';
+import {completeProjectZip} from './final-package.mjs';
 import React,{useEffect,useState} from 'react';
 import {engineeringCall,verifiedHandoffDownload} from './engineering-client.mjs';
 import {ArtifactChecks} from './ArtifactChecks.jsx';
 
-export function ImplementationDelivery({project,session,onBuild,onSave,contextBusy=false}){
+export function ImplementationDelivery({project,session,onBuild,onSave,contextBusy=false,designBundle,onDesignDownload,onDownloaded,checkReceipt,onExplore}){
+ const [prepared,setPrepared]=useState(null),[preparing,setPreparing]=useState(false);
  const [loaded,setLoaded]=useState(null),[error,setError]=useState(''),[retry,setRetry]=useState(0),[busy,setBusy]=useState(false);
  const report=loaded?.project===project?loaded.report:null;
  useEffect(()=>{
@@ -12,6 +18,17 @@ export function ImplementationDelivery({project,session,onBuild,onSave,contextBu
   }).catch(e=>{if(!controller.signal.aborted){if(e.status===404&&e.message.startsWith('Save or restore this project'))setLoaded({project,report:{artifact:null}});else setError(e.message);}});
   return()=>controller.abort();
  },[project,session.token,retry]);
+ useEffect(()=>{
+  if(!report?.canPackage||designBundle?.project!==project){setPrepared(null);return;}
+  let stopped=false;const controller=new AbortController();setPreparing(true);setError('');
+  (async()=>{try{
+    const captured=await verifiedHandoffDownload(session,{projectId:project.id,sessionId:report.session.id,artifactId:report.artifact.id,savedDesignSha256:report.savedDesignSha256},report.artifact,{signal:controller.signal});
+    const blob=await completeProjectZip(captured,designBundle);
+    const files=unzipSync(new Uint8Array(await blob.arrayBuffer()));
+    if(!stopped){setPrepared({artifactId:report.artifact.id,designSha256:report.savedDesignSha256,blob});onExplore?.({project,files});}
+  }catch(e){if(!stopped&&e.name!=='AbortError')setError(e.message);}finally{if(!stopped)setPreparing(false);}})();
+  return()=>{stopped=true;controller.abort();};
+ },[report?.artifact?.id,report?.savedDesignSha256,designBundle,project,session.token,retry]);
  async function download(){
   if(!report?.artifact||busy||contextBusy)return;
   setBusy(true);setError('');
@@ -29,27 +46,32 @@ export function ImplementationDelivery({project,session,onBuild,onSave,contextBu
       throw Error('The saved design or package changed. Review the refreshed Delivery information before downloading.');
    }
    const payload={projectId:project.id,sessionId:current.session.id,artifactId:current.artifact.id};
-   const blob=await verifiedHandoffDownload(session,{...payload,savedDesignSha256:current.savedDesignSha256},current.artifact);
+   const captured=await verifiedHandoffDownload(session,{...payload,savedDesignSha256:current.savedDesignSha256},current.artifact);
+   if(designBundle?.project!==project)throw Error('The design documents are refreshing. Try downloading again when preparation finishes.');
+   const blob=await completeProjectZip(captured,designBundle);
    const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;
-   link.download=`architect-handoff-${report.artifact.id}.zip`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+   link.download=`architect-handoff-${report.artifact.id}.zip`;link.click();onDownloaded?.();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }catch(e){setError(e.message)}finally{setBusy(false)}
  }
  return <section aria-label="Implementation delivery">
-  <h3>Project package</h3>
-  {!report&&!error&&<p role="status">Finding the captured implementation and its checks…</p>}
-  {report&&!report.artifact&&<><p>No implementation package has been captured for this project yet. Next: open Review to generate the project and inspect its checks. Return here for the final package.</p>{onBuild&&<button className="btn primary" disabled={contextBusy} onClick={onBuild}>Go to Review</button>}</>}
+  <h3>Your project ZIP</h3>
+  {!report&&!error&&<p role="status">Preparing package…</p>}
+  {report&&!report.artifact&&<p>Design package · implementation not generated.</p>}
+  {report&&!report.canPackage&&<button className="btn primary" disabled={!designBundle||designBundle.project!==project||contextBusy} onClick={()=>onDesignDownload?.(designBundle)}>Download project ZIP</button>}
   {report?.artifact&&<>
-   <p>{report.relation==='matches_saved_design'?'This package used the latest saved design.':report.relation==='design_changed'?'The saved design has changed since this implementation. New or changed requirements need implementation and checks.':report.relation==='earlier_turn'?'This is an earlier package. A later implementation turn has not produced a completed package yet.':'The submitted design receipt is unavailable. Its relationship to the current design is unknown.'} Capture and local checks do not establish full project acceptance.</p>
+   <p className="delivery-state">{report.relation==='matches_saved_design'?'✓ Current design':report.relation==='design_changed'?'! Design changed since generation':'! Earlier or unverified implementation'}</p>
+   <HelpNote label="Package evidence">The ZIP preserves the submitted and current designs, the original implementation and check receipts. Unresolved differences remain work to review; a download does not establish deployment or complete acceptance.</HelpNote>
    <p>{report.artifact.files.filter(file=>file.kind==='file').length} files · {report.artifact.model} · {report.artifact.effort}</p>
-   {report.canPackage&&<button className="btn primary" disabled={busy||contextBusy} onClick={()=>download()}>Download project package (ZIP)</button>}
-   {report.relation!=='matches_saved_design'&&onBuild&&<button className="btn" disabled={busy||contextBusy} onClick={onBuild}>Review latest design</button>}
-   <p>The handoff includes the captured files, their original ZIP, submitted and latest saved requirements/design, and recorded local checks. Missing implementation or Spec Kit content remains work to complete.</p>
-   <ArtifactChecks key={report.artifact.id} session={session} projectId={project.id} sessionId={report.session.id} artifact={report.artifact} readOnly/>
-   <details><summary>Package files and source receipt</summary><p>Artifact SHA-256: {report.artifact.sha256}</p><ul>{report.artifact.files.filter(file=>file.kind==='file').map(file=><li key={file.path}>{file.path}</li>)}</ul></details>
+   {report.canPackage&&<button className="btn primary" disabled={busy||preparing||!prepared||contextBusy||!designBundle||designBundle.project!==project} onClick={()=>download()}>Download project ZIP</button>}
+
+
+
+
   </>}
-  {busy&&<p role="status">Preparing and verifying your handoff download…</p>}
-  {contextBusy&&<p role="status">Finish the current design changes before downloading a combined handoff.</p>}
+  <FinalChecklist project={project} implementation={report?.canPackage&&report?.artifact} checks={report?.checks} terraform={checkReceipt}/>
+  {(busy||preparing)&&<p role="status"><BrainActivity/> Preparing ZIP…</p>}
+  {contextBusy&&<p role="status">Waiting for current changes…</p>}
   {error&&<p role="alert">{error}</p>}
-  <button className="link" disabled={busy} onClick={()=>setRetry(value=>value+1)}>Refresh delivery</button>
+  <button className="icon" aria-label="Refresh package" title="Refresh package" disabled={busy||preparing} onClick={()=>setRetry(value=>value+1)}>↻</button>
  </section>;
 }

@@ -1,3 +1,4 @@
+import {BrainActivity} from './BrainActivity.jsx';
 import {ArchitectureWorkPanel} from './ArchitectureWorkPanel.jsx';
 import React,{useEffect,useRef,useState} from 'react';
 import {engineeringCall,engineeringConversation,mergeEngineeringEvents} from './engineering-client.mjs';
@@ -6,7 +7,7 @@ import {ArtifactChecks} from './ArtifactChecks.jsx';
 import {verifyArtifactWork} from './artifact-work.mjs';
 import {hasArchitectureDesign,buildIntent,BUILD_AND_TEST_REQUEST} from './design-build-flow.mjs';
 
-export function EngineeringPanel({projectId,session,connection,saveProject,onConnections,project,onWorkModelChange,onIntentContext,onDesign,onDelivery,buildRequest,onBuildRequestHandled,contextBusy=false}){
+export function EngineeringPanel({projectId,session,connection,saveProject,onConnections,project,onWorkModelChange,onIntentContext,onDesign,onDelivery,buildRequest,onBuildRequestHandled,contextBusy=false,onBusyChange}){
   const draftKey=`atmem-engineering-draft-v1:${projectId}`;
   const [job,setJob]=useState(null),[events,setEvents]=useState([]),[draft,setDraft]=useState(()=>{try{return localStorage.getItem(draftKey)||'';}catch{return '';}}),
     [busy,setBusy]=useState(false),[error,setError]=useState(''),[loading,setLoading]=useState(true),[artifact,setArtifact]=useState(null);
@@ -58,6 +59,7 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
     actionLock.current=true;setBusy(true);setError('');
     try{await operation();}catch(e){if(live.current)setError(e.message);}finally{actionLock.current=false;if(live.current)setBusy(false);}
   }
+  useEffect(()=>{onBusyChange?.(busy);return()=>onBusyChange?.(false);},[busy,onBusyChange]);
   const exactSelection=connection?.provider==='codex'&&connection.model&&connection.model!=='default'&&connection.effort;
   const running=job?.state==='running',uncertain=job?.state==='starting';
   const conversation=engineeringConversation(events);
@@ -99,49 +101,50 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
     onWorkModelChange({kind:'artifact',verified},projectId);
   }
   return <div className="engineering-panel">
-    <h2>Generate and verify</h2>
-    <p>Generate the agreed design and run applicable local checks here. Review results and corrections before opening Delivery.</p>
+    <h2>2. Project files and checks</h2>
+    <p>Creates application code, infrastructure, tests and handoff documents from your saved design.</p>
     {onDesign&&<button onClick={onDesign}>Return to Design</button>}
 
     {buildRequest?.projectId===projectId&&<p role="status">{restoreBlocked?'Your implementation request is waiting. Retry loading earlier work before starting.':uncertain?'Your implementation request is waiting. Recover the existing request first to avoid duplicate work.':contextBusy?'Your implementation request is waiting for the current design changes.':!job&&!exactSelection?'Your implementation request is waiting here. Choose a model and reasoning level below; it will then start automatically.':'Your implementation request is queued.'} <button onClick={()=>onBuildRequestHandled?.(buildRequest.id)}>Cancel queued request</button></p>}
     {restoreBlocked&&<button disabled={loading||busy} onClick={()=>{setError('');setRestoreAttempt(value=>value+1);}}>Retry loading earlier work</button>}
     {loading?<p role="status">Finding your project’s work…</p>:<>
       {job?<>
-        <p role="status">{running?'Working':uncertain?'Recovering acceptance of your last request':job.last_status?({completed:'Work completed',interrupted:'Work stopped',failed:'Work needs attention'}[job.last_status]||job.last_status):'Ready'} · {job.model} · {job.effort}</p>
-        <p className="muted">Each request includes your saved design. Earlier versions remain in the work history.</p>
+        <p className="generation-status" role="status">{(running||uncertain||busy)&&<BrainActivity size={24}/>} {running?'Working':uncertain?'Recovering acceptance of your last request':job.last_status?({completed:'Work completed',interrupted:'Work stopped',failed:'Work needs attention'}[job.last_status]||job.last_status):'Ready'} · {job.model} · {job.effort}</p>
+
       </>:<>
         <p>{exactSelection?`${connection.model} · ${connection.effort}`:'Choose a Codex model and reasoning level to start.'}</p>
         {!exactSelection&&<button onClick={onConnections}>Choose model</button>}
         {contextBusy&&<p role="status">Finish the current design changes before starting new work.</p>}
       </>}
-      {conversation.length>0&&<section className="engineering-conversation" role="log" aria-label="Project conversation" aria-live="polite">{conversation.map(entry=><article key={entry.id} className={`engineering-entry ${entry.role}`}>
+      {conversation.length>0&&<details className="generation-conversation"><summary>Generation activity</summary><section className="engineering-conversation" role="log" aria-label="Project conversation" aria-live="polite">{conversation.map(entry=><article key={entry.id} className={`engineering-entry ${entry.role}`}>
         <strong>{entry.role==='user'?'You':'Architect'}</strong>
         {entry.status==='pending'&&<span> · Sending update</span>}
         {entry.status==='uncertain'&&<span> · Delivery uncertain; recover before resending</span>}
         <pre>{entry.text}</pre>
-      </article>)}</section>}
+      </article>)}</section></details>}
       {!hasDesign&&!job?<p>Start with the Board or Requirements. Add the components or responsibilities before building an implementation.</p>:<form onSubmit={submitIntent}>
-        <label htmlFor="engineering-intent">{running?'Add an implementation update':hasDesign?'Additional instructions (optional)':'Continue implementation'}</label>
-        <textarea id="engineering-intent" rows={4} value={draft} onChange={e=>setDraft(e.target.value)}/>
+        <details open={running||undefined}><summary>{running?'Add an update':'Additional instructions (optional)'}</summary><label htmlFor="engineering-intent">{running?'Add an implementation update':hasDesign?'Additional instructions (optional)':'Continue implementation'}</label>
+        <textarea id="engineering-intent" rows={2} value={draft} onChange={e=>setDraft(e.target.value)}/></details>
         {draft.length>80000&&<p role="alert">This update exceeds 80,000 characters. Edit it before sending; your draft is retained.</p>}
-        <button disabled={busy||restoreBlocked||uncertain||contextBusy||!canSubmit||draft.length>80000||(!job&&!exactSelection)}>{running?'Send update':hasDesign?'Generate and verify':'Continue implementation'}</button>
+        <button disabled={busy||restoreBlocked||uncertain||contextBusy||!canSubmit||draft.length>80000||(!job&&!exactSelection)}>{busy?<><BrainActivity size={22}/> Sending…</>:running?'Send update':hasDesign?'Generate project files':'Continue implementation'}</button>
       </form>}
       {job&&<>
-        {finalization&&<p role="status"><strong>Recorded verification update: </strong>{finalization.text}</p>}
-        <div className="engineering-actions">
+        {running&&<button disabled={busy} onClick={()=>act(async()=>{const next=await call('interrupt');if(live.current)setJob(next);})}>Stop generation</button>}
+
+        <details className="engineering-actions"><summary>Connection and package details</summary>{finalization&&<p>{finalization.text}</p>}
           <button disabled={busy} onClick={()=>act(async()=>{const next=await call('recover');if(live.current)setJob(next);})}>Refresh connection status</button>
           {running&&<button disabled={busy} onClick={()=>act(async()=>{const next=await call('interrupt');if(live.current)setJob(next);})}>Stop work</button>}
           {!running&&!uncertain&&job.last_status&&<button disabled={busy} onClick={()=>act(async()=>{const captured=await call('capture');if(live.current)setArtifact(captured);})}>Refresh package snapshot</button>}
-        </div>
+        </details>
         <details><summary>Engineering progress ({events.length})</summary><ol>{events.filter(event=>!['message','accepted','steering_submitted'].includes(event.kind)).map(event=><li key={event.sequence}>{event.kind}{event.text?` · ${event.text}`:''}</li>)}</ol></details>
       </>}
-      {artifact&&<div className="engineering-artifact"><p>Implementation draft · {artifact.files.filter(file=>file.kind==='file').length} {artifact.files.filter(file=>file.kind==='file').length===1?'file':'files'} · work {artifact.turnStatus}. Capture does not establish full project acceptance.</p>
+      {artifact&&<div className="engineering-artifact"><p>Project files · {artifact.files.filter(file=>file.kind==='file').length} {artifact.files.filter(file=>file.kind==='file').length===1?'file':'files'} · {artifact.turnStatus}.</p>
         {artifact.runId!==job?.run&&<p>This package is from an earlier turn. It does not cover the current work.</p>}
         {onDelivery&&<button disabled={busy} onClick={onDelivery}>Review and download handoff</button>}
 
-        {!running&&!uncertain&&job?.last_status==='completed'&&artifact.runId===job.run&&<button disabled={busy} onClick={()=>act(async()=>{await call('recheck',{runId:job.run,artifactId:artifact.id});const next=await call('state');if(live.current)setJob(next);})}>Recheck and repair</button>}
-        {onWorkModelChange&&!running&&!uncertain&&job?.last_status==='completed'&&artifact.runId===job.run&&<button disabled={busy||contextBusy} onClick={()=>act(linkMappings)}>Link proposed mappings</button>}
-        <ArtifactChecks key={artifact.id} session={session} projectId={projectId} sessionId={job.id} artifact={artifact}/>
+        <details><summary>Check and mapping tools</summary>{!running&&!uncertain&&job?.last_status==='completed'&&artifact.runId===job.run&&<button disabled={busy} onClick={()=>act(async()=>{await call('recheck',{runId:job.run,artifactId:artifact.id});const next=await call('state');if(live.current)setJob(next);})}>Recheck and repair</button>}
+        {onWorkModelChange&&!running&&!uncertain&&job?.last_status==='completed'&&artifact.runId===job.run&&<button disabled={busy||contextBusy} onClick={()=>act(linkMappings)}>Link proposed mappings</button>}</details>
+
       </div>}
     </>}
     {(hasDesign||job)&&<ArchitectureWorkPanel project={project} onChange={onWorkModelChange} busy={busy||contextBusy}/>}

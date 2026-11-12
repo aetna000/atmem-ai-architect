@@ -9,7 +9,7 @@ import json
 import os
 from pathlib import Path
 import signal
-from .local_providers import account_environment
+from .local_providers import account_environment, cli_command
 
 
 class ProtocolError(RuntimeError):
@@ -47,9 +47,9 @@ class CodexAppServer:
             if key.startswith(('AWS_', 'AZURE_', 'GOOGLE_', 'GCLOUD_', 'IBM_', 'WATSONX_', 'TF_')) or key in {'KUBECONFIG', 'DOCKER_HOST', 'DOCKER_CONFIG', 'CLOUDSDK_CONFIG', 'GOOGLE_APPLICATION_CREDENTIALS'}:
                 env.pop(key, None)
         self.process = await asyncio.create_subprocess_exec(
-            *self.command, cwd=self.workspace, env=env,
+            *cli_command(self.command), cwd=self.workspace, env=env,
             stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE,
-            stderr=asyncio.subprocess.PIPE, limit=8_000_000, start_new_session=True)
+            stderr=asyncio.subprocess.PIPE, limit=8_000_000, start_new_session=os.name != 'nt')
         self.reader = asyncio.create_task(self._read())
         self.stderr_reader = asyncio.create_task(self._drain_stderr())
         try:
@@ -202,14 +202,14 @@ class CodexAppServer:
                 await asyncio.wait_for(self.process.wait(), 2)
             except asyncio.TimeoutError:
                 try:
-                    os.killpg(self.process.pid, signal.SIGTERM)
+                    self.process.terminate() if os.name == 'nt' else os.killpg(self.process.pid, signal.SIGTERM)
                 except ProcessLookupError:
                     pass
                 try:
                     await asyncio.wait_for(self.process.wait(), 2)
                 except asyncio.TimeoutError:
                     try:
-                        os.killpg(self.process.pid, signal.SIGKILL)
+                        self.process.kill() if os.name == 'nt' else os.killpg(self.process.pid, signal.SIGKILL)
                     except ProcessLookupError:
                         pass
                     await self.process.wait()

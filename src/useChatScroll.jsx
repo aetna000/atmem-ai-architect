@@ -1,7 +1,8 @@
-import {useLayoutEffect,useRef} from 'react';
+import {useLayoutEffect,useRef,useState} from 'react';
 
 // Keep new messages inside their own viewport; never scroll the surrounding page.
 export function useChatScroll(projectId,open){
+ const [away,setAway]=useState(false);
  const viewport=useRef(null),content=useRef(null),resume=useRef(()=>{});
  useLayoutEffect(()=>{
   const pane=viewport.current,list=content.current;if(!pane||!list)return;
@@ -13,7 +14,7 @@ export function useChatScroll(projectId,open){
    pane.scrollTo({top:pane.scrollHeight,behavior:smooth&&!matchMedia('(prefers-reduced-motion: reduce)').matches?'smooth':'instant'});
   };
   // Layout/animation scroll events cannot opt out of following; user input can.
-  const scroll=()=>{if(!programmatic)following=atBottom();};
+  const scroll=()=>{if(!programmatic)following=atBottom();setAway(!atBottom());};
   const interrupt=()=>{programmatic=false;};
   const wheel=e=>{interrupt();if(e.deltaY<0)following=false;};
   pane.addEventListener('scroll',scroll);
@@ -24,7 +25,7 @@ export function useChatScroll(projectId,open){
   move(false);
   const observer=new ResizeObserver(()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>move());});
   observer.observe(list);observer.observe(pane);
-  resume.current=()=>{following=true;move();};
+  resume.current=()=>{following=true;setAway(false);move();};
   return ()=>{
    observer.disconnect();cancelAnimationFrame(frame);resume.current=()=>{};
    pane.removeEventListener('scroll',scroll);
@@ -32,5 +33,5 @@ export function useChatScroll(projectId,open){
    pane.removeEventListener('pointerdown',interrupt);pane.removeEventListener('keydown',interrupt);
   };
  },[projectId,open]);
- return {viewport,content,followLatest:()=>resume.current()};
+ return {viewport,content,away,followLatest:()=>resume.current()};
 }

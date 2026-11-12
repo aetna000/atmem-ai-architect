@@ -1,3 +1,4 @@
+import {HelpNote} from './HelpNote.jsx';
 import {BrainActivity} from "./BrainActivity.jsx";
 import {systemDescription,requirementExplanation} from './system-description.mjs';
 import { resolveCommentRevision } from "./consultation.mjs";
@@ -136,16 +137,16 @@ export function OptionsView({ project, onDiscuss, onPreview, onChoose, onContinu
   const ready = Object.values(notes).some(Boolean);
   const selected = [...(project.decisions||[])].reverse().find(d=>d.subject==='platform.cloud'&&d.status==='Accepted')?.decision;
   return <section className="doc" aria-label="Choices">
-    <header className="doc-head"><h2>Choices</h2><p className="muted">Compare the approaches below, then choose a cloud to continue. Next we’ll discuss country and data residency.</p></header>
+    <header className="doc-head"><h2>Choices</h2></header>
     <button className="btn" onClick={() => onDiscuss('Help me compare AWS, Azure, Google Cloud and IBM for this design. Ask one useful question about my priorities, then refine the comparison from my answer. Populate optionAssessment when enough is known. Keep the diagram unchanged.')}>Discuss cloud options</button>
-    {selected && <p className="cloud-selection" role="status"><strong>Selected: {OPTION_NAMES[selected]}</strong> · You can change your choice below. <button className="btn primary" disabled={busy} onClick={onContinue}>Continue with {OPTION_NAMES[selected]} →</button></p>}
+    {selected && <p className="cloud-selection" role="status"><strong>Selected: {OPTION_NAMES[selected]}</strong> <button className="btn primary" disabled={busy} onClick={onContinue}>Review →</button></p>}
     <DecisionsView project={project} onDiscuss={onDiscuss} embedded/>
     <h3>Cloud alternatives</h3>
-    {!ready && <p className="muted">We’ll clarify what matters to you and explain the tradeoffs here as we go.</p>}
+
     {['current','aws','azure','gcp','ibm'].filter(id => notes[id]).map(id => <article className="consultation-summary" key={id}>
-      <h3>{OPTION_NAMES[id]}{selected===id ? " · Selected" : ""}</h3><p>{notes[id].replace(/^(?:AtMem AI Architect|At[Ff]orma) proposal — confirm: /,'')}</p>
+      <h3>{OPTION_NAMES[id]}{selected===id ? " · Selected" : ""}</h3><HelpNote label={`About ${OPTION_NAMES[id]}`}>{notes[id].replace(/^(?:AtMem AI Architect|At[Ff]orma) proposal — confirm: /,'')}</HelpNote>
       <button className="link" onClick={() => onDiscuss(`Explain how ${OPTION_NAMES[id]} fits our design and the main tradeoff. Ask one question to help me decide; keep this as a discussion until I explicitly choose.`)}>Discuss this option</button>
-      {id!=="current" && <><button className="link" onClick={()=>onPreview(id)}>Preview service architecture</button><button className="btn primary" disabled={busy||selected===id} onClick={()=>onChoose(id)}>{selected===id ? `${OPTION_NAMES[id]} selected` : `Choose ${OPTION_NAMES[id]} & continue →`}</button></>}
+      {id!=="current" && <><button className="link" onClick={()=>onPreview(id)}>Preview service architecture</button><button className="btn primary" disabled={busy||selected===id} onClick={()=>onChoose(id)}>{selected===id ? `${OPTION_NAMES[id]} selected` : `${OPTION_NAMES[id]} →`}</button></>}
     </article>)}
   </section>;
 }
@@ -157,13 +158,13 @@ export function DecisionsView({ project, onDiscuss, embedded=false }) {
   const sketches = all.filter(d => d.subject?.startsWith('design.'));
   const labels = {'platform.cloud':'Cloud provider','cloud.region':'Region','data.country':'Country / data residency','infrastructure.tool':'Infrastructure tool'};
   return <section className={embedded?undefined:"doc"} aria-label="Decisions">
-    <header className="doc-head"><h2>Choices we’ve made</h2><p className="muted">AtMem AI Architect records your choices and explains why they fit. You can revisit them in chat.</p></header>
+    <header className="doc-head"><h2>Selected choices</h2></header>
     <button className="btn" onClick={() => onDiscuss('Review our current design and explicit choices. Explain the next choice we need to make and ask me one useful question. Do not treat a sketch or a suggestion as an accepted decision.')}>Discuss the next choice</button>
-    {!current.length && <p className="muted">No choices confirmed yet. We’ll work through them together as the design develops.</p>}
+    {!current.length && <p className="muted">No choices selected.</p>}
     {current.map(d => <article className="consultation-summary" key={d.id}>
       <h3>{labels[d.subject] || d.title}</h3><p>{OPTION_NAMES[d.decision] || d.decision || 'Still being discussed'}</p>
       <small className="muted">{d.status === 'Accepted' ? 'Confirmed in our conversation' : 'Proposed — still to discuss'}</small>
-      {d.context && <p>{d.context}</p>}{d.consequences && <p>{d.consequences}</p>}
+      {(d.context||d.consequences)&&<HelpNote label="Decision details"><p>{d.context}</p><p>{d.consequences}</p></HelpNote>}
       <button className="link" onClick={() => onDiscuss(`Let’s revisit our choice about ${labels[d.subject] || d.title}: ${d.decision}. Explain the tradeoff and ask what I would like to change before updating it.`)}>Revisit in chat</button>
       {choices.some(h => h.subject===d.subject && h.status==='Superseded') && <details className="extra"><summary>Earlier choices</summary>{choices.filter(h => h.subject===d.subject && h.status==='Superseded').map(h=><p key={h.id}>{h.decision} {h.reason && `— ${h.reason}`}</p>)}</details>}
     </article>)}
@@ -297,7 +298,7 @@ function RequirementComments({ requirement, comments, onSave, onRemove, target, 
       </div> : <><p className="comment-status">{c.reviewMessage || 'Saved feedback. Ask AtMem AI Architect to suggest wording, then review the change here.'}</p><button className="requirement-add-comment" disabled={reviewing} onClick={()=>onReview([c])}>{reviewing?<><BrainActivity/> Preparing suggestions…</>:'Suggest a revision'}</button><button className="link" onClick={()=>onDiscuss(`Help me clarify my feedback on ${number} (${requirement.id}): ${c.text}. Ask one question before proposing a change.`)}>Discuss feedback</button></>}
       <button className="link" onClick={()=>onRemove(c.id)} aria-label={`Remove comment ${c.id}`}>Remove</button>
     </div>)}
-    {comments.some(c=>['reviewed','dismissed'].includes(c.status)) && <details className="comment-history"><summary>Feedback history</summary>{comments.filter(c=>['reviewed','dismissed'].includes(c.status)).map(c=><div key={c.id}><p>{c.text}</p><small>{c.status==='reviewed'?'Revision applied':'Original wording kept'}</small>{c.after&&<p>{c.after}</p>}</div>)}</details>}
+    {comments.some(c=>['reviewed','dismissed'].includes(c.status)) && <section className="comment-history"><h4>Feedback history</h4>{comments.filter(c=>['reviewed','dismissed'].includes(c.status)).map(c=><div key={c.id}><p>{c.text}</p><small>{c.status==='reviewed'?'Revision applied':'Original wording kept'}</small>{c.after&&<p>{c.after}</p>}</div>)}</section>}
     {!open ? <button className="requirement-add-comment" onClick={()=>{setQuote('');setOpen(true);}}>Comment or request a change</button> : <div className="comment-composer">
       <strong>Feedback on {number}</strong>{quote && <blockquote>{quote}</blockquote>}
       <textarea ref={editor} aria-label={`Comment on ${requirement.id}`} value={text} maxLength={500} onChange={e=>setText(e.target.value)} placeholder="What doesn’t fit, what’s missing, or what would you like explained?" />
@@ -309,7 +310,7 @@ function RequirementComments({ requirement, comments, onSave, onRemove, target, 
   </aside>;
 }
 
-export function RequirementsView({ project, onDiscuss, onChange, onReview, reviewing, onUpload, onOpenProject }) {
+export function RequirementsView({onContinue, project, onDiscuss, onChange, onReview, reviewing, onUpload, onOpenProject }) {
   const [commentMenu,setCommentMenu]=React.useState(null), [commentTarget,setCommentTarget]=React.useState(null);
   React.useEffect(()=>{
     if(!commentMenu)return;
@@ -344,7 +345,7 @@ export function RequirementsView({ project, onDiscuss, onChange, onReview, revie
   const purpose = project.brief?.application || project.requirements;
   const system=systemDescription(project);
   return <section className="doc requirements-document" aria-label="Requirements">
-    <div className="requirements-actions"><button className="btn" onClick={() => onDiscuss('Summarise where we have reached from the current board and our discussion. Distinguish what I have confirmed from your proposals and unresolved questions. Then ask ONE useful question to develop the requirements further, and update the summary as we discuss.')}>Let’s discuss more in chat</button>
+    <div className="requirements-actions">
       {!!pending.length && <button className="btn" disabled={reviewing} onClick={()=>onReview(pending.slice(0,6))}>{reviewing?'Reviewing comments…':'Suggest revisions for saved feedback'} ({Math.min(6,pending.length)})</button>}
     </div>
     {commentMenu && <div className="ctx-menu requirement-text-menu" role="menu" aria-label="Selected text actions" style={{left:commentMenu.x,top:commentMenu.y}} onPointerDown={e=>e.stopPropagation()}>
@@ -353,7 +354,7 @@ export function RequirementsView({ project, onDiscuss, onChange, onReview, revie
     <article className="requirements-paper" aria-label="Requirements document">
       <header className="requirements-cover">
         <p className="document-kicker">AtMem AI Architect · Working requirements</p>
-        <h2>{project.name || 'Solution requirements'}</h2><div className="row">{onUpload&&<button className="btn" onClick={onUpload}>Upload requirements or diagram</button>}{onOpenProject&&<button className="btn" onClick={onOpenProject}>Open saved project file</button>}</div><p className="muted small">Start from Word (.docx), PDF, text, Markdown, draw.io or images. Send the attached material in chat; Architect extracts requirements, proposes the diagram and asks about unclear points.</p>
+        <h2>{project.name || 'Solution requirements'}</h2>
         <p className="document-subtitle">Where we’ve reached</p>
         <p>This document brings together the requirements developed from our board and discussion. Proposed requirements remain open for review as the design evolves.</p>
         <p className="document-meta">Design revision {project.revision || 1} · Working draft</p>
@@ -362,9 +363,9 @@ export function RequirementsView({ project, onDiscuss, onChange, onReview, revie
         <p>{purpose || 'We are developing the scope together. Describe the outcome you want in chat, and this document will grow with the design.'}</p>
       </section>
       <section className="requirements-chapter"><h3>How the system works</h3><p>{system.overview}</p>{system.flows.map((f,i)=><div className="system-interaction" key={f.id}><h4>{i+1}. {f.title}</h4><p>{f.description}</p><p>{f.contract}</p><p className="document-meta">Proposed verification: {f.validation}</p></div>)}</section>
-      <section className="requirements-chapter"><h3>Component responsibilities and design rationale</h3>{system.components.map(c=><section key={c.id} className="system-component"><h4>{c.name}</h4><p className="document-meta">{c.service} · {c.placement}</p><p>{c.purpose}</p><p>{c.boundary}</p><h5>Inputs and outputs</h5><ul>{[...c.inputs,...c.outputs].map((v,i)=><li key={i}>{v}</li>)}</ul>{!c.inputs.length&&!c.outputs.length&&<p>No connections are drawn for this component.</p>}<h5>Contribution to requirements</h5>{c.requirements.length?<ul>{c.requirements.map(r=><li key={r}>{r}</li>)}</ul>:<p>No requirement is explicitly linked to this component yet.</p>}<h5>Implementation and verification</h5><p>{c.implementation}</p><p className="document-meta">Engineering considerations, to be confirmed during implementation:</p><ul>{c.engineering.map(v=><li key={v}>{v}</li>)}</ul></section>)}</section>
-      {[...groups].sort(([a],[b])=>(a==='suggested')-(b==='suggested')).map(([key,rows])=>{const Tag=key==='suggested'?'details':'section';return <Tag className="requirements-chapter" key={key}>
-        {key==='suggested'?<summary>Suggestions still to discuss ({rows.length})</summary>:<h3>{titles[key] || 'Additional requirements'}</h3>}
+      <section className="requirements-chapter"><h3>Component responsibilities and design rationale</h3>{system.components.map(c=><section key={c.id} id={`component-spec-${c.id}`} className="system-component"><h4>{c.name}</h4><p className="document-meta">{c.service} · {c.placement}</p><p>{c.purpose}</p><p>{c.boundary}</p><h5>Inputs and outputs</h5><ul>{[...c.inputs,...c.outputs].map((v,i)=><li key={i}>{v}</li>)}</ul>{!c.inputs.length&&!c.outputs.length&&<p>No connections are drawn for this component.</p>}<h5>Contribution to requirements</h5>{c.requirements.length?<ul>{c.requirements.map(r=><li key={r}>{r}</li>)}</ul>:<p>No requirement is explicitly linked to this component yet.</p>}<h5>Implementation and verification</h5><p>{c.implementation}</p><p className="document-meta">Engineering considerations, to be confirmed during implementation:</p><ul>{c.engineering.map(v=><li key={v}>{v}</li>)}</ul></section>)}</section>
+      {[...groups].sort(([a],[b])=>(a==='suggested')-(b==='suggested')).map(([key,rows])=>{const Tag='section';return <Tag className="requirements-chapter" key={key}>
+        {key==='suggested'?<h4>Suggestions still to discuss ({rows.length})</h4>:<h3>{titles[key] || 'Additional requirements'}</h3>}
         {key==='suggested'&&<p className="document-meta">These are early considerations, not agreed requirements. We’ll discuss the most relevant ones as the design develops.</p>}
         {rows.map(r=><div className="requirement-paragraph" key={r.id}>
           <h4 className="requirement-number">{requirementNumber(project,r.id)}</h4>
@@ -379,7 +380,7 @@ export function RequirementsView({ project, onDiscuss, onChange, onReview, revie
       {!needs.length && <section className="requirements-chapter"><h3>Requirements to develop</h3><p>As we discuss the idea and shape the board, AtMem AI Architect will summarise the functional requirements, constraints and acceptance targets here.</p></section>}
       {!!project.assumptions?.length && <section className="requirements-chapter"><h3>Assumptions to validate</h3>{project.assumptions.map(a=><p key={a.id}>{a.statement}</p>)}</section>}
       {!!questions.length && <section className="requirements-chapter"><h3>Open questions</h3>{questions.map(q=><p key={q.id}>{q.question}</p>)}<button className="link document-discuss" onClick={()=>onDiscuss(`Help resolve the open questions in our requirements document, one at a time. Start with the question that most affects the design.`)}>Let’s work through these in chat</button></section>}
-      <footer className="document-footer">AtMem AI Architect · Requirements derived from the current design and discussion</footer>
+      <footer className="document-footer">{onContinue&&<button className="btn primary" disabled={reviewing} onClick={onContinue}>Continue to Choices →</button>}</footer>
     </article>
   </section>;
 }

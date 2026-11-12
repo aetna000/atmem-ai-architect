@@ -1382,3 +1382,16 @@ viewport/theme cases, no model work, data mutation or backend restart.
 ## 2026-11-12 — npm installation preview under owner-created atmem organization
 
 Owner authorized publishing @atmem/architect and authenticated npm as organization owner. Package alpha.4.1 separately from engine milestones. Include the real AtMem runtime in isolated data-directory environments and hash-lock both dependency graphs. Publish only the artifact qualified by cross-platform installed-app checks. Keep provider credentials out of distribution; future releases use package-specific GitHub OIDC trust. Restore the working brain and allow chat resizing without a general UI redesign.
+
+
+## 2026-11-12 — Concise, visual UI and one delivery path
+
+Owner explicitly directs: “I will avoid word vomit.” Review all screens for repeated
+narration and boilerplate. Keep short labels, visible working/completion states and
+one next-step action. Preserve detail in specs, recorded evidence and accessible ?
+help. Keep Terraform under unified checks and one final ZIP, including unresolved
+costs in its final checklist. Tab completion follows explicit completion actions,
+not navigation. Requirements is generated/editable content; starting imports belong
+at project entry points. New memory requests require paginated/searchable tables,
+local default profiles, actor/user provenance and scoped external context providers.
+Million-record support and full Windows export remain unqualified until measured.

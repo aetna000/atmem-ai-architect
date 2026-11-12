@@ -31,4 +31,4 @@ not yet cover every service. Windows/Linux installers must pass the release matr
 local Mac checks alone do not establish support on the other systems.
 
 Bundled third-party licences are in `public/licenses` and `agent-skills/upstream`.
-Application licensing has not been changed by this packaging work (`UNLICENSED`).
+AtMem-owned code is licensed under Apache-2.0. Third-party portions retain their original notices.

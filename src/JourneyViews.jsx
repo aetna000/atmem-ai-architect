@@ -90,24 +90,24 @@ export function ReviewView({ project, findings, onChange, onOpen, onAddRequireme
   );
 }
 
-export function EstimateView({ project, result, onChange, onEstimate, busy=false }) {
+export function EstimateView({ project, result, onChange, onEstimate, busy=false, pricing }) {
   const e = result;
   return (
     <section className="doc" aria-label="Estimate">
       <header className="doc-head">
-        <h2>Costs</h2>
-        <p className="muted">Choose an expected project size. We use it to estimate usage; you can refine the assumptions later. {DISCLAIMER}</p>
+        <h2>1. Cost estimate</h2>
+        <p className="muted">Choose a size; usage and available regional prices are calculated for you. {DISCLAIMER}</p>
       </header>
-      <fieldset disabled={busy}><legend>How large do you expect this project to be?</legend>
+      <fieldset disabled={busy||pricing?.busy}><legend>How large do you expect this project to be?</legend>
         <div className="row">{PROJECT_SIZES.map(size=><button type="button" className="btn" key={size.id} aria-pressed={project.estimate?.projectSize===size.id} onClick={()=>{const next=setProjectSize(project,size.id);onChange(next);onEstimate?.(next);}}>{size.label}</button>)}</div>
-        <p className="muted small">Small: 10,000 requests / 10 GB; Medium: 100,000 / 100 GB; Large: 1 million / 1 TB; Extra Large: 10 million / 10 TB per month. Existing usage figures take priority. Model assumptions: 3,000 tokens per request and 730 endpoint hours; training usage needs separate agreement.</p>
+        <details className="cost-assumptions"><summary>Planning assumptions</summary><p className="muted small">Small: 10,000 requests / 10 GB; Medium: 100,000 / 100 GB; Large: 1 million / 1 TB; Extra Large: 10 million / 10 TB per month. Existing usage figures take priority. Model assumptions: 3,000 tokens per request and 730 endpoint hours; training usage needs separate agreement.</p></details>
       </fieldset>
-      {busy&&<p role="status">Architect is preparing the estimate…</p>}
-      {onEstimate&&project.estimate?.projectSize&&<button className="link" disabled={busy} onClick={()=>onEstimate(project)}>Refresh estimate with Architect</button>}
+      {pricing?.busy&&<p role="status">Calculating costs…</p>}{pricing?.errors?.map((error,i)=><p className="warn-text" key={i}>{error.component&&`${error.component}: `}{error.reason} <button className="link" disabled={busy||pricing?.busy} onClick={()=>onEstimate?.(project)}>Retry pricing</button></p>)}
+      {onEstimate&&project.estimate?.projectSize&&<button className="link" disabled={busy||pricing?.busy} onClick={()=>onEstimate(project)}>Refresh prices</button>}
       <div className="totals">
         <div>
           <small className="muted">Estimated subtotal / month</small>
-          <strong>{e.lines.some((l) => l.cost != null) ? money(e.expected, e.currency) : "—"}</strong>
+          <strong>{e.lines.some((l) => l.cost != null) ? e.expected===0&&e.preciseExpected>0?`< ${money(0.01,e.currency)}`:money(e.expected, e.currency) : "—"}</strong>
         </div>
         <div>
           <small className="muted">Range</small>
@@ -118,7 +118,7 @@ export function EstimateView({ project, result, onChange, onEstimate, busy=false
         <div>
           <small className="muted">Status</small>
           <span className={e.complete ? "ok-text" : "warn-text"}>
-            {e.complete ? "All entered charges estimated" : e.mixedCurrencies ? "Currency needs review" : "Some charges not yet estimated"}
+            {e.complete ? "All entered charges estimated" : e.mixedCurrencies ? "Currency needs review" : "Partial estimate · see exclusions"}
           </span>
         </div>
         {e.budget && (
@@ -137,8 +137,8 @@ export function EstimateView({ project, result, onChange, onEstimate, busy=false
           Biggest drivers: {e.drivers.map((d) => `${d.component} (${money(d.cost, d.price.currency)})`).join(", ")}
         </p>
       )}
-      {e.lines.some(l=>l.cost==null)&&<p role="status">{e.lines.filter(l=>l.cost==null).length} charges await {e.lines.some(l=>l.quantity==null)?'usage assumptions or service pricing':'service pricing'}. {onEstimate?'Ask Architect using the estimate action above; detailed inputs are optional below.':'Service prices must be connected before these charges can be calculated.'}</p>}
-      <details className="extra"><summary>Cost breakdown and price sources</summary><div className="resource-schedule" aria-label="Estimate breakdown">{e.lines.map(l=><article key={l.id}><strong>{l.component} · {l.driver}</strong><span>{l.cost==null?'Not yet estimated':money(l.cost,l.price.currency)+'/month'}</span><small>{l.quantity??'Usage unresolved'} {l.unit}{l.price&&<> · {l.price.source}{l.price.url&&<> · <a href={l.price.url} target="_blank" rel="noreferrer">price source</a></>}</>}</small></article>)}</div></details>
+      {e.lines.some(l=>l.cost==null)&&<p role="status">{e.lines.filter(l=>l.cost==null).length} charges await {e.lines.some(l=>l.quantity==null)?'usage assumptions or service pricing':'service pricing'}. {onEstimate?'Available prices are fetched automatically. Review the listed exclusions or retry pricing; you do not need to enter every charge.':'Service prices must be connected before these charges can be calculated.'}</p>}
+      <details className="extra"><summary>Cost breakdown and price sources</summary><div className="resource-schedule" aria-label="Estimate breakdown">{e.lines.map(l=><article key={l.id}><strong>{l.component} · {l.driver}</strong><span>{l.cost==null?'Not yet estimated':money(l.cost,l.price.currency)+'/month'}</span><small>{l.note||l.price?.note}</small><small>{l.quantity??'Usage unresolved'} {l.unit}{l.price&&<> · {l.price.source}{l.price.url&&<> · <a href={l.price.url} target="_blank" rel="noreferrer">price source</a></>}</>}</small></article>)}</div></details>
       <details className="extra"><summary>Adjust usage assumptions and prices</summary>
       {e.lines.some((l) => !l.detailed) && <>
       <div className="doc-sub">
@@ -394,7 +394,7 @@ export function ProjectsDialog({ list, currentId, onOpen, onNew, onBin, onRestor
           </ul>
         </details>
       )}
-      <p className="modal-fine">Saved in {folder || "~/.atforma"} under your account on this computer.</p>
+      <p className="modal-fine">{folder || "~/.atforma"}</p>
     </div>
   );
 }

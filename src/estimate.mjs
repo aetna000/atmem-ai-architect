@@ -79,8 +79,8 @@ export function estimate(project, now = new Date()) {
         const priced = validNumber(l.price) && /^[A-Z]{3}$/.test(l.currency || "") && l.source?.trim() && l.unit?.trim();
         lines.push({ id: l.id, component: n.data.label, componentId: n.id, detailed: true,
           driver: l.description || "Charge", unit: l.unit, inputs: [], quantity: missing.length ? null : l.quantity,
-          missing, price: priced ? l : null,
-          cost: !missing.length && priced ? Math.round(l.quantity * l.price * 100) / 100 : null,
+          missing, note:l.note, price: priced ? l : null,
+          cost: !missing.length && priced ? l.quantity * l.price : null,
           status: missing.length ? "input needed" : priced ? "priced" : "price needed" });
       }
       continue;
@@ -103,7 +103,7 @@ export function estimate(project, now = new Date()) {
       quantity,
       missing,
       price: priced ? price : null,
-      cost: quantity != null && priced ? Math.round(quantity * price.price * 100) / 100 : null,
+      cost: quantity != null && priced ? quantity * price.price : null,
       status: missing.length ? "input needed" : priced ? "priced" : "price needed",
     });
   }
@@ -115,6 +115,7 @@ export function estimate(project, now = new Date()) {
   const gaps = [
     ...(est.details || []).filter((l) => !project.nodes.some((n) => n.id === l.componentId && n.data.kind !== "note")).map((l) => `${l.description || l.id}: linked component was removed; reassign this charge (excluded from totals).`),
     ...lines.filter((l) => l.status !== "priced").map((l) => `${l.component} / ${l.driver}: ${l.status}${l.missing.length ? ` (${l.missing.join(", ")})` : ""}.`),
+    ...lines.filter(l=>l.price?.coverageIncomplete).map(l=>`${l.component}: additional charges are excluded from this estimate.`),
     ...notCosted.map((name) => `${name}: no cost lines; add charges or an explicit zero-cost line with a reason.`),
     ...(currencies.length > 1 ? ["Choose one currency; different currencies cannot be added."] : []),
     ...lines.filter((l) => l.price && (!l.price.region?.trim() || !l.price.service?.trim() || !l.price.date || !Number.isFinite(Date.parse(l.price.date)))).map((l) => `${l.component} / ${l.driver}: confirm region, service/SKU and price date.`),
@@ -124,6 +125,7 @@ export function estimate(project, now = new Date()) {
   return {
     lines,
     notCosted,
+    preciseExpected:costed.length&&currencies.length===1?total:null,
     usage: u,
     currency: currencies.length === 1 ? currencies[0] : null,
     mixedCurrencies: currencies.length > 1,

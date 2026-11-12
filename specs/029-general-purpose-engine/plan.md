@@ -628,3 +628,6 @@ Evidence:029/evidence/20261112-live-preview-cache. Programme remains paused.
 component selection; close/Escape/top-layer bounded picker and stable sidebar filtering.
 Build plus4 source/4 actual5298 desktop/mobile/theme cases pass with no inference or
 owner writes. No backend restart or programme resumption. Evidence:029/evidence/20261112-board-overlays.
+
+
+2026-11-12 npm preview packaging: owner authorized public @atmem/architect, with an isolated checksum-verified Python/AtMem bootstrap and one loopback API/UI process. Installer qualification proceeds separately from the paused original28/native programme. Mac clean installation, real AtMem and chat fixtures pass; cross-platform matrix and npm publication are tracked under029 PKG-001. No engine-quality or deployment promotion.

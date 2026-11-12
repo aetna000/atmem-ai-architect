@@ -27,7 +27,7 @@ export function MemoryPanel({ session, project, onError, onStatus }) {
   async function act(fn) { setWorking(true);setError('');try{await fn();await refresh();}catch(e){setError(e.message);onError?.(e.message);}finally{setWorking(false);} }
   const records=report?.[tab] || [];
   return <div className="memory-panel">
-    <h2>AtMem dashboard</h2>
+    <h2>AtMem memory</h2>
     <p className="muted small">Durable preferences and confirmed decisions only. Drafts, canvas comments and routine edits stay in your project; they do not become long-term memory.</p>
     {(working||refreshing)&&<p role="status"><BrainActivity/> Updating memory…</p>}
     {error && <p className="error-box" role="alert">{error}</p>}

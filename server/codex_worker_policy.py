@@ -10,6 +10,8 @@ import re
 from pathlib import Path
 import shutil
 import tomllib
+import platform
+import sys
 
 from .codex_app_server import CodexAppServer
 
@@ -53,14 +55,35 @@ def configured_shell_override_names():
     return sorted(names)
 
 
+def native_codex(executable):
+    """Resolve the official npm native binary so sandbox helpers see their code tree."""
+    selected=Path(executable).resolve(strict=True)
+    package=selected.parent.parent
+    if selected.suffix.lower()=='.cmd':
+        package=selected.parent/'node_modules/@openai/codex'
+    metadata=package/'package.json'
+    try:
+        if json.loads(metadata.read_text(encoding='utf-8')).get('name')!='@openai/codex':return selected,selected.parent
+    except (OSError,ValueError):return selected,selected.parent
+    arch={'x86_64':'x64','AMD64':'x64','aarch64':'arm64','arm64':'arm64'}.get(platform.machine())
+    targets={('linux','x64'):('linux-x64','x86_64-unknown-linux-musl'),('linux','arm64'):('linux-arm64','aarch64-unknown-linux-musl'),('darwin','x64'):('darwin-x64','x86_64-apple-darwin'),('darwin','arm64'):('darwin-arm64','aarch64-apple-darwin'),('win32','x64'):('win32-x64','x86_64-pc-windows-msvc'),('win32','arm64'):('win32-arm64','aarch64-pc-windows-msvc')}
+    target=targets.get((sys.platform,arch))
+    if not target:raise RuntimeError('This Codex native target is unsupported')
+    suffix,triple=target
+    for vendor in [package.parent/('codex-'+suffix)/'vendor',package/'vendor']:
+        candidate=vendor/triple/'bin'/('codex.exe'if os.name=='nt'else'codex')
+        if candidate.is_file():return candidate.resolve(strict=True),candidate.parent.parent.resolve(strict=True)
+    raise RuntimeError('The Codex npm installation is missing its platform binary; reinstall the official client')
+
+
 def worker_command(read_roots=(),*,temporary_dir=None):
     executable = shutil.which('codex')
     if not executable:
         raise RuntimeError('The selected native worker is unavailable')
-    binary = Path(executable).resolve(strict=True)
+    binary, native_root = native_codex(executable)
     # Include the symlink's directory and native package tree so the CLI's
     # sandbox helper can execute. These are code paths, not its auth/state home.
-    roots = {Path(executable).parent.resolve(), binary.parent}
+    roots = {Path(executable).parent.resolve(), native_root}
     for root in read_roots:
         path = Path(root).resolve(strict=True)
         if not path.is_dir():
@@ -111,10 +134,10 @@ def worker_command(read_roots=(),*,temporary_dir=None):
 
 
 class CodexWorkerClient(CodexAppServer):
-    def __init__(self,workspace,*,read_roots=()):
+    def __init__(self,workspace,*,read_roots=(),requires_unix_sockets=True):
         root=Path(workspace).resolve(strict=True)
         temporary=root/'.worker-tmp'
-        if os.name=='posix' and len(os.fsencode(temporary))>80:
+        if requires_unix_sockets and os.name=='posix' and len(os.fsencode(temporary))>80:
             raise ValueError('Register a shorter worker workspace path for Unix-socket validators')
         if temporary.is_symlink():
             raise ValueError('Worker temporary storage cannot be a symlink')

@@ -6,6 +6,7 @@ export function conversationMessages(project, fallback = []) {
 function cleanMessages(messages) {
   return messages.filter(m => m && ['user','assistant'].includes(m.role) && typeof m.text === 'string').map(m => ({
     role:m.role, text:m.text,
+    ...(typeof m.createdAt==='string'&&Number.isFinite(Date.parse(m.createdAt))?{createdAt:m.createdAt}:{}),
     ...(typeof m.activityId==='string'&&/^[a-f0-9-]{36}$/.test(m.activityId)?{activityId:m.activityId}:{}),
     ...(m.requestId?{requestId:String(m.requestId).slice(0,100)}:{}),
     ...(['queued','processing','complete','superseded','failed','cancelled'].includes(m.workState)?{workState:m.workState}:{}),

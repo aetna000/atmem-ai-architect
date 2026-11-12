@@ -40,3 +40,14 @@ standard, established by the owner.
   service, not a local CLI. Keep engine sessions, skills, artifacts and evidence
   backend-neutral. Codex is the first harness adapter; a local subprocess is only a
   development transport. Never confuse the model backend with the target cloud.
+
+## Owner-directed UX rule
+
+**I will avoid word vomit.** Keep product UI copy short, concrete and actionable.
+Use at most 20 words per visible explanation or normal chat answer. Put longer
+explanations behind `?`; complete specifications and quoted user requirements are
+exempt. Use visual states and a clear next action; remove narration that merely describes
+the controls. Put optional explanations behind working, accessible `?` controls.
+Keep complete requirements and technical detail in the specification and exported
+documents. Never remove meaningful failures, unresolved costs or scope to simplify
+the screen. Review this rule across all screens, not only the page being edited.

@@ -20,7 +20,7 @@ export function completedStages(p){
  return {board:p.nodes.some(n=>n.data.kind!=='note'),scope:saved.scope===keys.scope,
  cloud:cloudMapping(p).ready&&saved.architecture===keys.architecture,
  review:saved.review===keys.architecture&&saved.estimate===keys.estimate,
- delivery:false}; // A visit/download alone never proves successful delivery.
+ delivery:saved.delivery===keys.delivery}; // Delivery means the exact package was downloaded, not deployed.
 }
 export function journeyAction(guidance,section='board'){
  if(section===journeySectionId(guidance.id)&&guidance.checkpoint&&section!=='board')return {kind:'continue',label:guidance.continueLabel};
@@ -42,7 +42,7 @@ const snapshot=value=>{const text=JSON.stringify(value);let a=2166136261,b=5381;
 export function journeyKeys(p){
  const scope=snapshot([p.brief?.application||p.requirements||'',(p.needs||[]).filter(r=>r.source==='user').map(r=>[r.id,r.statement,r.measure]).sort()]);
  const architecture=snapshot([scope,p.nodes.filter(n=>n.data.kind!=='note').map(n=>[n.id,n.data.label,n.data.service,n.data.provider,n.data.config,n.data.description]).sort(),p.edges.map(e=>[e.source,e.target,e.label]).sort(),choice(p,'platform.cloud'),choice(p,'cloud.region'),choice(p,'data.country')]);
- return {scope,architecture,estimate:snapshot([architecture,p.estimate||{}])};
+ const estimate=snapshot([architecture,p.estimate||{}]);return {scope,architecture,estimate,delivery:snapshot([architecture,estimate,p.revision])};
 }
 export function cloudMapping(p){
  const provider=choice(p,'platform.cloud');
@@ -84,4 +84,14 @@ export function advanceJourney(p,checkpoint){
  if(state.checkpoint!==checkpoint)return p;
  const key=checkpoint==='review'?'architecture':checkpoint;
  return {...p,extensions:{...p.extensions,journey:{...p.extensions?.journey,[checkpoint]:state.keys[key]}}};
+}
+
+// Explicit completion actions acknowledge a working draft; navigation never does.
+export function acknowledgeStage(p,stage){
+ const keys=journeyKeys(p),previous=p.extensions?.journey||{},saved={...previous};
+ if(stage==='scope'&&(p.needs?.length||p.brief?.application?.trim()))saved.scope=keys.scope;
+ if(stage==='cloud'&&cloudMapping(p).ready)saved.architecture=keys.architecture;
+ if(stage==='review')saved.review=keys.architecture;
+ if(stage==='delivery')saved.delivery=keys.delivery;
+ return {...p,extensions:{...p.extensions,journey:saved}};
 }

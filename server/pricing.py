@@ -82,3 +82,44 @@ def storage_quote(provider,region):
             if len(candidates)==1:return candidates[0]
         return {'available':False,'provider':'gcp','region':region,'sourceUrl':PROVIDER_PAGES[provider],'reason':'An exact regional storage SKU needs a configured Google Cloud Billing Catalog API key or a sourced quote. A generic/default-region web price will not be substituted.','nextQuestion':'Which Google Cloud region and storage class should we price?'}
     return {'available':False,'provider':'ibm','region':region,'sourceUrl':PROVIDER_PAGES[provider],'reason':'IBM pricing depends on region, storage class and plan. No verified regional quote is configured; no AWS or invented rate is substituted.','nextQuestion':'Which IBM region and storage class or existing IBM quote should we use?'}
+
+
+def parse_lambda(data,region,url,architecture='x86_64'):
+    """Regional on-demand base meters; never apply account-specific free tiers."""
+    suffix='-ARM' if architecture=='arm64' else ''
+    expected={'requests':('AWS-Lambda-Requests'+suffix,'Request'),
+              'compute':('AWS-Lambda-Duration'+suffix,'Lambda-GB-Second')}
+    meters={}
+    for name,(group,unit)in expected.items():
+        matches=[]
+        for sku,product in data.get('products',{}).items():
+            attrs=product.get('attributes',{})
+            if attrs.get('regionCode')!=region or attrs.get('group')!=group:continue
+            for term in data.get('terms',{}).get('OnDemand',{}).get(sku,{}).values():
+                for rate in term.get('priceDimensions',{}).values():
+                    if rate.get('unit')!=unit or rate.get('beginRange')!='0':continue
+                    value=float(rate.get('pricePerUnit',{}).get('USD','nan'))
+                    if not 0<value<1:continue
+                    end=rate.get('endRange')
+                    matches.append({'price':value,'unit':unit,'service':'AWS Lambda / '+sku,
+                                    'tierLimit':None if end=='Inf'else float(end)})
+        if len(matches)!=1:raise ValueError('Could not uniquely verify the regional Lambda meter')
+        meters[name]=matches[0]
+    return {'available':True,'provider':'aws','region':region,'architecture':architecture,
+            'currency':'USD','source':'AWS public Price List','url':url,
+            'date':datetime.now(timezone.utc).date().isoformat(),'publicationDate':data.get('publicationDate'),
+            'meters':meters,'coverage':'On-demand requests and base compute only. Free tiers, logs, transfer, public gateway charges, provisioned concurrency, taxes and discounts are not included.'}
+
+
+@lru_cache(maxsize=32)
+def _lambda(region,architecture,hour):
+    url=f'https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSLambda/current/{region}/index.json'
+    with urllib.request.urlopen(urllib.request.Request(url,headers={'User-Agent':'AtMem AI Architect/0.2'}),timeout=12)as response:raw=response.read(12_000_001)
+    if len(raw)>12_000_000:raise ValueError('Price list exceeds the supported size')
+    return parse_lambda(json.loads(raw),region,url,architecture)
+
+
+def lambda_quote(region,architecture='x86_64'):
+    if not re.fullmatch(r'[a-z]{2}-(?:gov-)?[a-z]+-\d',region)or architecture not in {'x86_64','arm64'}:
+        raise ValueError('Select an explicit AWS region and Lambda architecture')
+    return dict(_lambda(region,architecture,int(time.time()//3600)))

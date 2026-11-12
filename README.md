@@ -1,9 +1,8 @@
 # AtMem AI Architect
 
-AtMem AI Architect helps turn a client's intent into architecture and implementation. The current local candidate adds **Build**: a persistent native engineering session that retains ordered updates, works with reviewed skills and local tools, captures immutable packages and records local checks. **Design** preserves the existing diagram, review and estimate workflow. The engine programme targets AWS, Azure, Google Cloud, IBM and unfamiliar combinations; complete original-project acceptance remains under independent assessment. Nothing is deployed.
+AtMem AI Architect turns a client's intent into a design and engineering handoff through **Board → Requirements → Choices → Review → Delivery**. Start in chat, upload requirements or a diagram, or open a saved project. Review brings generation, local verification and costs together; Delivery provides the complete package. AtMem memory is included. Nothing is deployed automatically.
 
-For the native candidate, read [Local engineering Build](docs/LOCAL_ENGINEERING.md). The candidate is not a hosted service or a claim that all 28 projects pass.
-
+This is an alpha preview. The engine programme targets AWS, Azure, Google Cloud, IBM and unfamiliar combinations; complete original-project acceptance remains under independent assessment. Native engineering sessions and their tool requirements are described in [Local engineering](docs/LOCAL_ENGINEERING.md).
 
 The architect's know-how lives in [`agent-skills/`](agent-skills): a discovery skill (what to ask, in what order, in plain language, and what to assume when unsure) and workflow skills (knowledge assistant, document processing, prediction, agentic automation). The connected model uses them alongside a small reviewed specialist registry for architecture, security, FinOps, DevOps and all four clouds.
 
@@ -15,7 +14,17 @@ The architect's know-how lives in [`agent-skills/`](agent-skills): a discovery s
 - [Local AWS emulation before download](docs/AWS_EMULATION.md): stateful Moto services and generated runtime checks, with explicit unverified boundaries.
 - [Loadable AWS examples and qualification runbook](examples/aws/README.md): seven prompt histories, diagrams, generated code and recorded results. Six compute scenarios have real account plans but remain blocked from live deployment by Lambda quota.
 
-## Start
+## Run the npm preview
+
+With Node.js 22 or newer:
+
+```sh
+npx @atmem/architect@preview
+```
+
+First run prepares private Python and AtMem environments. Keep the terminal open and visit the printed local address. A Git checkout, system Python and Docker are not needed to open the app. Model connections and optional independent validation tools are configured separately. See [npm package details](packaging/README.npm.md).
+
+## Develop from source
 
 Prerequisites: Node 22.12+ and Python 3.11+. Current local verification uses Node 26 and Python 3.14.
 

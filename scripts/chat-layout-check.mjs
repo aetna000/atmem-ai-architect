@@ -11,7 +11,7 @@ try{
  let releaseAnswer;const pending=new Promise(r=>releaseAnswer=r);
  await page.route('**/api/**',async route=>{const url=route.request().url();if(url.endsWith('/api/architect')){await pending;return route.fulfill({json:{message:'I have received your design request.',contextUsed:[]}});}return route.fulfill({json:url.endsWith('/session')?{token:'fixture',status:'local-sidecar',architectureActivityEnabled:true,engineeringEnabled:true,providers:{codex:{installed:true,available:true,signedIn:true}}}:url.endsWith('/architect/activity')?{...route.request().postDataJSON(),id:route.request().postDataJSON().activityId,events:[],state:'running'}:{status:'disabled',enabled:false,projects:[],bin:[]}});});
  await page.goto(base);const chat=page.getByRole('complementary',{name:'Chat',exact:true});await chat.waitFor();const before=(await chat.boundingBox()).width;
- await page.getByRole('button',{name:'Widen',exact:true}).click();const wide=(await chat.boundingBox()).width;assert.ok(wide>before+100);
+ await page.getByRole('button',{name:'Widen chat',exact:true}).click();const wide=(await chat.boundingBox()).width;assert.ok(wide>before+100);
  const divider=page.getByRole('separator',{name:'Resize chat panel'});const box=await divider.boundingBox();await page.mouse.move(box.x+box.width/2,box.y+100);await page.mouse.down();await page.mouse.move(box.x+box.width/2+120,box.y+100,{steps:6});await page.mouse.up();const dragged=(await chat.boundingBox()).width;assert.ok(dragged<wide-80);
  await divider.focus();await page.keyboard.press('ArrowLeft');const keyboard=(await chat.boundingBox()).width;assert.ok(keyboard>dragged+20);
  await page.reload();await chat.waitFor();assert.ok(Math.abs((await chat.boundingBox()).width-keyboard)<2);

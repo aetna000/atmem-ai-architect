@@ -154,7 +154,7 @@ export function Connections({ session, connection, onCheck, onSave, onRetry, wel
     (kind === "aws" && !capability?.available);
   return (
     <div className="connect">
-      <h2>{welcome ? "Check your connection" : "Connection"}</h2>
+      <h2>{welcome ? "AI providers" : "AI providers"}</h2>
       {!session && (
         <p className="error-box">
           Looks like AtMem AI Architect's helper isn't running. Start it with <code>npm run local</code>, then{" "}

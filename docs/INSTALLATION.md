@@ -1,9 +1,28 @@
 # Install and start AtMem AI Architect
 
-AtMem AI Architect is a local, browser-based AI stack design workspace. Install it from
-source. There is no pip package installation step and no hosted agent service on
-atmem.ai. The website provides information and training; the application and
-its model connections run on your machine.
+AtMem AI Architect runs locally in your browser. The npm preview includes the UI,
+local service and isolated AtMem memory runtime.
+
+## npm preview
+
+Install Node.js 22 or later, then run:
+
+```sh
+npx @atmem/architect@preview
+```
+
+First run downloads checksum-verified uv, managed Python 3.13 and hash-locked
+application dependencies into your application data directory. No Git checkout,
+system Python or Docker is required to open the app. Keep the terminal open;
+Ctrl+C stops it. Open the printed address, normally http://127.0.0.1:5174.
+
+Use `--port 5175` if the port is occupied, `--data-dir PATH` for an external disk,
+`--no-open` to open the browser yourself, or `--doctor` for installation status.
+Upgrades retain existing project data, including legacy `~/.atforma` installations.
+Choose a model in Connections. Native coding agents and optional independent
+Terraform/container checks require their own local tools. No cloud deployment occurs.
+
+The following instructions are for developing from source.
 
 ## 1. Check prerequisites
 

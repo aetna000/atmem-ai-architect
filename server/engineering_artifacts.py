@@ -61,6 +61,10 @@ class EngineeringArtifacts:
                 raise ValueError('Pinned inputs require relative names and actual SHA-256 digests')
         before = self.store.get(scope, session)
         self._require_state(before)
+        if os.name == 'nt':
+            from .windows_snapshot import snapshot
+            data,files,exclusions=snapshot(workspace,excluded=self.EXCLUDED,max_bytes=self.max_bytes,max_files=self.max_files)
+            return self._complete_capture(scope,session,before,expected_inputs,data,files,exclusions)
         if os.name != 'posix' or not hasattr(os, 'O_NOFOLLOW'):
             raise SessionError('This platform has no qualified artifact capture adapter')
         output, files, exclusions = io.BytesIO(), [], []
@@ -146,6 +150,9 @@ class EngineeringArtifacts:
                 os.close(root)
         except OSError:
             raise SessionError('Artifact contains an unavailable or unsafe entry; no package was saved') from None
+        return self._complete_capture(scope,session,before,expected_inputs,output.getvalue(),files,exclusions)
+
+    def _complete_capture(self,scope,session,before,expected_inputs,data,files,exclusions):
         after = self.store.get(scope, session)
         self._require_state(after)
         if self._state_identity(after)!=self._state_identity(before):
@@ -154,7 +161,6 @@ class EngineeringArtifacts:
         observed = {entry['path']:entry.get('sha256') for entry in files}
         if any(observed.get(path)!=digest for path,digest in pinned.items()):
             raise SessionError('Pinned project evidence or reviewed instructions changed; restore the original inputs before capture')
-        data = output.getvalue()
         ident = str(uuid.uuid4())
         manifest = {'id': ident, 'sessionId': session, 'runId': before['run'],
                     'model': before['model'], 'effort': before['effort'],

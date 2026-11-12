@@ -1,3 +1,6 @@
+import {HelpNote} from './HelpNote.jsx';
+import {X,Volume2} from 'lucide-react';
+import {BrainActivity} from './BrainActivity.jsx';
 import React,{useEffect,useRef,useState} from 'react';
 import {OpenAIVoice} from './openai-voice.mjs';
 
@@ -34,29 +37,27 @@ export function OpenAIVoicePanel({session,connection,transportRef,onTranscript,o
    }});
   current.readReplies=readReplies;engine.current=current;transportRef.current=current;void current.start().then(()=>{if(live.current&&current.channel?.readyState==='open')setOpen(false)});
  }
- const caption={off:'Voice is off. Local dictation remains available from the microphone button.',connecting:'Connecting OpenAI audio…',listening:automatic?'Listening — completed turns go to your selected Architect. Existing drafts remain for review.':'Listening — review the transcript in chat, then Send.',speaking:'Speaking the written Architect reply.',error:'Voice stopped; continue in text or retry.'}[phase];
+ const caption={off:'Off',connecting:'Connecting OpenAI audio…',listening:automatic?'Listening · auto-send':'Listening',speaking:'Speaking',error:'Stopped · retry'}[phase];
  return <>
-  <div className="voice-status"><button type="button" onClick={()=>setOpen(true)}>OpenAI voice</button>{active&&<button type="button" onClick={()=>engine.current?.stop({preservePending:true})}>Stop OpenAI voice</button>}{active&&error.includes('playback')&&<button type="button" onClick={()=>void engine.current?.resumeAudio()}>Enable voice playback</button>}{(active||error)&&<span role="status">{error||caption}</span>}</div>
+  <div className="voice-status"><button type="button" className="icon" aria-label="Voice settings" title="Voice settings" onClick={()=>setOpen(true)}><Volume2 size={18}/></button>{active&&<button type="button" onClick={()=>engine.current?.stop({preservePending:true})}>Stop voice</button>}{active&&error.includes('playback')&&<button type="button" onClick={()=>void engine.current?.resumeAudio()}>Enable voice playback</button>}{(active||error)&&<span role="status">{error||caption}</span>}</div>
   {open&&<div className="backdrop" onMouseDown={event=>{if(event.target===event.currentTarget)setOpen(false)}}><section className="modal" role="dialog" aria-modal="true" aria-label="OpenAI voice" onKeyDown={event=>{if(event.key==='Escape'){event.stopPropagation();setOpen(false)}}}>
-  <h2>OpenAI voice</h2><button type="button" className="btn ghost" onClick={()=>setOpen(false)}>Close voice settings</button>
+  <h2>Voice</h2><button type="button" className="icon modal-close" aria-label="Close voice settings" onClick={()=>setOpen(false)}><X size={18}/></button>
   <section aria-label="OpenAI voice settings">
-   <p>Voice preview — live OpenAI audio verification is pending.</p>
-   <p>AI-generated audio from OpenAI. Microphone audio and spoken reply text are sent to OpenAI. Architect does not save the audio. Written chat remains the source for design decisions.</p>
-   <p>Architecture answers still use {connection?`${connection.model}${connection.effort?' · '+connection.effort:''}`:'your selected Architect'}. The audio model is {status?.model||'loading'}.</p>
-   {!connection&&<button type="button" className="btn" onClick={()=>{setOpen(false);onConnections()}}>Choose Architect connection</button>}
-   {status&&<details open={!status.available}><summary>Voice API setup</summary>
-    <p>Configure a dedicated OpenAI API key for voice. Your Architect connection stays unchanged. The server keeps this key in memory for its current session. An existing server OpenAI key can also be used.</p>
+   <small>AI audio · OpenAI</small><HelpNote label="Voice privacy and models"><p>Audio and spoken reply text are sent to OpenAI. Architect does not save audio; written chat holds design decisions. Live audio qualification is pending.</p><p>Architect: {connection?.model||'Not selected'} · Audio: {status?.model||'Loading'}</p></HelpNote>
+   {!connection&&<button type="button" className="btn" onClick={()=>{setOpen(false);onConnections()}}>Choose AI provider</button>}
+   {status&&<details open={!status.available}><summary>API key</summary>
+
     <label className="dialog-field">OpenAI voice API key<input aria-label="OpenAI voice API key" type="password" autoComplete="off" value={key} onChange={event=>setKey(event.target.value)}/></label>
-    <button type="button" className="btn" disabled={saving||active||!key.trim()} onClick={configure}>Configure voice key</button>
+    <button type="button" className="btn" disabled={saving||active||!key.trim()} onClick={configure}>Use key</button>
    </details>}
-   <button type="button" className="link" disabled={saving} onClick={()=>void refresh().catch(e=>setError(e.message))}>Check voice connection</button>
+   <button type="button" className="link" disabled={saving} onClick={()=>void refresh().catch(e=>setError(e.message))}>Refresh</button>
    <div className="record-row">
-    <button type="button" className="btn" disabled={!status?.available||!connection} onClick={active?()=>engine.current?.stop({preservePending:true}):start}>{active?'Stop OpenAI voice':'Start OpenAI voice'}</button>
+    <button type="button" className="btn" disabled={!status?.available||!connection} onClick={active?()=>engine.current?.stop({preservePending:true}):start}>{active?'Stop voice':'Start voice'}</button>
     {active&&<button type="button" className="btn" onClick={()=>engine.current?.interrupt()}>Stop speaking</button>}
     {active&&error.includes('playback')&&<button type="button" className="btn" onClick={()=>void engine.current?.resumeAudio()}>Enable voice playback</button>}
    </div>
-   <p><label><input type="checkbox" checked={automatic} onChange={event=>setAutomatic(event.target.checked)}/> Send spoken turns automatically</label></p>
-   <p><label><input type="checkbox" checked={readReplies} onChange={event=>{setReadReplies(event.target.checked);if(engine.current){engine.current.readReplies=event.target.checked;if(!event.target.checked)engine.current.interrupt();}}}/> Speak Architect replies</label></p>
+   <p><label><input type="checkbox" checked={automatic} onChange={event=>setAutomatic(event.target.checked)}/> Auto-send</label></p>
+   <p><label><input type="checkbox" checked={readReplies} onChange={event=>{setReadReplies(event.target.checked);if(engine.current){engine.current.readReplies=event.target.checked;if(!event.target.checked)engine.current.interrupt();}}}/> Read replies</label></p>
    <p role="status">{caption}</p>
    {error&&<p role="alert">{error}</p>}
   </section>

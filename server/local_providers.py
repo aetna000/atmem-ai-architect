@@ -4,6 +4,10 @@ from pathlib import Path
 
 SIGN_IN={'claude-code':('claude','claude auth login'),'codex':('codex','codex login'),'gemini-cli':('gemini','gemini'),'copilot':('copilot','copilot login')}
 
+def cli_command(argv):
+    """Resolve PATHEXT shims explicitly; CreateProcess does not search .cmd names."""
+    return [shutil.which(argv[0]) or argv[0], *argv[1:]]
+
 def account_environment():
     env=dict(os.environ)
     for key in ['ANTHROPIC_API_KEY','ANTHROPIC_AUTH_TOKEN','OPENAI_API_KEY','CODEX_API_KEY','GEMINI_API_KEY','GOOGLE_API_KEY','GITHUB_TOKEN','GH_TOKEN','COPILOT_GITHUB_TOKEN']:
@@ -21,7 +25,7 @@ def signed_in(provider):
     if not argv or not shutil.which(argv[0]):return None
     import subprocess
     try:
-        done=subprocess.run(argv,capture_output=True,text=True,timeout=8,stdin=subprocess.DEVNULL,env=account_environment())
+        done=subprocess.run(cli_command(argv),capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=8,stdin=subprocess.DEVNULL,env=account_environment())
     except Exception:
         return None
     if provider=='claude-code':
@@ -40,7 +44,7 @@ async def start_login(provider):
     if not argv or not shutil.which(argv[0]):raise RuntimeError('This provider has no sign-in AtMem AI Architect can start. Use its API key instead.')
     running=LOGINS.get(provider)
     if running and running.returncode is None:return {'started':True,'url':None}
-    process=await asyncio.create_subprocess_exec(*argv,stdin=asyncio.subprocess.DEVNULL,stdout=asyncio.subprocess.PIPE,stderr=asyncio.subprocess.STDOUT,env=account_environment(),start_new_session=os.name!='nt')
+    process=await asyncio.create_subprocess_exec(*cli_command(argv),stdin=asyncio.subprocess.DEVNULL,stdout=asyncio.subprocess.PIPE,stderr=asyncio.subprocess.STDOUT,env=account_environment(),start_new_session=os.name!='nt')
     LOGINS[provider]=process
     url=None
     try:
@@ -128,7 +132,7 @@ def models(provider):
         return [{'id':i,'name':n,'efforts':CLAUDE_EFFORTS,'defaultEffort':'medium'} for i,n in CLAUDE_MODELS]
     if provider=='codex' and shutil.which('codex'):
         try:
-            done=subprocess.run(['codex','debug','models'],capture_output=True,text=True,timeout=15,stdin=subprocess.DEVNULL,env=account_environment())
+            done=subprocess.run(cli_command(['codex','debug','models']),capture_output=True,text=True,encoding='utf-8',errors='replace',timeout=15,stdin=subprocess.DEVNULL,env=account_environment())
             data=json.loads(done.stdout)
             return [{'id':m['slug'],'name':m.get('display_name',m['slug']),'efforts':[e['effort'] for e in m.get('supported_reasoning_levels',[])],'defaultEffort':m.get('default_reasoning_level')}
                     for m in data.get('models',[]) if m.get('visibility','list')=='list']

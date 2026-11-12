@@ -25,8 +25,8 @@ export function ArtifactChecks({session,projectId,sessionId,artifact,readOnly=fa
     catch(e){if(live.current)setError(e.message);}finally{locked.current=false;if(live.current)setBusy(false);}
   }
   return <section className="artifact-checks" aria-label="Captured package checks">
-    <h3>Package checks</h3><p>Results cover this captured package. Full project acceptance remains pending.</p>
-    {!available&&<p>Local checks are unavailable on this server. Your captured package is retained.</p>}
+    <h3>Check results</h3>
+    {!available&&<p>Independent checks have not run: no check runner is configured.</p>}
     {!readOnly&&catalog.map(validator=>{
       const previous=checks.filter(check=>check.validatorId===validator.id&&check.contractSha256===validator.contractSha256).at(-1);
       const active=previous&&previous.state!=='finished';

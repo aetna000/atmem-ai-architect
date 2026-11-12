@@ -6,7 +6,7 @@ from typing import Literal
 from .contracts import Strict
 from .memory_service import service
 from . import skills
-from .pricing import aws_s3, storage_quote
+from .pricing import aws_s3, storage_quote, lambda_quote
 
 router=APIRouter()
 class Target(Strict):
@@ -80,3 +80,13 @@ async def price(payload:Price):
 async def storage(payload:Price):
     try:return await asyncio.to_thread(storage_quote,payload.provider,payload.region)
     except Exception:raise HTTPException(503,'The exact provider/region price could not be verified. No rate was invented.')
+
+
+class LambdaPrice(Target):
+    region:str=Field(max_length=40)
+    architecture:Literal['x86_64','arm64']='x86_64'
+
+@router.post('/api/pricing/lambda')
+async def lambda_price(payload:LambdaPrice):
+    try:return await asyncio.to_thread(lambda_quote,payload.region,payload.architecture)
+    except Exception:raise HTTPException(503,'The regional Lambda price is unavailable. Retry pricing; no rate was invented.')
