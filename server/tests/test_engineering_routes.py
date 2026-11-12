@@ -109,6 +109,34 @@ class EngineeringRouteTests(unittest.TestCase):
             for extra in ['context','command','records','sha256','tenant','workspace']:
                 self.assertEqual(self.client.post('/api/engineering/reconciliation',json={**body,extra:'untrusted'},headers=self.headers).status_code,422)
 
+    def test_delivery_is_project_scoped_read_only_and_omits_private_context_body(self):
+        with patch.object(routes, 'service') as service, patch('server.engineering_handoff.EngineeringHandoff') as delivery:
+            delivery.return_value.inspect.return_value = {'artifact': None, 'context': {
+                'id': 'context-id', 'revision': 1, 'sha256': 'a'*64, 'projectId': self.project,
+                'content': 'private full context'}}
+            result = self.client.post('/api/engineering/delivery', json={'projectId': self.project}, headers=self.headers)
+            self.assertEqual(result.status_code, 200)
+            self.assertNotIn('content', result.json()['context'])
+            service.return_value.jobs.start.assert_not_called()
+            service.return_value.jobs.recover.assert_not_called()
+            self.assertEqual(self.client.post('/api/engineering/delivery', json={'projectId': 'missing-project'}, headers=self.headers).status_code, 404)
+            for key in ['tenant', 'context', 'command', 'workspace']:
+                self.assertEqual(self.client.post('/api/engineering/delivery', json={'projectId': self.project, key: 'override'}, headers=self.headers).status_code, 422)
+
+    def test_handoff_download_is_exact_artifact_and_saved_design_bound(self):
+        with patch.object(routes, 'service'), patch('server.engineering_handoff.EngineeringHandoff') as delivery:
+            delivery.return_value.package.return_value = (b'captured handoff fixture', {'id': self.session, 'sha256': 'b'*64})
+            body = {**self.payload, 'artifactId': self.session, 'savedDesignSha256': 'a'*64}
+            result = self.client.post('/api/engineering/handoff', json=body, headers=self.headers)
+            self.assertEqual(result.status_code, 200)
+            self.assertEqual(result.content, b'captured handoff fixture')
+            self.assertEqual(result.headers['X-Source-Artifact-Sha256'], 'b'*64)
+            self.assertEqual(delivery.return_value.package.call_args.args[0], ProjectScope('local-owner', self.project))
+            for key in ['tenant', 'context', 'command', 'workspace']:
+                self.assertEqual(self.client.post('/api/engineering/handoff', json={**body, key: 'override'}, headers=self.headers).status_code, 422)
+            del body['savedDesignSha256']
+            self.assertEqual(self.client.post('/api/engineering/handoff', json=body, headers=self.headers).status_code, 422)
+
     def test_artifact_download_is_project_bound_and_returns_digest(self):
         with patch.object(routes,'service') as service:
             service.return_value.artifacts.get.return_value = ({'id':self.session,'sha256':'abc123'},b'ZIP')

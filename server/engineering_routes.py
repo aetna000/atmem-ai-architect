@@ -60,6 +60,10 @@ class ArtifactRequest(SessionRequest):
     artifactId: str = Field(pattern=r'^[a-f0-9-]{36}$')
 
 
+class HandoffRequest(ArtifactRequest):
+    savedDesignSha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+
+
 class RecheckRequest(ArtifactRequest):
     runId: str = Field(pattern=r'^[a-f0-9-]{36}$')
 
@@ -305,6 +309,48 @@ async def list_sessions(payload: ProjectRequest):
     rows = worker.store.db.execute('SELECT id FROM engineering_sessions WHERE tenant=? AND project=?',
                                    (scope.tenant,scope.project)).fetchall()
     return {'sessions':[worker.jobs.state(scope,row['id']) for row in rows]}
+
+
+async def delivery_action(payload, download=False):
+    from .engineering_handoff import EngineeringHandoff, digest
+    from .engineering_contexts import MAX_CONTEXT_BYTES
+    available()
+    scope, path = local_scope(payload.projectId)
+    try:
+        # Read a bounded regular saved project, never a browser-supplied snapshot.
+        import stat
+        with path.open('rb') as source:
+            if not stat.S_ISREG(os.fstat(source.fileno()).st_mode):
+                raise SessionError('Saved design is unavailable. Save your project and retry.')
+            saved = source.read(MAX_CONTEXT_BYTES + 1)
+        delivery = EngineeringHandoff(service())
+        if not download:
+            report = delivery.inspect(scope, saved)
+            # Context identity is enough for the page. Full private source goes
+            # only into the explicitly requested authorized handoff download.
+            if report.get('context'):
+                report['context'] = {key: report['context'][key] for key in ('id', 'revision', 'sha256', 'projectId')}
+            return report
+        data, manifest = delivery.package(scope, saved, payload.sessionId, payload.artifactId, payload.savedDesignSha256)
+        return Response(data, media_type='application/zip', headers={
+            'Content-Disposition': f'attachment; filename="architect-handoff-{manifest["id"]}.zip"',
+            'X-Artifact-Sha256': digest(data), 'X-Source-Artifact-Sha256': manifest['sha256']})
+    except SessionError as error:
+        raise HTTPException(409, str(error)) from None
+    except ValueError:
+        raise HTTPException(422, 'The saved design or handoff is invalid. No content was discarded.') from None
+    except Exception:
+        raise HTTPException(409, 'Delivery could not read the package. Refresh Delivery; no implementation was started.') from None
+
+
+@router.post('/delivery')
+async def delivery(payload: ProjectRequest):
+    return await delivery_action(payload)
+
+
+@router.post('/handoff')
+async def handoff(payload: HandoffRequest):
+    return await delivery_action(payload, True)
 
 
 async def action(payload, kind):

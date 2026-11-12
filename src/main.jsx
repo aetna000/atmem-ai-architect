@@ -1844,7 +1844,7 @@ function App() {
             ))}
           </div>
         )}
-        <div className="journey-current"><div><strong>{guidance.title}</strong><p>{guidance.reason}</p><p className="journey-next"><span>Next</span> {guidance.checkpoint?guidance.continueLabel:guidance.action}</p></div>
+        {(activeSection.id==='board'||(activeSection.id===guidance.id&&guidance.checkpoint&&activeSection.id!=='delivery'))&&<div className="journey-current"><div><strong>{guidance.title}</strong><p>{guidance.reason}</p><p className="journey-next"><span>Next</span> {guidance.checkpoint?guidance.continueLabel:guidance.action}</p></div>
           <div className="record-row">
             {session?.engineeringEnabled&&hasDesign&&<button className="btn primary build-design-button" disabled={busy||agentBusy||!!pending} onClick={buildCurrentDesign}><Package size={18}/>Implement and check</button>}
             <button className="btn primary" disabled={busy||agentBusy||!!pending} aria-label={guidance.checkpoint?guidance.continueLabel+' →':guidance.action} title={guidance.checkpoint?guidance.continueLabel:guidance.action} onClick={()=>guidance.checkpoint?continueJourney():followJourney()}>{agentBusy?<BrainActivity size={26}/>:<BrainCircuit size={20}/>} {guidance.checkpoint?guidance.continueLabel:guidance.action}</button>
@@ -1856,7 +1856,7 @@ function App() {
               <button className="btn" disabled aria-label="Deploy (under development)" title="Cloud deployment is under development"><Rocket size={18}/></button>
             </>}
           </div>
-        </div>
+        </div>}
       </section>}
       <main
         id="canvas"
@@ -1875,6 +1875,7 @@ function App() {
         {buildView?<section className="native-work-area" aria-label="Build workspace"><EngineeringPanel key={project.id} project={project} onWorkModelChange={changeArchitectureWork} onIntentContext={syncEngineeringIntent} projectId={project.id} session={session} connection={connection} contextBusy={busy||agentBusy||!!pending}
           saveProject={()=>saveEngineeringProject(project.id)}
           onDesign={()=>{chooseWorkspace('canvas');setMode('design');}}
+          onDelivery={()=>{chooseWorkspace('canvas');setMode('design');setDesignView('outputs');}}
           buildRequest={buildRequest} onBuildRequestHandled={id=>setBuildRequest(current=>current?.id===id?null:current)}
           onConnections={()=>setModal('connections')}/></section>:<>
         <ReactFlow
@@ -2172,7 +2173,7 @@ function App() {
 
         {onBoard&&emulationOpen&&<div className="emulation-dock"><EmulationPanel project={project} session={session} emulation={emulation} onDiscuss={discussEmulation} onOpenComponent={id=>{reviewBlock(id);setEmulationOpen(false);}} discussionBusy={busy||agentBusy||!!pending} onClose={()=>setEmulationOpen(false)} onBuild={session?.engineeringEnabled?()=>{setEmulationOpen(false);buildCurrentDesign('test');}:undefined}/></div>}
 
-        {mode === "design" && designView === "outputs" && <OutputsView project={project} run={run} environment={environment} session={session} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onDownload={downloadBundle} onBuild={session?.engineeringEnabled?()=>buildCurrentDesign('test'):undefined} onBack={()=>setDesignView("board")} />}
+        {mode === "design" && designView === "outputs" && <OutputsView onSave={()=>saveEngineeringProject(project.id)} project={project} run={run} environment={environment} session={session} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onDownload={downloadBundle} onBuild={session?.engineeringEnabled?()=>buildCurrentDesign('test'):undefined} onBack={()=>setDesignView("board")} />}
         {mode === "design" && designView === "terraform" && <TerraformView project={project} environment={environment} session={session} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onDownload={exportTerraform} onBuild={session?.engineeringEnabled?()=>buildCurrentDesign('test'):undefined} onBack={()=>setDesignView("board")} />}
         {mode === "design" && ["options","decisions"].includes(designView) && (
           <OptionsView project={project} busy={busy||agentBusy||!!pending} onChoose={chooseCloud} onContinue={()=>visitJourney("location")} onPreview={(provider)=>{setDesignView("board");setLevel("flow");setChatOpen(true);send(`Preview a concrete ${OPTION_NAMES[provider]} implementation of our working scope, using actual named services in data.service and explicit connections. Keep existing systems and comments. Use the known country/residency constraints, or leave region undecided and ask the country question. This is an alternative preview, not a cloud choice or deployment. Return a graph proposal and explain key integration assumptions.`,"preview",{mode:"design",view:"board"});}} onDiscuss={(question) => { setChatOpen(true); send(question, "workflow"); }} />

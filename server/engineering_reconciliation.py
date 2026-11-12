@@ -57,7 +57,7 @@ class EngineeringReconciliation:
             sha256 TEXT NOT NULL, payload TEXT NOT NULL, UNIQUE(session,artifact,sha256))''')
         self.db.commit()
 
-    def _intent(self,scope,session):
+    def submitted_context(self,scope,session):
         # Only durable client identity events are needed. Do not page or truncate
         # thousands of unrelated token/tool deltas into a supposed complete brief.
         rows=self.db.execute('''SELECT sequence,payload FROM engineering_events
@@ -98,7 +98,7 @@ class EngineeringReconciliation:
         self._current(scope,session,manifest)
         if manifest.get('sessionId')!=session or manifest.get('id')!=artifact or _sha(archive)!=manifest.get('sha256'):
             raise SessionError('Artifact integrity check failed; no mappings were imported')
-        context,events=self._intent(scope,session)
+        context,events=self.submitted_context(scope,session)
         files={}
         for entry in manifest['files']:
             if entry['kind']!='file':continue

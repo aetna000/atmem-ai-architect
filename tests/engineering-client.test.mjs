@@ -1,6 +1,7 @@
+import {zipSync,strToU8} from 'fflate';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {engineeringCall,engineeringConversation,mergeEngineeringEvents,verifiedEngineeringDownload} from '../src/engineering-client.mjs';
+import {engineeringCall,engineeringConversation,mergeEngineeringEvents,verifiedEngineeringDownload,verifiedHandoffDownload} from '../src/engineering-client.mjs';
 
 test('engineering protocol sends only scoped intent and server token',async()=>{
   const text='Keep every line.\n'.repeat(1000);let request;
@@ -25,6 +26,28 @@ test('immutable download checks bytes against both receipt and response digest',
   const blob=await verifiedEngineeringDownload({token:'local'},{artifactId:'public-artifact'},{sha256:digest},{fetcher});
   assert.equal(await blob.text(),'exact package bytes');
   await assert.rejects(verifiedEngineeringDownload({token:'local'},{},{sha256:'incorrect'},{fetcher}),/digest did not match/);
+});
+
+test('combined handoff verifies source archive, every receiving file, and transport digest independently',async()=>{
+ const sha=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),x=>x.toString(16).padStart(2,'0')).join('');
+ const content=strToU8('# Exact plan\n'),original=zipSync({'spec-kit/plan.md':content});
+ const receipt={sha256:await sha(original),files:[{kind:'file',path:'spec-kit/plan.md',bytes:content.length,sha256:await sha(content)}]};
+ const archive=zipSync({'evidence/original-implementation.zip':original,'implementation/spec-kit/plan.md':content});
+ const payload={projectId:'project-one',artifactId:'artifact-one',savedDesignSha256:'b'.repeat(64)};
+ const fetcher=async(url,options)=>{assert.equal(url,'/api/engineering/handoff');assert.deepEqual(JSON.parse(options.body),payload);return new Response(archive,{headers:{'X-Artifact-Sha256':await sha(archive),'X-Source-Artifact-Sha256':receipt.sha256}})};
+ assert.equal((await verifiedHandoffDownload({token:'local'},payload,receipt,{fetcher})).size,archive.length);
+ for(const headers of [
+  {'X-Artifact-Sha256':'bad','X-Source-Artifact-Sha256':receipt.sha256},
+  {'X-Artifact-Sha256':await sha(archive),'X-Source-Artifact-Sha256':'wrong source'}
+ ])await assert.rejects(verifiedHandoffDownload({token:'local'},payload,receipt,{fetcher:async()=>new Response(archive,{headers})}),/Download was stopped/);
+ for(const change of [
+  {'evidence/original-implementation.zip':strToU8('wrong archive'),'implementation/spec-kit/plan.md':content},
+  {'evidence/original-implementation.zip':original,'implementation/spec-kit/plan.md':strToU8('altered plan')},
+  {'evidence/original-implementation.zip':original,'implementation/spec-kit/plan.md':content,'implementation/extra.js':content}
+ ]){
+  const bad=zipSync(change);
+  await assert.rejects(verifiedHandoffDownload({token:'local'},payload,receipt,{fetcher:async()=>new Response(bad,{headers:{'X-Artifact-Sha256':await sha(bad),'X-Source-Artifact-Sha256':receipt.sha256}})}),/Download was stopped/);
+ }
 });
 
 test('native conversation retains complete ordered requests and streamed replies without promoting uncertain delivery',()=>{

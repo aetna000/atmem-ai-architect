@@ -2,6 +2,7 @@ import {BrainActivity} from "./BrainActivity.jsx";
 import React,{useEffect,useState} from 'react';
 import {EmulationPanel} from './EmulationPanel.jsx';
 import {outputBundle} from './output-bundle.mjs';
+import {ImplementationDelivery} from './ImplementationDelivery.jsx';
 
 // Render generated Markdown as text elements, never executable HTML.
 function Document({text}){
@@ -31,7 +32,7 @@ function Preview({name,content}){
  if(name.endsWith('.md'))return <Document text={content}/>;
  return <pre className="output-code"><code>{content}</code></pre>;
 }
-export function OutputsView({project,run,environment,session,onDownload,onBack,emulation,onDiscuss,discussionBusy,onBuild}){
+export function OutputsView({project,run,environment,session,onDownload,onBack,emulation,onDiscuss,discussionBusy,onBuild,onSave}){
  const [bundle,setBundle]=useState(null),[error,setError]=useState(''),[loading,setLoading]=useState(true),[retry,setRetry]=useState(0),[selected,setSelected]=useState('spec-kit/implementation-spec.md');
  useEffect(()=>{
    let active=true;setLoading(true);setError('');
@@ -41,9 +42,13 @@ export function OutputsView({project,run,environment,session,onDownload,onBack,e
  const readiness=bundle?.files['spec-kit/readiness.json']?JSON.parse(bundle.files['spec-kit/readiness.json']):null;
  const groups=bundle?[['Spec Kit',Object.keys(bundle.files).filter(n=>n.startsWith('spec-kit/')).sort((a,b)=>Number(b.includes('implementation-spec'))-Number(a.includes('implementation-spec')))],['Specification & handoff',Object.keys(bundle.files).filter(n=>!n.includes('/')&&!/^diagram\./.test(n))],['Design',Object.keys(bundle.files).filter(n=>/^diagram\./.test(n))],['Terraform',Object.keys(bundle.files).filter(n=>n.startsWith('terraform/'))]]:[];
  return <section className="doc outputs-view" aria-label="Outputs">
-  <header className="doc-head"><h2>Delivery</h2><p className="muted">Review the specification, Spec Kit, design and Terraform files before downloading the package.</p></header>
-  <div className="row"><button className="link" onClick={onBack}>Back to architecture</button><button className="btn primary" disabled={!bundle||loading||!!error} onClick={()=>onDownload(bundle)}>Download design handoff (ZIP)</button></div>
-  <EmulationPanel project={project} environment={environment} session={session} emulation={emulation} onDiscuss={onDiscuss} discussionBusy={discussionBusy} onBuild={onBuild}/>
+  <header className="doc-head"><h2>Delivery</h2><p className="muted">Download the implementation with its design and check evidence, or inspect the design draft below.</p></header>
+  <button className="link" onClick={onBack}>Back to architecture</button>
+  {session?.engineeringEnabled&&<ImplementationDelivery key={project.id} project={project} session={session} onBuild={onBuild} onSave={onSave} contextBusy={discussionBusy}/>}
+  <details open={!session?.engineeringEnabled}><summary>Design draft: requirements, Spec Kit and infrastructure</summary>
+  <p>This draft is generated from the current design. It is separate from the captured implementation above.</p>
+  <button className="btn" disabled={!bundle||loading||!!error} onClick={()=>onDownload(bundle)}>Download design handoff (ZIP)</button>
+  {!session?.engineeringEnabled&&<EmulationPanel project={project} environment={environment} session={session} emulation={emulation} onDiscuss={onDiscuss} discussionBusy={discussionBusy} onBuild={onBuild}/>}
   {loading&&<p role="status"><BrainActivity/> Preparing the current outputs…</p>}
   {error&&<div role="alert"><p>{error}</p><button className="btn" onClick={()=>setRetry(n=>n+1)}>Retry preparing outputs</button></div>}
   {bundle&&!loading&&!error&&<>
@@ -54,5 +59,6 @@ export function OutputsView({project,run,environment,session,onDownload,onBack,e
     <div className="output-preview" aria-label="Output preview"><h3>{selected}</h3>{bundle.files[selected]!==undefined&&<Preview key={selected} name={selected} content={bundle.files[selected]}/>}</div>
    </div>
   </>}
+  </details>
  </section>;
 }
