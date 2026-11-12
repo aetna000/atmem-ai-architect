@@ -15,3 +15,11 @@ Browser testing caught borrowed Window fetch/timer bindings that mocks missed; c
 Live gate: no API key is configured in the isolated preview. Configure one through the voice dialog (never through chat), then qualify real token/SDP/audio/ASR, interruption and listening quality using synthetic speech. UI remains explicitly marked a voice preview. Preserve the existing Architect model/effort and all authorization boundaries during that test. No claim of voice parity with ChatGPT, account availability or provider privacy/retention policy.
 
 UI-001 remains in progress: live OpenAI voice/quality and fresh full generation-to-handoff usability remain. No alpha.5, original28 acceptance or measured-quality promotion. Existing owner5288 unchanged; all bulk artifacts on MEM0.
+
+## Running preview
+
+Refresh http://localhost:5296 (frontend/backend frozen7646586; MEM0 voice-ui-v1 worktree). Restarted only the confirmed empty preview parent69910 after checking zero saved projects/native sessions and no API credentials; owner5288 untouched. Actual root/canvas, voice missing-key route and synthetic voice UI tests pass on that exact address. No native validators are registered in this UI preview; full fresh generation/system testing remains separate.
+
+Manual card: select your Architect model/effort, open OpenAI voice near the composer, configure a dedicated key through Voice API setup if needed, and start. Verify written transcript before Send; enable automatic sending only deliberately. Confirm the written reply is spoken without changing the selected Architect. Stop closes microphone/peer; keep the unsent draft intact. Confirm actual account access, interruptions and voice quality before any live acceptance claim. Do not paste credentials into conversation. The server keeps a dedicated key only for its running session.
+
+Rollback: keep owner5288 as-is. Only if this preview has no new work or credentials, stop its own parent and relaunch the previous delivery-ui-v1 source on5296/8889 with the same home/tool configuration. Once a user configures a key or starts work, preserve the running preview instead of silently restarting it.
