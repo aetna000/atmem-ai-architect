@@ -1,9 +1,11 @@
 import {useEffect,useMemo,useRef,useState} from 'react';
+import {emulationPreflight} from './emulation-guidance.mjs';
 import {terraformSketch} from './terraform.mjs';
 import {toProjectFile} from './project-file.mjs';
 
 export function useEmulation(project,environment,session){
  const [last,setLast]=useState(null),[running,setRunning]=useState(false),[autoRetest,setAutoRetest]=useState(true),[coach,setCoach]=useState(true),[retestLimitReached,setRetestLimitReached]=useState(false);
+ const preflight=useMemo(()=>emulationPreflight(project),[project]);
  const controller=useRef(null),retest=useRef(null),runRef=useRef(null),automaticRounds=useRef(0);
  const key=useMemo(()=>JSON.stringify([project.id,environment,terraformSketch(project,environment)]),[project,environment]);
  useEffect(()=>{
@@ -14,6 +16,7 @@ export function useEmulation(project,environment,session){
  useEffect(()=>()=>controller.current?.abort(),[]);
  useEffect(()=>{automaticRounds.current=0;setRetestLimitReached(false);},[project.id]);
  async function run(options={}){
+  if(preflight)return;
   if(!options.automatic){automaticRounds.current=0;setRetestLimitReached(false);}
   if(controller.current)return;
   const request=new AbortController();controller.current=request;setRunning(true);
@@ -29,5 +32,5 @@ export function useEmulation(project,environment,session){
  }
  runRef.current=run;
  const result=last?.key===key?last.report:null,previous=last?.projectId===project.id&&last.key!==key?last.report:null;
- return {result,previous,running,retestLimitReached,coach,setCoach,run,stop:()=>controller.current?.abort(),autoRetest,setAutoRetest,scheduleRetest:()=>{if(autoRetest&&automaticRounds.current<2){automaticRounds.current++;retest.current=project.id;}else if(autoRetest)setRetestLimitReached(true);}};
+ return {result,previous,running,preflight,retestLimitReached,coach,setCoach,run,stop:()=>controller.current?.abort(),autoRetest,setAutoRetest,scheduleRetest:()=>{if(autoRetest&&automaticRounds.current<2){automaticRounds.current++;retest.current=project.id;}else if(autoRetest)setRetestLimitReached(true);}};
 }

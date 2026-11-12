@@ -1291,3 +1291,5 @@ An alternative design needs complete original credential-boundary evidence. No
 blind native restart/second automatic repair; no deployment. Source/history/report/
 probe evidence is in20261112-native-gcp-water. Original local count remains2/28,
 four increments, owner0/unknown quality; IBM and full programme still pending.
+
+Test readiness correction: do not run known-unimplemented designs merely to discover missing code. Keep readiness separate from test evidence, offer explicit implementation/test action; unavailable implementation must say so with a downloadable task. Source/live5285 hook/panel browser checks and555 JS/build pass. No owner writes, CSS, native inference or deployment. Full availability/generation/recovery journey still needs qualification. Evidence:20261112-test-readiness.

@@ -51,11 +51,22 @@ test('automatic mentoring waits for a ready provider instead of spending failed 
  assert.equal(emulationCoachReady({token:'fixture',providers:{'claude-code':{available:true,signedIn:true}}},connection),true);
 });
 
-import {emulationGuidance,emulationRepairTask,guidanceMessage} from '../src/emulation-guidance.mjs';
+import {emulationGuidance,emulationPreflight,emulationRepairTask,guidanceMessage} from '../src/emulation-guidance.mjs';
 test('implementation gaps belong to Architect, with one next action and a traceable repair task',()=>{
  const p=structuredClone(CLOUD_STORAGE_SCENARIOS[0].project);p.nodes.push({id:'app',data:{label:'Application backend',provider:'azure',kind:'resource',origin:'proposed'}});
  const report={status:'blocked',checks:[],designRevision:95,artifactDigest:'a'.repeat(64),blockers:['implementation-required']};const g=emulationGuidance(p,report);assert.equal(g.owner,'engineering');assert.equal(g.needsModel,false);assert.equal(g.componentId,'app');assert.ok(guidanceMessage(g).split(/\s+/).length<70);assert.doesNotMatch(guidanceMessage(g),/95|artifact|runtime checks|Which|What port/);const task=emulationRepairTask(p,report);assert.match(task,/95/);assert.match(task,/implementation-required/);assert.match(task,/Checks executed: 0/);
 });
 test('a supported missing access correction still gets Architect help; empty success is not success',()=>{
  const p=structuredClone(CLOUD_STORAGE_SCENARIOS[0].project);delete p.edges[0].access;const g=emulationGuidance(p,{status:'blocked',checks:[]});assert.equal(g.needsModel,true);assert.match(g.next,/who should be allowed/);assert.notEqual(emulationGuidance(p,{status:'passed',checks:[]}).title,'Local emulation checks passed');assert.equal(emulationGuidance(p,{status:'passed',checks:[{passed:true}]}),null);
+});
+
+test('readiness catches missing code before a test, while supported provider designs can run',()=>{
+ for(const {project} of CLOUD_STORAGE_SCENARIOS){
+  assert.equal(emulationPreflight(project),null);
+  const missing=structuredClone(project);missing.nodes.push({id:'new-app',data:{label:'Email sign-in',provider:project.nodes[0].data.provider,kind:'resource',origin:'proposed'}});
+  const before=JSON.stringify(missing);const guidance=emulationPreflight(missing);
+  assert.equal(guidance.action,'build-and-test');assert.equal(guidance.componentId,'new-app');
+  assert.match(guidance.next,/Implement and test this design/);assert.match(guidance.next,/Nothing is deployed/);
+  assert.equal(JSON.stringify(missing),before);assert.equal(guidance.checks,undefined);
+ }
 });
