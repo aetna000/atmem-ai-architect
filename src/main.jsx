@@ -704,7 +704,6 @@ function App() {
   function chooseWorkspace(value){setWorkspaceView(value);}
   function buildCurrentDesign(intent){
     if(!hasArchitectureDesign(projectRef.current)||busy||agentBusy||pending)return;
-    if(connection?.provider!=='codex'||!connection.model||connection.model==='default'||!connection.effort){setModal('connections');return;}
     setBuildRequest({id:crypto.randomUUID(),projectId:projectRef.current.id,...(intent==='test'?{intent:'test'}:{})});chooseWorkspace('build');
   }
 

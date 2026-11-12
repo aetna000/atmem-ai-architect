@@ -1293,3 +1293,5 @@ probe evidence is in20261112-native-gcp-water. Original local count remains2/28,
 four increments, owner0/unknown quality; IBM and full programme still pending.
 
 Test readiness correction: do not run known-unimplemented designs merely to discover missing code. Keep readiness separate from test evidence, offer explicit implementation/test action; unavailable implementation must say so with a downloadable task. Source/live5285 hook/panel browser checks and555 JS/build pass. No owner writes, CSS, native inference or deployment. Full availability/generation/recovery journey still needs qualification. Evidence:20261112-test-readiness.
+
+Guided handoff repair: store the project implementation/test request before setup; retain it until submission can begin, wait for model/context/recovery, allow cancel. Fail closed on transient history lookup with explicit retry; preserve pinned existing session model/effort. Five browser scenarios pass on source/live5285 plus full engineering fixture/555 JS/build. No native generation or full-system claim. Queued pre-submit request is not reload-durable yet. Evidence:20261112-implementation-handoff.

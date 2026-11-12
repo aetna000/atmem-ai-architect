@@ -11,6 +11,7 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
   const [job,setJob]=useState(null),[events,setEvents]=useState([]),[draft,setDraft]=useState(()=>{try{return localStorage.getItem(draftKey)||'';}catch{return '';}}),
     [busy,setBusy]=useState(false),[error,setError]=useState(''),[loading,setLoading]=useState(true),[artifact,setArtifact]=useState(null);
   const [draftError,setDraftError]=useState('');
+  const [restoreBlocked,setRestoreBlocked]=useState(false),[restoreAttempt,setRestoreAttempt]=useState(0);
   useEffect(()=>{try{localStorage.setItem(draftKey,draft);setDraftError('');}catch{setDraftError('This draft could not be saved in your browser. Keep this view open or copy it before leaving.');}},[draftKey,draft]);
   const live=useRef(true),cursor=useRef(0),actionLock=useRef(false);
   const finalization=events.filter(event=>event.runId===job?.run&&event.kind.startsWith('finalization_')).at(-1);
@@ -26,6 +27,7 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
   },[job?.id,job?.run,finalization?.artifactId,projectId,session.token]);
   useEffect(()=>{
     const controller=new AbortController();let stopped=false;
+    setLoading(true);setRestoreBlocked(false);
     (async()=>{let restored=false;try{
       const result=await engineeringCall(session,'list',{projectId},{signal:controller.signal});
       const previous=result.sessions.at(-1);
@@ -35,9 +37,9 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
         const recovered=await engineeringCall(session,'recover',{projectId,sessionId:previous.id},{signal:controller.signal});
         if(!stopped)setJob(recovered);
       }
-    }catch(e){if(!stopped&&e.name!=='AbortError'&&(e.status!==404||restored))setError(e.message);}finally{if(!stopped)setLoading(false);}})();
+    }catch(e){if(!stopped&&e.name!=='AbortError'&&(e.status!==404||restored)){setError(e.message);setRestoreBlocked(true);}}finally{if(!stopped)setLoading(false);}})();
     return()=>{stopped=true;controller.abort();};
-  },[projectId,session.token]);
+  },[projectId,session.token,restoreAttempt]);
   useEffect(()=>{
     if(!job)return;
     const controller=new AbortController();let stopped=false,timer;
@@ -64,7 +66,7 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
   function submitIntent(event,requestedText){
     event?.preventDefault();
     const submitted=requestedText??(running?draft:buildIntent(project,draft));
-    if(!submitted||submitted.length>80000||uncertain||contextBusy||(!job&&(!exactSelection||!hasDesign)))return;
+    if(!submitted||submitted.length>80000||loading||restoreBlocked||actionLock.current||uncertain||contextBusy||(!job&&(!exactSelection||!hasDesign)))return false;
     void act(async()=>{
       let current=job;
       let saved=await saveProject();
@@ -81,13 +83,14 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
       const next=await call(current.state==='running'?'steer':'start',{sessionId:current.id,text:submitted,contextSha256:saved.sha256});
       if(live.current){setJob(next);setArtifact(null);setDraft(value=>value===submitted?'':value);}
     });
+    return true;
   }
   useEffect(()=>{
-    if(!buildRequest||buildRequest.projectId!==projectId||consumedBuild.current===buildRequest.id||loading||contextBusy)return;
-    consumedBuild.current=buildRequest.id;onBuildRequestHandled?.(buildRequest.id);
-    if(uncertain){setError('Recover the existing request before building the changed design. No new work was submitted.');return;}
-    submitIntent(null,buildRequest.intent==='test'?BUILD_AND_TEST_REQUEST:buildIntent(project,''));
-  },[buildRequest,projectId,loading,contextBusy,uncertain,job?.id]);
+    if(!buildRequest||buildRequest.projectId!==projectId||consumedBuild.current===buildRequest.id||loading||restoreBlocked||contextBusy||uncertain||busy||(!job&&!exactSelection))return;
+    if(submitIntent(null,buildRequest.intent==='test'?BUILD_AND_TEST_REQUEST:buildIntent(project,''))){
+      consumedBuild.current=buildRequest.id;onBuildRequestHandled?.(buildRequest.id);
+    }
+  },[buildRequest,projectId,loading,restoreBlocked,contextBusy,uncertain,busy,exactSelection,job?.id]);
   async function linkMappings(){
     const result=await call('reconciliation',{artifactId:artifact.id});
     if(result.status==='proposal_missing')throw Error(result.message);
@@ -100,6 +103,8 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
     <p>Implementation files, checks and progress for your saved design. Its requirements, components and ownership are included automatically.</p>
     {onDesign&&<button onClick={onDesign}>Return to Design</button>}
     {(hasDesign||job)&&<ArchitectureWorkPanel project={project} onChange={onWorkModelChange} busy={busy||contextBusy}/>}
+    {buildRequest?.projectId===projectId&&<p role="status">{restoreBlocked?'Your implementation request is waiting. Retry loading earlier work before starting.':uncertain?'Your implementation request is waiting. Recover the existing request first to avoid duplicate work.':contextBusy?'Your implementation request is waiting for the current design changes.':!job&&!exactSelection?'Your implementation request is waiting here. Choose a model and reasoning level below; it will then start automatically.':'Your implementation request is queued.'} <button onClick={()=>onBuildRequestHandled?.(buildRequest.id)}>Cancel queued request</button></p>}
+    {restoreBlocked&&<button disabled={loading||busy} onClick={()=>{setError('');setRestoreAttempt(value=>value+1);}}>Retry loading earlier work</button>}
     {loading?<p role="status">Finding your project’s work…</p>:<>
       {job?<>
         <p role="status">{running?'Working':uncertain?'Recovering acceptance of your last request':job.last_status?({completed:'Work completed',interrupted:'Work stopped',failed:'Work needs attention'}[job.last_status]||job.last_status):'Ready'} · {job.model} · {job.effort}</p>
@@ -119,7 +124,7 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
         <label htmlFor="engineering-intent">{running?'Add an implementation update':hasDesign?'Additional build instructions (optional)':'Continue implementation'}</label>
         <textarea id="engineering-intent" rows={4} value={draft} onChange={e=>setDraft(e.target.value)}/>
         {draft.length>80000&&<p role="alert">This update exceeds 80,000 characters. Edit it before sending; your draft is retained.</p>}
-        <button disabled={busy||uncertain||contextBusy||!canSubmit||draft.length>80000||(!job&&!exactSelection)}>{running?'Send update':hasDesign?'Build this design':'Continue implementation'}</button>
+        <button disabled={busy||restoreBlocked||uncertain||contextBusy||!canSubmit||draft.length>80000||(!job&&!exactSelection)}>{running?'Send update':hasDesign?'Build this design':'Continue implementation'}</button>
       </form>}
       {job&&<>
         {finalization&&<p role="status"><strong>Recorded verification update: </strong>{finalization.text}</p>}
