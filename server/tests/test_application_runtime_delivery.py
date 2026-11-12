@@ -27,7 +27,17 @@ class ApplicationRuntimeDeliveryTests(unittest.TestCase):
     def test_materialized_pure_contract_runs_without_host_repo_or_runtime_sdks(self):
         with tempfile.TemporaryDirectory()as tmp:
             root=Path(tmp);seed_delivery(root);materialize(root,'ibm','service')
-            code="import sys;sys.path.insert(0,sys.argv[1]);from workflow_bindings import application_declaration;from workflow_payload import PayloadContract;assert not ({'psycopg','jwt','boto3','fastapi'}&set(sys.modules));print('PURE_RUNTIME_AVAILABLE')"
+            code="""import sys
+sys.path.insert(0,sys.argv[1])
+from workflow_bindings import application_declaration
+from workflow_payload import PayloadContract
+from workflow_review import ReviewPolicy
+shape={'type':'object','properties':{'value':{'type':'string','minBytes':0,'maxBytes':4}},'required':['value']}
+payload=PayloadContract({'version':1,'id':'received-contract','source':shape,'result':shape})
+review=ReviewPolicy(payload,id='received-review',editable_fields=['value'])
+assert review.validate_edit({'value':'a'},{'value':'a'},{'value':'🙂'})=={'value':'🙂'}
+assert not ({'psycopg','jwt','boto3','fastapi'}&set(sys.modules))
+print('PURE_RUNTIME_AVAILABLE')"""
             result=subprocess.run([sys.executable,'-I','-c',code,str(root/'service')],cwd=root,capture_output=True,text=True)
             self.assertEqual(result.returncode,0,result.stderr);self.assertIn('PURE_RUNTIME_AVAILABLE',result.stdout)
     def test_unavailable_provider_unknown_paths_and_reserved_roots_create_nothing(self):

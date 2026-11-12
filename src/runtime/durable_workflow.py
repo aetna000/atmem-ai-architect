@@ -13,7 +13,7 @@ import uuid
 import psycopg
 from psycopg.rows import dict_row
 from psycopg.types.json import Json,Jsonb
-from workflow_contract import bind_payload_contract
+from workflow_contract import bind_review_policy
 from workflow_database import require_current_schema
 
 class Denied(PermissionError):pass
@@ -48,9 +48,10 @@ class Principal:
         if not isinstance(self.subject,str) or not 1<=len(self.subject.encode('utf-8'))<=500 or any(ord(c)<32 for c in self.subject):raise ValueError('Invalid verified subject')
 
 class WorkflowStore:
-    def __init__(self,dsn,extract_task,dispatch_task,*,destination_contract,max_attempts=5,lease_seconds=600,payload_contract=None,operation_kind=None):
-        self.destination_contract=bind_payload_contract(destination_contract,payload_contract)
+    def __init__(self,dsn,extract_task,dispatch_task,*,destination_contract,max_attempts=5,lease_seconds=600,payload_contract=None,operation_kind=None,review_policy=None):
+        self.destination_contract=bind_review_policy(destination_contract,payload_contract,review_policy)
         self.payload_contract=payload_contract
+        self.review_policy=review_policy
         if operation_kind is not None and(type(operation_kind)is not str or operation_kind not in {'document','draft','account_change'}):raise ValueError('Use an owned operation policy')
         self.operation_kind=operation_kind
         if not callable(dsn)and(not isinstance(dsn,str) or not dsn):raise ValueError('Supply an operator-managed PostgreSQL connection or trusted credential factory')
@@ -74,6 +75,7 @@ class WorkflowStore:
         if not isinstance(actor,Principal):raise Denied('Verified application identity required')
         row=conn.execute('SELECT active,roles FROM workflow.memberships WHERE account_id=%s AND subject=%s FOR SHARE',(actor.account_id,actor.subject)).fetchone()
         if not row or not row['active'] or not set(row['roles']).intersection(roles):raise Denied('Current application membership does not authorize this operation')
+        return set(row['roles'])
     def _row(self,conn,operation_id,account_id=None,*,lock=True):
         identifier(operation_id)
         query='SELECT * FROM workflow.operations WHERE id=%s AND workflow_key=%s';params=[operation_id,self.workflow_key]
@@ -83,6 +85,9 @@ class WorkflowStore:
         if not row:raise Missing('Operation unavailable')
         return row
     def _payload(self,side,value):
+        expected=self.review_policy.sha256 if self.review_policy else None
+        if self.destination_contract.get('reviewPolicySha256')!=expected:raise Conflict('Review policy binding changed')
+        if self.review_policy:self.review_policy.ensure_current()
         bound=self.destination_contract.get('payloadContractSha256')
         if bound!=(self.payload_contract.sha256 if self.payload_contract else None):raise Conflict('Application contract binding changed')
         canonical(value)
@@ -91,9 +96,11 @@ class WorkflowStore:
         if row['destination_contract']!=self.destination_contract:raise Conflict('Application/destination contract changed; explicit reconciliation is required')
         if self.operation_kind is not None and row['kind']!=self.operation_kind:raise Conflict('Operation policy differs from this application')
         self._payload('source',row['source_ref'])
-        if result:self._payload('result',row['result'])
+        if result:
+            self._payload('result',row['result'])
+            if self.review_policy:self.review_policy.validate_result(row['source_ref'],row['result'])
     def _event(self,conn,row,event,actor,detail=None):
-        if event not in {'submitted','claimed','result_ready','edited','approved','dispatch_claimed','sent','retry_pending','outcome_unknown','dead','recovered','approval_revoked'}:raise ValueError('Unknown owned audit event')
+        if event not in {'submitted','claimed','result_ready','edited','approved','dispatch_claimed','sent','retry_pending','outcome_unknown','dead','recovered','approval_revoked','review_inspected'}:raise ValueError('Unknown owned audit event')
         detail=detail or {};canonical(detail,1500)
         conn.execute('INSERT INTO workflow.events(operation_id,account_id,event,actor,detail) VALUES(%s,%s,%s,%s,%s)',(row['id'],row['account_id'],event,actor,Jsonb(detail)))
     def _enqueue(self,conn,kind,operation_id):
@@ -116,6 +123,7 @@ class WorkflowStore:
             row=conn.execute("INSERT INTO workflow.operations(id,account_id,workflow_key,kind,dedup_key,created_by,source_ref,destination_contract,state) VALUES(%s,%s,%s,%s,%s,%s,%s,%s,'pending') ON CONFLICT(account_id,workflow_key,kind,dedup_key) DO NOTHING RETURNING *",(new,actor.account_id,self.workflow_key,kind,dedup_key,actor.subject,stored_json(source_ref),Jsonb(self.destination_contract))).fetchone()
             if not row:
                 row=conn.execute('SELECT * FROM workflow.operations WHERE account_id=%s AND workflow_key=%s AND kind=%s AND dedup_key=%s',(actor.account_id,self.workflow_key,kind,dedup_key)).fetchone()
+                if self.review_policy and row['created_by']!=actor.subject:raise Conflict('Stable operation identity belongs to another submitter')
                 if canonical(row['source_ref'])!=canonical(source_ref):raise Conflict('Stable identity cannot refer to a changed source')
                 if row['destination_contract']!=self.destination_contract:raise Conflict('Stable identity cannot silently move to another destination contract')
                 return str(row['id'])
@@ -123,7 +131,12 @@ class WorkflowStore:
             return str(row['id'])
     def get(self,actor,operation_id):
         with self.connect()as conn:
-            self._actor(conn,actor,{'user','reviewer','supervisor','owner'});return self._row(conn,operation_id,actor.account_id,lock=False)
+            roles=self._actor(conn,actor,{'user','reviewer','supervisor','owner'});row=self._row(conn,operation_id,actor.account_id,lock=False)
+            self._readable(actor,roles,row);return row
+    def _owner_reads(self,roles):
+        return bool(self.review_policy and self.review_policy.data['readScope']=='owner'and not roles.intersection({'reviewer','supervisor','owner'}))
+    def _readable(self,actor,roles,row):
+        if self._owner_reads(roles)and row['created_by']!=actor.subject:raise Missing('Operation unavailable')
     def authorize(self,actor):
         with self.connect()as conn:
             self._actor(conn,actor,{'user','reviewer','supervisor','owner'})
@@ -131,20 +144,22 @@ class WorkflowStore:
     def list(self,actor,*,before=None,limit=25):
         if type(limit)is not int or not 1<=limit<=50:raise ValueError('Invalid bounded review page')
         with self.connect()as conn:
-            self._actor(conn,actor,{'user','reviewer','supervisor','owner'})
+            roles=self._actor(conn,actor,{'user','reviewer','supervisor','owner'})
             query='SELECT * FROM workflow.operations WHERE account_id=%s AND workflow_key=%s';params=[actor.account_id,self.workflow_key]
+            if self._owner_reads(roles):query+=' AND created_by=%s';params.append(actor.subject)
             if before is not None:
                 anchor=self._row(conn,before,actor.account_id,lock=False)
+                self._readable(actor,roles,anchor)
                 query+=' AND (created_at,id)<(%s,%s)';params.extend([anchor['created_at'],anchor['id']])
             return conn.execute(query+' ORDER BY created_at DESC,id DESC LIMIT %s',params+[limit]).fetchall()
     def events(self,actor,operation_id):
         with self.connect()as conn:
-            self._actor(conn,actor,{'user','reviewer','supervisor','owner'});self._row(conn,operation_id,actor.account_id,lock=False)
+            roles=self._actor(conn,actor,{'user','reviewer','supervisor','owner'});row=self._row(conn,operation_id,actor.account_id,lock=False);self._readable(actor,roles,row)
             return conn.execute('SELECT sequence,event,actor,detail,created_at FROM workflow.events WHERE operation_id=%s AND account_id=%s ORDER BY sequence',(operation_id,actor.account_id)).fetchall()
     def result_history(self,actor,operation_id,*,after_revision=0,limit=50):
         if type(after_revision)is not int or not 0<=after_revision<=2147483647 or type(limit)is not int or not 1<=limit<=50:raise ValueError('Use a bounded result history page')
         with self.connect()as conn:
-            self._actor(conn,actor,{'user','reviewer','supervisor','owner'});self._row(conn,operation_id,actor.account_id,lock=False)
+            roles=self._actor(conn,actor,{'user','reviewer','supervisor','owner'});row=self._row(conn,operation_id,actor.account_id,lock=False);self._readable(actor,roles,row)
             return conn.execute('SELECT revision,result,actor,created_at FROM workflow.results_history WHERE operation_id=%s AND account_id=%s AND revision>%s ORDER BY revision LIMIT %s',(operation_id,actor.account_id,after_revision,limit)).fetchall()
     def _result_history(self,conn,row,actor):
         conn.execute('INSERT INTO workflow.results_history(operation_id,account_id,revision,result,actor)VALUES(%s,%s,%s,%s,%s)',(row['id'],row['account_id'],row['result_revision'],stored_json(row['result']),actor))
@@ -173,6 +188,7 @@ class WorkflowStore:
         with self.connect()as conn:
             row=self._row(conn,operation_id);self._check_lease(conn,row,token,'processing')
             self._contract(row)
+            if self.review_policy:result=self.review_policy.validate_result(row['source_ref'],result)
             updated=conn.execute("UPDATE workflow.operations SET result=%s,result_revision=result_revision+1,state='review',approved_hash=NULL,approved_by=NULL,lease_token=NULL,lease_until=NULL,attempts=0,updated_at=clock_timestamp() WHERE id=%s RETURNING *",(stored_json(result),row['id'])).fetchone();self._result_history(conn,updated,'worker');self._event(conn,updated,'result_ready','worker',{'revision':updated['result_revision']});return updated
     def edit_result(self,actor,operation_id,expected_revision,result):
         result=self._payload('result',result)
@@ -181,8 +197,19 @@ class WorkflowStore:
             self._actor(conn,actor,{'reviewer','supervisor','owner'});row=self._row(conn,operation_id,actor.account_id)
             self._contract(row)
             if row['state']!='review' or row['result_revision']!=expected_revision:raise Conflict('Reload the current review before editing')
+            if self.review_policy:result=self.review_policy.validate_edit(row['source_ref'],row['result'],result)
             updated=conn.execute('UPDATE workflow.operations SET result=%s,result_revision=result_revision+1,approved_hash=NULL,approved_by=NULL,updated_at=clock_timestamp() WHERE id=%s RETURNING *',(stored_json(result),row['id'])).fetchone();self._result_history(conn,updated,actor.subject);self._event(conn,updated,'edited',actor.subject,{'revision':updated['result_revision']});return updated
-    def approve(self,actor,operation_id,expected_revision):
+    def inspect(self,actor,operation_id):
+        if not self.review_policy:raise Conflict('This application has no explicit inspection policy')
+        with self.connect()as conn:
+            initial=self._row(conn,operation_id,actor.account_id,lock=False)
+            roles={'supervisor','owner'}if initial['kind']=='account_change'else{'reviewer','supervisor','owner'}
+            self._actor(conn,actor,roles);row=self._row(conn,operation_id,actor.account_id)
+            self._contract(row,result=True)
+            if row['state']!='review':raise Conflict('The operation is not awaiting review')
+            self._event(conn,row,'review_inspected',actor.subject,{'revision':row['result_revision'],'payloadSha256':self._fingerprint(row)})
+            return row
+    def approve(self,actor,operation_id,expected_revision,payload_sha256=None):
         if type(expected_revision)is not int:raise ValueError('An exact revision is required')
         # Read ownership/kind without a row lock, then lock membership before the
         # operation everywhere human authorization is involved (consistent order).
@@ -193,10 +220,15 @@ class WorkflowStore:
             self._actor(conn,actor,roles);row=self._row(conn,operation_id,actor.account_id)
             self._contract(row,result=True)
             if row['result_revision']!=expected_revision or not row['result']:raise Conflict('Review the current result before approving')
+            if self.review_policy and payload_sha256!=self._fingerprint(row):raise Conflict('Approval must bind the inspected current payload')
             if row['state']in {'approved','dispatching','unknown','sent'}:
                 if row['approved_hash']!=self._fingerprint(row):raise Conflict('Approved content changed')
                 return row
             if row['state']!='review':raise Conflict('The operation is not awaiting approval')
+            ttl=self.review_policy.data['inspectionTtlSeconds']if self.review_policy else None
+            if ttl is not None:
+                inspection=conn.execute("SELECT 1 FROM workflow.events WHERE operation_id=%s AND account_id=%s AND actor=%s AND event='review_inspected' AND detail->>'payloadSha256'=%s AND detail->>'revision'=%s AND created_at>=clock_timestamp()-make_interval(secs=>%s) LIMIT 1",(row['id'],actor.account_id,actor.subject,payload_sha256,str(expected_revision),ttl)).fetchone()
+                if not inspection:raise Conflict('Inspect the exact current result before approving')
             digest=self._fingerprint(row);job=self._enqueue(conn,'dispatch',row['id'])
             updated=conn.execute("UPDATE workflow.operations SET state='approved',approved_hash=%s,approved_by=%s,queue_job_id=%s,attempts=0,updated_at=clock_timestamp() WHERE id=%s RETURNING *",(digest,actor.subject,job,row['id'])).fetchone();self._event(conn,updated,'approved',actor.subject,{'revision':row['result_revision'],'payloadSha256':digest});return updated
     def claim_dispatch(self,operation_id,*,verified_idempotent_replay=False):

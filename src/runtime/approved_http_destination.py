@@ -12,10 +12,10 @@ import ssl
 from urllib.parse import urlsplit
 from durable_workflow import canonical,identifier
 from workflow_errors import ExternalOutcomeUnknown,DestinationNotAttempted,InvalidDispatch
-from workflow_contract import normalized_contract,bind_payload_contract,bind_application_contract
+from workflow_contract import normalized_contract,bind_payload_contract,bind_application_contract,bind_review_policy
 
 class ApprovedHttpDestination:
-    def __init__(self,endpoint,credential,*,destination_scope,idempotency_verified=False,tls_context=None,allowed_kinds=('document',),payload_contract=None,application_contract_sha256=None):
+    def __init__(self,endpoint,credential,*,destination_scope,idempotency_verified=False,tls_context=None,allowed_kinds=('document',),payload_contract=None,application_contract_sha256=None,review_policy=None):
         try:target=urlsplit(endpoint)
         except (TypeError,ValueError):raise ValueError('Invalid operator destination')from None
         if (not isinstance(endpoint,str)or len(endpoint)>2000 or target.scheme!='https' or not target.hostname or target.username or target.password
@@ -29,6 +29,8 @@ class ApprovedHttpDestination:
         self.host=target.hostname;self.port=port;self.path=target.path or'/';self.credential=credential;self.idempotency_verified=idempotency_verified;self.context=context;self.allowed_kinds=frozenset(allowed_kinds)
         self.contract=bind_payload_contract(normalized_contract(endpoint,destination_scope),payload_contract)
         if application_contract_sha256 is not None:self.contract=bind_application_contract(self.contract,application_contract_sha256)
+        self.contract=bind_review_policy(self.contract,payload_contract,review_policy)
+        self.review_policy=review_policy
         self.payload_contract=payload_contract
     def __call__(self,row,*,idempotency_key,payload_sha256):
         try:identifier(idempotency_key)
@@ -40,6 +42,7 @@ class ApprovedHttpDestination:
             try:
                 if self.contract['payloadContractSha256']!=self.payload_contract.sha256:raise ValueError()
                 self.payload_contract.validate('source',row['source_ref']);self.payload_contract.validate('result',row['result'])
+                if self.review_policy:self.review_policy.validate_result(row['source_ref'],row['result'])
             except (KeyError,ValueError):raise InvalidDispatch('Approved application contract no longer matches this destination')from None
         snapshot={'kind':row['kind'],'source':row['source_ref'],'destination':row['destination_contract'],'result':row['result'],'revision':row['result_revision']}
         if hashlib.sha256(canonical(snapshot,140000)).hexdigest()!=payload_sha256:raise InvalidDispatch('Approved payload snapshot changed')

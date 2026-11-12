@@ -105,6 +105,10 @@ class PayloadContract:
     @property
     def sha256(self): return hashlib.sha256(self._encoded).hexdigest()
 
+    def fields(self, side):
+        if side not in {'source', 'result'}: raise ValueError('Use an application input or result boundary')
+        return tuple(json.loads(self._encoded)[side]['properties'])
+
     def validate(self, side, value):
         if side not in {'source', 'result'}: raise ValueError('Use an application input or result boundary')
         # Round trip before validation: no caller mutation can change the bytes

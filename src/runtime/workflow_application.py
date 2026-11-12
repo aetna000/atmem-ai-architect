@@ -31,14 +31,14 @@ def membership_key(profile,subject):
     return 'native-'+hashlib.sha256(encoded({'provider':data['provider'],'issuer':native_identity_realm(data['provider'],data['identitySettings']),'subject':subject})).hexdigest()
 
 
-def create_native_api(profile,environment,*,connection=None,jwks=None):
+def create_native_api(profile,environment,*,connection=None,jwks=None,review_policy=None):
     from workflow_identity import native_staff_identity
     from workflow_worker import producer_store
     from workflow_http import create_app
     env=checked_environment(profile,environment);data=profile.data;provider=data['provider']
     identity=native_staff_identity(provider,data['identitySettings'],jwks=jwks)
     dsn=connection if connection is not None else native_database(provider,env,'api')
-    store=producer_store(dsn,destination_contract=profile.destination,namespace=profile.namespace,payload_contract=profile.payload,operation_kind=data['operationKind'])
+    store=producer_store(dsn,destination_contract=profile.destination,namespace=profile.namespace,payload_contract=profile.payload,operation_kind=data['operationKind'],review_policy=review_policy)
     def verify(token):return membership_key(profile,identity.verify(token))
     return create_app(verify,store,account_id=data['accountId'],public_origin=data['publicOrigin'],operation_kind=data['operationKind'],token_header=identity.token_header)
 
@@ -53,10 +53,10 @@ class _OwnedStage:
         return self.stage(row,*args,**kwargs)
 
 
-def create_native_worker(profile,environment,processor,deliver,*,connection=None,idempotent_destination=False):
+def create_native_worker(profile,environment,processor,deliver,*,connection=None,idempotent_destination=False,review_policy=None):
     from workflow_worker import WorkflowRuntime
     env=checked_environment(profile,environment);data=profile.data
     if not callable(processor)or not callable(deliver):raise ValueError('Supply trusted application stages')
     dsn=connection if connection is not None else native_database(data['provider'],env,'worker')
     return WorkflowRuntime(dsn,_OwnedStage(processor,data['accountId'],data['operationKind']),_OwnedStage(deliver,data['accountId'],data['operationKind']),
-        destination_contract=profile.destination,payload_contract=profile.payload,operation_kind=data['operationKind'],namespace=profile.namespace,idempotent_destination=idempotent_destination)
+        destination_contract=profile.destination,payload_contract=profile.payload,operation_kind=data['operationKind'],namespace=profile.namespace,idempotent_destination=idempotent_destination,review_policy=review_policy)

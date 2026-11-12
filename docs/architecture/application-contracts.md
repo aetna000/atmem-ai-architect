@@ -92,3 +92,78 @@ back a binary across schema versions is not a valid rollback procedure.
 The primary PostgreSQL17.11 source revision and actual old/new SQL, domain-transfer,
 boundary and worker-admission checks are retained in
 `specs/029-general-purpose-engine/evidence/20261112-unicode-persistence/`.
+
+## Explicit review, access and source/result policies
+
+`workflow_review.ReviewPolicy` is an opt-in trusted bootstrap interface for typed
+approval workflows. It adds owner-scoped ordinary staff reads (or explicit account
+scope), a declared set of editable top-level result fields, optional bounded
+inspection lifetime, and a module-level semantic validator. It contains no cloud
+or business-domain dispatch. Payload shapes and byte units remain in
+`PayloadContract`; business arithmetic, routing and source/result relationships
+remain in application source supplied by its owner.
+
+Construct `ReviewPolicy(payload, id='owned-review-v1', editable_fields=[...],
+read_scope='owner', inspection_ttl_seconds=300, validator=validate_result,
+validation_sources=[...])`. The trusted module-level function takes detached
+`source` and `result` dictionaries, returns `None` to accept, or raises to reject.
+It must not change either dictionary, coerce values, return replacements, perform
+network/credential access, or select executable code from incoming data. The
+mechanism detects changed input dictionaries and non-None returns; it is not a
+Python sandbox or proof of purity/resource limits. Source/result retain separate
+64000-byte budgets. Arbitrary callbacks, decimal semantics and missing business
+rules are not inferred from prose by this interface.
+
+Declare the function's source file and all trusted source dependencies explicitly.
+A list of paths uses basenames; for packages with duplicate filenames, use an
+explicit mapping such as `{'a/limits.py': first_path, 'b/limits.py': second_path,
+'checks.py': validator_path}`. Labels are portable relative names, never executable
+module selectors; absolute paths, traversal and ambiguous labels are rejected.
+Each must be a bounded regular file with an unambiguous portable source label; callback
+closures and executable strings are rejected. The policy identity binds payload
+hash, version/id, editable fields, read scope, inspection TTL, function entrypoint,
+declared source hashes and the shared policy mechanism's own source hash. Runtime
+use rejects changed declared files. This is source binding, not automatic discovery
+of all Python dependencies or runtime attestation. Validate complete applications
+independently; keep API/worker/publisher files and dependencies identical in the
+receiving build.
+
+Supply the same `review_policy` to `producer_store`, `WorkflowRuntime`,
+`create_native_api`, `create_native_worker`, and `ApprovedHttpDestination` where
+used. `bind_review_policy(destination, payload, review)` exposes the exact bound
+identity for custom trusted publishers. Missing/mismatched policies fail before
+processing or delivery. `reviewPolicySha256` is part of persisted destination
+identity and every approval fingerprint, alongside any existing payload/application
+bindings. Source-derived semantics are checked before worker result commit,
+reviewer edit, approval and dispatch; the normalized publisher rechecks before
+obtaining destination credentials or opening a connection. Editable-field checks
+freeze all other result fields, including both directions of numeric changes.
+
+The shared HTTP interface retains `{source: ...}` submission and
+`{revision, result: ...}` review envelopes. With an explicit policy it exposes
+source with the result, adds authenticated reviewer `POST .../inspect` with `{}`,
+and requires `{revision, payloadSha256}` approval. History is available through
+`GET .../history` with a bounded `afterRevision` cursor. Inspection records an
+explicit authenticated request for the exact representation; it does not prove a
+human read it. Approval checks the live reviewer, account, revision, content hash,
+current policy and database-clock lifetime. Changing a result requires a fresh
+inspection. Account-change inspection/approval still requires supervisor/owner.
+Already-approved/sent/unknown work cannot acquire another dispatch merely through
+repeated approval; an expired inspection is not a reason to replay an unknown
+external action.
+
+Owner scope covers get/list/cursors/events/result history. Live reviewers can read
+within their account; revocation/removal of their role takes effect on the next
+operation. Cross-owner stable-key reuse conflicts. Caller token roles/groups,
+account IDs and query overrides do not configure these policies. The ordinary
+staff owner boundary is independent of provider-specific cryptographic identity.
+
+Inspection receipts use the existing append-only event ledger, with operation,
+account, actor, revision, hash and database timestamp. No new table/schema/grant or
+migration is introduced. Existing workflows that omit `review_policy` retain
+previous HTTP envelopes, account reads and approval behavior. Enabling or changing
+a policy alters its integration identity: use a new reviewed namespace or quiesce
+and explicitly reconcile older work. Never rewrite old approvals/unknown outcomes
+or silently remove policy enforcement to run an old worker. Old source bundles and
+native check history remain unchanged; binary rollback with a different policy is
+not compatible operation recovery.

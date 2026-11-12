@@ -9,7 +9,7 @@ else:
 
 def reviewed_contract(value):
     fields={'id','endpointSha256','scope','mappingVersion'}
-    optional={'payloadContractSha256','applicationContractSha256'}
+    optional={'payloadContractSha256','applicationContractSha256','reviewPolicySha256'}
     if (not isinstance(value,dict)or not fields<=set(value)<=fields|optional
         or not isinstance(value['id'],str)or not re.fullmatch(r'[a-z0-9-]{1,80}',value['id'])
         or not isinstance(value['endpointSha256'],str)or not re.fullmatch(r'[0-9a-f]{64}',value['endpointSha256'])
@@ -34,4 +34,21 @@ def bind_application_contract(destination,sha256):
     if type(sha256)is not str or not re.fullmatch(r'[0-9a-f]{64}',sha256):raise ValueError('Use an exact owned application declaration digest')
     if 'applicationContractSha256'in result and result['applicationContractSha256']!=sha256:raise ValueError('Application declaration binding changed')
     result['applicationContractSha256']=sha256
+    return result
+
+def bind_review_policy(destination,payload_contract,review_policy):
+    if __package__:
+        from .workflow_review import ReviewPolicy
+    else:
+        from workflow_review import ReviewPolicy
+    result=bind_payload_contract(destination,payload_contract)
+    bound=result.get('reviewPolicySha256')
+    if review_policy is None:
+        if bound is not None:raise ValueError('The destination requires its exact review policy')
+        return result
+    if type(review_policy)is not ReviewPolicy or payload_contract is None or review_policy.data['payloadContractSha256']!=payload_contract.sha256:
+        raise ValueError('Use an owned review policy matching the exact payload contract')
+    review_policy.ensure_current()
+    if bound is not None and bound!=review_policy.sha256:raise ValueError('Review policy differs from its destination binding')
+    result['reviewPolicySha256']=review_policy.sha256
     return result

@@ -23,10 +23,12 @@ class UnsupportedBody(ValueError): pass
 class Busy(RuntimeError): pass
 
 
-def public_operation(row):
-    return {'id':str(row['id']), 'state':row['state'], 'revision':row['result_revision'],
+def public_operation(row, *, include_source=False):
+    result = {'id':str(row['id']), 'state':row['state'], 'revision':row['result_revision'],
             'result':row['result'], 'receipt':row['receipt'],
             'createdAt':row['created_at'].isoformat(), 'updatedAt':row['updated_at'].isoformat()}
+    if include_source: result['source'] = row['source_ref']
+    return result
 
 
 async def body(request, fields):
@@ -64,6 +66,8 @@ def create_app(verify, store, *, account_id, public_origin, operation_kind='draf
     if getattr(store,'operation_kind',None) not in {None,operation_kind}: raise ValueError('HTTP and stored operation policies differ')
     if token_header is not None and (type(token_header) is not str or token_header != 'x-goog-iap-jwt-assertion'): raise ValueError('Unsupported native identity transport')
     app = FastAPI(docs_url=None,redoc_url=None,openapi_url=None)
+    policy = getattr(store, 'review_policy', None)
+    def representation(row): return public_operation(row, include_source=policy is not None)
     slots = threading.BoundedSemaphore(20)
     def error(code,status): return JSONResponse({'error':{'code':code}},status_code=status)
     async def actor(request):
@@ -127,29 +131,48 @@ def create_app(verify, store, *, account_id, public_origin, operation_kind='draf
         if len(keys) != 1 or not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.:-]{0,199}',keys[0]):
             raise ValueError('Use a stable bounded operation key')
         operation = await run_in_threadpool(store.submit,user,operation_kind,keys[0],value['source'])
-        return {'operation':public_operation(await run_in_threadpool(store.get,user,operation))}
+        return {'operation':representation(await run_in_threadpool(store.get,user,operation))}
     @app.get('/api/operations')
     async def listing(request:Request):
         user = await actor(request)
         if set(request.query_params)-{'before'} or len(request.query_params.getlist('before')) > 1:
             raise ValueError('Use the bounded operation cursor')
         rows = await run_in_threadpool(store.list,user,before=request.query_params.get('before'),limit=25)
-        return {'operations':[public_operation(row) for row in rows], 'next':str(rows[-1]['id']) if len(rows)==25 else None}
+        return {'operations':[representation(row) for row in rows], 'next':str(rows[-1]['id']) if len(rows)==25 else None}
     @app.get('/api/operations/{operation_id}')
     async def detail(operation_id:str,request:Request):
         user = await actor(request)
         if request.query_params: raise ValueError('No operation overrides are accepted')
-        return {'operation':public_operation(await run_in_threadpool(store.get,user,operation_id))}
+        return {'operation':representation(await run_in_threadpool(store.get,user,operation_id))}
     @app.post('/api/operations/{operation_id}/review')
     async def review(operation_id:str,request:Request):
         user,value = await mutation(request,['revision','result'])
         if type(value['revision']) is not int: raise ValueError('Use an exact revision')
         row = await run_in_threadpool(store.edit_result,user,operation_id,value['revision'],value['result'])
-        return {'operation':public_operation(row)}
+        return {'operation':representation(row)}
+    if policy is not None:
+        @app.post('/api/operations/{operation_id}/inspect')
+        async def inspect(operation_id:str,request:Request):
+            user,_ = await mutation(request,[])
+            row = await run_in_threadpool(store.inspect,user,operation_id)
+            return {'operation':representation(row),'payloadSha256':store._fingerprint(row),
+                    'destination':row['destination_contract']}
+        @app.get('/api/operations/{operation_id}/history')
+        async def history(operation_id:str,request:Request):
+            user = await actor(request)
+            if set(request.query_params)-{'afterRevision'}: raise ValueError('Invalid history cursor')
+            cursors = request.query_params.getlist('afterRevision')
+            if len(cursors)>1 or cursors and not re.fullmatch(r'0|[1-9][0-9]{0,9}',cursors[0]): raise ValueError('Invalid history cursor')
+            rows = await run_in_threadpool(store.result_history,user,operation_id,after_revision=int(cursors[0]) if cursors else 0)
+            return {'history':[{'revision':r['revision'],'result':r['result'],'actor':r['actor'],
+                                'createdAt':r['created_at'].isoformat()} for r in rows]}
     @app.post('/api/operations/{operation_id}/approve')
     async def approve(operation_id:str,request:Request):
-        user,value = await mutation(request,['revision'])
+        user,value = await mutation(request,['revision','payloadSha256'] if policy is not None else ['revision'])
         if type(value['revision']) is not int: raise ValueError('Use an exact revision')
-        row = await run_in_threadpool(store.approve,user,operation_id,value['revision'])
-        return {'operation':public_operation(row)}
+        if policy is not None:
+            row = await run_in_threadpool(store.approve,user,operation_id,value['revision'],value['payloadSha256'])
+        else:
+            row = await run_in_threadpool(store.approve,user,operation_id,value['revision'])
+        return {'operation':representation(row)}
     return app

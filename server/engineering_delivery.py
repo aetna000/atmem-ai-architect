@@ -83,6 +83,19 @@ Keep API and worker credentials separate; initialize SQL/admit memberships throu
 the operator role. Enforce the profile-bound payload, account/kind/namespace,
 identity realm, destination approval hash and uncertain-effect behavior.
 
+For workflows needing owner-only staff reads, restricted reviewer edits, explicit
+inspection or source-derived results, inspect workflow_review.py. Trusted bootstrap
+can supply an immutable ReviewPolicy to the API/worker/native factories and
+normalized publisher. Declare editable result fields, read scope, inspection TTL,
+and a module-level semantic validator with its exact source dependencies. These
+are trusted source inputs, never HTTP/profile module paths. Validation rejects
+invalid data without rewriting it; bound policies and source changes invalidate
+old approvals. Shared HTTP keeps source/result envelopes and adds POST inspect
+plus hash-bound approval when a policy is supplied. An inspection request records
+an authenticated representation request, not proof a person read it. Preserve
+existing unconfigured behavior; explicitly reconcile older work before enabling
+a new policy. No database migration or business semantics are supplied for you.
+
 Copy actual application modules into the delivered build context and document
 normal target-platform dependency setup. Do not make runtime images read from
 atmem-tools, .tools, host paths or a developer interpreter. Native SDK lock pins
