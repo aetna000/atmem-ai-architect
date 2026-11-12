@@ -1,6 +1,7 @@
 // Use only after observe.mjs confirms settlement; this never starts/rechecks work.
 import fs from 'node:fs';import assert from 'node:assert/strict';import path from 'node:path';import {createHash}from 'node:crypto';import {unzipSync,strFromU8}from 'fflate';import {chromium}from '@playwright/test';
 const base='http://127.0.0.1:5298',out='.local/external-artifacts/ui-native-handoff/v1',live=JSON.parse(fs.readFileSync(out+'/live.json')),settled=JSON.parse(fs.readFileSync(out+'/settled.json')),artifact=JSON.parse(fs.readFileSync(out+'/artifact.json')),sha=b=>createHash('sha256').update(b).digest('hex');
+assert(!fs.existsSync(out+'/browser-delivery-receipt.json'),'Preserve the verified download; use a new evidence directory for another attempt');
 const auth=await(await fetch(base+'/api/session')).json();
 async function post(action,extra={}){const r=await fetch(base+'/api/'+action,{method:'POST',headers:{'Content-Type':'application/json',Authorization:'Bearer '+auth.token},body:JSON.stringify({projectId:live.projectId,...extra})});assert(r.ok,action+' HTTP'+r.status);return r.json()}
 const file=await post('projects/get',{id:live.projectId}),before=await post('engineering/delivery');assert.equal(before.artifact.id,settled.artifactId);assert.equal(before.artifact.sha256,artifact.sha256);
