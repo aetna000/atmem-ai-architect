@@ -36,6 +36,14 @@ atmem-architect
 - Generate application files and inspect local check results.
 - Explore files and download one ZIP containing code, specifications, costs, and evidence.
 
+## Orca plugin
+
+Open Architect inside Orca and inspect exported project files.
+
+[![Watch the 32-second Orca walkthrough](https://raw.githubusercontent.com/aetna000/atmem-ai-architect-orca/v0.1.3/assets/walkthrough-poster.png)](https://github.com/aetna000/atmem-ai-architect-orca/releases/download/v0.1.3/atmem-ai-architect-orca-walkthrough.mp4)
+
+[Install the plugin](https://orca.dev/plugins/aetna000/atmem-ai-architect-orca) · [Plugin source and setup](https://github.com/aetna000/atmem-ai-architect-orca)
+
 ## AtMem memory
 
 Searchable tables, cursor pagination, local user profiles, actor provenance, and scoped external RAG or memory providers.

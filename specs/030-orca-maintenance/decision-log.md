@@ -27,3 +27,5 @@
 2026-11-13: Owner asked how to configure Application tests. Registered an existing cached isolated Python/PostgreSQL runner for candidate5306. All22 captured-package tests passed. Browser tests remain separate; retained a local restart launcher and documented registration.
 
 2026-11-13: Owner explicitly authorized publishing the accumulated changes as a formal stable npm release and public Orca distribution. Prepare0.2.1, use latest publishing metadata and the trusted-publisher CI with installed-platform gates. Plugin is already observed in the community catalog; update its pinned app after npm publication.
+
+2026-11-13: Stable0.2.1 published from tag v0.2.1 after all three installed-platform checks; registry integrity/provenance and clean registry CLI version verified. Plugin0.1.3 is published and installed. Owner requested a video: published a32-second edited sample walkthrough, with actual native/browser/handoff captures and no private user data or model/deployment claims. Both READMEs link it.
