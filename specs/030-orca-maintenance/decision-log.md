@@ -17,3 +17,5 @@
 2026-11-13: Owner requested consistent disabled checks during generation and clearer progress. Busy now includes restored/running/starting jobs, not only HTTP request time. Both checks share that gate; existing validators and evidence semantics are unchanged. The local job completed without intervention.
 
 2026-11-13: Owner requested a dynamic generation progress bar. Use an indeterminate bar and received activity because total native work is unknown. Correct previous-snapshot messaging without resubmitting or interrupting generation.
+
+2026-11-13: Owner requested subtle animation on the engineering event counter. Pulse once when its count changes during active generation; preserve tabular digits and reduced-motion preference.

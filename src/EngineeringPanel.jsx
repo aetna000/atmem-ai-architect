@@ -140,7 +140,7 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
           {running&&<button disabled={busy} onClick={()=>act(async()=>{const next=await call('interrupt');if(live.current)setJob(next);})}>Stop work</button>}
           {!running&&!uncertain&&job.last_status&&<button disabled={busy} onClick={()=>act(async()=>{const captured=await call('capture');if(live.current)setArtifact(captured);})}>Refresh package snapshot</button>}
         </details>
-        <details><summary>Engineering progress ({events.length})</summary><ol>{events.filter(event=>!['message','accepted','steering_submitted'].includes(event.kind)).map(event=><li key={event.sequence}>{event.kind}{event.text?` · ${event.text}`:''}</li>)}</ol></details>
+        <details><summary>Engineering progress (<span key={events.length} className={`engineering-progress-count${running||uncertain?' updated':''}`}>{events.length}</span>)</summary><ol>{events.filter(event=>!['message','accepted','steering_submitted'].includes(event.kind)).map(event=><li key={event.sequence}>{event.kind}{event.text?` · ${event.text}`:''}</li>)}</ol></details>
       </>}
       {artifact&&<div className="engineering-artifact"><p>Project files · {artifact.files.filter(file=>file.kind==='file').length} {artifact.files.filter(file=>file.kind==='file').length===1?'file':'files'} · {artifact.turnStatus}.</p>
         {artifact.runId!==job?.run&&<p>{running||uncertain?'Previous snapshot · New files are being generated.':'Previous snapshot · Generate files to include current changes.'}</p>}
