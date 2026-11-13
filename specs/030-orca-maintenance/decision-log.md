@@ -21,3 +21,5 @@
 2026-11-13: Owner requested subtle animation on the engineering event counter. Pulse once when its count changes during active generation; preserve tabular digits and reduced-motion preference.
 
 2026-11-13: Remove raw turnStatus from the file count. During regeneration identify the existing package as Previous files with Generating updated files; the running job owns generation status.
+
+2026-11-13: Owner requested large-request support with chunking after Terraform showed Request too large. Preserve full request bytes and existing content admission instead of stripping history/requirements. Add bounded temporary chunk assembly; configure the local candidate to use the already installed Terraform1.17.1 binary. Restarted only after verifying native work was idle; retained the same data directory.

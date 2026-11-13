@@ -1,4 +1,5 @@
 import React,{useEffect,useMemo,useRef,useState,useId}from'react';
+import{postLargeJson}from'./large-request.mjs';
 import{BrainActivity}from'./BrainActivity.jsx';
 import{engineeringCall}from'./engineering-client.mjs';
 import{terraformSketch}from'./terraform.mjs';
@@ -6,6 +7,7 @@ import{verifiedReceipt}from'./validation-receipt.mjs';
 export function ProjectChecks({project,environment,session,onReceipt,onBusy,receipt,generationPending=false}){
  const [report,setReport]=useState(null),[catalogReady,setCatalogReady]=useState(false),[catalog,setCatalog]=useState([]),[checks,setChecks]=useState([]),[result,setResult]=useState(null),[working,setWorking]=useState(false),[error,setError]=useState('');
  const hintId=useId();
+ const [uploadProgress,setUploadProgress]=useState(null);
  const active=useRef(null),locked=useRef(false),files=useMemo(()=>terraformSketch(project,environment),[project,environment]),key=JSON.stringify(files);
  useEffect(()=>{let stopped=false;setResult(null);active.current?.abort();let previous=receipt;try{previous=previous||JSON.parse(localStorage.getItem('atmem-tf-receipt:'+project.id)||'null');}catch{}void verifiedReceipt(files,previous).then(value=>{if(!stopped){setResult(value);onReceipt?.(value);}});return()=>{stopped=true;active.current?.abort();};},[key]);
  useEffect(()=>{
@@ -35,12 +37,11 @@ export function ProjectChecks({project,environment,session,onReceipt,onBusy,rece
     const results=await engineeringCall(session,'validation/list',payload,{signal:controller.signal});
     if(!controller.signal.aborted)setChecks(results.checks||[]);
    }else{
-    const response=await fetch('/api/terraform/validate',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.token}`},body:JSON.stringify({project,environment}),signal:AbortSignal.any([controller.signal,AbortSignal.timeout(500000)])});const value=await response.json();
-    if(!response.ok)throw Error(value.detail||'Terraform checks could not start.');
+    const value=await postLargeJson('/api/terraform/validate',{project,environment},{token:session.token,signal:AbortSignal.any([controller.signal,AbortSignal.timeout(500000)]),onProgress:setUploadProgress});
     const verified=await verifiedReceipt(files,value);if(!controller.signal.aborted){setResult(value);onReceipt?.(verified);try{if(verified)localStorage.setItem('atmem-tf-receipt:'+project.id,JSON.stringify(verified));else localStorage.removeItem('atmem-tf-receipt:'+project.id);}catch{}}
    }
-  }catch(e){if(!controller.signal.aborted){if(kind==='terraform')setResult({status:'failed',message:e.message});setError(e.message);}}
-  finally{locked.current=false;setWorking(false);}
+  }catch(e){if(!controller.signal.aborted){setError(e.message);}}
+  finally{locked.current=false;setWorking(false);setUploadProgress(null);}
  }
  const label=status=>({passed:'Passed',failed:'Failed',incomplete:'Incomplete',unavailable:'Not run'}[status]||'Not run');
  const terraformHint=generationPending?'Project files are being generated. Wait until generation finishes.':'Validate the Terraform draft from your saved design.';
@@ -48,7 +49,7 @@ export function ProjectChecks({project,environment,session,onReceipt,onBusy,rece
  const applicationStatus=generationPending?'Generating files…':!report?.artifact?'Generate files first':working==='application'||running?'Running…':checks.length?checks.every(c=>c.state==='finished'&&c.result?.status==='passed')?'Passed':'Needs attention':!catalogReady?'Loading…':available.length?'Not run':'Not configured';
  return <section className="project-checks" aria-label="Project checks"><div className="section-action"><h3>Checks</h3></div>
  <ul className="check-rows">
-  <li><span>Terraform validation</span><strong className={result?.status==='passed'?'check-complete':'check-pending'}>{working==='terraform'?'Running…':label(result?.status)}</strong><span className="check-run-action" title={terraformHint} tabIndex={generationPending?0:undefined} aria-label={terraformHint}><button className="btn" aria-label="Run Terraform validation" title={terraformHint} disabled={generationPending||!session?.token||!!working||running} onClick={()=>run('terraform')}>{working==='terraform'?<><BrainActivity size={18}/> Running…</>:'Run'}</button></span></li>
+  <li><span>Terraform validation</span><strong className={result?.status==='passed'?'check-complete':'check-pending'}>{working==='terraform'?uploadProgress!==null?`Uploading ${uploadProgress}%`:'Running…':label(result?.status)}</strong><span className="check-run-action" title={terraformHint} tabIndex={generationPending?0:undefined} aria-label={terraformHint}><button className="btn" aria-label="Run Terraform validation" title={terraformHint} disabled={generationPending||!session?.token||!!working||running} onClick={()=>run('terraform')}>{working==='terraform'?<><BrainActivity size={18}/> Running…</>:'Run'}</button></span></li>
   <li><span>Application tests</span><strong id={hintId} className={applicationStatus==='Passed'?'check-complete':'check-pending'}>{applicationStatus}</strong><span className="check-run-action" title={applicationHint} tabIndex={generationPending||!report?.artifact||!available.length?0:undefined} aria-label={applicationHint}><button className="btn" aria-label="Run application tests" aria-describedby={hintId} title={applicationHint} disabled={generationPending||!session?.token||!!working||running||!report?.artifact||!available.length} onClick={()=>run('application')}>{working==='application'||running?<><BrainActivity size={18}/> Running…</>:'Run'}</button></span></li>
  </ul>
  {(result||checks.length>0)&&<details><summary>Check details</summary>{result&&<><p>{result.message}</p>{result.checks?.map((c,i)=><details key={i}><summary>{c.name} · {c.passed?'Passed':'Failed'}</summary><pre>{c.output}</pre></details>)}</>}{checks.map(c=><details key={c.id}><summary>{c.label}</summary><pre>{c.result?.output||c.result?.reason||c.state}</pre></details>)}</details>}

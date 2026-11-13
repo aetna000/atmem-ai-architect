@@ -31,3 +31,10 @@ Replace the combined Run checks action with Terraform validation / Run and Appli
 Block both check actions while restoring, accepting or running project generation. Track the backend job lifecycle after the HTTP start returns, including restored jobs. Show concise current tool activity and elapsed time since the browser received an update; do not fabricate server event timestamps. Terraform validates the saved-design draft and its tooltip must say so.
 
 The inspected local job completed naturally (302 journal entries, 53 workspace files); no restart, cancellation or resubmission was performed. This observation is not implementation acceptance evidence.
+
+
+## Chunked Terraform validation requests
+
+The current project produces a 253,165-byte validation envelope, exceeding the generic 250,000-byte API boundary before Terraform starts. Keep that small-request boundary and send larger validation envelopes in ordered 128 KiB chunks. The authenticated server assembles a temporary, declared-size/SHA-256 checked request before applying the existing strict ValidationRequest schema and server-owned generator. Never accept client-supplied Terraform files.
+
+Transport bound: 64 MiB per envelope, 128 MiB reserved across eight uploads, 30-minute expiration on access and explicit cancellation. Uploads are one-use; malformed, reordered, oversized, incomplete or corrupted data cannot start validation. Normal uploads show percent, then validation shows Running. Transport errors do not fabricate a Terraform failure. This changes validation transport, not the separate 2 MB durable project-document admission limit or engineering-context bounds.
