@@ -12,3 +12,6 @@
 - Owner clarified that a best available estimate should not remain a warning. UI completion now means an estimate exists, while engine coverage and exclusions remain explicit in data/exports. No absent price is replaced with zero.
 - Profiling the Delivery path identified unconditional visual export and ZIP recompression on entry. Defer those operations to explicit previews/downloads rather than adding a mandatory waiting delay to every click.
 - Owner requested named check actions. Separate Terraform validation and application tests; only application tests require generated application files.
+
+
+2026-11-13: Owner requested consistent disabled checks during generation and clearer progress. Busy now includes restored/running/starting jobs, not only HTTP request time. Both checks share that gate; existing validators and evidence semantics are unchanged. The local job completed without intervention.

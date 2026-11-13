@@ -59,9 +59,14 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
     actionLock.current=true;setBusy(true);setError('');
     try{await operation();}catch(e){if(live.current)setError(e.message);}finally{actionLock.current=false;if(live.current)setBusy(false);}
   }
-  useEffect(()=>{onBusyChange?.(busy);return()=>onBusyChange?.(false);},[busy,onBusyChange]);
+  useEffect(()=>{onBusyChange?.(busy||loading||['running','starting'].includes(job?.state));return()=>onBusyChange?.(false);},[busy,loading,job?.state,onBusyChange]);
   const exactSelection=connection?.provider==='codex'&&connection.model&&connection.model!=='default'&&connection.effort;
   const running=job?.state==='running',uncertain=job?.state==='starting';
+  const lastProgress=events.filter(event=>event.runId===job?.run&&['progress','message'].includes(event.kind)).at(-1);
+  const [lastReceived,setLastReceived]=useState(null),[now,setNow]=useState(Date.now());
+  useEffect(()=>{if(lastProgress){const time=Date.now();setLastReceived(time);setNow(time);}},[lastProgress?.sequence]);
+  useEffect(()=>{if(!running&&!uncertain)return;const timer=setInterval(()=>setNow(Date.now()),1000);return()=>clearInterval(timer);},[running,uncertain]);
+  const activity=lastProgress?.kind==='message'?'Preparing an update':({reasoning:'Thinking through the implementation',fileChange:'Updating project files',commandExecution:'Running a development command',mcpToolCall:'Using a development tool',webSearch:'Checking documentation'}[lastProgress?.text]||'Generating project files');
   const conversation=engineeringConversation(events);
   const hasDesign=hasArchitectureDesign(project),canSubmit=running?!!draft.trim():!!buildIntent(project,draft);
   const consumedBuild=useRef(null);
@@ -112,7 +117,8 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
     {restoreBlocked&&<button disabled={loading||busy} onClick={()=>{setError('');setRestoreAttempt(value=>value+1);}}>Retry loading earlier work</button>}
     {loading?<p role="status">Finding your project’s work…</p>:<>
       {job?<>
-        <p className="generation-status" role="status">{(running||uncertain||busy)&&<BrainActivity size={24}/>} {running?'Working':uncertain?'Recovering acceptance of your last request':job.last_status?({completed:'Work completed',interrupted:'Work stopped',failed:'Work needs attention'}[job.last_status]||job.last_status):'Ready'} · {job.model} · {job.effort}</p>
+        {(running||uncertain)&&<p className="generation-activity" role="status">{activity}{lastReceived&&<> · Last update received {Math.max(0,Math.floor((now-lastReceived)/1000))}s ago</>}</p>}
+        <p className="generation-status" role="status">{(running||uncertain||busy)&&<BrainActivity size={24}/>} {running?'Working':uncertain?'Recovering acceptance of your last request':finalization?.kind==='finalization_needs_attention'?'Files generated · Checks need attention':job.last_status?({completed:'Work completed',interrupted:'Work stopped',failed:'Work needs attention'}[job.last_status]||job.last_status):'Ready'} · {job.model} · {job.effort}</p>
 
       </>:<>
         <p>{exactSelection?`${connection.model} · ${connection.effort}`:'Choose a Codex model and reasoning level to start.'}</p>

@@ -3,7 +3,7 @@ import{BrainActivity}from'./BrainActivity.jsx';
 import{engineeringCall}from'./engineering-client.mjs';
 import{terraformSketch}from'./terraform.mjs';
 import{verifiedReceipt}from'./validation-receipt.mjs';
-export function ProjectChecks({project,environment,session,onReceipt,onBusy,receipt}){
+export function ProjectChecks({project,environment,session,onReceipt,onBusy,receipt,generationPending=false}){
  const [report,setReport]=useState(null),[catalogReady,setCatalogReady]=useState(false),[catalog,setCatalog]=useState([]),[checks,setChecks]=useState([]),[result,setResult]=useState(null),[working,setWorking]=useState(false),[error,setError]=useState('');
  const hintId=useId();
  const active=useRef(null),locked=useRef(false),files=useMemo(()=>terraformSketch(project,environment),[project,environment]),key=JSON.stringify(files);
@@ -22,7 +22,7 @@ export function ProjectChecks({project,environment,session,onReceipt,onBusy,rece
  useEffect(()=>{onBusy?.(!!working||running);return()=>onBusy?.(false);},[working,running,onBusy]);
  const available=catalog.filter(v=>v.available!==false);
  async function run(kind){
-  if(locked.current||!session?.token||kind==='application'&&(!report?.artifact||!available.length))return;
+  if(generationPending||locked.current||!session?.token||kind==='application'&&(!report?.artifact||!available.length))return;
   locked.current=true;setWorking(kind);setError('');const controller=new AbortController();active.current=controller;
   try{
    if(kind==='application'){
@@ -43,12 +43,13 @@ export function ProjectChecks({project,environment,session,onReceipt,onBusy,rece
   finally{locked.current=false;setWorking(false);}
  }
  const label=status=>({passed:'Passed',failed:'Failed',incomplete:'Incomplete',unavailable:'Not run'}[status]||'Not run');
- const applicationHint=!report?.artifact?'Generate project files first.':!catalogReady?'Loading available application tests.':!available.length?'No application tests are configured.':'Run the generated application tests.';
- const applicationStatus=!report?.artifact?'Generate files first':working==='application'||running?'Running…':checks.length?checks.every(c=>c.state==='finished'&&c.result?.status==='passed')?'Passed':'Needs attention':!catalogReady?'Loading…':available.length?'Not run':'Not configured';
+ const terraformHint=generationPending?'Project files are being generated. Wait until generation finishes.':'Validate the Terraform draft from your saved design.';
+ const applicationHint=generationPending?'Project files are being generated. Wait until generation finishes.':!report?.artifact?'Generate project files first.':!catalogReady?'Loading available application tests.':!available.length?'No application tests are configured.':'Run the generated application tests.';
+ const applicationStatus=generationPending?'Generating files…':!report?.artifact?'Generate files first':working==='application'||running?'Running…':checks.length?checks.every(c=>c.state==='finished'&&c.result?.status==='passed')?'Passed':'Needs attention':!catalogReady?'Loading…':available.length?'Not run':'Not configured';
  return <section className="project-checks" aria-label="Project checks"><div className="section-action"><h3>Checks</h3></div>
  <ul className="check-rows">
-  <li><span>Terraform validation</span><strong className={result?.status==='passed'?'check-complete':'check-pending'}>{working==='terraform'?'Running…':label(result?.status)}</strong><span className="check-run-action" title="Validate the current Terraform files."><button className="btn" aria-label="Run Terraform validation" disabled={!session?.token||!!working||running} onClick={()=>run('terraform')}>{working==='terraform'?<><BrainActivity size={18}/> Running…</>:'Run'}</button></span></li>
-  <li><span>Application tests</span><strong id={hintId} className={applicationStatus==='Passed'?'check-complete':'check-pending'}>{applicationStatus}</strong><span className="check-run-action" title={applicationHint} tabIndex={!report?.artifact||!available.length?0:undefined} aria-label={applicationHint}><button className="btn" aria-label="Run application tests" aria-describedby={hintId} title={applicationHint} disabled={!session?.token||!!working||running||!report?.artifact||!available.length} onClick={()=>run('application')}>{working==='application'||running?<><BrainActivity size={18}/> Running…</>:'Run'}</button></span></li>
+  <li><span>Terraform validation</span><strong className={result?.status==='passed'?'check-complete':'check-pending'}>{working==='terraform'?'Running…':label(result?.status)}</strong><span className="check-run-action" title={terraformHint} tabIndex={generationPending?0:undefined} aria-label={terraformHint}><button className="btn" aria-label="Run Terraform validation" title={terraformHint} disabled={generationPending||!session?.token||!!working||running} onClick={()=>run('terraform')}>{working==='terraform'?<><BrainActivity size={18}/> Running…</>:'Run'}</button></span></li>
+  <li><span>Application tests</span><strong id={hintId} className={applicationStatus==='Passed'?'check-complete':'check-pending'}>{applicationStatus}</strong><span className="check-run-action" title={applicationHint} tabIndex={generationPending||!report?.artifact||!available.length?0:undefined} aria-label={applicationHint}><button className="btn" aria-label="Run application tests" aria-describedby={hintId} title={applicationHint} disabled={generationPending||!session?.token||!!working||running||!report?.artifact||!available.length} onClick={()=>run('application')}>{working==='application'||running?<><BrainActivity size={18}/> Running…</>:'Run'}</button></span></li>
  </ul>
  {(result||checks.length>0)&&<details><summary>Check details</summary>{result&&<><p>{result.message}</p>{result.checks?.map((c,i)=><details key={i}><summary>{c.name} · {c.passed?'Passed':'Failed'}</summary><pre>{c.output}</pre></details>)}</>}{checks.map(c=><details key={c.id}><summary>{c.label}</summary><pre>{c.result?.output||c.result?.reason||c.state}</pre></details>)}</details>}
  {error&&<p role="alert">{error}</p>}

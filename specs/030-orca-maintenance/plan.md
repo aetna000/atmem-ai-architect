@@ -24,3 +24,10 @@ An available estimate is a normal Estimated state, with neutral exclusions. Nume
 Delivery was generating PDF/diagram exports on entry and recompressing captured source for previews. Prepare lightweight source documents first, defer visual generation to preview/download, and only build the complete ZIP on explicit export. Preserve the same full PDFs/PNG/SVG in downloads and Orca handoffs; guard against a design changing during preparation. Remove the unconditional frame delay from checklist clicks.
 
 Replace the combined Run checks action with Terraform validation / Run and Application tests / Run. Keep application tests disabled before files exist, with a hover/focus prerequisite. Each action starts only its named check family. Terraform validation can run independently of application generation.
+
+
+## Generation lifecycle follow-up
+
+Block both check actions while restoring, accepting or running project generation. Track the backend job lifecycle after the HTTP start returns, including restored jobs. Show concise current tool activity and elapsed time since the browser received an update; do not fabricate server event timestamps. Terraform validates the saved-design draft and its tooltip must say so.
+
+The inspected local job completed naturally (302 journal entries, 53 workspace files); no restart, cancellation or resubmission was performed. This observation is not implementation acceptance evidence.
