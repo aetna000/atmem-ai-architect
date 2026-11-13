@@ -25,3 +25,5 @@
 2026-11-13: Owner requested large-request support with chunking after Terraform showed Request too large. Preserve full request bytes and existing content admission instead of stripping history/requirements. Add bounded temporary chunk assembly; configure the local candidate to use the already installed Terraform1.17.1 binary. Restarted only after verifying native work was idle; retained the same data directory.
 
 2026-11-13: Owner asked how to configure Application tests. Registered an existing cached isolated Python/PostgreSQL runner for candidate5306. All22 captured-package tests passed. Browser tests remain separate; retained a local restart launcher and documented registration.
+
+2026-11-13: Owner explicitly authorized publishing the accumulated changes as a formal stable npm release and public Orca distribution. Prepare0.2.1, use latest publishing metadata and the trusted-publisher CI with installed-platform gates. Plugin is already observed in the community catalog; update its pinned app after npm publication.

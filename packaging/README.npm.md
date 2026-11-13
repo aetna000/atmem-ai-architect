@@ -27,6 +27,8 @@ Packaged UI and AtMem startup are checked on Windows, macOS, and Linux. Full nat
 
 Native generation needs a supported signed-in agent. Independent Terraform/container checks require local tools and configuration.
 
-Costs remain partial where prices or usage are missing. Cloud deployment is not automatic. Actual Orca desktop launch remains unverified.
+Available cost estimates include explicit exclusions where prices or usage are missing. Cloud deployment is not automatic. Orca desktop integration is verified on macOS; Windows/Linux Orca execution remains unqualified.
+
+[Configure application tests](https://github.com/aetna000/atmem-ai-architect/blob/main/docs/architecture/configuring-application-tests.md) · [Orca plugin](https://orca.dev/plugins/aetna000/atmem-ai-architect-orca)
 
 AtMem-owned code is Apache-2.0. Bundled third-party licences and notices are retained.
