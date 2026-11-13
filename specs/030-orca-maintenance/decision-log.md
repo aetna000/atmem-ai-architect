@@ -19,3 +19,5 @@
 2026-11-13: Owner requested a dynamic generation progress bar. Use an indeterminate bar and received activity because total native work is unknown. Correct previous-snapshot messaging without resubmitting or interrupting generation.
 
 2026-11-13: Owner requested subtle animation on the engineering event counter. Pulse once when its count changes during active generation; preserve tabular digits and reduced-motion preference.
+
+2026-11-13: Remove raw turnStatus from the file count. During regeneration identify the existing package as Previous files with Generating updated files; the running job owns generation status.

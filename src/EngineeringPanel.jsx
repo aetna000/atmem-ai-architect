@@ -142,8 +142,8 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
         </details>
         <details><summary>Engineering progress (<span key={events.length} className={`engineering-progress-count${running||uncertain?' updated':''}`}>{events.length}</span>)</summary><ol>{events.filter(event=>!['message','accepted','steering_submitted'].includes(event.kind)).map(event=><li key={event.sequence}>{event.kind}{event.text?` · ${event.text}`:''}</li>)}</ol></details>
       </>}
-      {artifact&&<div className="engineering-artifact"><p>Project files · {artifact.files.filter(file=>file.kind==='file').length} {artifact.files.filter(file=>file.kind==='file').length===1?'file':'files'} · {artifact.turnStatus}.</p>
-        {artifact.runId!==job?.run&&<p>{running||uncertain?'Previous snapshot · New files are being generated.':'Previous snapshot · Generate files to include current changes.'}</p>}
+      {artifact&&<div className="engineering-artifact"><p>{artifact.runId!==job?.run||running||uncertain?'Previous files':'Project files'} · {artifact.files.filter(file=>file.kind==='file').length} {artifact.files.filter(file=>file.kind==='file').length===1?'file':'files'}</p>
+        {artifact.runId!==job?.run&&<p>{running||uncertain?'Generating updated files…':'Generate updated files to include your changes.'}</p>}
         {onDelivery&&<button disabled={busy} onClick={onDelivery}>Review and download handoff</button>}
 
         {onWorkModelChange&&<p className="muted small" role="status">{running||uncertain?'File links update when generation finishes.':artifact.runId!==job?.run?'File links belong to the previous snapshot.':mappingStatus||'Connecting files to design blocks…'}</p>}
