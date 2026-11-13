@@ -117,6 +117,7 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
     {restoreBlocked&&<button disabled={loading||busy} onClick={()=>{setError('');setRestoreAttempt(value=>value+1);}}>Retry loading earlier work</button>}
     {loading?<p role="status">Finding your project’s work…</p>:<>
       {job?<>
+        {(running||uncertain)&&<div className="generation-progress" role="progressbar" aria-label="Project generation" aria-valuetext={activity}><span/></div>}
         {(running||uncertain)&&<p className="generation-activity" role="status">{activity}{lastReceived&&<> · Last update received {Math.max(0,Math.floor((now-lastReceived)/1000))}s ago</>}</p>}
         <p className="generation-status" role="status">{(running||uncertain||busy)&&<BrainActivity size={24}/>} {running?'Working':uncertain?'Recovering acceptance of your last request':finalization?.kind==='finalization_needs_attention'?'Files generated · Checks need attention':job.last_status?({completed:'Work completed',interrupted:'Work stopped',failed:'Work needs attention'}[job.last_status]||job.last_status):'Ready'} · {job.model} · {job.effort}</p>
 
@@ -142,11 +143,11 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
         <details><summary>Engineering progress ({events.length})</summary><ol>{events.filter(event=>!['message','accepted','steering_submitted'].includes(event.kind)).map(event=><li key={event.sequence}>{event.kind}{event.text?` · ${event.text}`:''}</li>)}</ol></details>
       </>}
       {artifact&&<div className="engineering-artifact"><p>Project files · {artifact.files.filter(file=>file.kind==='file').length} {artifact.files.filter(file=>file.kind==='file').length===1?'file':'files'} · {artifact.turnStatus}.</p>
-        {artifact.runId!==job?.run&&<p>Earlier package · regenerate for current changes.</p>}
+        {artifact.runId!==job?.run&&<p>{running||uncertain?'Previous snapshot · New files are being generated.':'Previous snapshot · Generate files to include current changes.'}</p>}
         {onDelivery&&<button disabled={busy} onClick={onDelivery}>Review and download handoff</button>}
 
-        <p className="muted small" role="status">{mappingStatus||'File links pending.'}</p>
-        {mappingStatus==='File links missing from package.'&&<button disabled={busy||contextBusy} onClick={()=>submitIntent(null,'Add architecture-work-proposal.json binding the existing implementation files to the saved design blocks and requirements. Preserve the application and requirements. Run applicable local checks; retain failed or unexecuted checks explicitly.')}>Repair file links</button>}
+        {onWorkModelChange&&<p className="muted small" role="status">{running||uncertain?'File links update when generation finishes.':artifact.runId!==job?.run?'File links belong to the previous snapshot.':mappingStatus||'Connecting files to design blocks…'}</p>}
+        {!running&&!uncertain&&artifact.runId===job?.run&&mappingStatus==='File links missing from package.'&&<button disabled={busy||contextBusy} onClick={()=>submitIntent(null,'Add architecture-work-proposal.json binding the existing implementation files to the saved design blocks and requirements. Preserve the application and requirements. Run applicable local checks; retain failed or unexecuted checks explicitly.')}>Repair file links</button>}
 
 
       </div>}
