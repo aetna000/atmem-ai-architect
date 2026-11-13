@@ -11,13 +11,49 @@ from pathlib import Path
 import shutil
 import subprocess
 import tempfile
+import base64
+import binascii
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field, ValidationError
+from .request_uploads import RequestUploads, MAX_BYTES
 from typing import Literal
 
 router = APIRouter()
 LOCK = asyncio.Lock()
 ROOT = Path(__file__).resolve().parent.parent
+UPLOADS = RequestUploads()
+
+class UploadStart(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    bytes: int = Field(gt=0, le=MAX_BYTES, strict=True)
+    sha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+
+class UploadId(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    uploadId: str = Field(pattern=r'^[a-f0-9]{48}$')
+
+class UploadChunk(UploadId):
+    index: int = Field(ge=0, strict=True)
+    data: str = Field(min_length=1, max_length=174764)
+
+@router.post('/api/terraform/uploads/start')
+async def upload_start(payload: UploadStart):
+    try:
+        return UPLOADS.start(payload.bytes, payload.sha256)
+    except ValueError as error:
+        raise HTTPException(409, str(error))
+
+@router.post('/api/terraform/uploads/chunk')
+async def upload_chunk(payload: UploadChunk):
+    try:
+        return UPLOADS.append(payload.uploadId, payload.index, base64.b64decode(payload.data, validate=True))
+    except (ValueError, binascii.Error) as error:
+        raise HTTPException(422, str(error))
+
+@router.post('/api/terraform/uploads/cancel')
+async def upload_cancel(payload: UploadId):
+    UPLOADS.cancel(payload.uploadId)
+    return {'cancelled': True}
 
 class ValidationRequest(BaseModel):
     model_config = ConfigDict(extra='forbid')
@@ -116,3 +152,13 @@ async def validate_route(payload: ValidationRequest):
             raise HTTPException(504, 'Terraform validation timed out. No deployment was attempted.')
         except (ValueError, OSError):
             raise HTTPException(422, 'Could not validate the generated Terraform draft. Check the project and local Terraform installation.')
+
+@router.post('/api/terraform/validate-upload')
+async def validate_upload(payload: UploadId):
+    if LOCK.locked():
+        raise HTTPException(409, 'A Terraform validation is already running.')
+    try:
+        request = ValidationRequest.model_validate_json(UPLOADS.take(payload.uploadId))
+    except (ValueError, ValidationError):
+        raise HTTPException(422, 'The upload is incomplete, changed, or is not a valid project validation request.')
+    return await validate_route(request)

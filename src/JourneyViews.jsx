@@ -92,7 +92,7 @@ export function ReviewView({ project, findings, onChange, onOpen, onAddRequireme
   );
 }
 
-export function EstimateView({ project, result, onChange, onEstimate, busy=false, pricing, onNext }) {
+export function EstimateView({ project, result, onChange, onEstimate, busy=false, pricing, onNext, onChooseRegion }) {
   const e = result;
   return (
     <section className="doc" aria-label="Estimate">
@@ -104,7 +104,7 @@ export function EstimateView({ project, result, onChange, onEstimate, busy=false
         <div className="row">{PROJECT_SIZES.map(size=><button type="button" className={project.estimate?.projectSize===size.id?"btn primary":"btn"} key={size.id} aria-pressed={project.estimate?.projectSize===size.id} onClick={()=>{if(project.estimate?.projectSize===size.id)return;const next=setProjectSize(project,size.id);onChange(next);onEstimate?.(next);}}>{project.estimate?.projectSize===size.id&&<Check size={16} aria-hidden="true"/>}{size.label}</button>)}</div>
         <details className="cost-assumptions"><summary>Planning assumptions</summary><p className="muted small">Small: 10,000 requests / 10 GB; Medium: 100,000 / 100 GB; Large: 1 million / 1 TB; Extra Large: 10 million / 10 TB per month. Existing usage figures take priority. Model assumptions: 3,000 tokens per request and 730 endpoint hours; training usage needs separate agreement.</p></details>
       </fieldset>
-      {project.estimate?.projectSize&&<p className="cost-selection-status" role="status">{PROJECT_SIZES.find(size=>size.id===project.estimate.projectSize)?.label} · {pricing?.busy?'Updating prices…':e.complete?'Estimate ready':e.lines.some(line=>line.cost!=null)?'Partial estimate':'Prices unavailable'}</p>}{pricing?.errors?.map((error,i)=><p className="warn-text" key={i}>{error.component&&`${error.component}: `}{error.reason} <button className="link" disabled={busy||pricing?.busy} onClick={()=>onEstimate?.(project)}>Retry pricing</button></p>)}
+      {project.estimate?.projectSize&&<p className="cost-selection-status" role="status">{PROJECT_SIZES.find(size=>size.id===project.estimate.projectSize)?.label} · {pricing?.busy?'Updating prices…':e.expected!==null?'Estimate ready':'Prices unavailable'}</p>}{pricing?.errors?.map((error,i)=><p className={e.expected!==null?"muted small":"warn-text"} key={i}>{error.component&&`${error.component}: `}{error.reason} <button className="link" disabled={busy||pricing?.busy} onClick={()=>error.action==='choose-region'?onChooseRegion?.():onEstimate?.(project)}>{error.action==='choose-region'?'Choose region':'Retry pricing'}</button></p>)}
 
       <div className="totals">
         <div>
@@ -119,8 +119,8 @@ export function EstimateView({ project, result, onChange, onEstimate, busy=false
         </div>
         <div>
           <small className="muted">Status</small>
-          <span className={e.complete ? "ok-text" : "warn-text"}>
-            {e.complete ? "All entered charges estimated" : e.mixedCurrencies ? "Currency needs review" : "Partial estimate · see exclusions"}
+          <span className={e.mixedCurrencies ? "warn-text" : e.expected!==null ? "" : "muted"}>
+            {e.mixedCurrencies ? "Choose one currency" : e.expected!==null ? "Planning estimate" : "Not estimated"}
           </span>
         </div>
         {e.budget && (

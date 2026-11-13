@@ -2,7 +2,7 @@ import {FileTree} from './FileTree.jsx';
 import {strFromU8} from 'fflate';
 import {CodePreview} from './CodePreview.jsx';
 import {BrainActivity} from "./BrainActivity.jsx";
-import React,{useEffect,useState} from 'react';
+import React,{useEffect,useState,useRef,useMemo} from 'react';
 import {EmulationPanel} from './EmulationPanel.jsx';
 import {outputBundle} from './output-bundle.mjs';
 import {ImplementationDelivery} from './ImplementationDelivery.jsx';
@@ -37,16 +37,22 @@ function Preview({name,content}){
 }
 export function OutputsView({project,run,environment,session,onDownload,onBack,emulation,onDiscuss,discussionBusy,onBuild,onSave,onDownloaded,onReview,checkReceipt,onNavigate}){
  const [exploration,setExploration]=useState(null);
+ const projectRef=useRef(project);projectRef.current=project;
+ const [packing,setPacking]=useState(false);
  const [bundle,setBundle]=useState(null),[error,setError]=useState(''),[loading,setLoading]=useState(true),[retry,setRetry]=useState(0),[selected,setSelected]=useState('spec-kit/implementation-spec.md');
  useEffect(()=>{
    let active=true;setLoading(true);setError('');
-   outputBundle(project,run,environment,checkReceipt).then(value=>{if(active){setBundle(value);setLoading(false);}}).catch(e=>{if(active){setError(e.message);setLoading(false);}});
+   outputBundle(project,run,environment,checkReceipt,{deferVisuals:true}).then(value=>{if(active){setBundle(value);setLoading(false);}}).catch(e=>{if(active){setError(e.message);setLoading(false);}});
    return ()=>{active=false;};
  },[project,run,environment,retry,checkReceipt]);
  const readiness=bundle?.files['spec-kit/readiness.json']?JSON.parse(bundle.files['spec-kit/readiness.json']):null;
- const fileValues=exploration?.project===project?exploration.files:bundle?.files||{};
- const selectedPath=fileValues[selected]!==undefined?selected:fileValues['START_HERE.md']?'START_HERE.md':Object.keys(fileValues).find(name=>name.endsWith('implementation-spec.md'))||Object.keys(fileValues)[0];
- const raw=fileValues[selectedPath],content=typeof raw==='string'?raw:raw&&/\.(?:md|txt|json|py|js|mjs|tf|sh|yaml|yml|toml|html|css)$/.test(selectedPath)?strFromU8(raw):raw;
+ const artifactMode=exploration?.project===project,prefix=artifactMode?'design-documents/':'';
+ const fileValues=useMemo(()=>artifactMode?{...exploration.files,...Object.fromEntries(Object.entries(bundle?.files||{}).map(([name,value])=>[prefix+name,value]))}:bundle?.files||{},[artifactMode,exploration,bundle,prefix]);
+ const treeFiles=useMemo(()=>({...Object.fromEntries((bundle?.visualPaths||[]).map(path=>[prefix+path,null])),...fileValues}),[bundle,fileValues,prefix]);
+ async function selectFile(name){setSelected(name);if(treeFiles[name]===null){try{const full=await bundle.prepare();if(projectRef.current===project)setBundle(full);}catch(error){if(projectRef.current===project)setError(error.message);}}}
+ async function downloadDesign(){if(packing)return;setPacking(true);setError('');try{const full=await bundle.prepare();if(projectRef.current!==project)return;setBundle(full);await onDownload(full);}catch(error){if(projectRef.current===project)setError(error.message);}finally{setPacking(false);}}
+ const selectedPath=Object.hasOwn(treeFiles,selected)?selected:fileValues['START_HERE.md']?'START_HERE.md':Object.keys(fileValues).find(name=>name.endsWith('implementation-spec.md'))||Object.keys(fileValues)[0];
+ const raw=treeFiles[selectedPath],content=typeof raw==='string'?raw:raw&&/\.(?:md|txt|json|py|js|mjs|tf|sh|yaml|yml|toml|html|css)$/.test(selectedPath)?strFromU8(raw):raw;
 
  return <section className="doc outputs-view" aria-label="Outputs">
   <header className="doc-head"><h2>Delivery</h2></header>
@@ -54,7 +60,7 @@ export function OutputsView({project,run,environment,session,onDownload,onBack,e
   {session?.engineeringEnabled&&<ImplementationDelivery key={project.id} project={project} session={session} onBuild={onBuild} onSave={onSave} contextBusy={discussionBusy} designBundle={loading?null:bundle} onDesignDownload={onDownload} onDownloaded={onDownloaded} checkReceipt={checkReceipt} onExplore={setExploration} onNavigate={onNavigate}/>}
   <section aria-label="Project file explorer"><h3>Explore files</h3>
 
-  {!session?.engineeringEnabled&&<><p>Design package · no implementation generated.</p><button className="btn" disabled={!bundle||loading||!!error} onClick={()=>onDownload(bundle)}>Download project ZIP</button></>}
+  {!session?.engineeringEnabled&&<><p>Design package · no implementation generated.</p><button className="btn" disabled={!bundle||loading||!!error||packing} onClick={downloadDesign}>{packing?'Preparing ZIP…':'Download project ZIP'}</button></>}
 
   {loading&&<p role="status"><BrainActivity/> Preparing the current outputs…</p>}
   {error&&<div role="alert"><p>{error}</p><button className="btn" onClick={()=>setRetry(n=>n+1)}>Retry preparing outputs</button></div>}
@@ -62,8 +68,8 @@ export function OutputsView({project,run,environment,session,onDownload,onBack,e
    <p className="muted small">r{bundle.manifest.designRevision} · {Object.keys(bundle.files).length} design files</p>
    {readiness&&<details><summary>Remaining work</summary><aside aria-label="Handoff readiness"><strong>Engineering handoff — decisions and implementation remain</strong><p>{readiness.counts.priorityDecisions} priority decisions · {readiness.counts.generatedFoundations} generated foundations / {readiness.counts.components} logical components</p><p>Next: {readiness.nextAction}</p><button className="link" onClick={()=>setSelected('spec-kit/readiness.md')}>Review handoff gaps</button></aside></details>}
    <div className="outputs-browser" data-snapshot-id={bundle.manifest.snapshotId}>
-    <FileTree files={fileValues} selected={selectedPath} onSelect={setSelected}/>
-    <div className="output-preview" aria-label="Output preview"><h3>{selectedPath}</h3>{content!==undefined&&(typeof content==='string'||/\.(?:pdf|png|svg)$/.test(selectedPath)?<Preview key={selectedPath} name={selectedPath} content={content}/>:<p>{content.byteLength} bytes</p>)}</div>
+    <FileTree files={treeFiles} selected={selectedPath} onSelect={selectFile}/>
+    <div className="output-preview" aria-label="Output preview"><h3>{selectedPath}</h3>{raw===null?<p role="status"><BrainActivity/> Preparing preview…</p>:content!==undefined&&(typeof content==='string'||/\.(?:pdf|png|svg)$/.test(selectedPath)?<Preview key={selectedPath} name={selectedPath} content={content}/>:<p>{content.byteLength} bytes</p>)}</div>
    </div>
   </>}
   </section>

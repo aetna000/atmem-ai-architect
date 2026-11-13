@@ -631,3 +631,7 @@ owner writes. No backend restart or programme resumption. Evidence:029/evidence/
 
 
 2026-11-12 npm preview packaging: owner authorized public @atmem/architect, with an isolated checksum-verified Python/AtMem bootstrap and one loopback API/UI process. Installer qualification proceeds separately from the paused original28/native programme. Mac clean installation, real AtMem and chat fixtures pass; cross-platform matrix and npm publication are tracked under029 PKG-001. No engine-quality or deployment promotion.
+
+## Owner-directed Orca and maintenance follow-up — 2026-11-13
+
+See `specs/030-orca-maintenance/plan.md` for the separate Orca plugin, regional pricing/navigation fixes, stable AtMem runtime update and GitHub-star invitation. These changes do not establish broader engine quality, model generation acceptance or deployment evidence.

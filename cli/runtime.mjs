@@ -8,6 +8,8 @@ import {gunzipSync} from 'node:zlib';
 import {unzipSync} from 'fflate';
 import {createServer} from 'node:net';
 export const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
+export const memoryVersion=fs.readFileSync(path.join(root,'server/memory-requirements.txt'),'utf8').match(/^atmem==(\d+\.\d+\.\d+)$/m)?.[1];
+if(!memoryVersion)throw Error('A stable AtMem runtime pin is required.');
 export const metadata=JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8'));
 const lock=JSON.parse(fs.readFileSync(path.join(root,'packaging/uv-release-lock.json'),'utf8'));
 export const digest=bytes=>createHash('sha256').update(bytes).digest('hex');
@@ -86,7 +88,7 @@ export async function setupRuntime(home){
    await run(uv,['pip','install','--require-hashes','--python',venvPython(destination),'-r',path.join(root,'server',requirements),'--index-url','https://pypi.org/simple'],{env});
   }
   await run(serverPython,['-c','import fastapi,uvicorn; from server.attachments import extract; from server.engineering_routes import LocalEngineeringService'],{cwd:root,env:{...env,ATMEM_ARCHITECT_HOME:home}});
-  await run(memoryPython,['-c',"from importlib.metadata import version; from atmem import Memory; assert version('atmem')=='2.3.10'"],{cwd:root,env});
+  await run(memoryPython,['-c',`from importlib.metadata import version; from atmem import Memory; assert version('atmem')==${JSON.stringify(memoryVersion)}`],{cwd:root,env});
   fs.writeFileSync(receipt,JSON.stringify({id:definition.id,packageVersion:metadata.version,python:found.stdout.trim()},null,2)+'\n',{mode:0o600});return {serverPython,memoryPython,folder};
  }finally{if(descriptor!==undefined)fs.closeSync(descriptor);fs.rmSync(lease,{force:true});}
 }

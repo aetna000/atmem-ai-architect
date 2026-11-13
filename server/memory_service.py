@@ -46,6 +46,7 @@ class MemoryService:
         self.worker = str(worker or setting('MEMORY_PYTHON') or ROOT / '.memory-venv' / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python'))
         self.lock = threading.RLock()
         self.error = None
+        self.engine_version = None
         with self.db() as db:
             db.executescript('''
               CREATE TABLE IF NOT EXISTS identity (id TEXT PRIMARY KEY);
@@ -107,6 +108,7 @@ class MemoryService:
         if result.returncode or 'error' in payload:
             raise RuntimeError('AtMem rejected the operation (' + payload.get('error', 'worker failed') + ')')
         self.error = None
+        self.engine_version = payload.get('version')
         return payload['results']
 
     def enqueue(self, project, scope, key, text, event_id=None, source=''):
@@ -192,7 +194,7 @@ class MemoryService:
     def status(self, project):
         with self.db() as db:
             counts = dict(db.execute('SELECT state,count(*) FROM queue WHERE project=? GROUP BY state', (project,)).fetchall())
-        return {'enabled': self.enabled(project), 'status': 'disabled' if not self.enabled(project) else 'unavailable' if self.error else 'ready', 'pending': counts.get('pending', 0), 'rejected': counts.get('rejected', 0), 'engine': 'AtMem 2.3.10 core SDK', 'policy': 'AtMem AI Architect single-user scope and opt-out policy', 'detail': self.error}
+        return {'enabled': self.enabled(project), 'status': 'disabled' if not self.enabled(project) else 'unavailable' if self.error else 'ready', 'pending': counts.get('pending', 0), 'rejected': counts.get('rejected', 0), 'engine': f'AtMem {self.engine_version} core SDK' if self.engine_version else 'AtMem core SDK (not checked)', 'policy': 'AtMem AI Architect single-user scope and opt-out policy', 'detail': self.error}
 
     def profile(self, project, field, value):
         if field not in {'explanation', 'experience', 'iac', 'preferences'} or not value.strip() or len(value) > 1000:

@@ -1,3 +1,5 @@
+import {StarPrompt,STAR_URL} from './StarPrompt.jsx';
+import {prefillAcceptedSettings} from './engineering-defaults.mjs';
 import {LocationChoices} from './LocationChoices.jsx';
 import {InlineNote} from './HelpNote.jsx';
 import {ProjectChecks} from './ProjectChecks.jsx';
@@ -663,6 +665,7 @@ document.documentElement.dataset.theme = savedTheme();
 function readChatView(id){try{const value=JSON.parse(localStorage.getItem('atmem-chat-view:'+id)||'null');return value&&Number.isSafeInteger(value.start)&&value.start>=0&&Array.isArray(value.turnIds)?value:{start:0,turnIds:[]};}catch{return {start:0,turnIds:[]};}}
 const pricingSignature=p=>JSON.stringify([p.id,p.estimate?.projectSize||'small',p.estimate?.usage,p.facts,p.decisions?.filter(d=>d.status==='Accepted'&&['cloud.region','data.country'].includes(d.subject)),[...storageNodes(p),...lambdaNodes(p),...googleNodes(p)].map(n=>[n.id,n.data.provider,n.data.service,n.data.config])]);
 function App() {
+  const [starOffer,setStarOffer]=useState(0);
   const [project, setProject] = useState(readSaved);
   const projectRef = useRef(project);
   projectRef.current = project;
@@ -749,7 +752,8 @@ function App() {
   const pricingKey=pricingSignature(project);
   async function refreshEstimate(selected){
     if(!session?.token)return;
-    const requested=selected.estimate?.projectSize?selected:setProjectSize(selected,'small');
+    const resolved=prefillAcceptedSettings(selected);
+    const requested=resolved.estimate?.projectSize?resolved:setProjectSize(resolved,'small');
     if(requested!==selected)updateEngagement(requested);
     const request=++pricingRequest.current;pricingAttempt.current.add(pricingSignature(requested));
     const baseline=JSON.stringify([requested.estimate?.prices,requested.estimate?.details]);
@@ -1578,15 +1582,17 @@ function App() {
   const exportFiles = (files, suffix) => {
     download(zipSync(Object.fromEntries(Object.entries(files).map(([name, content]) => [name, typeof content === "string" ? strToU8(content) : content]))), `${slug}-r${project.revision}-${suffix}.zip`, "application/zip");
   };
-  const downloadBundle = bundle => {
+  const downloadBundle = async bundle => {
+    bundle=await(bundle.prepare?.()||bundle);
+    if(bundle.project!==projectRef.current)throw Error('Design changed while preparing files. Download again.');
     download(zipSync(Object.fromEntries(Object.entries(bundle.files).map(([name,content])=>[name,typeof content === "string"?strToU8(content):content]))),bundle.filename,"application/zip");
     if(bundle.project?.id===projectRef.current.id)updateEngagement(acknowledgeStage(projectRef.current,'delivery'));
-    notify("ZIP downloaded.");
+    notify("ZIP downloaded.");setStarOffer(value=>value+1);
   };
   const exportPack = async () => {
     try {
       notify("Preparing documents and diagram exports…");
-      downloadBundle(await outputBundle(project,run,environment));
+      await downloadBundle(await outputBundle(project,run,environment));
     } catch(e) { notify(e.message); }
   };
   const exportTerraform = async (validation = null) => {
@@ -1887,6 +1893,7 @@ function App() {
             <hr />
             <button role="menuitem" onClick={() => setModal("connections")}><Waypoints size={16}/>AI providers</button>
             <button role="menuitem" onClick={() => setModal("licenses")}><ShieldCheck size={16}/>Licences</button>
+            <a role="menuitem" href={STAR_URL} target="_blank" rel="noopener noreferrer">Star on GitHub ↗</a>
           </div>
         )}
       </header>
@@ -2164,12 +2171,12 @@ function App() {
         <header className="review-intro"><h2>Review</h2></header>
         <div className="review-design-status"><ShieldCheck size={18}/><span>{findings.filter(f=>f.status==='open').length} design items</span><button className="icon" aria-label="Open design checks in specification" title="Specification" onClick={()=>visitJourney('scope')}><Code2 size={16}/></button></div>
         <section className="review-costs" aria-label="Project costs">
-        {["review","estimate"].includes(mode) && <EstimateView project={project} result={costs} onChange={updateEngagement} busy={busy||agentBusy||!!pending} onEstimate={refreshEstimate} pricing={pricingState} onNext={()=>{const section=document.querySelector('.review-generation');const target=section?.querySelector('button')||section;if(target){target.setAttribute('tabindex','-1');target.focus({preventScroll:true});target.scrollIntoView({block:'center'});}}} />}
+        {["review","estimate"].includes(mode) && <EstimateView project={project} result={costs} onChange={updateEngagement} busy={busy||agentBusy||!!pending} onEstimate={refreshEstimate} onChooseRegion={()=>{visitJourney('cloud');requestAnimationFrame(()=>{const input=document.querySelector('.location-region-form input');input?.focus();input?.scrollIntoView({block:'center',behavior:'instant'});});}} pricing={pricingState} onNext={()=>{const section=document.querySelector('.review-generation');const target=section?.querySelector('button')||section;if(target){target.setAttribute('tabindex','-1');target.focus({preventScroll:true});target.scrollIntoView({block:'center'});}}} />}
         </section>
         {mode==='review'&&session?.engineeringEnabled&&<section className="review-generation" aria-label="Generation and verification"><EngineeringPanel key={project.id} project={project} onBusyChange={setGenerationPending} onWorkModelChange={changeArchitectureWork} onIntentContext={syncEngineeringIntent} projectId={project.id} session={session} connection={connection} contextBusy={busy||agentBusy||!!pending} saveProject={()=>saveEngineeringProject(project.id)} buildRequest={buildRequest} onBuildRequestHandled={id=>setBuildRequest(current=>current?.id===id?null:current)} onConnections={()=>setModal('connections')}/></section>}
         {mode==='review'&&!session?.engineeringEnabled&&<p>Generation and local checks require the engineering service. Your design is retained; Delivery can package the design and remaining tasks.</p>}
-        {mode==='review'&&<ProjectChecks receipt={checkReceipt} project={project} environment={environment} session={session} onReceipt={setCheckReceipt} onBusy={setChecking}/>}
-        {mode==='review'&&<footer className="review-finish"><div><strong>3. Package and download</strong><p>Explore all files and download one project ZIP in Delivery.</p></div><button className="btn primary" onClick={()=>{const next=acknowledgeStage(projectRef.current,'review');updateEngagement(costs.complete?{...next,extensions:{...next.extensions,journey:{...next.extensions.journey,estimate:journey(next).keys.estimate}}}:next);visitJourney('delivery');}}>Complete →</button></footer>}
+        {mode==='review'&&<ProjectChecks generationPending={generationPending} receipt={checkReceipt} project={project} environment={environment} session={session} onReceipt={setCheckReceipt} onBusy={setChecking}/>}
+        {mode==='review'&&<footer className="review-finish"><div><strong>3. Package and download</strong><p>Explore all files and download one project ZIP in Delivery.</p></div><button className="btn primary" onClick={()=>{const next=acknowledgeStage(projectRef.current,'review');updateEngagement(costs.expected!==null&&!costs.mixedCurrencies?{...next,extensions:{...next.extensions,journey:{...next.extensions.journey,estimate:journey(next).keys.estimate}}}:next);visitJourney('delivery');}}>Complete →</button></footer>}
         </div>
 
 
@@ -2177,7 +2184,7 @@ function App() {
 
         {onBoard&&emulationOpen&&<div className="emulation-dock"><EmulationPanel project={project} session={session} emulation={emulation} onDiscuss={discussEmulation} onOpenComponent={id=>{reviewBlock(id);setEmulationOpen(false);}} discussionBusy={busy||agentBusy||!!pending} onClose={()=>setEmulationOpen(false)} onBuild={session?.engineeringEnabled?()=>{setEmulationOpen(false);buildCurrentDesign('test');}:undefined}/></div>}
 
-        {mode === "design" && designView === "outputs" && <OutputsView onNavigate={target=>{const [stage,selector]={requirements:['scope','.requirements-document'],location:['cloud','section[aria-label="Country and region"]'],cost:['review','.review-costs'],implementation:['review','.review-generation'],checks:['review','.project-checks']}[target];visitJourney(stage);requestAnimationFrame(()=>requestAnimationFrame(()=>{const element=document.querySelector(selector);if(element){element.setAttribute('tabindex','-1');element.focus({preventScroll:true});element.scrollIntoView({block:'start'});}}));}} checkReceipt={checkReceipt} onDownloaded={()=>updateEngagement(acknowledgeStage(projectRef.current,'delivery'))} onReview={()=>visitJourney('review')} onSave={expected=>saveEngineeringProject(project.id,expected)} project={project} run={run} environment={environment} session={session} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onDownload={downloadBundle} onBuild={session?.engineeringEnabled?()=>visitJourney('review'):undefined} onBack={()=>setDesignView("board")} />}
+        {mode === "design" && designView === "outputs" && <OutputsView onNavigate={async target=>{const [stage,selector]={requirements:['scope','.requirements-document'],location:['cloud','section[aria-label="Country and region"]'],cost:['review','.review-costs'],implementation:['review','.review-generation'],checks:['review','.project-checks']}[target];visitJourney(stage);await new Promise((resolve,reject)=>{const started=performance.now();function focus(){const element=document.querySelector(selector);if(element&&element.getClientRects().length){element.setAttribute('tabindex','-1');element.focus({preventScroll:true});element.scrollIntoView({block:'start',behavior:'instant'});resolve();}else if(performance.now()-started<5000)requestAnimationFrame(focus);else reject(Error('Section is unavailable. Use the stage tabs to continue.'));}requestAnimationFrame(focus);});}} checkReceipt={checkReceipt} onDownloaded={()=>{updateEngagement(acknowledgeStage(projectRef.current,'delivery'));setStarOffer(value=>value+1);}} onReview={()=>visitJourney('review')} onSave={expected=>saveEngineeringProject(project.id,expected)} project={project} run={run} environment={environment} session={session} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onDownload={downloadBundle} onBuild={session?.engineeringEnabled?()=>visitJourney('review'):undefined} onBack={()=>setDesignView("board")} />}
         {mode === "design" && designView === "terraform" && <TerraformView project={project} environment={environment} session={session} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onDelivery={()=>visitJourney("delivery")} onBuild={session?.engineeringEnabled?()=>visitJourney('review'):undefined} onBack={()=>setDesignView("board")} />}
         <div className="choices-workspace" hidden={!(mode==="design"&&["options","decisions","location"].includes(designView))}>
         {mode === "design" && ["options","decisions"].includes(designView) && (
@@ -2324,7 +2331,7 @@ function App() {
               </button>
             ))}
           </div>
-          {(agentBusy||generationPending||['starting','running'].includes(engineeringStatus?.state)||pricingState.busy||checking)&&<div className="chat-working-status" role="status" aria-live="polite"><BrainActivity size={26}/><span>{agentBusy?architectAction:generationPending?'Starting project generation…':['starting','running'].includes(engineeringStatus?.state)?'Generating project files…':checking?'Running checks…':'Calculating costs…'}</span></div>}
+          {(agentBusy||generationPending||['starting','running'].includes(engineeringStatus?.state)||pricingState.busy||checking)&&<div className="chat-working-status" role="status" aria-live="polite"><BrainActivity size={26}/><span>{agentBusy?architectAction:generationPending?'Generating project files…':['starting','running'].includes(engineeringStatus?.state)?'Generating project files…':checking?'Running checks…':'Calculating costs…'}</span></div>}
           {readingAttachments&&<p className="attachment-status" role="status"><BrainActivity/> Reading files…</p>}
           {attachmentError&&<p className="attachment-status" role="alert">{attachmentError}</p>}
           {!!attachments.length&&<div className="attachment-tray" aria-label="Attachments ready to send">{attachments.map(a=><div className="attachment-chip" key={a.id}>{a.data&&a.mime.startsWith('image/')?<img src={`data:${a.mime};base64,${a.data}`} alt=""/>:<Paperclip size={16}/>}<span>{a.name}<small>{!a.data?'Original missing · attach again':a.mime.startsWith('image/')?'Image':a.mime==='application/pdf'||a.mime.includes('wordprocessingml')?'Text will be extracted; embedded images omitted':'Document text'}</small></span><button className="icon" aria-label={`Remove ${a.name}`} onClick={()=>setAttachments(list=>list.filter(item=>item.id!==a.id))}><X size={14}/></button></div>)}<p>Sent to your selected architect with this message. Original files are not stored in project files.</p></div>}
@@ -2387,6 +2394,7 @@ function App() {
           {toast === "Preparing documents and diagram exports…"&&<BrainActivity/>}{toast}
         </div>
       )}
+      <StarPrompt offer={starOffer}/>
       {modal && (
         <div className="backdrop" onMouseDown={(e) => e.target === e.currentTarget && !(modal === "welcome" && !connection) && setModal(null)}>
           <section className={`modal ${modal==="memory"?"memory-modal":""}`} role="dialog" aria-modal="true" aria-label={modal}>

@@ -29,3 +29,13 @@
 .architecture-work > ul { max-height: 24rem; overflow: auto; padding-left: 1.3rem; }
 .architecture-work pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: .8rem; }
 .architecture-work small { display: block; }
+
+.generation-progress { height: 8px; overflow: hidden; border-radius: 999px; background: var(--line, #e1e6ee); margin: 1rem 0 .5rem; }
+.generation-progress > span { display: block; height: 100%; width: 35%; border-radius: inherit; background: var(--action, #f3a2b4); animation: generation-sweep 1.8s ease-in-out infinite; }
+@keyframes generation-sweep { from { transform: translateX(-80%); } to { transform: translateX(266%); } }
+@media (prefers-reduced-motion: reduce) { .generation-progress > span { animation: none; width: 100%; opacity: .65; } }
+
+.engineering-progress-count { display: inline-block; font-variant-numeric: tabular-nums; transform-origin: center; }
+.engineering-progress-count.updated { animation: progress-count-pulse 360ms ease-out; }
+@keyframes progress-count-pulse { 0% { opacity: .55; transform: scale(.92); } 45% { opacity: 1; transform: scale(1.1); } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .engineering-progress-count.updated { animation: none; } }

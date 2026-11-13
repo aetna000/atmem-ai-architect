@@ -61,6 +61,9 @@ def storage_quote(provider,region):
     if provider=='aws':return {**aws_s3(region),'provider':'aws','available':True}
     if provider=='azure':return dict(_azure_storage(region,int(time.time()//3600)))
     if provider=='gcp':
+        if region=='us-central1':
+            try:return dict(_google_storage_public(region,int(time.time()//3600)))
+            except (ValueError,OSError):pass
         import os
         key=os.getenv('GOOGLE_CLOUD_BILLING_API_KEY')
         if key and re.fullmatch(r'[a-z]+-[a-z]+\d',region):
@@ -80,7 +83,7 @@ def storage_quote(provider,region):
                     price=rates[0]['unitPrice'];value=float(price.get('units',0))+float(price.get('nanos',0))/1e9
                     candidates.append({'available':True,'provider':'gcp','price':value,'currency':'USD','unit':'GiB-month','region':region,'service':'Google Cloud Storage Standard / '+sku['skuId'],'source':'Google Cloud Billing Catalog','url':'https://cloud.google.com/skus/?currency=USD','date':datetime.now(timezone.utc).date().isoformat(),'coverage':'Standard storage only; operations, replication and transfer excluded'})
             if len(candidates)==1:return candidates[0]
-        return {'available':False,'provider':'gcp','region':region,'sourceUrl':PROVIDER_PAGES[provider],'reason':'An exact regional storage SKU needs a configured Google Cloud Billing Catalog API key or a sourced quote. A generic/default-region web price will not be substituted.','nextQuestion':'Which Google Cloud region and storage class should we price?'}
+        return {'available':False,'provider':'gcp','region':region,'sourceUrl':PROVIDER_PAGES[provider],'reason':f'Storage pricing for {region or "the selected region"} could not be verified. Recalculate or enter a sourced rate.','nextQuestion':'Which Google Cloud region and storage class should we price?'}
     return {'available':False,'provider':'ibm','region':region,'sourceUrl':PROVIDER_PAGES[provider],'reason':'IBM pricing depends on region, storage class and plan. No verified regional quote is configured; no AWS or invented rate is substituted.','nextQuestion':'Which IBM region and storage class or existing IBM quote should we use?'}
 
 
@@ -188,3 +191,54 @@ def google_public_quote(service,region,planning_reference=False):
     if region!='us-central1' and not (planning_reference and (not region or re.search('select|unknown|tbd',region,re.I))):
         raise ValueError('This public quote supports Iowa only; the selected region is preserved.')
     return {**_google_public(service,int(time.time()//3600)),'planningReference':region!='us-central1'}
+
+
+def parse_google_storage_public(html, region, url):
+    """Read an explicitly selected single-region public table, never a region list match."""
+    import hashlib
+    from html.parser import HTMLParser
+    if region != 'us-central1':
+        raise ValueError('The public default storage table verifies Iowa only.')
+    marker = 'id="data-storage"'
+    if marker not in html:
+        raise ValueError('Google data storage section is missing.')
+    section = html[html.index(marker):]
+    # Stop before dual-region rates. Region options alone do not verify selected pricing.
+    boundary = re.search(r'<(?:p|h[1-6])[^>]*>\s*(?:<b>)?Dual-region(?:</b>)?\s*</', section)
+    if not boundary:
+        raise ValueError('The single-region storage boundary is missing.')
+    section = section[:boundary.start()]
+    class Selected(HTMLParser):
+        def __init__(self):super().__init__();self.regions=[]
+        def handle_starttag(self,tag,attrs):
+            a=dict(attrs)
+            if a.get('role')=='option' and a.get('aria-selected')=='true':self.regions.append(a.get('data-value'))
+    selected=Selected();selected.feed(section)
+    if selected.regions != ['Iowa (us-central1)']:
+        raise ValueError('The selected public storage region is not Iowa.')
+    table = re.search(r'<table\b[^>]*>.*?</table>', section, re.S)
+    rows = _public_rows(table.group(0)) if table else []
+    if len(rows)!=2 or rows[0].count('Standard storage')!=1:
+        raise ValueError('The Standard storage table could not be verified.')
+    index=rows[0].index('Standard storage')
+    if index>=len(rows[1]):raise ValueError('The storage price is missing.')
+    cell=rows[1][index]
+    rate=re.fullmatch(r'\$([0-9]+(?:\.[0-9]+)?) / 1 gibibyte hour(?:, per 1 month / account)?',cell)
+    if not rate or not 0<float(rate.group(1))<1:raise ValueError('Unexpected Google storage rate or unit.')
+    hourly=float(rate.group(1))
+    return {'available':True,'provider':'gcp','price':hourly*730,'currency':'USD',
+            'unit':'GiB-month','region':region,'service':'Cloud Storage Standard / single-region',
+            'source':'Google Cloud public pricing','url':url,
+            'date':datetime.now(timezone.utc).date().isoformat(),
+            'sourceSha256':hashlib.sha256(section.encode()).hexdigest(),
+            'hourlyPrice':hourly,'hoursPerMonth':730,
+            'coverage':'Single-region Standard storage; 730-hour planning month. Operations, replication, transfer, taxes and discounts excluded.'}
+
+
+@lru_cache(maxsize=32)
+def _google_storage_public(region,hour):
+    url='https://cloud.google.com/storage/pricing'
+    with urllib.request.urlopen(urllib.request.Request(url,headers={'User-Agent':'AtMem Architect pricing'}),timeout=12) as response:
+        raw=response.read(8_000_001)
+    if len(raw)>8_000_000:raise ValueError('Google storage page exceeds its size bound.')
+    return parse_google_storage_public(raw.decode('utf-8'),region,url)
