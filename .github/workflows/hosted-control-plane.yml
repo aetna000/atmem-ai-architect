@@ -1,0 +1,32 @@
+name: Hosted control plane
+on:
+  pull_request:
+    paths: ['hosted/**', '.github/workflows/hosted-control-plane.yml']
+  push:
+    branches: [main]
+    paths: ['hosted/**', '.github/workflows/hosted-control-plane.yml']
+permissions:
+  contents: read
+jobs:
+  transactions:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: python -m venv .hosted-venv
+      - run: .hosted-venv/bin/pip install --require-hashes -r hosted/requirements.lock
+      - name: Verify control plane against local Firestore
+        run: >-
+          npx --yes firebase-tools@15.18.0 emulators:exec
+          --project demo-architect-hosted --only firestore --config hosted/firebase.emulator.json
+          '.hosted-venv/bin/python -m unittest discover -s hosted/tests -v'

@@ -1,0 +1,45 @@
+{
+  "status": "in_progress",
+  "completed": [
+    "HG-1 evidence/contracts",
+    "HG-2 transactional ledger domain"
+  ],
+  "implemented": [
+    "Server-verified Google identity and exact owner billing guard",
+    "Firestore transaction adapter",
+    "Signed Stripe Checkout fulfillment and cumulative refunds",
+    "Tenant-bound AES-GCM credential storage",
+    "Control-plane API and sandbox/production separation",
+    "Private disabled account preview, AtMem policies and checkout icon"
+  ],
+  "remaining": [
+    "Project/artifact tenancy and lifecycle",
+    "Model broker and atomic global budget admission",
+    "Isolated generation/check workers",
+    "Payment disputes, refund admission and recovery scanning",
+    "Real Google signup, CSP/hosting rewrite and full hosted acceptance",
+    "Concrete region/retention/spending/concurrency review",
+    "Owner-reviewed private main publication",
+    "Authenticated Stripe account-wide branding/footer/receipt changes"
+  ],
+  "tests": [
+    {
+      "command": "FIRESTORE_EMULATOR_HOST=127.0.0.1:8897 .hosted-venv/bin/python -m unittest discover -s hosted/tests -v",
+      "result": "40 passed, no skips",
+      "evidence": "evidence/validation.txt"
+    },
+    {
+      "result": "Real Stripe sandbox Checkout + signed payment/refund webhooks passed",
+      "evidence": "evidence/stripe-testmode.json"
+    }
+  ],
+  "cloudChanges": [],
+  "realFundsMoved": false,
+  "liveDeployment": false,
+  "changedFiles": [
+    "hosted/",
+    ".github/workflows/hosted-control-plane.yml",
+    ".gitignore",
+    "specs/031-hosted-google-platform/"
+  ]
+}
