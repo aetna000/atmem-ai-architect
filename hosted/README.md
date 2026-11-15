@@ -11,7 +11,7 @@ This is a separate X-only authenticated control plane, not the complete hosted l
 - OpenRouter is the managed model provider and the only BYOK connection in this pilot. Keys are encrypted and tenant-bound; plaintext is never returned. BYOK provider billing and managed wallet usage remain separate.
 - Sol Medium is preselected. Administrators may choose from the live OpenRouter catalog, with Sol Medium and Terra Medium presets; model choice is server-owned.
 - Stripe credit purchases are TODO. The pilot has no checkout or payment-webhook routes. Historical billing modules below remain inactive and are not the pilot entry point.
-- Cloud Run is the proposed stateless API host; AtBots runs in a separate Google VM worker. Neither runtime has been deployed by this implementation. Managed spending remains off pending the broker and budget/worker qualification.
+- The account-only Cloud Run API is deployed and exercised with real Firebase X login and private project storage. AtBots generation workers remain undeployed. Managed spending remains off pending the broker and budget/worker qualification.
 
 ## Runtime configuration
 
@@ -42,7 +42,7 @@ npx --yes firebase-tools@15.18.0 emulators:exec \
   '.hosted-venv/bin/python -m unittest discover -s hosted/tests -v'
 ```
 
-Current full local suite: 60 tests passed with no skips. Firestore tests use the actual local emulator and synthetic demo project. Object payload tests use an explicitly named fixture. This does not qualify production IAM, live X login, cloud object storage or model execution. Running without the emulator skips six integration checks.
+Current full local suite: 60 tests passed with no skips. Firestore tests use the actual local emulator and synthetic demo project. Object payload tests use an explicitly named fixture. Separate real X/cloud-account checks now qualify login, profiles and project roundtrips; see the deployment evidence. Model execution remains unqualified. Running without the emulator skips six integration checks.
 
 AtBots uses a separate environment because its AtMem dependency and Firebase Admin require incompatible cryptography versions:
 

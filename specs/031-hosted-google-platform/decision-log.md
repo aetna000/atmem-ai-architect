@@ -21,3 +21,5 @@
 2026-11-15 — API and AtBots workers need separate dependency environments: Firebase Admin requires cryptography >=50.0.2; AtMem 2.3.14 requires <49. Local worker pins AtBots 0.3.1 and cryptography 48.0.1, while API pins 50.0.2. Do not weaken either dependency contract or imply a shared production environment was qualified.
 
 2026-11-15 — Owner selected atmem.ai/architect as the hosted entry point, invite-only early access via X DM or javad@atmem.ai, matching website/docs and an intro video with background music.
+
+2026-11-15 — Owner requested admitted users be able to log in now. Real Firebase Twitter OAuth and revoked-token verification succeeded for @atmemai; the verified numeric subject is kept in operator deployment configuration. Deploy the bounded account/project control plane independently of generation: 0–1 Cloud Run instances, 1 vCPU/1 GiB, concurrency 1, dedicated architect database/buckets and scoped IAM, us-central1 matching existing compute. Costs remain usage-based; model spending/Stripe and generation are off. Private Hosting changes still require owner merge under its AGENTS.
