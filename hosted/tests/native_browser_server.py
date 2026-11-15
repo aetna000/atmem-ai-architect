@@ -64,7 +64,7 @@ async def published_header_contract(request,call_next):
 
 @app.get('/fixture/{name}')
 async def module(name:str):
- if name not in {'account-controller.mjs','workspace-controller.mjs'}:raise HTTPException(404)
+ if name not in {'account-controller.mjs','workspace-controller.mjs','analytics.mjs'}:raise HTTPException(404)
  return FileResponse(site/'site/src/components/architect'/name,media_type='text/javascript')
 
 @app.get('/architect/')

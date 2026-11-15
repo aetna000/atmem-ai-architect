@@ -1,5 +1,9 @@
 """Firebase-backed, X-only control plane. Payments remain deferred."""
 import os
+import json
+import logging
+from .activity import Activity,JOB_KINDS
+from .x_lookup import XLookup,XLookupUnavailable
 from typing import Any, Literal
 from dataclasses import dataclass
 from fastapi import FastAPI,Header,Response
@@ -55,7 +59,13 @@ class TransferBody(Body):
 class ChunkBody(Body):
     data:StrictStr=Field(max_length=350000)
     sha256:StrictStr=Field(min_length=64,max_length=64)
+class LookupBody(Body):handle:StrictStr=Field(min_length=1,max_length=16)
+class ClientActivityBody(Body):
+    kind:Literal['project_opened','project_downloaded','template_opened','signed_out']
+    projectId:StrictStr|None=None
 class AccessBody(Body):
+    handle:StrictStr|None=Field(default=None,max_length=15)
+    nickname:StrictStr|None=Field(default=None,max_length=80)
     revision:StrictInt=Field(ge=0)
     allowed:StrictBool
     role:Literal['user','admin']='user'
@@ -75,6 +85,7 @@ class PilotServices:
     projects:Any=None
     workspace_jobs:Any=None
     workspace_transfers:Any=None
+    x_lookup:Any=None
 
 
 def create_pilot_app(services):
@@ -84,6 +95,12 @@ def create_pilot_app(services):
     settings=PilotSettings(services.store,services.access,services.catalog or OpenRouterCatalog())
     workspace_projects=WorkspaceProjects(services.store,profiles,projects)
     rate=AccountRateLimit(services.store)
+    activity=Activity(services.store,services.access)
+    async def observed(actor,kind,project=None,event_id=None):
+        try:return bool(await run_in_threadpool(activity.record,actor,kind,project=project,event_id=event_id))
+        except Exception:
+            logging.getLogger(__name__).warning('Activity summary unavailable; primary operation preserved')
+            return False
 
     async def signed_in(authorization,action='account',maximum=60):
         identity=await run_in_threadpool(services.identity.verify,authorization)
@@ -99,7 +116,7 @@ def create_pilot_app(services):
     async def bad_body(request,error):return JSONResponse({'detail':'Check the submitted fields'},status_code=422)
     for exception,status in [(Unauthorized,401),(Forbidden,403),(AuthenticationUnavailable,503),(RateExceeded,429),
                 (ProjectUnavailable,404),(AccountUnavailable,403),(InsufficientCredits,402),(Conflict,409),
-                (CreditError,400),(CredentialsUnavailable,503),(CatalogUnavailable,503)]:
+                (XLookupUnavailable,503),(CreditError,400),(CredentialsUnavailable,503),(CatalogUnavailable,503)]:
         async def error_response(request,error,status=status):return JSONResponse({'detail':str(error)},status_code=status)
         app.add_exception_handler(exception,error_response)
 
@@ -112,6 +129,7 @@ def create_pilot_app(services):
         record=await run_in_threadpool(profiles.register,actor)
         balance=await run_in_threadpool(lambda:wallet().register(actor.uid))
         policy=await run_in_threadpool(settings.current)
+        await observed(actor,'account_opened')
         return {'profile':record,'admin':actor.admin,'balanceMicros':balance['available'],'reservedMicros':balance['reserved'],
                 'currency':'usd','paymentsAvailable':False,'ai':{'model':policy['model'],'reasoning':'medium',
                 'workspaceAvailable':services.workspace_jobs is not None,'managedAvailable':services.managed_ai_ready and policy['platformSpendingEnabled']}}
@@ -138,7 +156,9 @@ def create_pilot_app(services):
     @app.post(PREFIX+'/workspace/projects/new')
     async def create_project(body:NewProjectBody,authorization:str|None=Header(default=None)):
         actor=await signed_in(authorization,'new-project',10)
-        return await run_in_threadpool(workspace_projects.create,actor.uid,body.requestId,body.title)
+        result=await run_in_threadpool(workspace_projects.create,actor.uid,body.requestId,body.title)
+        await observed(actor,'project_created',result['id'],body.requestId)
+        return result
 
     @app.post(PREFIX+'/workspace/projects/{pid}/trash')
     async def trash_project(pid:str,body:RevisionBody,authorization:str|None=Header(default=None)):
@@ -185,7 +205,9 @@ def create_pilot_app(services):
             _,raw=await run_in_threadpool(services.workspace_transfers.download,actor.uid,body.transferId)
             import json
             payload=json.loads(raw)
-        return await run_in_threadpool(services.workspace_jobs.submit,actor.uid,body.requestId,body.projectId,body.path,payload,body.method)
+        result=await run_in_threadpool(services.workspace_jobs.submit,actor.uid,body.requestId,body.projectId,body.path,payload,body.method)
+        if body.path in JOB_KINDS:await observed(actor,JOB_KINDS[body.path],body.projectId,body.requestId)
+        return result
 
     @app.get(PREFIX+'/workspace/projects/{pid}/jobs/{job_id}')
     async def workspace_job(pid:str,job_id:str,authorization:str|None=Header(default=None)):
@@ -218,7 +240,9 @@ def create_pilot_app(services):
     @app.post(PREFIX+'/projects/uploads/{upload_id}/complete')
     async def complete_upload(upload_id:str,authorization:str|None=Header(default=None)):
         actor=await signed_in(authorization,'complete',10)
-        return await run_in_threadpool(projects.complete,actor.uid,upload_id)
+        result=await run_in_threadpool(projects.complete,actor.uid,upload_id)
+        await observed(actor,'project_saved',result['id'],upload_id)
+        return result
 
     @app.delete(PREFIX+'/projects/uploads/{upload_id}')
     async def cancel_upload(upload_id:str,authorization:str|None=Header(default=None)):
@@ -234,7 +258,9 @@ def create_pilot_app(services):
     @app.delete(PREFIX+'/projects/{pid}')
     async def remove_project(pid:str,body:RevisionBody,authorization:str|None=Header(default=None)):
         actor=await signed_in(authorization,'delete',20)
-        return await run_in_threadpool(projects.remove,actor.uid,pid,body.revision)
+        result=await run_in_threadpool(projects.remove,actor.uid,pid,body.revision)
+        await observed(actor,'project_deleted',pid)
+        return result
 
     @app.get(PREFIX+'/provider/openrouter')
     async def key_status(authorization:str|None=Header(default=None)):
@@ -262,7 +288,38 @@ def create_pilot_app(services):
     @app.put(PREFIX+'/admin/whitelist/{subject}')
     async def edit_whitelist(subject:str,body:AccessBody,authorization:str|None=Header(default=None)):
         actor=await signed_in(authorization,'admin',20)
-        return await run_in_threadpool(services.access.update,actor,subject,allowed=body.allowed,role=body.role,revision=body.revision)
+        return await run_in_threadpool(services.access.update,actor,subject,allowed=body.allowed,role=body.role,revision=body.revision,handle=body.handle,nickname=body.nickname)
+
+    @app.post(PREFIX+'/admin/x/lookup')
+    async def lookup_x(body:LookupBody,authorization:str|None=Header(default=None)):
+        actor=await signed_in(authorization,'x-lookup',10);actor.require_admin()
+        return await run_in_threadpool((services.x_lookup or XLookup()).resolve,body.handle)
+
+    @app.get(PREFIX+'/admin/activity')
+    async def admin_activity(days:int=7,authorization:str|None=Header(default=None)):
+        actor=await signed_in(authorization,'activity-report',20);actor.require_admin()
+        report=await run_in_threadpool(activity.report,actor,days)
+        entries=await run_in_threadpool(services.access.list,actor)
+        labels={row['xId']:row for row in entries}
+        for user in report['users']:
+            entry=labels.get(user['xId'],{});user.update(handle=entry.get('handle',''),nickname=entry.get('nickname',''))
+        return report
+
+    @app.post(PREFIX+'/activity')
+    async def client_activity(body:ClientActivityBody,authorization:str|None=Header(default=None)):
+        actor=await signed_in(authorization,'activity',60)
+        if body.kind!='signed_out':
+            if body.projectId is None:raise CreditError('Open your own project first')
+            def owned():
+                key=projects._project_key(actor.uid,body.projectId)
+                def check(tx):
+                    profiles._account(tx,actor.uid)
+                    record=tx.get('projects',key)
+                    if not record or record.get('trashed'):raise ProjectUnavailable('Project is unavailable')
+                services.store.transaction(check)
+            await run_in_threadpool(owned)
+        recorded=await observed(actor,body.kind,body.projectId)
+        return {'recorded':recorded}
 
     @app.get(PREFIX+'/admin/models')
     async def models(authorization:str|None=Header(default=None)):
@@ -304,5 +361,6 @@ def configured_pilot_app():
     jobs=WorkspaceJobs(store,profiles,projects,bucket,prefix=namespace+'_jobs')
     transfers=transfer_store(store,profiles,bucket,namespace+'_transfers')
     enabled=os.environ.get('ARCHITECT_NATIVE_WORKSPACE_ENABLED')=='1'
-    return create_pilot_app(PilotServices(store,FirebaseXIdentity(project),access,vault,projects=projects,
+    lookup=XLookup(json.loads(os.environ['ARCHITECT_X_LOOKUP_CREDENTIALS'])) if os.environ.get('ARCHITECT_X_LOOKUP_CREDENTIALS') else XLookup()
+    return create_pilot_app(PilotServices(store,FirebaseXIdentity(project),access,vault,projects=projects,x_lookup=lookup,
         managed_ai_ready=enabled,workspace_jobs=jobs if enabled else None,workspace_transfers=transfers if enabled else None))

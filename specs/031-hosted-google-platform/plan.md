@@ -62,3 +62,11 @@ Website changes use the isolated private `atmemai-google-hosting` branch. The ow
 ## Binding hosted-experience increment
 
 The owner requires exact local-experience parity, not the deployed landing/account page. Follow [workspace-checklist.md](workspace-checklist.md) and WP-1 through WP-8 in tasks.json. Do not call the platform complete or launch a replacement flow while canvas/chat/memory/generation/check/export work remains missing.
+
+## Administrator experience increment — 2026-11-15
+
+1. AE-1: Keep immutable-ID access controls; add handle/nickname labels and an explicit admin-only converter. No background X calls or credit purchase.
+2. AE-2: Record authenticated actions in bounded transactional daily summaries. Admin-only 7/30-day reports distinguish requested work from completed checks; test revocation, tenant binding, retention and deduplication.
+3. AE-3: Track allowlisted workspace actions with existing Google Analytics and cookie preferences. Keep per-user identity data first-party only. Update privacy and test payload minimization.
+4. AE-4: Center the account dashboard, expose top login, preserve the video, remove its duration sentence, and open a hash-verified complete reference project for accounts without saved projects. Never replace returning users’ projects.
+5. AE-5: Run backend, controller, GA and responsive native browser acceptance; deploy only scoped account backend changes, prepare private owner-review PR, then publish the validated owner-merged main artifact.

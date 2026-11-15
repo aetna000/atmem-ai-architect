@@ -12,6 +12,7 @@ await build({plugins:[{name:'first-party-pdf-preview',transform(code,id){if(id.i
 if(!previewPatched)throw Error('Review the pinned PDF dependency before publishing its hosted bundle');
 await writeFile('dist-hosted/pdfobject-preview.js',"document.body.textContent='Use the Download PDF action in Architect.';\n");
 const files=[];async function inventory(dir,base=''){for(const entry of await readdir(dir,{withFileTypes:true})){const path=join(dir,entry.name),name=base+entry.name;if(entry.isDirectory())await inventory(path,name+'/');else files.push({path:name,sha256:createHash('sha256').update(await readFile(path)).digest('hex')});}}
+await writeFile('dist-hosted/reference-project.json',await readFile('src/reference-example/project.json'));
 await inventory('dist-hosted');
 const inputs=execFileSync('git',['ls-files','-co','--exclude-standard','--','src','public','package.json','package-lock.json','index.html','vite.config.js','scripts/build-hosted-workspace.mjs'],{encoding:'utf8'}).trim().split('\n');
 const source={revision:execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),dirty:!!execFileSync('git',['status','--porcelain','--','src','public','package.json','package-lock.json','scripts/build-hosted-workspace.mjs'],{encoding:'utf8'}).trim(),files:[]};

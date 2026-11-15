@@ -67,7 +67,7 @@ class XWhitelist:
 
     def _entry(self, tx, subject):
         record=tx.get('x_access',digest(subject))
-        if subject in self.admin_ids:return dict(xId=subject,allowed=True,role='admin',revision=record['revision'] if record else 0,bootstrap=True)
+        if subject in self.admin_ids:return {**(record or {}),**dict(xId=subject,allowed=True,role='admin',revision=record['revision'] if record else 0,bootstrap=True)}
         return record or dict(xId=subject,allowed=subject in self.initial_ids,role='user',revision=0,bootstrap=False)
 
     def authorize(self, identity):
@@ -75,10 +75,15 @@ class XWhitelist:
         if not record['allowed']:raise Forbidden('This X account is not whitelisted. Contact the administrator')
         return replace(identity,admin=record['role']=='admin')
 
-    def update(self, actor, subject, *, allowed, role, revision):
+    def update(self, actor, subject, *, allowed, role, revision, handle=None, nickname=None):
         subject=x_id(subject)
         if type(allowed) is not bool or role not in {'user','admin'} or type(revision) is not int or revision<0:
             raise CreditError('Use the current whitelist revision and a supported role')
+        if handle is not None:
+            from .x_lookup import handle as clean_handle
+            handle=clean_handle(handle) if handle else ''
+        if nickname is not None and (not isinstance(nickname,str) or len(nickname)>80 or any(ord(c)<32 for c in nickname)):
+            raise CreditError('Use a nickname up to 80 characters')
         audit=uuid.uuid4().hex
         def apply(tx):
             current_actor=self._entry(tx,actor.x_id)
@@ -90,6 +95,9 @@ class XWhitelist:
             ids=sorted(set(index['ids'])|{subject})
             if len(set(ids)|self.admin_ids|self.initial_ids)>500:raise CreditError('Pilot whitelist is full')
             record=dict(xId=subject,allowed=allowed,role=role,revision=revision+1,bootstrap=subject in self.admin_ids)
+            for field,value in [('handle',handle),('nickname',nickname)]:
+                if value is not None:record[field]=value.strip()
+                elif field in previous:record[field]=previous[field]
             tx.set('x_access',digest(subject),record);tx.set('x_access_index','members',{'ids':ids})
             tx.create('audit',audit,dict(kind='x_whitelist_updated',actor=actor.x_id,subject=subject,
                        previous=previous,updated=record,createdAt=datetime.now(timezone.utc).isoformat()))
