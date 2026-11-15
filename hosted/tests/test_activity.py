@@ -95,6 +95,7 @@ class ActivityAPITests(unittest.IsolatedAsyncioTestCase):
                 forged=await client.post(prefix+'/activity',headers=bob,json={'kind':'project_opened','projectId':project['id']})
                 self.assertEqual(forged.status_code,404)
                 self.assertEqual((await client.post(prefix+'/activity',headers=alice,json={'kind':'project_opened','projectId':project['id']})).status_code,200)
+                self.assertEqual((await client.post(prefix+'/activity',headers=bob,json={'kind':'signed_out','projectId':project['id']})).status_code,400)
                 report=(await client.get(prefix+'/admin/activity',headers=owner)).json()
                 self.assertEqual(report['activeUsers'],3);self.assertEqual(report['counts']['project_opened'],1)
                 self.assertNotIn('Private title',json.dumps(report))
