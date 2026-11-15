@@ -308,6 +308,7 @@ def create_pilot_app(services):
     @app.post(PREFIX+'/activity')
     async def client_activity(body:ClientActivityBody,authorization:str|None=Header(default=None)):
         actor=await signed_in(authorization,'activity',60)
+        if body.kind=='signed_out' and body.projectId is not None:raise CreditError('Sign-out activity does not accept a project')
         if body.kind!='signed_out':
             if body.projectId is None:raise CreditError('Open your own project first')
             def owned():
