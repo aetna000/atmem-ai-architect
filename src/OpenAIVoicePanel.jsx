@@ -4,10 +4,11 @@ import {BrainActivity} from './BrainActivity.jsx';
 import React,{useEffect,useRef,useState} from 'react';
 import {OpenAIVoice} from './openai-voice.mjs';
 
-export function OpenAIVoicePanel({session,connection,transportRef,onTranscript,onStart,onConnections}){
+export function OpenAIVoicePanel({hideTrigger=false,openRequest=0,session,connection,transportRef,onTranscript,onStart,onConnections}){
  const [status,setStatus]=useState(null),[phase,setPhase]=useState('off'),[error,setError]=useState(''),[key,setKey]=useState(''),[saving,setSaving]=useState(false),[automatic,setAutomatic]=useState(false),[readReplies,setReadReplies]=useState(true),[open,setOpen]=useState(false);
  const props=useRef({onTranscript,onStart,automatic});props.current={onTranscript,onStart,automatic};
  const engine=useRef(null),live=useRef(true);
+ useEffect(()=>{if(openRequest>0)setOpen(true);},[openRequest]);
  const active=!['off','error'].includes(phase);
  async function refresh(){
   const response=await fetch('/api/voice/openai/status');
@@ -39,7 +40,7 @@ export function OpenAIVoicePanel({session,connection,transportRef,onTranscript,o
  }
  const caption={off:'Off',connecting:'Connecting OpenAI audio…',listening:automatic?'Listening · auto-send':'Listening',speaking:'Speaking',error:'Stopped · retry'}[phase];
  return <>
-  <div className="voice-status"><button type="button" className="icon" aria-label="Voice settings" title="Voice settings" onClick={()=>setOpen(true)}><Volume2 size={18}/></button>{active&&<button type="button" onClick={()=>engine.current?.stop({preservePending:true})}>Stop voice</button>}{active&&error.includes('playback')&&<button type="button" onClick={()=>void engine.current?.resumeAudio()}>Enable voice playback</button>}{(active||error)&&<span role="status">{error||caption}</span>}</div>
+  <div className="voice-status">{!hideTrigger&&<button type="button" className="icon" aria-label="Voice settings" title="Voice settings" onClick={()=>setOpen(true)}><Volume2 size={18}/></button>}{active&&<button type="button" onClick={()=>engine.current?.stop({preservePending:true})}>Stop voice</button>}{active&&error.includes('playback')&&<button type="button" onClick={()=>void engine.current?.resumeAudio()}>Enable voice playback</button>}{(active||error)&&<span role="status">{error||caption}</span>}</div>
   {open&&<div className="backdrop" onMouseDown={event=>{if(event.target===event.currentTarget)setOpen(false)}}><section className="modal" role="dialog" aria-modal="true" aria-label="OpenAI voice" onKeyDown={event=>{if(event.key==='Escape'){event.stopPropagation();setOpen(false)}}}>
   <h2>Voice</h2><button type="button" className="icon modal-close" aria-label="Close voice settings" onClick={()=>setOpen(false)}><X size={18}/></button>
   <section aria-label="OpenAI voice settings">

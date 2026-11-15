@@ -5,6 +5,7 @@ import {fileURLToPath} from 'node:url';
 import path from 'node:path';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {chromium} from '@playwright/test';
 const [prefixArg,homeArg]=process.argv.slice(2);if(!prefixArg||!homeArg)throw Error('Usage: npm-installed-check.mjs PREFIX DATA_HOME');
 const prefix=path.resolve(prefixArg),home=path.resolve(homeArg),cli=path.join(prefix,'node_modules/@atmem/architect/cli/architect.mjs');assert.ok(fs.existsSync(cli));
@@ -18,6 +19,14 @@ try{
  const response=await fetch(base+'/api/memory/inspect',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.token}`},body:JSON.stringify({projectId:'npm-clean-install-test'})});const memory=await response.json();assert.equal(response.status,200);assert.notEqual(memory.status,'unavailable');assert.equal(memory.enabled,true);assert.match(memory.engine,/AtMem/i);
  browser=await chromium.launch({headless:true});const page=await browser.newPage();const errors=[],failures=[],modelCalls=[];page.on('pageerror',e=>errors.push(e.message));page.on('requestfailed',r=>failures.push(r.url()));page.on('request',r=>{if(/\/api\/architect$|\/engineering\/(create|start|steer)$/.test(r.url()))modelCalls.push(r.url());});
  await page.goto(base,{waitUntil:'networkidle',timeout:60000});assert.equal(await page.getByRole('tablist',{name:'Project stages'}).getByRole('tab').count(),5);assert.equal(await page.locator('.react-flow').count(),1);assert.deepEqual(errors,[]);assert.deepEqual(failures,[]);assert.deepEqual(modelCalls,[]);
+ await page.getByRole('button',{name:'Explore complete AI example',exact:true}).click();
+ await page.getByRole('button',{name:'Download example ZIP',exact:true}).waitFor();
+ await page.getByRole('tab',{name:'Delivery',exact:true}).click();
+ assert.equal(await page.locator('.ready-reference .check-complete').count(),8);
+ const [reference]=await Promise.all([page.waitForEvent('download'),page.getByRole('button',{name:'Download complete example',exact:true}).click()]);
+ const referenceReceipt=JSON.parse(fs.readFileSync(path.join(prefix,'node_modules/@atmem/architect/src/reference-example/receipt.json')));
+ assert.equal(createHash('sha256').update(fs.readFileSync(await reference.path())).digest('hex'),referenceReceipt.sha256);
+ assert.deepEqual(errors,[]);assert.deepEqual(modelCalls,[]);
  const savedFile=path.join(home,'installer-preservation-check.txt');fs.writeFileSync(savedFile,'preserve me');
  console.log(JSON.stringify({installedPrefix:prefix,platform:process.platform,arch:process.arch,version:JSON.parse(fs.readFileSync(path.join(prefix,'node_modules/@atmem/architect/package.json'))).version,memoryEngine:memory.engine,uiStages:5,errors,modelCalls}));
 }finally{await browser?.close();if(child&&child.exitCode===null){child.kill('SIGTERM');await Promise.race([new Promise(r=>child.once('exit',r)),new Promise(r=>setTimeout(r,10000))]);}}

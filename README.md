@@ -79,3 +79,10 @@ Open in Orca requires its CLI; actual desktop launch remains unverified.
 ## Licence
 
 AtMem-owned code: [Apache-2.0](LICENSE). Third-party code retains its original licences and notices.
+
+
+## Complete first-use example
+
+Explore the ready AI knowledge assistant before connecting a model. Delivery includes the complete reference ZIP: priced sample usage, requirements, generated application/Terraform source, built runtime and local check evidence. Native chat now stays compact, with a retractable introduction and voice controls at the top. Reset board starts a fresh context while preserving saved projects.
+
+Contact: [hello@atmem.ai](mailto:hello@atmem.ai). Release procedure: GitHub Actions trusted publishing, as documented in AGENTS.md.

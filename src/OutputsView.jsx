@@ -1,3 +1,5 @@
+import {ReadyExampleChecklist} from './ReadyExample.jsx';
+import {isReadyExample} from './ready-example.mjs';
 import {FileTree} from './FileTree.jsx';
 import {strFromU8} from 'fflate';
 import {CodePreview} from './CodePreview.jsx';
@@ -57,7 +59,8 @@ export function OutputsView({project,run,environment,session,onDownload,onBack,e
  return <section className="doc outputs-view" aria-label="Outputs">
   <header className="doc-head"><h2>Delivery</h2></header>
   <button className="link" onClick={onReview||onBack}>Back to Review</button>
-  {session?.engineeringEnabled&&<ImplementationDelivery key={project.id} project={project} session={session} onBuild={onBuild} onSave={onSave} contextBusy={discussionBusy} designBundle={loading?null:bundle} onDesignDownload={onDownload} onDownloaded={onDownloaded} checkReceipt={checkReceipt} onExplore={setExploration} onNavigate={onNavigate}/>}
+  {isReadyExample(project)&&<ReadyExampleChecklist/>}
+  {session?.engineeringEnabled&&(isReadyExample(project)?<details><summary>Checks for your edited project</summary><ImplementationDelivery key={project.id} project={project} session={session} onBuild={onBuild} onSave={onSave} contextBusy={discussionBusy} designBundle={loading?null:bundle} onDesignDownload={onDownload} onDownloaded={onDownloaded} checkReceipt={checkReceipt} onExplore={setExploration} onNavigate={onNavigate}/></details>:<ImplementationDelivery key={project.id} project={project} session={session} onBuild={onBuild} onSave={onSave} contextBusy={discussionBusy} designBundle={loading?null:bundle} onDesignDownload={onDownload} onDownloaded={onDownloaded} checkReceipt={checkReceipt} onExplore={setExploration} onNavigate={onNavigate}/>)}
   <section aria-label="Project file explorer"><h3>Explore files</h3>
 
   {!session?.engineeringEnabled&&<><p>Design package · no implementation generated.</p><button className="btn" disabled={!bundle||loading||!!error||packing} onClick={downloadDesign}>{packing?'Preparing ZIP…':'Download project ZIP'}</button></>}

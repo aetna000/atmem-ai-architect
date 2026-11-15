@@ -1,0 +1,18 @@
+// Exercise first use against an isolated local installation. No model or cloud calls.
+import {chromium} from '@playwright/test';import assert from 'node:assert/strict';import fs from 'node:fs/promises';import {createHash} from 'node:crypto';
+const base=process.env.ATMEM_ONBOARDING_URL||'http://127.0.0.1:5186';const receipt=JSON.parse(await fs.readFile(new URL('../src/reference-example/receipt.json',import.meta.url)));
+const browser=await chromium.launch({headless:true});
+try{
+ const page=await browser.newPage({viewport:{width:870,height:850},acceptDownloads:true});const errors=[],modelCalls=[];page.on('pageerror',e=>errors.push(e.message));page.on('request',r=>{if(/\/api\/architect$|\/engineering\/(create|start|steer)$/.test(r.url()))modelCalls.push(r.url())});
+ await page.goto(base);await page.getByRole('button',{name:'Explore complete AI example',exact:true}).click();await page.getByRole('button',{name:'Download example ZIP',exact:true}).waitFor();
+ const intro=page.getByRole('button',{name:'Introduction',exact:false});assert.equal(await intro.getAttribute('aria-expanded'),'false');assert.equal(await page.locator('.chat>.messages').isVisible(),false);await intro.click();assert.ok(await page.locator('.chat>.messages').isVisible());await intro.click();
+ const composer=page.getByRole('textbox',{name:'Your message',exact:true});await composer.fill('Draft only');assert.ok((await page.locator('.composer').boundingBox()).height<=90);await composer.fill('Line\n'.repeat(15));assert.ok((await composer.boundingBox()).height<=120);await composer.fill('');
+ const voice=page.getByRole('button',{name:'Voice settings',exact:true});await voice.click();await page.getByRole('dialog',{name:'OpenAI voice',exact:true}).waitFor();await page.getByRole('button',{name:'Close voice settings',exact:true}).click();
+ await page.getByRole('tab',{name:'Delivery',exact:true}).click();await page.getByRole('region',{name:'Prepared example checklist',exact:true}).waitFor();assert.equal(await page.locator('.ready-reference .check-complete').count(),8);
+ const [download]=await Promise.all([page.waitForEvent('download'),page.getByRole('button',{name:'Download complete example',exact:true}).click()]);assert.equal(createHash('sha256').update(await fs.readFile(await download.path())).digest('hex'),receipt.sha256);
+ await page.screenshot({path:'/tmp/architect-native-ready-delivery.png'});
+ await page.getByRole('tab',{name:'Board',exact:true}).click();await page.getByRole('button',{name:'Reset board and context',exact:true}).click();await page.getByRole('button',{name:'Keep working',exact:true}).click();assert.ok(await page.getByRole('button',{name:'Download example ZIP',exact:true}).isVisible());
+ await page.getByRole('button',{name:'Reset board and context',exact:true}).click();await page.getByRole('button',{name:'Confirm reset board and context',exact:true}).click();await page.waitForFunction(()=>JSON.parse(localStorage.getItem('atforma-workspace-v3')||'null')?.nodes.length===0);
+ const blank=await page.evaluate(()=>JSON.parse(localStorage.getItem('atforma-workspace-v3')));assert.equal(blank.nodes.length,0);assert.equal(blank.edges.length,0);assert.equal(blank.needs?.length||0,0);assert.equal(blank.decisions?.length||0,0);assert.equal((blank.extensions?.conversation?.messages||[]).filter(x=>x.role==='user').length,0);
+ assert.ok(await page.getByRole('dialog').isVisible());assert.deepEqual(modelCalls,[]);assert.deepEqual(errors,[]);console.log('Native onboarding passed: example, 8 checks, immutable download, compact chat, intro, voice settings, reset and model setup. No model calls.');
+}finally{await browser.close()}
