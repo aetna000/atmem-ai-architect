@@ -44,7 +44,10 @@ class NativeWorkspaceRuntime:
   target=directory/(pid+'.atforma.json')
   fd,temporary=tempfile.mkstemp(prefix='.snapshot-',dir=directory)
   try:
-   with os.fdopen(fd,'w') as stream:json.dump(file,stream,ensure_ascii=False,allow_nan=False);stream.flush();os.fsync(stream.fileno())
+   # Preserve the exact server-confirmed UTF-8 snapshot bytes. Context submission
+   # verifies their digest; reserializing JSON would change that acknowledgement.
+   content=raw if json.loads(raw).get('meta',{}).get('id')==pid else json.dumps(file,separators=(',',':'),ensure_ascii=False,allow_nan=False).encode()
+   with os.fdopen(fd,'wb') as stream:stream.write(content);stream.flush();os.fsync(stream.fileno())
    os.replace(temporary,target);receipt.write_text(str(row['revision']))
   finally:
    if os.path.exists(temporary):os.unlink(temporary)
@@ -67,7 +70,7 @@ class NativeWorkspaceRuntime:
     if len(audio)>1920100:raise ValueError('Voice clip exceeds the existing duration bound')
     response=await client.post(job['path'],content=audio,headers={'Content-Type':'audio/wav'})
    else:response=await client.request(method,job['path'],**({'json':body} if method=='POST' else {}))
-  headers={name:value for name,value in response.headers.items() if name.lower() in {'content-type','content-disposition'}}
+  headers={name:value for name,value in response.headers.items() if name.lower() in {'content-type','content-disposition','x-artifact-sha256','x-source-artifact-sha256'}}
   if response.headers.get('content-type','').startswith('application/json'):
    return {'status':response.status_code,'headers':headers,'body':response.json()}
   return {'status':response.status_code,'headers':headers,'base64':base64.b64encode(response.content).decode()}

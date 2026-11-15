@@ -1,7 +1,16 @@
 import {zipSync,strToU8} from 'fflate';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {engineeringCall,engineeringConversation,mergeEngineeringEvents,verifiedEngineeringDownload,verifiedHandoffDownload} from '../src/engineering-client.mjs';
+import {engineeringCall,engineeringConversation,mergeEngineeringEvents,verifiedEngineeringDownload,verifiedHandoffDownload,engineeringSelectionSupported} from '../src/engineering-client.mjs';
+
+test('hosted engineering admits its managed connection while local engineering retains Codex selection',()=>{
+ const connection={provider:'openrouter',model:'vendor/managed-model',effort:'medium'};
+ assert.equal(engineeringSelectionSupported({hosted:true},connection),true);
+ assert.equal(engineeringSelectionSupported({},connection),false);
+ assert.equal(engineeringSelectionSupported({hosted:true},{...connection,effort:'high'}),false);
+ assert.equal(engineeringSelectionSupported({}, {...connection,provider:'codex'}),true);
+ assert.equal(engineeringSelectionSupported({hosted:true},{...connection,model:'default'}),false);
+});
 
 test('engineering protocol sends only scoped intent and server token',async()=>{
   const text='Keep every line.\n'.repeat(1000);let request;

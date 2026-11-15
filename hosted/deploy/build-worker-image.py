@@ -1,7 +1,8 @@
 """Prepare and optionally submit the owned, digest-pinned native worker image."""
 import argparse,hashlib,json,shlex,shutil,subprocess,tarfile,tempfile,re
 from pathlib import Path
-parser=argparse.ArgumentParser();parser.add_argument('--project',required=True);parser.add_argument('--apply',action='store_true');parser.add_argument('--base-image',help='Reuse a previously built owned immutable runtime, only with identical dependency locks and runtime pins');args=parser.parse_args()
+parser=argparse.ArgumentParser();parser.add_argument('--project',required=True);parser.add_argument('--apply',action='store_true');parser.add_argument('--base-image',help='Reuse a previously built owned immutable runtime, only with identical dependency locks and runtime pins');parser.add_argument('--refresh-python-lock',action='store_true',help='Explicitly synchronize a changed hashed Python lock in the pinned base');args=parser.parse_args()
+if args.refresh_python_lock and not args.base_image:parser.error('A dependency refresh needs the owned pinned base')
 if args.base_image and not re.fullmatch(r'us-central1-docker\.pkg\.dev/'+re.escape(args.project)+r'/architect/native-worker@sha256:[a-f0-9]{64}',args.base_image):parser.error('Reuse only an owned digest-pinned runtime')
 root=Path(__file__).resolve().parents[2];pins=json.loads((root/'hosted/deploy/runtime-images.json').read_text())
 output=root/'.local/worker-build';output.mkdir(parents=True,exist_ok=True)
@@ -53,7 +54,7 @@ ENV UV_PYTHON_INSTALL_DIR=/opt/python UV_NO_CACHE=1 PYTHONDONTWRITEBYTECODE=1 PY
 RUN ln -sf ../lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm && uv python install {pins['pythonVersion']} && uv venv --python {pins['pythonVersion']} /opt/architect/venv
 WORKDIR /opt/architect
 COPY hosted/worker-requirements.lock /opt/architect/hosted/worker-requirements.lock
-RUN uv pip sync --python /opt/architect/venv/bin/python --require-hashes /opt/architect/hosted/worker-requirements.lock
+RUN uv pip sync --python /opt/architect/venv/bin/python --require-hashes /opt/architect/hosted/worker-requirements.lock && uv pip check --python /opt/architect/venv/bin/python
 ENV PATH=/opt/architect/venv/bin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin ATMEM_ARCHITECT_PROVIDER_CACHE=/opt/architect/provider-mirror ATMEM_ARCHITECT_TERRAFORM_BIN=/usr/local/bin/terraform
 COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts
@@ -66,16 +67,18 @@ USER architect
 CMD ["python","-m","hosted.worker_main"]
 '''
  if args.base_image:
-  expected={name:hashlib.sha256((root/name).read_bytes()).hexdigest() for name in ['hosted/worker-requirements.lock','package-lock.json','hosted/deploy/runtime-images.json']}
+  names=['package-lock.json','hosted/deploy/runtime-images.json']+([] if args.refresh_python_lock else ['hosted/worker-requirements.lock'])
+  expected={name:hashlib.sha256((root/name).read_bytes()).hexdigest() for name in names}
   verify="from pathlib import Path;import hashlib;expected="+repr(expected)+";assert all(hashlib.sha256(Path(name).read_bytes()).hexdigest()==digest for name,digest in expected.items()),'Runtime/dependency inputs changed: perform a full build'"
   clean="from pathlib import Path;import json;root=Path('/opt/architect');rows=json.loads((root/'worker-source.json').read_text())['files'];paths=[root/row['path'] for row in rows];assert all(path.resolve().is_relative_to(root) and not path.is_symlink() for path in paths);[path.unlink() for path in paths]"
+  refresh='COPY hosted/worker-requirements.lock /tmp/architect-worker.lock\nRUN uv pip sync --python /opt/architect/venv/bin/python --require-hashes /tmp/architect-worker.lock && uv pip check --python /opt/architect/venv/bin/python\n' if args.refresh_python_lock else ''
   dockerfile=f'''FROM {args.base_image}
 USER root
 WORKDIR /opt/architect
 RUN python -c {shlex.quote(verify)}
-RUN python -c {shlex.quote(clean)}
+{refresh}RUN python -c {shlex.quote(clean)}
 COPY . /opt/architect/
-RUN python -m unittest hosted.tests.test_model_metering hosted.tests.test_native_model_broker hosted.tests.test_native_worker_process hosted.tests.test_native_host hosted.tests.test_firestore_read_recovery server.tests.test_atbots_engineering_backend server.tests.test_local_validation -v
+RUN python -m unittest hosted.tests.test_model_metering hosted.tests.test_native_model_broker hosted.tests.test_native_worker_process hosted.tests.test_native_host hosted.tests.test_native_snapshot_protocol hosted.tests.test_firestore_read_recovery server.tests.test_atbots_engineering_backend server.tests.test_local_validation -v
 USER architect
 CMD ["python","-m","hosted.worker_main"]
 '''

@@ -1,6 +1,6 @@
 import {BrainActivity} from './BrainActivity.jsx';
 import React,{useEffect,useRef,useState} from 'react';
-import {engineeringCall,engineeringConversation,mergeEngineeringEvents} from './engineering-client.mjs';
+import {engineeringCall,engineeringConversation,mergeEngineeringEvents,engineeringSelectionSupported} from './engineering-client.mjs';
 import './engineering.css';
 import {ArtifactChecks} from './ArtifactChecks.jsx';
 import {verifyArtifactWork} from './artifact-work.mjs';
@@ -60,7 +60,7 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
     try{await operation();}catch(e){if(live.current)setError(e.message);}finally{actionLock.current=false;if(live.current)setBusy(false);}
   }
   useEffect(()=>{onBusyChange?.(busy||loading||['running','starting'].includes(job?.state));return()=>onBusyChange?.(false);},[busy,loading,job?.state,onBusyChange]);
-  const exactSelection=connection?.provider==='codex'&&connection.model&&connection.model!=='default'&&connection.effort;
+  const exactSelection=engineeringSelectionSupported(session,connection);
   const running=job?.state==='running',uncertain=job?.state==='starting';
   const lastProgress=events.filter(event=>event.runId===job?.run&&['progress','message'].includes(event.kind)).at(-1);
   const [lastReceived,setLastReceived]=useState(null),[now,setNow]=useState(Date.now());
