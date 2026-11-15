@@ -12,7 +12,7 @@ class ConfigurationTests(unittest.TestCase):
         self.user=Identity('ordinary','person@example.test','google.com',True)
 
     def test_owner_defaults_and_arbitrary_whole_cent_topup(self):
-        self.assertEqual(self.config.current()['welcomeMicros'],5_000_000)
+        self.assertEqual(self.config.current()['welcomeMicros'],20_000_000)
         self.assertEqual(self.config.purchase_quote(100)['creditMicros'],1_000_000)
         self.assertEqual(self.config.purchase_quote(137)['creditMicros'],1_370_000)
         self.assertFalse(self.config.current()['platformSpendingEnabled'])

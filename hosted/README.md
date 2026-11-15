@@ -1,73 +1,61 @@
-# Hosted control plane — implementation in progress
+# Firebase-first hosted Architect pilot — implementation in progress
 
-This is a separate authenticated control plane for the planned Google-hosted
-Architect. It is **not** a hosted replacement for the complete local app yet.
-No cloud resource or production payment was created by the implementation tests.
-Project ownership/artifact storage, model execution/budget admission, isolated
-generation/test workers and account export/deletion remain required launch work.
+This is a separate X-only authenticated control plane, not the complete hosted local app. The owner selected Firebase services first, with Google Cloud for worker compute and OpenRouter for models. [Current plan](../specs/031-hosted-google-platform/plan.md) records requirements, actual configuration and outstanding launch work.
 
-Implemented contracts:
+## Active pilot
 
-- Server-verified Firebase Google identity, revocation checks and exact owner
-  billing administration. No local bootstrap token, client-selected UID or grant.
-- USD micro-unit ledger, one-time welcome grants, atomic credit reservations,
-  receipt-bound settlement, uncertain-request retention, idempotent payments and
-  cumulative refunds. Concurrent requests cannot overspend an admitted balance.
-- Real Firestore transactions, with explicit project/database and no memory fallback.
-- Stripe Checkout with server-owned amount/order snapshots, stable idempotency,
-  exact raw-body webhook verification and authoritative payment/line-item checks.
-- AES-256-GCM BYOK storage bound to UID/provider, versioned encryption keys,
-  revision-checked edits/removal and no plaintext key response. Storage does not
-  establish model permissions or provider acceptance.
-- Bounded account APIs, shared per-UID rate counters, no-store responses and
-  request errors that never echo submitted provider keys.
+- Firebase Hosting serves the site; Firebase Authentication handles Twitter/X sign-in. Server-side whitelist records in Firestore authorize each operation. Other existing website sign-in providers remain untouched and cannot authorize this pilot.
+- The administrator is @atmemai, but privileges require its verified numeric X ID in operator configuration. No first-signup admin, handle matching or browser-supplied role.
+- Firestore owns profiles, access, audited settings, integer USD credits and transactional project metadata. Every admitted X identity receives USD20 once, even if its Firebase UID is recreated.
+- Cloud Storage for Firebase holds immutable project bytes. Saves use 256 KiB chunks, SHA256 checks and a 64 MiB project limit; users can save/download/remove only their projects. The API never accepts client object names or bucket selection.
+- OpenRouter is the managed model provider and the only BYOK connection in this pilot. Keys are encrypted and tenant-bound; plaintext is never returned. BYOK provider billing and managed wallet usage remain separate.
+- Sol Medium is preselected. Administrators may choose from the live OpenRouter catalog, with Sol Medium and Terra Medium presets; model choice is server-owned.
+- Stripe credit purchases are TODO. The pilot has no checkout or payment-webhook routes. Historical billing modules below remain inactive and are not the pilot entry point.
+- Cloud Run is the proposed stateless API host; AtBots runs in a separate Google VM worker. Neither runtime has been deployed by this implementation. Managed spending remains off pending the broker and budget/worker qualification.
 
-## Local verification
+## Runtime configuration
+
+Use `uvicorn hosted.pilot_api:configured_pilot_app --factory --host 0.0.0.0 --port 8080` only in a reviewed deployment. Do not launch `hosted.api:configured_app`, which is the superseded Google/Stripe preview.
+
+| Variable | Contract |
+| --- | --- |
+| `ARCHITECT_GOOGLE_PROJECT` | Explicit Firebase/Google project. |
+| `ARCHITECT_FIRESTORE_DATABASE` | Explicit reviewed database; separate from the existing ChatGPT service. |
+| `ARCHITECT_DATA_ENVIRONMENT` | Required `sandbox` or `production`; disjoint pilot collection and object prefixes. Production rejects emulator endpoints. |
+| `ARCHITECT_FIREBASE_STORAGE_BUCKET` | Explicit reviewed Firebase Storage bucket; service identity has only required object permissions. |
+| `ARCHITECT_ADMIN_X_IDS` | Comma-separated verified immutable numeric X IDs; required, no default or public bootstrap. |
+| `ARCHITECT_ALLOWED_X_IDS` | Optional initial numeric IDs. Persisted whitelist revocation overrides initial allow entries. |
+| `ARCHITECT_STRIPE_MODE` | Must remain `disabled` for this pilot. |
+| `ARCHITECT_BYOK_KEYRING` | Mounted JSON secret: `activeKey` and `keys` map of base64 32-byte encryption keys. Missing secret disables key storage. |
+
+Firebase Storage and Firestore browser access to server-owned pilot data must be denied. Server SDKs use IAM, so rules alone do not isolate the API. Do not deploy blanket rules over existing site datasets. Review bucket generation, staging expiry, retired-object lifecycle, recovery and IAM before enabling saves in production. Storage prefixes are namespace separation, not an IAM guarantee. Durable retirement/orphan reconciliation and expired-upload cleanup remain open.
+
+Project completion currently assembles at most 64 MiB in memory, plus JSON processing overhead. Choose bounded request concurrency and adequate memory in the reviewed deployment. Metadata deletion immediately denies application downloads; physical object removal follows lifecycle and cannot be described as immediate deletion.
+
+## Verification
 
 ```sh
 uv venv --python 3.13 .hosted-venv
 uv pip install --python .hosted-venv/bin/python --require-hashes -r hosted/requirements.lock
-.hosted-venv/bin/python -m unittest discover -s hosted/tests -v
-```
-
-Without an explicit emulator the three Firestore integration tests skip. Run
-actual persistence/concurrency tests locally with Java21, Node22 and Firebase CLI:
-
-```sh
 npx --yes firebase-tools@15.18.0 emulators:exec \
   --project demo-architect-hosted --only firestore --config hosted/firebase.emulator.json \
   '.hosted-venv/bin/python -m unittest discover -s hosted/tests -v'
 ```
 
-The emulator uses synthetic data only. This proves local Firestore behavior,
-not IAM, live Firebase identity, a deployed database or cloud scale.
+Current full local suite: 60 tests passed with no skips. Firestore tests use the actual local emulator and synthetic demo project. Object payload tests use an explicitly named fixture. This does not qualify production IAM, live X login, cloud object storage or model execution. Running without the emulator skips six integration checks.
 
-## Explicit service configuration
+AtBots uses a separate environment because its AtMem dependency and Firebase Admin require incompatible cryptography versions:
 
-Run `uvicorn hosted.api:configured_app --factory --host 0.0.0.0 --port 8080`
-only inside the reviewed hosted service. Supply:
+```sh
+uv venv --python 3.13 .worker-venv
+uv pip install --python .worker-venv/bin/python --require-hashes -r hosted/worker-requirements.lock
+```
 
-| Variable | Contract |
-| --- | --- |
-| `ARCHITECT_GOOGLE_PROJECT` | Explicit authorized Google project; no default discovery. |
-| `ARCHITECT_FIRESTORE_DATABASE` | Explicit dedicated reviewed database. |
-| `ARCHITECT_DATA_ENVIRONMENT` | `sandbox` or `production`; different collection namespaces. |
-| `ARCHITECT_STRIPE_MODE` | `disabled` (default), `test` for sandbox, or `live` for production. |
-| `STRIPE_SECRET_KEY` | Mounted Stripe secret for the selected mode. Never source control or browser code. |
-| `STRIPE_WEBHOOK_SECRET` | Mounted secret for this exact endpoint. |
-| `ARCHITECT_STRIPE_ICON_FILE` | Stripe `business_icon` file ID of the existing AtMem brain artwork. |
-| `ARCHITECT_CHECKOUT_RETURN_URL` | Fixed HTTPS account return page, never client input. |
-| `ARCHITECT_BYOK_KEYRING` | Mounted JSON secret with `activeKey` and a `keys` map of base64 32-byte keys. |
+AtBots 0.3.1 is pinned. The local native-provider smoke check used a Pydantic test model, not a real model request or VM. The shared API must not execute untrusted project checks or share provider credentials across users. Full job admission, worker isolation, durable progress, usage reconciliation and account export/deletion are still required.
 
-Missing payment/vault configuration disables those capabilities; no insecure
-fallback is generated. Sandbox wallets must never become real-spending wallets.
-Platform spending defaults off with a zero daily budget. The model broker must
-implement atomic global-budget admission before this flag can enable real usage.
+## Historical payment work — deferred
 
-The account/policy frontend is prepared in the private website repository. Keep
-its enabled flag false until Google identity, CSP/rewrite, lifecycle, providers,
-workers, policies and end-to-end acceptance are qualified. AtMem Cloud's ChatGPT
-memory terms are a separate service and do not cover Architect credit purchases.
+The following describes prior sandbox evidence, not currently enabled payment functionality.
 
 ## Stripe acceptance and branding
 

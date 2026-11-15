@@ -43,13 +43,13 @@ class ApiTests(unittest.IsolatedAsyncioTestCase):
         for user in ['alice','bob']:
             result=await self.request('POST','/account',user)
             self.assertEqual(result.status_code,200)
-            self.assertEqual(result.json()['balanceMicros'],5_000_000)
+            self.assertEqual(result.json()['balanceMicros'],20_000_000)
             self.assertEqual(result.headers['cache-control'],'no-store')
         self.ledger.reserve('alice','one','a'*64,400)
         bob=await self.request('GET','/balance?uid=alice','bob')
-        self.assertEqual(bob.json()['balanceMicros'],5_000_000)
+        self.assertEqual(bob.json()['balanceMicros'],20_000_000)
         repeated=await self.request('POST','/account')
-        self.assertEqual(repeated.json()['balanceMicros'],4_999_600)
+        self.assertEqual(repeated.json()['balanceMicros'],19_999_600)
         self.assertFalse(repeated.json()['admin'])
 
     async def test_admin_is_server_enforced_and_configuration_updates_are_versioned(self):
@@ -68,7 +68,7 @@ class ApiTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual((await self.request('POST','/checkout',json=body)).status_code,422)
         result=await self.request('POST','/checkout',json={'requestId':'one','amountCents':137})
         self.assertEqual(result.status_code,200)
-        self.assertEqual(self.ledger.account('alice')['available'],5_000_000)
+        self.assertEqual(self.ledger.account('alice')['available'],20_000_000)
         self.assertTrue(result.json()['url'].startswith('https://checkout.stripe.com/'))
 
     async def test_oversized_json_and_chunked_body_rejected_before_parsing(self):

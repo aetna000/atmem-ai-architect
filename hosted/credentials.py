@@ -14,7 +14,7 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.exceptions import InvalidTag
 from .credits import CreditError, Conflict, digest, identifier
 
-PROVIDERS = frozenset({'openai', 'anthropic'})
+PROVIDERS = frozenset({'openai', 'anthropic', 'openrouter'})
 
 
 class CredentialsUnavailable(RuntimeError): pass
@@ -42,7 +42,7 @@ class CredentialVault:
     @staticmethod
     def _path(uid, provider):
         identifier(uid)
-        if provider not in PROVIDERS: raise CreditError('Choose OpenAI or Anthropic')
+        if provider not in PROVIDERS: raise CreditError('Choose OpenAI, Anthropic or OpenRouter')
         return digest(uid) + '-' + provider
 
     @staticmethod

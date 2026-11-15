@@ -1,44 +1,60 @@
-# Public Google-hosted Architect
+# Firebase-first hosted Architect pilot
 
-Owner direction, 2026-11-15: host Architect using the existing atmem.ai Firebase/Google project; anyone may sign up; grant a configurable initial credit amount; sell AI credits through Architect; use a platform OpenRouter connection or a user's Anthropic/OpenAI API key; retain a path to scaling.
+Current owner direction, 2026-11-15, supersedes the earlier public Google-signup and payment launch proposal. Preserve historical Stripe sandbox evidence; Stripe purchases are now TODO.
 
-## Observed existing state
+Canonical hosted URL: **https://atmem.ai/architect**. Early access is invite only; request access by DM to @AtMemAi on X or email javad@atmem.ai. Preserve existing local documentation URLs.
 
-- Website source is private `javadtaghia/atmemai-platform`, under local `gitlab/atmemai-platform`. Its main working tree contains unrelated edits and is untouched. Website changes use isolated `atmemai-google-hosting`, from verified remote main063bcc1.
-- Current site is static Firebase Hosting; the Architect workspace is a reserved placeholder, not a running backend. Firebase identity/admin specifications exist; no deployed customer wallet or payment flow is established by them.
-- Authorized Google project `atmemai` is active with billing enabled. Firestore, Identity Toolkit, Cloud Run, Secret Manager and Cloud Build APIs are already enabled. Existing Firestore databases are `(default)` in nam5 and `atmem-chatgpt` in us-central1. No resources have been created or modified for this task.
-- The released local app has a shared loopback bootstrap token and local-owner filesystem scope. It must not be exposed as a public multi-user service unchanged.
+## Accepted scope
 
-## Architecture and boundaries
+- Existing `atmem.ai` Firebase/Google project; use Firebase services wherever they fit, then Google Cloud for remaining compute.
+- X is only the application's identity provider. Access requires a server-owned whitelist. Administrator: `@atmemai`, pinned to its verified immutable numeric X ID before activation.
+- Each admitted X account receives USD20 welcome credit once, an individual profile, private saved projects and project downloads.
+- Managed OpenRouter is the default AI connection. Users may instead supply their own OpenRouter key and pay that provider directly. BYOK must not consume managed welcome credit.
+- Default model: `openai/gpt-6.1-sol`, medium reasoning. Only administrators select models from the live OpenRouter catalog, including Sol Medium and Terra Medium presets. No ordinary-user model selection is required.
+- AtBots runs in an isolated Google Cloud worker VM. Managed access uses OpenRouter, not the owner's ChatGPT subscription.
+- Stripe credit purchasing remains deferred. Do not expose checkout, purchase fulfillment or Stripe account management in the pilot.
 
-1. Firebase Hosting/CDN serves the Architect frontend independently from marketing pages. Reuse Firebase Authentication with server-verified issuer, audience, expiry and verified identity. Preserve the site's existing Google sign-in decision initially. Public registration is distinct from authorization to spend credits or run work.
-2. A stateless Cloud Run control API owns account registration, project ownership, credit reservations, payment events, model routing and job admission. Never trust browser-supplied UID, price, balance, grant, role or entitlement.
-3. Durable transactional storage owns balances, append-only ledger entries, one-time welcome grants, checkout receipts, usage reservations, idempotency and job leases. Storage adapters must support atomic cross-record updates; process-local locks are not a distributed concurrency guarantee.
-4. Object storage holds versioned tenant/project documents and immutable artifacts. No authoritative SQLite/project files on Cloud Run's ephemeral filesystem. Keep existing waitlist/admin and ChatGPT datasets separate.
-5. A model broker supports platform-funded OpenRouter requests and separately scoped user-owned Anthropic/OpenAI keys. Credentials stay encrypted server-side, never in public configuration, logs, browser persistence or generated projects. BYOK provider charges are distinct from AtMem-funded model usage. Compute/fair-use limits apply to both.
-6. Native generation and untrusted application checks run in separately isolated workers, not in the shared authenticated API. Scale these independently with explicit concurrency and execution budgets. Current native adapters, account isolation and tool capabilities need qualification on the chosen cloud worker; a UI/API deployment cannot claim generation/test acceptance.
-7. Public signup receives exactly one welcome grant per verified account. Reserve credits atomically before platform model calls, settle recorded usage once, release only proven unconsumed reservations, and retain uncertain operations rather than blindly retrying or refunding them.
-8. Payment fulfillment uses verified server/provider evidence, server-owned configurable purchase quotes and idempotent receipts. Returning from checkout never mints credits. Duplicate/out-of-order webhooks, refunds, disputes and restart recovery require tests.
-9. Website claims/privacy, account deletion/export, stored regions, credential retention and billing terms must be updated before public launch. Website repository instructions require owner merge and deployment only from its validated main artifact; prepare the complete PR before requesting that final step.
+## Service allocation and boundaries
+
+| Responsibility | Selected service | Contract |
+| --- | --- | --- |
+| Public site and application assets | Firebase Hosting | Preserve existing site; same-origin API rewrite only after qualification. |
+| X sign-in | Firebase Authentication, Twitter/X provider | Server verifies signed Firebase tokens and revocation; X subject comes from verified provider identity. No X content features. |
+| Profiles, whitelist and administration | Cloud Firestore | Server-only access, immutable X identity, revision-aware changes and audited role edits. Handles never establish privileges. |
+| Welcome grants, reservations and usage records | Cloud Firestore transactions | Integer USD micro-units; grant once per X ID, atomic admission and receipt-bound settlement. |
+| Project snapshots and generated artifacts | Cloud Storage for Firebase | Server-authorized tenant ownership, immutable generations, bounded chunk uploads, integrity checks and lifecycle controls. Large payloads do not go into Firestore documents. |
+| API hosting | Google Cloud Run, behind Firebase Hosting | Proposed stateless Python service; preserves current Python engine and permits independent scaling. No publicly exposed local sidecar. |
+| Generation and checks | Google Compute Engine VM with AtBots | Separate worker runtime and least-privilege service identity. Durable job metadata in Firestore; private project execution and explicit resource budgets remain required. |
+| Operator/model and encryption secrets | Google Secret Manager | Server-only scoped secrets; encrypted user OpenRouter credentials in Firestore. Never put provider keys in projects, UI responses or logs. |
+| Model catalog and inference | OpenRouter | Administrators own model policy. Live catalog validation, medium reasoning, atomic budgets and actual usage settlement. |
+| Future purchases | Stripe, TODO | Disabled until separately qualified and enabled. |
+
+Firebase Authentication establishes identity; Firestore whitelist records establish application access. Every application operation rechecks access. Authentication through another product's Google provider cannot authorize Architect. Preserve existing site authentication providers, administrator roles and ChatGPT datasets.
+
+The API uses `architect_pilot_sandbox` and `architect_pilot_production` Firestore collection namespaces and matching object prefixes. Neither shares the earlier Google/Stripe wallet namespace. Production rejects Firebase emulator configuration. SQLite is only a local test adapter, never a production fallback. Final deployment must review a dedicated database/bucket and IAM boundaries; namespaces alone are not IAM isolation.
 
 ## Dependency-ordered delivery
 
-- HG-1: Evidence audit, architecture, contracts and configuration boundaries.
-- HG-2: Transactional credit/account/idempotency domain with concurrency/failure tests.
-- HG-3: Firebase token verification and tenant/project authorization, durable database/object adapters and actual emulator isolation tests.
-- HG-4: Configurable arbitrary-amount purchases, checkout adapter, verified fulfillment, refund/dispute reconciliation and real provider test-mode evidence.
-- HG-5: OpenRouter/platform usage and encrypted BYOK routing, usage admission/settlement/recovery; no model or price inferred from a name.
-- HG-6: Public signup, credit balance/top-up and provider controls integrated into Architect's frontend; preserve the local mode.
-- HG-7: Job/worker isolation, durable progress/artifacts and all applicable generation/check/export paths qualified.
-- HG-8: Least-privilege Google infrastructure, concrete price/concurrency limits, backups, monitoring, CI and rollback. Review deployment plan and cost scope before provisioning.
-- HG-9: Full user journeys and failure/abuse/security tests, private website owner-review PR, approved cloud deployment and live verification.
+- HG-1: Evidence, owner decisions, Firebase-first contracts and configuration boundaries.
+- HG-2: Transactional credit/idempotency domain and failure/concurrency evidence.
+- HG-3: X identity, immutable administrator bootstrap, Firestore whitelist/profiles and Firebase Storage project ownership. Actual emulator checks plus real OAuth and storage IAM acceptance.
+- HG-4: Deferred Stripe work; preserve historical sandbox evidence. Not a pilot launch dependency.
+- HG-5: OpenRouter catalog/admin policy, encrypted BYOK, exclusive request dispatch, atomic daily-budget/credit admission and usage reconciliation.
+- HG-6: X-only account/project frontend and administrator controls; USD20 balance, managed/own OpenRouter connection, no checkout. Preserve local mode.
+- HG-7: AtBots worker VM, durable jobs/leases/progress, isolated generation/checks and all applicable export paths.
+- HG-8: Concrete region/cost plan, least-privilege Google resources, backups, lifecycle, monitoring, CI and rollback. Review actual provisioning/cost scope before creating runtime resources.
+- HG-9: Complete admission/save/generate/check/download/revocation journeys; owner-reviewed private site PR and validated-main publication, then live verification.
 
-## Launch decisions still needed
+## Observed configuration and evidence
 
-Owner confirmed: USD5 welcome balance, USD1 minimum purchase with arbitrary larger amounts, configurable in an admin view restricted server-side to verified Google login taghia.javad@gmail.com. Stripe Checkout is selected. Credits are denominated in USD micro-units; purchase amounts use integer cents. Platform model-cost multiplier and launch spending caps remain visible operator configuration, not an implicit unlimited subsidy. Hosting region and spending/concurrency caps require concrete review; us-central1 is a proposal matching an existing regional service, not an agreed residency requirement. The earlier US$12 private VM pilot estimate does not price this public credit-funded platform. Model/provider keys and payment credentials are not yet supplied or inspected.
+Firebase's Twitter provider is configured and enabled using the separate AtMem AI Architect X app. Callback: `https://atmemai.firebaseapp.com/__/auth/handler`. X has read permission, no email request, and no content integration is implemented. Existing X apps and Firebase identity providers were preserved. The generated OAuth2 credential pair was saved privately in Secret Manager; Firebase uses the separately configured OAuth1 consumer credentials. AtMem.ai and localhost were added to authorized domains while preserving existing domains. No secrets are retained in these specifications.
 
-Plans, local/mock tests, emulator tests, provider test mode, cloud plans and deployed checks remain distinct. Do not enable public spending, payment fulfillment or native execution from placeholders.
+The actual numeric ID of `@atmemai` has not yet been verified by a real Firebase X sign-in; do not derive it from the developer console account URL. The application stays disabled pending that acceptance and full backend/worker qualification.
 
-## Implemented evidence checkpoint
+The local Firestore emulator suite currently passes 60 tests with no skips. This includes real Firestore pilot signup/grant concurrency, durable whitelist revocation, project metadata commit/cancel/delete, and environment separation. Object payload tests use a named storage fixture, not cloud storage. Native AtBots 0.3.1 was installed in a separate local worker environment and its native provider exercised with a Pydantic test model; no VM installation or live managed model request is established.
 
-See progress.json, decision-log.md and evidence/. The ledger/control-plane/vault and disabled private account preview are implemented. HG-3 through HG-9 remain incomplete: no hosted engine, model broker, project/artifact tenancy, worker isolation or cloud deployment is established. The real Stripe sandbox check does not establish production account-wide branding or a live public return page.
+## Remaining launch boundaries
+
+Storage/processing region, lifecycle and account deletion/export, daily spending and worker concurrency require concrete qualification. The object adapter still needs durable retirement/orphan reconciliation and expired-upload cleanup. The API currently assembles project uploads in bounded memory (64 MiB/file), requiring a reviewed deployment memory/concurrency limit. No cloud VM, hosted model broker or complete generation service is running from this work. Platform spending remains off. A successful emulator, OAuth configuration or sandbox payment does not establish deployment.
+
+Website changes use the isolated private `atmemai-google-hosting` branch. The owner alone merges that repository; publication uses only its checksum-verified validated main artifact. Keep its signup flag false until full acceptance.

@@ -10,17 +10,24 @@
     "Signed Stripe Checkout fulfillment and cumulative refunds",
     "Tenant-bound AES-GCM credential storage",
     "Control-plane API and sandbox/production separation",
-    "Private disabled account preview, AtMem policies and checkout icon"
+    "Private disabled account preview, AtMem policies and checkout icon",
+    "X-only Firebase identity and durable server whitelist",
+    "USD20 grant once per immutable X identity",
+    "Private profiles and chunked versioned project snapshots",
+    "Firebase Storage adapter with Firestore metadata",
+    "Admin live OpenRouter catalog selection and encrypted OpenRouter BYOK",
+    "Separate API and AtBots 0.3.1 worker dependency locks",
+    "Pilot sandbox/production metadata and blob namespaces"
   ],
   "remaining": [
-    "Project/artifact tenancy and lifecycle",
-    "Model broker and atomic global budget admission",
-    "Isolated generation/check workers",
-    "Payment disputes, refund admission and recovery scanning",
-    "Real Google signup, CSP/hosting rewrite and full hosted acceptance",
-    "Concrete region/retention/spending/concurrency review",
-    "Owner-reviewed private main publication",
-    "Authenticated Stripe account-wide branding/footer/receipt changes"
+    "Verified @atmemai numeric X ID and real Firebase X sign-in",
+    "X/OpenRouter account and project frontend replacing old preview",
+    "Live Firebase Storage IAM/lifecycle and object reconciliation",
+    "OpenRouter broker, exclusive dispatch and atomic daily-budget admission",
+    "AtBots VM, isolated generation/check workers and durable jobs",
+    "Region/retention/deletion/spending/concurrency review",
+    "Owner-reviewed private main publication and hosted acceptance",
+    "Stripe purchases TODO"
   ],
   "tests": [
     {
@@ -31,9 +38,19 @@
     {
       "result": "Real Stripe sandbox Checkout + signed payment/refund webhooks passed",
       "evidence": "evidence/stripe-testmode.json"
+    },
+    {
+      "command": "FIRESTORE_EMULATOR_HOST=127.0.0.1:8897 .hosted-venv/bin/python -m unittest discover -s hosted/tests -v",
+      "result": "60 passed, no skips; local Firestore plus explicitly named object-storage fixture",
+      "evidence": "evidence/firebase-pilot-validation.txt"
     }
   ],
-  "cloudChanges": [],
+  "cloudChanges": [
+    "Created separate AtMem AI Architect X app and saved read-only web authentication settings",
+    "Configured/enabled Firebase Twitter provider; verified expected app key without exposing credentials",
+    "Preserved authorized domains and added atmem.ai/localhost",
+    "Preserved generated OAuth2 credentials privately in Secret Manager; no new IAM grants"
+  ],
   "realFundsMoved": false,
   "liveDeployment": false,
   "changedFiles": [
@@ -41,5 +58,8 @@
     ".github/workflows/hosted-control-plane.yml",
     ".gitignore",
     "specs/031-hosted-google-platform/"
-  ]
+  ],
+  "historicalScope": "Google/Stripe implementation and sandbox checks are retained evidence; pilot uses X and defers payments.",
+  "managedSpendingEnabled": false,
+  "vmCreated": false
 }

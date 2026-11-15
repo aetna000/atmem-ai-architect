@@ -47,3 +47,6 @@ class _Transaction:
 
     def create(self, collection, key, record):
         self.transaction.create(self._reference(collection, key), record); self.written = True
+
+    def delete(self, collection, key):
+        self.transaction.delete(self._reference(collection,key));self.written=True

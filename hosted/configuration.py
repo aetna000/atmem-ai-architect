@@ -9,7 +9,7 @@ USD_MICROS = 1_000_000
 DEFAULT_POLICY = {
     'revision': 1,
     'currency': 'usd',
-    'welcomeMicros': 5 * USD_MICROS,
+    'welcomeMicros': 20 * USD_MICROS,
     'minimumPurchaseCents': 100,
     'maximumPurchaseCents': 99_999_999,  # Provider integer amount boundary, not a chosen pack price.
     'dailyPlatformBudgetMicros': 0,  # Spending stays off until an administrator sets the launch budget.
