@@ -9,3 +9,9 @@
 - JavaScript suite: 588 tests passed, including the portable-reference regression.
 
 Publishing uses `.github/workflows/npm-release.yml` trusted npm authentication. Local npm login is not the release path. Registry publication and three-platform qualification are reported separately after workflow completion.
+
+## Trusted publication
+
+The v0.2.2 workflow passed package checks and clean-install tests on macOS, Windows and Linux. npm accepted the exact candidate at 2026-11-15T10:34:08Z and recorded provenance. Its shasum is 4f296ad61f7f8b5b07ed50a312f02c1ab9d269e7. The exact tarball and SHA256SUMS are attached to the public GitHub release. A direct GitHub-release npx invocation reports 0.2.2. At this checkpoint npm's public registry is still processing; this is not yet a normal registry-install success.
+
+The release workflow now checks registry visibility, latest-tag selection and exact SHA-512 integrity after publish. Three targeted tests verify acceptance and rejection of changed bytes or a conflicting latest tag. This follow-up changes release verification only; it does not mutate the immutable npm candidate.
