@@ -1,0 +1,44 @@
+{
+  "kind": "Actual Google VM isolated container runtime canaries",
+  "imageConfigId": "sha256:87a71c3301a14b4cc41fea2b473e8dbb9c623b25942a23ce171c2e28a2254255",
+  "passed": true,
+  "checks": [
+    {
+      "name": "python-guards",
+      "expected": "passed",
+      "observed": "passed",
+      "testsReported": 1,
+      "output": "test_outer_guards (test_guards.Isolation.test_outer_guards) ... ok\n\n----------------------------------------------------------------------\nRan 1 test in 0.001s\n\nOK\n"
+    },
+    {
+      "name": "python-negative",
+      "expected": "failed",
+      "observed": "failed",
+      "testsReported": 1,
+      "output": "test_failure (test_negative.Negative.test_failure) ... FAIL\n\n======================================================================\nFAIL: test_failure (test_negative.Negative.test_failure)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/work/source/test_negative.py\", line 3, in test_failure\n    def test_failure(self):self.fail(\"deliberate counterexample\")\n                           ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: deliberate counterexample\n\n----------------------------------------------------------------------\nRan 1 test in 0.001s\n\nFAILED (failures=1)\n"
+    },
+    {
+      "name": "node-positive",
+      "expected": "passed",
+      "observed": "passed",
+      "testsReported": 1,
+      "output": "TAP version 13\n# Subtest: sum\nok 1 - sum\n  ---\n  duration_ms: 0.89517\n  type: 'test'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 90.496597\n"
+    },
+    {
+      "name": "browser-positive",
+      "expected": "passed",
+      "observed": "passed",
+      "testsReported": 1,
+      "output": "TAP version 13\n# Subtest: actual sandboxed Chromium interaction\nok 1 - actual sandboxed Chromium interaction\n  ---\n  duration_ms: 745.287782\n  type: 'test'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 1346.897003\n"
+    },
+    {
+      "name": "terraform-positive",
+      "expected": "passed",
+      "observed": "passed",
+      "testsReported": null,
+      "output": "{\"command\": \"init\", \"exitCode\": 0, \"output\": \"Initializing provider plugins...\\n- Finding latest version of hashicorp/null...\\n- Installing hashicorp/null v3.3.2...\\n- Installed hashicorp/null v3.3.2 (unauthenticated)\\n\\nTerraform has created a lock file .terraform.lock.hcl to record the provider\\nselections it made above. Include this file in your version control repository\\nso that Terraform can guarantee to make the same selections by default when\\nyou run \\\"terraform init\\\" in the future.\\n\\n\\nWarning: Incomplete lock file information for providers\\n\\nDue to your customized provider installation methods, Terraform was forced to\\ncalculate lock file checksums locally for the following providers:\\n  - hashicorp/null\\n\\nThe current .terraform.lock.hcl file only includes checksums for linux_amd64,\\nso Terraform running on another platform will fail to install these\\nproviders.\\n\\nTo calculate additional checksums for another platform, run:\\n  terraform providers lock -platform=linux_amd64\\n(where linux_amd64 is the platform to generate)\\nTerraform has been successfully initialized!\\n\"}\n{\"command\": \"validate\", \"exitCode\": 0, \"output\": \"{\\n  \\\"format_version\\\": \\\"1.0\\\",\\n  \\\"valid\\\": true,\\n  \\\"error_count\\\": 0,\\n  \\\"warning_count\\\": 0,\\n  \\\"diagnostics\\\": []\\n}\\n\"}\n"
+    }
+  ],
+  "cloudDeploymentByTests": false,
+  "modelCalls": false
+}
