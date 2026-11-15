@@ -1892,7 +1892,7 @@ function App() {
         </button>
         <nav className="crumbs" aria-label="Level"><span className="workspace-label">PROJECT</span>
           <button className="projects-btn" aria-label="Projects" title="Your projects" onClick={() => (refreshProjects(), setModal("projects"))}>
-            <FolderOpen size={22} /> Projects
+            <FolderOpen size={22} /><span>Projects</span>
           </button>
           <label className="project-rename"><input
             className="project-name"
@@ -1904,7 +1904,7 @@ function App() {
         </nav>
         <div className="bar-actions">
           {HOSTED&&<><button className="btn" onClick={newProject} disabled={busy||agentBusy}><Plus size={16}/>New project</button><button className="btn" onClick={()=>hostedCall('account')}>Account</button></>}
-          {isReadyExample(project)&&<><ReadyExampleDownload compact/><button className="btn" onClick={newProject} disabled={busy||agentBusy}>Create new project</button></>}
+          {isReadyExample(project)&&<><ReadyExampleDownload compact/>{!HOSTED&&<button className="btn" onClick={newProject} disabled={busy||agentBusy}>Create new project</button>}</>}
           {storageError && <span className="warn-text">Not saved</span>}
           <button
             className="icon"
