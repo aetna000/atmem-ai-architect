@@ -71,7 +71,8 @@ def validate(payload):
         env = {'PATH': os.getenv('PATH', ''), 'HOME': folder, 'TMPDIR': folder, 'TF_IN_AUTOMATION': '1', 'CHECKPOINT_DISABLE': '1', 'AWS_EC2_METADATA_DISABLED': 'true'}
         cache=Path(setting('PROVIDER_CACHE') or ROOT/'.local/provider-cache')
         if cache.is_dir():
-            env['TF_PLUGIN_CACHE_DIR']=str(cache)
+            writable_cache=Path(folder)/'.provider-cache';writable_cache.mkdir()
+            env['TF_PLUGIN_CACHE_DIR']=str(writable_cache)
             mirror=Path(folder)/'.atmem-provider-mirror.tfrc'
             mirror.write_text('provider_installation { filesystem_mirror { path = '+json.dumps(str(cache.resolve()))+' } }\n')
             env['TF_CLI_CONFIG_FILE']=str(mirror)

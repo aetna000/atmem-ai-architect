@@ -4,8 +4,9 @@
 .stage-tabs>button[aria-selected=true]{outline:2px solid var(--accent,#be5679);outline-offset:-2px;font-weight:600}
 .stage-tabs>button.stage-complete{background:#e7f4eb;color:#215d3b;border-color:#a9cdb4}
 .stage-tabs>button>span{font-size:.85em;border:1px solid currentColor;border-radius:50%;width:22px;height:22px;display:grid;place-items:center}
-.unified-journey{display:flex;flex-direction:column;align-items:stretch}
-.unified-journey .journey-current{padding:4px 14px;display:flex;gap:12px;align-items:center}
+.unified-journey{display:flex;flex-direction:row;align-items:center}
+.unified-journey .stage-tabs{width:auto;flex:0 1 auto;min-width:0;padding:2px}
+.unified-journey .journey-current{margin:0;padding:0;display:flex;flex:0 0 auto;gap:0;align-items:center}
 .unified-journey .journey-current p{margin:4px 0;flex:1}
 .project-rename{display:flex;align-items:center;min-width:0}.project-rename>svg{opacity:0}.project-rename:hover>svg,.project-rename:focus-within>svg{opacity:1}
 .bar .projects-btn{display:inline-flex;align-items:center;gap:7px;width:auto;min-width:100px;padding:7px 10px}
@@ -109,3 +110,5 @@
 .star-prompt{width:min(460px,calc(100vw - 32px));max-width:460px;border:1px solid var(--line);border-radius:16px;padding:22px;background:var(--paper);color:var(--ink);box-shadow:0 18px 60px #0003}.star-prompt::backdrop{background:#0005}.star-prompt header,.star-prompt h2,.star-prompt-actions{display:flex;align-items:center;gap:10px}.star-prompt header{justify-content:space-between}.star-prompt h2{font-size:1.2rem}.star-prompt h2>svg{color:var(--accent);fill:var(--accent-soft)}.star-prompt p{margin:18px 0;line-height:1.5}.star-prompt-actions>a{flex:1;text-decoration:none}.star-prompt-actions>button{min-width:90px}
 
 .check-run-action{display:inline-flex;margin-left:12px;flex-shrink:0}.check-run-action>button:disabled{pointer-events:none}.check-run-action:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+
+@media(max-width:650px){.unified-journey .stage-tabs{flex:1;min-width:0;width:0}.unified-journey .journey-current{max-width:120px}.unified-journey .journey-current>.btn{white-space:normal;padding:7px 9px;font-size:12px;min-height:36px}}

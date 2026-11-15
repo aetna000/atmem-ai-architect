@@ -1,14 +1,14 @@
 # Install and start AtMem AI Architect
 
-AtMem AI Architect runs locally in your browser. The npm preview includes the UI,
+AtMem AI Architect runs locally in your browser. The stable npm package includes the UI,
 local service and isolated AtMem memory runtime.
 
-## npm preview
+## Stable npm package
 
 Install Node.js 22 or later, then run:
 
 ```sh
-npx @atmem/architect@preview
+npx @atmem/architect@latest
 ```
 
 First run downloads checksum-verified uv, managed Python 3.13 and hash-locked
@@ -71,8 +71,8 @@ python -m venv .venv
 python scripts/setup-memory.py
 ```
 
-The launcher selects the Windows virtualenv executable. Native Windows
-execution has not been browser-qualified; these commands are not a claim
+The launcher selects the Windows virtualenv executable. Packaged Windows UI and AtMem startup are qualified. Full native Windows
+generation/export remains unqualified; these commands are not a claim
 of completed Windows acceptance. Report problems with OS and tool versions.
 
 ## 4. Start the application

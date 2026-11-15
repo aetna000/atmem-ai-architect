@@ -12,6 +12,9 @@ from .engineering_sessions import BackendEvent, EmptySessionUnavailable, Recover
 class CodexEngineeringBackend:
     name='codex-app-server'
 
+    @property
+    def session_count(self):return len(self.clients)
+
     def __init__(self,workspaces,*,client_factory=CodexAppServer,instructions='',permission_profile=None,tools=None):
         self.workspaces=dict(workspaces)
         self.client_factory=client_factory

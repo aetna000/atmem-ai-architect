@@ -2,6 +2,7 @@
 import hashlib
 import io
 import json
+import re
 from pathlib import PurePosixPath
 import zipfile
 from .engineering_contexts import validate_context
@@ -14,8 +15,22 @@ def digest(content):
 
 def design_value(content, project):
     value = validate_context(content, project)
-    # Export time changes on every autosave; every other field remains evidence.
+    # Export time and validated navigation/download acknowledgement fingerprints
+    # are UI state, not implementation intent. Exact source bytes remain in ZIPs.
     value.get('meta', {}).pop('updatedAt', None)
+    # Reopening adds these exact empty pricing defaults through engagement import.
+    estimate=value.get('estimate')
+    if isinstance(estimate,dict):
+        for field,empty in (('details',[]),('usage',{}),('prices',{})):
+            if field in estimate and type(estimate[field]) is type(empty) and estimate[field]==empty:
+                del estimate[field]
+    extensions=value.get('extensions')
+    if isinstance(extensions,dict):
+        journey=extensions.get('journey')
+        if (isinstance(journey,dict) and set(journey)<={'scope','architecture','review','estimate','delivery'}
+                and all(isinstance(item,str) and re.fullmatch(r'[0-9]{1,8}-[a-f0-9]{1,8}-[a-f0-9]{1,8}',item) for item in journey.values())):
+            del extensions['journey']
+        if not extensions:value.pop('extensions',None)
     return value
 
 

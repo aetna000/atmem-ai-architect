@@ -1,7 +1,23 @@
 import {zipSync,strToU8} from 'fflate';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {engineeringCall,engineeringConversation,mergeEngineeringEvents,verifiedEngineeringDownload,verifiedHandoffDownload} from '../src/engineering-client.mjs';
+import {engineeringCall,engineeringConversation,mergeEngineeringEvents,verifiedEngineeringDownload,verifiedHandoffDownload,engineeringSelectionSupported,engineeringDeliveryNeedsRefresh} from '../src/engineering-client.mjs';
+
+test('delivery follows active generation and checks without reclassifying settled failures',()=>{
+ assert.equal(engineeringDeliveryNeedsRefresh(null,{state:'running'}),true);
+ assert.equal(engineeringDeliveryNeedsRefresh({session:{state:'idle'},checks:[{state:'running'}]}),true);
+ assert.equal(engineeringDeliveryNeedsRefresh({session:{state:'idle'},checks:[{state:'finished',result:{status:'incomplete'}}]}),false);
+ assert.equal(engineeringDeliveryNeedsRefresh({session:{state:'running'}},{state:'idle'}),false);
+});
+
+test('hosted engineering admits its managed connection while local engineering retains Codex selection',()=>{
+ const connection={provider:'openrouter',model:'vendor/managed-model',effort:'medium'};
+ assert.equal(engineeringSelectionSupported({hosted:true},connection),true);
+ assert.equal(engineeringSelectionSupported({},connection),false);
+ assert.equal(engineeringSelectionSupported({hosted:true},{...connection,effort:'high'}),false);
+ assert.equal(engineeringSelectionSupported({}, {...connection,provider:'codex'}),true);
+ assert.equal(engineeringSelectionSupported({hosted:true},{...connection,model:'default'}),false);
+});
 
 test('engineering protocol sends only scoped intent and server token',async()=>{
   const text='Keep every line.\n'.repeat(1000);let request;

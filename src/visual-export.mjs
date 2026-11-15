@@ -4,7 +4,7 @@ const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;
 const plain=value=>String(value??'').replace(/\*\*|`/g,'').replace(/\[([^\]]+)\]\([^)]+\)/g,'$1');
 let fontPromise;
 async function font(){
-  fontPromise ||= fetch('/fonts/NotoSans-Regular.ttf').then(async r=>{if(!r.ok)throw Error('PDF font could not be loaded. Please retry the download.');const bytes=new Uint8Array(await r.arrayBuffer());let binary='';for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(binary);}).catch(e=>{fontPromise=null;throw e;});
+  fontPromise ||= fetch((import.meta.env?.BASE_URL||'/')+'fonts/NotoSans-Regular.ttf').then(async r=>{if(!r.ok)throw Error('PDF font could not be loaded. Please retry the download.');const bytes=new Uint8Array(await r.arrayBuffer());let binary='';for(let i=0;i<bytes.length;i+=8192)binary+=String.fromCharCode(...bytes.subarray(i,i+8192));return btoa(binary);}).catch(e=>{fontPromise=null;throw e;});
   return fontPromise;
 }
 function pdf(fontData,options={}){const doc=new jsPDF({compress:true,...options});doc.addFileToVFS('NotoSans.ttf',fontData);doc.addFont('NotoSans.ttf','NotoSans','normal');doc.setFont('NotoSans');return doc;}

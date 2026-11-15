@@ -36,3 +36,7 @@ Available cost estimates include explicit exclusions where prices or usage are m
 AtMem-owned code is Apache-2.0. Bundled third-party licences and notices are retained.
 
 Contact: [hello@atmem.ai](mailto:hello@atmem.ai) · [atmem.ai](https://atmem.ai)
+
+## Version 0.2.3
+
+Slimmer project/stage controls, a clearer responsive message field and reliable Delivery refresh after generation or reopening. The complete example remains available. Hosted account analytics deploy separately; local installations do not load website analytics.

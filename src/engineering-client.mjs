@@ -1,5 +1,12 @@
 // Backend-owned jobs: no native thread IDs, host paths or model credentials.
 import {unzipSync} from 'fflate';
+export function engineeringSelectionSupported(session,connection){
+ if(!connection?.model||connection.model==='default'||!connection.effort)return false;
+ return connection.provider==='codex'||!!(session?.hosted&&connection.provider==='openrouter'&&connection.effort==='medium');
+}
+export function engineeringDeliveryNeedsRefresh(report,job){
+ return ['starting','running'].includes((job||report?.session)?.state)||!!report?.checks?.some(check=>['queued','running'].includes(check.state));
+}
 export async function engineeringCall(session, action, payload, {signal,fetcher=fetch}={}) {
   if(!session?.token)throw new Error('Connect to the session service first.');
   const response=await fetcher(`/api/engineering/${action}`,{method:'POST',signal,

@@ -1,3 +1,4 @@
+import {HOSTED,connectHostedWorkspace,hostedInitial,hostedCall,hostedRevision,noteHostedChange} from './hosted-workspace.mjs';
 import {readyExample,isReadyExample} from './ready-example.mjs';
 import {ReadyExampleDownload} from './ReadyExample.jsx';
 import {StarPrompt,STAR_URL} from './StarPrompt.jsx';
@@ -171,6 +172,7 @@ import { zipSync, strToU8 } from "fflate";
 const STORAGE = "atforma-workspace-v3";
 // A new project starts empty: the user describes what they want first.
 import './onboarding.css';
+import './chat-composer.css';
 const emptyProject = () => ({ id: crypto.randomUUID(), version: 1, revision: 1, name: "New project", provider: "tools", requirements: "", nodes: [], edges: [] });
 const ALL_CATALOG = [...CATALOG, ...UPSTREAM_CATALOG];
 const KIND_ICON = {
@@ -257,6 +259,7 @@ function Mark({ size = 20 }) {
 // Which architect the user chose; absent on first visit, so we ask before anything else.
 const CONNECTION = "atforma-connection-v1";
 function readConnection() {
+  if(HOSTED)return hostedInitial().connection;
   try {
     const c = JSON.parse(localStorage.getItem(CONNECTION) || "null");
     // Older builds stored "offline"; the architect now always needs a real model.
@@ -273,6 +276,7 @@ function saveConnection(c) {
   } catch {}
 }
 function readSaved() {
+  if(HOSTED)return withDerived(fromProjectFile(hostedInitial().file).project);
   try {
     const raw = localStorage.getItem(STORAGE);
     const p = validateImport(raw ? JSON.parse(raw) : emptyProject());
@@ -665,14 +669,14 @@ function savedTheme() {
     return "light";
   }
 }
-document.documentElement.dataset.theme = savedTheme();
+
 
 function readChatView(id){try{const value=JSON.parse(localStorage.getItem('atmem-chat-view:'+id)||'null');return value&&Number.isSafeInteger(value.start)&&value.start>=0&&Array.isArray(value.turnIds)?value:{start:0,turnIds:[]};}catch{return {start:0,turnIds:[]};}}
 const pricingSignature=p=>JSON.stringify([p.id,p.estimate?.projectSize||'small',p.estimate?.usage,p.facts,p.decisions?.filter(d=>d.status==='Accepted'&&['cloud.region','data.country'].includes(d.subject)),[...storageNodes(p),...lambdaNodes(p),...googleNodes(p)].map(n=>[n.id,n.data.provider,n.data.service,n.data.config])]);
 function App() {
   const [starOffer,setStarOffer]=useState(0);
   const [introOpen,setIntroOpen]=useState(false),[voiceOpenRequest,setVoiceOpenRequest]=useState(0);
-  const [project, setProject] = useState(()=>new URL(location.href).searchParams.get('example')==='1'&&!projectIdFromUrl(location.href)?readyExample():readSaved());
+  const [project, setProject] = useState(()=>!HOSTED&&new URL(location.href).searchParams.get('example')==='1'&&!projectIdFromUrl(location.href)?readyExample():readSaved());
   const projectRef = useRef(project);
   projectRef.current = project;
   const [initialCanvasView] = useState(()=>readCanvasView(project));
@@ -917,16 +921,19 @@ function App() {
     return () => { clearTimeout(zoom); clearTimeout(clear); };
   }, [attention, fitView]);
 
+  function showConnections(){if(HOSTED){void hostedCall('account').catch(error=>notify(error.message));return;}setModal('connections');}
   const refreshSession = useCallback(async () => {
     try {
       const next = await discoverLocalAgent();
       setSession(next);
+      if(HOSTED&&next.defaultConnection)setConnection(current=>current?.model===next.defaultConnection.model&&current?.effort===next.defaultConnection.effort?current:next.defaultConnection);
       return next;
     } catch {
       setSession(null);
       return null;
     }
   }, []);
+  useEffect(()=>{if(HOSTED&&session?.token)void hostedCall('ready').catch(()=>{});},[session?.token]);
   useEffect(() => {
     refreshSession();
     const timer=setInterval(refreshSession,30000);
@@ -1216,7 +1223,11 @@ function App() {
       const raw = JSON.parse(content);
       if (raw.format || raw.version === 1) {
         const { project: opened, migrated, from } = parseProjectFile(content);
-        loadDesign(fileImportAsCopy.current?copyProject(opened,crypto.randomUUID()):opened, { own: true });
+        if(HOSTED){
+          await saveEngineeringProject(projectRef.current.id);
+          const imported=await hostedCall('import-project',{file:toProjectFile(opened)});
+          loadDesign(fromProjectFile(imported.file).project,{own:true});
+        }else loadDesign(fileImportAsCopy.current?copyProject(opened,crypto.randomUUID()):opened, { own: true });
         notify(fileImportAsCopy.current?"New project created from the saved design. The original is preserved.":migrated ? `Project opened and upgraded from ${from}.` : "Project opened.");
       } else {
         loadDesign(importUpstreamProject(raw));
@@ -1649,13 +1660,15 @@ function App() {
     updateEngagement({ ...skipped, lastAsked: next });
     setMessages((m) => [...m, { role: "assistant", text: next ? `No problem, we'll come back to it.\n\n${next.question}\n${next.beginner}` : "That's everything I need for now." }]);
   }
-  // Autosave to the helper (your account on this computer), a moment after each change.
+  useEffect(()=>{if(HOSTED)void noteHostedChange(project.id).catch(()=>{});},[project,messages]);
+  // Autosave through the selected local or hosted session service.
   const binned = useRef(new Set());
   useEffect(() => {
-    if (!session || binned.current.has(project.id) || (!project.nodes.length && !project.brief?.application?.trim() && messages.length < 2)) return;
+    if (!session || binned.current.has(project.id) || (!HOSTED && !project.nodes.length && !project.brief?.application?.trim() && messages.length < 2)) return;
+    const bridgeVersion=HOSTED?hostedRevision(project.id):undefined;
     const t = setTimeout(async () => {
       try {
-        const saved=await projectStore(session, "save", { id: project.id, file: toProjectFile(withConversation(project, messages)) });
+        const saved=await projectStore(session, "save", { id: project.id, file: toProjectFile(withConversation(project, messages)),...(HOSTED?{bridgeVersion}:{}) });
         if(saved.memory)setMemorySync({projectId:project.id,...saved.memory});
       } catch (error) { setMemorySync(current=>({...((current?.projectId===project.id)?current:{}),projectId:project.id,status:'sync_failed'}));notify(`Project conversation could not be saved: ${error.message}`); }
     }, 800);
@@ -1711,6 +1724,7 @@ function App() {
   }
   async function openSaved(id) {
     try {
+      if(HOSTED)await saveEngineeringProject(projectRef.current.id);
       const { project: opened } = fromProjectFile(await projectStore(session, "get", { id }));
       switchTo(opened);
       setModal(null);
@@ -1739,20 +1753,30 @@ function App() {
     })();
     return () => { active = false; };
   }, [session?.token]);
-  function newProject() { if(!busy&&!agentBusy&&!intake.length)setModal("start-over"); }
+  async function newProject() {
+    if(HOSTED){
+      if(agentBusy||busy||intake.length)return;
+      try{await saveEngineeringProject(projectRef.current.id);const {file}=await hostedCall('new-project');switchTo(fromProjectFile(file).project);setModal(null);}catch(error){notify(error.message);}
+      return;
+    }
+    if(!busy&&!agentBusy&&!intake.length)setModal("start-over");
+  }
   function createOwnProject(){
+    if(HOSTED){void newProject();return;}
     switchTo(validateImport(emptyProject()));setModal(connection?null:'connections');
     requestAnimationFrame(()=>document.querySelector('input[aria-label="Project name"]')?.focus());
   }
-  function openReadyExample(){
+  async function openReadyExample(){
     if(busy||agentBusy||intake.length)return;
-    const example=readyExample();example.id=crypto.randomUUID();switchTo(example);setModal(null);
+    const example=readyExample();example.id=crypto.randomUUID();
+    if(HOSTED){try{await saveEngineeringProject(projectRef.current.id);const {file}=await hostedCall('import-project',{file:toProjectFile(example)});switchTo(fromProjectFile(file).project);setModal(null);}catch(error){notify(error.message);}return;}
+    switchTo(example);setModal(null);
   }
   async function binProject(id) {
     try {
       binned.current.add(id);
       await projectStore(session, "trash", { id });
-      if (id === projectRef.current.id) switchTo(validateImport(emptyProject()));
+      if(id===projectRef.current.id){if(HOSTED){const {file}=await hostedCall('new-project');switchTo(fromProjectFile(file).project);}else switchTo(validateImport(emptyProject()));}
       await refreshProjects();
       notify("Moved to the bin. Restore it from Projects any time.");
     } catch (e) {
@@ -1868,7 +1892,7 @@ function App() {
         </button>
         <nav className="crumbs" aria-label="Level"><span className="workspace-label">PROJECT</span>
           <button className="projects-btn" aria-label="Projects" title="Your projects" onClick={() => (refreshProjects(), setModal("projects"))}>
-            <FolderOpen size={22} /> Projects
+            <FolderOpen size={22} /><span>Projects</span>
           </button>
           <label className="project-rename"><input
             className="project-name"
@@ -1879,7 +1903,8 @@ function App() {
           /><PencilRuler size={14} aria-hidden="true"/></label>
         </nav>
         <div className="bar-actions">
-          {isReadyExample(project)&&<><ReadyExampleDownload compact/><button className="btn" onClick={newProject} disabled={busy||agentBusy}>Create new project</button></>}
+          {HOSTED&&<><button className="btn" onClick={newProject} disabled={busy||agentBusy}><Plus size={16}/>New project</button><button className="btn" onClick={()=>hostedCall('account')}>Account</button></>}
+          {isReadyExample(project)&&<><ReadyExampleDownload compact/>{!HOSTED&&<button className="btn" onClick={newProject} disabled={busy||agentBusy}>Create new project</button>}</>}
           {storageError && <span className="warn-text">Not saved</span>}
           <button
             className="icon"
@@ -1915,7 +1940,7 @@ function App() {
             <hr/><button role="menuitem" onClick={() => setModal("memory")} disabled={!session}><BrainActivity size={18} active={false}/>AtMem memory</button>
             <button role="menuitem" onClick={() => setModal("start-over")} disabled={busy || agentBusy}><RotateCcw size={16}/>Start over</button>
             <hr />
-            <button role="menuitem" onClick={() => setModal("connections")}><Waypoints size={16}/>AI providers</button>
+            {!HOSTED&&<button role="menuitem" onClick={() => showConnections()}><Waypoints size={16}/>AI providers</button>}
             <button role="menuitem" onClick={() => setModal("licenses")}><ShieldCheck size={16}/>Licences</button>
             <a role="menuitem" href={STAR_URL} target="_blank" rel="noopener noreferrer">Star on GitHub ↗</a>
           </div>
@@ -2197,7 +2222,7 @@ function App() {
         <section className="review-costs" aria-label="Project costs">
         {["review","estimate"].includes(mode) && <EstimateView project={project} result={costs} onChange={updateEngagement} busy={busy||agentBusy||!!pending} onEstimate={refreshEstimate} onChooseRegion={()=>{visitJourney('cloud');requestAnimationFrame(()=>{const input=document.querySelector('.location-region-form input');input?.focus();input?.scrollIntoView({block:'center',behavior:'instant'});});}} pricing={pricingState} onNext={()=>{const section=document.querySelector('.review-generation');const target=section?.querySelector('button')||section;if(target){target.setAttribute('tabindex','-1');target.focus({preventScroll:true});target.scrollIntoView({block:'center'});}}} />}
         </section>
-        {mode==='review'&&session?.engineeringEnabled&&<section className="review-generation" aria-label="Generation and verification"><EngineeringPanel key={project.id} project={project} onBusyChange={setGenerationPending} onWorkModelChange={changeArchitectureWork} onIntentContext={syncEngineeringIntent} projectId={project.id} session={session} connection={connection} contextBusy={busy||agentBusy||!!pending} saveProject={()=>saveEngineeringProject(project.id)} buildRequest={buildRequest} onBuildRequestHandled={id=>setBuildRequest(current=>current?.id===id?null:current)} onConnections={()=>setModal('connections')}/></section>}
+        {mode==='review'&&session?.engineeringEnabled&&<section className="review-generation" aria-label="Generation and verification"><EngineeringPanel key={project.id} project={project} onBusyChange={setGenerationPending} onWorkModelChange={changeArchitectureWork} onIntentContext={syncEngineeringIntent} projectId={project.id} session={session} connection={connection} contextBusy={busy||agentBusy||!!pending} saveProject={()=>saveEngineeringProject(project.id)} buildRequest={buildRequest} onBuildRequestHandled={id=>setBuildRequest(current=>current?.id===id?null:current)} onConnections={()=>showConnections()}/></section>}
         {mode==='review'&&!session?.engineeringEnabled&&<p>Generation and local checks require the engineering service. Your design is retained; Delivery can package the design and remaining tasks.</p>}
         {mode==='review'&&<ProjectChecks generationPending={generationPending} receipt={checkReceipt} project={project} environment={environment} session={session} onReceipt={setCheckReceipt} onBusy={setChecking}/>}
         {mode==='review'&&<footer className="review-finish"><div><strong>3. Package and download</strong><p>Explore all files and download one project ZIP in Delivery.</p></div><button className="btn primary" onClick={()=>{const next=acknowledgeStage(projectRef.current,'review');updateEngagement(costs.expected!==null&&!costs.mixedCurrencies?{...next,extensions:{...next.extensions,journey:{...next.extensions.journey,estimate:journey(next).keys.estimate}}}:next);visitJourney('delivery');}}>Complete →</button></footer>}
@@ -2208,7 +2233,7 @@ function App() {
 
         {onBoard&&emulationOpen&&<div className="emulation-dock"><EmulationPanel project={project} session={session} emulation={emulation} onDiscuss={discussEmulation} onOpenComponent={id=>{reviewBlock(id);setEmulationOpen(false);}} discussionBusy={busy||agentBusy||!!pending} onClose={()=>setEmulationOpen(false)} onBuild={session?.engineeringEnabled?()=>{setEmulationOpen(false);buildCurrentDesign('test');}:undefined}/></div>}
 
-        {mode === "design" && designView === "outputs" && <OutputsView onNavigate={async target=>{const [stage,selector]={requirements:['scope','.requirements-document'],location:['cloud','section[aria-label="Country and region"]'],cost:['review','.review-costs'],implementation:['review','.review-generation'],checks:['review','.project-checks']}[target];visitJourney(stage);await new Promise((resolve,reject)=>{const started=performance.now();function focus(){const element=document.querySelector(selector);if(element&&element.getClientRects().length){element.setAttribute('tabindex','-1');element.focus({preventScroll:true});element.scrollIntoView({block:'start',behavior:'instant'});resolve();}else if(performance.now()-started<5000)requestAnimationFrame(focus);else reject(Error('Section is unavailable. Use the stage tabs to continue.'));}requestAnimationFrame(focus);});}} checkReceipt={checkReceipt} onDownloaded={()=>{updateEngagement(acknowledgeStage(projectRef.current,'delivery'));setStarOffer(value=>value+1);}} onReview={()=>visitJourney('review')} onSave={expected=>saveEngineeringProject(project.id,expected)} project={project} run={run} environment={environment} session={session} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onDownload={downloadBundle} onBuild={session?.engineeringEnabled?()=>visitJourney('review'):undefined} onBack={()=>setDesignView("board")} />}
+        {mode === "design" && designView === "outputs" && <OutputsView workStatus={engineeringStatus} onNavigate={async target=>{const [stage,selector]={requirements:['scope','.requirements-document'],location:['cloud','section[aria-label="Country and region"]'],cost:['review','.review-costs'],implementation:['review','.review-generation'],checks:['review','.project-checks']}[target];visitJourney(stage);await new Promise((resolve,reject)=>{const started=performance.now();function focus(){const element=document.querySelector(selector);if(element&&element.getClientRects().length){element.setAttribute('tabindex','-1');element.focus({preventScroll:true});element.scrollIntoView({block:'start',behavior:'instant'});resolve();}else if(performance.now()-started<5000)requestAnimationFrame(focus);else reject(Error('Section is unavailable. Use the stage tabs to continue.'));}requestAnimationFrame(focus);});}} checkReceipt={checkReceipt} onDownloaded={()=>{updateEngagement(acknowledgeStage(projectRef.current,'delivery'));setStarOffer(value=>value+1);}} onReview={()=>visitJourney('review')} onSave={expected=>saveEngineeringProject(project.id,expected)} project={project} run={run} environment={environment} session={session} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onDownload={downloadBundle} onBuild={session?.engineeringEnabled?()=>visitJourney('review'):undefined} onBack={()=>setDesignView("board")} />}
         {mode === "design" && designView === "terraform" && <TerraformView project={project} environment={environment} session={session} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onDelivery={()=>visitJourney("delivery")} onBuild={session?.engineeringEnabled?()=>visitJourney('review'):undefined} onBack={()=>setDesignView("board")} />}
         <div className="choices-workspace" hidden={!(mode==="design"&&["options","decisions","location"].includes(designView))}>
         {mode === "design" && ["options","decisions"].includes(designView) && (
@@ -2241,10 +2266,11 @@ function App() {
               />
               Draw as we talk
             </label>
-            <button className="model" onClick={() => setModal("connections")} title="AI providers">
+            {HOSTED?<span className="model"><span className={`led ${connection&&session?'on':''}`}/>{connection?.model?.split('/').at(-1)} · Medium</span>:<>
+            <button className="model" onClick={() => showConnections()} title="AI providers">
               <span className={`led ${connection && session ? "on" : ""}`} />
               {connection ? `${connection.model}${connection.effort ? ` · ${EFFORT_LABEL[connection.effort] || connection.effort}` : ""}` : "Connect a model"}
-            </button>
+            </button></>}
             <span className="chat-top-utilities">
               {hasIntroduction&&<button type="button" aria-expanded={introOpen} onClick={()=>setIntroOpen(value=>!value)}>{introOpen?'▾':'▸'} Introduction</button>}
               {session&&<button type="button" className="icon" aria-label="Voice settings" title="Voice settings" onClick={()=>setVoiceOpenRequest(value=>value+1)}><Volume2 size={15}/></button>}
@@ -2292,6 +2318,8 @@ function App() {
               ))}
             </ul>
           )}
+          <div className="chat-body">
+          <section className="chat-history" aria-label="Chat history"><h2 className="chat-history-label">Chat history</h2>
           <div className="messages" ref={chatScroll.viewport}>
             <div className="message-list" ref={chatScroll.content}>
             {architectureChatEntries(project,messages).filter(entry=>entry.kind==='message'?entry.index>=chatView.start:entry.kind==='activity'?!chatView.turnIds.includes(entry.turn.id):entry.kind==='legacy-activity'?entry.entries.some(item=>!chatView.turnIds.includes(item.turn.id)):true).map(entry=>{
@@ -2306,7 +2334,7 @@ function App() {
                 {(m.workState==='queued'||m.workState==='processing'&&intake.some(q=>q.id===m.requestId))&&<small className="message-work-state">Queued for the next update <button className="link" onClick={()=>{updateIntake(intakeRef.current.filter(q=>q.id!==m.requestId));setRequestState([m.requestId],'cancelled');}}>Remove from queue</button><button className="link" onClick={()=>{if(input||attachments.length){notify('Your current draft is preserved. Send or clear it before editing a queued update.');return;}const queued=intakeRef.current.find(q=>q.id===m.requestId);if(!queued)return;setInput(queued.text);setAttachments(queued.attachments);updateIntake(intakeRef.current.filter(q=>q.id!==m.requestId));setRequestState([m.requestId],'cancelled');}}>Edit update</button>{m.attachments?.some(a=>!a.data)&&<button className="link" onClick={()=>{updateIntake(intakeRef.current.map(q=>q.id===m.requestId?{...q,attachments:[]}:q));setIntakePaused(false);}}>Continue with text only</button>}</small>}
                 {!!m.attachments?.length&&<div className="sent-attachments">{m.attachments.map(a=><figure key={a.id}>{a.data&&a.mime.startsWith('image/')&&<img src={`data:${a.mime};base64,${a.data}`} alt={a.name}/>}<figcaption><Paperclip size={12}/>{a.name}{a.originalNotSaved && <small>Original file not saved; attach it again to review its contents.</small>}</figcaption></figure>)}</div>}
                 {m.fix && (
-                  <button className="btn fix" onClick={() => setModal("connections")}>
+                  <button className="btn fix" onClick={() => showConnections()}>
                     Fix connection
                   </button>
                 )}
@@ -2349,6 +2377,8 @@ function App() {
             </div>
           </div>
           {chatScroll.away&&<button className="chat-jump-latest" aria-label="Jump to latest message" onClick={chatScroll.followLatest}>↓</button>}
+          </section>
+          <div className="chat-compose-pane">
           {!!intake.filter(q=>q.projectId===project.id).length&&<div className="intake-status" role="status">{intake.filter(q=>q.projectId===project.id).length} update(s) {intakePaused?'saved · paused':'queued · combining next'}{intakeIssue&&<span> {intakeIssue}</span>}{intakePaused&&<button className="link" onClick={()=>setIntakePaused(false)}>Resume</button>}</div>}
           <div className="prompts">
             {mode === "design" && project.workflow && !project.nodes.length && !pending && (
@@ -2371,11 +2401,12 @@ function App() {
               void postMessage();
             }}
           >
-            <textarea
+            <label className="composer-label" htmlFor="architect-message">Your message</label>
+            <textarea id="architect-message"
               onPaste={e=>{const files=[...e.clipboardData.files];if(files.length){e.preventDefault();void attachFiles(files);}}}
               ref={messageInput}
               aria-label="Your message"
-              placeholder={brief(project) ? "Reply in your own words…" : "Describe what you want to build…"}
+              placeholder="Type here…"
               rows={2}
               value={input}
               onChange={(e) => { stopVoice(); setInput(e.target.value); }}
@@ -2401,11 +2432,11 @@ function App() {
               {voiceActive ? <Square size={13} /> : <Mic size={15} />}
             </button>
             <button type="submit" className="send" aria-label="Send message" disabled={(!input.trim() && !voiceActive && !attachments.length) || busy || readingAttachments || voiceState === "transcribing"}>
-              <ArrowUp size={15} />
+              <ArrowUp size={15} /><span>Send</span>
             </button>
             </div>
           </form>
-          {session&&<OpenAIVoicePanel hideTrigger openRequest={voiceOpenRequest} key={project.id} session={session} connection={connection} transportRef={openaiVoice} onConnections={()=>setModal('connections')} onStart={()=>{voice.current?.cancel();setVoiceError('');}} onTranscript={(text,automatic)=>{
+          {session&&<OpenAIVoicePanel hideTrigger openRequest={voiceOpenRequest} key={project.id} session={session} connection={connection} transportRef={openaiVoice} onConnections={()=>showConnections()} onStart={()=>{voice.current?.cancel();setVoiceError('');}} onTranscript={(text,automatic)=>{
             if(automatic&&!input.trim()&&!attachments.length){setInput(text);void send(text);}
             else setInput(current=>current+(current.trim()?' ':'')+text);
           }}/>}
@@ -2413,10 +2444,12 @@ function App() {
             {!voiceError&&["starting","transcribing"].includes(voiceState)&&<BrainActivity size={22}/>}
             {voiceError || ({ starting: "Opening microphone…", listening: "Dictating locally — review your words, then press Send.", transcribing: "Finishing your transcript…" }[voiceState] || "")}
           </div>
+          </div>
+          </div>
         </aside>
       )}
 
-      <input type="file" id="requirements-file-input" ref={requirementsInput} accept={ATTACHMENT_ACCEPT} multiple hidden onChange={async e=>{const files=[...e.target.files];e.target.value='';if(!files.length||readingAttachments)return;const uploadOwner=projectRef.current.id;setReadingAttachments(true);setAttachmentError('');try{const added=await readAttachments(files,attachments);if(projectRef.current.id!==uploadOwner)return;const all=[...attachments,...added];setAttachments(all);setChatOpen(true);setInput('Read these requirements and diagrams. Summarise what you understand, propose requirements and a connected design, and ask one focused question about anything important that is unclear. Preserve existing systems and distinguish source facts from assumptions.');if(connection&&session){setReadingAttachments(false);void send('Read these requirements and diagrams. Summarise what you understand, propose requirements and a connected design, and ask one focused question about anything important that is unclear. Preserve existing systems and distinguish source facts from assumptions.','chat',null,null,{attachments:all});}else{setModal('connections');}}catch(error){setAttachmentError(error.message);}finally{setReadingAttachments(false);}}}/>
+      <input type="file" id="requirements-file-input" ref={requirementsInput} accept={ATTACHMENT_ACCEPT} multiple hidden onChange={async e=>{const files=[...e.target.files];e.target.value='';if(!files.length||readingAttachments)return;const uploadOwner=projectRef.current.id;setReadingAttachments(true);setAttachmentError('');try{const added=await readAttachments(files,attachments);if(projectRef.current.id!==uploadOwner)return;const all=[...attachments,...added];setAttachments(all);setChatOpen(true);setInput('Read these requirements and diagrams. Summarise what you understand, propose requirements and a connected design, and ask one focused question about anything important that is unclear. Preserve existing systems and distinguish source facts from assumptions.');if(connection&&session){setReadingAttachments(false);void send('Read these requirements and diagrams. Summarise what you understand, propose requirements and a connected design, and ask one focused question about anything important that is unclear. Preserve existing systems and distinguish source facts from assumptions.','chat',null,null,{attachments:all});}else{showConnections();}}catch(error){setAttachmentError(error.message);}finally{setReadingAttachments(false);}}}/>
       <input id="project-file-input" type="file" ref={fileRef} accept="application/json,.json" hidden onChange={importProject} />
       {toast && (
         <div className="toast" role="status">
@@ -2494,7 +2527,7 @@ function App() {
               />
             ) : modal === "licenses" ? (
               <>
-                <h2>AtMem</h2><a href="/licenses/atmem-APACHE-2.0.txt" target="_blank" rel="noreferrer">Apache 2.0</a>
+                <h2>AtMem</h2><a href={(HOSTED?'/architect/workspace/':'/')+'licenses/atmem-APACHE-2.0.txt'} target="_blank" rel="noreferrer">Apache 2.0</a>
               </>
             ) : (
               <>
@@ -2509,8 +2542,17 @@ function App() {
   );
 }
 
-createRoot(document.getElementById("root")).render(
+async function mountArchitect(){
+ await connectHostedWorkspace();
+ document.documentElement.dataset.theme=savedTheme();
+ createRoot(document.getElementById("root")).render(
   <ReactFlowProvider>
     <App />
   </ReactFlowProvider>,
 );
+}
+void mountArchitect().catch(error=>{
+ const root=document.getElementById('root');root.replaceChildren();
+ const message=document.createElement('p');message.textContent=error.message||'The workspace could not open.';
+ const link=document.createElement('a');link.href='/architect';link.textContent='Return to Architect';root.append(message,link);
+});

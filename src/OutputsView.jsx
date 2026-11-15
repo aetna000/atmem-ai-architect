@@ -37,7 +37,7 @@ function Preview({name,content}){
  if(name.endsWith('.md'))return <Document text={content}/>;
  return <CodePreview className="output-code" content={content} name={name}/>;
 }
-export function OutputsView({project,run,environment,session,onDownload,onBack,emulation,onDiscuss,discussionBusy,onBuild,onSave,onDownloaded,onReview,checkReceipt,onNavigate}){
+export function OutputsView({project,run,environment,session,workStatus,onDownload,onBack,emulation,onDiscuss,discussionBusy,onBuild,onSave,onDownloaded,onReview,checkReceipt,onNavigate}){
  const [exploration,setExploration]=useState(null);
  const projectRef=useRef(project);projectRef.current=project;
  const [packing,setPacking]=useState(false);
@@ -60,7 +60,7 @@ export function OutputsView({project,run,environment,session,onDownload,onBack,e
   <header className="doc-head"><h2>Delivery</h2></header>
   <button className="link" onClick={onReview||onBack}>Back to Review</button>
   {isReadyExample(project)&&<ReadyExampleChecklist/>}
-  {session?.engineeringEnabled&&(isReadyExample(project)?<details><summary>Checks for your edited project</summary><ImplementationDelivery key={project.id} project={project} session={session} onBuild={onBuild} onSave={onSave} contextBusy={discussionBusy} designBundle={loading?null:bundle} onDesignDownload={onDownload} onDownloaded={onDownloaded} checkReceipt={checkReceipt} onExplore={setExploration} onNavigate={onNavigate}/></details>:<ImplementationDelivery key={project.id} project={project} session={session} onBuild={onBuild} onSave={onSave} contextBusy={discussionBusy} designBundle={loading?null:bundle} onDesignDownload={onDownload} onDownloaded={onDownloaded} checkReceipt={checkReceipt} onExplore={setExploration} onNavigate={onNavigate}/>)}
+  {session?.engineeringEnabled&&(isReadyExample(project)?<details><summary>Checks for your edited project</summary><ImplementationDelivery key={project.id} project={project} session={session} workStatus={workStatus} onBuild={onBuild} onSave={onSave} contextBusy={discussionBusy} designBundle={loading?null:bundle} onDesignDownload={onDownload} onDownloaded={onDownloaded} checkReceipt={checkReceipt} onExplore={setExploration} onNavigate={onNavigate}/></details>:<ImplementationDelivery key={project.id} project={project} session={session} workStatus={workStatus} onBuild={onBuild} onSave={onSave} contextBusy={discussionBusy} designBundle={loading?null:bundle} onDesignDownload={onDownload} onDownloaded={onDownloaded} checkReceipt={checkReceipt} onExplore={setExploration} onNavigate={onNavigate}/>)}
   <section aria-label="Project file explorer"><h3>Explore files</h3>
 
   {!session?.engineeringEnabled&&<><p>Design package · no implementation generated.</p><button className="btn" disabled={!bundle||loading||!!error||packing} onClick={downloadDesign}>{packing?'Preparing ZIP…':'Download project ZIP'}</button></>}
