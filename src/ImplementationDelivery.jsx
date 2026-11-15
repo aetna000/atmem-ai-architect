@@ -3,10 +3,10 @@ import {FinalChecklist} from './FinalChecklist.jsx';
 import {BrainActivity} from './BrainActivity.jsx';
 import {completeProjectZip} from './final-package.mjs';
 import React,{useEffect,useState,useRef} from 'react';
-import {engineeringCall,verifiedHandoffDownload} from './engineering-client.mjs';
+import {engineeringCall,verifiedHandoffDownload,engineeringDeliveryNeedsRefresh} from './engineering-client.mjs';
 import {ArtifactChecks} from './ArtifactChecks.jsx';
 
-export function ImplementationDelivery({project,session,onBuild,onSave,contextBusy=false,designBundle,onDesignDownload,onDownloaded,checkReceipt,onExplore,onNavigate}){
+export function ImplementationDelivery({project,session,workStatus,onBuild,onSave,contextBusy=false,designBundle,onDesignDownload,onDownloaded,checkReceipt,onExplore,onNavigate}){
  const [orcaResult,setOrcaResult]=useState(null);
  const projectRef=useRef(project);projectRef.current=project;
  const [prepared,setPrepared]=useState(null),[preparing,setPreparing]=useState(false);
@@ -18,7 +18,11 @@ export function ImplementationDelivery({project,session,onBuild,onSave,contextBu
    if(!controller.signal.aborted)setLoaded({project,report:value});
   }).catch(e=>{if(!controller.signal.aborted){if(e.status===404&&e.message.startsWith('Save or restore this project'))setLoaded({project,report:{artifact:null}});else setError(e.message);}});
   return()=>controller.abort();
- },[project,session.token,retry]);
+ },[project,session.token,retry,workStatus?.run,workStatus?.state,workStatus?.last_status]);
+ useEffect(()=>{
+  if(!engineeringDeliveryNeedsRefresh(report,workStatus))return;
+  const timer=setTimeout(()=>setRetry(value=>value+1),2500);return()=>clearTimeout(timer);
+ },[report,workStatus?.run,workStatus?.state]);
  useEffect(()=>{
   if(!report?.canPackage||designBundle?.project!==project){setPrepared(null);return;}
   let stopped=false;const controller=new AbortController();setPreparing(true);setError('');

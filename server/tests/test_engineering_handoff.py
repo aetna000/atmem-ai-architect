@@ -126,6 +126,17 @@ class HandoffTests(unittest.TestCase):
             changed = json.loads(content); mutate(changed)
             self.assertEqual(self.delivery.inspect(self.scope, json.dumps(changed).encode())['relation'], 'design_changed')
 
+    def test_navigation_and_download_acknowledgements_preserve_binding_but_not_new_intent(self):
+        artifact=self.capture();current=json.loads(self.saved)
+        current.setdefault('extensions',{})['journey']={'review':'120-a1-b2','delivery':'240-c3-d4'}
+        raw=json.dumps(current).encode();report=self.delivery.inspect(self.scope,raw)
+        self.assertEqual(report['relation'],'matches_saved_design')
+        package,_=self.delivery.package(self.scope,raw,self.session,artifact['id'],report['savedDesignSha256'])
+        with zipfile.ZipFile(io.BytesIO(package)) as archive:self.assertEqual(archive.read('design/latest-saved-project.json'),raw)
+        for journey in [{'delivery':'New unsubmitted requirement'},{'unknown':'120-a1-b2'}]:
+            current['extensions']['journey']=journey
+            self.assertEqual(self.delivery.inspect(self.scope,json.dumps(current).encode())['relation'],'design_changed')
+
     def test_history_projection_requires_acknowledged_exact_identity_and_never_loses_prior_intent(self):
         original = json.loads(self.saved)
         row = {'id': f'{self.session}:10', 'sessionId': self.session, 'sequence': 10, 'text': 'Preserve routing ownership', 'status': 'accepted'}
