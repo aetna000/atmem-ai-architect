@@ -21,6 +21,15 @@ from server.engineering_sessions import SqliteSessionStore, ProjectScope, ModelS
 
 
 class HandoffTests(unittest.TestCase):
+    def test_empty_pricing_defaults_added_on_reopen_preserve_design_binding(self):
+        original=json.loads(self.saved);original['estimate']={'projectSize':'small'}
+        reopened=json.loads(json.dumps(original));reopened['estimate'].update(details=[],usage={},prices={})
+        before=design_digest(json.dumps(original).encode(),self.scope.project)
+        self.assertEqual(before,design_digest(json.dumps(reopened).encode(),self.scope.project))
+        for field,value in [('details',[{'description':'new charge'}]),('usage',{'requests':1}),('prices',{'compute':{'price':1}}),('unknown',{})]:
+            changed=json.loads(json.dumps(reopened));changed['estimate'][field]=value
+            self.assertNotEqual(before,design_digest(json.dumps(changed).encode(),self.scope.project))
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name)

@@ -18,6 +18,12 @@ def design_value(content, project):
     # Export time and validated navigation/download acknowledgement fingerprints
     # are UI state, not implementation intent. Exact source bytes remain in ZIPs.
     value.get('meta', {}).pop('updatedAt', None)
+    # Reopening adds these exact empty pricing defaults through engagement import.
+    estimate=value.get('estimate')
+    if isinstance(estimate,dict):
+        for field,empty in (('details',[]),('usage',{}),('prices',{})):
+            if field in estimate and type(estimate[field]) is type(empty) and estimate[field]==empty:
+                del estimate[field]
     extensions=value.get('extensions')
     if isinstance(extensions,dict):
         journey=extensions.get('journey')
