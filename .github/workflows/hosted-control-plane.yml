@@ -1,10 +1,10 @@
 name: Hosted control plane
 on:
   pull_request:
-    paths: ['hosted/**', '.github/workflows/hosted-control-plane.yml']
+    paths: ['hosted/**', 'server/**', 'src/**', 'scripts/build-hosted-workspace.mjs', '.github/workflows/hosted-control-plane.yml']
   push:
     branches: [main]
-    paths: ['hosted/**', '.github/workflows/hosted-control-plane.yml']
+    paths: ['hosted/**', 'server/**', 'src/**', 'scripts/build-hosted-workspace.mjs', '.github/workflows/hosted-control-plane.yml']
 permissions:
   contents: read
 jobs:
@@ -30,3 +30,18 @@ jobs:
           npx --yes firebase-tools@15.18.0 emulators:exec
           --project demo-architect-hosted --only firestore --config hosted/firebase.emulator.json
           '.hosted-venv/bin/python -m unittest discover -s hosted/tests -v'
+
+  native-worker:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m venv .worker-venv
+      - run: .worker-venv/bin/pip install --require-hashes -r hosted/worker-requirements.lock
+      - name: Qualify native AtBots, AtMem and receipt metering without paid calls
+        env:
+          PYDANTIC_AI_NO_BANNER: '1'
+        run: .worker-venv/bin/python -m unittest hosted.tests.test_model_metering hosted.tests.test_native_model_broker hosted.tests.test_native_worker_process hosted.tests.test_native_host hosted.tests.test_firestore_read_recovery server.tests.test_atbots_engineering_backend server.tests.test_local_validation -v

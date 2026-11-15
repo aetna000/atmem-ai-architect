@@ -21,6 +21,7 @@ parser.add_argument('--project',required=True)
 parser.add_argument('--region',default='us-central1')
 parser.add_argument('--admin-x-id',required=True)
 parser.add_argument('--apply',action='store_true')
+parser.add_argument('--native-workspace',action='store_true',help='Enable durable native workspace API after worker qualification; does not enable model spending')
 args=parser.parse_args()
 if not re.fullmatch(r'[a-z][a-z0-9-]{4,28}[a-z0-9]',args.project):parser.error('Explicit Google project required')
 if not re.fullmatch(r'[a-z]+-[a-z]+[0-9]',args.region):parser.error('Use a regional location')
@@ -33,7 +34,7 @@ plan={'service':'architect-accounts','region':region,'database':'architect','dat
       'runtimeIdentity':runtime,'buildIdentity':builder,'minInstances':0,'maxInstances':1,'cpu':1,'memory':'1Gi',
       'concurrency':1,'timeoutSeconds':60,'adminXId':args.admin_x_id,'modelSpendingEnabled':False,
       'costBoundary':'Request-billed scale-to-zero API; Firestore, Storage, image builds/registry and secrets billed by usage. Max instances is not a monetary cap.',
-      'hostingDeployment':False}
+      'hostingDeployment':False,'nativeWorkspaceEnabled':args.native_workspace}
 print(json.dumps(plan,indent=2),flush=True)
 if not args.apply:raise SystemExit(0)
 
@@ -80,6 +81,7 @@ root=Path(__file__).resolve().parents[2]
 with tempfile.TemporaryDirectory(prefix='architect-accounts-build-') as folder:
     context=Path(folder);(context/'hosted').mkdir()
     for file in (root/'hosted').glob('*.py'):shutil.copyfile(file,context/'hosted'/file.name)
+    shutil.copyfile(root/'hosted/workspace-routes.json',context/'hosted/workspace-routes.json')
     shutil.copyfile(root/'hosted/requirements.lock',context/'hosted/requirements.lock')
     shutil.copyfile(root/'hosted/deploy/Dockerfile',context/'Dockerfile')
     shutil.copyfile(root/'hosted/deploy/cloudbuild.json',context/'cloudbuild.json')
@@ -109,6 +111,7 @@ with tempfile.TemporaryDirectory(prefix='architect-accounts-build-') as folder:
           '--gcs-source-staging-dir','gs://'+source+'/source','--format=json')
     env={'ARCHITECT_GOOGLE_PROJECT':project,'ARCHITECT_FIRESTORE_DATABASE':'architect','ARCHITECT_DATA_ENVIRONMENT':'production',
          'ARCHITECT_ADMIN_X_IDS':args.admin_x_id,'ARCHITECT_FIREBASE_STORAGE_BUCKET':bucket,'ARCHITECT_STRIPE_MODE':'disabled'}
+    if args.native_workspace:env['ARCHITECT_NATIVE_WORKSPACE_ENABLED']='1'
     envfile=context/'runtime-env.json';envfile.write_text(json.dumps(env))
     apply('Deploying account service','run','deploy','architect-accounts','--region',region,'--image',image,'--service-account',runtime,
           '--min-instances=0','--max-instances=1','--cpu=1','--memory=1Gi','--concurrency=1','--timeout=60','--port=8080',

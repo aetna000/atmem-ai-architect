@@ -107,3 +107,16 @@ class FirebasePilotTests(unittest.TestCase):
         with self.assertRaises(Conflict):recovered.remove('2',saved['id'],99)
         recovered.remove('2',saved['id'],1)
         self.assertEqual(recovered.list('2')['usedBytes'],0)
+
+    def test_native_job_claim_and_large_receipt_use_real_firestore_transactions(self):
+        from hosted.workspace_jobs import WorkspaceJobs
+        from hosted.workspace_projects import WorkspaceProjects
+        bucket=BucketFixture();projects=StorageProjects(self.store,self.profiles,bucket,object_prefix='synthetic_workspace')
+        pid=WorkspaceProjects(self.store,self.profiles,projects).create('2','native-new','Warehouse')['id']
+        jobs=WorkspaceJobs(self.store,self.profiles,projects,bucket)
+        accepted=jobs.submit('2','native-chat',pid,'/api/architect',{'projectId':pid,'message':'Preserve existing warehouse systems'})
+        row=jobs.claim('native-worker');self.assertEqual(row['id'],accepted['id']);self.assertIsNone(jobs.claim('other-worker'))
+        response={'status':200,'body':{'message':'Complete response '*50000}}
+        jobs.finish(row['id'],'native-worker',response)
+        received=jobs.read('2',pid,row['id']);self.assertIn('responseTransfer',received)
+        with self.assertRaises(ProjectUnavailable):jobs.read('3',pid,row['id'])

@@ -33,6 +33,17 @@ class ValidationContractTests(unittest.TestCase):
             with self.assertRaises(ValueError):worker.run(b'archive','incorrect',spec)
             command.assert_not_called()
 
+    def test_cached_config_platform_and_identity_must_both_match_before_execution(self):
+        from types import SimpleNamespace
+        image='sha256:'+'a'*64;raw=b'fixture archive'
+        with patch('server.local_validation.Path.is_socket',return_value=True):worker=DockerValidationWorker('unix:///safe/local.sock')
+        spec=ValidationSpec('local-tests',image,('/usr/local/bin/python3','test.py'))
+        for observed in ['linux/arm64 '+image,'linux/amd64 sha256:'+'b'*64]:
+            with self.subTest(observed=observed),patch('server.local_validation.subprocess.run',side_effect=[SimpleNamespace(returncode=0,stdout=image),SimpleNamespace(returncode=0,stdout=observed)]) as inspect,patch('server.local_validation.subprocess.Popen') as execute:
+                with self.assertRaises(RuntimeError):worker.run(raw,hashlib.sha256(raw).hexdigest(),spec)
+                self.assertNotIn('--platform',inspect.call_args.args[0])
+                execute.assert_not_called()
+
     def test_unregistered_or_modified_isolation_policy_cannot_launch_a_container(self):
         import json,tempfile
         from pathlib import Path

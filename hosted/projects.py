@@ -76,12 +76,13 @@ class Projects:
     def list(self,uid):
         def apply(tx):
             index=self._index(tx,uid)
-            return {'projects':[tx.get('projects',self._project_key(uid,pid)) for pid in index['ids']],
+            rows=[tx.get('projects',self._project_key(uid,pid)) for pid in index['ids']]
+            return {'projects':[row for row in rows if not row.get('trashed')],'bin':[row for row in rows if row.get('trashed')],
                     'usedBytes':index['bytes'],'reservedBytes':index['reservedBytes'],'limitBytes':USER_BYTES,
                     'maxProjectBytes':MAX_PROJECT_BYTES,'chunkBytes':CHUNK_BYTES}
         return self.store.transaction(apply)
 
-    def begin(self,uid,request_id,*,title,size,sha256,pid=None,revision=0):
+    def begin(self,uid,request_id,*,title,size,sha256,pid=None,revision=0,allow_new=False):
         identifier(request_id);fingerprint(sha256)
         if type(title) is not str or not 1<=len(title.strip())<=120 or any(ord(c)<32 for c in title):raise CreditError('Use a project name between 1 and 120 characters')
         if type(size) is not int or not 1<=size<=MAX_PROJECT_BYTES:raise CreditError('Project files must be between 1 byte and 64 MiB')
@@ -97,7 +98,8 @@ class Projects:
             if previous:
                 if previous['uid']!=uid or previous['fingerprint']!=fp:raise Conflict('Save request already belongs to different content')
                 return previous
-            if requested_pid and not current:raise ProjectUnavailable('Project is unavailable')
+            if current and current.get('trashed'):raise Conflict('Restore the project before saving changes')
+            if requested_pid and not current and not allow_new:raise ProjectUnavailable('Project is unavailable')
             if (current['revision'] if current else 0)!=revision:raise Conflict('Project changed. Reload before replacing it')
             if len(index['uploads'])>=4:raise CreditError('Finish or cancel an existing save before starting another')
             if not current and len(index['ids'])+len(index['uploads'])>=MAX_PROJECTS:raise CreditError('Project limit reached')

@@ -41,7 +41,8 @@ class BlobFixture:
     def download_as_bytes(self,**options):
         self.reload()
         if options.get('if_generation_match')!=self.generation:raise PreconditionFailed('Generation changed')
-        return self.bucket.rows[self.name]['raw']
+        raw=self.bucket.rows[self.name]['raw']
+        return raw[options.get('start',0):options['end']+1] if 'end' in options else raw
     def patch(self,**options):
         row=self.bucket.rows[self.name]
         if options.get('if_generation_match')!=row['generation'] or options.get('if_metageneration_match')!=row['metageneration']:raise PreconditionFailed('Metadata changed')

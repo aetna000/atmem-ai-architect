@@ -99,7 +99,7 @@ export async function discoverLocalAgent() {
   });
   if (!response.ok) throw Error("Local sidecar unavailable");
   const session = await response.json();
-  if (!session.token || session.status !== "local-sidecar")
+  if (!session.token || !["local-sidecar","hosted-workspace"].includes(session.status))
     throw Error("Invalid local sidecar response");
   return session;
 }

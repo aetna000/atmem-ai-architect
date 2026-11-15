@@ -37,7 +37,7 @@ class OpenRouterCatalog:
                 if type(model) is not str or not 1<=len(model)<=160:continue
                 parameters=item.get('supported_parameters',[])
                 models.append({'id':model,'name':name,'mediumSupported':bool(set(parameters)&{'reasoning','reasoning_effort'}),
-                               'pricing':item.get('pricing',{}),'contextLength':item.get('context_length')})
+                               'inputModalities':architecture.get('input_modalities',[]),'pricing':item.get('pricing',{}),'contextLength':item.get('context_length') or 0})
             if not models:raise ValueError('Empty text catalog')
             self.cached={'models':models,'presets':PRESETS,'fetchedAt':datetime.now(timezone.utc).isoformat()}
             self.fetched_at=self.clock();return self.cached

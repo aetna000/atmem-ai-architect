@@ -80,9 +80,13 @@ class CreditLedger:
     def account(self, uid):
         return self.store.transaction(lambda tx: self._account(tx, uid)[1])
 
-    def reserve(self, uid, operation, request_sha256, ceiling):
+    def reserve(self, uid, operation, request_sha256, ceiling, *, daily_budget=None):
         operation = identifier(operation); request_sha256 = fingerprint(request_sha256)
         ceiling = units(ceiling, zero=False)
+        if daily_budget is not None:
+            if set(daily_budget)!={'day','limit'} or not re.fullmatch(r'\d{4}-\d{2}-\d{2}',daily_budget['day']):
+                raise CreditError('Use a server-owned daily budget')
+            units(daily_budget['limit'],zero=False)
         key = self._operation_key(uid, operation)
         def apply(tx):
             account_key, account = self._account(tx, uid)
@@ -93,15 +97,32 @@ class CreditLedger:
                 return previous
             if account['disabled'] or account['available'] < ceiling:
                 raise InsufficientCredits('Insufficient available credits')
+            budget_key=digest(daily_budget['day']) if daily_budget else None
+            budget=(tx.get('daily_budgets',budget_key) or {'day':daily_budget['day'],'reserved':0,'spent':0}) if daily_budget else None
+            if budget is not None and budget['reserved']+budget['spent']+ceiling>daily_budget['limit']:
+                raise InsufficientCredits('The daily managed AI budget is exhausted')
             now = self.clock()
             operation_record = dict(uid=uid, operation=operation, requestSha256=request_sha256,
                                     ceiling=ceiling, state='reserved', createdAt=now)
+            if budget is not None:
+                budget['reserved']+=ceiling;operation_record['dailyBudgetKey']=budget_key
+                tx.set('daily_budgets',budget_key,budget)
             account.update(available=account['available'] - ceiling, reserved=units(account['reserved'] + ceiling))
             tx.set('accounts', account_key, account)
             tx.create('operations', key, operation_record)
             tx.create('ledger', 'reserve-' + key, dict(uid=uid, kind='reserve', delta=0,
                       reservedDelta=ceiling, operation=operation, createdAt=now))
             return operation_record
+        return self.store.transaction(apply)
+
+    def claim_dispatch(self,uid,operation):
+        """Exclusive sender election. A retry cannot claim already-sent work."""
+        key=self._operation_key(uid,operation)
+        def apply(tx):
+            self._account(tx,uid);record=tx.get('operations',key)
+            if not record or record['uid']!=uid or record['state']!='reserved':
+                raise Conflict('This model request was already dispatched or requires reconciliation')
+            record.update(state='sent',updatedAt=self.clock());tx.set('operations',key,record);return record
         return self.store.transaction(apply)
 
     @staticmethod
@@ -143,12 +164,16 @@ class CreditLedger:
                 raise Conflict('Settlement lacks admitted work or exceeds its reservation')
             receipt_key = digest(receipt)
             binding = tx.get('usage_receipts', receipt_key)
+            budget=tx.get('daily_budgets',record['dailyBudgetKey']) if record.get('dailyBudgetKey') else None
             if binding and (binding['uid'] != uid or binding['operationKey'] != key or binding['used'] != used):
                 raise Conflict('Usage receipt is already bound to another operation')
             now = self.clock()
             account.update(available=account['available'] + record['ceiling'] - used,
                            reserved=account['reserved'] - record['ceiling'], spent=units(account['spent'] + used))
             record.update(state='settled', used=used, receipt=receipt, updatedAt=now)
+            if budget is not None:
+                budget['reserved']-=record['ceiling'];budget['spent']+=used
+                tx.set('daily_budgets',record['dailyBudgetKey'],budget)
             tx.set('accounts', account_key, account); tx.set('operations', key, record)
             if not binding:
                 tx.create('usage_receipts', receipt_key, dict(uid=uid, operationKey=key, used=used, createdAt=now))
@@ -168,8 +193,11 @@ class CreditLedger:
                 return record
             if record['state'] != 'reserved':
                 raise Conflict('Sent or uncertain work requires a verified settlement receipt')
+            budget=tx.get('daily_budgets',record['dailyBudgetKey']) if record.get('dailyBudgetKey') else None
             account.update(available=account['available'] + record['ceiling'], reserved=account['reserved'] - record['ceiling'])
             record.update(state='released', updatedAt=self.clock())
+            if budget is not None:
+                budget['reserved']-=record['ceiling'];tx.set('daily_budgets',record['dailyBudgetKey'],budget)
             tx.set('accounts', account_key, account); tx.set('operations', key, record)
             tx.create('ledger', 'release-' + key, dict(uid=uid, kind='release', delta=0,
                       reservedDelta=-record['ceiling'], operation=operation, createdAt=self.clock()))

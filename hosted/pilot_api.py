@@ -16,6 +16,8 @@ from .projects import Profiles,Projects,ProjectUnavailable
 from .pilot_settings import PilotSettings,OpenRouterCatalog,CatalogUnavailable
 from .firestore_store import FirestoreTransactions
 from .storage_projects import StorageProjects
+from .workspace_projects import WorkspaceProjects
+from .workspace_jobs import WorkspaceJobs,transfer_store
 
 PREFIX='/api/ai-architect'
 
@@ -36,6 +38,20 @@ class UploadBody(Body):
     sha256:StrictStr=Field(min_length=64,max_length=64)
     projectId:StrictStr|None=None
     revision:StrictInt=Field(default=0,ge=0)
+class NewProjectBody(Body):
+    requestId:StrictStr=Field(min_length=1,max_length=128)
+    title:StrictStr=Field(default='New project',min_length=1,max_length=120)
+class WorkspaceJobBody(Body):
+    requestId:StrictStr=Field(min_length=1,max_length=128)
+    projectId:StrictStr=Field(min_length=8,max_length=64)
+    path:StrictStr=Field(min_length=5,max_length=150)
+    method:Literal['POST','GET']='POST'
+    body:dict[str,Any]|None=None
+    transferId:StrictStr|None=None
+class TransferBody(Body):
+    requestId:StrictStr=Field(min_length=1,max_length=128)
+    size:StrictInt=Field(ge=1,le=64*1024*1024)
+    sha256:StrictStr=Field(min_length=64,max_length=64)
 class ChunkBody(Body):
     data:StrictStr=Field(max_length=350000)
     sha256:StrictStr=Field(min_length=64,max_length=64)
@@ -57,6 +73,8 @@ class PilotServices:
     catalog:Any=None
     managed_ai_ready:bool=False
     projects:Any=None
+    workspace_jobs:Any=None
+    workspace_transfers:Any=None
 
 
 def create_pilot_app(services):
@@ -64,6 +82,7 @@ def create_pilot_app(services):
     app.add_middleware(BodyLimit)
     profiles=Profiles(services.store);projects=services.projects or Projects(services.store,profiles)
     settings=PilotSettings(services.store,services.access,services.catalog or OpenRouterCatalog())
+    workspace_projects=WorkspaceProjects(services.store,profiles,projects)
     rate=AccountRateLimit(services.store)
 
     async def signed_in(authorization,action='account',maximum=60):
@@ -95,7 +114,16 @@ def create_pilot_app(services):
         policy=await run_in_threadpool(settings.current)
         return {'profile':record,'admin':actor.admin,'balanceMicros':balance['available'],'reservedMicros':balance['reserved'],
                 'currency':'usd','paymentsAvailable':False,'ai':{'model':policy['model'],'reasoning':'medium',
-                'managedAvailable':services.managed_ai_ready and policy['platformSpendingEnabled']}}
+                'workspaceAvailable':services.workspace_jobs is not None,'managedAvailable':services.managed_ai_ready and policy['platformSpendingEnabled']}}
+
+    @app.get(PREFIX+'/workspace/session')
+    async def workspace_session(authorization:str|None=Header(default=None)):
+        actor=await signed_in(authorization,'workspace-session',120)
+        record=await run_in_threadpool(profiles.get,actor.uid)
+        policy=await run_in_threadpool(settings.current)
+        return {'profile':record,'ai':{'model':policy['model'],'reasoning':'medium',
+                'workspaceAvailable':services.workspace_jobs is not None,
+                'managedAvailable':services.managed_ai_ready and policy['platformSpendingEnabled'] and not record['disabled']}}
 
     @app.patch(PREFIX+'/profile')
     async def update_profile(body:ProfileBody,authorization:str|None=Header(default=None)):
@@ -106,6 +134,76 @@ def create_pilot_app(services):
     async def list_projects(authorization:str|None=Header(default=None)):
         actor=await signed_in(authorization)
         return await run_in_threadpool(projects.list,actor.uid)
+
+    @app.post(PREFIX+'/workspace/projects/new')
+    async def create_project(body:NewProjectBody,authorization:str|None=Header(default=None)):
+        actor=await signed_in(authorization,'new-project',10)
+        return await run_in_threadpool(workspace_projects.create,actor.uid,body.requestId,body.title)
+
+    @app.post(PREFIX+'/workspace/projects/{pid}/trash')
+    async def trash_project(pid:str,body:RevisionBody,authorization:str|None=Header(default=None)):
+        actor=await signed_in(authorization,'trash',20)
+        return await run_in_threadpool(workspace_projects.move,actor.uid,pid,body.revision,True)
+
+    @app.post(PREFIX+'/workspace/projects/{pid}/restore')
+    async def restore_project(pid:str,body:RevisionBody,authorization:str|None=Header(default=None)):
+        actor=await signed_in(authorization,'restore',20)
+        return await run_in_threadpool(workspace_projects.move,actor.uid,pid,body.revision,False)
+
+    @app.post(PREFIX+'/workspace/transfers')
+    async def begin_transfer(body:TransferBody,authorization:str|None=Header(default=None)):
+        actor=await signed_in(authorization,'workspace-transfer',30)
+        if services.workspace_transfers is None:raise CredentialsUnavailable('Workspace workers are unavailable')
+        return await run_in_threadpool(services.workspace_transfers.begin,actor.uid,body.requestId,title='Workspace request',size=body.size,sha256=body.sha256)
+
+    @app.put(PREFIX+'/workspace/transfers/{upload_id}/parts/{part}')
+    async def transfer_chunk(upload_id:str,part:int,body:ChunkBody,authorization:str|None=Header(default=None)):
+        actor=await signed_in(authorization,'workspace-chunks',600)
+        if services.workspace_transfers is None:raise CredentialsUnavailable('Workspace workers are unavailable')
+        return await run_in_threadpool(services.workspace_transfers.put_chunk,actor.uid,upload_id,part,body.data,body.sha256)
+
+    @app.post(PREFIX+'/workspace/transfers/{upload_id}/complete')
+    async def finish_transfer(upload_id:str,authorization:str|None=Header(default=None)):
+        actor=await signed_in(authorization,'workspace-transfer-complete',30)
+        if services.workspace_transfers is None:raise CredentialsUnavailable('Workspace workers are unavailable')
+        return await run_in_threadpool(services.workspace_transfers.complete,actor.uid,upload_id)
+
+    @app.delete(PREFIX+'/workspace/transfers/{pid}')
+    async def remove_transfer(pid:str,body:RevisionBody,authorization:str|None=Header(default=None)):
+        actor=await signed_in(authorization,'workspace-transfer-delete',30)
+        if services.workspace_transfers is None:raise CredentialsUnavailable('Workspace transfers are unavailable')
+        return await run_in_threadpool(services.workspace_transfers.remove,actor.uid,pid,body.revision)
+
+    @app.post(PREFIX+'/workspace/jobs')
+    async def submit_workspace_job(body:WorkspaceJobBody,authorization:str|None=Header(default=None)):
+        actor=await signed_in(authorization,'workspace-jobs',120)
+        if services.workspace_jobs is None:raise CredentialsUnavailable('Workspace workers are unavailable')
+        if (body.body is None)==(body.transferId is None):raise CreditError('Supply one complete workspace payload')
+        payload=body.body
+        if body.transferId is not None:
+            if services.workspace_transfers is None:raise CredentialsUnavailable('Workspace transfers are unavailable')
+            _,raw=await run_in_threadpool(services.workspace_transfers.download,actor.uid,body.transferId)
+            import json
+            payload=json.loads(raw)
+        return await run_in_threadpool(services.workspace_jobs.submit,actor.uid,body.requestId,body.projectId,body.path,payload,body.method)
+
+    @app.get(PREFIX+'/workspace/projects/{pid}/jobs/{job_id}')
+    async def workspace_job(pid:str,job_id:str,authorization:str|None=Header(default=None)):
+        actor=await signed_in(authorization,'workspace-poll',600)
+        if services.workspace_jobs is None:raise CredentialsUnavailable('Workspace workers are unavailable')
+        return await run_in_threadpool(services.workspace_jobs.read,actor.uid,pid,job_id)
+
+    @app.delete(PREFIX+'/workspace/projects/{pid}/jobs/{job_id}')
+    async def cancel_workspace_job(pid:str,job_id:str,authorization:str|None=Header(default=None)):
+        actor=await signed_in(authorization,'workspace-cancel',30)
+        if services.workspace_jobs is None:raise CredentialsUnavailable('Workspace workers are unavailable')
+        return await run_in_threadpool(services.workspace_jobs.cancel,actor.uid,pid,job_id)
+
+    @app.get(PREFIX+'/workspace/projects/{pid}/jobs/{job_id}/result/{part}')
+    async def workspace_result_part(pid:str,job_id:str,part:int,authorization:str|None=Header(default=None)):
+        actor=await signed_in(authorization,'workspace-result-chunks',600)
+        if services.workspace_jobs is None:raise CredentialsUnavailable('Workspace workers are unavailable')
+        return await run_in_threadpool(services.workspace_jobs.result_chunk,actor.uid,pid,job_id,part)
 
     @app.post(PREFIX+'/projects/uploads')
     async def begin_upload(body:UploadBody,authorization:str|None=Header(default=None)):
@@ -203,4 +301,8 @@ def configured_pilot_app():
     from google.cloud import storage
     bucket=storage.Client(project=project).bucket(os.environ['ARCHITECT_FIREBASE_STORAGE_BUCKET'])
     projects=StorageProjects(store,profiles,bucket,object_prefix=namespace)
-    return create_pilot_app(PilotServices(store,FirebaseXIdentity(project),access,vault,projects=projects))
+    jobs=WorkspaceJobs(store,profiles,projects,bucket,prefix=namespace+'_jobs')
+    transfers=transfer_store(store,profiles,bucket,namespace+'_transfers')
+    enabled=os.environ.get('ARCHITECT_NATIVE_WORKSPACE_ENABLED')=='1'
+    return create_pilot_app(PilotServices(store,FirebaseXIdentity(project),access,vault,projects=projects,
+        managed_ai_ready=enabled,workspace_jobs=jobs if enabled else None,workspace_transfers=transfers if enabled else None))

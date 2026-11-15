@@ -1,0 +1,59 @@
+/* Keep the conversation and the place to reply visibly distinct. */
+.chat { container-type:inline-size; }
+.chat > .chat-body { display:flex;flex:1;flex-direction:column;min-height:0;min-width:0; }
+.chat-history { position:relative;display:flex;flex:1;flex-direction:column;min-height:0;min-width:0;overflow:hidden; }
+.chat-history-label { margin:8px 16px 0;font-size:12px;font-weight:600;color:var(--ink-2); }
+.chat-history .messages { min-height:0;padding-top:10px; }
+.chat-compose-pane { overflow-anchor:none;display:flex;flex-direction:column;flex-shrink:0;min-width:0; }
+.chat-history .chat-jump-latest { bottom:12px;right:16px; }
+.chat .composer { border:2px solid var(--color-brand-text);background:var(--paper);padding:10px;gap:6px; }
+.composer-label { display:block;font-size:13px;font-weight:700;color:var(--ink);line-height:1.4; }
+.chat .composer textarea { box-sizing:border-box;min-height:76px;padding:8px;background:var(--board);border-radius:8px; }
+.chat .composer textarea:focus { outline:2px solid var(--color-brand-text);outline-offset:-2px; }
+.chat .composer-actions .send { display:inline-flex;align-items:center;justify-content:center;gap:5px;width:auto;min-width:70px;padding:0 10px;border-radius:10px;background:var(--color-brand);color:var(--color-brand-ink);font-weight:700; }
+.chat .composer-actions .send:disabled { background:var(--line);color:var(--ink-2); }
+/* A wide chat drawer can use the same two-column conversation/reply layout. */
+@container (min-width:600px) {
+ .chat-body { display:grid!important;grid-template-columns:minmax(0,1.2fr) minmax(220px,1fr); }
+ .chat-compose-pane { min-height:0;overflow:auto;padding-top:8px;border-left:1px solid var(--line); }
+ .chat-compose-pane .composer { order:-1;position:sticky;top:8px;flex-shrink:0;z-index:1; }
+}
+@media (max-width:900px) {
+ .app:not(.chat-closed) { height:100dvh;min-height:0;grid-template-rows:auto auto minmax(0,2fr) minmax(300px,3fr);overflow:hidden; }
+ .app:not(.chat-closed) .chat { height:auto;min-height:0;overflow:hidden; }
+ .chat > .chat-body { display:grid;grid-template-columns:minmax(0,1fr) minmax(148px,.9fr); }
+ .chat-compose-pane { min-height:0;overflow:auto;border-left:1px solid var(--line);padding:8px 0 0; }
+ .chat-compose-pane .composer { order:-1;position:sticky;top:8px;flex-shrink:0;z-index:1;margin:0 8px 8px;padding:8px; }
+ .chat-head { display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;padding:8px 12px; }
+ .chat-heading-row { grid-column:1/-1; }
+ .chat-head .model { grid-column:1;grid-row:2;justify-self:start;max-width:100%; }
+ .chat-head .live-toggle { grid-column:2;grid-row:2;order:0;flex-basis:auto;white-space:nowrap; }
+ .chat .composer textarea { min-height:64px;max-height:180px;font-size:16px; }
+ .chat .composer-actions { gap:4px; }
+ .chat .composer-actions .attach-button,.chat .composer-actions .mic { width:28px;height:32px;padding:3px;flex-shrink:0; }
+ .chat .composer-actions .send { min-width:54px;padding:0 7px;font-size:12px; }
+ .chat-history-label { margin-left:12px; }
+ .board-start { top:50%;max-height:calc(100% - 24px);overflow:auto; }
+ .board-start h2 { margin-top:0;font-size:18px; }
+ .board-surface:has(.board-start) > .board-components:not([data-expanded=true]) { top:auto;bottom:8px; }
+ .chat-history .messages { padding:10px 12px; }
+ .chat .skills { flex-wrap:nowrap;overflow-x:auto;flex-shrink:0; }
+ .chat .skills > * { flex-shrink:0;white-space:nowrap; }
+ .chat-compose-pane .prompts { padding:0 8px 8px; }
+}
+@media (max-width:900px) and (max-height:600px) {
+ .app:not(.chat-closed) { grid-template-rows:auto auto minmax(0,1fr) minmax(238px,3fr); }
+ .chat .composer textarea { min-height:54px; }
+ .chat-head { padding-top:6px;padding-bottom:4px; }
+}
+
+@media (max-width:900px) and (min-height:760px) { .chat .composer textarea { min-height:88px; } }
+/* Keep navigation usable when a short window or on-screen keyboard reduces height. */
+@media (max-width:900px) and (max-height:600px) {
+ .app:not(.chat-closed) { grid-template-rows:auto auto minmax(0,1fr) minmax(280px,3fr); }
+ .unified-journey { flex-direction:row;align-items:center;padding:4px;gap:4px; }
+ .unified-journey .stage-tabs { flex:1;min-width:0;width:0;padding:4px; }
+ .unified-journey .journey-current { flex:0 1 110px;min-width:0;max-width:110px;padding:0; }
+ .unified-journey .journey-current .btn { padding:6px 8px;font-size:11px;min-height:36px; }
+ .chat-compose-pane .composer { padding:6px;gap:4px; }
+}

@@ -133,10 +133,13 @@ class DockerValidationWorker:
                                    env=env,capture_output=True,text=True,timeout=15)
             if inspect.returncode!=0 or inspect.stdout.strip()!=spec.image:
                 raise RuntimeError('The reviewed local image/platform is unavailable; no image was pulled')
-            platform=subprocess.run([*prefix,'image','inspect','--platform',spec.platform,spec.image,'--format','{{.Os}}/{{.Architecture}} {{.Id}}'],
+            # A registered config image ID identifies one architecture, not a
+            # multi-platform tag/index. Inspect that exact cached config directly;
+            # --platform inspection requires a newer daemon API unnecessarily.
+            platform=subprocess.run([*prefix,'image','inspect',spec.image,'--format','{{.Os}}/{{.Architecture}} {{.Id}}'],
                                     env=env,capture_output=True,text=True,timeout=15)
             selection=platform.stdout.strip().split()
-            if platform.returncode!=0 or len(selection)!=2 or selection[0]!=spec.platform or not re.fullmatch(r'sha256:[a-f0-9]{64}',selection[1]):
+            if platform.returncode!=0 or len(selection)!=2 or selection[0]!=spec.platform or selection[1]!=spec.image:
                 raise RuntimeError('The reviewed cached platform is unavailable; no fallback or image pull was used')
             browser=spec.isolation_profile=='chromium-userns-v1'
             postgres=spec.isolation_profile=='postgresql-local-v1'

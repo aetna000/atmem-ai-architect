@@ -58,3 +58,7 @@ The local Firestore emulator suite currently passes 60 tests with no skips. This
 Storage/processing region, lifecycle and account deletion/export, daily spending and worker concurrency require concrete qualification. The object adapter still needs durable retirement/orphan reconciliation and expired-upload cleanup. The API currently assembles project uploads in bounded memory (64 MiB/file), requiring a reviewed deployment memory/concurrency limit. The bounded account/project API is running in Cloud Run with a dedicated Firestore database, Firebase Storage bucket and scoped identities. No cloud VM, hosted model broker or complete generation service is running. Platform spending remains off. A successful emulator, OAuth configuration or sandbox payment does not establish deployment.
 
 Website changes use the isolated private `atmemai-google-hosting` branch. The owner alone merges that repository; publication uses only its checksum-verified validated main artifact. Keep its signup flag false until full acceptance.
+
+## Binding hosted-experience increment
+
+The owner requires exact local-experience parity, not the deployed landing/account page. Follow [workspace-checklist.md](workspace-checklist.md) and WP-1 through WP-8 in tasks.json. Do not call the platform complete or launch a replacement flow while canvas/chat/memory/generation/check/export work remains missing.
