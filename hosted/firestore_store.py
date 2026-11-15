@@ -31,8 +31,15 @@ class FirestoreTransactions:
         # callback; never retry an ambiguous commit/network exception here.
         for attempt in range(5):
             try:return apply(self.client.transaction(max_attempts=10))
-            except Aborted:
-                if attempt==4:raise
+            except (Aborted,ValueError) as error:
+                # The pinned SDK wraps exhausted commit aborts in this exact
+                # ValueError after rollback. Every attempt is known aborted;
+                # ambiguous commits and callback errors must never be replayed.
+                known_abort=isinstance(error,Aborted) or (
+                    type(error) is ValueError
+                    and str(error)=='Failed to commit transaction in 10 attempts.'
+                    and isinstance(error.__cause__,Aborted))
+                if not known_abort or attempt==4:raise
                 time.sleep(random.uniform(.02,.08)*(2**attempt))
 
 

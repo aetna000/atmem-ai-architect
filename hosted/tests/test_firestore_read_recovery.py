@@ -25,3 +25,26 @@ class ReadRecoveryTests(unittest.TestCase):
   with patch('google.cloud.firestore.transactional',side_effect=transactional):
    with self.assertRaises(DeadlineExceeded):FirestoreTransactions(client).transaction(lambda tx:None)
   self.assertEqual(client.transaction.call_count,1)
+
+ def test_sdk_exhausted_known_commit_aborts_retry_a_new_transaction(self):
+  client=MagicMock();first,second=object(),object();client.transaction.side_effect=[first,second]
+  def transactional(callback):
+   def run(transaction):
+    if transaction is first:
+     raise ValueError('Failed to commit transaction in 10 attempts.') from Aborted('known rolled-back commit')
+    return 'committed'
+   return run
+  with patch('google.cloud.firestore.transactional',side_effect=transactional),patch('hosted.firestore_store.time.sleep'):
+   self.assertEqual(FirestoreTransactions(client).transaction(lambda tx:None),'committed')
+  self.assertEqual(client.transaction.call_count,2)
+
+ def test_wrapped_ambiguous_commit_or_callback_error_is_never_replayed(self):
+  for message,cause in [('Failed to commit transaction in 10 attempts.',DeadlineExceeded('unknown commit')),
+                        ('callback rejected intent',Aborted('unrelated underlying error'))]:
+   client=MagicMock()
+   def transactional(callback):
+    def run(transaction):raise ValueError(message) from cause
+    return run
+   with patch('google.cloud.firestore.transactional',side_effect=transactional):
+    with self.assertRaises(ValueError):FirestoreTransactions(client).transaction(lambda tx:None)
+   self.assertEqual(client.transaction.call_count,1)
