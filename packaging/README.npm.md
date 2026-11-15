@@ -17,7 +17,9 @@ npm install -g @atmem/architect
 atmem-architect
 ```
 
-Choose your model under **AI providers**. Model usage may incur provider costs.
+Explore the complete AI example without connecting a model. Its ZIP includes costs, application source, infrastructure and local check evidence.
+
+Choose your model under **AI providers** when creating your own project. Model usage may incur provider costs.
 
 Options: `--port 5174`, `--no-open`, `--data-dir PATH`, `--setup`, `--doctor`, `--version`.
 
@@ -32,3 +34,5 @@ Available cost estimates include explicit exclusions where prices or usage are m
 [Configure application tests](https://github.com/aetna000/atmem-ai-architect/blob/main/docs/architecture/configuring-application-tests.md) · [Orca plugin](https://orca.dev/plugins/aetna000/atmem-ai-architect-orca)
 
 AtMem-owned code is Apache-2.0. Bundled third-party licences and notices are retained.
+
+Contact: [hello@atmem.ai](mailto:hello@atmem.ai) · [atmem.ai](https://atmem.ai)

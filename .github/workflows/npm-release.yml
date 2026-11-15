@@ -19,6 +19,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            /scripts/verify-npm-release.mjs
+          sparse-checkout-cone-mode: false
       - uses: actions/setup-node@v4
         with:
           node-version: '24'
@@ -76,6 +81,7 @@ jobs:
       - name: Start installed UI and real isolated AtMem
         run: node scripts/npm-installed-check.mjs .local/clean-install .local/install-home
   publish:
+    timeout-minutes: 45
     needs: [package, installed]
     if: startsWith(github.ref, 'refs/tags/v') || startsWith(github.ref, 'refs/tags/npm-v') || inputs.publish == true
     runs-on: ubuntu-latest
@@ -93,6 +99,8 @@ jobs:
           path: candidate
       - run: npm install --global npm@11.17.0
       - run: npm publish ./candidate/*.tgz --access public --tag latest --provenance
+      - name: Verify public npm version, latest tag and artifact integrity
+        run: node scripts/verify-npm-release.mjs ./candidate/*.tgz
 
   github-package:
     needs: [package, installed]

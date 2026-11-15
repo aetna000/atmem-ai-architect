@@ -50,3 +50,13 @@ the controls. Do not use question-mark help controls. Put concise supporting tex
 Keep complete requirements and technical detail in the specification and exported
 documents. Never remove meaningful failures, unresolved costs or scope to simplify
 the screen. Review this rule across all screens, not only the page being edited.
+
+## Publishing owner-approved releases
+
+Publish `@atmem/architect` using the linked GitHub Actions trusted publishing workflow
+(`.github/workflows/npm-release.yml`), after package and installed-platform checks pass.
+Do not request a local npm login for this repository's normal release path. Push a
+versioned release tag only when the owner authorizes publication. Verify npm's `latest`
+tag and the installed package after the workflow completes.
+
+A successful npm publish job may still report asynchronous registry processing. Use `scripts/verify-npm-release.mjs` with the accepted CI tarball to verify the public version, `latest` tag and exact integrity, then clean-install it before claiming it is installable.

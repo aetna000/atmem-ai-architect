@@ -1,4 +1,6 @@
 import {HOSTED,connectHostedWorkspace,hostedInitial,hostedCall,hostedRevision,noteHostedChange} from './hosted-workspace.mjs';
+import {readyExample,isReadyExample} from './ready-example.mjs';
+import {ReadyExampleDownload} from './ReadyExample.jsx';
 import {StarPrompt,STAR_URL} from './StarPrompt.jsx';
 import {prefillAcceptedSettings} from './engineering-defaults.mjs';
 import {LocationChoices} from './LocationChoices.jsx';
@@ -102,6 +104,7 @@ import {
   Rocket,
   BrainCircuit,
   Waypoints,
+  Volume2,
   Mic,
   Square,
   Eraser,
@@ -147,7 +150,6 @@ import { linkedTo, slugSubject } from "./records.mjs";
 import "./atmem-tokens.css";
 import "./brand.css";
 import "./atflow.css";
-import "./chat-composer.css";
 import {
   UPSTREAM_CATALOG,
   autoLayout,
@@ -169,6 +171,8 @@ import { zipSync, strToU8 } from "fflate";
 // Each browser starts fresh; earlier projects are opened deliberately (⋯ → Open project file).
 const STORAGE = "atforma-workspace-v3";
 // A new project starts empty: the user describes what they want first.
+import './onboarding.css';
+import './chat-composer.css';
 const emptyProject = () => ({ id: crypto.randomUUID(), version: 1, revision: 1, name: "New project", provider: "tools", requirements: "", nodes: [], edges: [] });
 const ALL_CATALOG = [...CATALOG, ...UPSTREAM_CATALOG];
 const KIND_ICON = {
@@ -650,6 +654,7 @@ function harnessSignals(was, now) {
 }
 const welcome = (project) => ({
   role: "assistant",
+  introduction: true,
   text: project.nodes.length || project.brief?.application?.trim()
     ? `Good to see you again — let's keep going.\n\n${opening(project)}`
     : `What would you like to build?`,
@@ -670,7 +675,8 @@ function readChatView(id){try{const value=JSON.parse(localStorage.getItem('atmem
 const pricingSignature=p=>JSON.stringify([p.id,p.estimate?.projectSize||'small',p.estimate?.usage,p.facts,p.decisions?.filter(d=>d.status==='Accepted'&&['cloud.region','data.country'].includes(d.subject)),[...storageNodes(p),...lambdaNodes(p),...googleNodes(p)].map(n=>[n.id,n.data.provider,n.data.service,n.data.config])]);
 function App() {
   const [starOffer,setStarOffer]=useState(0);
-  const [project, setProject] = useState(readSaved);
+  const [introOpen,setIntroOpen]=useState(false),[voiceOpenRequest,setVoiceOpenRequest]=useState(0);
+  const [project, setProject] = useState(()=>!HOSTED&&new URL(location.href).searchParams.get('example')==='1'&&!projectIdFromUrl(location.href)?readyExample():readSaved());
   const projectRef = useRef(project);
   projectRef.current = project;
   const [initialCanvasView] = useState(()=>readCanvasView(project));
@@ -702,7 +708,7 @@ function App() {
     [history, setHistory] = useState([]),
     [future, setFuture] = useState([]),
     [toast, setToast] = useState(""),
-    [modal, setModal] = useState(() => (readConnection() ? null : "welcome")),
+    [modal, setModal] = useState(null),
     [menu, setMenu] = useState(false),
     [palette, setPalette] = useState(false),
     [issuesOpen, setIssuesOpen] = useState(false),
@@ -786,6 +792,12 @@ function App() {
   const consultationAttempts = useRef(new Set());
   const agentAbort = useRef(null);
   const messageInput = useRef(null);
+  const hasIntroduction=messages[0]?.role==='assistant'&&(messages[0].introduction===true||messages[0].text==='What would you like to build?'||messages[0].text.startsWith('Good to see you again'));
+  const idleChat=hasIntroduction&&!introOpen&&architectureChatEntries(project,messages).length===1;
+  useEffect(()=>{
+    const resize=()=>{const field=messageInput.current;if(field){field.style.height='32px';field.style.height=Math.min(120,Math.max(32,field.scrollHeight))+'px';}};
+    resize();window.addEventListener('resize',resize);return()=>window.removeEventListener('resize',resize);
+  },[input,chatWidth,chatOpen]);
   const intakeRef=useRef(restoreQueuedMessages(messages,project.id));
   const [intake,setIntake]=useState(intakeRef.current),[intakePaused,setIntakePausedState]=useState(()=>restoreIntakePaused(messages)||intakeRef.current.length>0);
   const [intakeIssue,setIntakeIssue]=useState(null);
@@ -1680,6 +1692,8 @@ function App() {
     }
   }
   function switchTo(next) {
+    setIntroOpen(false);setVoiceOpenRequest(0);
+    const address=new URL(window.location.href);if(address.searchParams.get('project')!==next.id){address.searchParams.delete('project');address.searchParams.delete('example');window.history.replaceState(null,'',address);}
     chooseWorkspace('canvas');setBuildRequest(null);
     next = withDerived(next);
     const leaving = projectRef.current;
@@ -1741,11 +1755,21 @@ function App() {
   }, [session?.token]);
   async function newProject() {
     if(HOSTED){
-      if(agentBusy||busy)return;
+      if(agentBusy||busy||intake.length)return;
       try{await saveEngineeringProject(projectRef.current.id);const {file}=await hostedCall('new-project');switchTo(fromProjectFile(file).project);setModal(null);}catch(error){notify(error.message);}
       return;
     }
-    setModal("start-over");
+    if(!busy&&!agentBusy&&!intake.length)setModal("start-over");
+  }
+  function createOwnProject(){
+    switchTo(validateImport(emptyProject()));setModal(connection?null:'connections');
+    requestAnimationFrame(()=>document.querySelector('input[aria-label="Project name"]')?.focus());
+  }
+  async function openReadyExample(){
+    if(busy||agentBusy||intake.length)return;
+    const example=readyExample();example.id=crypto.randomUUID();
+    if(HOSTED){try{await saveEngineeringProject(projectRef.current.id);const {file}=await hostedCall('import-project',{file:toProjectFile(example)});switchTo(fromProjectFile(file).project);setModal(null);}catch(error){notify(error.message);}return;}
+    switchTo(example);setModal(null);
   }
   async function binProject(id) {
     try {
@@ -1859,7 +1883,7 @@ function App() {
           />
   );
   return (
-    <div style={{"--chat-panel-width":`${chatWidth}px`}} className={`app ${chatOpen&&!buildView ? "" : "chat-closed"} ${buildView?"build-workspace":""}`}>
+    <div style={{"--chat-panel-width":`${chatWidth}px`}} className={`app ${idleChat?"idle-chat":""} ${chatOpen&&!buildView ? "" : "chat-closed"} ${buildView?"build-workspace":""}`}>
       <header className="bar">
         <button aria-label="About AtMem AI Architect" className="brand" onClick={() => setModal("about")} title="About AtMem AI Architect">
           <Mark />
@@ -1879,6 +1903,7 @@ function App() {
         </nav>
         <div className="bar-actions">
           {HOSTED&&<><button className="btn" onClick={newProject} disabled={busy||agentBusy}><Plus size={16}/>New project</button><button className="btn" onClick={()=>hostedCall('account')}>Account</button></>}
+          {isReadyExample(project)&&<><ReadyExampleDownload compact/><button className="btn" onClick={newProject} disabled={busy||agentBusy}>Create new project</button></>}
           {storageError && <span className="warn-text">Not saved</span>}
           <button
             className="icon"
@@ -1903,6 +1928,9 @@ function App() {
         {menu && (
           <div className="menu" role="menu" onClick={() => setMenu(false)}>
             <button role="menuitem" onClick={() => (refreshProjects(), setModal("projects"))} disabled={busy}><FolderOpen size={16}/>Projects</button>
+            <a role="menuitem" href="https://atmem.ai" target="_blank" rel="noopener noreferrer">atmem.ai ↗</a>
+            <a role="menuitem" href="mailto:hello@atmem.ai">Contact us: hello@atmem.ai</a>
+            <button role="menuitem" onClick={openReadyExample} disabled={busy||agentBusy}><LayoutGrid size={16}/>Open complete AI example</button>
             <button role="menuitem" onClick={newProject} disabled={busy}><Plus size={16}/>New project</button>
             <hr/><button role="menuitem" onClick={() => setPalette(true)} disabled={busy}><Plus size={16}/>Add a block</button>
             <button role="menuitem" onClick={() => setModal("templates")} disabled={busy}><LayoutTemplate size={16}/>Templates</button>
@@ -1940,7 +1968,7 @@ function App() {
           {level!=="block"&&<aside className="board-components component-navigator" data-expanded={treeOpen} aria-label="Board components"><button className="btn" aria-label="Toggle components and layers" aria-expanded={treeOpen} onClick={()=>setTreeOpen(!treeOpen)}><LayoutGrid size={16}/> Components &amp; layers</button>
 {treeOpen&&<nav className="board-component-tree" aria-label="Component tree"><strong>{project.name}</strong><div className="tree-views"><button disabled={!blockReviews.length} onClick={()=>{reviewBlock((blockReviews.find(r=>r.status!=='reviewed')||blockReviews[0]).id);}}><CheckCheck size={16}/> Review blocks · {blockReviews.filter(r=>r.status==='reviewed').length}/{blockReviews.length}</button></div>{[...new Map(project.nodes.filter(n=>n.data.kind!=='note').map(n=>[layerOf(n).id,layerOf(n)])).values()].map(layer=><details open key={layer.id}><summary>{layer.label}</summary>{project.nodes.filter(n=>n.data.kind!=='note'&&layerOf(n).id===layer.id).map(n=><button key={n.id} aria-current={selected===n.id?'true':undefined} onClick={()=>{setMode('design');setDesignView('board');setFocus(null);setLevel('flow');setSelected(n.id);setTimeout(()=>fitView({nodes:[{id:n.id}],padding:1,maxZoom:1.2,duration:350}),100);}}><Database size={14}/><span>{n.data.label}<small>{n.data.service||n.data.provider}</small><small className={`tree-review-state ${blockReviews.find(r=>r.id===n.id)?.status}`}>{blockReviews.find(r=>r.id===n.id)?.statusLabel}</small></span></button>)}</details>)}</nav>}
           {treeOpen&&<button className="btn" disabled={busy} onClick={()=>setPalette(true)}><Plus size={16}/> Add component</button>}</aside>}
-          {!hasDesign&&!palette&&!dismissedStarts.includes(project.id)&&<section className="board-start" aria-label="Start your project"><button type="button" className="icon board-start-close" aria-label="Dismiss welcome card" title="Dismiss welcome card" onClick={dismissStart}><X size={16}/></button><h2>What would you like to create?</h2><div className="row"><button className="btn primary" onClick={()=>{dismissStart();setChatOpen(true);document.querySelector('.composer textarea, .chat textarea')?.focus();}}>Start chatting</button><button className="btn" onClick={()=>{setChatOpen(true);requirementsInput.current.click();}}>Upload requirements or diagram</button><button className="btn" onClick={()=>setModal("project-file")}>Open project</button></div><InlineNote label="Supported starting files">Word, PDF, text, Markdown, draw.io, images and Architect project JSON.</InlineNote></section>}
+          {!hasDesign&&!palette&&!dismissedStarts.includes(project.id)&&<section className="board-start" aria-label="Start your project"><button type="button" className="icon board-start-close" aria-label="Dismiss welcome card" title="Dismiss welcome card" onClick={dismissStart}><X size={16}/></button><h2>What would you like to create?</h2><div className="row"><button className="btn primary" onClick={openReadyExample}>Explore complete AI example</button><button className="btn primary" onClick={()=>{dismissStart();setChatOpen(true);document.querySelector('.composer textarea, .chat textarea')?.focus();}}>Start chatting</button><button className="btn" onClick={()=>{setChatOpen(true);requirementsInput.current.click();}}>Upload requirements or diagram</button><button className="btn" onClick={()=>setModal("project-file")}>Open project</button></div><InlineNote label="Supported starting files">Word, PDF, text, Markdown, draw.io, images and Architect project JSON.</InlineNote></section>}
         <ReactFlow
           nodes={canvasNodes}
           edges={canvasEdges}
@@ -2006,8 +2034,8 @@ function App() {
           >
             <LayoutGrid size={17} />
           </button>
-          <button className="icon" title="Clear board" aria-label="Clear board" disabled={!project.nodes.length || busy} onClick={clearBoard}>
-            <Eraser size={17} />
+          <button className="btn reset-board" title="Reset board and context" aria-label="Reset board and context" disabled={busy||agentBusy||intake.length>0} onClick={newProject}>
+            <Trash2 size={17} /> Reset board
           </button>
           <button className="icon" title="Undo board change" aria-label="Undo" disabled={!history.length || busy || agentBusy} onClick={undo}>
             <Undo2 size={17} />
@@ -2053,8 +2081,8 @@ function App() {
                   <Scan size={16}/> Select all
                 </button>
                 <div className="ctx-divider" role="separator"/>
-                <button role="menuitem" className="danger" disabled={!project.nodes.length} onClick={() => (clearBoard(), setCtx(null))}>
-                  <Eraser size={16}/> Clear board
+                <button role="menuitem" className="danger" disabled={!project.nodes.length} onClick={() => (newProject(), setCtx(null))}>
+                  <Trash2 size={16}/> Reset board and context
                 </button>
               </>
             )}
@@ -2219,7 +2247,7 @@ function App() {
 
       {!chatOpen&&!buildView && <button className="icon chat-reopen" title="Show chat" aria-label="Show chat" onClick={()=>setChatOpen(true)}><PanelRightOpen size={18}/></button>}
       {chatOpen&&!buildView && (
-        <aside className="chat" aria-label="Chat"><ChatResizeHandle width={chatWidth} onChange={resizeChat}/>
+        <aside className={`chat ${idleChat?"idle":""}`} aria-label="Chat"><ChatResizeHandle width={chatWidth} onChange={resizeChat}/>
           <div className="chat-head">
             <div className="chat-heading-row"><strong className="chat-title" aria-label="AI Architect">
               <Mark size={24} />
@@ -2242,6 +2270,10 @@ function App() {
               <span className={`led ${connection && session ? "on" : ""}`} />
               {connection ? `${connection.model}${connection.effort ? ` · ${EFFORT_LABEL[connection.effort] || connection.effort}` : ""}` : "Connect a model"}
             </button></>}
+            <span className="chat-top-utilities">
+              {hasIntroduction&&<button type="button" aria-expanded={introOpen} onClick={()=>setIntroOpen(value=>!value)}>{introOpen?'▾':'▸'} Introduction</button>}
+              {session&&<button type="button" className="icon" aria-label="Voice settings" title="Voice settings" onClick={()=>setVoiceOpenRequest(value=>value+1)}><Volume2 size={15}/></button>}
+            </span>
           </div>
           <div className="skills" aria-label="Active skills">
             <button className="known-bar" disabled={!session} aria-label="AtMem memory" title="Open AtMem memory, confirmed decisions and sync activity" onClick={()=>setModal("memory")}><BrainActivity size={18} active={false}/>{memoryLabel}<ChevronRight size={14}/></button>
@@ -2293,6 +2325,7 @@ function App() {
               if(entry.kind==='activity-error')return <p key="activity-error" role="alert">{entry.error}</p>;
               if(entry.kind==='legacy-activity')return <EarlierArchitectureActivity key={entry.id} entries={entry.entries} projectId={project.id} session={session}/>;
               if(entry.kind==='activity')return <ArchitectureTurn key={project.id+':'+entry.turn.id} turn={entry.turn} number={entry.number} projectId={project.id} session={session} active={agentBusy&&entry.turn.clientStatus==='submitted'&&entry.turn.id===latestArchitectureTurn?.id} working={agentBusy&&entry.turn.clientStatus==='submitted'} onStop={()=>agentAbort.current?.abort()}/>;
+              if(entry.index===0&&hasIntroduction&&!introOpen)return null;
               const m=entry.message,i=entry.index,turn=project.extensions?.architectureActivity?.turns?.find(t=>t.id===m.activityId),messageTime=m.createdAt||(m.role==='assistant'?turn?.completedAt:null)||turn?.startedAt;
               return (
               <div key={i} className={`msg ${m.role}`}>
@@ -2402,7 +2435,7 @@ function App() {
             </button>
             </div>
           </form>
-          {session&&<OpenAIVoicePanel key={project.id} session={session} connection={connection} transportRef={openaiVoice} onConnections={()=>showConnections()} onStart={()=>{voice.current?.cancel();setVoiceError('');}} onTranscript={(text,automatic)=>{
+          {session&&<OpenAIVoicePanel hideTrigger openRequest={voiceOpenRequest} key={project.id} session={session} connection={connection} transportRef={openaiVoice} onConnections={()=>showConnections()} onStart={()=>{voice.current?.cancel();setVoiceError('');}} onTranscript={(text,automatic)=>{
             if(automatic&&!input.trim()&&!attachments.length){setInput(text);void send(text);}
             else setInput(current=>current+(current.trim()?' ':'')+text);
           }}/>}
@@ -2457,22 +2490,20 @@ function App() {
               /></div>
             ) : modal === "start-over" ? (
               <>
-                <h2>Start over?</h2>
-                <p>Start a new idea with an empty board and chat. Requirements, decisions and estimates start fresh too. Your model connection stays.</p>
+                <h2>Reset board and context?</h2>
+                <p>Start fresh with an empty board, chat, requirements and decisions. Your saved projects and model connection stay.</p>
                 <div className="reset-actions">
                   <button className="btn primary" title="Download your project, then start a new one" aria-label="Save project and start over" onClick={() => {
                     if (!saveProjectFile()) return;
-                    switchTo(validateImport(emptyProject()));
-                    setModal(null);
+                    createOwnProject();
                   }}><Package size={18}/> Save & start new</button>
                   <button
-                    className="btn" title="Start a new project without downloading this one" aria-label="Start over without download"
+                    className="btn" title="Start a new project without downloading this one" aria-label="Confirm reset board and context"
                     onClick={() => {
-                      switchTo(validateImport(emptyProject()));
-                      setModal(null);
+                      createOwnProject();
                     }}
                   >
-                    <Plus size={18}/> Start without saving
+                    <Trash2 size={18}/> Reset board and context
                   </button>
                   <button className="btn ghost" onClick={() => setModal(null)}>
                     <ArrowLeft size={18}/> Keep working
