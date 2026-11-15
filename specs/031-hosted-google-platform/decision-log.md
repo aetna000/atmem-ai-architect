@@ -55,3 +55,5 @@
 2026-11-15 — Owner requested less empty space in stage navigation. Place the next action beside stage tabs in one compact row, remove automatic left margin, retain horizontal scrolling on narrow screens, and qualify its height/alignment with the native responsive browser checks.
 
 2026-11-15 — Owner additionally requested a slim top toolbar. Keep project actions in one row with compact controls, retain accessible Projects navigation, remove duplicate hosted Create-new-project control, and keep the example ZIP available in Delivery on narrow screens. Stage action remains inline. Validate real viewport geometry without hiding essential project/account controls.
+
+2026-11-16 — Owner requested npm publication alongside the online changes. Prepare stable 0.2.3 through the repository’s trusted publishing workflow, after packaged Linux/macOS/Windows checks. Npm publication, website owner-merged main publication and the Orca plugin are separate release states; do not publish a preview tag or represent hosted-only analytics as local telemetry.

@@ -24,7 +24,7 @@ npm install -g @atmem/architect
 atmem-architect
 ```
 
-[Stable release notes](docs/releases/v0.2.1.md) · [Application test configuration](docs/architecture/configuring-application-tests.md) · [Installation and troubleshooting](docs/INSTALLATION.md) · [Package options](packaging/README.npm.md) · [npm package](https://www.npmjs.com/package/@atmem/architect)
+[Stable release notes](docs/releases/v0.2.3.md) · [Application test configuration](docs/architecture/configuring-application-tests.md) · [Installation and troubleshooting](docs/INSTALLATION.md) · [Package options](packaging/README.npm.md) · [npm package](https://www.npmjs.com/package/@atmem/architect)
 
 ## Workflow
 
@@ -86,3 +86,9 @@ AtMem-owned code: [Apache-2.0](LICENSE). Third-party code retains its original l
 Explore the ready AI knowledge assistant before connecting a model. Delivery includes the complete reference ZIP: priced sample usage, requirements, generated application/Terraform source, built runtime and local check evidence. Native chat now stays compact, with a retractable introduction and voice controls at the top. Reset board starts a fresh context while preserving saved projects.
 
 Contact: [hello@atmem.ai](mailto:hello@atmem.ai). Release procedure: GitHub Actions trusted publishing, as documented in AGENTS.md.
+
+## Compact workspace
+
+The project toolbar and stage action share slim rows. Phone and tablet layouts keep the message field visibly labeled beside history. Delivery refreshes while engineering finishes and retains package binding when a project is reopened.
+
+Hosted workspace access, administrator activity reports and website analytics are deployed separately. Local installations do not load website analytics.
