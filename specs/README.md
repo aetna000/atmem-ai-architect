@@ -59,3 +59,7 @@ Evidence-led mentoring and native storage qualification: [023](023-emulation-des
 ## Canvas consultation refresh
 
 [025 Canvas consultation and pink branding](025-canvas-consultation/spec.md) covers integrated emulation, component navigation, system documentation and the shared visual interaction language.
+
+## Infrastructure maintenance planning
+
+[032 Infrastructure upgrade maintenance](032-infrastructure-upgrades/spec.md) defines proposed local migrations, cross-repository coordination, exact-patch-approved GitHub PRs and opt-in recurring preparation. [Release gates](032-infrastructure-upgrades/releases.md) propose stable0.3.0–0.6.0 after R0 qualification. This is planning only; existing027–029 scope remains unfinished. Independent read-only Opus5.5 Medium review is recorded in032/reviews. Hosted governance alignment is a prerequisite to R4, not a silent amendment.

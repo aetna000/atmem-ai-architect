@@ -1,0 +1,90 @@
+{
+  "model": "claude-opus-5-5",
+  "effort": "medium",
+  "access": "no tools; supplied documents only",
+  "review": {
+    "verdict": "AGREE",
+    "scope_note": "AGREE is a planning baseline for release planning only. It is not authorization to implement, publish, deploy or charge, and it is not evidence of engine quality, migration coverage or market demand.",
+    "blocking_findings": [],
+    "round1_resolution": {
+      "B1": "Resolved. R3 now uses a customer-owned fine-grained token held in the OS keychain, plus bounded outbound polling. The App private key and inbound webhooks are now R4-only and gated on governance alignment. The plan.md, releases.md, tasks.md (T001, T013, T018), interfaces.md, spec.md and decision-log.md now agree on R3 versus R4. Token storage exclusions are stated: no package, project file, browser storage or memory events.",
+      "B2": "Resolved. FR-014 makes the verifier enforce a denial policy for new sources, external/http data sources, provisioners and CI paths, and blocks symlink evasion. Each preview discloses every ref, commit and PR write with its detected and unknown automation. The documents state that draft PRs are not CI isolation and that consent applies per action, with local export as the fallback. T002, T006 and T014 cover the fixtures and the disclosure test.",
+      "B3": "Resolved. The documents add ReleaseObservation, normalized and versioned equality (path-scoped tree digest or package digest, with the archive SHA retained), pending, observed and re-verification states, mismatch blocking, modules.json-equivalent receipts for ranged constraints, rechecks against the fetched release, and a fresh authorization per wave. R2 simulation is labelled and cannot earn R3 acceptance.",
+      "B4": "Resolved at the contract level. The documents add ModelEgressAuthorization, default-deny sensitive paths, pre-egress scanning, payload confirmation, vendor terms, credential-owner and aggregate tenant spend ledgers, and quarantine of secret-bearing check output from model context. One payload-identity ambiguity remains; see N1."
+    },
+    "nonblocking_findings": [
+      {
+        "id": "N1",
+        "severity": "medium",
+        "file": "spec.md FR-016; data-model.md ModelEgressAuthorization; spec.md US4",
+        "issue": "The authorization binds one confirmed 'selected payload digest' but also applies to 'each model request'. Repair attempts (up to 3) and R4 unattended recomputes send different payloads: new check findings, prior model output and rebased source. Read literally, either every repair needs a fresh human confirmation, which makes repair impractical, or R4's scheduled preparation cannot call models at all. The conservative reading is safe, so this does not block R1 planning. It must still be decided rather than left to implementation.",
+        "required_change": "Before T006 code, define confirmation over a source-selection digest (paths, redacted file digests and data classes). Derived payloads may consist only of that selection plus sanitized verifier findings and the model's prior output; each derived payload gets its own payload digest and filter receipt. Any new path, data class or changed source requires reconfirmation. For R4, define a schedule-level standing egress policy in T017/T018, or state that scheduled jobs stop at egress_confirmation_required."
+      },
+      {
+        "id": "N2",
+        "severity": "medium",
+        "file": "contracts/interfaces.md (GitHub adapter)",
+        "issue": "A fine-grained token with contents:write can push to any unprotected branch, including the default branch. 'Branch protection remains authoritative' does not cover unprotected repositories.",
+        "required_change": "The broker must enforce a ref allowlist (a dedicated proposal ref prefix only) independently of token scope. Add a T016 negative test that a default-branch write is refused by the broker on an unprotected repository. Note that omitting the workflows permission is an additional defense that should not be relied on alone."
+      },
+      {
+        "id": "N3",
+        "severity": "low",
+        "file": "interfaces.md (human-commit stop); spec.md US3",
+        "issue": "Commits are authored by the token owner, a human account, so author identity cannot separate AtMem commits from that person's manual edits.",
+        "required_change": "Detect human edits by comparing the branch against the recorded AtMem-created commit SHAs and markers, not by author."
+      },
+      {
+        "id": "N4",
+        "severity": "low",
+        "file": "interfaces.md FR-014 policy",
+        "issue": "Finalized consumer patches change module refs to the observed release. The denial policy exempts only the 'reviewed recipe allowlist'.",
+        "required_change": "Explicitly allow refs bound to an equality-passing ReleaseObservation, and deny any other ref change."
+      },
+      {
+        "id": "N5",
+        "severity": "low",
+        "file": "interfaces.md automation disclosure",
+        "issue": "The documents name only push and pull_request triggers.",
+        "required_change": "Also detect and disclose pull_request_target, workflow_run, check_suite and repository-level required-check apps as higher-risk or unknown triggers."
+      },
+      {
+        "id": "N6",
+        "severity": "low",
+        "file": "interfaces.md FR-014",
+        "issue": "'Existing forbidden executable constructs make readiness blocked' may block most real estates that already use external or http data sources.",
+        "required_change": "Have T001/T002 measure the prevalence of these constructs. Keep the block as a deliberate coverage limit, published as such, rather than letting it be quietly weakened later."
+      },
+      {
+        "id": "N7",
+        "severity": "low",
+        "file": "interfaces.md R3 identity",
+        "issue": "Fine-grained tokens are scoped to one resource owner and may require org approval. They expire. Linux headless environments may lack a keychain.",
+        "required_change": "Support one token per owner per campaign. Show organization approval and expiry states. Block publication when no qualified keychain backend is available."
+      },
+      {
+        "id": "N8",
+        "severity": "low",
+        "file": "releases.md R2 row",
+        "issue": "The R2 exit criterion says 'released-module equality' without the simulation label that the decision log and interfaces carry.",
+        "required_change": "Write 'simulated local operator release' in the R2 exit and coverage label."
+      },
+      {
+        "id": "N9",
+        "severity": "low",
+        "file": "data-model.md Authorization; interfaces.md",
+        "issue": "Stale App terminology remains: 'repository installation scope' and 'OAuth/installation credential'.",
+        "required_change": "Use 'token/repository scope' for R3 and keep App wording R4-only."
+      },
+      {
+        "id": "N10",
+        "severity": "low",
+        "file": "multiple",
+        "issue": "Formatting defects persist: 'within30', '|0.3.0|', 'NEW15-minute', 'defaults3', 'for60', 'independent30', 'Opus5.5'.",
+        "required_change": "Fix the spacing in normative text."
+      }
+    ],
+    "release_sequence_assessment": "The sequence is sound and now internally consistent. R0 is a hard qualification gate with a stop/replan rule. R1 (0.3.0) is local single-repo with isolation and egress controls. R2 (0.4.0) is coordinated multi-repo with a labelled simulated release loop. R3 (0.5.0) is real GitHub delivery using a local customer token, polling and per-wave authorization. R4 (0.6.0) is recurring and hosted, behind explicit governance alignment. Version numbers remain proposals to rebase on the latest release. Commercial framing correctly treats R1\u2013R3 as engineering proof. N1 should be closed before T006 and its R4 half before T017. N2 belongs in T013/T016 acceptance. Neither changes the release order.",
+    "rationale": "All four round-1 blockers are now concrete contracts with matching tasks, fixtures and release exits, rather than deferrals. R3 is achievable without a vendor key or inbound endpoint, which removes the conflict with the local-only constitution. The CI side-effect boundary is truthfully stated and enforced by the verifier rather than the model. Cross-repo correctness has an artifact-equality proof and wave-scoped authorization. Model egress is now a separate opt-in privilege. The remaining issues are a payload-binding ambiguity with a safe conservative default, broker-level ref restriction, and wording. They can be resolved during R0/T001 without reopening the architecture. R0 research outputs (provider pair, parser, isolation backends, fixtures) are correctly left unexecuted as gated deliverables."
+  }
+}
