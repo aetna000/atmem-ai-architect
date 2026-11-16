@@ -348,6 +348,15 @@ class LifecycleTests(unittest.TestCase):
         # The source fixture is never modified.
         self.assertEqual(sorted(path.name for path in (CORPUS / 'identity').iterdir()), ['main.tf'])
 
+    def test_build_cannot_change_the_artifact_that_receives_a_pass(self):
+        with tempfile.TemporaryDirectory() as folder:
+            shutil.copy(CORPUS / 'identity/main.tf', folder)
+            write(folder,'build-runtime.py',"from pathlib import Path\nPath('main.tf').write_text('# changed by build')\n")
+            report=self.run_directory(folder)
+        self.assertEqual(report['status'],'failed')
+        self.assertIn('changed source inputs',report['message'])
+        self.assertNotIn('Apply',{stage['name'] for stage in report['stages']})
+
     def test_broken_configuration_fails_and_is_not_called_an_emulator_gap(self):
         with tempfile.TemporaryDirectory() as folder:
             shutil.copy(CORPUS / 'identity/main.tf', folder)

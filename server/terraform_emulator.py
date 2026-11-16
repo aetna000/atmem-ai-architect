@@ -1063,10 +1063,14 @@ def emulate_directory(source, terraform, provider_cache=None, inputs=None, progr
     report['backend'] = backend.describe()
 
     # Provider plugins open Unix sockets under TMPDIR; keep the path short.
-    short = '/tmp' if os.name == 'posix' and Path('/tmp').is_dir() else None
+    short = os.getenv('ATMEM_EMULATOR_SCRATCH_ROOT') or ('/tmp' if os.name == 'posix' and Path('/tmp').is_dir() else None)
     folder = Path(workspace or tempfile.mkdtemp(prefix='tfe-', dir=short))
     target = folder / 'w'
     shutil.copytree(source, target, ignore=shutil.ignore_patterns('.terraform', '*.tfstate', '*.tfstate.backup', '.git'))
+    # Immutable inputs may be root-owned/read-only in the sandbox. Only this
+    # disposable copy needs writable directories; source bytes stay unchanged.
+    for directory in [target,*(path for path in target.rglob('*') if path.is_dir())]:
+        directory.chmod(0o700)
     declared = {name: value for name, value in read_test_variables(source).items() if name in variables and 'default' not in variables[name]}
     values = {**declared, **backend.synthetic_inputs(variables), **(inputs or {})}
     required = sorted(name for name, declaration in variables.items() if 'default' not in declaration and name not in values)
@@ -1119,6 +1123,10 @@ def lifecycle(run, backend, report, values):
         built = subprocess.run([os.getenv('ATMEM_EMULATOR_BUILD_PYTHON') or sys.executable, '-I', 'build-runtime.py'], cwd=target, env=build_env, capture_output=True, text=True, timeout=COMMAND_TIMEOUT)
         if not run.stage('Application build', 'passed' if built.returncode == 0 else 'failed', started, built.stdout + '\n' + built.stderr):
             return 'failed', 'The application build failed before Terraform ran.'
+        changed=[name for name,digest in report['fileDigests'].items() if not (target/name).is_file() or sha256((target/name).read_bytes())!=digest]
+        if changed:
+            run.stage('Artifact integrity','failed',time.monotonic(),'Build changed source inputs: '+', '.join(changed[:20]))
+            return 'failed','The application build changed source inputs. No Terraform operation was run.'
     if run.step('Provider initialization', 'init', '-input=false', '-no-color').returncode:
         return 'failed', 'Terraform could not initialize the providers.'
     providers = json.loads(run.command('version', '-json').stdout).get('provider_selections', {})

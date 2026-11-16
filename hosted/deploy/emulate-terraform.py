@@ -6,6 +6,7 @@ from server.terraform_emulator import emulate_directory
 # PID 1 exiting terminates all processes even if the outside controller disappears.
 watchdog=threading.Timer(1450,lambda:os._exit(124));watchdog.daemon=True;watchdog.start()
 try:
+    os.environ['ATMEM_EMULATOR_SCRATCH_ROOT']='/dependencies'
     os.environ['ATMEM_EMULATOR_WHEELHOUSE']='/opt/architect/emulator-wheels'
     def progress(event):print('ATMEM_EMULATION_EVENT:'+json.dumps(event,separators=(',',':')),flush=True)
     report=emulate_directory(Path.cwd(),'/usr/local/bin/terraform',provider_cache='/opt/architect/provider-mirror',progress=progress)
