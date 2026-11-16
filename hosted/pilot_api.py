@@ -6,7 +6,7 @@ from .activity import Activity,JOB_KINDS
 from .x_lookup import XLookup,XLookupUnavailable
 from typing import Any, Literal
 from dataclasses import dataclass
-from fastapi import FastAPI,Header,Response
+from fastapi import FastAPI,Header,Response,Request
 from fastapi.responses import JSONResponse
 from fastapi.exceptions import RequestValidationError
 from pydantic import BaseModel,ConfigDict,Field,StrictStr,StrictInt,StrictBool
@@ -60,6 +60,11 @@ class ChunkBody(Body):
     data:StrictStr=Field(max_length=350000)
     sha256:StrictStr=Field(min_length=64,max_length=64)
 class LookupBody(Body):handle:StrictStr=Field(min_length=1,max_length=16)
+class XLoginStartBody(Body):challenge:StrictStr=Field(min_length=43,max_length=43)
+class XLoginFinishBody(Body):
+    state:StrictStr=Field(min_length=45,max_length=47)
+    code:StrictStr=Field(min_length=1,max_length=2048)
+    verifier:StrictStr=Field(min_length=43,max_length=128)
 class ClientActivityBody(Body):
     kind:Literal['project_opened','project_downloaded','template_opened','signed_out']
     projectId:StrictStr|None=None
@@ -86,6 +91,7 @@ class PilotServices:
     workspace_jobs:Any=None
     workspace_transfers:Any=None
     x_lookup:Any=None
+    x_login:Any=None
 
 
 def create_pilot_app(services):
@@ -122,6 +128,25 @@ def create_pilot_app(services):
 
     @app.get(PREFIX+'/health')
     def health():return {'service':'AtMem AI Architect','mode':'firebase-x-pilot','paymentsAvailable':False}
+
+    async def login_request(request):
+        from .x_login import ORIGIN
+        if request.headers.get('origin') != ORIGIN: raise Forbidden('Open sign-in from AtMem AI Architect')
+        if services.x_login is None: raise AuthenticationUnavailable('X sign-in is temporarily unavailable')
+        # Global bounded admission; caller-supplied IP headers never establish identity.
+        await run_in_threadpool(rate.admit,'x-login','exchange',60)
+
+    @app.post(PREFIX+'/auth/x/start')
+    async def start_x_login(body:XLoginStartBody,request:Request):
+        await login_request(request)
+        result=await run_in_threadpool(services.x_login.start,body.challenge)
+        return JSONResponse(result,headers={'Cache-Control':'no-store','Pragma':'no-cache'})
+
+    @app.post(PREFIX+'/auth/x/finish')
+    async def finish_x_login(body:XLoginFinishBody,request:Request):
+        await login_request(request)
+        result=await run_in_threadpool(services.x_login.finish,body.state,body.code,body.verifier)
+        return JSONResponse(result,headers={'Cache-Control':'no-store','Pragma':'no-cache'})
 
     @app.post(PREFIX+'/profile')
     async def profile(authorization:str|None=Header(default=None)):
@@ -363,5 +388,11 @@ def configured_pilot_app():
     transfers=transfer_store(store,profiles,bucket,namespace+'_transfers')
     enabled=os.environ.get('ARCHITECT_NATIVE_WORKSPACE_ENABLED')=='1'
     lookup=XLookup(json.loads(os.environ['ARCHITECT_X_LOOKUP_CREDENTIALS'])) if os.environ.get('ARCHITECT_X_LOOKUP_CREDENTIALS') else XLookup()
+    login=None
+    if os.environ.get('ARCHITECT_X_OAUTH2_CREDENTIALS'):
+        from .x_login import XLogin,FirebaseXTokenIssuer
+        login=XLogin(store,access,json.loads(os.environ['ARCHITECT_X_OAUTH2_CREDENTIALS']),
+                     FirebaseXTokenIssuer(project,os.environ['ARCHITECT_X_TOKEN_SIGNER']))
     return create_pilot_app(PilotServices(store,FirebaseXIdentity(project),access,vault,projects=projects,x_lookup=lookup,
+        x_login=login,
         managed_ai_ready=enabled,workspace_jobs=jobs if enabled else None,workspace_transfers=transfers if enabled else None))

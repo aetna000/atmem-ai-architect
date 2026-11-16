@@ -31,11 +31,18 @@ class XIdentity:
     def from_verified_claims(cls, claims):
         try:
             firebase = claims['firebase']
-            ids = firebase['identities']['twitter.com']
-            if firebase['sign_in_provider'] != 'twitter.com' or type(ids) is not list or len(ids) != 1:
-                raise Unauthorized('Sign in with X')
             uid = identifier(claims.get('uid') or claims.get('sub'))
-            subject = x_id(ids[0])
+            ids = firebase.get('identities', {}).get('twitter.com')
+            if firebase['sign_in_provider'] == 'custom' and claims.get('architect_x_login') == 'oauth2-v1':
+                subject = x_id(claims['architect_x_id'])
+                # Only the server can mint these signed custom claims. Existing linked
+                # Firebase accounts retain their UID; new ones use the reserved namespace.
+                if uid != 'architect-x-' + subject and ids != [subject]:
+                    raise Unauthorized('Sign in with X')
+            else:
+                if firebase['sign_in_provider'] != 'twitter.com' or type(ids) is not list or len(ids) != 1:
+                    raise Unauthorized('Sign in with X')
+                subject = x_id(ids[0])
             name = claims.get('name')
             if type(name) is not str or not name.strip():name='X account'
             name = ''.join(c for c in name if ord(c)>=32)[:120]

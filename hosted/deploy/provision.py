@@ -22,6 +22,8 @@ parser.add_argument('--region',default='us-central1')
 parser.add_argument('--admin-x-id',required=True)
 parser.add_argument('--apply',action='store_true')
 parser.add_argument('--x-lookup',action='store_true',help='Enable administrator-clicked X conversion using a scoped Secret Manager credential')
+parser.add_argument('--x-oauth2',action='store_true',help='Enable minimal X OAuth2 login and runtime-only custom-token signing')
+parser.add_argument('--no-traffic',action='store_true',help='Qualify the new account revision before a coordinated Hosting cutover')
 parser.add_argument('--native-workspace',action='store_true',help='Enable durable native workspace API after worker qualification; does not enable model spending')
 args=parser.parse_args()
 if not re.fullmatch(r'[a-z][a-z0-9-]{4,28}[a-z0-9]',args.project):parser.error('Explicit Google project required')
@@ -35,7 +37,7 @@ plan={'service':'architect-accounts','region':region,'database':'architect','dat
       'runtimeIdentity':runtime,'buildIdentity':builder,'minInstances':0,'maxInstances':1,'cpu':1,'memory':'1Gi',
       'concurrency':1,'timeoutSeconds':60,'adminXId':args.admin_x_id,'modelSpendingEnabled':False,
       'costBoundary':'Request-billed scale-to-zero API; Firestore, Storage, image builds/registry and secrets billed by usage. Max instances is not a monetary cap.',
-      'hostingDeployment':False,'nativeWorkspaceEnabled':args.native_workspace}
+      'hostingDeployment':False,'nativeWorkspaceEnabled':args.native_workspace,'xOAuth2Enabled':args.x_oauth2}
 print(json.dumps(plan,indent=2),flush=True)
 if not args.apply:raise SystemExit(0)
 
@@ -66,6 +68,13 @@ if not exists('artifacts','repositories','describe','architect','--location',reg
 if not exists('iam','roles','describe','architectAuthVerifier'):
     apply('Creating minimal token revocation role','iam','roles','create','architectAuthVerifier','--title','Architect Firebase token verifier','--permissions','firebaseauth.users.get','--stage','GA')
 apply('Granting token revocation check','projects','add-iam-policy-binding',project,'--member','serviceAccount:'+runtime,'--role','projects/'+project+'/roles/architectAuthVerifier','--condition=None')
+if args.x_oauth2:
+    # Only signBlob on this runtime identity. No project-wide token creator role/key export.
+    if not exists('iam','roles','describe','architectXTokenSigner'):
+        apply('Creating minimal custom-token signer role','iam','roles','create','architectXTokenSigner',
+              '--title','Architect X Firebase token signer','--permissions','iam.serviceAccounts.signBlob','--stage','GA')
+    apply('Scoping Firebase custom-token signing','iam','service-accounts','add-iam-policy-binding',runtime,
+          '--member','serviceAccount:'+runtime,'--role','projects/'+project+'/roles/architectXTokenSigner')
 apply('Scoping database permission','projects','add-iam-policy-binding',project,'--member','serviceAccount:'+runtime,'--role','roles/datastore.user',
       '--condition=expression=resource.name=="projects/'+project+'/databases/architect",title=architect_database_only')
 apply('Scoping project object permission','storage','buckets','add-iam-policy-binding','gs://'+bucket,'--member','serviceAccount:'+runtime,'--role','roles/storage.objectUser')
@@ -113,8 +122,14 @@ with tempfile.TemporaryDirectory(prefix='architect-accounts-build-') as folder:
     env={'ARCHITECT_GOOGLE_PROJECT':project,'ARCHITECT_FIRESTORE_DATABASE':'architect','ARCHITECT_DATA_ENVIRONMENT':'production',
          'ARCHITECT_ADMIN_X_IDS':args.admin_x_id,'ARCHITECT_FIREBASE_STORAGE_BUCKET':bucket,'ARCHITECT_STRIPE_MODE':'disabled'}
     if args.native_workspace:env['ARCHITECT_NATIVE_WORKSPACE_ENABLED']='1'
+    if args.x_oauth2:env['ARCHITECT_X_TOKEN_SIGNER']=runtime
     envfile=context/'runtime-env.json';envfile.write_text(json.dumps(env))
     secret_bindings='ARCHITECT_BYOK_KEYRING='+secret+':1'
+    if args.x_oauth2:
+        login_secret='architect-x-oauth2-33641797'
+        if not exists('secrets','describe',login_secret):raise ValueError('Configure private X OAuth2 credentials first')
+        apply('Scoping X OAuth2 credential access','secrets','add-iam-policy-binding',login_secret,'--member','serviceAccount:'+runtime,'--role','roles/secretmanager.secretAccessor')
+        secret_bindings+=',ARCHITECT_X_OAUTH2_CREDENTIALS='+login_secret+':latest'
     if args.x_lookup:
         lookup_secret='architect-x-lookup-credentials'
         if not exists('secrets','describe',lookup_secret):raise ValueError('Configure the private X conversion credential first')
@@ -122,7 +137,8 @@ with tempfile.TemporaryDirectory(prefix='architect-accounts-build-') as folder:
         secret_bindings+=',ARCHITECT_X_LOOKUP_CREDENTIALS='+lookup_secret+':latest'
     apply('Deploying account service','run','deploy','architect-accounts','--region',region,'--image',image,'--service-account',runtime,
           '--min-instances=0','--max-instances=1','--cpu=1','--memory=1Gi','--concurrency=1','--timeout=60','--port=8080',
-          '--allow-unauthenticated','--cpu-throttling','--env-vars-file',str(envfile),'--set-secrets',secret_bindings)
+          '--allow-unauthenticated','--cpu-throttling','--env-vars-file',str(envfile),'--set-secrets',secret_bindings,
+          *(['--no-traffic','--tag','x-login-candidate'] if args.no_traffic else []))
     result=command('run','services','describe','architect-accounts','--region',region,'--format=json')
     service=json.loads(result.stdout);receipt={**plan,'image':image,'url':service['status']['url'],'revision':service['status'].get('latestReadyRevisionName')}
     evidence=root/'.local/deployments';evidence.mkdir(parents=True,exist_ok=True)
