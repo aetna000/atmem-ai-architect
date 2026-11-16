@@ -4,7 +4,8 @@ This is a separate X-only authenticated control plane, not the complete hosted l
 
 ## Active pilot
 
-- Firebase Hosting serves the site; Firebase Authentication handles Twitter/X sign-in. Server-side whitelist records in Firestore authorize each operation. Other existing website sign-in providers remain untouched and cannot authorize this pilot.
+- Firebase Hosting serves the site; X OAuth2 establishes identity and Firebase Authentication manages the application session. Server-side whitelist records in Firestore authorize each operation. Other existing website sign-in providers remain untouched and cannot authorize this pilot.
+
 - The administrator is @atmemai, but privileges require its verified numeric X ID in operator configuration. No first-signup admin, handle matching or browser-supplied role.
 - Firestore owns profiles, access, audited settings, integer USD credits and transactional project metadata. Every admitted X identity receives USD20 once, even if its Firebase UID is recreated.
 - Cloud Storage for Firebase holds immutable project bytes. Saves use 256 KiB chunks, SHA256 checks and a 64 MiB project limit; users can save/download/remove only their projects. The API never accepts client object names or bucket selection.
@@ -12,6 +13,30 @@ This is a separate X-only authenticated control plane, not the complete hosted l
 - Sol Medium is preselected. Administrators may choose from the live OpenRouter catalog, with Sol Medium and Terra Medium presets; model choice is server-owned.
 - Stripe credit purchases are TODO. The pilot has no checkout or payment-webhook routes. Historical billing modules below remain inactive and are not the pilot entry point.
 - The account-only Cloud Run API is deployed and exercised with real Firebase X login and private project storage. AtBots generation workers remain undeployed. Managed spending remains off pending the broker and budget/worker qualification.
+
+### Minimum X login consent
+
+The hosted OAuth2 exchange requests exactly `users.read tweet.read`. X's documented
+`/2/users/me` mapping requires both; a real profile-only (`users.read`) test returned
+403, while the pair returned200. Architect calls only `/2/users/me` with default
+identity fields. It requests no follow/list/mute/block, message, email, write or
+offline access and revokes its X access token before issuing a Firebase session.
+The live revoke endpoint requires `token_type_hint=access_token`.
+
+The browser uses S256 PKCE, checks the exact popup origin/source/state and removes
+callback codes from history. The server consumes five-minute state exactly once,
+checks the code verifier, bounds abandoned records and verifies the whitelist.
+Existing linked Firebase UIDs and numeric X IDs retain projects, roles and credits.
+Firebase token signature/project/expiry/revocation and disabled-account checks still
+apply on every authenticated API operation; handles never grant access.
+
+Configure the exact callback `https://atmem.ai/architect/auth/x`. The provisioner’s
+`--x-oauth2 --no-traffic` options deploy a candidate with a scoped OAuth2 secret and
+only `iam.serviceAccounts.signBlob` on the runtime's own service account. Never
+export a service-account key or grant project-wide token creation. Qualify the
+candidate’s existing-account Firebase handoff before changing the website login.
+The private website still requires owner merge and validated-main publication.
+Earlier OAuth1 app grants can be revoked by users in X’s connected-app settings.
 
 ## Runtime configuration
 
