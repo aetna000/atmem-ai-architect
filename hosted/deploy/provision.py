@@ -69,6 +69,7 @@ if not exists('iam','roles','describe','architectAuthVerifier'):
     apply('Creating minimal token revocation role','iam','roles','create','architectAuthVerifier','--title','Architect Firebase token verifier','--permissions','firebaseauth.users.get','--stage','GA')
 apply('Granting token revocation check','projects','add-iam-policy-binding',project,'--member','serviceAccount:'+runtime,'--role','projects/'+project+'/roles/architectAuthVerifier','--condition=None')
 if args.x_oauth2:
+    apply('Enabling scoped IAM signing API','services','enable','iamcredentials.googleapis.com')
     # Only signBlob on this runtime identity. No project-wide token creator role/key export.
     if not exists('iam','roles','describe','architectXTokenSigner'):
         apply('Creating minimal custom-token signer role','iam','roles','create','architectXTokenSigner',
