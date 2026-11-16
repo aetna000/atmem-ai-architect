@@ -4,11 +4,12 @@ import {generationQuality} from './generation-quality.mjs';
 import {BrainActivity} from "./BrainActivity.jsx";
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {EmulationPanel} from './EmulationPanel.jsx';
+import {TerraformApplyPanel} from './TerraformApplyPanel.jsx';
 import {terraformSketch} from './terraform.mjs';
 import {resourcePlan} from './resources.mjs';
 import {toProjectFile} from './project-file.mjs';
 
-export function TerraformView({project,environment,session,onDelivery,onBack,emulation,onDiscuss,discussionBusy,onBuild}){
+export function TerraformView({project,environment,session,onDelivery,onBack,emulation,onDiscuss,discussionBusy,onBuild,applyEmulation}){
   const files=useMemo(()=>terraformSketch(project,environment),[project,environment]);
   const plan=useMemo(()=>resourcePlan(project),[project]);
   const [file,setFile]=useState('main.tf.json'),[step,setStep]=useState('code'),[result,setResult]=useState(null),[running,setRunning]=useState(false);
@@ -50,6 +51,7 @@ export function TerraformView({project,environment,session,onDelivery,onBack,emu
       <button className="btn primary" disabled={running} onClick={test}>{running?'Testing Terraform…':'Run Terraform checks'}</button>
       {running&&<p role="status"><BrainActivity/> Initializing providers, validating configuration and running generated local tests. This may take a few minutes.</p>}
       {result&&<div role="status"><h3>{result.status==='passed'?'Configuration validated':result.status==='unavailable'?'Terraform validation not run':result.status==='incomplete'?'Validation incomplete':'Validation failed'}</h3><p>{result.message}</p>{result.checks?.map((c,i)=><details key={i}><summary>{c.passed?'Passed':'Failed'}: {c.name}</summary><pre className="terraform-code">{c.output}</pre></details>)}</div>}
+      {applyEmulation&&<TerraformApplyPanel project={project} emulation={applyEmulation} blocked={!!gaps.length}/>}
       <h3>Cloud deployment plan — not run</h3><p>A real plan must verify the selected account, region, permissions and proposed changes. Cloud access is not connected. Passing these checks does not prove a real deployment or live application behavior.</p>
       <button className="btn" disabled>Run cloud plan (under development)</button>
     </>}

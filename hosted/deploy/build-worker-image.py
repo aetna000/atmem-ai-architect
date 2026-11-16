@@ -59,6 +59,8 @@ ENV PATH=/opt/architect/venv/bin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin AT
 COPY package.json package-lock.json ./
 RUN npm ci --ignore-scripts
 COPY . /opt/architect/
+RUN if [ ! -x /opt/architect/emulator/bin/python ]; then uv venv --python /opt/architect/venv/bin/python /opt/architect/emulator; fi && uv pip sync --python /opt/architect/emulator/bin/python --require-hashes /opt/architect/server/terraform-emulator-requirements.lock && /opt/architect/emulator/bin/python -I -m ensurepip --default-pip && /opt/architect/emulator/bin/python -I -c 'import moto,flask,boto3;assert moto.__version__=="5.2.5"'
+RUN /opt/architect/emulator/bin/python -I /opt/architect/hosted/deploy/prepare-emulator-wheels.py
 RUN python -m unittest hosted.tests.test_model_metering hosted.tests.test_native_model_broker hosted.tests.test_native_worker_process hosted.tests.test_native_host server.tests.test_atbots_engineering_backend -v
 RUN node hosted/deploy/mirror-providers.mjs && python hosted/deploy/unpack-provider-mirror.py
 RUN node -e "import('./src/terraform.mjs').then(m=>{{if(typeof m.terraformSketch!=='function')process.exit(1)}})" && python -c "import atmem;import importlib.metadata as m;assert m.version('atmem')=='2.3.14'" && terraform version -json > /opt/architect/terraform-runtime.json
@@ -78,7 +80,9 @@ WORKDIR /opt/architect
 RUN python -c {shlex.quote(verify)}
 {refresh}RUN python -c {shlex.quote(clean)}
 COPY . /opt/architect/
+RUN if [ ! -x /opt/architect/emulator/bin/python ]; then uv venv --python /opt/architect/venv/bin/python /opt/architect/emulator; fi && uv pip sync --python /opt/architect/emulator/bin/python --require-hashes /opt/architect/server/terraform-emulator-requirements.lock && /opt/architect/emulator/bin/python -I -m ensurepip --default-pip && /opt/architect/emulator/bin/python -I -c 'import moto,flask,boto3;assert moto.__version__=="5.2.5"'
 {'RUN npm ci --ignore-scripts' if args.refresh_node_lock else ''}
+RUN /opt/architect/emulator/bin/python -I /opt/architect/hosted/deploy/prepare-emulator-wheels.py
 RUN python -m unittest hosted.tests.test_model_metering hosted.tests.test_native_model_broker hosted.tests.test_native_worker_process hosted.tests.test_native_host hosted.tests.test_native_snapshot_protocol hosted.tests.test_firestore_read_recovery server.tests.test_atbots_engineering_backend server.tests.test_local_validation server.tests.test_engineering_handoff -v
 USER architect
 CMD ["python","-m","hosted.worker_main"]

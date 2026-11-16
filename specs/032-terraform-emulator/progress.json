@@ -1,0 +1,115 @@
+{
+  "updatedAt": "2026-11-16T23:18:06.817999+00:00",
+  "scope": "Local AWS Terraform lifecycle emulator; no cloud deployment or publication",
+  "tasks": [
+    {
+      "id": "engines",
+      "status": "done",
+      "deliverables": [
+        "server/terraform_emulator_engines.py",
+        "server/terraform_emulator.py"
+      ],
+      "tests": [
+        "26 engine/adapter tests passed in isolated Moto runtime",
+        "4 coverage evidence tests passed"
+      ],
+      "evidence": [
+        ".local/tfe-engines-final.log",
+        ".local/tfe-ai-continuation.log",
+        ".local/tfe-relational-continuation.log",
+        ".local/tfe-apprunner-continuation.log",
+        ".local/tfe-serverless-continuation.log",
+        ".local/tfe-guardrails-continuation.log",
+        ".local/tfe-readback-final.log"
+      ]
+    },
+    {
+      "id": "regressions",
+      "status": "done",
+      "tests": [
+        "49 original/coverage Python tests passed; 26 engine/adapter tests passed (19 overlap; 56 distinct Python tests)",
+        "603 JavaScript tests passed; no skips",
+        "Production build passed",
+        "npm staging private-file checks and packaged emulator HTTP route passed"
+      ],
+      "evidence": [
+        ".local/tfe-original-final.log",
+        ".local/tfe-engines-final.log",
+        ".local/tfe-all-js.log",
+        ".local/tfe-build.log",
+        ".local/tfe-package.log"
+      ]
+    },
+    {
+      "id": "corpus",
+      "status": "done",
+      "evidence": [
+        "docs/terraform-emulator-aws-coverage.json",
+        ".local/tfe-coverage-final.log",
+        ".local/terraform-emulation/continuation-qualified-receipts/origins.json",
+        ".local/tfe-full-corpus-continuation.log"
+      ],
+      "remaining": [],
+      "tests": [
+        "22/22 fixtures have passing lifecycle receipts; 89/89 measured resource types qualify",
+        "Full original run 21/22 retained; corrected AI receipt supersedes its earlier failure",
+        "Per-fixture implementation and exact report-file SHA-256 digests verified"
+      ]
+    },
+    {
+      "id": "examples",
+      "status": "done",
+      "evidence": [
+        ".local/terraform-emulation/2026-11-16T22-54-55.576371+00-00/results.json"
+      ],
+      "remaining": [],
+      "tests": [
+        "7/7 archived AWS examples passed through current generator"
+      ]
+    },
+    {
+      "id": "video",
+      "status": "done",
+      "evidence": [
+        "/Volumes/MEM0/AtMem-AI-Architect/terraform-emulator-demo/recorded-final/browser-evidence.json",
+        "/Volumes/MEM0/AtMem-AI-Architect/terraform-emulator-demo/recorded-final/atmem-aws-emulator-demo.mp4",
+        "/Volumes/MEM0/AtMem-AI-Architect/terraform-emulator-demo/recorded-final/timeline.json",
+        "/Volumes/MEM0/AtMem-AI-Architect/terraform-emulator-demo/recorded-final/explainer-evidence.json"
+      ],
+      "remaining": []
+    },
+    {
+      "id": "other-clouds",
+      "status": "todo",
+      "remaining": [
+        "Azure, Google Cloud and IBM backends remain unimplemented; return unavailable"
+      ]
+    },
+    {
+      "id": "hosted-isolation",
+      "status": "todo",
+      "remaining": [
+        "Tenant authentication, container sandboxing and network policy are separate prerequisites"
+      ]
+    }
+  ],
+  "changedFiles": [
+    "server/terraform_emulator.py",
+    "server/terraform_emulator_engines.py",
+    "server/tests/test_terraform_emulator_continuation.py",
+    "server/tests/test_terraform_emulator_coverage.py",
+    "scripts/qualify-terraform-emulator.py",
+    "src/main.jsx",
+    "src/TerraformApplyPanel.jsx",
+    "docs/TERRAFORM_EMULATION.md",
+    "specs/032-terraform-emulator/plan.md",
+    "specs/032-terraform-emulator/decision-log.md",
+    "tests/terraform-emulator/aws/apprunner/main.tf",
+    "tests/terraform-emulator/aws/serverless/main.tf",
+    "tests/terraform-emulator/aws/guardrails/main.tf",
+    "scripts/package-npm.mjs",
+    "scripts/record-terraform-emulator.mjs",
+    "specs/032-terraform-emulator/acceptance.md",
+    "docs/terraform-emulator-aws-coverage.json"
+  ]
+}

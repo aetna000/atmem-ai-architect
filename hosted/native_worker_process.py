@@ -40,7 +40,8 @@ async def main():
    wire.write(json.dumps({'id':request['id'],'response':{'cancelRequested':bool(target)}})+'\n');wire.flush();return
   if request.get('control')=='status':
    from server.engineering_routes import service
-   wire.write(json.dumps({'id':request['id'],'response':{'active':bool(service().backend.tasks) or len(tasks)>1}})+'\n');wire.flush();return
+   from server.terraform_emulation_routes import LOCK as emulation_lock
+   wire.write(json.dumps({'id':request['id'],'response':{'active':bool(service().backend.tasks) or len(tasks)>1 or emulation_lock.locked()}})+'\n');wire.flush();return
   try:
    result=await runtime.dispatch(request['job'],request['body'],base64.b64decode(request['snapshot'],validate=True),model=request['model'],policy=request['policy'])
   except asyncio.CancelledError:

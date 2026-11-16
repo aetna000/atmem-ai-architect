@@ -1,0 +1,1749 @@
+{
+ "kind": "terraform-apply-emulator-coverage",
+ "provider": "aws",
+ "measuredAt": "2026-11-16T23-18-06.773219+00-00",
+ "terraform": {
+  "version": "1.17.1",
+  "providerSource": "local mirror",
+  "providers": {
+   "registry.terraform.io/hashicorp/aws": "6.72.0"
+  }
+ },
+ "backend": {
+  "name": "moto-server",
+  "engine": "moto",
+  "version": "5.2.5",
+  "endpoint": "loopback",
+  "accountId": "123456789012",
+  "adapters": [
+   {
+    "id": "moto-rds-parameter-source-v1",
+    "motoVersion": "5.2.5",
+    "reason": "User-modified DB parameters omit Source, so the provider excludes them from read-back and proposes perpetual drift.",
+    "reference": "https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_ModifyDBParameterGroup.html",
+    "scope": "Mark explicitly modified DB parameter values as user-sourced; retain names, values and apply methods. No engine validation or reboot semantics are implied."
+   },
+   {
+    "id": "moto-s3-create-bucket-tags-v1",
+    "motoVersion": "5.2.5",
+    "reason": "Moto drops tags supplied in CreateBucketConfiguration, so the provider reads an untagged bucket and reports false drift.",
+    "reference": "https://docs.aws.amazon.com/AmazonS3/latest/API/API_CreateBucketConfiguration.html",
+    "scope": "Store exactly the tags of the successful CreateBucket request on that bucket. No other request is changed."
+   },
+   {
+    "id": "moto-rpc-v2-cbor-bridge-v1",
+    "motoVersion": "5.2.5",
+    "reason": "The provider calls CloudWatch in the smithy rpc-v2-cbor protocol; Moto server mode routes only the JSON and query forms, so alarms could never be created.",
+    "reference": "https://smithy.io/2.0/additional-specs/protocols/smithy-rpc-v2.html",
+    "scope": "Re-encode the same operation and members between rpc-v2-cbor and awsJson using the pinned botocore model. No value is added, removed or defaulted."
+   },
+   {
+    "id": "moto-sqs-redrive-allow-policy-v1",
+    "motoVersion": "5.2.5",
+    "reason": "Moto stores RedriveAllowPolicy but answers InvalidAttributeName when it is read, re-serializes RedrivePolicy with different whitespace, and clears the queue Policy whenever another attribute is set, so the provider waits forever or reports false drift.",
+    "reference": "https://docs.aws.amazon.com/AWSSimpleQueueService/latest/APIReference/API_GetQueueAttributes.html",
+    "scope": "Return the stored RedriveAllowPolicy; omit it while unset. Return RedrivePolicy as the text the caller supplied when it is the same JSON document. Keep Policy when a request does not name it."
+   },
+   {
+    "id": "moto-s3-policy-condition-v1",
+    "motoVersion": "5.2.5",
+    "reason": "Moto applies conditional bucket-policy statements unconditionally, so a deny-insecure-transport statement blocks every object upload.",
+    "reference": "https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition.html",
+    "scope": "Statements with a Condition are stored and returned unchanged but not enforced. Unconditional statements keep Moto behavior."
+   },
+   {
+    "id": "moto-lambda-mapping-alias-arn-v1",
+    "motoVersion": "5.2.5",
+    "reason": "Moto reports an alias-qualified event source mapping as targeting a numbered version, so the provider plans a change on every run.",
+    "reference": "https://docs.aws.amazon.com/lambda/latest/api/API_CreateEventSourceMapping.html",
+    "scope": "Keep the exact alias ARN supplied at creation as FunctionArn. Unqualified and version-qualified targets are unchanged."
+   }
+  ],
+  "engines": [
+   {
+    "name": "atmem-opensearch-serverless-lifecycle",
+    "service": "aoss",
+    "operations": [
+     "CreateCollection",
+     "DeleteSecurityPolicy"
+    ],
+    "reference": "https://docs.aws.amazon.com/opensearch-service/latest/ServerlessAPIReference/API_DeleteSecurityPolicy.html"
+   },
+   {
+    "name": "atmem-bedrock-knowledge-base",
+    "service": "bedrock",
+    "operations": [
+     "CreateKnowledgeBase",
+     "GetKnowledgeBase",
+     "UpdateKnowledgeBase",
+     "DeleteKnowledgeBase",
+     "ListKnowledgeBases",
+     "ListTagsForResource",
+     "TagResource",
+     "UntagResource"
+    ],
+    "reference": "https://docs.aws.amazon.com/bedrock/latest/APIReference/API_agent_CreateKnowledgeBase.html"
+   },
+   {
+    "name": "atmem-cloudfront",
+    "service": "cloudfront",
+    "operations": [
+     "CreateCachePolicy",
+     "GetCachePolicy",
+     "GetCachePolicyConfig",
+     "UpdateCachePolicy",
+     "DeleteCachePolicy",
+     "CreateOriginRequestPolicy",
+     "GetOriginRequestPolicy",
+     "GetOriginRequestPolicyConfig",
+     "UpdateOriginRequestPolicy",
+     "DeleteOriginRequestPolicy",
+     "CreateResponseHeadersPolicy",
+     "GetResponseHeadersPolicy",
+     "GetResponseHeadersPolicyConfig",
+     "UpdateResponseHeadersPolicy",
+     "DeleteResponseHeadersPolicy",
+     "ListCachePolicies",
+     "ListOriginRequestPolicies",
+     "ListResponseHeadersPolicies",
+     "CreateDistribution",
+     "CreateDistributionWithTags",
+     "GetDistribution",
+     "GetDistributionConfig",
+     "UpdateDistribution",
+     "DeleteDistribution",
+     "ListDistributions",
+     "ListTagsForResource",
+     "TagResource",
+     "UntagResource"
+    ],
+    "reference": "https://docs.aws.amazon.com/cloudfront/latest/APIReference/API_Operations.html"
+   },
+   {
+    "name": "atmem-apprunner",
+    "service": "apprunner",
+    "operations": [
+     "CreateService",
+     "DescribeService",
+     "UpdateService",
+     "DeleteService",
+     "ListServices",
+     "ListOperations",
+     "ListTagsForResource",
+     "TagResource",
+     "UntagResource"
+    ],
+    "reference": "https://docs.aws.amazon.com/apprunner/latest/api/API_CreateService.html"
+   },
+   {
+    "name": "atmem-bedrock-guardrail",
+    "service": "bedrock",
+    "operations": [
+     "CreateGuardrail",
+     "GetGuardrail",
+     "UpdateGuardrail",
+     "DeleteGuardrail",
+     "ListGuardrails",
+     "ListTagsForResource",
+     "TagResource",
+     "UntagResource"
+    ],
+    "reference": "https://docs.aws.amazon.com/bedrock/latest/APIReference/API_CreateGuardrail.html"
+   },
+   {
+    "name": "atmem-stepfunctions-validation",
+    "service": "states",
+    "operations": [
+     "ValidateStateMachineDefinition",
+     "ListStateMachineVersions"
+    ],
+    "reference": "https://docs.aws.amazon.com/step-functions/latest/apireference/API_ValidateStateMachineDefinition.html"
+   },
+   {
+    "name": "atmem-cognito-resource-servers",
+    "service": "cognito-idp",
+    "operations": [
+     "DeleteResourceServer"
+    ],
+    "reference": "https://docs.aws.amazon.com/cognito-user-identity-pools/latest/APIReference/API_DeleteResourceServer.html"
+   }
+  ],
+  "implementationDigests": {
+   "lifecycle": "1c0dc6281d4a036e580f807cf1197e5542ae8eb30051f099028a17e7a7edfb1a",
+   "engines": "b0b858a7e748c2f94f186d8b01b7071803a3183ac990aea2f974e1e68a5c22db"
+  }
+ },
+ "provenance": "Per-fixture implementation and artifact digests identify measured revisions; the top-level backend describes the first receipt only.",
+ "meaning": "qualified = applied, converged and destroyed in a fully passing fixture on this emulator. It is not AWS behavior. Types absent from this file are unmeasured.",
+ "summary": {
+  "fixtures": 22,
+  "fixturesPassed": 22,
+  "resourceTypes": 89,
+  "qualified": 89,
+  "drift": 0,
+  "applied-in-failing-fixture": 0,
+  "emulator-gap": 0,
+  "apply-failed": 0,
+  "not-reached": 0
+ },
+ "fixtures": {
+  "ai": {
+   "status": "passed",
+   "message": "Apply, independent read-back, convergence and destroy passed on the local emulator. No cloud account was used.",
+   "seconds": 79.7,
+   "implementationDigests": {
+    "lifecycle": "1c0dc6281d4a036e580f807cf1197e5542ae8eb30051f099028a17e7a7edfb1a",
+    "engines": "b0b858a7e748c2f94f186d8b01b7071803a3183ac990aea2f974e1e68a5c22db"
+   },
+   "artifactDigest": "2dc7448e7afaa9e5c1288c0d176a7c492b6de4d68bd5f8b4923735cd4db9372a",
+   "reportDigest": "5f9009a4666815f9ca1f6e3de5442217d8baead37481a26a17d4cbd057b5aa08",
+   "evidenceFile": ".local/terraform-emulation/corpus-2026-11-16T23-18-06.773219+00-00/ai.json",
+   "apiCalls": 62,
+   "notImplemented": []
+  },
+  "api": {
+   "status": "passed",
+   "message": "Apply, independent read-back, convergence and destroy passed on the local emulator. No cloud account was used.",
+   "seconds": 30.6,
+   "implementationDigests": {
+    "lifecycle": "1e74c08d6b8111d87a5c25cd6353cafe5fd045a1e57a37696e5f78d28351bdd2",
+    "engines": "d970edc28dca24ccac8b31315420f6fea198da02dfc428f6f0848c99cc12d58b"
+   },
+   "artifactDigest": "1db6b87c93f8735ee26b6d2225e453b670afba8b1dde65c3357c6da361b101ff",
+   "reportDigest": "2244ec851e95b6b345e775d627c60add7abe48829d7e7a2a80e8a1da0dbaa043",
+   "evidenceFile": ".local/terraform-emulation/corpus-2026-11-16T23-18-06.773219+00-00/api.json",
+   "apiCalls": 72,
+   "notImplemented": []
+  },
+  "apprunner": {
+   "status": "passed",
+   "message": "Apply, independent read-back, convergence and destroy passed on the local emulator. No cloud account was used.",
+   "seconds": 20.2,
+   "implementationDigests": {
+    "lifecycle": "1c0dc6281d4a036e580f807cf1197e5542ae8eb30051f099028a17e7a7edfb1a",
+    "engines": "b0b858a7e748c2f94f186d8b01b7071803a3183ac990aea2f974e1e68a5c22db"
+   },
+   "artifactDigest": "a7bcfa49cd6044b392656b955667b4cb40446d63d33122bfde5ef9a5f170b86e",
+   "reportDigest": "a0ddec5eda5540d490b0ed66ebcdb9eb648a742754af1577fa76f16e1b99b7c8",
+   "evidenceFile": ".local/terraform-emulation/corpus-2026-11-16T23-18-06.773219+00-00/apprunner.json",
+   "apiCalls": 20,
+   "notImplemented": []
+  },
+  "auth": {
+   "status": "passed",
+   "message": "Apply, independent read-back, convergence and destroy passed on the local emulator. No cloud account was used.",
+   "seconds": 18.4,
+   "implementationDigests": {
+    "lifecycle": "1e74c08d6b8111d87a5c25cd6353cafe5fd045a1e57a37696e5f78d28351bdd2",
+    "engines": "d970edc28dca24ccac8b31315420f6fea198da02dfc428f6f0848c99cc12d58b"
+   },
+   "artifactDigest": "c98eceb9b0c4f281458c93ff4b37c1ce2f6642bda21b591d324c3d8ef087b565",
+   "reportDigest": "012cc8b9990aba070f650973aa7e826fd9d79ee34b532baf58afd2aab1f274e8",
+   "evidenceFile": ".local/terraform-emulation/corpus-2026-11-16T23-18-06.773219+00-00/auth.json",
+   "apiCalls": 34,
+   "notImplemented": []
+  },
+  "compute": {
+   "status": "passed",
+   "message": "Apply, independent read-back, convergence and destroy passed on the local emulator. No cloud account was used.",
+   "seconds": 95.6,
+   "implementationDigests": {
+    "lifecycle": "1e74c08d6b8111d87a5c25cd6353cafe5fd045a1e57a37696e5f78d28351bdd2",
+    "engines": "d970edc28dca24ccac8b31315420f6fea198da02dfc428f6f0848c99cc12d58b"
+   },
+   "artifactDigest": "074586a199eee135a4db5ffde1ef1e95412aa4f79de5987abb99ba7f94ea24ec",
+   "reportDigest": "ce8c51683b5f3480fc761d718f58b7b60ca0ae0de2006304da5ee76d3d81d566",
+   "evidenceFile": ".local/terraform-emulation/corpus-2026-11-16T23-18-06.773219+00-00/compute.json",
+   "apiCalls": 95,
+   "notImplemented": []
+  },
+  "configuration": {
+   "status": "passed",
+   "message": "Apply, independent read-back, convergence and destroy passed on the local emulator. No cloud account was used.",
+   "seconds": 18.9,
+   "implementationDigests": {
+    "lifecycle": "1e74c08d6b8111d87a5c25cd6353cafe5fd045a1e57a37696e5f78d28351bdd2",
+    "engines": "d970edc28dca24ccac8b31315420f6fea198da02dfc428f6f0848c99cc12d58b"
+   },
+   "artifactDigest": "ccb9074c3175e659147b80d132b28c3a7aca2a8bfeff04c92aad637528b4e8c6",
+   "reportDigest": "cc0fd56525ad8e16a08fe098a15cfce8daf201ec76059bde3896cbc4d7cea1be",
+   "evidenceFile": ".local/terraform-emulation/corpus-2026-11-16T23-18-06.773219+00-00/configuration.json",
+   "apiCalls": 61,
+   "notImplemented": []
+  },
+  "containers": {
+   "status": "passed",
+   "message": "Apply, independent read-back, convergence and destroy passed on the local emulator. No cloud account was used.",
+   "seconds": 79.1,
+   "implementationDigests": {
+    "lifecycle": "1e74c08d6b8111d87a5c25cd6353cafe5fd045a1e57a37696e5f78d28351bdd2",
+    "engines": "d970edc28dca24ccac8b31315420f6fea198da02dfc428f6f0848c99cc12d58b"
+   },
+   "artifactDigest": "fa1da61980250e2579185fe1aaf4bdd505a256d3e8a95adb216991097780a010",
+   "reportDigest": "cd4eb48a888bd46e649d739546a1999969984db3fb0f26407131d5ff007c3ab2",
+   "evidenceFile": ".local/terraform-emulation/corpus-2026-11-16T23-18-06.773219+00-00/containers.json",
+   "apiCalls": 153,
+   "notImplemented": []
+  },
+  "database": {
+   "status": "passed",
+   "message": "Apply, independent read-back, convergence and destroy passed on the local emulator. No cloud account was used.",
+   "seconds": 24.9,
+   "implementationDigests": {
+    "lifecycle": "1e74c08d6b8111d87a5c25cd6353cafe5fd045a1e57a37696e5f78d28351bdd2",
+    "engines": "d970edc28dca24ccac8b31315420f6fea198da02dfc428f6f0848c99cc12d58b"
+   },
+   "artifactDigest": "5762a31dd3ba637be82a5057dc858ab4aa17458cd3909fc93021c63137d43548",
+   "reportDigest": "30c368e24ac7d36182a27783d7de60c00aace60e36cfe7fdd7b0b42e8cc3f9ab",
+   "evidenceFile": ".local/terraform-emulation/corpus-2026-11-16T23-18-06.773219+00-00/database.json",
+   "apiCalls": 63,
+   "notImplemented": []
+  },
+  "edge": {
+   "status": "passed",
+   "message": "Apply, independent read-back, convergence and destroy passed on the local emulator. No cloud account was used.",
+   "seconds": 123.9,
+   "implementationDigests": {
+    "lifecycle": "c0df3b7fa818031de056c77b412cc57b52ac7214a703f5f222c448878003d375",
+    "engines": "b0b858a7e748c2f94f186d8b01b7071803a3183ac990aea2f974e1e68a5c22db"
+   },
+   "artifactDigest": "450e6eda16a6d08c6f1d78be557121f997cdf5cf85893ba04287c2fc44151dea",
+   "reportDigest": "b8660d9610ba600118dc0f99668c9ad78444b3ca2507076c24ce73e10c7e30e9",
+   "evidenceFile": ".local/terraform-emulation/corpus-2026-11-16T23-18-06.773219+00-00/edge.json",
+   "apiCalls": 111,
+   "notImplemented": []
+  },
+  "edge-policies": {
+   "status": "passed",
+   "message": "Apply, independent read-back, convergence and destroy passed on the local emulator. No cloud account was used.",
+   "seconds": 93.8,
+   "implementationDigests": {
+    "lifecycle": "c0df3b7fa818031de056c77b412cc57b52ac7214a703f5f222c448878003d375",
+    "engines": "b0b858a7e748c2f94f186d8b01b7071803a3183ac990aea2f974e1e68a5c22db"
+   },
+   "artifactDigest": "4f970e92f358b97abc6e787962de62f04a3d6c72e9a221e0ccb66a6fae4e4e9a",
+   "reportDigest": "7b5de8b261b720e53305760ef6669a200eb2d6b69f00eafaaf4ad7d3bf992bef",
+   "evidenceFile": ".local/terraform-emulation/corpus-2026-11-16T23-18-06.773219+00-00/edge-policies.json",
+   "apiCalls": 39,
+   "notImplemented": []
+  },
+  "guardrails": {
+   "status": "passed",
+   "message": "Apply, independent read-back, convergence and destroy passed on the local emulator. No cloud account was used.",
+   "seconds": 20.3,
+   "implementationDigests": {
+    "lifecycle": "1c0dc6281d4a036e580f807cf1197e5542ae8eb30051f099028a17e7a7edfb1a",
+    "engines": "b0b858a7e748c2f94f186d8b01b7071803a3183ac990aea2f974e1e68a5c22db"
+   },
+   "artifactDigest": "934c3965255beb10f31aa1747e891bf360ad6508764b92b128781ee558c1bea4",
+   "reportDigest": "4f25bf9ddfcaf9c161f5f94cc0c2d930ca13c5e719e34d604fb54726b551eaf0",
+   "evidenceFile": ".local/terraform-emulation/corpus-2026-11-16T23-18-06.773219+00-00/guardrails.json",
+   "apiCalls": 20,
+   "notImplemented": []
+  },
+  "identity": {
+   "status": "passed",
+   "message": "Apply, independent read-back, convergence and destroy passed on the local emulator. No cloud account was used.",
+   "seconds": 23.9,
+   "implementationDigests": {
+    "lifecycle": "c0df3b7fa818031de056c77b412cc57b52ac7214a703f5f222c448878003d375",
+    "engines": "b0b858a7e748c2f94f186d8b01b7071803a3183ac990aea2f974e1e68a5c22db"
+   },
+   "artifactDigest": "86b40f5be6ab7eb3dab62782b4fe112fe9c1bcdb026c143ba6d4b7a43b83efd6",
+   "reportDigest": "efe68642e908112edb9d072f8232d99f2f3f10ff3cf2d55359ab01b2dd81a266",
+   "evidenceFile": ".local/terraform-emulation/corpus-2026-11-16T23-18-06.773219+00-00/identity.json",
+   "apiCalls": 98,
+   "notImplemented": []
+  },
+  "messaging": {
+   "status": "passed",
+   "message": "Apply, independent read-back, convergence and destroy passed on the local emulator. No cloud account was used.",
+   "seconds": 202.9,
+   "implementationDigests": {
+    "lifecycle": "c0df3b7fa818031de056c77b412cc57b52ac7214a703f5f222c448878003d375",
+    "engines": "b0b858a7e748c2f94f186d8b01b7071803a3183ac990aea2f974e1e68a5c22db"
+   },
+   "artifactDigest": "726097456973fe81b22e73dfaa34605e598321cd1c16b16565873d5f1e7290a1",
+   "reportDigest": "2e4e9e5efc155acd17c3cb9783015483507e834df3fc9c4a442031e7ccb02752",
+   "evidenceFile": ".local/terraform-emulation/corpus-2026-11-16T23-18-06.773219+00-00/messaging.json",
+   "apiCalls": 158,
+   "notImplemented": []
+  },
+  "network": {
+   "status": "passed",
+   "message": "Apply, independent read-back, convergence and destroy passed on the local emulator. No cloud account was used.",
+   "seconds": 44.6,
+   "implementationDigests": {
+    "lifecycle": "c0df3b7fa818031de056c77b412cc57b52ac7214a703f5f222c448878003d375",
+    "engines": "b0b858a7e748c2f94f186d8b01b7071803a3183ac990aea2f974e1e68a5c22db"
+   },
+   "artifactDigest": "fab929a7dbb36b855df8494b09c7257b3191bbce0cd204ec7c511c847da2ded5",
+   "reportDigest": "531e3480f31c70038b127960f4295f9d467ecd6ace6a1b4bf6a1e8463a94b427",
+   "evidenceFile": ".local/terraform-emulation/corpus-2026-11-16T23-18-06.773219+00-00/network.json",
+   "apiCalls": 167,
+   "notImplemented": []
+  },
+  "observability": {
+   "status": "passed",
+   "message": "Apply, independent read-back, convergence and destroy passed on the local emulator. No cloud account was used.",
+   "seconds": 19.7,
+   "implementationDigests": {
+    "lifecycle": "c0df3b7fa818031de056c77b412cc57b52ac7214a703f5f222c448878003d375",
+    "engines": "b0b858a7e748c2f94f186d8b01b7071803a3183ac990aea2f974e1e68a5c22db"
+   },
+   "artifactDigest": "189120ca3d5432cc2be6dc7df00bf0797051b352c68280e4d9c7b8dd05a2dc71",
+   "reportDigest": "6448960e0387d66213d19ca5f81af28baa032a1c237e57fa6f5b71c8769547b1",
+   "evidenceFile": ".local/terraform-emulation/corpus-2026-11-16T23-18-06.773219+00-00/observability.json",
+   "apiCalls": 127,
+   "notImplemented": []
+  },
+  "relational": {
+   "status": "passed",
+   "message": "Apply, independent read-back, convergence and destroy passed on the local emulator. No cloud account was used.",
+   "seconds": 178.8,
+   "implementationDigests": {
+    "lifecycle": "c0df3b7fa818031de056c77b412cc57b52ac7214a703f5f222c448878003d375",
+    "engines": "b0b858a7e748c2f94f186d8b01b7071803a3183ac990aea2f974e1e68a5c22db"
+   },
+   "artifactDigest": "de4efea2d359fe624fba9968dfc8d45cf7566213d1f065edec06038e3e08e968",
+   "reportDigest": "7f254e960da9f28609878be4290a1ce4bbbd182b980f978167ae5f711b1c138c",
+   "evidenceFile": ".local/terraform-emulation/corpus-2026-11-16T23-18-06.773219+00-00/relational.json",
+   "apiCalls": 100,
+   "notImplemented": []
+  },
+  "scheduling": {
+   "status": "passed",
+   "message": "Apply, independent read-back, convergence and destroy passed on the local emulator. No cloud account was used.",
+   "seconds": 85.4,
+   "implementationDigests": {
+    "lifecycle": "c0df3b7fa818031de056c77b412cc57b52ac7214a703f5f222c448878003d375",
+    "engines": "b0b858a7e748c2f94f186d8b01b7071803a3183ac990aea2f974e1e68a5c22db"
+   },
+   "artifactDigest": "12b682afbdfd2f42d87d53e1602ae81d5892742c0ca5da0d42b2377ba37f86d9",
+   "reportDigest": "12047796d4e4d58c89898b603073c49110623d829b4ceb5f07a8f657cc0c4a8c",
+   "evidenceFile": ".local/terraform-emulation/corpus-2026-11-16T23-18-06.773219+00-00/scheduling.json",
+   "apiCalls": 67,
+   "notImplemented": []
+  },
+  "search": {
+   "status": "passed",
+   "message": "Apply, independent read-back, convergence and destroy passed on the local emulator. No cloud account was used.",
+   "seconds": 1237.5,
+   "implementationDigests": {
+    "lifecycle": "c0df3b7fa818031de056c77b412cc57b52ac7214a703f5f222c448878003d375",
+    "engines": "b0b858a7e748c2f94f186d8b01b7071803a3183ac990aea2f974e1e68a5c22db"
+   },
+   "artifactDigest": "666881d4f4ee925f3318d7b5a744ffac36ee7a60a7517087935768c49401b70b",
+   "reportDigest": "c1f7508b495b11de3d26c08fde2d42530b2b826f8a1877d6adf049477e55e83f",
+   "evidenceFile": ".local/terraform-emulation/corpus-2026-11-16T23-18-06.773219+00-00/search.json",
+   "apiCalls": 31,
+   "notImplemented": []
+  },
+  "serverless": {
+   "status": "passed",
+   "message": "Apply, independent read-back, convergence and destroy passed on the local emulator. No cloud account was used.",
+   "seconds": 78.6,
+   "implementationDigests": {
+    "lifecycle": "c0df3b7fa818031de056c77b412cc57b52ac7214a703f5f222c448878003d375",
+    "engines": "b0b858a7e748c2f94f186d8b01b7071803a3183ac990aea2f974e1e68a5c22db"
+   },
+   "artifactDigest": "9c3992c72e8f1df0db71da799200d9f8932843ecd19e4cdf9051642f46d8d0f3",
+   "reportDigest": "8a2f093245eae25c0e766fe59808a9172402e7c7e899daafb129459f2f608668",
+   "evidenceFile": ".local/terraform-emulation/corpus-2026-11-16T23-18-06.773219+00-00/serverless.json",
+   "apiCalls": 22,
+   "notImplemented": []
+  },
+  "servers": {
+   "status": "passed",
+   "message": "Apply, independent read-back, convergence and destroy passed on the local emulator. No cloud account was used.",
+   "seconds": 30.0,
+   "implementationDigests": {
+    "lifecycle": "c0df3b7fa818031de056c77b412cc57b52ac7214a703f5f222c448878003d375",
+    "engines": "b0b858a7e748c2f94f186d8b01b7071803a3183ac990aea2f974e1e68a5c22db"
+   },
+   "artifactDigest": "6eb3f7c69cb4dc7de8651798cb45345b94b10b5a06f5fef3577ef42c8cf2007e",
+   "reportDigest": "fddb08186b71cf99b3278a9c6c809323c966fcf05ee367e762fb8b8b8a456015",
+   "evidenceFile": ".local/terraform-emulation/corpus-2026-11-16T23-18-06.773219+00-00/servers.json",
+   "apiCalls": 93,
+   "notImplemented": []
+  },
+  "storage": {
+   "status": "passed",
+   "message": "Apply, independent read-back, convergence and destroy passed on the local emulator. No cloud account was used.",
+   "seconds": 160.9,
+   "implementationDigests": {
+    "lifecycle": "c0df3b7fa818031de056c77b412cc57b52ac7214a703f5f222c448878003d375",
+    "engines": "b0b858a7e748c2f94f186d8b01b7071803a3183ac990aea2f974e1e68a5c22db"
+   },
+   "artifactDigest": "940c8b278895e0b1a38d7a07252f72527f0392e5ca16cae2cffcda363c1ba4c9",
+   "reportDigest": "303f30e7b471fea6ca63a334af2c7ae5ae0fe81fe81e3d47d459997bbb49b358",
+   "evidenceFile": ".local/terraform-emulation/corpus-2026-11-16T23-18-06.773219+00-00/storage.json",
+   "apiCalls": 176,
+   "notImplemented": []
+  },
+  "workflow": {
+   "status": "passed",
+   "message": "Apply, independent read-back, convergence and destroy passed on the local emulator. No cloud account was used.",
+   "seconds": 28.6,
+   "implementationDigests": {
+    "lifecycle": "c0df3b7fa818031de056c77b412cc57b52ac7214a703f5f222c448878003d375",
+    "engines": "b0b858a7e748c2f94f186d8b01b7071803a3183ac990aea2f974e1e68a5c22db"
+   },
+   "artifactDigest": "70100c1017856204095976cafc50dea883db839e5acec6805553541777ec383f",
+   "reportDigest": "29e1019cedc4f327e3d160405073e639b3bbca9e56c9619195b559f90c6993da",
+   "evidenceFile": ".local/terraform-emulation/corpus-2026-11-16T23-18-06.773219+00-00/workflow.json",
+   "apiCalls": 36,
+   "notImplemented": []
+  }
+ },
+ "resourceTypes": {
+  "aws_acm_certificate": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "edge": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_apigatewayv2_api": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "api": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_apigatewayv2_authorizer": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "api": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_apigatewayv2_integration": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "api": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_apigatewayv2_route": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "api": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_apigatewayv2_stage": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "api": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_apprunner_service": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "ai": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    },
+    "apprunner": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_autoscaling_group": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "servers": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_bedrock_guardrail": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "ai": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    },
+    "guardrails": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_bedrockagent_knowledge_base": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "ai": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_cloudfront_cache_policy": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "edge-policies": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_cloudfront_distribution": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "edge": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    },
+    "edge-policies": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_cloudfront_origin_access_control": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "edge": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_cloudfront_origin_request_policy": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "edge-policies": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_cloudfront_response_headers_policy": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "edge-policies": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_cloudtrail": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "observability": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_cloudwatch_event_rule": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "observability": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_cloudwatch_event_target": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "observability": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_cloudwatch_log_group": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "compute": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    },
+    "observability": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_cloudwatch_log_metric_filter": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "observability": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_cloudwatch_metric_alarm": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "observability": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_cognito_resource_server": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "auth": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_cognito_user_pool": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "auth": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_cognito_user_pool_client": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "auth": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_cognito_user_pool_domain": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "auth": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_db_instance": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "relational": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_db_parameter_group": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "relational": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_db_subnet_group": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "relational": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_dynamodb_table": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "database": {
+     "instances": 2,
+     "applied": 2,
+     "sdkVerified": 2,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_dynamodb_table_item": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "database": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_ecr_repository": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "containers": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_ecs_cluster": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "containers": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_ecs_service": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "containers": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_ecs_task_definition": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "containers": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_eip": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "network": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_iam_instance_profile": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "identity": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_iam_policy": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "identity": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_iam_role": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "ai": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    },
+    "api": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    },
+    "compute": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    },
+    "containers": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    },
+    "identity": {
+     "instances": 2,
+     "applied": 2,
+     "sdkVerified": 2,
+     "result": "qualified"
+    },
+    "scheduling": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    },
+    "workflow": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_iam_role_policy": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "identity": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_iam_role_policy_attachment": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "identity": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_internet_gateway": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "network": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_kinesis_stream": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "messaging": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_kms_alias": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "identity": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_kms_key": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "identity": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_lambda_alias": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "compute": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_lambda_event_source_mapping": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "compute": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_lambda_function": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "api": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    },
+    "compute": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_lambda_permission": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "api": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    },
+    "compute": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_launch_template": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "servers": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_lb": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "containers": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_lb_listener": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "containers": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_lb_target_group": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "containers": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_nat_gateway": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "network": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_opensearch_domain": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "search": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_opensearchserverless_collection": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "ai": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    },
+    "serverless": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_opensearchserverless_security_policy": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "ai": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    },
+    "serverless": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_route": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "network": {
+     "instances": 2,
+     "applied": 2,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_route53_record": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "edge": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_route53_zone": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "edge": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_route_table": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "network": {
+     "instances": 2,
+     "applied": 2,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_route_table_association": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "network": {
+     "instances": 2,
+     "applied": 2,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_s3_bucket": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "edge": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    },
+    "observability": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    },
+    "storage": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_s3_bucket_lifecycle_configuration": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "storage": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_s3_bucket_notification": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "storage": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_s3_bucket_ownership_controls": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "storage": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_s3_bucket_policy": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "observability": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    },
+    "storage": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_s3_bucket_public_access_block": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "storage": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_s3_bucket_server_side_encryption_configuration": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "storage": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_s3_bucket_versioning": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "storage": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_s3_object": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "storage": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_scheduler_schedule": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "scheduling": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_scheduler_schedule_group": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "scheduling": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_secretsmanager_secret": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "configuration": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_secretsmanager_secret_version": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "configuration": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_security_group": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "containers": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    },
+    "network": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    },
+    "relational": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    },
+    "servers": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_sfn_state_machine": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "workflow": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_sns_topic": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "messaging": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    },
+    "observability": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_sns_topic_policy": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "messaging": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_sns_topic_subscription": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "messaging": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_sqs_queue": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "compute": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    },
+    "messaging": {
+     "instances": 3,
+     "applied": 3,
+     "sdkVerified": 3,
+     "result": "qualified"
+    },
+    "scheduling": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    },
+    "storage": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_sqs_queue_policy": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "storage": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_sqs_queue_redrive_allow_policy": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "messaging": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_ssm_document": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "configuration": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_ssm_parameter": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "configuration": {
+     "instances": 2,
+     "applied": 2,
+     "sdkVerified": 2,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_subnet": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "containers": {
+     "instances": 2,
+     "applied": 2,
+     "sdkVerified": 2,
+     "result": "qualified"
+    },
+    "network": {
+     "instances": 2,
+     "applied": 2,
+     "sdkVerified": 2,
+     "result": "qualified"
+    },
+    "relational": {
+     "instances": 2,
+     "applied": 2,
+     "sdkVerified": 2,
+     "result": "qualified"
+    },
+    "servers": {
+     "instances": 2,
+     "applied": 2,
+     "sdkVerified": 2,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_vpc": {
+   "result": "qualified",
+   "sdkReadBack": true,
+   "fixtures": {
+    "containers": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    },
+    "network": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    },
+    "relational": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    },
+    "servers": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 1,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_vpc_endpoint": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "network": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_vpc_security_group_egress_rule": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "network": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  },
+  "aws_vpc_security_group_ingress_rule": {
+   "result": "qualified",
+   "sdkReadBack": false,
+   "fixtures": {
+    "network": {
+     "instances": 1,
+     "applied": 1,
+     "sdkVerified": 0,
+     "result": "qualified"
+    }
+   }
+  }
+ }
+}

@@ -26,7 +26,9 @@ for address, sdk, modules in entries:
     if folder.exists():shutil.rmtree(folder)
     folder.mkdir(parents=True)
     if sdk:
-        subprocess.run([sys.executable,"-I","-m","pip","--isolated","install","--disable-pip-version-check","--no-compile","--only-binary=:all:","--require-hashes","--python-version","3.13","--implementation","cp","--abi","cp313","--platform","manylinux2014_aarch64","--index-url","https://pypi.org/simple","--target",str(folder),"-r",str(root/"runtime-requirements.lock")],check=True)
+        wheelhouse=os.environ.get("ATMEM_BUILD_WHEELHOUSE")
+        index=["--no-index","--find-links",wheelhouse] if wheelhouse else ["--index-url","https://pypi.org/simple"]
+        subprocess.run([sys.executable,"-I","-m","pip","--isolated","install","--disable-pip-version-check","--no-compile","--only-binary=:all:","--require-hashes","--python-version","3.13","--implementation","cp","--abi","cp313","--platform","manylinux2014_aarch64",*index,"--target",str(folder),"-r",str(root/"runtime-requirements.lock")],check=True)
     shutil.copyfile(root/"handlers"/(address+".py"),folder/(address+".py"))
     for module in modules:
         if not re.fullmatch(r"[a-z_]+[.]py",module):raise ValueError("Invalid generated module name")

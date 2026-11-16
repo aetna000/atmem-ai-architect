@@ -69,12 +69,12 @@ async function uvExecutable(home){
 }
 export function venvPython(folder,platform=process.platform){return path.join(folder,platform==='win32'?'Scripts':'bin',platform==='win32'?'python.exe':'python');}
 export function runtimeDefinition(){
- const server=fs.readFileSync(path.join(root,'server/requirements.lock')),memory=fs.readFileSync(path.join(root,'server/memory-requirements.lock'));
- return {id:digest(Buffer.concat([server,memory,Buffer.from(`uv=${lock.version};python=3.13;${process.platform};${process.arch};${platformTarget().sha256}`)])).slice(0,20),server,memory};
+ const server=fs.readFileSync(path.join(root,'server/requirements.lock')),memory=fs.readFileSync(path.join(root,'server/memory-requirements.lock')),emulator=fs.readFileSync(path.join(root,'server/terraform-emulator-requirements.lock'));
+ return {id:digest(Buffer.concat([server,memory,emulator,Buffer.from(`uv=${lock.version};python=3.13;${process.platform};${process.arch};${platformTarget().sha256}`)])).slice(0,20),server,memory,emulator};
 }
 export async function setupRuntime(home){
- const definition=runtimeDefinition(),folder=path.join(home,'runtimes',definition.id),serverPython=venvPython(path.join(folder,'server')),memoryPython=venvPython(path.join(folder,'memory')),receipt=path.join(folder,'ready.json');
- try{const saved=JSON.parse(fs.readFileSync(receipt,'utf8'));if(saved.id===definition.id&&fs.existsSync(serverPython)&&fs.existsSync(memoryPython))return {serverPython,memoryPython,folder};}catch{}
+ const definition=runtimeDefinition(),folder=path.join(home,'runtimes',definition.id),serverPython=venvPython(path.join(folder,'server')),memoryPython=venvPython(path.join(folder,'memory')),emulatorPython=venvPython(path.join(folder,'emulator')),receipt=path.join(folder,'ready.json');
+ try{const saved=JSON.parse(fs.readFileSync(receipt,'utf8'));if(saved.id===definition.id&&fs.existsSync(serverPython)&&fs.existsSync(memoryPython)&&fs.existsSync(emulatorPython))return {serverPython,memoryPython,emulatorPython,folder};}catch{}
  fs.mkdirSync(folder,{recursive:true,mode:0o700});
  const lease=path.join(folder,'setup.lock');let descriptor;
  try{descriptor=fs.openSync(lease,'wx',0o600);fs.writeFileSync(descriptor,String(process.pid));}catch{throw Error(`Another setup is using ${folder}. Wait for it to finish; if it was interrupted, remove only its setup.lock and retry.`);}
@@ -83,13 +83,15 @@ export async function setupRuntime(home){
   process.stdout.write('Preparing Python 3.13 and isolated application/AtMem environments…\n');
   await run(uv,['python','install','3.13'],{env});
   const found=spawnSync(uv,['python','find','--managed-python','3.13'],{env,encoding:'utf8',windowsHide:true});if(found.status!==0)throw Error('Managed Python could not be located.');const python=found.stdout.trim();
-  for(const [name,requirements]of [['server','requirements.lock'],['memory','memory-requirements.lock']]){
+  for(const [name,requirements]of [['server','requirements.lock'],['memory','memory-requirements.lock'],['emulator','terraform-emulator-requirements.lock']]){
    const destination=path.join(folder,name);await run(uv,['venv','--python',python,destination],{env});
    await run(uv,['pip','install','--require-hashes','--python',venvPython(destination),'-r',path.join(root,'server',requirements),'--index-url','https://pypi.org/simple'],{env});
   }
   await run(serverPython,['-c','import fastapi,uvicorn; from server.attachments import extract; from server.engineering_routes import LocalEngineeringService'],{cwd:root,env:{...env,ATMEM_ARCHITECT_HOME:home}});
   await run(memoryPython,['-c',`from importlib.metadata import version; from atmem import Memory; assert version('atmem')==${JSON.stringify(memoryVersion)}`],{cwd:root,env});
-  fs.writeFileSync(receipt,JSON.stringify({id:definition.id,packageVersion:metadata.version,python:found.stdout.trim()},null,2)+'\n',{mode:0o600});return {serverPython,memoryPython,folder};
+  await run(emulatorPython,['-I','-m','ensurepip','--default-pip'],{cwd:root,env});
+  await run(emulatorPython,['-I','-c',"import moto,flask,flask_cors,boto3;assert moto.__version__=='5.2.5'"],{cwd:root,env});
+  fs.writeFileSync(receipt,JSON.stringify({id:definition.id,packageVersion:metadata.version,python:found.stdout.trim()},null,2)+'\n',{mode:0o600});return {serverPython,memoryPython,emulatorPython,folder};
  }finally{if(descriptor!==undefined)fs.closeSync(descriptor);fs.rmSync(lease,{force:true});}
 }
 export async function checkPort(port){await new Promise((resolve,reject)=>{const server=createServer();server.once('error',()=>reject(Error(`Port ${port} is already in use. Try --port ${port+1}.`)));server.listen(port,'127.0.0.1',()=>server.close(resolve));});}
@@ -106,7 +108,7 @@ export async function main(args=process.argv.slice(2)){
  if(!options.setup)await checkPort(options.port);
  const runtime=await setupRuntime(home);if(options.setup){console.log('Architect and AtMem are installed. Run atmem-architect to open the app.');return;}
  const workspaces=path.join(home,'workspaces');fs.mkdirSync(workspaces,{recursive:true,mode:0o700});
- const env={...process.env,ATMEM_ARCHITECT_HOME:home,ATMEM_ARCHITECT_PORT:String(options.port),ATMEM_ARCHITECT_SIDECAR_PORT:String(options.port),ATMEM_ARCHITECT_MEMORY_PYTHON:runtime.memoryPython,ATMEM_ARCHITECT_ENABLE_ENGINEERING:'1',ATMEM_ARCHITECT_ENGINEERING_WORKSPACE_ROOT:workspaces};
+ const env={...process.env,ATMEM_ARCHITECT_HOME:home,ATMEM_ARCHITECT_PORT:String(options.port),ATMEM_ARCHITECT_SIDECAR_PORT:String(options.port),ATMEM_ARCHITECT_MEMORY_PYTHON:runtime.memoryPython,ATMEM_ARCHITECT_TERRAFORM_EMULATOR_PYTHON:runtime.emulatorPython,ATMEM_ARCHITECT_ENABLE_ENGINEERING:'1',ATMEM_ARCHITECT_ENGINEERING_WORKSPACE_ROOT:workspaces};
  const child=spawn(runtime.serverPython,['-m','uvicorn','server.packaged_app:app','--host','127.0.0.1','--port',String(options.port),'--no-access-log'],{cwd:root,env,stdio:'inherit',windowsHide:true});
  let stopped=false;const stop=()=>{stopped=true;child.kill('SIGTERM');};process.once('SIGINT',stop);process.once('SIGTERM',stop);
  try{
