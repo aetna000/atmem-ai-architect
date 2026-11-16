@@ -877,7 +877,7 @@ def file_digests(folder):
     digests = {}
     for path in sorted(Path(folder).rglob('*')):
         relative = path.relative_to(folder)
-        if path.is_file() and not path.is_symlink() and relative.parts[0] not in ('.terraform', 'build') and not relative.name.endswith(('.tfstate', '.tfstate.backup')):
+        if path.is_file() and not path.is_symlink() and relative.parts[0] not in ('.terraform', '.git', 'build') and '__pycache__' not in relative.parts and not relative.name.endswith(('.tfstate', '.tfstate.backup')):
             digests[relative.as_posix()] = sha256(path.read_bytes())
     return digests
 
@@ -1123,7 +1123,9 @@ def lifecycle(run, backend, report, values):
         built = subprocess.run([os.getenv('ATMEM_EMULATOR_BUILD_PYTHON') or sys.executable, '-I', 'build-runtime.py'], cwd=target, env=build_env, capture_output=True, text=True, timeout=COMMAND_TIMEOUT)
         if not run.stage('Application build', 'passed' if built.returncode == 0 else 'failed', started, built.stdout + '\n' + built.stderr):
             return 'failed', 'The application build failed before Terraform ran.'
-        changed=[name for name,digest in report['fileDigests'].items() if not (target/name).is_file() or sha256((target/name).read_bytes())!=digest]
+        observed=file_digests(target)
+        changed=[name for name,digest in report['fileDigests'].items() if observed.get(name)!=digest]
+        changed+=sorted(set(observed)-set(report['fileDigests'])-set(report.get('workspaceAdditions',[])))
         if changed:
             run.stage('Artifact integrity','failed',time.monotonic(),'Build changed source inputs: '+', '.join(changed[:20]))
             return 'failed','The application build changed source inputs. No Terraform operation was run.'

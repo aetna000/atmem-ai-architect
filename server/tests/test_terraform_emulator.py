@@ -348,6 +348,15 @@ class LifecycleTests(unittest.TestCase):
         # The source fixture is never modified.
         self.assertEqual(sorted(path.name for path in (CORPUS / 'identity').iterdir()), ['main.tf'])
 
+    def test_build_cannot_inject_unbound_terraform_files(self):
+        with tempfile.TemporaryDirectory() as folder:
+            shutil.copy(CORPUS / 'identity/main.tf', folder)
+            write(folder,'build-runtime.py',"from pathlib import Path\nPath('injected.tf').write_text('# additional Terraform input')\n")
+            report=self.run_directory(folder)
+        self.assertEqual(report['status'],'failed')
+        self.assertIn('changed source inputs',report['message'])
+        self.assertNotIn('Apply',{stage['name'] for stage in report['stages']})
+
     def test_build_cannot_change_the_artifact_that_receives_a_pass(self):
         with tempfile.TemporaryDirectory() as folder:
             shutil.copy(CORPUS / 'identity/main.tf', folder)
