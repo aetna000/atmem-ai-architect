@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "implementationStatus": "local_candidate_implemented_validation_in_progress",
+  "implementationStatus": "local_candidate_complete_live_validation_pending",
   "releaseStatus": "unpublished_local_candidate",
   "baseCommit": "7601a8eabb11705014b0dd1b6fb200afc7eae46a",
   "branch": "feat/architecture-review-hook",
@@ -47,7 +47,7 @@
     },
     {
       "id": "H006",
-      "status": "in_progress",
+      "status": "done",
       "evidence": [
         "decision-log.md",
         "evidence/local-checks.json"
@@ -62,11 +62,13 @@
     "OpenSpec 2.1.0 schema validation and actual blocked/ready/reblocked dependency qualification passed",
     "Current Infracost CLI 2.19.1 checksum verified; version/help inspected without pricing/login; current and legacy output adapters covered by fake outputs",
     "Local wheel and extension/schema ZIPs built with manifests; runtime dependencies locked with universal hashes",
-    "Initial CI: Linux Python 3.11 and 3.14 passed; Windows checkout failed on unrelated long paths in archived 028 evidence before running tests. Reviewer CI checkout now includes the complete review-hook component, 033 spec and workflows. Windows tests remain required."
+    "Initial CI: Linux Python 3.11 and 3.14 passed; Windows checkout failed on unrelated long paths in archived 028 evidence before running tests. Reviewer CI checkout now includes the complete review-hook component, 033 spec and workflows. Windows tests remain required.",
+    "CI e83cc52: all four reviewer platform jobs passed, plus Architect package and installed Linux/macOS/Windows regressions; publication jobs skipped."
   ],
   "blockers": [
-    "Live credential-backed pricing/output coverage and explicitly approved semantic model quality/usage remain unqualified.",
-    "No public release/catalog submission/hosted deployment authorization."
+    "Live pricing requires an Infracost account/token; account availability question is pending.",
+    "Live semantic model quality/usage qualification requires explicit model/egress configuration.",
+    "Public package/catalog/hosted publication remains separately owner-authorized."
   ],
   "changedFiles": [
     "README.md",
@@ -77,7 +79,25 @@
   "remaining": [
     "Hosted/team billing, catalog/public package distribution and commercial rollout remain later owner-approved work.",
     "Live pricing and semantic quality/usage qualification remain required before the proposed public release.",
-    "Proposed narrated/video demo is not recorded; current generated inputs/results and CLI manual demo are actual local output.",
-    "Installed-platform CI pending push."
-  ]
+    "Proposed narrated/video demo is not recorded; current generated inputs/results and CLI manual demo are actual local output."
+  ],
+  "pullRequest": "https://github.com/aetna000/atmem-ai-architect/pull/13",
+  "ci": {
+    "sourceCommit": "e83cc52",
+    "reviewerRun": "https://github.com/aetna000/atmem-ai-architect/actions/runs/44081116020",
+    "reviewerPlatforms": [
+      "ubuntu-latest Python 3.11 passed",
+      "ubuntu-latest Python 3.14 passed",
+      "macos-latest Python 3.14 passed",
+      "windows-latest Python 3.14 passed"
+    ],
+    "architectRegressionRun": "https://github.com/aetna000/atmem-ai-architect/actions/runs/44081115906",
+    "architectRegression": [
+      "package passed",
+      "installed ubuntu-latest passed",
+      "installed macos-latest passed",
+      "installed windows-latest passed"
+    ],
+    "publicationJobs": "skipped as expected; no tag/publication"
+  }
 }
