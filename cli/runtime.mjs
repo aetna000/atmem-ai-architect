@@ -27,6 +27,8 @@ export function parseArgs(args){
   const arg=args[i];if(arg==='--no-open')options.open=false;
   else if(arg==='--setup')options.setup=true;
   else if(arg==='--doctor')options.doctor=true;
+  else if(arg==='--maintenance-setup')options.maintenanceSetup=true;
+  else if(arg==='--docker-endpoint'){const value=args[++i];if(!value?.startsWith('unix:///'))throw Error('--docker-endpoint needs an explicit local Unix socket URL.');options.dockerEndpoint=value;}
   else if(arg==='--help'||arg==='-h')options.help=true;
   else if(arg==='--version'||arg==='-v')options.version=true;
   else if(arg==='--port'){const value=args[++i];if(!/^\d+$/.test(value||'')||+value<1024||+value>65535)throw Error('--port needs a number from 1024 to 65535.');options.port=+value;}
@@ -102,11 +104,13 @@ function openBrowser(url){
 export async function main(args=process.argv.slice(2)){
  const options=parseArgs(args);
  if(options.version){console.log(metadata.version);return;}
- if(options.help){console.log(`AtMem AI Architect ${metadata.version}\n\nUsage: atmem-architect [--port 5174] [--no-open] [--data-dir PATH]\n       atmem-architect --setup | --doctor | --version\n\nFirst run downloads a checksum-verified Python installer, Python and pinned app/AtMem dependencies.\nData and runtimes stay in your app data directory; no administrator access is needed.\nA model login/API key is selected in the UI. No cloud deployment is performed.`);return;}
+ if(options.help){console.log(`AtMem AI Architect ${metadata.version}\n\nUsage: atmem-architect [--port 5174] [--no-open] [--data-dir PATH]\n       atmem-architect --setup | --doctor | --version\n       atmem-architect --maintenance-setup --docker-endpoint unix:///path/to/docker.sock\n\nFirst run downloads a checksum-verified Python installer, Python and pinned app/AtMem dependencies.\nData and runtimes stay in your app data directory; no administrator access is needed.\nA model login/API key is selected in the UI. No cloud deployment is performed.`);return;}
  const home=options.home||applicationHome(),definition=runtimeDefinition();
  if(options.doctor){console.log(JSON.stringify({version:metadata.version,node:process.version,platform:process.platform,arch:process.arch,home,runtimeReady:fs.existsSync(path.join(home,'runtimes',definition.id,'ready.json')),modelAuthentication:'Select a model and sign in from Connections'},null,2));return;}
- if(!options.setup)await checkPort(options.port);
+ if(options.maintenanceSetup&&!options.dockerEndpoint)throw Error('--maintenance-setup requires --docker-endpoint unix:///path/to/docker.sock.');
+ if(!options.setup&&!options.maintenanceSetup)await checkPort(options.port);
  const runtime=await setupRuntime(home);if(options.setup){console.log('Architect and AtMem are installed. Run atmem-architect to open the app.');return;}
+ if(options.maintenanceSetup){await run(runtime.serverPython,[path.join(root,'scripts/setup-maintenance-worker.py'),'--endpoint',options.dockerEndpoint,'--output',path.join(home,'maintenance-worker.json')],{cwd:root,env:process.env});return;}
  const workspaces=path.join(home,'workspaces');fs.mkdirSync(workspaces,{recursive:true,mode:0o700});
  const env={...process.env,ATMEM_ARCHITECT_HOME:home,ATMEM_ARCHITECT_PORT:String(options.port),ATMEM_ARCHITECT_SIDECAR_PORT:String(options.port),ATMEM_ARCHITECT_MEMORY_PYTHON:runtime.memoryPython,ATMEM_ARCHITECT_TERRAFORM_EMULATOR_PYTHON:runtime.emulatorPython,ATMEM_ARCHITECT_ENABLE_ENGINEERING:'1',ATMEM_ARCHITECT_ENGINEERING_WORKSPACE_ROOT:workspaces};
  const child=spawn(runtime.serverPython,['-m','uvicorn','server.packaged_app:app','--host','127.0.0.1','--port',String(options.port),'--no-access-log'],{cwd:root,env,stdio:'inherit',windowsHide:true});

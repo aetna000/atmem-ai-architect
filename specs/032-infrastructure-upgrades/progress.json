@@ -1,67 +1,119 @@
 {
   "schemaVersion": 1,
   "planningStatus": "agreed_planning_baseline",
-  "implementationStatus": "not_started",
+  "implementationStatus": "in_progress",
   "releaseStatus": "not_released",
   "tasks": [
     {
       "id": "T001",
-      "status": "todo",
-      "evidence": [],
+      "status": "done",
+      "evidence": [
+        "research.md",
+        "evidence/tool-artifacts.json",
+        "server/maintenance-requirements.lock",
+        "server/maintenance/THIRD_PARTY_NOTICES.txt"
+      ],
       "blockers": []
     },
     {
       "id": "T002",
-      "status": "todo",
-      "evidence": [],
+      "status": "done",
+      "evidence": [
+        "tests/maintenance/fixtures/manifest.json",
+        "tests/maintenance/fixtures/campaign/manifest.json",
+        "evidence/qualification.json",
+        "evidence/construct-coverage.json"
+      ],
       "blockers": []
     },
     {
       "id": "T003",
-      "status": "todo",
-      "evidence": [],
+      "status": "done",
+      "evidence": [
+        "server/maintenance/workers.py",
+        "server/maintenance/isolation.py",
+        "server/tests/test_maintenance_isolation.py",
+        "evidence/isolation.json"
+      ],
       "blockers": []
     },
     {
       "id": "T004",
-      "status": "todo",
-      "evidence": [],
+      "status": "done",
+      "evidence": [
+        "server/maintenance/models.py",
+        "server/maintenance/store.py",
+        "server/maintenance/portable.py",
+        "server/tests/test_maintenance_store.py",
+        "tests/maintenance/model.test.mjs"
+      ],
       "blockers": []
     },
     {
       "id": "T005",
-      "status": "todo",
-      "evidence": [],
+      "status": "done",
+      "evidence": [
+        "server/maintenance/inventory.py",
+        "server/maintenance/parser_process.py",
+        "server/tests/test_maintenance_inventory.py"
+      ],
       "blockers": []
     },
     {
       "id": "T006",
-      "status": "todo",
-      "evidence": [],
+      "status": "done",
+      "evidence": [
+        "server/maintenance/recipes.py",
+        "server/maintenance/patches.py",
+        "server/maintenance/egress.py",
+        "server/maintenance/catalog/aws-batch-queue-v6.json",
+        "server/engineering_contexts.py",
+        "server/tests/test_engineering_contexts.py"
+      ],
       "blockers": []
     },
     {
       "id": "T007",
-      "status": "todo",
-      "evidence": [],
+      "status": "done",
+      "evidence": [
+        "server/maintenance/verification.py",
+        "server/maintenance/budget.py",
+        "server/tests/test_maintenance_verification.py",
+        "server/tests/test_maintenance_service.py"
+      ],
       "blockers": []
     },
     {
       "id": "T008",
-      "status": "todo",
-      "evidence": [],
+      "status": "done",
+      "evidence": [
+        "server/maintenance_routes.py",
+        "src/maintenance/MaintenancePanel.jsx",
+        "src/maintenance/model.mjs",
+        "scripts/maintenance-smoke.mjs"
+      ],
       "blockers": []
     },
     {
       "id": "T009",
-      "status": "todo",
-      "evidence": [],
+      "status": "done",
+      "evidence": [
+        "evidence/r1.json",
+        "evidence/isolation.json",
+        "quickstart.md",
+        "docs/INFRASTRUCTURE_MAINTENANCE.md",
+        "evidence/r1-checks.json",
+        "evidence/installed-macos.json"
+      ],
       "blockers": []
     },
     {
       "id": "T010",
-      "status": "todo",
-      "evidence": [],
+      "status": "in_progress",
+      "evidence": [
+        "server/maintenance/graph.py",
+        "server/tests/test_maintenance_graph.py"
+      ],
       "blockers": []
     },
     {
@@ -120,19 +172,27 @@
     },
     {
       "id": "T020",
-      "status": "todo",
-      "evidence": [],
+      "status": "in_progress",
+      "evidence": [
+        "scripts/setup-maintenance-worker.py",
+        "scripts/package-npm.mjs",
+        "docs/INFRASTRUCTURE_MAINTENANCE.md",
+        "evidence/installed-macos.json",
+        "evidence/r1-checks.json"
+      ],
       "blockers": []
     }
   ],
   "testsRun": [
-    "Spec Kit setup-plan/setup-tasks/check-prerequisites",
-    "20 unique task IDs and JSON progress consistency",
-    "16/16 requirement-to-task mapping",
-    "JSON parse and placeholder checks",
-    "git diff --check"
+    "606 JavaScript tests passed",
+    "623 configured server tests ran: 601 passed, 22 optional/platform skips",
+    "15 engineering context tests passed, including private-source format and model projections",
+    "npm run test:browser passed: voice fixture, real AtMem 2.3.14, delivery ZIP/numeric/undo/reset/mobile",
+    "Real maintenance browser and baseline/control/candidate/import qualification passed; zero model/cloud calls",
+    "Production build and dependency notices passed",
+    "Unpublished npm tarball clean installation, five-stage browser and real migration passed on macOS arm64; client CI matrix pending"
   ],
-  "changedFilesScope": "specification documents only",
+  "changedFilesScope": "Local R0/R1 implementation, privacy boundaries, fixtures, browser regression refresh and review artifacts; no public release or hosted rollout",
   "review": {
     "modelRequested": "claude-opus-5-5",
     "effort": "medium",
@@ -146,24 +206,135 @@
     ],
     "limits": "round2 full documents; round3 final clarification delta; read-only tools disabled"
   },
-  "authorAssessment": "agree: proposed release sequence and engineering contracts ready for owner release planning; implementation not started",
-  "productTests": "not run; documents only; mandatory release checks remain pending",
+  "authorAssessment": "R1 local candidate qualified, including installed package. R2 dependency graph under test; overlay/release workflow and R3/R4 not implemented.",
+  "productTests": "Real local Linux arm64 provider/schema and hostile-container checks; real browser and AtMem; model/audio/pricing fixtures explicitly distinguished. No cloud, state, deployment or publication qualification.",
   "changedFiles": [
-    "specs/032-infrastructure-upgrades/releases.md",
-    "specs/032-infrastructure-upgrades/decision-log.md",
-    "specs/032-infrastructure-upgrades/quickstart.md",
-    "specs/032-infrastructure-upgrades/analysis.md",
-    "specs/032-infrastructure-upgrades/tasks.md",
-    "specs/032-infrastructure-upgrades/research.md",
+    "README.md",
+    "cli/runtime.mjs",
+    "docs/INFRASTRUCTURE_MAINTENANCE.md",
+    "package.json",
+    "scripts/delivery-smoke.mjs",
+    "scripts/maintenance-smoke.mjs",
+    "scripts/memory-e2e.mjs",
+    "scripts/package-npm.mjs",
+    "scripts/qualify-maintenance.py",
+    "scripts/setup-maintenance-worker.py",
+    "scripts/voice-smoke.mjs",
+    "server/app.py",
+    "server/engineering_contexts.py",
+    "server/engineering_routes.py",
+    "server/local_validation.py",
+    "server/maintenance-requirements.lock",
+    "server/maintenance-requirements.txt",
+    "server/maintenance/THIRD_PARTY_NOTICES.txt",
+    "server/maintenance/__init__.py",
+    "server/maintenance/budget.py",
+    "server/maintenance/catalog/aws-6-archive-checksums.json",
+    "server/maintenance/catalog/aws-batch-queue-v6.json",
+    "server/maintenance/catalog/tool-artifacts.json",
+    "server/maintenance/check_runner.py",
+    "server/maintenance/egress.py",
+    "server/maintenance/graph.py",
+    "server/maintenance/inventory.py",
+    "server/maintenance/isolation.py",
+    "server/maintenance/models.py",
+    "server/maintenance/parser_process.py",
+    "server/maintenance/patches.py",
+    "server/maintenance/portable.py",
+    "server/maintenance/recipes.py",
+    "server/maintenance/service.py",
+    "server/maintenance/store.py",
+    "server/maintenance/verification.py",
+    "server/maintenance/workers.py",
+    "server/maintenance_routes.py",
+    "server/requirements.lock",
+    "server/requirements.txt",
+    "server/tests/e2e_app.py",
+    "server/tests/test_engineering_contexts.py",
+    "server/tests/test_engineering_local_worker.py",
+    "server/tests/test_maintenance_graph.py",
+    "server/tests/test_maintenance_inventory.py",
+    "server/tests/test_maintenance_isolation.py",
+    "server/tests/test_maintenance_routes.py",
+    "server/tests/test_maintenance_service.py",
+    "server/tests/test_maintenance_store.py",
+    "server/tests/test_maintenance_verification.py",
     "specs/032-infrastructure-upgrades/data-model.md",
+    "specs/032-infrastructure-upgrades/decision-log.md",
+    "specs/032-infrastructure-upgrades/evidence/construct-coverage.json",
+    "specs/032-infrastructure-upgrades/evidence/installed-macos.json",
+    "specs/032-infrastructure-upgrades/evidence/isolation.json",
+    "specs/032-infrastructure-upgrades/evidence/parser-advisories.json",
+    "specs/032-infrastructure-upgrades/evidence/qualification.json",
+    "specs/032-infrastructure-upgrades/evidence/r1-checks.json",
+    "specs/032-infrastructure-upgrades/evidence/r1.json",
+    "specs/032-infrastructure-upgrades/evidence/tool-artifacts.json",
     "specs/032-infrastructure-upgrades/plan.md",
     "specs/032-infrastructure-upgrades/progress.json",
+    "specs/032-infrastructure-upgrades/quickstart.md",
+    "specs/032-infrastructure-upgrades/releases.md",
+    "specs/032-infrastructure-upgrades/research.md",
     "specs/032-infrastructure-upgrades/spec.md",
-    "specs/032-infrastructure-upgrades/checklists/requirements.md",
-    "specs/032-infrastructure-upgrades/contracts/interfaces.md",
-    "specs/032-infrastructure-upgrades/reviews/opus-round1.json",
-    "specs/032-infrastructure-upgrades/reviews/opus-final.md",
-    "specs/032-infrastructure-upgrades/reviews/opus-round2.json",
-    "specs/README.md"
-  ]
+    "specs/032-infrastructure-upgrades/tasks.md",
+    "src/main.jsx",
+    "src/maintenance/MaintenancePanel.jsx",
+    "src/maintenance/maintenance.css",
+    "src/maintenance/model.mjs",
+    "src/project-file.mjs",
+    "tests/maintenance/fixtures/backend/main.tf",
+    "tests/maintenance/fixtures/baseline-failure/main.tf",
+    "tests/maintenance/fixtures/baseline-oracle/main.tf",
+    "tests/maintenance/fixtures/baseline/main.tf",
+    "tests/maintenance/fixtures/campaign/consumer-a/main.tf",
+    "tests/maintenance/fixtures/campaign/consumer-b/main.tf",
+    "tests/maintenance/fixtures/campaign/cycle-a/main.tf",
+    "tests/maintenance/fixtures/campaign/cycle-b/main.tf",
+    "tests/maintenance/fixtures/campaign/dynamic-consumer/main.tf",
+    "tests/maintenance/fixtures/campaign/holdout-monorepo/apps/ingest/main.tf",
+    "tests/maintenance/fixtures/campaign/holdout-monorepo/modules/queue/main.tf",
+    "tests/maintenance/fixtures/campaign/manifest.json",
+    "tests/maintenance/fixtures/campaign/range-consumer/main.tf",
+    "tests/maintenance/fixtures/campaign/shared/main.tf",
+    "tests/maintenance/fixtures/campaign/unrelated/main.tf",
+    "tests/maintenance/fixtures/ci/.github/workflows/deploy.yml",
+    "tests/maintenance/fixtures/ci/main.tf",
+    "tests/maintenance/fixtures/dynamic/main.tf",
+    "tests/maintenance/fixtures/external/main.tf",
+    "tests/maintenance/fixtures/holdout-oracle/main.tf",
+    "tests/maintenance/fixtures/holdout/main.tf",
+    "tests/maintenance/fixtures/http/main.tf",
+    "tests/maintenance/fixtures/manifest.json",
+    "tests/maintenance/fixtures/portable-section.json",
+    "tests/maintenance/fixtures/provisioner/main.tf",
+    "tests/maintenance/fixtures/sensitive/main.tf",
+    "tests/maintenance/model.test.mjs"
+  ],
+  "increments": {
+    "R0": {
+      "status": "qualified_local",
+      "host": "macOS arm64 / Colima Linux arm64",
+      "evidence": [
+        "evidence/qualification.json",
+        "evidence/isolation.json"
+      ]
+    },
+    "R1": {
+      "status": "qualified_local_unpublished",
+      "support": "AWS 5.100.0 to 6.0.0 Batch explicit tuples; one root; deterministic; no model calls",
+      "publication": "not_authorized_or_attempted",
+      "ownerManualReview": "card provided; owner acceptance not claimed"
+    },
+    "R2": {
+      "status": "in_progress_graph",
+      "fixtureManifest": "tests/maintenance/fixtures/campaign/manifest.json"
+    },
+    "R3": {
+      "status": "todo",
+      "gate": "Exact disposable-repository write authorization and actual remote qualification required"
+    },
+    "R4": {
+      "status": "todo",
+      "gate": "R3 acceptance and explicit hosted governance alignment required"
+    }
+  }
 }

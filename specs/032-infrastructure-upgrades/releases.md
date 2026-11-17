@@ -1,6 +1,6 @@
 # Proposed release train — stable versions, evidence first
 
-Current npm release: 0.2.3. Version numbers below are reservations/proposals; rebase on latest stable before implementation. No alpha/beta suffixes. A gated capability may ship with an honest coverage label. Release dates and subscription prices are not approved here.
+Current npm release: 0.2.4. Version numbers below are reservations/proposals; rebase on latest stable before implementation. No alpha/beta suffixes. A gated capability may ship with an honest coverage label. Release dates and subscription prices are not approved here.
 
 | Increment | Proposed version | Delivered outcome | Required exit / owner test |
 |---|---|---|---|

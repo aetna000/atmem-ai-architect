@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "aws-batch-queue-v6",
+  "version": "1.0.0",
+  "provider": "registry.terraform.io/hashicorp/aws",
+  "baseline": "5.100.0",
+  "target": "6.0.0",
+  "terraform": "1.17.2",
+  "reviewedAt": "2026-11-17",
+  "reviewer": "R0 independent baseline/control/oracle qualification",
+  "withdrawn": false,
+  "source": {
+    "commit": "887f72b40b1d74adbb77b5fc7cf70acd2058064a",
+    "url": "https://github.com/hashicorp/terraform-provider-aws/blob/887f72b40b1d74adbb77b5fc7cf70acd2058064a/website/docs/guides/version-6-upgrade.html.markdown#resource-aws_batch_job_queue"
+  },
+  "transform": "Explicit compute_environments tuple to ordered compute_environment_order blocks; preserve expressions and ordinals.",
+  "limits": [
+    "Schema compatibility only. No state inspection, cloud plan, apply or deployment qualification.",
+    "Explicit nonempty tuple only; dynamic, conflicting or old-attribute references are blocked.",
+    "AWS provider is the only provider qualified by this recipe. Module execution requires R2 qualification.",
+    "Confirm real state migration, resource behavior and rollback with the destination operator."
+  ]
+}

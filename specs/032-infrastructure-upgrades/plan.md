@@ -17,7 +17,7 @@ Reference qualification scope: one migration recipe, shared module + two consume
 
 ## Constitution check (before and after design)
 
-CONSTITUTION.md is read as the owner-established governing engineering standard; `.specify/memory/constitution.md` retains required I–VIII checks. Owner's explicit request authorizes planning this adjacent maintenance workflow; no silent amendment of either file.
+CONSTITUTION.md is read as the owner-established governing engineering standard; `.specify/memory/constitution.md` retains required I–VIII checks. Owner's explicit request now authorizes local development of this adjacent maintenance workflow; no silent amendment of either file.
 
 I control: isolated proposals; exact diff approval for remote publication; no deployment. II honesty: pinned official sources, qualified costs and evidence. III one model: versioned MigrationProject references snapshots, decisions, patches and receipts; export/import required. IV local/least privilege: local-first core and scoped adapters; hosted runner is a later proposal requiring compatibility review of the older local-only wording. V depth: AWS recipe first, matrix expansion only with evidence. VI memory: events/supersession/private isolation. VII UI: existing canvas with concise maintenance overlay and expandable evidence, 20-word explanations, keyboard/mobile WCAG2.2AA. VIII tests: independently executable oracles plus unit/contracts/browser and all existing required gates.
 
@@ -33,7 +33,7 @@ Generic-engine instruction: review already exists under029; T001 rechecks integr
 - `publication.py`, `github_adapter.py`: write-ahead intent, confirmation, reconciliation, scoped credentials.
 - `scheduler.py`, `budget.py`: opt-in repeat matching and durable budget admission.
 - `server/maintenance_routes.py`: sidecar contract; remote server adapter separate from core.
-- `src/maintenance/{model.mjs,MaintenancePanel.jsx}`: concise migration views; integrate `src/App.jsx` only after locating its actual workflow boundary.
+- `src/maintenance/{model.mjs,MaintenancePanel.jsx}`: concise migration views; integrate `src/main.jsx` only after locating its actual workflow boundary.
 - `tests/maintenance/`, `server/tests/test_maintenance_*.py`, `scripts/maintenance-smoke.mjs`: qualification and regression.
 
 Names are proposed deliverables, not claims these files exist. Existing `server/engineering_jobs.py`, `server/local_validation.py`, `server/terraform_routes.py` and hosted workers are integration candidates, not automatically trusted/reused security primitives.

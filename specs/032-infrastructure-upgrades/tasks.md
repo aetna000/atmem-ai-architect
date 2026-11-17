@@ -1,26 +1,26 @@
 # Tasks: infrastructure upgrade maintenance
 
-All implementation tasks are pending. Dependencies are explicit; story releases are independently testable using prior released foundations. Paths below are proposed, not existing implementations.
+Development is authorized. `progress.json` records current execution and evidence; checkboxes mark only fully accepted task deliverables. Dependencies remain explicit.
 
 ## Phase 1 — R0 setup/research
 
-- [ ] T001 Inspect existing engine/worker integration and select pinned HCL/parser/Terraform/provider/schema/upgrade-guide contracts in `specs/032-infrastructure-upgrades/research.md`; measure blocked executable-construct coverage; deliver exact supported schema-removal/type-error migration matrix (deprecation warnings are not failing controls), local R3 identity/polling contract and R4 governance conflict record before code.
-- [ ] T002 Freeze a real breaking-upgrade baseline, version-only failure, independently specified candidate oracle, distinct-composition holdout and unsupported, forbidden CI/source/data-source/provisioner, secret egress and module-release/range-drift cases in `tests/maintenance/fixtures/` and `specs/032-infrastructure-upgrades/evidence/qualification.json` (T001).
+- [x] T001 Inspect existing engine/worker integration and select pinned HCL/parser/Terraform/provider/schema/upgrade-guide contracts in `specs/032-infrastructure-upgrades/research.md`; measure blocked executable-construct coverage; deliver exact supported schema-removal/type-error migration matrix (deprecation warnings are not failing controls), local R3 identity/polling contract and R4 governance conflict record before code.
+- [x] T002 Freeze a real breaking-upgrade baseline, version-only failure, independently specified candidate oracle, distinct-composition holdout and unsupported, forbidden CI/source/data-source/provisioner, secret egress and module-release/range-drift cases in `tests/maintenance/fixtures/` and `specs/032-infrastructure-upgrades/evidence/qualification.json` (T001).
 
 ## Phase 2 — R0/R1 foundations
 
-- [ ] T003 Implement isolated tool/network/credential/resource profiles in `server/maintenance/workers.py` and `server/tests/test_maintenance_isolation.py`; deliver per-OS isolation matrix and prove hostile provider/test cannot read host secrets or escape; unqualified OS execution blocked (T001).
-- [ ] T004 Implement strict versioned records, SQLite transactions/fencing, tenant scoping, existing project-format maintenance-section migration and permission-free export/import in `server/maintenance/models.py`, `store.py` and `server/tests/test_maintenance_store.py` (T001).
+- [x] T003 Implement isolated tool/network/credential/resource profiles in `server/maintenance/workers.py` and `server/tests/test_maintenance_isolation.py`; deliver per-OS isolation matrix and prove hostile provider/test cannot read host secrets or escape; unqualified OS execution blocked (T001).
+- [x] T004 Implement strict versioned records, SQLite transactions/fencing, tenant scoping, existing project-format maintenance-section migration and permission-free export/import in `server/maintenance/models.py`, `store.py` and `server/tests/test_maintenance_store.py` (T001).
 
 ## Phase 3 — US1 / R1 local migration
 
 Goal: meaningful checked single-root patch, original unchanged. Independent test: frozen baseline/control/candidate and counterexample.
 
-- [ ] T005 [US1] Implement immutable allowlisted source snapshots and AST inventory with unknown references in `server/maintenance/inventory.py` and `server/tests/test_maintenance_inventory.py` (T002,T004).
-- [ ] T006 [US1] Implement reviewed recipe applicability/digests and bounded backend-neutral patch authoring, independent patch safety and confirmed secret-filtered source-selection/derived-request model egress in `server/maintenance/recipes.py`, `catalog/`, `planner.py`, `patches.py` and `server/tests/test_maintenance_recipes.py` (T002,T004,T005).
-- [ ] T007 [US1] Implement baseline/control/candidate independent receipts,3-attempt repair budgets and atomic tenant/project/credential-owner spend reservations and stale-input invalidation in `server/maintenance/verification.py`, `budget.py` and `server/tests/test_maintenance_verification.py` (T003,T006).
-- [ ] T008 [US1] Implement local routes, concise accessible panel and export/import in `server/maintenance_routes.py`, `src/maintenance/model.mjs`, `MaintenancePanel.jsx`, `tests/maintenance/model.test.mjs` and `scripts/maintenance-smoke.mjs` (T007).
-- [ ] T009 [US1] Run clean baseline/holdout/hostile/cancel qualification, all existing gates and owner test card; publish exact support/evidence in `specs/032-infrastructure-upgrades/evidence/r1.json` and `quickstart.md` (T008).
+- [x] T005 [US1] Implement immutable allowlisted source snapshots and AST inventory with unknown references in `server/maintenance/inventory.py` and `server/tests/test_maintenance_inventory.py` (T002,T004).
+- [x] T006 [US1] Implement reviewed recipe applicability/digests and bounded backend-neutral patch authoring, independent patch safety and confirmed secret-filtered source-selection/derived-request model egress in `server/maintenance/recipes.py`, `catalog/`, `planner.py`, `patches.py` and `server/tests/test_maintenance_recipes.py` (T002,T004,T005).
+- [x] T007 [US1] Implement baseline/control/candidate independent receipts,3-attempt repair budgets and atomic tenant/project/credential-owner spend reservations and stale-input invalidation in `server/maintenance/verification.py`, `budget.py` and `server/tests/test_maintenance_verification.py` (T003,T006).
+- [x] T008 [US1] Implement local routes, concise accessible panel and export/import in `server/maintenance_routes.py`, `src/maintenance/model.mjs`, `MaintenancePanel.jsx`, `tests/maintenance/model.test.mjs` and `scripts/maintenance-smoke.mjs` (T007).
+- [x] T009 [US1] Run clean baseline/holdout/hostile/cancel qualification, all existing gates and owner test card; publish exact support/evidence in `specs/032-infrastructure-upgrades/evidence/r1.json` and `quickstart.md` (T008).
 
 ## Phase 4 — US2 / R2 coordinated migrations
 

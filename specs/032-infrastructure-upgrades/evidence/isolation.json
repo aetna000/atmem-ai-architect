@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "evidenceLevel": "real_local_container_isolation",
+  "hostSystem": "Darwin",
+  "hostArchitecture": "arm64",
+  "containerPlatform": "linux/arm64",
+  "imageId": "sha256:21e6045ead28a13de1bf7b1b2a0e42b4a796882d52f349adb5d35af42e4f6e3c",
+  "controllerPolicyDigest": "e66ce4466dfc843c2f2b9f0ee73f79208aa466526281fd0963e0edc8cd1e2910",
+  "runnerDigest": "f8820d505150588f88e6915853c323147611209ab9a5c73ab2972ce3d8da021d",
+  "results": {
+    "hostile": {
+      "status": "passed",
+      "findings": {
+        "uid_dropped": true,
+        "credentials_absent": true,
+        "host_secret": true,
+        "docker_socket": true,
+        "host_home": true,
+        "source_readonly": true,
+        "image_readonly": true,
+        "privilege_denied": true,
+        "network_denied": true,
+        "symlink_escape_denied": true
+      },
+      "reason": null
+    },
+    "timeout": {
+      "status": "passed",
+      "observedReason": "timeout"
+    },
+    "cancel": {
+      "status": "passed",
+      "observedReason": "cancelled"
+    },
+    "output_bound": {
+      "status": "passed",
+      "observedReason": "output_limit"
+    }
+  },
+  "matrix": [
+    {
+      "host": "macOS arm64",
+      "runtime": "Linux arm64 Docker/Colima",
+      "execution": "qualified_local_only"
+    },
+    {
+      "host": "Linux (all architectures)",
+      "execution": "blocked_unqualified"
+    },
+    {
+      "host": "macOS amd64",
+      "execution": "blocked_unqualified"
+    },
+    {
+      "host": "Windows",
+      "execution": "blocked_unqualified"
+    }
+  ],
+  "limits": [
+    "No hypervisor escape certification, cloud or deployment qualification.",
+    "Parser inventory is trusted data processing; does not execute HCL.",
+    "Actual execution always requires current private operator registration."
+  ]
+}

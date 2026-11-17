@@ -1,6 +1,6 @@
 # Data model v1 — proposed
 
-All records have schemaVersion, tenantId, projectId, immutable ID, createdAt UTC, actor and provenance. Mutations use revision compare-and-swap. Credentials are opaque broker references only. Export strips credential references and remote authorization; importing never restores permission.
+The aggregate carries schemaVersion, tenantId, projectId, ID, createdAt UTC and actor. R1 nested snapshots/jobs/receipts inherit that owner scope, retaining their own identities, times and content/tool provenance; redundant tenant fields are forbidden rather than independently editable. Mutations use revision compare-and-swap. R3 broker references and remote grants remain outside portable records. Importing never restores permission and marks retained checks historical.
 
 - RepositorySnapshot: adapter/repository immutable identity, commit, selected roots, tree digest, resolved artifact digests, byte/file inventory and completeness findings. Moving refs are recorded but never cache keys. Unknown/missing Git/LFS/submodule/private dependencies remain explicit.
 - DependencyGraph: snapshot set, parser identity, root/module/provider nodes, typed edges, exact source ranges, resolution state/reason and user-confirmed overrides. Overrides are audited facts requiring confirmation, not silent inferred edges.

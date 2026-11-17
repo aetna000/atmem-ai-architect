@@ -1,0 +1,426 @@
+{
+  "schemaVersion": 1,
+  "status": "passed",
+  "scope": "R1 local migration controls, patch application and clean imported reproduction only",
+  "evidenceLevel": "real_local_container_schema_checks",
+  "cloudOperations": false,
+  "remoteWrites": false,
+  "modelCalls": 0,
+  "modelSpendMicros": 0,
+  "recipe": {
+    "schemaVersion": 1,
+    "id": "aws-batch-queue-v6",
+    "version": "1.0.0",
+    "provider": "registry.terraform.io/hashicorp/aws",
+    "baseline": "5.100.0",
+    "target": "6.0.0",
+    "terraform": "1.17.2",
+    "reviewedAt": "2026-11-17",
+    "reviewer": "R0 independent baseline/control/oracle qualification",
+    "withdrawn": false,
+    "source": {
+      "commit": "887f72b40b1d74adbb77b5fc7cf70acd2058064a",
+      "url": "https://github.com/hashicorp/terraform-provider-aws/blob/887f72b40b1d74adbb77b5fc7cf70acd2058064a/website/docs/guides/version-6-upgrade.html.markdown#resource-aws_batch_job_queue"
+    },
+    "transform": "Explicit compute_environments tuple to ordered compute_environment_order blocks; preserve expressions and ordinals.",
+    "limits": [
+      "Schema compatibility only. No state inspection, cloud plan, apply or deployment qualification.",
+      "Explicit nonempty tuple only; dynamic, conflicting or old-attribute references are blocked.",
+      "AWS provider is the only provider qualified by this recipe. Module execution requires R2 qualification.",
+      "Confirm real state migration, resource behavior and rollback with the destination operator."
+    ]
+  },
+  "recipeDigest": "ec0dd68980225e58795a9908515d8add24facfc56d6fb1d011ef1d49e6b111ac",
+  "workerIdentity": "06b9464d11f89ed3f622fccbd361942cf16b087c10320fb08dde98ee938e3a8b",
+  "policyDigest": "75fbb0c0744651ff104df95eb60c464a570657fab76974fe6741337aa1e26257",
+  "oracleDigest": "02874397acdf81954ec9b12a3e5b826f6f045f40a537f81d5f7e82d4fa245887",
+  "fixtureManifestDigest": "0e7f737f6f54ba361d5989f8f86fd3d317f02af73647b686ae005276a1204d64",
+  "results": {
+    "baseline": {
+      "status": "ready_for_review",
+      "source": {
+        "schemaVersion": 1,
+        "id": "3d54fd86-6f14-492b-9e82-b12d26de24e9",
+        "repositoryId": "repository-001",
+        "treeDigest": "04a72fe2345d5874ff2da9f00350ad7afe0ee918097c0dc138f9fe88c37c2059",
+        "files": [
+          {
+            "schemaVersion": 1,
+            "path": "main.tf",
+            "text": "terraform {\n  required_providers {\n    aws = { source = \"hashicorp/aws\", version = \"5.100.0\" }\n  }\n}\nprovider \"aws\" { region = \"us-east-1\" }\n# Queue order is an accepted deployment decision.\nvariable \"environment_arn\" { type = string }\nresource \"aws_batch_job_queue\" \"jobs\" {\n  name = \"research-jobs\"\n  state = \"ENABLED\"\n  priority = 10\n  compute_environments = [var.environment_arn, \"arn:aws:batch:us-east-1:123456789012:compute-environment/backup\"]\n}\noutput \"queue_arn\" { value = aws_batch_job_queue.jobs.arn }\n",
+            "sha256": "5f59707fdd45505287686ab4d54d1705afc8d867091bfb90901c57ed575ebe08"
+          }
+        ],
+        "createdAt": "2026-11-17T07:20:00.400396+00:00",
+        "findings": [],
+        "commit": null
+      },
+      "candidate": {
+        "schemaVersion": 1,
+        "digest": "305c5d9289996dd409d779a3756e2c1f6ca791910a7e715b662923b0ec5351b2",
+        "changes": [
+          {
+            "schemaVersion": 1,
+            "operation": "create",
+            "path": ".terraform.lock.hcl",
+            "beforeDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "afterDigest": "ae15e32911f0530afed56ca3e6abb6b1e4d78b53d82c49c4d53c04924dac090c",
+            "after": "# This file is maintained automatically by \"terraform init\".\n# Manual edits may be lost in future updates.\n\nprovider \"registry.terraform.io/hashicorp/aws\" {\n  version     = \"6.0.0\"\n  constraints = \"6.0.0\"\n  hashes = [\n    \"h1:W+H/RVJcygeLd5auWocMHJbHeBE19x010nD9bSsGe+8=\",\n    \"zh:16b1bb786719b7ebcddba3ab751b976ebf4006f7144afeebcb83f0c5f41f8eb9\",\n    \"zh:1fbc08b817b9eaf45a2b72ccba59f4ea19e7fcf017be29f5a9552b623eccc5bc\",\n    \"zh:304f58f3333dbe846cfbdfc2227e6ed77041ceea33b6183972f3f8ab51bd065f\",\n    \"zh:4cd447b5c24f14553bd6e1a0e4fea3c7d7b218cbb2316a3d93f1c5cb562c181b\",\n    \"zh:589472b56be8277558616075fc5480fcd812ba6dc70e8979375fc6d8750f83ef\",\n    \"zh:5d78484ba43c26f1ef6067c4150550b06fd39c5d4bfb790f92c4a6f7d9d0201b\",\n    \"zh:5f470ce664bffb22ace736643d2abe7ad45858022b652143bcd02d71d38d4e42\",\n    \"zh:7a9cbb947aaab8c885096bce5da22838ca482196cf7d04ffb8bdf7fd28003e47\",\n    \"zh:854df3e4c50675e727705a0eaa4f8d42ccd7df6a5efa2456f0205a9901ace019\",\n    \"zh:87162c0f47b1260f5969679dccb246cb528f27f01229d02fd30a8e2f9869ba2c\",\n    \"zh:9a145404d506b52078cd7060e6cbb83f8fc7953f3f63a5e7137d41f69d6317a3\",\n    \"zh:a4eab2649f5afe06cc406ce2aaf9fd44dcf311123f48d344c255e93454c08921\",\n    \"zh:bea09141c6186a3e133413ae3a2e3d1aaf4f43466a6a468827287527edf21710\",\n    \"zh:d7ea2a35ff55ddfe639ab3b04331556b772a8698eca01f5d74151615d9f336db\",\n  ]\n}\n",
+            "diff": "--- /dev/null\n+++ b/.terraform.lock.hcl\n@@ -0,0 +1,24 @@\n+# This file is maintained automatically by \"terraform init\".\n+# Manual edits may be lost in future updates.\n+\n+provider \"registry.terraform.io/hashicorp/aws\" {\n+  version     = \"6.0.0\"\n+  constraints = \"6.0.0\"\n+  hashes = [\n+    \"h1:W+H/RVJcygeLd5auWocMHJbHeBE19x010nD9bSsGe+8=\",\n+    \"zh:16b1bb786719b7ebcddba3ab751b976ebf4006f7144afeebcb83f0c5f41f8eb9\",\n+    \"zh:1fbc08b817b9eaf45a2b72ccba59f4ea19e7fcf017be29f5a9552b623eccc5bc\",\n+    \"zh:304f58f3333dbe846cfbdfc2227e6ed77041ceea33b6183972f3f8ab51bd065f\",\n+    \"zh:4cd447b5c24f14553bd6e1a0e4fea3c7d7b218cbb2316a3d93f1c5cb562c181b\",\n+    \"zh:589472b56be8277558616075fc5480fcd812ba6dc70e8979375fc6d8750f83ef\",\n+    \"zh:5d78484ba43c26f1ef6067c4150550b06fd39c5d4bfb790f92c4a6f7d9d0201b\",\n+    \"zh:5f470ce664bffb22ace736643d2abe7ad45858022b652143bcd02d71d38d4e42\",\n+    \"zh:7a9cbb947aaab8c885096bce5da22838ca482196cf7d04ffb8bdf7fd28003e47\",\n+    \"zh:854df3e4c50675e727705a0eaa4f8d42ccd7df6a5efa2456f0205a9901ace019\",\n+    \"zh:87162c0f47b1260f5969679dccb246cb528f27f01229d02fd30a8e2f9869ba2c\",\n+    \"zh:9a145404d506b52078cd7060e6cbb83f8fc7953f3f63a5e7137d41f69d6317a3\",\n+    \"zh:a4eab2649f5afe06cc406ce2aaf9fd44dcf311123f48d344c255e93454c08921\",\n+    \"zh:bea09141c6186a3e133413ae3a2e3d1aaf4f43466a6a468827287527edf21710\",\n+    \"zh:d7ea2a35ff55ddfe639ab3b04331556b772a8698eca01f5d74151615d9f336db\",\n+  ]\n+}\n"
+          },
+          {
+            "schemaVersion": 1,
+            "operation": "modify",
+            "path": "main.tf",
+            "beforeDigest": "5f59707fdd45505287686ab4d54d1705afc8d867091bfb90901c57ed575ebe08",
+            "afterDigest": "95c361237df169a1ace3ffb77030a386132f74b7f74bd455256b5caa46487bf4",
+            "after": "terraform {\n  required_providers {\n    aws = { source = \"hashicorp/aws\", version = \"6.0.0\" }\n  }\n}\nprovider \"aws\" { region = \"us-east-1\" }\n# Queue order is an accepted deployment decision.\nvariable \"environment_arn\" { type = string }\nresource \"aws_batch_job_queue\" \"jobs\" {\n  name = \"research-jobs\"\n  state = \"ENABLED\"\n  priority = 10\n  compute_environment_order {\n    compute_environment = var.environment_arn\n    order = 0\n  }\n  compute_environment_order {\n    compute_environment = \"arn:aws:batch:us-east-1:123456789012:compute-environment/backup\"\n    order = 1\n  }\n}\noutput \"queue_arn\" { value = aws_batch_job_queue.jobs.arn }\n",
+            "diff": "--- a/main.tf\n+++ b/main.tf\n@@ -1,6 +1,6 @@\n terraform {\n   required_providers {\n-    aws = { source = \"hashicorp/aws\", version = \"5.100.0\" }\n+    aws = { source = \"hashicorp/aws\", version = \"6.0.0\" }\n   }\n }\n provider \"aws\" { region = \"us-east-1\" }\n@@ -10,6 +10,13 @@\n   name = \"research-jobs\"\n   state = \"ENABLED\"\n   priority = 10\n-  compute_environments = [var.environment_arn, \"arn:aws:batch:us-east-1:123456789012:compute-environment/backup\"]\n+  compute_environment_order {\n+    compute_environment = var.environment_arn\n+    order = 0\n+  }\n+  compute_environment_order {\n+    compute_environment = \"arn:aws:batch:us-east-1:123456789012:compute-environment/backup\"\n+    order = 1\n+  }\n }\n output \"queue_arn\" { value = aws_batch_job_queue.jobs.arn }\n"
+          }
+        ],
+        "findings": [],
+        "manualSteps": [
+          "Review the exact patch and provider state-upgrade behavior before merging.",
+          "Run an authorized destination-specific plan and review rollback before deployment."
+        ]
+      },
+      "receipts": [
+        {
+          "schemaVersion": 1,
+          "id": "3a510130-7f9d-47e1-8444-302e4fc72cb4",
+          "kind": "baseline",
+          "binding": {
+            "schemaVersion": 1,
+            "sourceDigest": "04a72fe2345d5874ff2da9f00350ad7afe0ee918097c0dc138f9fe88c37c2059",
+            "recipeDigest": "ec0dd68980225e58795a9908515d8add24facfc56d6fb1d011ef1d49e6b111ac",
+            "patchDigest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "toolDigest": "06b9464d11f89ed3f622fccbd361942cf16b087c10320fb08dde98ee938e3a8b",
+            "policyDigest": "75fbb0c0744651ff104df95eb60c464a570657fab76974fe6741337aa1e26257",
+            "oracleDigest": "02874397acdf81954ec9b12a3e5b826f6f045f40a537f81d5f7e82d4fa245887"
+          },
+          "artifactDigest": "340f39892c334e3a68cbbdf065c517833166cd0e66ad5fa0b0f7397c5f553850",
+          "status": "passed",
+          "evidenceLevel": "local_container_schema_check",
+          "exitCode": 0,
+          "durationSeconds": 4.407,
+          "output": "{\"schemaVersion\": 1, \"steps\": [{\"command\": [\"init\", \"-backend=false\", \"-input=false\", \"-no-color\"], \"exitCode\": 0, \"stdout\": \"Initializing provider plugins...\\n- Finding hashicorp/aws versions matching \\\"5.100.0\\\"...\\n- Installing hashicorp/aws v5.100.0...\\n- Installed hashicorp/aws v5.100.0 (unauthenticated)\\n\\nTerraform has created a lock file .terraform.lock.hcl to record the provider\\nselections it made above. Include this file in your version control repository\\nso that Terraform can guarantee to make the same selections by default when\\nyou run \\\"terraform init\\\" in the future.\\n\\n\\nWarning: Incomplete lock file information for providers\\n\\nDue to your customized provider installation methods, Terraform was forced to\\ncalculate lock file checksums locally for the following providers:\\n  - hashicorp/aws\\n\\nThe current .terraform.lock.hcl file only includes checksums for linux_arm64,\\nso Terraform running on another platform will fail to install these\\nproviders.\\n\\nTo calculate additional checksums for another platform, run:\\n  terraform providers lock -platform=linux_amd64\\n(where linux_amd64 is the platform to generate)\\nTerraform has been successfully initialized!\\n\", \"stderr\": \"\"}, {\"command\": [\"validate\", \"-json\"], \"exitCode\": 0, \"stdout\": \"{\\n  \\\"format_version\\\": \\\"1.0\\\",\\n  \\\"valid\\\": true,\\n  \\\"error_count\\\": 0,\\n  \\\"warning_count\\\": 1,\\n  \\\"diagnostics\\\": [\\n    {\\n      \\\"severity\\\": \\\"warning\\\",\\n      \\\"summary\\\": \\\"Attribute Deprecated\\\",\\n      \\\"detail\\\": \\\"This parameter will be replaced by `compute_environment_order`.\\\",\\n      \\\"address\\\": \\\"aws_batch_job_queue.jobs\\\",\\n      \\\"range\\\": {\\n        \\\"filename\\\": \\\"main.tf\\\",\\n        \\\"start\\\": {\\n          \\\"line\\\": 13,\\n          \\\"column\\\": 26,\\n          \\\"byte\\\": 362\\n        },\\n        \\\"end\\\": {\\n          \\\"line\\\": 13,\\n          \\\"column\\\": 114,\\n          \\\"byte\\\": 450\\n        }\\n      },\\n      \\\"snippet\\\": {\\n        \\\"context\\\": \\\"resource \\\\\\\"aws_batch_job_queue\\\\\\\" \\\\\\\"jobs\\\\\\\"\\\",\\n        \\\"code\\\": \\\"  compute_environments = [var.environment_arn, \\\\\\\"arn:aws:batch:us-east-1:123456789012:compute-environment/backup\\\\\\\"]\\\",\\n        \\\"start_line\\\": 13,\\n        \\\"highlight_start_offset\\\": 25,\\n        \\\"highlight_end_offset\\\": 113,\\n        \\\"values\\\": []\\n      }\\n    }\\n  ]\\n}\\n\", \"stderr\": \"\"}], \"lock\": \"# This file is maintained automatically by \\\"terraform init\\\".\\n# Manual edits may be lost in future updates.\\n\\nprovider \\\"registry.terraform.io/hashicorp/aws\\\" {\\n  version     = \\\"5.100.0\\\"\\n  constraints = \\\"5.100.0\\\"\\n  hashes = [\\n    \\\"h1:wOhTPz6apLBuF7/FYZuCoXRK/MLgrNprZ3vXmq83g5k=\\\",\\n  ]\\n}\\n\", \"queueSchema\": {\"version\": 1, \"block\": {\"attributes\": {\"arn\": {\"type\": \"string\", \"description_kind\": \"plain\", \"computed\": true}, \"compute_environments\": {\"type\": [\"list\", \"string\"], \"description_kind\": \"plain\", \"deprecated\": true, \"optional\": true}, \"id\": {\"type\": \"string\", \"description_kind\": \"plain\", \"computed\": true}, \"name\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}, \"priority\": {\"type\": \"number\", \"description_kind\": \"plain\", \"required\": true}, \"scheduling_policy_arn\": {\"type\": \"string\", \"description_kind\": \"plain\", \"optional\": true}, \"state\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}, \"tags\": {\"type\": [\"map\", \"string\"], \"description_kind\": \"plain\", \"optional\": true}, \"tags_all\": {\"type\": [\"map\", \"string\"], \"description_kind\": \"plain\", \"computed\": true}}, \"block_types\": {\"compute_environment_order\": {\"nesting_mode\": \"list\", \"block\": {\"attributes\": {\"compute_environment\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}, \"order\": {\"type\": \"number\", \"description_kind\": \"plain\", \"required\": true}}, \"description_kind\": \"plain\"}}, \"job_state_time_limit_action\": {\"nesting_mode\": \"list\", \"block\": {\"attributes\": {\"action\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}, \"max_time_seconds\": {\"type\": \"number\", \"description_kind\": \"plain\", \"required\": true}, \"reason\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}, \"state\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}}, \"description_kind\": \"plain\"}}, \"timeouts\": {\"nesting_mode\": \"single\", \"block\": {\"attributes\": {\"create\": {\"type\": \"string\", \"description\": \"A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as \\\"30s\\\" or \\\"2h45m\\\". Valid time units are \\\"s\\\" (seconds), \\\"m\\\" (minutes), \\\"h\\\" (hours).\", \"description_kind\": \"plain\", \"optional\": true}, \"delete\": {\"type\": \"string\", \"description\": \"A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as \\\"30s\\\" or \\\"2h45m\\\". Valid time units are \\\"s\\\" (seconds), \\\"m\\\" (minutes), \\\"h\\\" (hours). Setting a timeout for a Delete operation is only applicable if changes are saved into state before the destroy operation occurs.\", \"description_kind\": \"plain\", \"optional\": true}, \"update\": {\"type\": \"string\", \"description\": \"A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as \\\"30s\\\" or \\\"2h45m\\\". Valid time units are \\\"s\\\" (seconds), \\\"m\\\" (minutes), \\\"h\\\" (hours).\", \"description_kind\": \"plain\", \"optional\": true}}, \"description_kind\": \"plain\"}}}, \"description_kind\": \"plain\"}}}\n",
+          "reason": null,
+          "cleanupConfirmed": true,
+          "createdAt": "2026-11-17T07:20:05.514978+00:00"
+        },
+        {
+          "schemaVersion": 1,
+          "id": "036b3461-f2e7-4d59-b212-3a32353e9083",
+          "kind": "control",
+          "binding": {
+            "schemaVersion": 1,
+            "sourceDigest": "04a72fe2345d5874ff2da9f00350ad7afe0ee918097c0dc138f9fe88c37c2059",
+            "recipeDigest": "ec0dd68980225e58795a9908515d8add24facfc56d6fb1d011ef1d49e6b111ac",
+            "patchDigest": "49143dbdc28ce8870e81bce113a62a0baa9edb0964cc2db0a39f3e4d1eceac42",
+            "toolDigest": "06b9464d11f89ed3f622fccbd361942cf16b087c10320fb08dde98ee938e3a8b",
+            "policyDigest": "75fbb0c0744651ff104df95eb60c464a570657fab76974fe6741337aa1e26257",
+            "oracleDigest": "02874397acdf81954ec9b12a3e5b826f6f045f40a537f81d5f7e82d4fa245887"
+          },
+          "artifactDigest": "e6042f6487151ff58238aff63a7d6a43f8c25409731287bba00a022e22efb444",
+          "status": "failed",
+          "evidenceLevel": "local_container_schema_check",
+          "exitCode": 1,
+          "durationSeconds": 2.594,
+          "output": "{\"schemaVersion\": 1, \"steps\": [{\"command\": [\"init\", \"-backend=false\", \"-input=false\", \"-upgrade\", \"-no-color\"], \"exitCode\": 0, \"stdout\": \"Initializing provider plugins...\\n- Finding hashicorp/aws versions matching \\\"6.0.0\\\"...\\n- Installing hashicorp/aws v6.0.0...\\n- Installed hashicorp/aws v6.0.0 (unauthenticated)\\n\\nTerraform has created a lock file .terraform.lock.hcl to record the provider\\nselections it made above. Include this file in your version control repository\\nso that Terraform can guarantee to make the same selections by default when\\nyou run \\\"terraform init\\\" in the future.\\n\\n\\nWarning: Incomplete lock file information for providers\\n\\nDue to your customized provider installation methods, Terraform was forced to\\ncalculate lock file checksums locally for the following providers:\\n  - hashicorp/aws\\n\\nThe current .terraform.lock.hcl file only includes checksums for linux_arm64,\\nso Terraform running on another platform will fail to install these\\nproviders.\\n\\nTo calculate additional checksums for another platform, run:\\n  terraform providers lock -platform=linux_amd64\\n(where linux_amd64 is the platform to generate)\\nTerraform has been successfully initialized!\\n\", \"stderr\": \"\"}, {\"command\": [\"validate\", \"-json\"], \"exitCode\": 1, \"stdout\": \"{\\n  \\\"format_version\\\": \\\"1.0\\\",\\n  \\\"valid\\\": false,\\n  \\\"error_count\\\": 1,\\n  \\\"warning_count\\\": 0,\\n  \\\"diagnostics\\\": [\\n    {\\n      \\\"severity\\\": \\\"error\\\",\\n      \\\"summary\\\": \\\"Unsupported argument\\\",\\n      \\\"detail\\\": \\\"An argument named \\\\\\\"compute_environments\\\\\\\" is not expected here.\\\",\\n      \\\"range\\\": {\\n        \\\"filename\\\": \\\"main.tf\\\",\\n        \\\"start\\\": {\\n          \\\"line\\\": 13,\\n          \\\"column\\\": 3,\\n          \\\"byte\\\": 337\\n        },\\n        \\\"end\\\": {\\n          \\\"line\\\": 13,\\n          \\\"column\\\": 23,\\n          \\\"byte\\\": 357\\n        }\\n      },\\n      \\\"snippet\\\": {\\n        \\\"context\\\": \\\"resource \\\\\\\"aws_batch_job_queue\\\\\\\" \\\\\\\"jobs\\\\\\\"\\\",\\n        \\\"code\\\": \\\"  compute_environments = [var.environment_arn, \\\\\\\"arn:aws:batch:us-east-1:123456789012:compute-environment/backup\\\\\\\"]\\\",\\n        \\\"start_line\\\": 13,\\n        \\\"highlight_start_offset\\\": 2,\\n        \\\"highlight_end_offset\\\": 22,\\n        \\\"values\\\": []\\n      }\\n    }\\n  ]\\n}\\n\", \"stderr\": \"\"}], \"lock\": \"# This file is maintained automatically by \\\"terraform init\\\".\\n# Manual edits may be lost in future updates.\\n\\nprovider \\\"registry.terraform.io/hashicorp/aws\\\" {\\n  version     = \\\"6.0.0\\\"\\n  constraints = \\\"6.0.0\\\"\\n  hashes = [\\n    \\\"h1:W+H/RVJcygeLd5auWocMHJbHeBE19x010nD9bSsGe+8=\\\",\\n  ]\\n}\\n\"}\n",
+          "reason": null,
+          "cleanupConfirmed": true,
+          "createdAt": "2026-11-17T07:20:10.192928+00:00"
+        },
+        {
+          "schemaVersion": 1,
+          "id": "bf237a19-752c-414a-9708-a68ca3e27154",
+          "kind": "candidate",
+          "binding": {
+            "schemaVersion": 1,
+            "sourceDigest": "04a72fe2345d5874ff2da9f00350ad7afe0ee918097c0dc138f9fe88c37c2059",
+            "recipeDigest": "ec0dd68980225e58795a9908515d8add24facfc56d6fb1d011ef1d49e6b111ac",
+            "patchDigest": "85b5badd2ea973b9c940f4eb40748aad1da3db3f037d0ae39c38e473a56d5cb8",
+            "toolDigest": "06b9464d11f89ed3f622fccbd361942cf16b087c10320fb08dde98ee938e3a8b",
+            "policyDigest": "75fbb0c0744651ff104df95eb60c464a570657fab76974fe6741337aa1e26257",
+            "oracleDigest": "02874397acdf81954ec9b12a3e5b826f6f045f40a537f81d5f7e82d4fa245887"
+          },
+          "artifactDigest": "718e236868b0d0bfb0a79273ae34e39af7749fe24c5ae9e8df7260942e44a43e",
+          "status": "passed",
+          "evidenceLevel": "local_container_schema_check",
+          "exitCode": 0,
+          "durationSeconds": 4.293,
+          "output": "{\"schemaVersion\": 1, \"steps\": [{\"command\": [\"init\", \"-backend=false\", \"-input=false\", \"-upgrade\", \"-no-color\"], \"exitCode\": 0, \"stdout\": \"Initializing provider plugins...\\n- Finding hashicorp/aws versions matching \\\"6.0.0\\\"...\\n- Installing hashicorp/aws v6.0.0...\\n- Installed hashicorp/aws v6.0.0 (unauthenticated)\\n\\nTerraform has created a lock file .terraform.lock.hcl to record the provider\\nselections it made above. Include this file in your version control repository\\nso that Terraform can guarantee to make the same selections by default when\\nyou run \\\"terraform init\\\" in the future.\\n\\n\\nWarning: Incomplete lock file information for providers\\n\\nDue to your customized provider installation methods, Terraform was forced to\\ncalculate lock file checksums locally for the following providers:\\n  - hashicorp/aws\\n\\nThe current .terraform.lock.hcl file only includes checksums for linux_arm64,\\nso Terraform running on another platform will fail to install these\\nproviders.\\n\\nTo calculate additional checksums for another platform, run:\\n  terraform providers lock -platform=linux_amd64\\n(where linux_amd64 is the platform to generate)\\nTerraform has been successfully initialized!\\n\", \"stderr\": \"\"}, {\"command\": [\"validate\", \"-json\"], \"exitCode\": 0, \"stdout\": \"{\\n  \\\"format_version\\\": \\\"1.0\\\",\\n  \\\"valid\\\": true,\\n  \\\"error_count\\\": 0,\\n  \\\"warning_count\\\": 0,\\n  \\\"diagnostics\\\": []\\n}\\n\", \"stderr\": \"\"}], \"lock\": \"# This file is maintained automatically by \\\"terraform init\\\".\\n# Manual edits may be lost in future updates.\\n\\nprovider \\\"registry.terraform.io/hashicorp/aws\\\" {\\n  version     = \\\"6.0.0\\\"\\n  constraints = \\\"6.0.0\\\"\\n  hashes = [\\n    \\\"h1:W+H/RVJcygeLd5auWocMHJbHeBE19x010nD9bSsGe+8=\\\",\\n  ]\\n}\\n\", \"queueSchema\": {\"version\": 2, \"block\": {\"attributes\": {\"arn\": {\"type\": \"string\", \"description_kind\": \"plain\", \"computed\": true}, \"id\": {\"type\": \"string\", \"description_kind\": \"plain\", \"deprecated\": true, \"computed\": true}, \"name\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}, \"priority\": {\"type\": \"number\", \"description_kind\": \"plain\", \"required\": true}, \"region\": {\"type\": \"string\", \"description\": \"Region where this resource will be [managed](https://docs.aws.amazon.com/general/latest/gr/rande.html#regional-endpoints). Defaults to the Region set in the [provider configuration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs#aws-configuration-reference).\", \"description_kind\": \"plain\", \"optional\": true, \"computed\": true}, \"scheduling_policy_arn\": {\"type\": \"string\", \"description_kind\": \"plain\", \"optional\": true}, \"state\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}, \"tags\": {\"type\": [\"map\", \"string\"], \"description_kind\": \"plain\", \"optional\": true}, \"tags_all\": {\"type\": [\"map\", \"string\"], \"description_kind\": \"plain\", \"computed\": true}}, \"block_types\": {\"compute_environment_order\": {\"nesting_mode\": \"list\", \"block\": {\"attributes\": {\"compute_environment\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}, \"order\": {\"type\": \"number\", \"description_kind\": \"plain\", \"required\": true}}, \"description_kind\": \"plain\"}}, \"job_state_time_limit_action\": {\"nesting_mode\": \"list\", \"block\": {\"attributes\": {\"action\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}, \"max_time_seconds\": {\"type\": \"number\", \"description_kind\": \"plain\", \"required\": true}, \"reason\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}, \"state\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}}, \"description_kind\": \"plain\"}}, \"timeouts\": {\"nesting_mode\": \"single\", \"block\": {\"attributes\": {\"create\": {\"type\": \"string\", \"description\": \"A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as \\\"30s\\\" or \\\"2h45m\\\". Valid time units are \\\"s\\\" (seconds), \\\"m\\\" (minutes), \\\"h\\\" (hours).\", \"description_kind\": \"plain\", \"optional\": true}, \"delete\": {\"type\": \"string\", \"description\": \"A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as \\\"30s\\\" or \\\"2h45m\\\". Valid time units are \\\"s\\\" (seconds), \\\"m\\\" (minutes), \\\"h\\\" (hours). Setting a timeout for a Delete operation is only applicable if changes are saved into state before the destroy operation occurs.\", \"description_kind\": \"plain\", \"optional\": true}, \"update\": {\"type\": \"string\", \"description\": \"A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as \\\"30s\\\" or \\\"2h45m\\\". Valid time units are \\\"s\\\" (seconds), \\\"m\\\" (minutes), \\\"h\\\" (hours).\", \"description_kind\": \"plain\", \"optional\": true}}, \"description_kind\": \"plain\"}}}, \"description_kind\": \"plain\"}}}\n",
+          "reason": null,
+          "cleanupConfirmed": true,
+          "createdAt": "2026-11-17T07:20:16.572957+00:00"
+        },
+        {
+          "schemaVersion": 1,
+          "id": "262883c9-8ed3-4b70-94c8-69bfe2241b03",
+          "kind": "candidate",
+          "binding": {
+            "schemaVersion": 1,
+            "sourceDigest": "04a72fe2345d5874ff2da9f00350ad7afe0ee918097c0dc138f9fe88c37c2059",
+            "recipeDigest": "ec0dd68980225e58795a9908515d8add24facfc56d6fb1d011ef1d49e6b111ac",
+            "patchDigest": "305c5d9289996dd409d779a3756e2c1f6ca791910a7e715b662923b0ec5351b2",
+            "toolDigest": "06b9464d11f89ed3f622fccbd361942cf16b087c10320fb08dde98ee938e3a8b",
+            "policyDigest": "75fbb0c0744651ff104df95eb60c464a570657fab76974fe6741337aa1e26257",
+            "oracleDigest": "02874397acdf81954ec9b12a3e5b826f6f045f40a537f81d5f7e82d4fa245887"
+          },
+          "artifactDigest": "56e9e322918369b31e7b7d0f0c3f4b7f34c98f78243e61a7f71ac1e5125b05c9",
+          "status": "passed",
+          "evidenceLevel": "local_container_schema_check",
+          "exitCode": 0,
+          "durationSeconds": 4.244,
+          "output": "{\"schemaVersion\": 1, \"steps\": [{\"command\": [\"init\", \"-backend=false\", \"-input=false\", \"-upgrade\", \"-no-color\"], \"exitCode\": 0, \"stdout\": \"Initializing provider plugins...\\n- Finding hashicorp/aws versions matching \\\"6.0.0\\\"...\\n- Installing hashicorp/aws v6.0.0...\\n- Installed hashicorp/aws v6.0.0 (unauthenticated)\\n\\nTerraform has been successfully initialized!\\n\", \"stderr\": \"\"}, {\"command\": [\"validate\", \"-json\"], \"exitCode\": 0, \"stdout\": \"{\\n  \\\"format_version\\\": \\\"1.0\\\",\\n  \\\"valid\\\": true,\\n  \\\"error_count\\\": 0,\\n  \\\"warning_count\\\": 0,\\n  \\\"diagnostics\\\": []\\n}\\n\", \"stderr\": \"\"}], \"lock\": \"# This file is maintained automatically by \\\"terraform init\\\".\\n# Manual edits may be lost in future updates.\\n\\nprovider \\\"registry.terraform.io/hashicorp/aws\\\" {\\n  version     = \\\"6.0.0\\\"\\n  constraints = \\\"6.0.0\\\"\\n  hashes = [\\n    \\\"h1:W+H/RVJcygeLd5auWocMHJbHeBE19x010nD9bSsGe+8=\\\",\\n    \\\"zh:16b1bb786719b7ebcddba3ab751b976ebf4006f7144afeebcb83f0c5f41f8eb9\\\",\\n    \\\"zh:1fbc08b817b9eaf45a2b72ccba59f4ea19e7fcf017be29f5a9552b623eccc5bc\\\",\\n    \\\"zh:304f58f3333dbe846cfbdfc2227e6ed77041ceea33b6183972f3f8ab51bd065f\\\",\\n    \\\"zh:4cd447b5c24f14553bd6e1a0e4fea3c7d7b218cbb2316a3d93f1c5cb562c181b\\\",\\n    \\\"zh:589472b56be8277558616075fc5480fcd812ba6dc70e8979375fc6d8750f83ef\\\",\\n    \\\"zh:5d78484ba43c26f1ef6067c4150550b06fd39c5d4bfb790f92c4a6f7d9d0201b\\\",\\n    \\\"zh:5f470ce664bffb22ace736643d2abe7ad45858022b652143bcd02d71d38d4e42\\\",\\n    \\\"zh:7a9cbb947aaab8c885096bce5da22838ca482196cf7d04ffb8bdf7fd28003e47\\\",\\n    \\\"zh:854df3e4c50675e727705a0eaa4f8d42ccd7df6a5efa2456f0205a9901ace019\\\",\\n    \\\"zh:87162c0f47b1260f5969679dccb246cb528f27f01229d02fd30a8e2f9869ba2c\\\",\\n    \\\"zh:9a145404d506b52078cd7060e6cbb83f8fc7953f3f63a5e7137d41f69d6317a3\\\",\\n    \\\"zh:a4eab2649f5afe06cc406ce2aaf9fd44dcf311123f48d344c255e93454c08921\\\",\\n    \\\"zh:bea09141c6186a3e133413ae3a2e3d1aaf4f43466a6a468827287527edf21710\\\",\\n    \\\"zh:d7ea2a35ff55ddfe639ab3b04331556b772a8698eca01f5d74151615d9f336db\\\",\\n  ]\\n}\\n\", \"queueSchema\": {\"version\": 2, \"block\": {\"attributes\": {\"arn\": {\"type\": \"string\", \"description_kind\": \"plain\", \"computed\": true}, \"id\": {\"type\": \"string\", \"description_kind\": \"plain\", \"deprecated\": true, \"computed\": true}, \"name\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}, \"priority\": {\"type\": \"number\", \"description_kind\": \"plain\", \"required\": true}, \"region\": {\"type\": \"string\", \"description\": \"Region where this resource will be [managed](https://docs.aws.amazon.com/general/latest/gr/rande.html#regional-endpoints). Defaults to the Region set in the [provider configuration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs#aws-configuration-reference).\", \"description_kind\": \"plain\", \"optional\": true, \"computed\": true}, \"scheduling_policy_arn\": {\"type\": \"string\", \"description_kind\": \"plain\", \"optional\": true}, \"state\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}, \"tags\": {\"type\": [\"map\", \"string\"], \"description_kind\": \"plain\", \"optional\": true}, \"tags_all\": {\"type\": [\"map\", \"string\"], \"description_kind\": \"plain\", \"computed\": true}}, \"block_types\": {\"compute_environment_order\": {\"nesting_mode\": \"list\", \"block\": {\"attributes\": {\"compute_environment\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}, \"order\": {\"type\": \"number\", \"description_kind\": \"plain\", \"required\": true}}, \"description_kind\": \"plain\"}}, \"job_state_time_limit_action\": {\"nesting_mode\": \"list\", \"block\": {\"attributes\": {\"action\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}, \"max_time_seconds\": {\"type\": \"number\", \"description_kind\": \"plain\", \"required\": true}, \"reason\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}, \"state\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}}, \"description_kind\": \"plain\"}}, \"timeouts\": {\"nesting_mode\": \"single\", \"block\": {\"attributes\": {\"create\": {\"type\": \"string\", \"description\": \"A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as \\\"30s\\\" or \\\"2h45m\\\". Valid time units are \\\"s\\\" (seconds), \\\"m\\\" (minutes), \\\"h\\\" (hours).\", \"description_kind\": \"plain\", \"optional\": true}, \"delete\": {\"type\": \"string\", \"description\": \"A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as \\\"30s\\\" or \\\"2h45m\\\". Valid time units are \\\"s\\\" (seconds), \\\"m\\\" (minutes), \\\"h\\\" (hours). Setting a timeout for a Delete operation is only applicable if changes are saved into state before the destroy operation occurs.\", \"description_kind\": \"plain\", \"optional\": true}, \"update\": {\"type\": \"string\", \"description\": \"A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as \\\"30s\\\" or \\\"2h45m\\\". Valid time units are \\\"s\\\" (seconds), \\\"m\\\" (minutes), \\\"h\\\" (hours).\", \"description_kind\": \"plain\", \"optional\": true}}, \"description_kind\": \"plain\"}}}, \"description_kind\": \"plain\"}}}\n",
+          "reason": null,
+          "cleanupConfirmed": true,
+          "createdAt": "2026-11-17T07:20:22.817165+00:00"
+        }
+      ],
+      "findings": []
+    },
+    "holdout": {
+      "status": "ready_for_review",
+      "source": {
+        "schemaVersion": 1,
+        "id": "a5ab46ab-9452-4484-8652-91064faa7cc4",
+        "repositoryId": "repository-001",
+        "treeDigest": "1de36e94819bb65c6d2593527b5c44b840285d16c05f4544f99e62ec51f41f26",
+        "files": [
+          {
+            "schemaVersion": 1,
+            "path": "main.tf",
+            "text": "terraform {\n  required_providers {\n    aws = { source = \"hashicorp/aws\", version = \"5.100.0\" }\n  }\n}\nprovider \"aws\" { region = \"us-east-1\" }\nprovider \"aws\" {\n  alias = \"west\"\n  region = \"us-west-2\"\n}\nlocals {\n  primary = \"arn:aws:batch:us-west-2:123456789012:compute-environment/primary\"\n}\nresource \"aws_s3_bucket\" \"logs\" { bucket = \"maintenance-holdout-logs\" }\nresource \"aws_batch_job_queue\" \"nightly\" {\n  provider = aws.west\n  name = \"nightly\"\n  priority = 2\n  state = \"DISABLED\"\n  compute_environments = [\n    local.primary, # preserve this expression\n  ]\n}\n",
+            "sha256": "09e731fd1390b47bbaab2d60f215e5b4abb37b891210c742bea1629bde5dec12"
+          }
+        ],
+        "createdAt": "2026-11-17T07:20:22.846455+00:00",
+        "findings": [],
+        "commit": null
+      },
+      "candidate": {
+        "schemaVersion": 1,
+        "digest": "01d4d3c4dc680413735e849919e9b2fc18ea1ac8abbf74c3c7fdc31573040457",
+        "changes": [
+          {
+            "schemaVersion": 1,
+            "operation": "create",
+            "path": ".terraform.lock.hcl",
+            "beforeDigest": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "afterDigest": "ae15e32911f0530afed56ca3e6abb6b1e4d78b53d82c49c4d53c04924dac090c",
+            "after": "# This file is maintained automatically by \"terraform init\".\n# Manual edits may be lost in future updates.\n\nprovider \"registry.terraform.io/hashicorp/aws\" {\n  version     = \"6.0.0\"\n  constraints = \"6.0.0\"\n  hashes = [\n    \"h1:W+H/RVJcygeLd5auWocMHJbHeBE19x010nD9bSsGe+8=\",\n    \"zh:16b1bb786719b7ebcddba3ab751b976ebf4006f7144afeebcb83f0c5f41f8eb9\",\n    \"zh:1fbc08b817b9eaf45a2b72ccba59f4ea19e7fcf017be29f5a9552b623eccc5bc\",\n    \"zh:304f58f3333dbe846cfbdfc2227e6ed77041ceea33b6183972f3f8ab51bd065f\",\n    \"zh:4cd447b5c24f14553bd6e1a0e4fea3c7d7b218cbb2316a3d93f1c5cb562c181b\",\n    \"zh:589472b56be8277558616075fc5480fcd812ba6dc70e8979375fc6d8750f83ef\",\n    \"zh:5d78484ba43c26f1ef6067c4150550b06fd39c5d4bfb790f92c4a6f7d9d0201b\",\n    \"zh:5f470ce664bffb22ace736643d2abe7ad45858022b652143bcd02d71d38d4e42\",\n    \"zh:7a9cbb947aaab8c885096bce5da22838ca482196cf7d04ffb8bdf7fd28003e47\",\n    \"zh:854df3e4c50675e727705a0eaa4f8d42ccd7df6a5efa2456f0205a9901ace019\",\n    \"zh:87162c0f47b1260f5969679dccb246cb528f27f01229d02fd30a8e2f9869ba2c\",\n    \"zh:9a145404d506b52078cd7060e6cbb83f8fc7953f3f63a5e7137d41f69d6317a3\",\n    \"zh:a4eab2649f5afe06cc406ce2aaf9fd44dcf311123f48d344c255e93454c08921\",\n    \"zh:bea09141c6186a3e133413ae3a2e3d1aaf4f43466a6a468827287527edf21710\",\n    \"zh:d7ea2a35ff55ddfe639ab3b04331556b772a8698eca01f5d74151615d9f336db\",\n  ]\n}\n",
+            "diff": "--- /dev/null\n+++ b/.terraform.lock.hcl\n@@ -0,0 +1,24 @@\n+# This file is maintained automatically by \"terraform init\".\n+# Manual edits may be lost in future updates.\n+\n+provider \"registry.terraform.io/hashicorp/aws\" {\n+  version     = \"6.0.0\"\n+  constraints = \"6.0.0\"\n+  hashes = [\n+    \"h1:W+H/RVJcygeLd5auWocMHJbHeBE19x010nD9bSsGe+8=\",\n+    \"zh:16b1bb786719b7ebcddba3ab751b976ebf4006f7144afeebcb83f0c5f41f8eb9\",\n+    \"zh:1fbc08b817b9eaf45a2b72ccba59f4ea19e7fcf017be29f5a9552b623eccc5bc\",\n+    \"zh:304f58f3333dbe846cfbdfc2227e6ed77041ceea33b6183972f3f8ab51bd065f\",\n+    \"zh:4cd447b5c24f14553bd6e1a0e4fea3c7d7b218cbb2316a3d93f1c5cb562c181b\",\n+    \"zh:589472b56be8277558616075fc5480fcd812ba6dc70e8979375fc6d8750f83ef\",\n+    \"zh:5d78484ba43c26f1ef6067c4150550b06fd39c5d4bfb790f92c4a6f7d9d0201b\",\n+    \"zh:5f470ce664bffb22ace736643d2abe7ad45858022b652143bcd02d71d38d4e42\",\n+    \"zh:7a9cbb947aaab8c885096bce5da22838ca482196cf7d04ffb8bdf7fd28003e47\",\n+    \"zh:854df3e4c50675e727705a0eaa4f8d42ccd7df6a5efa2456f0205a9901ace019\",\n+    \"zh:87162c0f47b1260f5969679dccb246cb528f27f01229d02fd30a8e2f9869ba2c\",\n+    \"zh:9a145404d506b52078cd7060e6cbb83f8fc7953f3f63a5e7137d41f69d6317a3\",\n+    \"zh:a4eab2649f5afe06cc406ce2aaf9fd44dcf311123f48d344c255e93454c08921\",\n+    \"zh:bea09141c6186a3e133413ae3a2e3d1aaf4f43466a6a468827287527edf21710\",\n+    \"zh:d7ea2a35ff55ddfe639ab3b04331556b772a8698eca01f5d74151615d9f336db\",\n+  ]\n+}\n"
+          },
+          {
+            "schemaVersion": 1,
+            "operation": "modify",
+            "path": "main.tf",
+            "beforeDigest": "09e731fd1390b47bbaab2d60f215e5b4abb37b891210c742bea1629bde5dec12",
+            "afterDigest": "66b753ed068fe05adc1dda0620c45232f88a39fa08b7ec1ac315af4a9beb5b0c",
+            "after": "terraform {\n  required_providers {\n    aws = { source = \"hashicorp/aws\", version = \"6.0.0\" }\n  }\n}\nprovider \"aws\" { region = \"us-east-1\" }\nprovider \"aws\" {\n  alias = \"west\"\n  region = \"us-west-2\"\n}\nlocals {\n  primary = \"arn:aws:batch:us-west-2:123456789012:compute-environment/primary\"\n}\nresource \"aws_s3_bucket\" \"logs\" { bucket = \"maintenance-holdout-logs\" }\nresource \"aws_batch_job_queue\" \"nightly\" {\n  provider = aws.west\n  name = \"nightly\"\n  priority = 2\n  state = \"DISABLED\"\n  # preserve this expression\n  compute_environment_order {\n    compute_environment = local.primary\n    order = 0\n  }\n}\n",
+            "diff": "--- a/main.tf\n+++ b/main.tf\n@@ -1,6 +1,6 @@\n terraform {\n   required_providers {\n-    aws = { source = \"hashicorp/aws\", version = \"5.100.0\" }\n+    aws = { source = \"hashicorp/aws\", version = \"6.0.0\" }\n   }\n }\n provider \"aws\" { region = \"us-east-1\" }\n@@ -17,7 +17,9 @@\n   name = \"nightly\"\n   priority = 2\n   state = \"DISABLED\"\n-  compute_environments = [\n-    local.primary, # preserve this expression\n-  ]\n+  # preserve this expression\n+  compute_environment_order {\n+    compute_environment = local.primary\n+    order = 0\n+  }\n }\n"
+          }
+        ],
+        "findings": [],
+        "manualSteps": [
+          "Review the exact patch and provider state-upgrade behavior before merging.",
+          "Run an authorized destination-specific plan and review rollback before deployment."
+        ]
+      },
+      "receipts": [
+        {
+          "schemaVersion": 1,
+          "id": "475a7f59-ae8b-4633-8e9e-60e9617f155f",
+          "kind": "baseline",
+          "binding": {
+            "schemaVersion": 1,
+            "sourceDigest": "1de36e94819bb65c6d2593527b5c44b840285d16c05f4544f99e62ec51f41f26",
+            "recipeDigest": "ec0dd68980225e58795a9908515d8add24facfc56d6fb1d011ef1d49e6b111ac",
+            "patchDigest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "toolDigest": "06b9464d11f89ed3f622fccbd361942cf16b087c10320fb08dde98ee938e3a8b",
+            "policyDigest": "75fbb0c0744651ff104df95eb60c464a570657fab76974fe6741337aa1e26257",
+            "oracleDigest": "02874397acdf81954ec9b12a3e5b826f6f045f40a537f81d5f7e82d4fa245887"
+          },
+          "artifactDigest": "e38f753a082a9d3d755060b7a9feafcd21cd1006736d8cabe16bfdd6998aa6a0",
+          "status": "passed",
+          "evidenceLevel": "local_container_schema_check",
+          "exitCode": 0,
+          "durationSeconds": 4.481,
+          "output": "{\"schemaVersion\": 1, \"steps\": [{\"command\": [\"init\", \"-backend=false\", \"-input=false\", \"-no-color\"], \"exitCode\": 0, \"stdout\": \"Initializing provider plugins...\\n- Finding hashicorp/aws versions matching \\\"5.100.0\\\"...\\n- Installing hashicorp/aws v5.100.0...\\n- Installed hashicorp/aws v5.100.0 (unauthenticated)\\n\\nTerraform has created a lock file .terraform.lock.hcl to record the provider\\nselections it made above. Include this file in your version control repository\\nso that Terraform can guarantee to make the same selections by default when\\nyou run \\\"terraform init\\\" in the future.\\n\\n\\nWarning: Incomplete lock file information for providers\\n\\nDue to your customized provider installation methods, Terraform was forced to\\ncalculate lock file checksums locally for the following providers:\\n  - hashicorp/aws\\n\\nThe current .terraform.lock.hcl file only includes checksums for linux_arm64,\\nso Terraform running on another platform will fail to install these\\nproviders.\\n\\nTo calculate additional checksums for another platform, run:\\n  terraform providers lock -platform=linux_amd64\\n(where linux_amd64 is the platform to generate)\\nTerraform has been successfully initialized!\\n\", \"stderr\": \"\"}, {\"command\": [\"validate\", \"-json\"], \"exitCode\": 0, \"stdout\": \"{\\n  \\\"format_version\\\": \\\"1.0\\\",\\n  \\\"valid\\\": true,\\n  \\\"error_count\\\": 0,\\n  \\\"warning_count\\\": 1,\\n  \\\"diagnostics\\\": [\\n    {\\n      \\\"severity\\\": \\\"warning\\\",\\n      \\\"summary\\\": \\\"Attribute Deprecated\\\",\\n      \\\"detail\\\": \\\"This parameter will be replaced by `compute_environment_order`.\\\",\\n      \\\"address\\\": \\\"aws_batch_job_queue.nightly\\\",\\n      \\\"range\\\": {\\n        \\\"filename\\\": \\\"main.tf\\\",\\n        \\\"start\\\": {\\n          \\\"line\\\": 20,\\n          \\\"column\\\": 26,\\n          \\\"byte\\\": 507\\n        },\\n        \\\"end\\\": {\\n          \\\"line\\\": 22,\\n          \\\"column\\\": 4,\\n          \\\"byte\\\": 558\\n        }\\n      },\\n      \\\"snippet\\\": {\\n        \\\"context\\\": \\\"resource \\\\\\\"aws_batch_job_queue\\\\\\\" \\\\\\\"nightly\\\\\\\"\\\",\\n        \\\"code\\\": \\\"  compute_environments = [\\\\n    local.primary, # preserve this expression\\\\n  ]\\\",\\n        \\\"start_line\\\": 20,\\n        \\\"highlight_start_offset\\\": 25,\\n        \\\"highlight_end_offset\\\": 76,\\n        \\\"values\\\": []\\n      }\\n    }\\n  ]\\n}\\n\", \"stderr\": \"\"}], \"lock\": \"# This file is maintained automatically by \\\"terraform init\\\".\\n# Manual edits may be lost in future updates.\\n\\nprovider \\\"registry.terraform.io/hashicorp/aws\\\" {\\n  version     = \\\"5.100.0\\\"\\n  constraints = \\\"5.100.0\\\"\\n  hashes = [\\n    \\\"h1:wOhTPz6apLBuF7/FYZuCoXRK/MLgrNprZ3vXmq83g5k=\\\",\\n  ]\\n}\\n\", \"queueSchema\": {\"version\": 1, \"block\": {\"attributes\": {\"arn\": {\"type\": \"string\", \"description_kind\": \"plain\", \"computed\": true}, \"compute_environments\": {\"type\": [\"list\", \"string\"], \"description_kind\": \"plain\", \"deprecated\": true, \"optional\": true}, \"id\": {\"type\": \"string\", \"description_kind\": \"plain\", \"computed\": true}, \"name\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}, \"priority\": {\"type\": \"number\", \"description_kind\": \"plain\", \"required\": true}, \"scheduling_policy_arn\": {\"type\": \"string\", \"description_kind\": \"plain\", \"optional\": true}, \"state\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}, \"tags\": {\"type\": [\"map\", \"string\"], \"description_kind\": \"plain\", \"optional\": true}, \"tags_all\": {\"type\": [\"map\", \"string\"], \"description_kind\": \"plain\", \"computed\": true}}, \"block_types\": {\"compute_environment_order\": {\"nesting_mode\": \"list\", \"block\": {\"attributes\": {\"compute_environment\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}, \"order\": {\"type\": \"number\", \"description_kind\": \"plain\", \"required\": true}}, \"description_kind\": \"plain\"}}, \"job_state_time_limit_action\": {\"nesting_mode\": \"list\", \"block\": {\"attributes\": {\"action\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}, \"max_time_seconds\": {\"type\": \"number\", \"description_kind\": \"plain\", \"required\": true}, \"reason\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}, \"state\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}}, \"description_kind\": \"plain\"}}, \"timeouts\": {\"nesting_mode\": \"single\", \"block\": {\"attributes\": {\"create\": {\"type\": \"string\", \"description\": \"A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as \\\"30s\\\" or \\\"2h45m\\\". Valid time units are \\\"s\\\" (seconds), \\\"m\\\" (minutes), \\\"h\\\" (hours).\", \"description_kind\": \"plain\", \"optional\": true}, \"delete\": {\"type\": \"string\", \"description\": \"A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as \\\"30s\\\" or \\\"2h45m\\\". Valid time units are \\\"s\\\" (seconds), \\\"m\\\" (minutes), \\\"h\\\" (hours). Setting a timeout for a Delete operation is only applicable if changes are saved into state before the destroy operation occurs.\", \"description_kind\": \"plain\", \"optional\": true}, \"update\": {\"type\": \"string\", \"description\": \"A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as \\\"30s\\\" or \\\"2h45m\\\". Valid time units are \\\"s\\\" (seconds), \\\"m\\\" (minutes), \\\"h\\\" (hours).\", \"description_kind\": \"plain\", \"optional\": true}}, \"description_kind\": \"plain\"}}}, \"description_kind\": \"plain\"}}}\n",
+          "reason": null,
+          "cleanupConfirmed": true,
+          "createdAt": "2026-11-17T07:20:28.020735+00:00"
+        },
+        {
+          "schemaVersion": 1,
+          "id": "4bd6cf84-7c15-490b-bf4f-3c0f322237c2",
+          "kind": "control",
+          "binding": {
+            "schemaVersion": 1,
+            "sourceDigest": "1de36e94819bb65c6d2593527b5c44b840285d16c05f4544f99e62ec51f41f26",
+            "recipeDigest": "ec0dd68980225e58795a9908515d8add24facfc56d6fb1d011ef1d49e6b111ac",
+            "patchDigest": "5507ec96d453b2f41cb72f54107129afea9e9dcd907c9d29b928389454b7784d",
+            "toolDigest": "06b9464d11f89ed3f622fccbd361942cf16b087c10320fb08dde98ee938e3a8b",
+            "policyDigest": "75fbb0c0744651ff104df95eb60c464a570657fab76974fe6741337aa1e26257",
+            "oracleDigest": "02874397acdf81954ec9b12a3e5b826f6f045f40a537f81d5f7e82d4fa245887"
+          },
+          "artifactDigest": "66b641190e15076d5dae2e5f8a6f929cc25ed9c458d9f73809409240b845f908",
+          "status": "failed",
+          "evidenceLevel": "local_container_schema_check",
+          "exitCode": 1,
+          "durationSeconds": 3.379,
+          "output": "{\"schemaVersion\": 1, \"steps\": [{\"command\": [\"init\", \"-backend=false\", \"-input=false\", \"-upgrade\", \"-no-color\"], \"exitCode\": 0, \"stdout\": \"Initializing provider plugins...\\n- Finding hashicorp/aws versions matching \\\"6.0.0\\\"...\\n- Installing hashicorp/aws v6.0.0...\\n- Installed hashicorp/aws v6.0.0 (unauthenticated)\\n\\nTerraform has created a lock file .terraform.lock.hcl to record the provider\\nselections it made above. Include this file in your version control repository\\nso that Terraform can guarantee to make the same selections by default when\\nyou run \\\"terraform init\\\" in the future.\\n\\n\\nWarning: Incomplete lock file information for providers\\n\\nDue to your customized provider installation methods, Terraform was forced to\\ncalculate lock file checksums locally for the following providers:\\n  - hashicorp/aws\\n\\nThe current .terraform.lock.hcl file only includes checksums for linux_arm64,\\nso Terraform running on another platform will fail to install these\\nproviders.\\n\\nTo calculate additional checksums for another platform, run:\\n  terraform providers lock -platform=linux_amd64\\n(where linux_amd64 is the platform to generate)\\nTerraform has been successfully initialized!\\n\", \"stderr\": \"\"}, {\"command\": [\"validate\", \"-json\"], \"exitCode\": 1, \"stdout\": \"{\\n  \\\"format_version\\\": \\\"1.0\\\",\\n  \\\"valid\\\": false,\\n  \\\"error_count\\\": 1,\\n  \\\"warning_count\\\": 0,\\n  \\\"diagnostics\\\": [\\n    {\\n      \\\"severity\\\": \\\"error\\\",\\n      \\\"summary\\\": \\\"Unsupported argument\\\",\\n      \\\"detail\\\": \\\"An argument named \\\\\\\"compute_environments\\\\\\\" is not expected here.\\\",\\n      \\\"range\\\": {\\n        \\\"filename\\\": \\\"main.tf\\\",\\n        \\\"start\\\": {\\n          \\\"line\\\": 20,\\n          \\\"column\\\": 3,\\n          \\\"byte\\\": 482\\n        },\\n        \\\"end\\\": {\\n          \\\"line\\\": 20,\\n          \\\"column\\\": 23,\\n          \\\"byte\\\": 502\\n        }\\n      },\\n      \\\"snippet\\\": {\\n        \\\"context\\\": \\\"resource \\\\\\\"aws_batch_job_queue\\\\\\\" \\\\\\\"nightly\\\\\\\"\\\",\\n        \\\"code\\\": \\\"  compute_environments = [\\\",\\n        \\\"start_line\\\": 20,\\n        \\\"highlight_start_offset\\\": 2,\\n        \\\"highlight_end_offset\\\": 22,\\n        \\\"values\\\": []\\n      }\\n    }\\n  ]\\n}\\n\", \"stderr\": \"\"}], \"lock\": \"# This file is maintained automatically by \\\"terraform init\\\".\\n# Manual edits may be lost in future updates.\\n\\nprovider \\\"registry.terraform.io/hashicorp/aws\\\" {\\n  version     = \\\"6.0.0\\\"\\n  constraints = \\\"6.0.0\\\"\\n  hashes = [\\n    \\\"h1:W+H/RVJcygeLd5auWocMHJbHeBE19x010nD9bSsGe+8=\\\",\\n  ]\\n}\\n\"}\n",
+          "reason": null,
+          "cleanupConfirmed": true,
+          "createdAt": "2026-11-17T07:20:33.873393+00:00"
+        },
+        {
+          "schemaVersion": 1,
+          "id": "2a61f06f-e7ff-4d30-bafd-785dac6050eb",
+          "kind": "candidate",
+          "binding": {
+            "schemaVersion": 1,
+            "sourceDigest": "1de36e94819bb65c6d2593527b5c44b840285d16c05f4544f99e62ec51f41f26",
+            "recipeDigest": "ec0dd68980225e58795a9908515d8add24facfc56d6fb1d011ef1d49e6b111ac",
+            "patchDigest": "3e26e62fe8023cb0efe4fe420e075ab990d02ccc0aae0f8d8a81db17ee1eb931",
+            "toolDigest": "06b9464d11f89ed3f622fccbd361942cf16b087c10320fb08dde98ee938e3a8b",
+            "policyDigest": "75fbb0c0744651ff104df95eb60c464a570657fab76974fe6741337aa1e26257",
+            "oracleDigest": "02874397acdf81954ec9b12a3e5b826f6f045f40a537f81d5f7e82d4fa245887"
+          },
+          "artifactDigest": "398e3245bab9b47385fc1da93396e3a3d2700016ebb10289ba5d0cc6dff84e47",
+          "status": "passed",
+          "evidenceLevel": "local_container_schema_check",
+          "exitCode": 0,
+          "durationSeconds": 4.713,
+          "output": "{\"schemaVersion\": 1, \"steps\": [{\"command\": [\"init\", \"-backend=false\", \"-input=false\", \"-upgrade\", \"-no-color\"], \"exitCode\": 0, \"stdout\": \"Initializing provider plugins...\\n- Finding hashicorp/aws versions matching \\\"6.0.0\\\"...\\n- Installing hashicorp/aws v6.0.0...\\n- Installed hashicorp/aws v6.0.0 (unauthenticated)\\n\\nTerraform has created a lock file .terraform.lock.hcl to record the provider\\nselections it made above. Include this file in your version control repository\\nso that Terraform can guarantee to make the same selections by default when\\nyou run \\\"terraform init\\\" in the future.\\n\\n\\nWarning: Incomplete lock file information for providers\\n\\nDue to your customized provider installation methods, Terraform was forced to\\ncalculate lock file checksums locally for the following providers:\\n  - hashicorp/aws\\n\\nThe current .terraform.lock.hcl file only includes checksums for linux_arm64,\\nso Terraform running on another platform will fail to install these\\nproviders.\\n\\nTo calculate additional checksums for another platform, run:\\n  terraform providers lock -platform=linux_amd64\\n(where linux_amd64 is the platform to generate)\\nTerraform has been successfully initialized!\\n\", \"stderr\": \"\"}, {\"command\": [\"validate\", \"-json\"], \"exitCode\": 0, \"stdout\": \"{\\n  \\\"format_version\\\": \\\"1.0\\\",\\n  \\\"valid\\\": true,\\n  \\\"error_count\\\": 0,\\n  \\\"warning_count\\\": 0,\\n  \\\"diagnostics\\\": []\\n}\\n\", \"stderr\": \"\"}], \"lock\": \"# This file is maintained automatically by \\\"terraform init\\\".\\n# Manual edits may be lost in future updates.\\n\\nprovider \\\"registry.terraform.io/hashicorp/aws\\\" {\\n  version     = \\\"6.0.0\\\"\\n  constraints = \\\"6.0.0\\\"\\n  hashes = [\\n    \\\"h1:W+H/RVJcygeLd5auWocMHJbHeBE19x010nD9bSsGe+8=\\\",\\n  ]\\n}\\n\", \"queueSchema\": {\"version\": 2, \"block\": {\"attributes\": {\"arn\": {\"type\": \"string\", \"description_kind\": \"plain\", \"computed\": true}, \"id\": {\"type\": \"string\", \"description_kind\": \"plain\", \"deprecated\": true, \"computed\": true}, \"name\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}, \"priority\": {\"type\": \"number\", \"description_kind\": \"plain\", \"required\": true}, \"region\": {\"type\": \"string\", \"description\": \"Region where this resource will be [managed](https://docs.aws.amazon.com/general/latest/gr/rande.html#regional-endpoints). Defaults to the Region set in the [provider configuration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs#aws-configuration-reference).\", \"description_kind\": \"plain\", \"optional\": true, \"computed\": true}, \"scheduling_policy_arn\": {\"type\": \"string\", \"description_kind\": \"plain\", \"optional\": true}, \"state\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}, \"tags\": {\"type\": [\"map\", \"string\"], \"description_kind\": \"plain\", \"optional\": true}, \"tags_all\": {\"type\": [\"map\", \"string\"], \"description_kind\": \"plain\", \"computed\": true}}, \"block_types\": {\"compute_environment_order\": {\"nesting_mode\": \"list\", \"block\": {\"attributes\": {\"compute_environment\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}, \"order\": {\"type\": \"number\", \"description_kind\": \"plain\", \"required\": true}}, \"description_kind\": \"plain\"}}, \"job_state_time_limit_action\": {\"nesting_mode\": \"list\", \"block\": {\"attributes\": {\"action\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}, \"max_time_seconds\": {\"type\": \"number\", \"description_kind\": \"plain\", \"required\": true}, \"reason\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}, \"state\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}}, \"description_kind\": \"plain\"}}, \"timeouts\": {\"nesting_mode\": \"single\", \"block\": {\"attributes\": {\"create\": {\"type\": \"string\", \"description\": \"A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as \\\"30s\\\" or \\\"2h45m\\\". Valid time units are \\\"s\\\" (seconds), \\\"m\\\" (minutes), \\\"h\\\" (hours).\", \"description_kind\": \"plain\", \"optional\": true}, \"delete\": {\"type\": \"string\", \"description\": \"A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as \\\"30s\\\" or \\\"2h45m\\\". Valid time units are \\\"s\\\" (seconds), \\\"m\\\" (minutes), \\\"h\\\" (hours). Setting a timeout for a Delete operation is only applicable if changes are saved into state before the destroy operation occurs.\", \"description_kind\": \"plain\", \"optional\": true}, \"update\": {\"type\": \"string\", \"description\": \"A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as \\\"30s\\\" or \\\"2h45m\\\". Valid time units are \\\"s\\\" (seconds), \\\"m\\\" (minutes), \\\"h\\\" (hours).\", \"description_kind\": \"plain\", \"optional\": true}}, \"description_kind\": \"plain\"}}}, \"description_kind\": \"plain\"}}}\n",
+          "reason": null,
+          "cleanupConfirmed": true,
+          "createdAt": "2026-11-17T07:20:40.789864+00:00"
+        },
+        {
+          "schemaVersion": 1,
+          "id": "631dea1e-9f14-4385-84cd-ab4ec89c33ba",
+          "kind": "candidate",
+          "binding": {
+            "schemaVersion": 1,
+            "sourceDigest": "1de36e94819bb65c6d2593527b5c44b840285d16c05f4544f99e62ec51f41f26",
+            "recipeDigest": "ec0dd68980225e58795a9908515d8add24facfc56d6fb1d011ef1d49e6b111ac",
+            "patchDigest": "01d4d3c4dc680413735e849919e9b2fc18ea1ac8abbf74c3c7fdc31573040457",
+            "toolDigest": "06b9464d11f89ed3f622fccbd361942cf16b087c10320fb08dde98ee938e3a8b",
+            "policyDigest": "75fbb0c0744651ff104df95eb60c464a570657fab76974fe6741337aa1e26257",
+            "oracleDigest": "02874397acdf81954ec9b12a3e5b826f6f045f40a537f81d5f7e82d4fa245887"
+          },
+          "artifactDigest": "4c8461ef8dfab29a94abacd1a286af85c13cbad03177471426bd010ead1c8ba9",
+          "status": "passed",
+          "evidenceLevel": "local_container_schema_check",
+          "exitCode": 0,
+          "durationSeconds": 5.085,
+          "output": "{\"schemaVersion\": 1, \"steps\": [{\"command\": [\"init\", \"-backend=false\", \"-input=false\", \"-upgrade\", \"-no-color\"], \"exitCode\": 0, \"stdout\": \"Initializing provider plugins...\\n- Finding hashicorp/aws versions matching \\\"6.0.0\\\"...\\n- Installing hashicorp/aws v6.0.0...\\n- Installed hashicorp/aws v6.0.0 (unauthenticated)\\n\\nTerraform has been successfully initialized!\\n\", \"stderr\": \"\"}, {\"command\": [\"validate\", \"-json\"], \"exitCode\": 0, \"stdout\": \"{\\n  \\\"format_version\\\": \\\"1.0\\\",\\n  \\\"valid\\\": true,\\n  \\\"error_count\\\": 0,\\n  \\\"warning_count\\\": 0,\\n  \\\"diagnostics\\\": []\\n}\\n\", \"stderr\": \"\"}], \"lock\": \"# This file is maintained automatically by \\\"terraform init\\\".\\n# Manual edits may be lost in future updates.\\n\\nprovider \\\"registry.terraform.io/hashicorp/aws\\\" {\\n  version     = \\\"6.0.0\\\"\\n  constraints = \\\"6.0.0\\\"\\n  hashes = [\\n    \\\"h1:W+H/RVJcygeLd5auWocMHJbHeBE19x010nD9bSsGe+8=\\\",\\n    \\\"zh:16b1bb786719b7ebcddba3ab751b976ebf4006f7144afeebcb83f0c5f41f8eb9\\\",\\n    \\\"zh:1fbc08b817b9eaf45a2b72ccba59f4ea19e7fcf017be29f5a9552b623eccc5bc\\\",\\n    \\\"zh:304f58f3333dbe846cfbdfc2227e6ed77041ceea33b6183972f3f8ab51bd065f\\\",\\n    \\\"zh:4cd447b5c24f14553bd6e1a0e4fea3c7d7b218cbb2316a3d93f1c5cb562c181b\\\",\\n    \\\"zh:589472b56be8277558616075fc5480fcd812ba6dc70e8979375fc6d8750f83ef\\\",\\n    \\\"zh:5d78484ba43c26f1ef6067c4150550b06fd39c5d4bfb790f92c4a6f7d9d0201b\\\",\\n    \\\"zh:5f470ce664bffb22ace736643d2abe7ad45858022b652143bcd02d71d38d4e42\\\",\\n    \\\"zh:7a9cbb947aaab8c885096bce5da22838ca482196cf7d04ffb8bdf7fd28003e47\\\",\\n    \\\"zh:854df3e4c50675e727705a0eaa4f8d42ccd7df6a5efa2456f0205a9901ace019\\\",\\n    \\\"zh:87162c0f47b1260f5969679dccb246cb528f27f01229d02fd30a8e2f9869ba2c\\\",\\n    \\\"zh:9a145404d506b52078cd7060e6cbb83f8fc7953f3f63a5e7137d41f69d6317a3\\\",\\n    \\\"zh:a4eab2649f5afe06cc406ce2aaf9fd44dcf311123f48d344c255e93454c08921\\\",\\n    \\\"zh:bea09141c6186a3e133413ae3a2e3d1aaf4f43466a6a468827287527edf21710\\\",\\n    \\\"zh:d7ea2a35ff55ddfe639ab3b04331556b772a8698eca01f5d74151615d9f336db\\\",\\n  ]\\n}\\n\", \"queueSchema\": {\"version\": 2, \"block\": {\"attributes\": {\"arn\": {\"type\": \"string\", \"description_kind\": \"plain\", \"computed\": true}, \"id\": {\"type\": \"string\", \"description_kind\": \"plain\", \"deprecated\": true, \"computed\": true}, \"name\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}, \"priority\": {\"type\": \"number\", \"description_kind\": \"plain\", \"required\": true}, \"region\": {\"type\": \"string\", \"description\": \"Region where this resource will be [managed](https://docs.aws.amazon.com/general/latest/gr/rande.html#regional-endpoints). Defaults to the Region set in the [provider configuration](https://registry.terraform.io/providers/hashicorp/aws/latest/docs#aws-configuration-reference).\", \"description_kind\": \"plain\", \"optional\": true, \"computed\": true}, \"scheduling_policy_arn\": {\"type\": \"string\", \"description_kind\": \"plain\", \"optional\": true}, \"state\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}, \"tags\": {\"type\": [\"map\", \"string\"], \"description_kind\": \"plain\", \"optional\": true}, \"tags_all\": {\"type\": [\"map\", \"string\"], \"description_kind\": \"plain\", \"computed\": true}}, \"block_types\": {\"compute_environment_order\": {\"nesting_mode\": \"list\", \"block\": {\"attributes\": {\"compute_environment\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}, \"order\": {\"type\": \"number\", \"description_kind\": \"plain\", \"required\": true}}, \"description_kind\": \"plain\"}}, \"job_state_time_limit_action\": {\"nesting_mode\": \"list\", \"block\": {\"attributes\": {\"action\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}, \"max_time_seconds\": {\"type\": \"number\", \"description_kind\": \"plain\", \"required\": true}, \"reason\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}, \"state\": {\"type\": \"string\", \"description_kind\": \"plain\", \"required\": true}}, \"description_kind\": \"plain\"}}, \"timeouts\": {\"nesting_mode\": \"single\", \"block\": {\"attributes\": {\"create\": {\"type\": \"string\", \"description\": \"A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as \\\"30s\\\" or \\\"2h45m\\\". Valid time units are \\\"s\\\" (seconds), \\\"m\\\" (minutes), \\\"h\\\" (hours).\", \"description_kind\": \"plain\", \"optional\": true}, \"delete\": {\"type\": \"string\", \"description\": \"A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as \\\"30s\\\" or \\\"2h45m\\\". Valid time units are \\\"s\\\" (seconds), \\\"m\\\" (minutes), \\\"h\\\" (hours). Setting a timeout for a Delete operation is only applicable if changes are saved into state before the destroy operation occurs.\", \"description_kind\": \"plain\", \"optional\": true}, \"update\": {\"type\": \"string\", \"description\": \"A string that can be [parsed as a duration](https://pkg.go.dev/time#ParseDuration) consisting of numbers and unit suffixes, such as \\\"30s\\\" or \\\"2h45m\\\". Valid time units are \\\"s\\\" (seconds), \\\"m\\\" (minutes), \\\"h\\\" (hours).\", \"description_kind\": \"plain\", \"optional\": true}}, \"description_kind\": \"plain\"}}}, \"description_kind\": \"plain\"}}}\n",
+          "reason": null,
+          "cleanupConfirmed": true,
+          "createdAt": "2026-11-17T07:20:48.014411+00:00"
+        }
+      ],
+      "findings": []
+    },
+    "baseline-failure": {
+      "status": "blocked",
+      "source": {
+        "schemaVersion": 1,
+        "id": "153cbd9e-f733-4923-84a8-813da125e65b",
+        "repositoryId": "repository-001",
+        "treeDigest": "97208eb27bf8e9937e685fa9b90bcffc2f566aa320cc607129a1fcf6faf8719b",
+        "files": [
+          {
+            "schemaVersion": 1,
+            "path": "main.tf",
+            "text": "terraform {\n  required_providers {\n    aws = { source = \"hashicorp/aws\", version = \"5.100.0\" }\n  }\n}\nprovider \"aws\" { region = \"us-east-1\" }\nresource \"aws_batch_job_queue\" \"invalid\" {\n name = \"invalid\"\n state = \"ENABLED\"\n compute_environments = [\"arn:aws:batch:us-east-1:123456789012:compute-environment/a\"]\n}\n",
+            "sha256": "31c319b1d1cb41ff9a787b35b1b754c0125c772ef521439919c0da1582f8dac8"
+          }
+        ],
+        "createdAt": "2026-11-17T07:20:48.045051+00:00",
+        "findings": [],
+        "commit": null
+      },
+      "candidate": null,
+      "receipts": [
+        {
+          "schemaVersion": 1,
+          "id": "6a44e4e9-0d77-4ecf-81b0-7994be1cdb8a",
+          "kind": "baseline",
+          "binding": {
+            "schemaVersion": 1,
+            "sourceDigest": "97208eb27bf8e9937e685fa9b90bcffc2f566aa320cc607129a1fcf6faf8719b",
+            "recipeDigest": "ec0dd68980225e58795a9908515d8add24facfc56d6fb1d011ef1d49e6b111ac",
+            "patchDigest": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "toolDigest": "06b9464d11f89ed3f622fccbd361942cf16b087c10320fb08dde98ee938e3a8b",
+            "policyDigest": "75fbb0c0744651ff104df95eb60c464a570657fab76974fe6741337aa1e26257",
+            "oracleDigest": "02874397acdf81954ec9b12a3e5b826f6f045f40a537f81d5f7e82d4fa245887"
+          },
+          "artifactDigest": "5202c26c1a5a290738d473d3ebf974aaa25610e353e5c5dd8a14d9f45e88932f",
+          "status": "failed",
+          "evidenceLevel": "local_container_schema_check",
+          "exitCode": 1,
+          "durationSeconds": 2.438,
+          "output": "{\"schemaVersion\": 1, \"steps\": [{\"command\": [\"init\", \"-backend=false\", \"-input=false\", \"-no-color\"], \"exitCode\": 0, \"stdout\": \"Initializing provider plugins...\\n- Finding hashicorp/aws versions matching \\\"5.100.0\\\"...\\n- Installing hashicorp/aws v5.100.0...\\n- Installed hashicorp/aws v5.100.0 (unauthenticated)\\n\\nTerraform has created a lock file .terraform.lock.hcl to record the provider\\nselections it made above. Include this file in your version control repository\\nso that Terraform can guarantee to make the same selections by default when\\nyou run \\\"terraform init\\\" in the future.\\n\\n\\nWarning: Incomplete lock file information for providers\\n\\nDue to your customized provider installation methods, Terraform was forced to\\ncalculate lock file checksums locally for the following providers:\\n  - hashicorp/aws\\n\\nThe current .terraform.lock.hcl file only includes checksums for linux_arm64,\\nso Terraform running on another platform will fail to install these\\nproviders.\\n\\nTo calculate additional checksums for another platform, run:\\n  terraform providers lock -platform=linux_amd64\\n(where linux_amd64 is the platform to generate)\\nTerraform has been successfully initialized!\\n\", \"stderr\": \"\"}, {\"command\": [\"validate\", \"-json\"], \"exitCode\": 1, \"stdout\": \"{\\n  \\\"format_version\\\": \\\"1.0\\\",\\n  \\\"valid\\\": false,\\n  \\\"error_count\\\": 1,\\n  \\\"warning_count\\\": 0,\\n  \\\"diagnostics\\\": [\\n    {\\n      \\\"severity\\\": \\\"error\\\",\\n      \\\"summary\\\": \\\"Missing required argument\\\",\\n      \\\"detail\\\": \\\"The argument \\\\\\\"priority\\\\\\\" is required, but no definition was found.\\\",\\n      \\\"range\\\": {\\n        \\\"filename\\\": \\\"main.tf\\\",\\n        \\\"start\\\": {\\n          \\\"line\\\": 7,\\n          \\\"column\\\": 42,\\n          \\\"byte\\\": 182\\n        },\\n        \\\"end\\\": {\\n          \\\"line\\\": 7,\\n          \\\"column\\\": 43,\\n          \\\"byte\\\": 183\\n        }\\n      },\\n      \\\"snippet\\\": {\\n        \\\"context\\\": \\\"resource \\\\\\\"aws_batch_job_queue\\\\\\\" \\\\\\\"invalid\\\\\\\"\\\",\\n        \\\"code\\\": \\\"resource \\\\\\\"aws_batch_job_queue\\\\\\\" \\\\\\\"invalid\\\\\\\" {\\\",\\n        \\\"start_line\\\": 7,\\n        \\\"highlight_start_offset\\\": 41,\\n        \\\"highlight_end_offset\\\": 42,\\n        \\\"values\\\": []\\n      }\\n    }\\n  ]\\n}\\n\", \"stderr\": \"\"}], \"lock\": \"# This file is maintained automatically by \\\"terraform init\\\".\\n# Manual edits may be lost in future updates.\\n\\nprovider \\\"registry.terraform.io/hashicorp/aws\\\" {\\n  version     = \\\"5.100.0\\\"\\n  constraints = \\\"5.100.0\\\"\\n  hashes = [\\n    \\\"h1:wOhTPz6apLBuF7/FYZuCoXRK/MLgrNprZ3vXmq83g5k=\\\",\\n  ]\\n}\\n\"}\n",
+          "reason": null,
+          "cleanupConfirmed": true,
+          "createdAt": "2026-11-17T07:20:51.210422+00:00"
+        }
+      ],
+      "findings": [
+        {
+          "schemaVersion": 1,
+          "code": "baseline_failed",
+          "path": "",
+          "line": 0,
+          "message": "Repair the existing baseline before upgrading. Original failures are retained.",
+          "severity": "blocked"
+        }
+      ]
+    },
+    "dynamic": {
+      "status": "blocked",
+      "source": {
+        "schemaVersion": 1,
+        "id": "8427d6ff-a764-4297-a118-d721c36761ab",
+        "repositoryId": "repository-001",
+        "treeDigest": "f8e80b96826ab9e3453503109c81507fbd89bf628c3011f6902276c30fa467dc",
+        "files": [
+          {
+            "schemaVersion": 1,
+            "path": "main.tf",
+            "text": "terraform {\n  required_providers {\n    aws = { source = \"hashicorp/aws\", version = \"5.100.0\" }\n  }\n}\nprovider \"aws\" { region = \"us-east-1\" }\nvariable \"environments\" { type = list(string) }\nresource \"aws_batch_job_queue\" \"unknown\" {\n name = \"unknown\"\n priority = 1\n state = \"ENABLED\"\n compute_environments = var.environments\n}\n",
+            "sha256": "f5383bf90f745838ef9a0451d6c3b45e0771b3816d517a56024c7a8fd3195fe2"
+          }
+        ],
+        "createdAt": "2026-11-17T07:20:51.210719+00:00",
+        "findings": [],
+        "commit": null
+      },
+      "candidate": null,
+      "receipts": [],
+      "findings": [
+        {
+          "schemaVersion": 1,
+          "code": "unsupported_queue_expression",
+          "path": "main.tf",
+          "line": 12,
+          "message": "Use an explicit nonempty list without conflicting order blocks.",
+          "severity": "blocked"
+        }
+      ]
+    }
+  },
+  "cleanImportReproduction": {
+    "status": "ready_for_review",
+    "candidateDigest": "01d4d3c4dc680413735e849919e9b2fc18ea1ac8abbf74c3c7fdc31573040457"
+  },
+  "releaseStatus": "not_published",
+  "limits": [
+    "Linux arm64 local schema checks only.",
+    "No state, account plan, apply, deployment or remote publication proof.",
+    "Current broad regression gates and owner review remain separate release requirements."
+  ]
+}

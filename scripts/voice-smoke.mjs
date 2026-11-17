@@ -104,7 +104,7 @@ try {
  fs.mkdirSync('/private/tmp/atmem-architect-voice',{recursive:true});
  await page.screenshot({path:'/private/tmp/atmem-architect-voice/desktop.png',fullPage:true});
  await page.setViewportSize({width:390,height:844});
- const box=await page.locator('.voice-status').boundingBox();assert.ok(box&&box.x>=0&&box.x+box.width<=390);
+ const box=await page.locator('.voice-status[role="status"]').boundingBox();assert.ok(box&&box.x>=0&&box.x+box.width<=390);
  await page.screenshot({path:'/private/tmp/atmem-architect-voice/mobile.png',fullPage:true});
  assert.deepEqual(errors,[]);assert.ok(await page.evaluate(()=>window.__audio.stops>=2));
  console.log('Local dictation UI passed: live partial text, no automatic submission/playback/browser speech service, Stop, explicit Send, finalisation on Send, canvas proposal and microphone permission errors. Audio/model transports were fixtures.');

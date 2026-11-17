@@ -1,8 +1,8 @@
 # Feature Specification: Infrastructure upgrade maintenance
 
-**Feature Branch**: `spec/infrastructure-upgrade-maintenance`
+**Feature Branch**: `feat/infrastructure-upgrades` (implementation; reviewed planning baseline retained)
 **Created**: 2026-11-16
-**Status**: Proposed; planning only, no product implementation or release
+**Status**: Owner-authorized development in progress; no maintenance release or deployment claimed
 **Input**: Owner requests ongoing coordinated infrastructure migrations across repositories, available checks and repairs, and reviewable PRs. Independent Claude Opus 5.5 Medium review must precede agreement on release planning.
 
 ## Outcome and boundaries
@@ -94,7 +94,7 @@ Missing/ambiguous lock versions; multiple roots/provider aliases; mixed constrai
 
 ## Assumptions and decisions
 
-GitHub is the proposed first remote adapter. Local operation comes first; hosted scheduling follows explicit qualification. Opt-in authorizes matching and candidate computation; publication requires a separate exact-patch confirmation in initial releases. Stable numbered releases only, with feature/coverage disclosure. User authorization covers specification and review now, not implementation, installation credentials, remote publication or deployment. This owner-directed maintenance feature does not complete or replace the unfinished generic-engine programme (027–029).
+GitHub is the proposed first remote adapter. Local operation comes first; hosted scheduling follows explicit qualification. Opt-in authorizes matching and candidate computation; publication requires a separate exact-patch confirmation in initial releases. Stable numbered releases only, with feature/coverage disclosure. The owner has authorized full development. Installation credentials, customer repository publication, release tags/npm publication and deployment remain separately scoped actions. This owner-directed maintenance feature does not complete or replace the unfinished generic-engine programme (027–029).
 
 ## Review-resolved requirements (normative)
 

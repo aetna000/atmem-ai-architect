@@ -234,7 +234,9 @@ Visible progress must be one short sentence of at most 20 words. Final progress 
             import uuid
             workspace_id = str(uuid.uuid4())
             workspace = Path(tempfile.mkdtemp(prefix='atm-job-',dir=self.workspace_root)).resolve()
-            context = project_path.read_bytes()
+            original_context = project_path.read_bytes()
+            from .engineering_contexts import model_context_content
+            context = model_context_content(original_context, scope.project)
             (workspace/'project-context.json').write_bytes(context)
             tools = workspace/'.tools'
             tools.mkdir()
@@ -265,6 +267,7 @@ Visible progress must be one short sentence of at most 20 words. Final progress 
             self.backend.workspaces[scope,workspace_id] = workspace
             state = await self.sessions.create(scope,workspace_id,selection)
             self.jobs._record(scope,state['id'],'created',contextSha256=hashlib.sha256(context).hexdigest(),
+                              sourceContextSha256=hashlib.sha256(original_context).hexdigest(),
                               skillSha256=hashlib.sha256(source.read_bytes()).hexdigest(),inputDigests=inputs,**tool_inputs)
             return state
 

@@ -7,10 +7,64 @@ import tempfile
 import unittest
 from unittest.mock import patch
 import uuid
-from server.engineering_contexts import EngineeringContexts, context_input, validate_context
+import sqlite3
+from types import SimpleNamespace
+from unittest.mock import AsyncMock
+from server.engineering_contexts import EngineeringContexts, context_input, validate_context, model_context_content
 from server.engineering_sessions import EngineeringSessions, SqliteSessionStore, ProjectScope, ModelSelection, SessionError
 from server.engineering_jobs import EngineeringJobs
 from server.tests.test_engineering_sessions import Backend
+
+
+class InitialContextPrivacyTests(unittest.IsolatedAsyncioTestCase):
+    async def test_private_format_projection_preserves_approval_format(self):
+        value = {'format': 'atmem.ai-architect.project', 'formatVersion': '4.0.0',
+                 'meta': {'id': 'approval-private'}, 'design': {'nodes': [
+                     {'data': {'implementation': 'approval-workflow'}}]},
+                 'extensions': {'maintenance': {'source': 'private-canary'}}}
+        original = json.dumps(value).encode()
+        projected = json.loads(model_context_content(original, 'approval-private'))
+        self.assertEqual(projected['formatVersion'], '3.0.0')
+        self.assertNotIn('maintenance', projected['extensions'])
+        self.assertEqual(json.loads(original), value)
+
+    async def test_general_workspace_never_receives_private_maintenance_source(self):
+        from server.engineering_routes import LocalEngineeringService
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            scope = ProjectScope('tenant-local', 'project-private')
+            source = json.dumps({'format': 'atmem.ai-architect.project', 'formatVersion': '4.0.0', 'meta': {'id': scope.project},
+                                 'requirements': [{'statement': 'Preserve the existing gauge.'}],
+                                 'extensions': {'maintenance': {'source': 'private-maintenance-source-canary'}}}).encode()
+            path = root / 'private.project.json'
+            path.write_bytes(source)
+            service = LocalEngineeringService.__new__(LocalEngineeringService)
+            service.create_lock = asyncio.Lock()
+            service.backend = SimpleNamespace(session_count=0, workspaces={})
+            service.dependencies, service.toolchain = None, {}
+            service.workspace_root = root / 'workspaces'
+            service.workspace_root.mkdir()
+            db = sqlite3.connect(':memory:')
+            db.execute('CREATE TABLE engineering_workspaces (id TEXT, tenant TEXT, project TEXT, path TEXT)')
+            service.store = SimpleNamespace(db=db)
+            service.native_tools = SimpleNamespace(register=lambda *args: {})
+            service.sessions = SimpleNamespace(create=AsyncMock(return_value={'id': 'session-private'}))
+            records = []
+            service.jobs = SimpleNamespace(_record=lambda *args, **record: records.append(record))
+            try:
+                await service.create(scope, path, ModelSelection('test-model', 'medium'))
+                workspace = next(iter(service.backend.workspaces.values()))
+                pinned = (workspace / 'project-context.json').read_bytes()
+                self.assertNotIn(b'private-maintenance-source-canary', pinned)
+                self.assertIn(b'maintenanceBoundary', pinned)
+                self.assertEqual(json.loads(pinned)['formatVersion'], '2.3.0')
+                self.assertIn(b'Preserve the existing gauge.', pinned)
+                self.assertEqual(path.read_bytes(), source)
+                self.assertEqual(records[0]['contextSha256'], hashlib.sha256(pinned).hexdigest())
+                self.assertEqual(records[0]['sourceContextSha256'], hashlib.sha256(source).hexdigest())
+                self.assertEqual(records[0]['inputDigests']['project-context.json'], records[0]['contextSha256'])
+            finally:
+                db.close()
 
 
 class ContextTests(unittest.IsolatedAsyncioTestCase):
@@ -83,6 +137,25 @@ class ContextTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(self.store.db.execute('SELECT COUNT(*) FROM engineering_contexts').fetchone()[0],0)
         first = self.attach(expected_sha256=hashlib.sha256(self.content).hexdigest())
         self.assertEqual(first['sha256'],hashlib.sha256(self.content).hexdigest())
+
+    async def test_maintenance_source_never_enters_general_model_context(self):
+        value = json.loads(self.content)
+        value['extensions']['maintenance'] = {'privateSource': 'maintenance-egress-canary', 'diagnostics': 'private-output-canary'}
+        value['extensions']['maintenanceNeedsImport'] = False
+        source = json.dumps(value, ensure_ascii=False).encode()
+        receipt = self.attach(source)
+        rendered = context_input(receipt)['text']
+        projected = model_context_content(source, self.scope.project)
+        for canary in [b'maintenance-egress-canary', b'private-output-canary']:
+            self.assertNotIn(canary, projected)
+            self.assertNotIn(canary.decode(), rendered)
+        self.assertIn('withheldExtensions', rendered)
+        self.assertIn('maintenanceBoundary', json.loads(projected)['extensions'])
+        self.assertEqual(json.loads(projected)['requirements'], value['requirements'])
+        self.assertEqual(json.loads(projected)['extensions']['architectureWork'], value['extensions']['architectureWork'])
+        # Original private evidence stays complete and bound to the original source digest.
+        self.assertEqual(self.contexts.get(self.scope, self.session, receipt['id'])['content'].encode(), source)
+        self.assertEqual(model_context_content(self.content, self.scope.project), self.content)
 
     async def test_malformed_nonfinite_duplicate_oversize_and_invalid_unicode_refuse_atomically(self):
         for content in [b'{}',b'{"meta":{},"meta":{}}',b'{"n":NaN}',b'{"n":1e999}',b'\xff',b'{"n":"\\ud800"}',self.content+b' '*2_000_000]:
