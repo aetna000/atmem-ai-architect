@@ -11,3 +11,5 @@
 - OpenSpec current review reports must be archived after a failed re-review; simply adding review.blocked.md while keeping an old review.md leaves tasks unlocked. Qualification tests that report-only operation explicitly.
 - Spec Kit/OpenSpec agent instructions are not an unbypassable security boundary. Local tests qualify registration and artifact dependencies, not model/agent obedience.
 - Use proposed review-hook-v0.1.0 tag namespace for later owner-approved publication; Architect v* tags can invoke its npm publisher. No tag has been created.
+
+- Scope the standalone reviewer CI checkout to the full new component, its spec and workflow files. Full repository checkout exceeded Windows Git path limits in unrelated archived 028 evidence before tests; all reviewer platform tests remain required.

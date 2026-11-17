@@ -25,6 +25,11 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            atmem-review-hook
+            specs/033-architecture-review-hook
+            .github/workflows
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
