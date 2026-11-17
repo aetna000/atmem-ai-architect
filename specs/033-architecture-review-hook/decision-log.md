@@ -29,3 +29,7 @@
 The actual browser Code it journey ran against real Codex and AtMem and produced a captured implementation with task/file links and a passing static infrastructure review. Independent acceptance is still open: Node failed to start under the demo operator's incomplete Homebrew read-root registration; Terraform/provider and independent validators were unavailable. Preserve these observed limits in the video/evidence.
 
 Recording exposed two source defects. Preserve estimate coverage/provenance through receiving normalization rather than dropping the partial-coverage warning. Retain conversation in the saved handoff context, but exclude it from the design fingerprint: saving a chat alone does not change the accepted specification. Accepted requirements/rule edits still invalidate the design review. Regression cases exercise both actual saving paths.
+
+## PR readiness: native-worker CI runtime
+
+The hosted CI job installed only its Python lock; the native handoff now also executes the source JavaScript generators. Install the locked production npm runtime (without package scripts) in that job and trigger the workflow when its scripts/npm inputs change. All 31 tests from the failing job pass locally; verify the pushed job before claiming CI repaired. No cloud or package publication is part of this check.
