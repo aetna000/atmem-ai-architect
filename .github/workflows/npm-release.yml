@@ -38,6 +38,34 @@ jobs:
           .local/terraform-emulator-runtime/bin/python -m unittest server.tests.test_terraform_emulator_engines server.tests.test_terraform_emulator_continuation server.tests.test_terraform_emulator_coverage -v
       - run: npm ci --ignore-scripts
       - run: npm test
+      - name: Prepare real AtMem for native Spec Kit integration checks
+        run: |
+          python -m venv .memory-venv
+          .memory-venv/bin/python -m pip install --require-hashes -r server/memory-requirements.lock
+      - name: Qualify native rules, memory, task bindings and engineering adapters
+        env:
+          ATMEM_ARCHITECT_HOME: ${{ github.workspace }}/.local/native-test-home
+          ATMEM_ARCHITECT_MEMORY_PYTHON: ${{ github.workspace }}/.memory-venv/bin/python
+        run: .venv/bin/python -m unittest server.tests.test_architecture_rules server.tests.test_memory server.tests.test_memory_dashboard server.tests.test_memory_context server.tests.test_engineering_routes server.tests.test_engineering_handoff server.tests.test_engineering_delivery server.tests.test_engineering_reconciliation server.tests.test_engineering_finalization server.tests.test_engineering_local_worker server.tests.test_engineering_contexts server.tests.test_codex_engineering_backend -v
+      - name: Qualify native rules in the actual browser and AtMem backend
+        env:
+          ATMEM_ARCHITECT_HOME: ${{ github.workspace }}/.local/native-browser-home
+          ATMEM_ARCHITECT_MEMORY_PYTHON: ${{ github.workspace }}/.memory-venv/bin/python
+          ATMEM_ARCHITECT_PORT: '5197'
+          ATMEM_ARCHITECT_SIDECAR_PORT: '8771'
+        run: |
+          npx playwright install --with-deps chromium
+          mkdir -p .local/review-hook
+          .venv/bin/python -m uvicorn server.app:app --host 127.0.0.1 --port 8771 --no-access-log > .local/review-hook/native-api.log 2>&1 &
+          native_api_pid=$!
+          npm run dev > .local/review-hook/native-ui.log 2>&1 &
+          native_ui_pid=$!
+          trap 'kill "$native_api_pid" "$native_ui_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:5197/ >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/architecture-rules-browser.mjs
       - run: npm run package:npm
       - uses: actions/upload-artifact@v4
         with:

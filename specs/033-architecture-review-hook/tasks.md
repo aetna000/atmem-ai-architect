@@ -8,3 +8,16 @@
 - [x] H006 Run applicable regression/security/package checks, push branch and create a draft PR with evidence and remaining access-dependent gates (H005).
 
 Publishing, hosted billing and catalog submission are follow-up actions requiring explicit scope; none is a completed task by writing these documents.
+
+## Native Architect integration
+
+- [x] H007 Run real Codex Specify → Plan → Tasks: mandatory review blocks tasks on FAIL, permits 34 tasks on PASS (H006; evidence/live-codex.json).
+- [x] H008 Store exact approved policies, revisions and review evidence in project-scoped AtMem (H007).
+- [x] H009 Connect existing Review and Code it controls; bind generated Spec Kit/Terraform/rules before worker submission (H008).
+- [x] H010 Bind current spec/task IDs to captured output files; reject unknown tasks/orphan files; invalidate changed sources (H009).
+- [x] H011 Show graphical task/code/test/infrastructure evidence and remember scoped status for chat (H010).
+- [x] H012 Qualify native browser, backend, hosted worker and clean-installed npm candidate; record limitations and manual steps (H011; evidence/native-integration.json).
+- [ ] H013 Qualify a live native Code it → implementation → tests → graphical acceptance journey (H012).
+- [ ] H014 Enforce semantic requirement acceptance and resolve concurrent worktree conflicts; qualify large agent counts (H013).
+
+H010/H011 provide provenance and observed evidence, not automatic semantic proof that each requirement is satisfied.

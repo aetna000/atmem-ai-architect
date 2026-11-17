@@ -171,6 +171,11 @@ export function specKit(project,{snapshotId,stamp,environment,now}){
  'spec-kit/progress.json':json({snapshotId,status:'not_started',tasks:tasks.map(t=>({id:t.id,status:'todo',evidence:[],tests:[],changedFiles:[],blockers:[]}))}),
  'spec-kit/decision-log.md':`# Implementation decision log\n\n${stamp}\n\nRecord date, decision, reason, alternatives, affected requirements/tasks, approver and evidence. The accepted design decisions are preserved in ../decisions.md and context.json; none are changed by generating this kit.\n`,
  };
+ const policy=project.extensions?.architecturePolicy;
+ if(policy?.content&&policy?.revision){
+  files['architecture.md']=policy.content;
+  files['spec-kit/architecture-rules.json']=json({format:'atmem.architecture-policy-snapshot',version:1,...policy,boundary:'Exported policy snapshot. The owning AtMem service resolves current approval and scope.'});
+ }
  Object.assign(files,invoiceSpecDocuments(resources));
  if(resources.invoicePlan?.entries.length){
   files['spec-kit/plan.md']+='\n## Invoice delivery phases\n\nRead invoice-delivery.md and the concrete TASK-INVOICE-* dependencies. The emitted\nsource supplies runtime, parser, queue, identities and operating jobs. Validate it\nlocally, then separately authorize state/account planning, foundation, image\npublication, SQL/staff bootstrap, schedule/alert acceptance and application release.\nDo not ask the user to invent already supplied commands or clear scope gates.\n';

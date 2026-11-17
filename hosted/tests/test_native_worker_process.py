@@ -11,7 +11,8 @@ class NativeWorkerProcessTests(unittest.TestCase):
    raw=json.dumps(file).encode();snapshot={'id':pid,'size':len(raw),'sha256':hashlib.sha256(raw).hexdigest(),'revision':1}
    config={'uid':'2','root':temporary,'brokerSocket':temporary+'/not-used.sock','capability':'synthetic-capability'}
    requests=[]
-   for path,body in [('/api/memory/sync',{'projectId':pid,'file':file}),('/api/memory/overview',{'projectId':pid}),('/api/engineering/create',{'projectId':pid,'model':'ignored-browser-model','effort':'high'}),('/api/engineering/list',{'projectId':pid})]:
+   rules='---\nschema: atmem-architecture/v1\nnetwork:\n - id: PRIVATE\n   check: {resource: aws_db_instance, attribute: publicly_accessible, must_equal: false}\n---\n'
+   for path,body in [('/api/memory/sync',{'projectId':pid,'file':file}),('/api/memory/overview',{'projectId':pid}),('/api/engineering/create',{'projectId':pid,'model':'ignored-browser-model','effort':'high'}),('/api/engineering/list',{'projectId':pid}),('/api/memory/architecture/rules',{'projectId':pid,'content':rules}),('/api/memory/architecture/status',{'projectId':pid})]:
     requests.append({'job':{'id':hashlib.sha256(path.encode()).hexdigest(),'uid':'2','projectId':pid,'path':path,'projectSnapshot':snapshot},'body':body,'snapshot':base64.b64encode(raw).decode(),'model':'openai/gpt-6.1-sol','policy':{'maxOutputTokens':4096}})
    environment={key:value for key,value in os.environ.items() if key in {'PATH','LANG','LC_ALL','SYSTEMROOT'}}
    with tempfile.TemporaryFile(mode='w+') as errors:
@@ -36,4 +37,5 @@ class NativeWorkerProcessTests(unittest.TestCase):
    self.assertTrue((Path(temporary)/'memory/memories.db').is_file())
    # The original session service pins the administrator-selected model, not browser model/effort.
    created=responses[3]['response']['body'];self.assertEqual(created['model'],'openai/gpt-6.1-sol');self.assertEqual(created['effort'],'medium')
+   self.assertEqual(responses[-1]['response']['body']['policy']['content'],rules)
    self.assertNotIn('synthetic-capability',json.dumps(responses))

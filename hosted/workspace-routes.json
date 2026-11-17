@@ -1,17 +1,19 @@
 {
   "sources": {
-    "engineering_routes.py": "706fb10ed61573347987463de35834ee14d0a83a47e90d54474e2e8683a038ab",
+    "engineering_routes.py": "fc39d8d7d94a2331464f052b0364899107ca34806bfa558387136ee7c2d05b42",
+    "architecture_rules.py": "4ec07db15c74d0831f6830c0b19fa2ced36b8c31659739fe37b2cbc63ebae327",
     "emulation_routes.py": "3261b845298de78ad2f2c60f160f7a17f0cf1d12f06a2650c056fccf2f197700",
     "terraform_routes.py": "e808990421ed1f7a578da9b330debfbc080a7aba3dab6c2a72faf2f990de27b9",
+    "terraform_emulation_routes.py": "d90a8f00abd193f1890b191963e4e75eefad14b86c68248ca241cab20656aa03",
     "memory_routes.py": "9efedc96ae3f41dfcb2d3505fe4e3154dc48913b66f781259e79546501940591",
     "voice_routes.py": "53de9ac7aa17721fb4f6f9ce89d1ea6849bf995cae85c3f0debf31999e3537e1",
-    "openai_voice.py": "2f6d77b6a026f9d6ccd7a1eb525f292d0e011c77448fa7b90015ca05d75cde4e",
-    "terraform_emulation_routes.py": "d90a8f00abd193f1890b191963e4e75eefad14b86c68248ca241cab20656aa03"
+    "openai_voice.py": "2f6d77b6a026f9d6ccd7a1eb525f292d0e011c77448fa7b90015ca05d75cde4e"
   },
   "paths": [
     "/api/architect",
     "/api/architect/activity",
     "/api/emulation/run",
+    "/api/engineering/architecture-review",
     "/api/engineering/artifacts",
     "/api/engineering/capture",
     "/api/engineering/create",
@@ -25,6 +27,7 @@
     "/api/engineering/recheck",
     "/api/engineering/reconciliation",
     "/api/engineering/recover",
+    "/api/engineering/specification",
     "/api/engineering/start",
     "/api/engineering/state",
     "/api/engineering/steer",
@@ -34,6 +37,9 @@
     "/api/engineering/validation/recover",
     "/api/engineering/validation/start",
     "/api/engineering/validators",
+    "/api/memory/architecture/rules",
+    "/api/memory/architecture/run",
+    "/api/memory/architecture/status",
     "/api/memory/context",
     "/api/memory/forget",
     "/api/memory/forget-preview",
@@ -63,10 +69,10 @@
     "/api/voice/transcribe"
   ],
   "methods": {
-    "/api/architect": [
+    "/api/architect/activity": [
       "POST"
     ],
-    "/api/architect/activity": [
+    "/api/architect": [
       "POST"
     ],
     "/api/engineering/create": [
@@ -88,6 +94,12 @@
       "POST"
     ],
     "/api/engineering/start": [
+      "POST"
+    ],
+    "/api/engineering/architecture-review": [
+      "POST"
+    ],
+    "/api/engineering/specification": [
       "POST"
     ],
     "/api/engineering/recover": [
@@ -135,6 +147,15 @@
     "/api/engineering/validation/recover": [
       "POST"
     ],
+    "/api/memory/architecture/status": [
+      "POST"
+    ],
+    "/api/memory/architecture/rules": [
+      "POST"
+    ],
+    "/api/memory/architecture/run": [
+      "POST"
+    ],
     "/api/emulation/run": [
       "POST"
     ],
@@ -151,6 +172,12 @@
       "POST"
     ],
     "/api/terraform/validate-upload": [
+      "POST"
+    ],
+    "/api/terraform/emulate": [
+      "POST"
+    ],
+    "/api/terraform/emulate/status": [
       "POST"
     ],
     "/api/memory/sync": [
@@ -212,12 +239,6 @@
     ],
     "/api/voice/openai/status": [
       "GET"
-    ],
-    "/api/terraform/emulate": [
-      "POST"
-    ],
-    "/api/terraform/emulate/status": [
-      "POST"
     ]
   }
 }

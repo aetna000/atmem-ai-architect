@@ -2,6 +2,17 @@
 
 Check infrastructure plans against team policy before an agent turns them into implementation tasks.
 
+This engine is connected to **AtMem AI Architect**. In the existing Review
+screen, set project rules, save them in AtMem, and review the current design.
+The same approved rule snapshot travels with the Spec Kit/Terraform handoff.
+Code it is gated against the reviewed design, while engineering activity and
+artifact/check progress remain in Architect. Users do not install this Python
+package separately for the native interface. CLI/MCP below are worker adapters.
+
+Native integration is a development candidate. Complete task/code/test semantic
+acceptance, bidirectional reconciliation across many agent worktrees and hosted
+qualification remain tracked work, not guarantees established by a policy check.
+
 Local development candidate. No public package, catalog listing or hosted service is claimed. The supplied [PLAN.md](PLAN.md) is the original proposal; [current evidence](../specs/033-architecture-review-hook/) records what actually runs.
 
 ## Install locally

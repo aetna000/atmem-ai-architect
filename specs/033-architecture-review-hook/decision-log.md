@@ -1,5 +1,11 @@
 # Decisions
 
+- 2026-11-18 owner correction: one AtMem AI Architect/Spec Kit IDE, with native memory, rules, design, handoff, code feedback and evidence graphics. CLI/MCP remain worker adapters, not the product boundary. Preserve the existing project/architecture-work model. Earlier standalone statements below record the initial candidate stage.
+- Store exact policy/report snapshots in AtMem audited source episodes, with short searchable facts and a scoped lookup index. The pinned SDK normalizes fact text and limits interpreted facts to 2,000 characters; parsing normalized prose as exact JSON or truncating reports would be wrong. Preserve full structured episodes and check their exact active record identity.
+- Native design review normalizes literal generated Terraform JSON, retaining unresolved expressions/inventory as unknown. It is static draft evidence, never a Terraform/cloud plan. Backend coding acceptance checks the current saved policy/design bindings.
+- Rules travel in the same project snapshot and handoff. New code sessions receive backend-generated, pinned Spec Kit/Terraform/rule documents before implementation. Existing worker journals and artifact/check receipts remain evidence; model claims never become test passes.
+- Full specification/code/test semantic consistency and hundred-agent reconciliation remain explicit work. The existing four-session local worker is not claimed as 100-agent support.
+
 - Owner chose the supplied review-hook direction on a separate branch from main; preserve infrastructure-upgrades work and the original scaffold folder.
 - Implement a separately installable Python package in the existing repository. Do not create the placeholder atmem-ai repositories or publish tags/packages/catalog posts.
 - Keep runtime review stateless. Reusing Architect generation/session memory would introduce writes and unnecessary tool privileges; reuse its evidence/contract discipline and pinned common dependencies instead.

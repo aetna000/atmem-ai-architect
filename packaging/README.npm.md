@@ -29,6 +29,14 @@ Packaged UI and AtMem startup are checked on Windows, macOS, and Linux. Full nat
 
 Native generation needs a supported signed-in agent. Independent Terraform/container checks require local tools and configuration.
 
+In the native development workflow, **Review → Project rules** saves approved
+rules in AtMem. Review your design, then press **Code it**. Architect supplies the
+Spec Kit, Terraform and rules before coding; the agent receives a new immutable
+task snapshot when the specification changes. Live activity, task/file links and
+recorded checks appear in the same workspace. Missing task bindings and stale
+rules block acceptance; linked files alone do not establish successful tests.
+CLI/MCP remain optional worker adapters, not a separate application.
+
 Available cost estimates include explicit exclusions where prices or usage are missing. Cloud deployment is not automatic. Orca desktop integration is verified on macOS; Windows/Linux Orca execution remains unqualified.
 
 [Configure application tests](https://github.com/aetna000/atmem-ai-architect/blob/main/docs/architecture/configuring-application-tests.md) · [Orca plugin](https://orca.dev/plugins/aetna000/atmem-ai-architect-orca)

@@ -105,6 +105,24 @@ export function toProjectFile(project, now = new Date()) {
 }
 
 // Returns the browser project plus what happened, so the UI can say so.
+export function reviewDesignSnapshot(project){
+  const file=JSON.parse(JSON.stringify(toProjectFile(project)));
+  delete file.meta.updatedAt;delete file.meta.createdAt;
+  for(const edge of file.design.edges||[])delete edge.animated;
+  const estimate=file.estimate;
+  if(estimate)for(const [key,empty] of [['details',[]],['usage',{}],['prices',{}]]){
+    if(JSON.stringify(estimate[key])===JSON.stringify(empty))delete estimate[key];
+  }
+  const journey=file.extensions?.journey;
+  if(journey&&Object.keys(journey).every(k=>['scope','architecture','review','estimate','delivery'].includes(k))&&Object.values(journey).every(v=>typeof v==='string'&&/^[0-9]{1,8}-[a-f0-9]{1,8}-[a-f0-9]{1,8}$/.test(v)))delete file.extensions.journey;
+  return file;
+}
+
+export function reviewDesignContent(project){
+  const ordered=value=>Array.isArray(value)?value.map(ordered):value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(key=>[key,ordered(value[key])])):value;
+  return JSON.stringify(ordered(reviewDesignSnapshot(project)));
+}
+
 export function fromProjectFile(raw) {
   if (!raw || typeof raw !== "object") throw Error("Not a project file.");
   refuseCredentials(raw, "Import");

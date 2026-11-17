@@ -122,7 +122,24 @@ class EngineeringReconciliation:
                 raise SessionError('The proposed mapping file is malformed or uses an unsupported schema; the artifact is retained') from None
             if not safe(proposal):raise SessionError('Proposed mapping data looks like a credential')
             if not proposal['records']:raise SessionError('The work proposal contains no records')
-            ids=set();bindings={}
+            baseline='atmem-inputs/handoff/spec-kit/tasks.json'
+            task_ids=None
+            if context.get('specification'):
+                specification=context['specification']
+                if specification.get('contextSha256')!=context['sha256']:raise SessionError('Specification revision does not match the submitted design')
+                tasks=specification.get('tasks',{}).get('tasks')
+                if not isinstance(tasks,list) or len(tasks)>2000:raise SessionError('Current specification task inventory is invalid')
+                task_ids={t.get('id') for t in tasks if isinstance(t,dict) and isinstance(t.get('id'),str)}
+                if len(task_ids)!=len(tasks):raise SessionError('Current specification tasks require unique explicit IDs')
+            elif baseline in files:
+                if manifest.get('pinnedInputs',{}).get(baseline)!=files[baseline]['sha256']:raise SessionError('Native Spec Kit tasks lack the backend input receipt')
+                content_tasks=package.read(baseline)
+                if len(content_tasks)>2_000_000 or _sha(content_tasks)!=files[baseline]['sha256']:raise SessionError('Native Spec Kit task baseline failed integrity verification')
+                tasks=_json(content_tasks).get('tasks')
+                if not isinstance(tasks,list) or len(tasks)>2000:raise SessionError('Native Spec Kit task inventory is invalid')
+                task_ids={t.get('id') for t in tasks if isinstance(t,dict) and isinstance(t.get('id'),str)}
+                if len(task_ids)!=len(tasks):raise SessionError('Native specification tasks require unique explicit IDs')
+            ids=set();bindings={};implementation_paths=set()
             for record in proposal['records']:
                 if not record['id'].strip() or not record['title'].strip() or record['id'] in ids or any(not r.strip() for r in record['dependsOn']):
                     raise SessionError('Work proposals require unique explicit identities and references')
@@ -132,6 +149,10 @@ class EngineeringReconciliation:
                     raise SessionError('Mapping file lists must be bounded unique paths')
                 if record['kind']=='implementation' and not paths:
                     raise SessionError('An implementation mapping must name actual artifact files')
+                if task_ids is not None and record['kind'] in {'implementation','evidence'}:
+                    refs=record['data'].get('specTaskIds')
+                    if not isinstance(refs,list) or not refs or len(refs)>200 or any(not isinstance(ref,str) or ref not in task_ids for ref in refs) or len(set(refs))!=len(refs):
+                        raise SessionError('Every native implementation/evidence mapping must name current Spec Kit data.specTaskIds; unknown or missing task bindings block acceptance')
                 for path in paths:
                     _path(path)
                     if path not in files or path in manifest.get('pinnedInputs',{}) or path==PROPOSAL_PATH:
@@ -140,6 +161,10 @@ class EngineeringReconciliation:
                     if len(actual)!=files[path]['bytes'] or _sha(actual)!=files[path]['sha256']:
                         raise SessionError('Mapped file bytes differ from the captured manifest')
                     bindings[path]={'path':path,'bytes':len(actual),'sha256':_sha(actual)}
+                    if record['kind'] in {'implementation','evidence'}:implementation_paths.add(path)
+            if task_ids is not None:
+                source_paths=set(files)-set(manifest.get('pinnedInputs',{}))-{PROPOSAL_PATH}
+                if source_paths-implementation_paths:raise SessionError('Generated code or infrastructure has no specification-bound implementation/evidence mapping; reconcile the files before acceptance')
         payload={'format':'atmem.architecture-proposal','version':1,'projectId':scope.project,
             'sessionId':session,'runId':manifest['runId'],'artifactId':artifact,'artifactSha256':manifest['sha256'],
             'proposalSha256':_sha(content),'context':context,'events':events,'proposal':proposal,

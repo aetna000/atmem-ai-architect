@@ -95,4 +95,6 @@ Hosted workspace access, administrator activity reports and website analytics ar
 
 ## Infrastructure review gate for coding agents
 
-The [AtMem Architecture Review development candidate](atmem-review-hook/README.md) checks supplied plans and Terraform JSON against team policy through MCP, a local CLI and fresh CI. It includes Spec Kit/OpenSpec adapters. Coverage, unknowns and unpublished release gates are documented separately; this does not change the hosted Architect release.
+The development candidate connects infrastructure rules to Architect's existing **Review** screen and AtMem memory. Save rules, review the current design, then use **Code it**. Coding agents receive the same Spec Kit/Terraform/rules handoff; current task IDs, captured files, rule results and observed checks stay linked to their source revisions. Live activity and task/subsystem links are visible in Architect. CLI/MCP are worker adapters, not a second product to install.
+
+[Implementation and qualification](specs/033-architecture-review-hook/) · [Engine/adapter reference](atmem-review-hook/README.md). Full semantic acceptance and large multi-worktree orchestration remain tracked work; this candidate is not a new npm or hosted deployment.

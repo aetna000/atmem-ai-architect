@@ -7,6 +7,30 @@ CONTRACT='''# AtMem implementation delivery contract
 This file and atmem-tools/prepare.py are backend-supplied inputs. Preserve them.
 Client requirements, provider choices, ownership and accepted decisions remain authoritative.
 
+## Native Architect Spec Kit and bindings
+
+When atmem-inputs/handoff/ is present it is the backend-generated baseline from
+the user's saved Architect project: Spec Kit, requirements/task identities,
+Terraform draft and any approved infrastructure policy. Preserve these pinned
+inputs. Read its START_HERE.md, spec-kit/context.json and spec-kit/tasks.json
+before writing implementation. Create the receiving implementation's own
+spec-kit/progress.json, recording original task IDs, changed files and actual
+test evidence. Code changes without specification/task bindings are unresolved.
+Never change an approved requirement to make failing code agree with it. Propose
+the discrepancy for user review and keep the current work incomplete.
+Keep architecture-work-proposal.json connected to those same requirement/block
+IDs and actual generated files. File links and an agent completion message do
+not prove test success, semantic acceptance or infrastructure approval. Edits to
+either specification or code require rechecking the dependent evidence.
+For every implementation and evidence record include data.specTaskIds containing exact IDs
+from the current server-supplied context.specification task snapshot. The pinned
+atmem-inputs/handoff/spec-kit/tasks.json remains the original baseline; a later
+design revision supplies its full updated task inventory without rewriting that
+history. Reconcile changes in both directions. Invented task IDs or missing
+bindings are rejected by reconciliation. Map every new output file, including
+tests, documentation and assets; file extensions cannot bypass binding. A
+task/file link is not a test pass.
+
 ## Worker environment and exported project
 
 The worker supplies .tools and .worker-tmp for local engineering. Those directories,

@@ -30,13 +30,40 @@ class ReconciliationTests(unittest.TestCase):
     def tearDown(self):
         self.store.close();self.temp.cleanup()
 
-    def capture(self,records=None,raw=None):
+    def capture(self,records=None,raw=None,pins=None):
         value={'version':1,'records':self.records if records is None else records}
         (self.workspace/'architecture-work-proposal.json').write_bytes(raw if raw is not None else json.dumps(value,ensure_ascii=False).encode())
-        return self.artifacts.capture(self.scope,self.session,self.workspace,expected_inputs={'project-context.json':self.context['sha256']})
+        return self.artifacts.capture(self.scope,self.session,self.workspace,expected_inputs={'project-context.json':self.context['sha256'],**(pins or {})})
 
     def prepare(self,artifact):
         return self.engine.prepare(self.scope,self.session,artifact['id'])
+
+    def test_native_specification_task_baseline_rejects_missing_unknown_and_orphan_code_bindings(self):
+        baseline='atmem-inputs/handoff/spec-kit/tasks.json';path=self.workspace/baseline;path.parent.mkdir(parents=True)
+        path.write_text(json.dumps({'tasks':[{'id':'TASK-READ-ONLY'}]}));pins={baseline:hashlib.sha256(path.read_bytes()).hexdigest()}
+        with self.assertRaisesRegex(SessionError,'specTaskIds'):self.prepare(self.capture(pins=pins))
+        self.records[0]['data']['specTaskIds']=['TASK-INVENTED']
+        with self.assertRaisesRegex(SessionError,'specTaskIds'):self.prepare(self.capture(pins=pins))
+        self.records[0]['data']['specTaskIds']=['TASK-READ-ONLY']
+        self.records[1]['data']['specTaskIds']=['TASK-READ-ONLY']
+        self.assertEqual(self.prepare(self.capture(pins=pins))['status'],'prepared')
+        (self.workspace/'unmapped.py').write_text('VALUE = 1\n')
+        with self.assertRaisesRegex(SessionError,'no specification-bound'):self.prepare(self.capture(pins=pins))
+
+    def test_changed_specification_requires_current_task_ids_and_preserves_original_context(self):
+        self.contexts.bind_specification(self.scope,self.session,self.context['id'],{'contextSha256':self.context['sha256'],'tasks':{'tasks':[{'id':'TASK-ORIGINAL'}]}})
+        self.records[0]['data']['specTaskIds']=['TASK-ORIGINAL'];self.records[1]['data']['specTaskIds']=['TASK-ORIGINAL']
+        self.assertEqual(self.prepare(self.capture())['status'],'prepared')
+        request=str(uuid.uuid4());content=self.context['content'].replace('Read-only catalogue access.','Read-only catalogue access with Unicode labels.')
+        current=self.contexts.attach(self.scope,self.session,request,content.encode())
+        self.contexts.bind_specification(self.scope,self.session,current['id'],{'contextSha256':current['sha256'],'tasks':{'tasks':[{'id':'TASK-CURRENT'}]}})
+        self.journal.append(self.scope,self.session,{'kind':'steering_submitted','requestId':request,'text':'Preserve Unicode labels.'})
+        self.journal.append(self.scope,self.session,{'kind':'steering_accepted','requestId':request})
+        with self.assertRaisesRegex(SessionError,'specTaskIds'):self.prepare(self.capture())
+        for record in self.records:record['data']['specTaskIds']=['TASK-CURRENT']
+        payload=json.loads(self.prepare(self.capture())['content'])
+        self.assertEqual(payload['context']['specification']['contextSha256'],current['sha256'])
+        self.assertEqual(self.contexts.get(self.scope,self.session,self.context['id'])['content'],self.context['content'])
 
     def test_actual_archive_files_context_intent_and_receipt_are_bound_without_execution(self):
         artifact=self.capture();receipt=self.prepare(artifact);payload=json.loads(receipt['content'])

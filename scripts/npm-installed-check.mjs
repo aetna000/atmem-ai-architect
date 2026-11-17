@@ -1,7 +1,7 @@
 // Run from the repository against a clean npm prefix; no model inference or cloud calls.
 import {spawn} from 'node:child_process';
 import {createServer} from 'node:net';
-import {fileURLToPath} from 'node:url';
+import {fileURLToPath,pathToFileURL} from 'node:url';
 import path from 'node:path';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
@@ -17,6 +17,15 @@ try{
  for(let i=0;i<900;i++){if(child.exitCode!==null)throw Error('Installed launcher exited: '+logs.join('').slice(-2000));try{const response=await fetch(base+'/api/session');if(response.ok){session=await response.json();break;}}catch{}await new Promise(r=>setTimeout(r,1000));}
  assert.ok(session?.token,'installed app becomes ready');
  const response=await fetch(base+'/api/memory/inspect',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.token}`},body:JSON.stringify({projectId:'npm-clean-install-test'})});const memory=await response.json();assert.equal(response.status,200);assert.notEqual(memory.status,'unavailable');assert.equal(memory.enabled,true);assert.match(memory.engine,/AtMem/i);
+ // The reviewer is part of the installed Architect, with no separate Python
+ // package installation or source-checkout imports.
+ const {template}=await import(pathToFileURL(path.join(prefix,'node_modules/@atmem/architect/src/core.mjs')).href);
+ const nativeProject={...template('aws'),id:'npm-native-rules-'+Date.now(),createdAt:new Date().toISOString()};nativeProject.nodes=nativeProject.nodes.slice(0,1);nativeProject.edges=[];
+ const post=async(action,value)=>{const r=await fetch(base+'/api/memory/architecture/'+action,{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.token}`},body:JSON.stringify({projectId:nativeProject.id,...value})});const result=await r.json();assert.equal(r.status,200,JSON.stringify(result));return result;};
+ await post('rules',{content:'---\nschema: atmem-architecture/v1\nnetwork:\n - id: PRIVATE-STORAGE\n   check: {resource: aws_s3_bucket_public_access_block, attribute: block_public_policy, must_equal: true}\n---\n'});
+ await post('run',{project:nativeProject});let nativeReview;
+ for(let attempt=0;attempt<60;attempt++){nativeReview=(await post('status',{})).review;if(nativeReview&&nativeReview.state!=='running')break;await new Promise(r=>setTimeout(r,250));}
+ assert.equal(nativeReview?.state,'completed',JSON.stringify(nativeReview));assert.equal(nativeReview.report.verdict,'pass');assert.ok(Object.keys(nativeReview.fileDigests).length);
  browser=await chromium.launch({headless:true});const page=await browser.newPage();const errors=[],failures=[],modelCalls=[];page.on('pageerror',e=>errors.push(e.message));page.on('requestfailed',r=>failures.push(r.url()));page.on('request',r=>{if(/\/api\/architect$|\/engineering\/(create|start|steer)$/.test(r.url()))modelCalls.push(r.url());});
  await page.goto(base,{waitUntil:'networkidle',timeout:60000});assert.equal(await page.getByRole('tablist',{name:'Project stages'}).getByRole('tab').count(),5);assert.equal(await page.locator('.react-flow').count(),1);assert.deepEqual(errors,[]);assert.deepEqual(failures,[]);assert.deepEqual(modelCalls,[]);
  await page.getByRole('button',{name:'Explore complete AI example',exact:true}).click();
@@ -28,5 +37,5 @@ try{
  assert.equal(createHash('sha256').update(fs.readFileSync(await reference.path())).digest('hex'),referenceReceipt.sha256);
  assert.deepEqual(errors,[]);assert.deepEqual(modelCalls,[]);
  const savedFile=path.join(home,'installer-preservation-check.txt');fs.writeFileSync(savedFile,'preserve me');
- console.log(JSON.stringify({installedPrefix:prefix,platform:process.platform,arch:process.arch,version:JSON.parse(fs.readFileSync(path.join(prefix,'node_modules/@atmem/architect/package.json'))).version,memoryEngine:memory.engine,uiStages:5,errors,modelCalls}));
+ console.log(JSON.stringify({installedPrefix:prefix,platform:process.platform,arch:process.arch,version:JSON.parse(fs.readFileSync(path.join(prefix,'node_modules/@atmem/architect/package.json'))).version,memoryEngine:memory.engine,nativeRules:'real_installed_atmem_render_review_pass',uiStages:5,errors,modelCalls}));
 }finally{await browser?.close();if(child&&child.exitCode===null){child.kill('SIGTERM');await Promise.race([new Promise(r=>child.once('exit',r)),new Promise(r=>setTimeout(r,10000))]);}}

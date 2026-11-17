@@ -14,6 +14,7 @@ def public_record(record, owner=None, memory=None):
     episode=memory.store.get_episode(record['subject_id'],record['episode_id'])if memory and record.get('episode_id')else None
     raw=(episode or {}).get('raw') or record.get('raw') or {}
     return {**{key:record.get(key)for key in ('id','content','status','fact_key','created_at','updated_at','supersedes_id','source_type')},
+            **({'structuredValue':raw['architectureValue']} if record.get('fact_key') in {'architecture.policy','architecture.review','architecture.implementation','architecture.artifact_review','architecture.bindings','architecture.specification','architecture.validation'} and 'architectureValue' in raw else {}),
             'governance':{'userId':raw.get('user_id'), 'actor':raw.get('actor'), 'actorType':raw.get('actor_type'),
                           'source':raw.get('source_url') or raw.get('interpreter'), 'ownerUserId':owner}}
 
@@ -81,7 +82,7 @@ def run(payload):
                     continue
                 value = memory.remember(subject, message=op['text'], source_type='user_message',
                     interpreted_fact=op['text'], interpreted_fact_key=op['key'], actor=op.get('actor','atforma'),
-                    raw={'interpreter': 'atforma-project-event-v1', 'event_id': op['eventId'], 'source_url': op.get('source', ''), 'user_id':op.get('owner'), 'actor':op.get('actor'), 'actor_type':op.get('actorType')})
+                    raw={'interpreter': 'atforma-project-event-v1', 'event_id': op['eventId'], 'source_url': op.get('source', ''), 'user_id':op.get('owner'), 'actor':op.get('actor'), 'actor_type':op.get('actorType'), **({'architectureValue':op['structuredValue']} if 'structuredValue' in op else {})})
                 receipt = {'refused': value.get('refused', []), 'ids': [r['id'] for r in value.get('records', [])] + value.get('duplicate_ids', [])}
                 receipts.execute('INSERT INTO receipts VALUES (?,?)', (op['eventId'], json.dumps(receipt)))
                 receipts.commit()
@@ -90,6 +91,11 @@ def run(payload):
                 results.append(memory.recall(subject, op['query'], limit=op.get('limit', 6)))
             elif action == 'page':
                 results.append(page_records(memory,subject,op))
+            elif action == 'fact':
+                from atmem.store.sqlite import _record_from_row
+                rows=memory.store._conn.execute("SELECT * FROM records WHERE subject_id=? AND fact_key=? AND status='active' LIMIT 2",(subject,op['key'])).fetchall()
+                if len(rows)>1:raise ValueError('Ambiguous active memory fact')
+                results.append(public_record(_record_from_row(rows[0]),op.get('owner'),memory) if rows else None)
             elif action == 'record':
                 record=memory.store.get_record(subject,op['recordId'])
                 if not record or record['status']=='tombstoned':raise ValueError('Record unavailable in this scope')

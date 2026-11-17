@@ -10,7 +10,7 @@ with tempfile.TemporaryDirectory(prefix='architect-native-build-') as temporary:
  context=Path(temporary)
  allowed={'.py','.mjs','.jsx','.js','.json','.md','.css','.txt','.ts','.toml','.yaml','.yml','.svg','.lock'}
  inputs=[]
- for directory in ['hosted','server','src','scripts','agent-skills','knowledge']:
+ for directory in ['hosted','server','src','scripts','agent-skills','knowledge','atmem-review-hook/src/atmem_review']:
   for source in sorted((root/directory).rglob('*')):
    relative=source.relative_to(root)
    if any(part.startswith('.') or part=='__pycache__' for part in relative.parts):continue
