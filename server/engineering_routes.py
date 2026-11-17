@@ -182,16 +182,21 @@ Visible progress must be one short sentence of at most 20 words. Final progress 
         finally:
             os.close(fd)
         from .memory_service import safe
-        from .engineering_contexts import validate_context
+        from .engineering_contexts import validate_context, model_context_content
         if not safe(validate_context(content, scope.project)):
             raise SessionError('Saved project context looks like a credential')
         context=self.contexts.attach(scope, session, request, content, expected_sha256=expected_sha256)
         if 'specification' not in context:
             node=shutil.which('node')
             if not node:raise SessionError('Node is required to bind the current specification before coding.')
-            result=subprocess.run([node,str(Path(__file__).resolve().parents[1]/'scripts/engineering-handoff.mjs'),'--tasks-only'],input=content,capture_output=True,timeout=30)
+            projected=model_context_content(content,scope.project)
+            result=subprocess.run([node,str(Path(__file__).resolve().parents[1]/'scripts/engineering-handoff.mjs'),'--tasks-only'],input=projected,capture_output=True,timeout=30)
             if result.returncode:raise SessionError('The current specification could not be prepared; coding was not submitted.')
-            context=self.contexts.bind_specification(scope,session,context['id'],json.loads(result.stdout))
+            specification=json.loads(result.stdout)
+            if projected!=content:
+                specification['modelContextSha256']=specification['contextSha256']
+                specification['contextSha256']=context['sha256']
+            context=self.contexts.bind_specification(scope,session,context['id'],specification)
         from .architecture_rules import remember_specification
         from .memory_service import service as project_memory
         try:remember_specification(project_memory(),scope.project,context)
@@ -247,7 +252,9 @@ Visible progress must be one short sentence of at most 20 words. Final progress 
             import uuid
             workspace_id = str(uuid.uuid4())
             workspace = Path(tempfile.mkdtemp(prefix='atm-job-',dir=self.workspace_root)).resolve()
-            context = project_path.read_bytes()
+            original_context = project_path.read_bytes()
+            from .engineering_contexts import model_context_content
+            context = model_context_content(original_context, scope.project)
             (workspace/'project-context.json').write_bytes(context)
             tools = workspace/'.tools'
             tools.mkdir()
@@ -290,6 +297,7 @@ Visible progress must be one short sentence of at most 20 words. Final progress 
             self.backend.workspaces[scope,workspace_id] = workspace
             state = await self.sessions.create(scope,workspace_id,selection)
             self.jobs._record(scope,state['id'],'created',contextSha256=hashlib.sha256(context).hexdigest(),
+                              sourceContextSha256=hashlib.sha256(original_context).hexdigest(),
                               skillSha256=hashlib.sha256(source.read_bytes()).hexdigest(),inputDigests=inputs,**tool_inputs)
             return state
 

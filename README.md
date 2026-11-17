@@ -24,7 +24,11 @@ npm install -g @atmem/architect
 atmem-architect
 ```
 
-[Stable release notes](docs/releases/v0.2.3.md) · [Application test configuration](docs/architecture/configuring-application-tests.md) · [Installation and troubleshooting](docs/INSTALLATION.md) · [Package options](packaging/README.npm.md) · [npm package](https://www.npmjs.com/package/@atmem/architect)
+[Stable release notes](docs/releases/v0.2.4.md) · [Application test configuration](docs/architecture/configuring-application-tests.md) · [Installation and troubleshooting](docs/INSTALLATION.md) · [Package options](packaging/README.npm.md) · [npm package](https://www.npmjs.com/package/@atmem/architect)
+
+## Infrastructure maintenance (development branch)
+
+Prepare checked AWS Batch upgrades locally. Selected source stays outside general model context. [Setup, support matrix and limits](docs/INFRASTRUCTURE_MAINTENANCE.md).
 
 ## Workflow
 

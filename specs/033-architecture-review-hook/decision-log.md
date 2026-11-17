@@ -33,3 +33,13 @@ Recording exposed two source defects. Preserve estimate coverage/provenance thro
 ## PR readiness: native-worker CI runtime
 
 The hosted CI job installed only its Python lock; the native handoff now also executes the source JavaScript generators. Install the locked production npm runtime (without package scripts) in that job and trigger the workflow when its scripts/npm inputs change. All 31 tests from the failing job pass locally; verify the pushed job before claiming CI repaired. No cloud or package publication is part of this check.
+
+## Consolidate infrastructure upgrades and native Architect workflow
+
+The owner clarified that the second PR is #11 (infrastructure upgrades), not #14. Consolidate #11 into #13 and close #11 as superseded after pushing its complete history. Preserve the original source branch and exported evidence.
+
+Merge resolution keeps both installed feature checks and package tools, both HTTP body-size contracts, valid complete native fixture projects, and both immutable task binding and private-maintenance egress protection. Current task generation uses the permitted model projection and records both projected and original source identities. A regression verifies private source is retained locally but absent from the pinned coding handoff, task snapshot and model envelope.
+
+General Terraform review excludes separately consented maintenance repository evidence; import/historical marking must not change an unrelated design's rules fingerprint. Accepted design/rule changes still invalidate that review. Hosted route allowlisting remains closed to local maintenance operations; its locked runtime includes parser dependencies required to import the shared application.
+
+Because the context/privacy source changed, old maintenance policy receipts correctly became stale. Do not refresh their hashes by hand. Re-execute the real offline shared-module/two-consumer/monorepo qualification and 30-repository discovery; preserve the old record and select the fresh receipt for protocol fixtures. Add a counterexample that stale-policy receipts cannot authorize a module wave.

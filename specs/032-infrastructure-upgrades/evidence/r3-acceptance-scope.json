@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "projectId": "r3-disposable-acceptance",
+  "owner": "aetna000",
+  "repositories": [
+    {
+      "role": "shared",
+      "root": "root-shared",
+      "repository": "aetna000/atmem-maintenance-r3-module",
+      "visibility": "private",
+      "files": {
+        "main.tf": "terraform {\n required_providers {\n  aws = { source = \"hashicorp/aws\", version = \"5.100.0\" }\n }\n}\nvariable \"primary\" { type = string }\nvariable \"backup\" { type = string }\nresource \"aws_batch_job_queue\" \"shared\" {\n name = \"shared-batch\"\n state = \"ENABLED\"\n priority = 3\n compute_environments = [var.primary, var.backup]\n}\noutput \"queue_arn\" { value = aws_batch_job_queue.shared.arn }\n",
+        ".github/workflows/review.yml": "name: Disposable acceptance\non: [push, pull_request]\npermissions:\n  contents: read\njobs:\n  review:\n    runs-on: ubuntu-latest\n    steps:\n      - run: echo \"AtMem disposable acceptance only\"\n"
+      },
+      "fileDigests": {
+        "main.tf": "5e2b3a2cb0107698837213d1504f682add486ab6f0f232ad04e3276da06bfa9b",
+        ".github/workflows/review.yml": "fa47f2c407708c5b12b3d455c7657d0ba6458914bd551cddc34f37f4c3e01be8"
+      }
+    },
+    {
+      "role": "consumer-a",
+      "root": "root-consumer-a",
+      "repository": "aetna000/atmem-maintenance-r3-consumer-a",
+      "visibility": "private",
+      "files": {
+        "main.tf": "terraform {\n required_providers {\n  aws = { source = \"hashicorp/aws\", version = \"5.100.0\" }\n }\n}\nprovider \"aws\" { region = \"us-east-1\" }\nmodule \"queue\" {\n source = \"git::https://github.com/aetna000/atmem-maintenance-r3-module.git?ref=v1.0.0\"\n primary = \"arn:aws:batch:us-east-1:123456789012:compute-environment/primary\"\n backup = \"arn:aws:batch:us-east-1:123456789012:compute-environment/backup\"\n}\noutput \"queue\" { value = module.queue.queue_arn }\n"
+      },
+      "fileDigests": {
+        "main.tf": "c84680402fbb6dbdb4b918398fd66103907c7bda8fb1d88917eab80a4549d89e"
+      }
+    },
+    {
+      "role": "consumer-b",
+      "root": "root-consumer-b",
+      "repository": "aetna000/atmem-maintenance-r3-consumer-b",
+      "visibility": "private",
+      "files": {
+        "main.tf": "terraform {\n required_providers {\n  aws = { source = \"hashicorp/aws\", version = \"5.100.0\" }\n }\n}\nprovider \"aws\" { region = \"eu-west-1\" }\nmodule \"archive\" {\n source = \"git::https://github.com/aetna000/atmem-maintenance-r3-module.git?ref=v1.0.0\"\n primary = \"arn:aws:batch:eu-west-1:123456789012:compute-environment/primary\"\n backup = \"arn:aws:batch:eu-west-1:123456789012:compute-environment/backup\"\n}\n"
+      },
+      "fileDigests": {
+        "main.tf": "36591cd462961270e992f1d0fb9e7c276c4bee4f0e82bb4acbe91681467ff266"
+      }
+    },
+    {
+      "role": "unrelated",
+      "root": "root-unrelated",
+      "repository": "aetna000/atmem-maintenance-r3-unprotected",
+      "visibility": "private",
+      "files": {
+        "main.tf": "terraform {\n required_providers {\n  aws = { source = \"hashicorp/aws\", version = \"6.0.0\" }\n }\n}\nresource \"aws_s3_bucket\" \"unrelated\" { bucket = \"maintenance-unrelated\" }\n"
+      },
+      "fileDigests": {
+        "main.tf": "aca582d1299c19af17b83e6d2b51fd003c460311a3ad0b717bc00ef693f782f4"
+      }
+    }
+  ],
+  "automation": "One inert echo workflow may run on push/PR. GitHub Actions usage can bill.",
+  "productWrites": [
+    "Git blobs/trees/commits",
+    "atmem-upgrades/* refs",
+    "draft pull requests"
+  ],
+  "operatorOnly": [
+    "Create and seed the four new private repositories",
+    "Create initial module tag v1.0.0",
+    "Merge/tag disposable module and merge disposable consumers",
+    "Configure a protected proposal branch for denial testing",
+    "Inject a human commit race",
+    "Revoke disposable fine-grained token",
+    "Confirm cleanup separately; no automatic deletion"
+  ],
+  "excluded": [
+    "Existing application repositories",
+    "Cloud access or deployment",
+    "Public release/npm publication"
+  ],
+  "remainingManualGates": [
+    "Interruption/timeout injection and restart reconciliation",
+    "Revocation/expiry and protected/default/unowned branch denial",
+    "Conditional append versus a human commit",
+    "Cross-install ownership conflict",
+    "Actual module release and separate consumer wave",
+    "Retain sanitized evidence for every gate"
+  ],
+  "scopeDigest": "09b732c842c88e70ea115b9fa7dc4c208a5b46801e3646cf3591c55cd1915628"
+}

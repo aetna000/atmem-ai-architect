@@ -85,10 +85,10 @@ class SkillsTests(unittest.TestCase):
 class ProjectStoreTests(unittest.TestCase):
     def setUp(self):
         import tempfile,os
-        self.dir=tempfile.TemporaryDirectory();os.environ['ATFORMA_HOME']=self.dir.name
+        self.dir=tempfile.TemporaryDirectory();self.home_patch=patch.dict(os.environ,{'ATMEM_ARCHITECT_HOME':self.dir.name});self.home_patch.start()
         self.client=TestClient(app);self.h={'Authorization':f'Bearer {TOKEN}'}
     def tearDown(self):
-        import os;os.environ.pop('ATFORMA_HOME',None);self.dir.cleanup()
+        self.home_patch.stop();self.dir.cleanup()
     def file(self,name):
         return {'format':'atforma.project','formatVersion':'2.1.0','meta':{'id':'p1','name':name,'revision':1,'updatedAt':'2026-11-05T10:00:00Z'},'design':{'nodes':[],'edges':[]}}
     def post(self,path,body):return self.client.post(path,headers=self.h,json=body)

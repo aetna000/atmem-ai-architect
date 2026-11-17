@@ -77,7 +77,7 @@ class ValidationSpec:
         if type(self.timeout_seconds) is not int or not 1<=self.timeout_seconds<=(1500 if self.isolation_profile=='terraform-emulation-v1' else 300):raise ValueError('Validator time budget must be bounded')
         if not isinstance(self.bootstrap_python,str) or not self.bootstrap_python.startswith('/') or '\0' in self.bootstrap_python:
             raise ValueError('Register an absolute Python bootstrap executable in the reviewed image')
-        if self.isolation_profile not in {'standard-v1','chromium-userns-v1','postgresql-local-v1','terraform-emulation-v1'}:raise ValueError('Unreviewed validator isolation profile')
+        if self.isolation_profile not in {'standard-v1','chromium-userns-v1','postgresql-local-v1','terraform-emulation-v1','terraform-maintenance-v1'}:raise ValueError('Unreviewed validator isolation profile')
         if type(self.executable_scratch)is not bool:raise ValueError('Executable dependency scratch requires an explicit operator boolean')
         if self.executable_scratch and self.isolation_profile=='chromium-userns-v1':raise ValueError('Executable dependency scratch is not qualified with the browser profile')
         if not isinstance(self.runtime_environment,tuple) or any(not isinstance(pair,tuple) or len(pair)!=2 or not isinstance(pair[0],str) or pair[0] not in {'ATMEM_PLAYWRIGHT_MODULE','PLAYWRIGHT_BROWSERS_PATH'} or not isinstance(pair[1],str) or not pair[1].startswith('/') or any(ord(c)<32 for c in pair[1]) for pair in self.runtime_environment) or len({pair[0] for pair in self.runtime_environment})!=len(self.runtime_environment):
@@ -114,7 +114,7 @@ class DockerValidationWorker:
         self.policy_digest=hashlib.sha256(json.dumps({'code':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'profiles':{name:hashlib.sha256(content).hexdigest() for name,content in self.isolation_profiles.items()}},sort_keys=True).encode()).hexdigest()
         self.identity_digest=hashlib.sha256(endpoint.encode()).hexdigest()
 
-    def supports(self,spec):return spec.isolation_profile in {'standard-v1','postgresql-local-v1','terraform-emulation-v1'} or spec.isolation_profile in self.isolation_profiles
+    def supports(self,spec):return spec.isolation_profile in {'standard-v1','postgresql-local-v1','terraform-emulation-v1','terraform-maintenance-v1'} or spec.isolation_profile in self.isolation_profiles
 
     def run(self, archive, expected_digest, spec: ValidationSpec, *, execution_id=None, cancel_event=None, progress=None):
         if not isinstance(archive,bytes) or len(archive)>64000000 or hashlib.sha256(archive).hexdigest()!=expected_digest:
@@ -144,6 +144,7 @@ class DockerValidationWorker:
             browser=spec.isolation_profile=='chromium-userns-v1'
             postgres=spec.isolation_profile=='postgresql-local-v1'
             emulation=spec.isolation_profile=='terraform-emulation-v1'
+            maintenance=spec.isolation_profile=='terraform-maintenance-v1'
             security=[]
             if browser:
                 policy=Path(folder)/'reviewed-seccomp.json';policy.write_bytes(self.isolation_profiles[spec.isolation_profile])
@@ -152,9 +153,9 @@ class DockerValidationWorker:
             dependency_scratch=['--tmpfs',f'/dependencies:rw,exec,nosuid,nodev,size={512 if emulation else 128}m,mode=1777','--env','TMPDIR=/dependencies','--env','ATMEM_TEST_DEPENDENCY_ROOT=/dependencies']if spec.executable_scratch else []
             command=[*prefix,'run','--pull','never','--rm','--name',ident,'--platform',spec.platform,
                 '--network','none','--read-only','--cap-drop','ALL','--cap-add','SETUID','--cap-add','SETGID',
-                '--security-opt','no-new-privileges',*security,'--pids-limit','128' if browser or emulation else '64','--memory','1536m' if emulation else '512m' if browser or postgres else '256m','--cpus','1',
+                '--security-opt','no-new-privileges',*security,'--pids-limit','128' if browser or emulation or maintenance else '64','--memory','1536m' if emulation else '768m' if maintenance else '512m' if browser or postgres else '256m','--cpus','1',
                 '--tmpfs','/work:rw,noexec,nosuid,nodev,size=128m,mode=0755',
-                '--tmpfs',f'/tmp:rw,noexec,nosuid,nodev,size={256 if emulation else 192 if postgres else 64 if browser else 32}m,mode=1777',
+                '--tmpfs',f'/tmp:rw,noexec,nosuid,nodev,size={256 if emulation else 192 if postgres else 128 if maintenance else 64 if browser else 32}m,mode=1777',
                 '--env','HOME=/tmp','--env','PYTHONDONTWRITEBYTECODE=1','--env','AWS_EC2_METADATA_DISABLED=true',
                 *runtime_env,*dependency_scratch,'--entrypoint',spec.bootstrap_python,'-i',spec.image,'-I','-c',BOOTSTRAP,
                 json.dumps([expected_digest,list(spec.command)])]

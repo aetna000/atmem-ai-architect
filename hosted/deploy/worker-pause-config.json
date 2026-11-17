@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "project": "atmemai",
+  "zone": "us-central1-a",
+  "instance": "architect-native-worker",
+  "instanceId": "2465606325247425787",
+  "machineType": "e2-medium",
+  "serviceAccount": "architect-worker@atmemai.iam.gserviceaccount.com",
+  "disks": [
+    {
+      "name": "architect-native-worker",
+      "boot": true,
+      "deviceName": "persistent-disk-0",
+      "autoDelete": true,
+      "sizeGb": 30
+    },
+    {
+      "name": "architect-native-worker-state",
+      "boot": false,
+      "deviceName": "architect-state",
+      "autoDelete": false,
+      "sizeGb": 30
+    }
+  ],
+  "network": "architect-workers",
+  "subnet": "architect-workers",
+  "region": "us-central1",
+  "internalIp": "10.91.0.2",
+  "startupScriptSha256": "1be750d15486ff81be5b52abe4e695763f40bea0afd84b0ab0ff030397572655",
+  "workerImage": "us-central1-docker.pkg.dev/atmemai/architect/native-worker@sha256:8aabd7a9f5c3d55a0854b6f9702adec0667e5ea2978a03a9cd15aedcb083124f",
+  "snapshotPolicy": "architect-state-daily",
+  "firestoreDatabase": "architect",
+  "projectBucket": "atmemai-architect-projects",
+  "artifactRepository": "us-central1-docker.pkg.dev/atmemai/architect",
+  "accountService": "architect-accounts",
+  "accountServiceRegion": "us-central1",
+  "website": "https://atmem.ai/architect",
+  "workerUnit": "architect-native-worker.service",
+  "workerContainer": "architect-native-worker",
+  "stateMount": "/mnt/disks/architect-state",
+  "modelSpendingChanged": false,
+  "credentialsIncluded": false
+}

@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "frozenBeforePatchAuthoring": true,
+  "oracle": "Manually specified guide-derived ordered expressions; independent provider validate determines validity, never planner verdict.",
+  "cases": {
+    "backend/main.tf": "85a110fe5d0ea4f544d301e32eb1e508bef7a92e35aaa80b64ef7963129737af",
+    "baseline/main.tf": "5f59707fdd45505287686ab4d54d1705afc8d867091bfb90901c57ed575ebe08",
+    "baseline-failure/main.tf": "31c319b1d1cb41ff9a787b35b1b754c0125c772ef521439919c0da1582f8dac8",
+    "baseline-oracle/main.tf": "95c361237df169a1ace3ffb77030a386132f74b7f74bd455256b5caa46487bf4",
+    "ci/.github/workflows/deploy.yml": "b618f0bc914c6d739c32656f1c7c8ea355896448d09c06b96ea449682fc6a21d",
+    "ci/main.tf": "5f59707fdd45505287686ab4d54d1705afc8d867091bfb90901c57ed575ebe08",
+    "dynamic/main.tf": "f5383bf90f745838ef9a0451d6c3b45e0771b3816d517a56024c7a8fd3195fe2",
+    "external/main.tf": "c6267bb2befd5dcdb004c5ab8815210271288769b6eec3e23042f2c787d24566",
+    "holdout/main.tf": "09e731fd1390b47bbaab2d60f215e5b4abb37b891210c742bea1629bde5dec12",
+    "holdout-oracle/main.tf": "aa4cbbce2cfe4785167cf4bd4d042f81189ced315b4f715d859363423fc5fc92",
+    "http/main.tf": "04a79013d21092adcb62ef603cf5e24c47098aba394d7362a42de69723a7cf8c",
+    "provisioner/main.tf": "1033255682767ad672f29b1147129f9c2838fc2f1af58a50dc77519ff4522a6f",
+    "sensitive/main.tf": "c17eb83bdabe92d55f4fd431a4c2458998e96b885206ffd812624bc7565713f3"
+  },
+  "expected": {
+    "baseline": {
+      "baseline": true,
+      "versionOnly": false,
+      "candidate": true,
+      "resource": "aws_batch_job_queue.jobs",
+      "orders": [
+        0,
+        1
+      ]
+    },
+    "holdout": {
+      "baseline": true,
+      "versionOnly": false,
+      "candidate": true,
+      "resource": "aws_batch_job_queue.nightly",
+      "orders": [
+        0
+      ]
+    },
+    "baseline-failure": {
+      "baseline": false
+    },
+    "dynamic": {
+      "applicability": "unsupported"
+    },
+    "external": {
+      "policy": "denied"
+    },
+    "http": {
+      "policy": "denied"
+    },
+    "provisioner": {
+      "policy": "denied"
+    },
+    "backend": {
+      "policy": "denied"
+    },
+    "sensitive": {
+      "egress": "denied"
+    },
+    "ci": {
+      "changedPaths": "denied",
+      "automation": "push,pull_request_target"
+    }
+  }
+}

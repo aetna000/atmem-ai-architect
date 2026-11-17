@@ -170,6 +170,7 @@ import {
   FrontPanel,
 } from "./WorkbenchDialogs.jsx";
 import { discoverLocalAgent, projects as projectStore, requestArchitect } from "./local-agent.mjs";
+import MaintenancePanel from './maintenance/MaintenancePanel.jsx';
 import { EFFORT_LABEL } from "./WorkbenchDialogs.jsx";
 import { pulumiScaffold } from "./pulumi.mjs";
 import { zipSync, strToU8 } from "fflate";
@@ -1926,6 +1927,7 @@ function App() {
           /><PencilRuler size={14} aria-hidden="true"/></label>
         </nav>
         <div className="bar-actions">
+          {!HOSTED&&<button className="btn maintenance-launch" onClick={()=>setModal('maintenance')} disabled={busy||!session} title={!session?'Connecting to the local helper':'Prepare checked infrastructure migrations'}>Infrastructure upgrades</button>}
           {HOSTED&&<><button className="btn" onClick={newProject} disabled={busy||agentBusy}><Plus size={16}/>New project</button><button className="btn" onClick={()=>hostedCall('account')}>Account</button></>}
           {isReadyExample(project)&&<><ReadyExampleDownload compact/>{!HOSTED&&<button className="btn" onClick={newProject} disabled={busy||agentBusy}>Create new project</button>}</>}
           {storageError && <span className="warn-text">Not saved</span>}
@@ -1961,6 +1963,7 @@ function App() {
             <hr/><button role="menuitem" onClick={() => setModal("import")} disabled={busy}><GitBranch size={16}/>Import diagram</button>
             <button role="menuitem" onClick={() => setModal("project-file")} disabled={busy}><FolderOpen size={16}/>Open project file</button>
             <hr/><button role="menuitem" onClick={() => setModal("memory")} disabled={!session}><BrainActivity size={18} active={false}/>AtMem memory</button>
+            {!HOSTED&&<button role="menuitem" onClick={()=>setModal('maintenance')} disabled={busy||!session}>Infrastructure upgrades</button>}
             <button role="menuitem" onClick={() => setModal("start-over")} disabled={busy || agentBusy}><RotateCcw size={16}/>Start over</button>
             <hr />
             {!HOSTED&&<button role="menuitem" onClick={() => showConnections()}><Waypoints size={16}/>AI providers</button>}
@@ -2486,11 +2489,11 @@ function App() {
       <StarPrompt offer={starOffer}/>
       {modal && (
         <div className="backdrop" onMouseDown={(e) => e.target === e.currentTarget && !(modal === "welcome" && !connection) && setModal(null)}>
-          <section className={`modal ${modal==="memory"?"memory-modal":""}`} role="dialog" aria-modal="true" aria-label={modal}>
+          <section className={`modal ${modal==="memory"?"memory-modal":""} ${modal==="maintenance"?"maintenance-modal":""}`} role="dialog" aria-modal="true" aria-label={modal}>
             {!(modal === "welcome" && !connection) && <button className="icon modal-close" onClick={() => setModal(null)} aria-label="Close dialog">
               <X size={16} />
             </button>}
-            {modal === "project-file" ? (<><h2>Open project</h2><button className="btn primary" onClick={()=>{fileImportAsCopy.current=false;fileRef.current.click();}}>Open project</button></>) : modal === "memory" ? (
+            {modal === 'maintenance' ? (<MaintenancePanel session={session} project={project} onSection={section=>updateEngagement({...projectRef.current,extensions:{...projectRef.current.extensions,maintenance:section,maintenanceNeedsImport:false}})}/>) : modal === "project-file" ? (<><h2>Open project</h2><button className="btn primary" onClick={()=>{fileImportAsCopy.current=false;fileRef.current.click();}}>Open project</button></>) : modal === "memory" ? (
               <MemoryPanel key={project.id} session={session} project={project} onError={notify} onStatus={status=>setMemorySync({projectId:project.id,...status})} />
             ) : modal === "templates" ? (
               <TemplateDialog onLoad={loadDesign} />

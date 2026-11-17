@@ -5,6 +5,7 @@ import {template,validateImport} from '../src/core.mjs';
 import {toProjectFile,fromProjectFile,reviewDesignSnapshot,reviewDesignContent} from '../src/project-file.mjs';
 import {createHash} from 'node:crypto';
 import {withConversation} from '../src/conversation.mjs';
+import fs from 'node:fs';
 import {architectureSources} from '../src/architecture-work.mjs';
 
 const project=()=>({...template('aws'),id:'rules-binding-project',createdAt:'2026-11-18T00:00:00Z'});
@@ -67,4 +68,14 @@ test('saving the actual engineering handoff with conversation preserves reviewed
  assert.equal(reviewDesignContent(p),reviewDesignContent(fromProjectFile(saved).project));
  const changed=structuredClone(p);changed.requirements='A newly accepted requirement';
  assert.notEqual(reviewDesignContent(changed),reviewDesignContent(p));
+});
+
+test('general rule review survives a maintenance import without absorbing private repository evidence',()=>{
+ const p=project(),expected=reviewDesignContent(p);
+ p.extensions={maintenance:JSON.parse(fs.readFileSync(new URL('./maintenance/fixtures/portable-section.json',import.meta.url),'utf8'))};
+ assert.equal(reviewDesignContent(p),expected);
+ assert.equal(reviewDesignContent(fromProjectFile(toProjectFile(p)).project),expected);
+ const result=spawnSync(process.execPath,['scripts/terraform-render.mjs'],{input:JSON.stringify({project:toProjectFile(p),environment:'staging',review:true}),encoding:'utf8'});
+ assert.equal(result.status,0,result.stderr);assert.equal(JSON.parse(result.stdout).designSha256,createHash('sha256').update(expected).digest('hex'));
+ p.requirements='Accepted new storage requirement';assert.notEqual(reviewDesignContent(p),expected);
 });
