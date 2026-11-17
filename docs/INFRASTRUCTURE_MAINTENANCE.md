@@ -143,3 +143,13 @@ ATMEM_MAINTENANCE_TEST_CONFIG=/absolute/path/maintenance-worker.json node script
 ```
 
 No remote release, repository publication, scheduled service or hosted rollout is qualified by these local checks. Those remain R3/R4 gates.
+
+## Scoped GitHub connection (R3 development)
+
+Run `atmem-architect --maintenance-github` in an interactive terminal. Connect one resource owner and explicitly selected repositories to one Architect project. The helper prompts for a customer-owned fine-grained token without echoing it; token bytes are never command arguments, files, browser fields, model inputs or worker environment. Native macOS Keychain is the current adapter. Unsupported or locked credential stores block access rather than falling back to plaintext.
+
+The first broker verifies identity and selected-repository reads, pins numeric repository IDs and explicit expiry, and can materialize selected immutable commits with Git blob verification. Include all Terraform configuration for each selected root and repository automation files; incomplete trees, missing files, symlinks, submodules, LFS pointers, secrets and invalid UTF-8 are blocked. The helper's `revoke` action disables new operations before deleting the credential. A `materialize` action saves a new private source snapshot without overwriting an existing file.
+
+Connection setup grants no publication permission. Protocol tests use a fake HTTP transport; a native Keychain round-trip uses only a temporary dummy value and confirms deletion. Actual scoped-token, network, repository-write and cross-install conflict acceptance remains the R3 release gate.
+
+The R3 publication coordinator is currently an **inactive prototype**, with no publication HTTP routes or UI. Fake-service tests cover the exact shared-module wave, durable authorization and recovery; they do not qualify GitHub behavior. Consumer publication from a local release simulation is refused. Authenticated release observation, checked proposal refresh, publication UI and actual disposable-repository acceptance remain unfinished. Do not treat connection setup or prototype tests as a released PR service.

@@ -17,7 +17,7 @@ function copy(name){
   return true;
  }});
 }
-for(const name of ['LICENSE','NOTICE','CONSTITUTION.md','dist','src','server','agent-skills','knowledge','cli','packaging/uv-release-lock.json','scripts/terraform-render.mjs','scripts/setup-terraform-emulator.py','scripts/terraform-emulator-render.py','docs/TERRAFORM_EMULATION.md','scripts/setup-maintenance-worker.py','docs/INFRASTRUCTURE_MAINTENANCE.md','docs/terraform-emulator-aws-coverage.json','docs/upstream-lock.json','public/licenses'])copy(name);
+for(const name of ['LICENSE','NOTICE','CONSTITUTION.md','dist','src','server','agent-skills','knowledge','cli','packaging/uv-release-lock.json','scripts/terraform-render.mjs','scripts/setup-terraform-emulator.py','scripts/terraform-emulator-render.py','docs/TERRAFORM_EMULATION.md','scripts/setup-maintenance-worker.py','scripts/maintenance-github.py','docs/INFRASTRUCTURE_MAINTENANCE.md','docs/terraform-emulator-aws-coverage.json','docs/upstream-lock.json','public/licenses'])copy(name);
 const knowledge=JSON.parse(fs.readFileSync('knowledge/engineering-practices.json','utf8'));
 for(const record of knowledge.records){if(record.localVerification){const name=record.localVerification.receipt;if(!name.startsWith('specs/')||name.includes('..'))throw Error('Invalid evidence path.');copy(name);}}
 fs.copyFileSync('packaging/README.npm.md',path.join(stage,'README.md'));

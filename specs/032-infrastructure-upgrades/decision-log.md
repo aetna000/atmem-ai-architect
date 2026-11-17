@@ -36,3 +36,11 @@ Use separate selected roots and explicit remote materialization bindings; R1 sna
 ### CI-discovered hosted project creation race
 
 R2's hosted transactions CI exposed an existing interleaving: creation read an uploading receipt, another identical request completed it, then the first caller's duplicate chunk was rejected. Completed uploads now acknowledge only a byte-identical retained chunk, with the same index/size/hash, without writing or changing content. Altered, canceled, missing and foreign chunks remain denied. A deterministic test completes the real nested creation between begin and put; existing concurrent creation and storage tests remain required. This is a regression repair, not a hosted maintenance rollout.
+
+### R3 broker and publication foundation
+
+Native macOS Keychain uses Security.framework directly; no token is placed in subprocess arguments or plaintext fallback files. A dummy round-trip and deletion was exercised; six broker protocol tests use fake HTTP and confer no network acceptance. The CLI prompt is out of band, with explicit selected owner/repositories/project and expiry.
+
+Private publication authorizations, intents, leases and branch claims stay outside portable campaigns. First proposal refs point to a unique nonce-bound candidate commit rather than the shared base commit, so an uncertain ref response cannot silently adopt another installation's base branch. Canonical Git object hashes are independently checked with Git. Exact approvals expire after 15 minutes, serialize a campaign, and must disclose automation. Unknown PR outcomes are reconciled, never blindly repeated. Module-wave fake protocol checks pass, but the coordinator remains inactive: consumer release observation, checked refresh, UI and T016 actual network qualification remain unfinished.
+
+R2 client CI passed all three OS clients on c302bd7; the hosted creation race repair also passed Firestore transactions/native worker CI. Campaign readiness now becomes historical when its current worker is missing or has changed, in addition to policy changes.

@@ -129,7 +129,9 @@ class CampaignService:
                 self.store.fence(tenant, ident)
                 value.status, value.phase, value.error = 'blocked', 'execution_unknown', 'Prior execution stopped. Prepare fresh checks.'
                 value = self.store.put(value, value.revision)
-            if value.result and value.result.get('plannerDigest') != planner_digest() and value.status in {'module_release_pending', 'local_release_checked'}:
+            if value.result and value.status in {'module_release_pending', 'local_release_checked'} and (
+                value.result.get('plannerDigest') != planner_digest() or self.worker is None or
+                value.result.get('workerIdentity') != self.worker.identity):
                 value.status, value.phase = 'historical', 'policy_changed'
                 value = self.store.put(value, value.revision)
             return value

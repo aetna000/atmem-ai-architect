@@ -143,17 +143,26 @@
     },
     {
       "id": "T013",
-      "status": "in_progress",
+      "status": "done",
       "evidence": [
-        "research.md",
-        "contracts/interfaces.md"
+        "server/maintenance/github_adapter.py",
+        "server/maintenance/credential_store.py",
+        "scripts/maintenance-github.py",
+        "server/tests/test_maintenance_github.py",
+        "evidence/r3-broker.json"
       ],
       "blockers": []
     },
     {
       "id": "T014",
-      "status": "todo",
-      "evidence": [],
+      "status": "in_progress",
+      "evidence": [
+        "server/maintenance/publication.py",
+        "server/maintenance/publication_store.py",
+        "server/maintenance/git_objects.py",
+        "server/tests/test_maintenance_publication.py",
+        "server/tests/test_maintenance_publication_protocol.py"
+      ],
       "blockers": []
     },
     {
@@ -211,7 +220,11 @@
     "R2 six graph tests passed, including 30 pre-materialized snapshots; four real campaign checks and four persistence/API tests passed",
     "R2 full configured server: 639 ran, 617 passed, 22 platform/optional skips; final targeted import/history/failure tests passed",
     "R2 final real browser and container qualification passed, including held-out monorepo; 30-snapshot discovery 20.640 seconds (fetch/clone excluded)",
-    "R2 production build and clean installed macOS package passed; candidate graph/import and real AtMem confirmed"
+    "R2 production build and clean installed macOS package passed; candidate graph/import and real AtMem confirmed",
+    "R3 six fake-transport broker protocol tests passed; native macOS Keychain dummy round-trip and deletion passed; no remote account token or write used",
+    "Hosted CI creation race repaired: eight storage/creation tests passed; refreshed hosted CI pending",
+    "Latest pushed R2 package/install matrix (Linux/macOS/Windows), native worker and hosted Firestore transactions all passed on c302bd7",
+    "R3 13 broker/Git-object/private-ledger tests passed; six additional fake-service module-publication/recovery/race tests passed; no remote acceptance claimed"
   ],
   "changedFilesScope": "Local R0/R1 implementation, privacy boundaries, fixtures, browser regression refresh and review artifacts; no public release or hosted rollout",
   "review": {
@@ -227,15 +240,18 @@
     ],
     "limits": "round2 full documents; round3 final clarification delta; read-only tools disabled"
   },
-  "authorAssessment": "R1 and R2 local candidates implemented and locally qualified. R1 client CI matrix passed; R2 CI pending. R3 broker/publication and R4 service remain unfinished.",
+  "authorAssessment": "R1/R2 local candidates implemented and qualified, including client matrix and repaired hosted CI. R3 broker implemented; exact module-wave coordinator passes fake protocol tests but remains inactive and incomplete. Consumer waves, checked refresh, UI and real remote acceptance remain. R4 not implemented.",
   "productTests": "Real local Linux arm64 provider/schema and hostile-container checks; real browser and AtMem; model/audio/pricing fixtures explicitly distinguished. No cloud, state, deployment or publication qualification.",
   "changedFiles": [
     "README.md",
     "cli/runtime.mjs",
     "docs/INFRASTRUCTURE_MAINTENANCE.md",
+    "hosted/projects.py",
+    "hosted/tests/test_workspace_projects.py",
     "package.json",
     "scripts/delivery-smoke.mjs",
     "scripts/maintenance-campaign-smoke.mjs",
+    "scripts/maintenance-github.py",
     "scripts/maintenance-smoke.mjs",
     "scripts/memory-e2e.mjs",
     "scripts/npm-installed-check.mjs",
@@ -258,7 +274,10 @@
     "server/maintenance/catalog/aws-batch-queue-v6.json",
     "server/maintenance/catalog/tool-artifacts.json",
     "server/maintenance/check_runner.py",
+    "server/maintenance/credential_store.py",
     "server/maintenance/egress.py",
+    "server/maintenance/git_objects.py",
+    "server/maintenance/github_adapter.py",
     "server/maintenance/graph.py",
     "server/maintenance/inventory.py",
     "server/maintenance/isolation.py",
@@ -267,6 +286,8 @@
     "server/maintenance/patches.py",
     "server/maintenance/planner.py",
     "server/maintenance/portable.py",
+    "server/maintenance/publication.py",
+    "server/maintenance/publication_store.py",
     "server/maintenance/recipes.py",
     "server/maintenance/service.py",
     "server/maintenance/store.py",
@@ -281,9 +302,13 @@
     "server/tests/test_engineering_local_worker.py",
     "server/tests/test_maintenance_campaign.py",
     "server/tests/test_maintenance_campaign_store.py",
+    "server/tests/test_maintenance_git_objects.py",
+    "server/tests/test_maintenance_github.py",
     "server/tests/test_maintenance_graph.py",
     "server/tests/test_maintenance_inventory.py",
     "server/tests/test_maintenance_isolation.py",
+    "server/tests/test_maintenance_publication.py",
+    "server/tests/test_maintenance_publication_protocol.py",
     "server/tests/test_maintenance_routes.py",
     "server/tests/test_maintenance_service.py",
     "server/tests/test_maintenance_store.py",
@@ -302,6 +327,7 @@
     "specs/032-infrastructure-upgrades/evidence/r1.json",
     "specs/032-infrastructure-upgrades/evidence/r2-checks.json",
     "specs/032-infrastructure-upgrades/evidence/r2.json",
+    "specs/032-infrastructure-upgrades/evidence/r3-broker.json",
     "specs/032-infrastructure-upgrades/evidence/tool-artifacts.json",
     "specs/032-infrastructure-upgrades/plan.md",
     "specs/032-infrastructure-upgrades/progress.json",
@@ -381,10 +407,20 @@
         "evidence/r2.json",
         "evidence/r2-checks.json"
       ],
-      "publication": "not_authorized_or_attempted"
+      "publication": "not_authorized_or_attempted",
+      "clientCI": {
+        "sourceCommit": "c302bd7",
+        "run": "https://github.com/aetna000/atmem-ai-architect/actions/runs/44043689070",
+        "platforms": [
+          "ubuntu-latest passed",
+          "macos-latest passed",
+          "windows-latest passed"
+        ],
+        "hostedRegression": "transactions and native-worker passed after creation-race repair"
+      }
     },
     "R3": {
-      "status": "in_progress_broker_contracts",
+      "status": "in_progress_broker_and_module_publication_prototype",
       "gate": "Exact disposable-repository write authorization and actual remote qualification required"
     },
     "R4": {
