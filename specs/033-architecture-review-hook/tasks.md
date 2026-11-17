@@ -21,3 +21,7 @@ Publishing, hosted billing and catalog submission are follow-up actions requirin
 - [ ] H014 Enforce semantic requirement acceptance and resolve concurrent worktree conflicts; qualify large agent counts (H013).
 
 H010/H011 provide provenance and observed evidence, not automatic semantic proof that each requirement is satisfied.
+
+- [x] H015 Record actual step-by-step native demo, retain runtime failures, and qualify pricing/chat design-fingerprint corrections (H012; evidence/native-demo.json).
+
+H013 follow-up: actual native Codex implementation, capture, mappings and static review ran. Independent test acceptance remains open because the demo runtime could not launch Node and no independent validators were registered.

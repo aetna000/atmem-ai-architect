@@ -95,6 +95,13 @@ export function cleanEngagement(p) {
     );
   if (p.estimate && typeof p.estimate === "object") {
     const num = (v) => (typeof v === "number" && Number.isFinite(v) && v >= 0 ? v : undefined);
+    const evidence = v => ({
+      ...(typeof v?.coverageIncomplete === "boolean" ? {coverageIncomplete:v.coverageIncomplete} : {}),
+      ...(typeof v?.planningReference === "boolean" ? {planningReference:v.planningReference} : {}),
+      ...(typeof v?.sourceSha256 === "string" ? {sourceSha256:text(v.sourceSha256,64)} : {}),
+      ...(num(v?.hourlyPrice) !== undefined ? {hourlyPrice:v.hourlyPrice} : {}),
+      ...(num(v?.hoursPerMonth) !== undefined ? {hoursPerMonth:v.hoursPerMonth} : {}),
+    });
     out.estimate = {
       ...(["small","medium","large","extra-large"].includes(p.estimate.projectSize) ? {projectSize:p.estimate.projectSize} : {}),
       details: (Array.isArray(p.estimate.details) ? p.estimate.details : []).slice(0, 500).map((l, i) => ({
@@ -102,6 +109,7 @@ export function cleanEngagement(p) {
         description: text(l?.description, 200), quantity: num(l?.quantity), price: num(l?.price),
         unit: text(l?.unit, 80), currency: text(l?.currency || "USD", 3).toUpperCase(),
         source: text(l?.source, 500), date: text(l?.date, 10), region: text(l?.region, 80), service: text(l?.service, 200),
+        ...(l?.url !== undefined ? {url:text(l.url,500)} : {}), ...(l?.note !== undefined ? {note:text(l.note,1000)} : {}), ...evidence(l),
       })),
       ...(p.estimate.consulting ? { consulting: {
         currency: text(p.estimate.consulting.currency || "USD", 3).toUpperCase(),
@@ -116,7 +124,7 @@ export function cleanEngagement(p) {
           .slice(0, 200)
           .map(([k, v]) => [
             text(k, 100),
-            { price: num(v?.price), currency: text(v?.currency || "USD", 3).toUpperCase(), source: text(v?.source, 300), url: text(v?.url, 500), date: text(v?.date, 10), note: text(v?.note, 300), region: text(v?.region, 80), service: text(v?.service, 200), ...(num(v?.tierLimit) !== undefined ? { tierLimit:v.tierLimit } : {}) },
+            { price: num(v?.price), currency: text(v?.currency || "USD", 3).toUpperCase(), source: text(v?.source, 300), url: text(v?.url, 500), date: text(v?.date, 10), note: text(v?.note, 300), region: text(v?.region, 80), service: text(v?.service, 200), ...(num(v?.tierLimit) !== undefined ? { tierLimit:v.tierLimit } : {}), ...evidence(v) },
           ]),
       ),
       ...(num(p.estimate.low) !== undefined ? { low: p.estimate.low } : {}),

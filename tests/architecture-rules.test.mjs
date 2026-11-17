@@ -1,9 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {spawnSync} from 'node:child_process';
-import {template} from '../src/core.mjs';
+import {template,validateImport} from '../src/core.mjs';
 import {toProjectFile,fromProjectFile,reviewDesignSnapshot,reviewDesignContent} from '../src/project-file.mjs';
 import {createHash} from 'node:crypto';
+import {withConversation} from '../src/conversation.mjs';
 import {architectureSources} from '../src/architecture-work.mjs';
 
 const project=()=>({...template('aws'),id:'rules-binding-project',createdAt:'2026-11-18T00:00:00Z'});
@@ -50,4 +51,20 @@ test('current specification task snapshots drain their full pipe output for larg
  assert.equal(result.status,0,result.stderr);assert.ok(result.stdout.length>65536);
  const snapshot=JSON.parse(result.stdout);assert.equal(snapshot.contextSha256.length,64);
  assert.ok(snapshot.tasks.tasks.some(task=>task.requirementIds?.includes('requirement-34')));
+});
+
+test('live price coverage and provenance survive receiving reload and server review normalization',()=>{
+ const p=project();const evidence={coverageIncomplete:true,planningReference:false,sourceSha256:'a'.repeat(64),hourlyPrice:0.02,hoursPerMonth:730};
+ p.estimate={projectSize:'small',usage:{},prices:{'block-0':{price:14.6,currency:'USD',source:'Provider rate',url:'https://example.com/rate',date:'2026-11-18',note:'Storage only',region:'us-east-1',service:'S3',...evidence}},details:[{id:'compute',componentId:'block-0',description:'Compute',quantity:1,unit:'hours',price:0.02,currency:'USD',source:'Provider rate',url:'https://example.com/rate',date:'2026-11-18',note:'Compute only',region:'us-east-1',service:'Compute',...evidence}]};
+ const normalized=validateImport(p);assert.equal(normalized.estimate.prices['block-0'].coverageIncomplete,true);assert.equal(normalized.estimate.details[0].sourceSha256,evidence.sourceSha256);
+ assert.deepEqual(reviewDesignSnapshot(p),reviewDesignSnapshot(normalized));
+ assert.deepEqual(reviewDesignSnapshot(p),reviewDesignSnapshot(fromProjectFile(toProjectFile(p)).project));
+});
+
+test('saving the actual engineering handoff with conversation preserves reviewed design identity',()=>{
+ const p=project();p.extensions={architecturePolicy:{content:'approved rules',revision:'a'.repeat(64)}};
+ const saved=toProjectFile(withConversation(p,[{role:'user',text:'Where are we?'}]));
+ assert.equal(reviewDesignContent(p),reviewDesignContent(fromProjectFile(saved).project));
+ const changed=structuredClone(p);changed.requirements='A newly accepted requirement';
+ assert.notEqual(reviewDesignContent(changed),reviewDesignContent(p));
 });

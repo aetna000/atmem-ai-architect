@@ -108,6 +108,8 @@ export function toProjectFile(project, now = new Date()) {
 export function reviewDesignSnapshot(project){
   const file=JSON.parse(JSON.stringify(toProjectFile(project)));
   delete file.meta.updatedAt;delete file.meta.createdAt;
+  // Chat is retained as context, but does not change the approved design revision.
+  delete file.extensions.conversation;
   for(const edge of file.design.edges||[])delete edge.animated;
   const estimate=file.estimate;
   if(estimate)for(const [key,empty] of [['details',[]],['usage',{}],['prices',{}]]){
