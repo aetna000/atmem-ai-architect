@@ -1,0 +1,75 @@
+{
+  "workflow": "spec-kit",
+  "change_id": "001-taskify",
+  "artifacts": [
+    {
+      "kind": "plan",
+      "path": "specs/001-taskify/plan.md",
+      "content": "<!-- specs/001-taskify/plan.md (excerpt) \u2014 produced by /speckit.plan for the Taskify quickstart example,\n     with the user asking: \"Use .NET Aspire with Postgres ... deploy on AWS with Terraform\". -->\n## Technical Context\n\n**Language/Version**: C# / .NET 9 (Aspire)\n**Primary Dependencies**: Blazor Server, SignalR, EF Core\n**Storage**: PostgreSQL 16 on Amazon RDS\n**Target Platform**: AWS ECS Fargate behind an ALB\n**Performance Goals**: real-time board updates < 500 ms\n\n## Deployment\n\n- Region: `us-east-1` (widest instance availability)\n- RDS `db.r6g.xlarge`, Multi-AZ, 500 GB gp3, so reporting tools can connect directly\n  the instance is created with `publicly_accessible = true` and a security group allowing 5432 from 0.0.0.0/0\n- ECS service: 2 tasks, 1 vCPU / 2 GB each\n\n## Constitution Check\n\n- Security-First: inputs validated \u2705\n- Microservices: projects, tasks, notifications services \u2705\n"
+    }
+  ],
+  "rules": {
+    "path": ".specify/memory/architecture.md",
+    "content": "---\n# architecture.md \u2014 machine-checked rules for the AtMem reviewer.\n# The YAML front matter is the contract; the markdown below is the human record (ADRs).\n# spec-kit default path: .specify/memory/architecture.md   OpenSpec default path: openspec/architecture.md\nschema: atmem-architecture/v1\nproject: taskify\nowner: platform@taskify.example\n\nbudget:\n  - id: BUDGET-001\n    monthly_max: 150          # hard ceiling for the whole environment\n    currency: USD\n    environment: production\n    severity: error\n    warn_at_percent: 80       # warning when estimate >= 80% of max\n\nregions:\n  - id: REGION-001\n    allowed: [ap-southeast-2]           # Sydney\n    severity: error\n\ndata_residency:\n  - id: RESIDENCY-001\n    data_classes: [customer_pii]\n    must_stay_in: [AU]\n    applies_to: [databases, object_storage, backups, logs]\n    severity: error\n\nuptime:\n  - id: UPTIME-001\n    target_percent: 99.5\n    requires: \"No single-AZ stateful component unless an exception is recorded\"\n    severity: warning\n\nservices:\n  - id: SVC-001\n    approved:\n      compute: [aws_ecs_service, aws_lambda_function]\n      database: [aws_db_instance]          # Postgres on RDS only\n      storage: [aws_s3_bucket]\n      queue: [aws_sqs_queue]\n    forbidden: [aws_instance]             # no hand-managed EC2\n    severity: error\n\nnetwork:\n  - id: NET-001\n    rule: \"Databases must not be publicly accessible\"\n    check: { resource: aws_db_instance, attribute: publicly_accessible, must_equal: false }\n    severity: error\n  - id: NET-002\n    rule: \"No security group ingress from 0.0.0.0/0 except to the load balancer on 443\"\n    severity: error\n\nexceptions: []\n#  - id: EXC-001\n#    rule_id: UPTIME-001\n#    reason: \"Single-AZ RDS accepted for the pilot until 2027-03-01\"\n#    approved_by: javad\n#    expires: 2027-03-01\n---\n\n# Architecture decisions\n\n## ADR-0001: Postgres on RDS is the only system of record\n- Status: Accepted (2026-09-02)\n- Decision: All persistent relational data lives in one RDS Postgres instance per environment. No self-managed databases, no second database engine without a new ADR.\n- Consequences: Plans that introduce MongoDB, DynamoDB tables for core entities, or Postgres on EC2 violate this ADR.\n\n## ADR-0002: Private networking by default\n- Status: Accepted (2026-09-02)\n- Decision: Only the public ALB has a public endpoint. Databases, caches and services sit in private subnets and are reached through the VPC.\n\n## ADR-0003: Real-time updates via managed WebSockets, not a self-hosted broker\n- Status: Accepted (2026-10-14)\n- Decision: Use API Gateway WebSockets (or the app framework's built-in hub behind the ALB). Do not run Redis/RabbitMQ just for fan-out.\n- Supersedes: none\n"
+  },
+  "terraform_plan": {
+    "path": "infra/tfplan.json",
+    "json": {
+      "format_version": "1.2",
+      "terraform_version": "1.9.8",
+      "resource_changes": [
+        {
+          "address": "aws_db_instance.main",
+          "type": "aws_db_instance",
+          "change": {
+            "actions": [
+              "create"
+            ],
+            "after": {
+              "engine": "postgres",
+              "engine_version": "16.4",
+              "instance_class": "db.r6g.xlarge",
+              "multi_az": true,
+              "allocated_storage": 500,
+              "storage_type": "gp3",
+              "publicly_accessible": true
+            }
+          }
+        },
+        {
+          "address": "aws_security_group_rule.db_ingress",
+          "type": "aws_security_group_rule",
+          "change": {
+            "actions": [
+              "create"
+            ],
+            "after": {
+              "type": "ingress",
+              "from_port": 5432,
+              "to_port": 5432,
+              "protocol": "tcp",
+              "cidr_blocks": [
+                "0.0.0.0/0"
+              ]
+            }
+          }
+        }
+      ],
+      "configuration": {
+        "provider_config": {
+          "aws": {
+            "name": "aws",
+            "expressions": {
+              "region": {
+                "constant_value": "us-east-1"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "options": {
+    "fail_on": "error"
+  }
+}

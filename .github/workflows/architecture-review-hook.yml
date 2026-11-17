@@ -1,0 +1,38 @@
+name: Architecture review hook
+on:
+  pull_request:
+    paths:
+      - 'atmem-review-hook/**'
+      - 'specs/033-architecture-review-hook/**'
+      - '.github/workflows/architecture-review-hook.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  reviewer:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            python: '3.11'
+          - os: ubuntu-latest
+            python: '3.14'
+          - os: macos-latest
+            python: '3.14'
+          - os: windows-latest
+            python: '3.14'
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install --require-hashes -r atmem-review-hook/requirements.lock
+      - run: python -m pip install --no-deps ./atmem-review-hook
+      - run: python -m unittest discover -s atmem-review-hook/tests -v
+      - name: Packaged commands
+        run: |
+          atmem-review --help
+          atmem-review-mcp --help
+          atmem-review-ci --help

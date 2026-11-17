@@ -92,3 +92,7 @@ Contact: [hello@atmem.ai](mailto:hello@atmem.ai). Release procedure: GitHub Acti
 The project toolbar and stage action share slim rows. Phone and tablet layouts keep the message field visibly labeled beside history. Delivery refreshes while engineering finishes and retains package binding when a project is reopened.
 
 Hosted workspace access, administrator activity reports and website analytics are deployed separately. Local installations do not load website analytics.
+
+## Infrastructure review gate for coding agents
+
+The [AtMem Architecture Review development candidate](atmem-review-hook/README.md) checks supplied plans and Terraform JSON against team policy through MCP, a local CLI and fresh CI. It includes Spec Kit/OpenSpec adapters. Coverage, unknowns and unpublished release gates are documented separately; this does not change the hosted Architect release.

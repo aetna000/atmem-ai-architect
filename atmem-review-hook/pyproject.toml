@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools==80.9.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "atmem-architecture-review"
+version = "0.1.0"
+description = "Evidence-based infrastructure policy review for coding agents"
+readme = "README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
+dependencies = ["jsonschema==4.26.0", "PyYAML==6.0.3", "mcp==2.3.0"]
+
+[project.scripts]
+atmem-review = "atmem_review.cli:main"
+atmem-review-mcp = "atmem_review.mcp_server:main"
+atmem-review-ci = "atmem_review.ci:main"
+
+[tool.setuptools.package-data]
+atmem_review = ["schemas/*.json"]

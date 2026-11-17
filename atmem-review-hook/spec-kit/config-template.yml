@@ -1,0 +1,8 @@
+# AtMem Architecture Review configuration
+# Copy to .specify/extensions/atmem/atmem-config.yml and edit.
+# Env overrides: SPECKIT_ATMEM_RULES_PATH, SPECKIT_ATMEM_TERRAFORM_PLAN_JSON, SPECKIT_ATMEM_FAIL_ON
+
+rules_path: ".specify/memory/architecture.md"
+terraform_plan_json: ""     # path to `terraform show -json <planfile>` output, relative to repo root
+fail_on: "error"            # "error": only error-severity violations fail; "warning": warnings also fail
+cost_estimate: "auto"       # "auto": price the Terraform plan if present; "off": never call the cost engine

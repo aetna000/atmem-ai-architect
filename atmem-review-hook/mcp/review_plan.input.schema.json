@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://atmem.ai/schemas/review_plan.input.v1.json",
+  "title": "review_plan input",
+  "description": "Read-only architecture review. The tool never writes files, never runs terraform, and never calls a cloud provider API. Send file contents: a hosted server cannot read the caller's disk.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["artifacts", "rules"],
+  "properties": {
+    "workflow": { "type": "string", "enum": ["spec-kit", "openspec", "other"], "default": "other" },
+    "change_id": { "type": "string", "description": "spec-kit feature dir name (e.g. 001-taskify) or OpenSpec change name." },
+    "artifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "content"],
+        "properties": {
+          "kind": { "type": "string", "enum": ["plan", "design", "proposal", "spec", "research", "data-model", "contract", "quickstart", "tasks", "constitution", "other"] },
+          "path": { "type": "string", "description": "Project-relative path, used only for evidence citations." },
+          "content": { "type": "string", "maxLength": 400000 }
+        }
+      }
+    },
+    "rules": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["content"],
+      "properties": {
+        "path": { "type": "string" },
+        "content": { "type": "string", "description": "architecture.md text: YAML front matter (machine rules) + markdown ADRs." }
+      }
+    },
+    "terraform_plan": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Output of `terraform show -json <planfile>`. Optional; enables resource-level checks and cost estimation.",
+      "required": ["json"],
+      "properties": {
+        "path": { "type": "string" },
+        "json": { "type": "object", "required": ["format_version"], "properties": { "format_version": { "type": "string" }, "resource_changes": { "type": "array" }, "planned_values": { "type": "object" }, "configuration": { "type": "object" } } }
+      }
+    },
+    "options": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "fail_on": { "type": "string", "enum": ["error", "warning"], "default": "error" },
+        "cost_estimate": { "type": "string", "enum": ["auto", "off"], "default": "auto" },
+        "currency": { "type": "string", "pattern": "^[A-Z]{3}$", "default": "USD" },
+        "max_findings": { "type": "integer", "minimum": 1, "maximum": 200, "default": 50 }
+      }
+    }
+  }
+}

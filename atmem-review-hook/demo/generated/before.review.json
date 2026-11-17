@@ -1,0 +1,189 @@
+{
+  "schema_version": "1.0",
+  "verdict": "fail",
+  "summary": "FAIL: 4 policy findings; 14 unverified checks. Supplied artifacts only; no deployment verification.",
+  "rules_file": {
+    "path": ".specify/memory/architecture.md",
+    "sha256": "f2a7e7266d05f8f6b2ab5cd65433e1f35ee44255286bf20f39b4c6ed6a91f23d",
+    "rule_count": 7,
+    "adr_count": 3
+  },
+  "violations": [
+    {
+      "rule_id": "REGION-001",
+      "severity": "error",
+      "title": "Unapproved region",
+      "evidence": [
+        {
+          "source": "terraform_plan",
+          "path": "infra/tfplan.json",
+          "resource_address": "aws_db_instance.main",
+          "attribute": "configuration.provider_config.aws.expressions.region.constant_value",
+          "value": "us-east-1"
+        }
+      ],
+      "explanation": "The resolved region is outside the policy allowlist.",
+      "exception_id": null
+    },
+    {
+      "rule_id": "REGION-001",
+      "severity": "error",
+      "title": "Unapproved region",
+      "evidence": [
+        {
+          "source": "terraform_plan",
+          "path": "infra/tfplan.json",
+          "resource_address": "aws_security_group_rule.db_ingress",
+          "attribute": "configuration.provider_config.aws.expressions.region.constant_value",
+          "value": "us-east-1"
+        }
+      ],
+      "explanation": "The resolved region is outside the policy allowlist.",
+      "exception_id": null
+    },
+    {
+      "rule_id": "NET-001",
+      "severity": "error",
+      "title": "Network attribute violates policy",
+      "evidence": [
+        {
+          "source": "terraform_plan",
+          "path": "infra/tfplan.json",
+          "resource_address": "aws_db_instance.main",
+          "attribute": "publicly_accessible",
+          "value": true
+        }
+      ],
+      "explanation": "Databases must not be publicly accessible",
+      "exception_id": null
+    },
+    {
+      "rule_id": "NET-002",
+      "severity": "error",
+      "title": "Public ingress outside the load-balancer exception",
+      "evidence": [
+        {
+          "source": "terraform_plan",
+          "path": "infra/tfplan.json",
+          "resource_address": "aws_security_group_rule.db_ingress",
+          "attribute": "cidr_blocks.0",
+          "value": "0.0.0.0/0"
+        },
+        {
+          "source": "terraform_plan",
+          "path": "infra/tfplan.json",
+          "resource_address": "aws_security_group_rule.db_ingress",
+          "attribute": "from_port",
+          "value": 5432
+        },
+        {
+          "source": "terraform_plan",
+          "path": "infra/tfplan.json",
+          "resource_address": "aws_security_group_rule.db_ingress",
+          "attribute": "to_port",
+          "value": 5432
+        },
+        {
+          "source": "terraform_plan",
+          "path": "infra/tfplan.json",
+          "resource_address": "aws_security_group_rule.db_ingress",
+          "attribute": "protocol",
+          "value": "tcp"
+        }
+      ],
+      "explanation": "World-open ingress is permitted only for a proven load balancer on TCP 443.",
+      "exception_id": null
+    }
+  ],
+  "cost": {
+    "status": "skipped",
+    "reason": "engine_unavailable"
+  },
+  "risks": [],
+  "suggested_fixes": [
+    {
+      "rule_id": "REGION-001",
+      "target": "aws_db_instance.main",
+      "change": "Use an approved region and regenerate the plan."
+    },
+    {
+      "rule_id": "REGION-001",
+      "target": "aws_security_group_rule.db_ingress",
+      "change": "Use an approved region and regenerate the plan."
+    },
+    {
+      "rule_id": "NET-001",
+      "target": "aws_db_instance.main",
+      "change": "Set publicly_accessible to the required value and regenerate the plan."
+    },
+    {
+      "rule_id": "NET-002",
+      "target": "aws_security_group_rule.db_ingress",
+      "change": "Restrict ingress to approved private sources or prove the load-balancer 443 exception."
+    }
+  ],
+  "unverified": [
+    {
+      "rule_id": "BUDGET-001",
+      "reason": "Monthly cost is unavailable; missing pricing is not zero."
+    },
+    {
+      "rule_id": "REGION-001",
+      "reason": "Desired-state inventory is incomplete or deferred; only supplied known resources were checked."
+    },
+    {
+      "rule_id": "RESIDENCY-001",
+      "reason": "Desired-state inventory is incomplete or deferred; only supplied known resources were checked."
+    },
+    {
+      "rule_id": "RESIDENCY-001",
+      "reason": "Data classification is not established for aws_db_instance.main"
+    },
+    {
+      "rule_id": "RESIDENCY-001",
+      "reason": "Backup/log/residency topology requires additional qualified resource adapters."
+    },
+    {
+      "rule_id": "UPTIME-001",
+      "reason": "Desired-state inventory is incomplete or deferred; only supplied known resources were checked."
+    },
+    {
+      "rule_id": "UPTIME-001",
+      "reason": "An uptime target cannot be established from configuration; operational/SLO evidence is required."
+    },
+    {
+      "rule_id": "SVC-001",
+      "reason": "Desired-state inventory is incomplete or deferred; only supplied known resources were checked."
+    },
+    {
+      "rule_id": "SVC-001",
+      "reason": "Service category is not mapped for aws_security_group_rule; no allowlist inference was made."
+    },
+    {
+      "rule_id": "NET-001",
+      "reason": "Desired-state inventory is incomplete or deferred; only supplied known resources were checked."
+    },
+    {
+      "rule_id": "NET-002",
+      "reason": "Desired-state inventory is incomplete or deferred; only supplied known resources were checked."
+    },
+    {
+      "rule_id": "ADR-0001",
+      "reason": "ADR semantic consistency has not been verified by a cited model review."
+    },
+    {
+      "rule_id": "ADR-0002",
+      "reason": "ADR semantic consistency has not been verified by a cited model review."
+    },
+    {
+      "rule_id": "ADR-0003",
+      "reason": "ADR semantic consistency has not been verified by a cited model review."
+    }
+  ],
+  "reviewer": {
+    "name": "atmem-review",
+    "version": "0.1.0",
+    "reviewed_at": "2026-11-17T12:03:26.158428+00:00",
+    "input_sha256": "7a0e1a8b8fa641ca83f8835192a02b812298d41e2d019474d9b39cdd8c6fb9ff"
+  }
+}
