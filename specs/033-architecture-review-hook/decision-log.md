@@ -13,3 +13,7 @@
 - Use proposed review-hook-v0.1.0 tag namespace for later owner-approved publication; Architect v* tags can invoke its npm publisher. No tag has been created.
 
 - Scope the standalone reviewer CI checkout to the full new component, its spec and workflow files. Full repository checkout exceeded Windows Git path limits in unrelated archived 028 evidence before tests; all reviewer platform tests remain required.
+
+- Follow-up live pricing: the owner completed CLI 2.19.1 interactive login. Its short-lived access token was passed in memory to the existing isolated pricing child; no refresh token, user home, cloud credentials or repository config were forwarded. The runtime still requires explicit cost egress and token configuration; it does not discover login caches automatically.
+- A real EC2/storage result exposed synthetic child resources with empty type, is_supported=false and complete cost components. Accept only these priced nested breakdowns, retain rejection for unsupported typed/root resources, and reject usage_unknown components even when their placeholder total is zero. Regression includes missing-price, unknown-usage and typed-unsupported counterexamples.
+- Credential-backed synthetic t3.micro/us-east-1 plus 8 GiB gp3 returned USD 8.232/month. The exact live result passed a USD 20 budget and failed a USD 5 budget. This is pricing/policy evidence only; no Terraform execution, deployed resources or live model review. See evidence/live-pricing.json. Earlier no-live-pricing notes describe the initial qualification stage.

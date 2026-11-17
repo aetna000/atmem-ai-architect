@@ -176,6 +176,21 @@ class EngineTests(unittest.TestCase):
 
 
 class CurrentInfracostTests(unittest.TestCase):
+    def test_priced_synthetic_storage_child_is_not_an_unsupported_resource(self):
+        output={'currency':'USD','summary':{'projects':1,'resources':1,'free_resources':0,'total_monthly_cost':'8.232'},'projects':[{'resources':[
+            {'name':'aws_instance.example','type':'aws_instance','is_supported':True,'is_free':False,
+             'cost_components':[{'total_monthly_cost':'7.592'}],
+             'subresources':[{'name':'root_block_device','type':'','is_supported':False,'is_free':False,
+                              'cost_components':[{'total_monthly_cost':'0.64'}]}]}]}]}
+        self.assertEqual(parse_infracost(output,'USD')['monthly_total'],8.232)
+        child=output['projects'][0]['resources'][0]['subresources'][0]
+        child['type']='aws_unknown_resource'
+        self.assertEqual(parse_infracost(output,'USD')['status'],'error')
+        child['type']='';child['cost_components'][0]['usage_unknown']=True
+        self.assertEqual(parse_infracost(output,'USD')['status'],'error')
+        child['cost_components'][0].pop('usage_unknown');child['cost_components'][0].pop('total_monthly_cost')
+        self.assertEqual(parse_infracost(output,'USD')['status'],'error')
+
     def test_current_cli_shape_counts_free_and_nested_resources_without_inventing_prices(self):
         from atmem_review.adapters import parse_infracost
         output={'currency':'USD','summary':{'projects':1,'resources':2,'free_resources':1,'total_monthly_cost':'45'},'projects':[{'resources':[

@@ -50,7 +50,7 @@ def _parse_legacy_infracost(data, currency):
 def parse_infracost(data,currency):
     if isinstance(data,dict) and data.get('version')=='0.2':return _parse_legacy_infracost(data,currency)
     # Source contract: infracost/cli v2.19.1 internal/format/json.go.
-    # This is not a claim of credential-backed pricing qualification.
+    # Credential-backed qualification scope is recorded separately in spec evidence.
     if not isinstance(data,dict) or 'version' in data or data.get('currency')!=currency:
         return {'status':'error','reason':'unsupported_cost_format_or_currency'}
     try:
@@ -69,7 +69,14 @@ def parse_infracost(data,currency):
             if not isinstance(components,list) or not isinstance(children,list):raise ValueError()
             if item['is_free']:
                 if components:raise ValueError()
-            elif not item['is_supported'] or not components and not children:raise ValueError()
+            else:
+                # CLI 2.19.1 emits priced synthetic children (e.g. EC2 root
+                # volumes) with empty type and is_supported=false. They are
+                # cost breakdowns, not unsupported Terraform resources.
+                synthetic_child=depth>0 and item.get('type')=='' and bool(components)
+                if not item['is_supported'] and not synthetic_child:raise ValueError()
+                if not components and not children:raise ValueError()
+            if any(c.get('usage_unknown',False) is not False for c in components):raise ValueError()
             total=sum(money(c['total_monthly_cost']) for c in components)
             return total+sum(resource(c,depth+1) for c in children)
         for project in projects:

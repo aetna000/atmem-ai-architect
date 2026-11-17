@@ -22,7 +22,7 @@ Use a separate future tag such as `review-hook-v0.1.0`; an Architect `v*` tag ca
 
 ## Remaining publication gates
 
-- Current Infracost CLI/credential-backed output compatibility and real cost coverage; no fixture prices as evidence.
+- Broader pricing coverage: CLI 2.19.1 now has one credential-backed EC2/gp3 qualification with actual under/over-budget decisions ([evidence](../specs/033-architecture-review-hook/evidence/live-pricing.json)); other services/providers/currencies remain unqualified.
 - Live explicitly approved model evaluation of representative prose/ADR cases, with usage and citation-quality evidence.
 - Installed client/platform CI and independent code review.
 - Owner authorization for tags, public package/catalog submissions or hosted service deployment.
