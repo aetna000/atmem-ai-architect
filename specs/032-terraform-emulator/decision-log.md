@@ -37,3 +37,5 @@
 ## Authorized release and hosted publication — 2026-11-17
 
 The owner requested deploying the latest online and publishing a stable npm package. Release target: 0.2.4. The npm launcher now installs the emulator lock separately and supplies its private interpreter. Hosted runs must use the registered immutable container image, with tenant/project-owned status polling, no external network/credentials/host mounts, nonroot execution and bounded resources. Missing sandbox configuration refuses execution; no local-process fallback is permitted online. Existing website instructions reserve private-main merges for the owner; prepare the complete website PR and validated publication artifact after their merge.
+
+- Actual Linux sandbox qualification built Lambda archives offline, then correctly rejected the generator lock because its content hash was for macOS. The retained registry lock in the owned worker image supplied the Linux content hash. All official archive hashes and version were compared exactly before adding that hash to the generator lock. No exported configuration or checksum verification was bypassed. Evidence: `evidence/aws-linux-provider-checksum.json`.
