@@ -29,7 +29,7 @@ class Campaign(Record):
     roots: list[Root] = Field(min_length=1, max_length=300)
     bindings: list[ModuleBinding] = Field(default_factory=list, max_length=1000)
     graph: dict
-    status: Literal['discovered', 'checking', 'module_release_pending', 'local_release_checked', 'blocked', 'canceled', 'historical'] = 'discovered'
+    status: Literal['discovered', 'checking', 'module_release_pending', 'local_release_checked', 'blocked', 'canceled', 'historical', 'proposals_merged'] = 'discovered'
     phase: str = Field(default='discovered', max_length=200)
     result: dict | None = None
     history: list[dict] = Field(default_factory=list, max_length=20)
@@ -147,13 +147,13 @@ class CampaignService:
             value.requestKey, value.operationDigest = None, None
             return self.store.put(value, expected)
 
-    def start(self, tenant, ident, expected, graph_digest, key, confirmed, module=None, release=None):
+    def start(self, tenant, ident, expected, graph_digest, key, confirmed, module=None, release=None, remote_fetch=None, remote_request=None):
         with self.lock:
             value = self.get(tenant, ident)
             if self.worker is None:
                 raise RuntimeError('Qualified local worker required')
             operation = digest({'graph': graph_digest, 'module': module, 'release': release, 'planner': planner_digest(),
-                                'policy': value.policy.model_dump(), 'worker': self.worker.identity})
+                                'policy': value.policy.model_dump(), 'worker': self.worker.identity, 'remoteRequest': remote_request})
             if not confirmed or graph_digest != value.graph['digest']:
                 raise Conflict('Confirm checks against the current graph')
             if value.requestKey == key:
@@ -165,7 +165,7 @@ class CampaignService:
             previous = value.result
             if len(value.history) >= 20:
                 raise ValueError('Campaign history reached its bound; export before creating a fresh campaign')
-            if release is not None and (previous is None or value.status not in {'module_release_pending', 'local_release_checked'}):
+            if (release is not None or remote_fetch is not None) and (previous is None or value.status not in {'module_release_pending', 'local_release_checked'}):
                 raise Conflict('Prepare module and consumer overlays before observing a release')
             lease = self.store.acquire(tenant, ident, value.policy.maxSeconds)
             event = threading.Event()
@@ -176,10 +176,10 @@ class CampaignService:
             value.requestKey, value.operationDigest = key, operation
             value = self.store.put(value, expected, lease=lease)
             self.running[ident] = event
-            self.pool.submit(self._run, tenant, ident, lease, event, module, release, previous)
+            self.pool.submit(self._run, tenant, ident, lease, event, module, release, previous, remote_fetch)
             return value
 
-    def _run(self, tenant, ident, lease, event, module, release, previous):
+    def _run(self, tenant, ident, lease, event, module, release, previous, remote_fetch=None):
         def phase(name):
             with self.lock:
                 current = self.store.get(tenant, ident)
@@ -187,8 +187,17 @@ class CampaignService:
                     raise Conflict('Campaign canceled')
                 current.phase = name
                 self.store.put(current, current.revision, lease=lease)
+        deadline = None
         try:
             value = self.store.get(tenant, ident)
+            deadline = threading.Timer(value.policy.maxSeconds, event.set)
+            deadline.start()
+            after_release = None
+            if remote_fetch is not None:
+                phase('fetching_module_release')
+                release, after_release = remote_fetch(event)
+                if event.is_set():
+                    raise ValueError('Release fetch canceled or compute budget exhausted')
             if release is None:
                 result = prepare_campaign(value.snapshots, value.roots, value.graph, module, self.worker,
                                           value.policy, cancel_event=event, on_progress=phase)
@@ -196,6 +205,8 @@ class CampaignService:
                 phase('released_artifact_checks')
                 result = observe_local_release(previous, **release, worker=self.worker, compute_confirmed=True,
                                                cancel_event=event, policy=value.policy)
+                if after_release is not None and result['status'] == 'local_release_checked':
+                    result = after_release(result)
             with self.lock:
                 current = self.store.get(tenant, ident)
                 if event.is_set() or current.status != 'checking':
@@ -216,6 +227,8 @@ class CampaignService:
                     except Conflict:
                         pass
         finally:
+            if deadline is not None:
+                deadline.cancel()
             with self.lock:
                 self.store.release(tenant, ident, lease)
                 self.running.pop(ident, None)

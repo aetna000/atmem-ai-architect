@@ -44,3 +44,11 @@ Native macOS Keychain uses Security.framework directly; no token is placed in su
 Private publication authorizations, intents, leases and branch claims stay outside portable campaigns. First proposal refs point to a unique nonce-bound candidate commit rather than the shared base commit, so an uncertain ref response cannot silently adopt another installation's base branch. Canonical Git object hashes are independently checked with Git. Exact approvals expire after 15 minutes, serialize a campaign, and must disclose automation. Unknown PR outcomes are reconciled, never blindly repeated. Module-wave fake protocol checks pass, but the coordinator remains inactive: consumer release observation, checked refresh, UI and T016 actual network qualification remain unfinished.
 
 R2 client CI passed all three OS clients on c302bd7; the hosted creation race repair also passed Firestore transactions/native worker CI. Campaign readiness now becomes historical when its current worker is missing or has changed, in addition to policy changes.
+
+## R3 development follow-up: gated UI, receipts and inert CI
+
+Implemented default-closed local publication routes/UI, private authenticated module-release observations, separate consumer wave confirmation, partial-merge invalidation and expected-head conditional refresh. Browser reload is read-only; it restores no authorization. Confirmed PR creation receipts appear immediately even during the bounded remote poll interval; creation receipts do not invent merge observations.
+
+Campaign root projection preserves known automation files as inert bytes while nested executable Terraform/configuration layouts remain blocked. Independent patch policy still refuses automation changes; the isolated worker never executes repository CI. Real offline worker checks plus fake GitHub demonstrate preserved CI bytes and explicit automation disclosure. These are not actual GitHub acceptance.
+
+Prepared a staged real acceptance driver and exact four-repository private scope in r3-acceptance.md. No repository creation, account token enrollment, remote publication, tag, merge, cloud start, public release or hosted maintenance deployment was performed. T016 authorization/remote evidence and later R4 governance alignment remain mandatory.

@@ -7,12 +7,21 @@ import unittest
 from server.maintenance.graph import discover
 from server.maintenance.models import Candidate, ComputePolicy
 from server.maintenance.patches import apply_candidate
-from server.maintenance.planner import prepare_campaign, observe_local_release, overlay, content_digest
+from server.maintenance.planner import prepare_campaign, observe_local_release, overlay, content_digest, root_files
+from server.maintenance.inventory import snapshot
 from server.maintenance.workers import MaintenanceWorker
 from server.tests.test_maintenance_graph import frozen_campaign
 
 
 class OverlayTests(unittest.TestCase):
+    def test_root_projection_retains_inert_automation_but_refuses_nested_configuration(self):
+        workflow = 'name: review\non: pull_request\njobs: {}\n'
+        files = {'main.tf': 'output "answer" { value = 42 }', '.github/workflows/review.yml': workflow}
+        self.assertEqual(root_files(snapshot(files, 'repository-ci'), '.'), files)
+        for path in ['nested/main.tf', '.github/workflows/hidden.tf', 'assets/program.py']:
+            with self.assertRaisesRegex(ValueError, 'Nested root assets'):
+                root_files(snapshot({**files, path: '# retained unsupported asset'}, 'repository-ci'), '.')
+
     def test_only_validation_copy_gets_local_module_path(self):
         root = {'main.tf': 'module "shared" { source = "company/queue/aws" version = "~> 1.0" }'}
         module = {'main.tf': 'output "answer" { value = 42 }'}

@@ -26,12 +26,26 @@ class PublicationStore:
                 preview TEXT PRIMARY KEY, epoch INTEGER NOT NULL, owner TEXT NOT NULL, expires REAL NOT NULL);
               CREATE TABLE IF NOT EXISTS publication_claims (
                 repository INTEGER NOT NULL, branch TEXT NOT NULL, tenant TEXT NOT NULL,
-                project TEXT NOT NULL, campaign TEXT NOT NULL, nonce TEXT NOT NULL, head TEXT NOT NULL,
+                project TEXT NOT NULL, campaign TEXT NOT NULL, nonce TEXT NOT NULL, head TEXT NOT NULL, manifest TEXT,
                 PRIMARY KEY(repository,branch));
+              CREATE TABLE IF NOT EXISTS publication_pr_observations (
+                tenant TEXT NOT NULL, project TEXT NOT NULL, campaign TEXT NOT NULL, repository INTEGER NOT NULL,
+                number INTEGER NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(tenant,project,campaign,repository,number));
+              CREATE TABLE IF NOT EXISTS publication_merge_observations (
+                tenant TEXT NOT NULL, project TEXT NOT NULL, campaign TEXT NOT NULL, graph TEXT NOT NULL,
+                root TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(tenant,project,campaign,root));
+              CREATE TABLE IF NOT EXISTS publication_poll_cursors (
+                tenant TEXT NOT NULL, project TEXT NOT NULL, campaign TEXT NOT NULL, next REAL NOT NULL,
+                PRIMARY KEY(tenant,project,campaign));
+              CREATE TABLE IF NOT EXISTS publication_release_observations (
+                id TEXT PRIMARY KEY, tenant TEXT NOT NULL, project TEXT NOT NULL, campaign TEXT NOT NULL,
+                digest TEXT NOT NULL, payload TEXT NOT NULL);
               CREATE TABLE IF NOT EXISTS publication_events (
                 sequence INTEGER PRIMARY KEY, preview TEXT NOT NULL, operation TEXT,
                 kind TEXT NOT NULL, at REAL NOT NULL);
             ''')
+            if 'manifest' not in {row['name'] for row in db.execute('PRAGMA table_info(publication_claims)')} :
+                db.execute('ALTER TABLE publication_claims ADD COLUMN manifest TEXT')
             row = db.execute("SELECT nonce FROM publication_installation WHERE id='local'").fetchone()
             if row is None:
                 self.installation = str(uuid4())
@@ -60,10 +74,78 @@ class PublicationStore:
         if len(encoded.encode()) > 64_000_000 or payload.get('tenant') != tenant or payload.get('project') != project:
             raise ValueError('Publication preview exceeds its scope or size bound')
         with self.store.transaction() as db:
+            if db.execute('SELECT COUNT(*) FROM publication_previews WHERE tenant=? AND project=?', (tenant, project)).fetchone()[0] >= 100:
+                raise ValueError('Publication preview retention bound reached; preserve audit before starting fresh')
             db.execute('INSERT INTO publication_previews VALUES(?,?,?,?,?,?,?)',
                        (payload['id'], tenant, project, campaign, digest(payload), encoded, time.time()))
             self._event(db, payload['id'], 'preview_created')
         return self.preview(tenant, project, payload['id'])
+
+    def campaign_previews(self, tenant, project, campaign):
+        with self.store.transaction() as db:
+            rows = db.execute('SELECT id FROM publication_previews WHERE tenant=? AND project=? AND campaign=? ORDER BY created',
+                              (tenant, project, campaign)).fetchall()
+        return [self.preview(tenant, project, row['id']) for row in rows]
+
+    def poll_due(self, tenant, project, campaign):
+        with self.store.transaction() as db:
+            row = db.execute('SELECT next FROM publication_poll_cursors WHERE tenant=? AND project=? AND campaign=?', (tenant, project, campaign)).fetchone()
+            if row is not None and row['next'] > time.time():
+                return False
+            db.execute('INSERT OR REPLACE INTO publication_poll_cursors VALUES(?,?,?,?)', (tenant, project, campaign, time.time() + 30))
+            return True
+
+    def retain_pr(self, tenant, project, campaign, graph, root, payload, *, consumer=False):
+        encoded = json.dumps(payload, allow_nan=False, separators=(',', ':'))
+        if len(encoded) > 10000:
+            raise ValueError('PR observation exceeds its bound')
+        with self.store.transaction() as db:
+            db.execute('INSERT OR REPLACE INTO publication_pr_observations VALUES(?,?,?,?,?,?)',
+                       (tenant, project, campaign, payload['repositoryId'], payload['number'], encoded))
+            if consumer and payload['merged']:
+                previous = db.execute('SELECT payload FROM publication_merge_observations WHERE tenant=? AND project=? AND campaign=? AND root=?',
+                                      (tenant, project, campaign, root)).fetchone()
+                if previous is not None:
+                    old = json.loads(previous['payload'])
+                    if (old['repositoryId'], old['number'], old['head']) != (payload['repositoryId'], payload['number'], payload['head']):
+                        raise Conflict('Merged consumer observation cannot be replaced by a different proposal')
+                else:
+                    db.execute('INSERT INTO publication_merge_observations VALUES(?,?,?,?,?,?)', (tenant, project, campaign, graph, root, encoded))
+
+    def merged_consumers(self, tenant, project, campaign, graph):
+        with self.store.transaction() as db:
+            rows = db.execute('SELECT root,payload FROM publication_merge_observations WHERE tenant=? AND project=? AND campaign=? AND graph=? ORDER BY root',
+                              (tenant, project, campaign, graph)).fetchall()
+        return {row['root']: json.loads(row['payload']) for row in rows}
+
+    def pr_observations(self, tenant, project, campaign):
+        with self.store.transaction() as db:
+            rows = db.execute('SELECT payload FROM publication_pr_observations WHERE tenant=? AND project=? AND campaign=?', (tenant, project, campaign)).fetchall()
+        return [json.loads(row['payload']) for row in rows]
+
+    def save_release_observation(self, tenant, project, campaign, payload):
+        ident = str(uuid4())
+        encoded = json.dumps(payload, allow_nan=False, separators=(',', ':'), ensure_ascii=False)
+        if len(encoded.encode()) > 64000:
+            raise ValueError('Release observation exceeds its explicit bound')
+        with self.store.transaction() as db:
+            count = db.execute('SELECT COUNT(*) FROM publication_release_observations WHERE tenant=? AND project=?', (tenant, project)).fetchone()[0]
+            if count >= 1000:
+                raise ValueError('Release observation retention bound reached')
+            db.execute('INSERT INTO publication_release_observations VALUES(?,?,?,?,?,?)',
+                       (ident, tenant, project, campaign, digest(payload), encoded))
+        return ident
+
+    def release_observation(self, tenant, project, campaign, ident):
+        with self.store.transaction() as db:
+            row = db.execute('SELECT * FROM publication_release_observations WHERE id=? AND tenant=? AND project=? AND campaign=?',
+                             (ident, tenant, project, campaign)).fetchone()
+        if row is None:
+            raise PermissionError('Authenticated module release observation is unavailable')
+        value = json.loads(row['payload'])
+        if digest(value) != row['digest']:
+            raise ValueError('Private release observation integrity mismatch')
+        return value
 
     def authorize(self, tenant, project, preview, expected_digest, *, automation_accepted):
         current = self.preview(tenant, project, preview)
@@ -162,20 +244,25 @@ class PublicationStore:
             db.execute('UPDATE publication_operations SET state=?,result=? WHERE id=?', (state, encoded, operation['id']))
             self._event(db, preview, 'operation_' + state, operation['id'])
 
-    def claim(self, tenant, project, campaign, repository, branch, nonce, head):
+    def claim(self, tenant, project, campaign, repository, branch, nonce, head, *, manifest=None, expected_head=None):
         with self.store.transaction() as db:
             row = db.execute('SELECT * FROM publication_claims WHERE repository=? AND branch=?', (repository, branch)).fetchone()
             if row is not None and (row['tenant'], row['project'], row['campaign'], row['nonce']) != (tenant, project, campaign, nonce):
                 raise Conflict('Proposal branch belongs to a different campaign or installation')
-            db.execute('INSERT OR REPLACE INTO publication_claims VALUES(?,?,?,?,?,?,?)',
-                       (repository, branch, tenant, project, campaign, nonce, head))
+            if row is not None and row['head'] != head and (expected_head is None or row['head'] != expected_head):
+                raise Conflict('Proposal ownership head advanced; late outcomes cannot roll it back')
+            encoded = json.dumps(manifest, allow_nan=False, separators=(',', ':')) if manifest is not None else (row['manifest'] if row else None)
+            if encoded is not None and len(encoded) > 64000:
+                raise ValueError('Proposal ownership manifest exceeds its bound')
+            db.execute('INSERT OR REPLACE INTO publication_claims VALUES(?,?,?,?,?,?,?,?)',
+                       (repository, branch, tenant, project, campaign, nonce, head, encoded))
 
     def owned(self, tenant, project, campaign, repository, branch):
         with self.store.transaction() as db:
             row = db.execute('SELECT * FROM publication_claims WHERE repository=? AND branch=?', (repository, branch)).fetchone()
         if row is None or (row['tenant'], row['project'], row['campaign']) != (tenant, project, campaign):
             return None
-        return dict(row)
+        return {**dict(row), 'manifest': json.loads(row['manifest']) if row['manifest'] else None}
 
     def cancel(self, tenant, project, preview):
         self.preview(tenant, project, preview)
@@ -189,8 +276,9 @@ class PublicationStore:
             db.execute('UPDATE publication_leases SET expires=0 WHERE preview=? AND owner=? AND epoch=?', (preview, *lease))
 
     def status(self, tenant, project, preview):
-        self.preview(tenant, project, preview)
         with self.store.transaction() as db:
+            if db.execute('SELECT 1 FROM publication_previews WHERE id=? AND tenant=? AND project=?', (preview, tenant, project)).fetchone() is None:
+                raise PermissionError('Publication preview unavailable')
             rows = db.execute('SELECT id,action,state,result FROM publication_operations WHERE preview=? ORDER BY action', (preview,)).fetchall()
         # Crash between intent and acknowledgement is uncertain until reconciliation.
         return {'previewId': preview, 'operations': [{**dict(row), 'state': 'uncertain' if row['state'] == 'in_flight' else row['state'],

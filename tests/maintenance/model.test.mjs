@@ -40,3 +40,9 @@ test('progress reports actual phases without fabricated percentages or passed wa
  assert.equal(progress({status:'historical',phase:'reproduce_checks',receipts:[{kind:'candidate',status:'historical'}]}).completed.size,0);
  assert.equal(progress({status:'historical',phase:'reproduce_checks'}).label,'Imported evidence · recheck required');
 });
+
+test('folder selection retains Terraform tests for explicit unsupported checks rather than silently omitting them',async()=>{
+ const text='run "acceptance" { command = plan }';
+ const selected=await readSelection([{name:'acceptance.tftest.hcl',webkitRelativePath:'repo/acceptance.tftest.hcl',size:text.length,arrayBuffer:async()=>new TextEncoder().encode(text).buffer}]);
+ assert.deepEqual(selected,{'acceptance.tftest.hcl':text});
+});

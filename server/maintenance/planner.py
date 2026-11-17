@@ -12,7 +12,7 @@ import threading
 import time
 
 from .graph import affected_waves
-from .inventory import parse_files, snapshot, inventory
+from .inventory import AUTOMATION, parse_files, snapshot, inventory
 from .models import ComputePolicy
 from .patches import source_map, apply_candidate, build_candidate, check_patch
 from .store import digest
@@ -33,7 +33,7 @@ def content_digest(files):
 def root_files(source, directory):
     prefix = '' if directory == '.' else directory + '/'
     selected = {path[len(prefix):]: text for path, text in source_map(source).items() if path.startswith(prefix)}
-    if any('/' in path for path in selected):
+    if any('/' in path and (not AUTOMATION.search(path) or path.endswith(('.tf', '.tf.json', '.tftest.hcl', '.lock.hcl'))) for path in selected):
         raise ValueError('Nested root assets require a separately qualified campaign layout')
     return selected
 
@@ -138,6 +138,14 @@ def _check(worker, files, kind, bindings, cancel_event, deadline):
     return result, receipt
 
 
+def _locked_target_passed(result, lock):
+    report = result.get('report') or {}
+    queue = report.get('queueSchema', {}).get('block', {})
+    return (result['status'] == 'passed' and result.get('cleanupConfirmed') is True and
+            report.get('lock') == lock and 'compute_environments' not in queue.get('attributes', {}) and
+            'compute_environment_order' in queue.get('block_types', {}))
+
+
 def prepare_campaign(snapshots, roots, graph, changed_module, worker, policy=None, *, cancel_event=None, on_progress=None):
     policy = policy or ComputePolicy()
     cancel_event = cancel_event or threading.Event()
@@ -204,7 +212,7 @@ def prepare_campaign(snapshots, roots, graph, changed_module, worker, policy=Non
                 final, receipt = _check(worker, projected, 'candidate', {**bindings, 'consumerPatchDigest': candidate.digest,
                                         'moduleArtifactDigest': artifact}, cancel_event, deadline)
                 checks.append(receipt)
-                if final['status'] != 'passed' or not final.get('cleanupConfirmed'):
+                if not _locked_target_passed(final, after['.terraform.lock.hcl']):
                     return {'schemaVersion': 1, 'status': 'blocked', 'module': changed_module, 'graphDigest': graph['digest'],
                             'findings': [{'code': 'final_consumer_check_failed', 'consumer': consumer}], 'checks': checks}
         proposals[consumer] = {'before': before, 'candidate': candidate.model_dump(), 'edges': edges}
@@ -244,7 +252,7 @@ def observe_local_release(campaign, *, released_files, source, version, resolved
                          'artifactDigest': content_digest(released_files), 'observation': 'operator_supplied_local_simulation'}
     result['releaseChecks'] = []
     for consumer, proposal in sorted(result['consumers'].items()):
-        if consumer in result.get('simulatedMergedConsumers', []):
+        if consumer in set(result.get('simulatedMergedConsumers', [])) | set(result.get('observedMergedConsumers', [])):
             continue
         before = proposal['before']
         after = apply_candidate(before, Candidate.model_validate(proposal['candidate']))
@@ -272,7 +280,7 @@ def observe_local_release(campaign, *, released_files, source, version, resolved
         check, receipt = _check(worker, projected, 'candidate', {'graphDigest': result['graphDigest'], 'consumer': consumer,
                                  'consumerPatchDigest': patch.digest, 'moduleArtifactDigest': artifact}, cancel_event, deadline)
         result['releaseChecks'].append(receipt)
-        if check['status'] != 'passed' or not check.get('cleanupConfirmed'):
+        if not _locked_target_passed(check, after['.terraform.lock.hcl']):
             result['status'] = 'blocked'
             result['findings'] = [{'code': 'released_consumer_check_failed', 'consumer': consumer}]
             result['digest'] = digest(result)

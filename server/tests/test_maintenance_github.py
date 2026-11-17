@@ -152,3 +152,49 @@ class GitHubBrokerTests(unittest.TestCase):
         for method, path in [('GET', 'https://evil.invalid/'), ('GET', '//evil.invalid/'), ('DELETE', '/repos/owner/project')]:
             with self.assertRaises(ValueError):
                 transport.request(self.token, method, path)
+
+class TagTransport(FakeTransport):
+    def __init__(self):
+        super().__init__()
+        self.tag_reads, self.move, self.cycle = 0, False, False
+    def request(self, token, method, path, body=None, headers=None):
+        if '/git/ref/tags/' in path:
+            self.tag_reads += 1
+            return {'data': {'object': {'type': 'tag', 'sha': 'c' * 40}}, 'headers': {}, 'status': 200}
+        if '/git/tags/' in path:
+            commit = 'd' * 40 if self.move and self.tag_reads > 1 else 'a' * 40
+            return {'data': {'object': {'type': 'tag' if self.cycle else 'commit', 'sha': 'c' * 40 if self.cycle else commit}}, 'headers': {}, 'status': 200}
+        return super().request(token, method, path, body, headers)
+
+
+class ReleasedArtifactTests(unittest.TestCase):
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory();self.addCleanup(self.temp.cleanup)
+        self.db = Store(Path(self.temp.name) / 'maintenance.sqlite')
+        self.remote = TagTransport()
+        self.broker = GitHubBroker(self.db, FakeKeychain(), self.remote)
+        self.connection = self.broker.register('tenant-one', ['project-one'], 'owner', ['owner/project'], 'github_pat_' + 'x' * 30, int(time.time()) + 3600)
+        self.args = ('tenant-one', 'project-one', self.connection.id, 'owner/project')
+
+    def test_annotated_release_fetch_requires_full_set_and_byte_equality(self):
+        files, proof = self.broker.released_module(*self.args, 'v2.0.0', '.', {'main.tf': 'terraform {}\n'})
+        self.assertEqual(files, {'main.tf': 'terraform {}\n'})
+        self.assertEqual(proof['commit'], 'a' * 40)
+        self.assertEqual(proof['tagObject'], 'c' * 40)
+        self.assertEqual(proof['source'], 'git::https://github.com/owner/project.git?ref=' + 'a' * 40)
+        with self.assertRaisesRegex(ValueError, 'bytes'):
+            self.broker.released_module(*self.args, 'v2.0.0', '.', {'main.tf': '# different'})
+        self.remote.files['README.md'] = b'additional release file'
+        with self.assertRaisesRegex(ValueError, 'file set'):
+            self.broker.released_module(*self.args, 'v2.0.0', '.', {'main.tf': 'terraform {}\n'})
+
+    def test_moving_tags_cycles_and_non_tag_refs_are_denied(self):
+        from server.maintenance.store import Conflict
+        self.remote.move = True
+        with self.assertRaises(Conflict):
+            self.broker.released_module(*self.args, 'v2.0.0', '.', {'main.tf': 'terraform {}\n'})
+        self.remote.move = False;self.remote.cycle = True
+        with self.assertRaises(ValueError):
+            self.broker.resolve_tag(*self.args, 'v2.0.0')
+        for tag in ['../main', 'refs/tags/../../main', 'v2^{commit}', 'v2\nmalicious']:
+            with self.assertRaises(ValueError):self.broker.resolve_tag(*self.args, tag)

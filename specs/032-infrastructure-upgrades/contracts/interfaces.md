@@ -78,3 +78,12 @@ R2 campaigns are separate from R1 source history:
 - GET `/{id}/export` and POST `/campaigns/import`: versioned complete source/evidence; import binds the receiving owner/project and demotes readiness.
 
 R2 deliberately exposes no GitHub token, remote write, publication authorization or schedule. The proposed R3 publication commands above remain unimplemented until their dependency gates pass.
+
+
+## Gated local R3 development adapter
+
+`server/maintenance_publication_routes.py` implements the local `/api/maintenance/github` namespace behind `ATMEM_ARCHITECT_ENABLE_MAINTENANCE_PUBLICATION=1` (default closed). This does not register a hosted publication API. Capabilities advertise pending actual GitHub acceptance. Connections expose metadata only; token enrollment stays in the interactive OS-keychain CLI.
+
+Campaign commands: POST `/campaigns/{id}/preview`, POST `/campaigns/{id}/observe-release` (queued real source fetch and checks), GET `/campaigns/{id}/proposals` (30-second remote status budget). Preview commands: GET `/previews/{id}/review` (metadata projection), GET `/export` (full private preview without grants), GET `/previews/{id}` (bounded operations), POST `/authorize`, `/publish`, `/cancel` and `/reconcile`. Publication requires an Idempotency-Key. All commands bind project scope; publication additionally binds exact preview digest, private authorization and current campaign/policy/head evidence. No arbitrary HTTP/mutation dispatch or account token field is exposed.
+
+Confirmed PR creation receipts may appear before the next remote poll; `merged: null` means no merge observation. Only validated remote status can record a merged consumer or invalidate the remaining wave. Creation receipts cannot satisfy a release/merge gate.

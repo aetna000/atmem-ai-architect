@@ -50,12 +50,15 @@ from .maintenance_routes import router as maintenance_router, close as close_mai
 app.include_router(maintenance_router)
 from .maintenance_campaign_routes import router as campaign_router, close as close_campaigns
 app.include_router(campaign_router)
+from .maintenance_publication_routes import router as publication_router, close as close_publication
+app.include_router(publication_router)
 from .engineering_routes import router as engineering_router, close as close_engineering
 app.include_router(engineering_router)
 
 @app.on_event('shutdown')
 async def shutdown_engineering():
     await close_engineering()
+    close_publication()
     close_campaigns()
     close_maintenance()
 TOKEN=secrets.token_urlsafe(32)

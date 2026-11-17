@@ -17,7 +17,7 @@ export function selectionPath(file) {
 export function selectable(path) {
   return !path.split('/').some(p=>['.git','.terraform','node_modules','.venv'].includes(p)) &&
     !/(^|\/)(\.env[^/]*|.*\.tfvars(?:\.json)?|.*\.pem|.*\.key|credentials|secrets?[^/]*)$/i.test(path) &&
-    (path.endsWith('.tf')||path.endsWith('.tf.json')||path.endsWith('.terraform.lock.hcl')||/(^|\/)(\.github\/|\.gitlab-ci|atlantis\.|Jenkinsfile|azure-pipelines|\.circleci\/|\.buildkite\/)/i.test(path));
+    (path.endsWith('.tf')||path.endsWith('.tf.json')||path.endsWith('.tftest.hcl')||path.endsWith('.terraform.lock.hcl')||/(^|\/)(\.github\/|\.gitlab-ci|atlantis\.|Jenkinsfile|azure-pipelines|\.circleci\/|\.buildkite\/)/i.test(path));
 }
 export async function readSelection(fileList) {
   const selected={};let total=0;

@@ -20,6 +20,7 @@ from pydantic import Field
 from .credential_store import MacKeychain, KeychainUnavailable
 from .inventory import snapshot, safe_path, SENSITIVE_PATH, AUTOMATION
 from .models import Record, Identifier
+from .store import Conflict
 
 REPOSITORY = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_.-]{0,99}/[A-Za-z0-9][A-Za-z0-9_.-]{0,99}$')
 COMMIT = re.compile(r'^[a-f0-9]{40}$')
@@ -231,16 +232,26 @@ class GitHubBroker:
                 or metadata.get('full_name') != repository or metadata.get('archived')
                 or metadata.get('owner', {}).get('login', '').lower() != connection.resourceOwner.lower()):
                 raise PermissionError('Repository or credential identity changed')
-            paths = {'blob': '/git/blobs', 'tree': '/git/trees', 'commit': '/git/commits', 'ref': '/git/refs', 'pull': '/pulls'}
+            paths = {'blob': '/git/blobs', 'tree': '/git/trees', 'commit': '/git/commits', 'ref': '/git/refs', 'pull': '/pulls', 'append': '/graphql'}
             if kind not in paths:
                 raise ValueError('Unreviewed publication operation')
             if kind == 'ref':
                 ref = body.get('ref', '')
                 if not ref.startswith('refs/heads/atmem-upgrades/') or ref.removeprefix('refs/heads/') == metadata.get('default_branch'):
                     raise PermissionError('Default, tag and unapproved proposal refs are forbidden')
+            if kind == 'append':
+                branch = body.get('branch', {})
+                if branch.get('repositoryNameWithOwner') != repository or not branch.get('refName', '').startswith('atmem-upgrades/') or branch.get('refName') == metadata.get('default_branch'):
+                    raise PermissionError('Conditional append is limited to the exact proposal branch')
+                changes = body.get('fileChanges', {})
+                if any(AUTOMATION.search(item.get('path', '')) for item in [*changes.get('additions', []), *changes.get('deletions', [])]):
+                    raise PermissionError('Automation file changes are forbidden')
             if kind == 'tree' and any(AUTOMATION.search(item.get('path', '')) for item in body.get('tree', [])):
                 raise PermissionError('Automation file changes are forbidden')
             guard(metadata)  # Durable exact-intent and authorization check, not a model decision.
+            if kind == 'append':
+                query = 'mutation($input:CreateCommitOnBranchInput!){createCommitOnBranch(input:$input){commit{oid}}}'
+                return self.transport.request(token, 'POST', '/graphql', {'query': query, 'variables': {'input': body}})
             return self.transport.request(token, 'POST', repo_path(repository) + paths[kind], body)
         except GitHubError as error:
             if error.status in {401, 403}:
@@ -248,13 +259,70 @@ class GitHubBroker:
                 self._save(connection)
             raise
 
-    def materialize(self, tenant, project, ident, repository, commit, paths):
+    def resolve_tag(self, tenant, project, ident, repository, tag):
+        if (not isinstance(tag, str) or not 1 <= len(tag) <= 200 or tag.startswith(('/', '.'))
+            or tag.endswith(('/', '.')) or '..' in tag or '@{' in tag or tag.endswith('.lock')
+            or any(ord(c) < 33 or c in '~^:?*[\\' for c in tag)):
+            raise ValueError('Select an exact existing Git tag')
+        result = self.request(tenant, project, ident, repository, 'GET',
+                              '/git/ref/tags/' + urllib.parse.quote(tag, safe=''))['data']
+        obj = result.get('object', {})
+        observed = obj.get('sha')
+        seen = set()
+        for _ in range(6):
+            sha = obj.get('sha', '')
+            if not isinstance(sha, str) or not COMMIT.fullmatch(sha) or sha in seen:
+                raise ValueError('Released tag identity is unresolved')
+            seen.add(sha)
+            if obj.get('type') == 'commit':
+                return {'tag': tag, 'tagObject': observed, 'commit': sha}
+            if obj.get('type') != 'tag':
+                break
+            obj = self.request(tenant, project, ident, repository, 'GET', '/git/tags/' + sha)['data'].get('object', {})
+        raise ValueError('Annotated tag chain exceeds its qualification bound')
+
+    def released_module(self, tenant, project, ident, repository, tag, directory, expected_files, *, cancel_event=None):
+        if directory != '.':
+            safe_path(directory)
+        observed = self.resolve_tag(tenant, project, ident, repository, tag)
+        commit = self.request(tenant, project, ident, repository, 'GET', '/commits/' + observed['commit'])['data']
+        tree_id = commit.get('commit', {}).get('tree', {}).get('sha')
+        if commit.get('sha') != observed['commit'] or not isinstance(tree_id, str) or not COMMIT.fullmatch(tree_id):
+            raise ValueError('Released commit tree could not be verified')
+        tree = self.request(tenant, project, ident, repository, 'GET', '/git/trees/' + tree_id + '?recursive=1')['data']
+        if tree.get('truncated') or tree.get('sha') != tree_id or len(tree.get('tree', [])) > 20000:
+            raise ValueError('Released source tree is incomplete')
+        prefix = '' if directory == '.' else directory + '/'
+        paths = [item['path'] for item in tree['tree'] if item.get('type') != 'tree' and
+                 (item['path'].startswith(prefix) or AUTOMATION.search(item['path']))]
+        module_paths = {path[len(prefix):] for path in paths if path.startswith(prefix)}
+        if module_paths != set(expected_files):
+            raise ValueError('Released module file set differs from the tested candidate')
+        fetched = self.materialize(tenant, project, ident, repository, observed['commit'], paths, cancel_event=cancel_event)
+        files = {f.path[len(prefix):]: f.text for f in fetched.files if f.path.startswith(prefix)}
+        if files != expected_files:
+            raise ValueError('Released module bytes differ from the tested candidate')
+        if self.resolve_tag(tenant, project, ident, repository, tag) != observed:
+            raise Conflict('Released tag moved while source was fetched')
+        source = 'git::https://github.com/' + repository + '.git' + ('//' + directory if directory != '.' else '')
+        source += '?ref=' + observed['commit']  # Pin the authenticated release bytes, not a moving tag.
+        connection = self.connection(tenant, project, ident)
+        return files, {**observed, 'repository': repository, 'repositoryId': connection.repositories[repository],
+                       'connection': ident, 'directory': directory, 'source': source, 'version': None,
+                       'sourceTreeDigest': fetched.treeDigest, 'observedAt': int(time.time())}
+
+    def materialize(self, tenant, project, ident, repository, commit, paths, *, cancel_event=None):
         if not COMMIT.fullmatch(commit) or not isinstance(paths, list) or not 1 <= len(paths) <= 1000 or len(set(paths)) != len(paths):
             raise ValueError('Select an immutable commit and bounded unique file paths')
         for path in paths:
             safe_path(path)
             if SENSITIVE_PATH.search(path) or any(part in {'.git', '.terraform', 'node_modules', '.venv'} for part in path.split('/')):
                 raise ValueError('Sensitive or installed source paths are excluded')
+        started = time.monotonic()
+        def checkpoint():
+            if time.monotonic() - started > 300 or cancel_event is not None and cancel_event.is_set():
+                raise ValueError('Source fetch canceled or exceeded five minutes')
+        checkpoint()
         record = self.request(tenant, project, ident, repository, 'GET', '/commits/' + commit)['data']
         if record.get('sha') != commit:
             raise ValueError('Requested immutable revision did not match GitHub')
@@ -275,6 +343,7 @@ class GitHubBroker:
             raise ValueError('Include every selected-root configuration and repository automation file')
         files, total = {}, 0
         for path in paths:
+            checkpoint()
             item = entries.get(path)
             if item is None or item.get('type') != 'blob' or item.get('mode') not in {'100644', '100755'}:
                 raise ValueError('Selected source is missing, a symlink, or an unresolved submodule')

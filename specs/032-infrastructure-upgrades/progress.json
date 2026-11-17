@@ -155,27 +155,46 @@
     },
     {
       "id": "T014",
-      "status": "in_progress",
+      "status": "done",
       "evidence": [
+        "evidence/r3-local-checks.json",
+        "scripts/maintenance-publication-smoke.mjs",
+        "server/maintenance/git_objects.py",
         "server/maintenance/publication.py",
         "server/maintenance/publication_store.py",
-        "server/maintenance/git_objects.py",
+        "server/maintenance_publication_routes.py",
         "server/tests/test_maintenance_publication.py",
-        "server/tests/test_maintenance_publication_protocol.py"
+        "server/tests/test_maintenance_publication_protocol.py",
+        "src/maintenance/PublicationPanel.jsx"
       ],
       "blockers": []
     },
     {
       "id": "T015",
-      "status": "todo",
-      "evidence": [],
+      "status": "done",
+      "evidence": [
+        "evidence/r3-local-checks.json",
+        "scripts/maintenance-publication-smoke.mjs",
+        "server/maintenance_publication_routes.py",
+        "server/tests/test_maintenance_publication_routes.py",
+        "src/maintenance/PublicationPanel.jsx"
+      ],
       "blockers": []
     },
     {
       "id": "T016",
-      "status": "todo",
-      "evidence": [],
-      "blockers": []
+      "status": "blocked",
+      "evidence": [
+        "r3-acceptance.md",
+        "evidence/r3-acceptance-scope.json",
+        "scripts/maintenance-github-acceptance.py",
+        "server/tests/test_maintenance_acceptance_driver.py"
+      ],
+      "blockers": [
+        "Awaiting separate explicit authorization for four new private disposable repositories and operator test actions.",
+        "Enroll a selected-repository fine-grained token through the interactive OS-keychain CLI.",
+        "Actual remote failure/protection/revocation/race and module/consumer-wave evidence remain required."
+      ]
     },
     {
       "id": "T017",
@@ -224,9 +243,17 @@
     "R3 six fake-transport broker protocol tests passed; native macOS Keychain dummy round-trip and deletion passed; no remote account token or write used",
     "Hosted CI creation race repaired: eight storage/creation tests passed; refreshed hosted CI pending",
     "Latest pushed R2 package/install matrix (Linux/macOS/Windows), native worker and hosted Firestore transactions all passed on c302bd7",
-    "R3 13 broker/Git-object/private-ledger tests passed; six additional fake-service module-publication/recovery/race tests passed; no remote acceptance claimed"
+    "R3 13 broker/Git-object/private-ledger tests passed; six additional fake-service module-publication/recovery/race tests passed; no remote acceptance claimed",
+    "R3 browser/API fake-GitHub module publication passed: explicit acceptance, immediate PR link, compact layout, reload without duplicate writes; no actual GitHub network/write acceptance",
+    "R3 eight local protocol/API tests passed; three targeted overlay/receipt regressions passed",
+    "R3: 35 targeted server/campaign tests passed in 280.593 seconds; real isolated Terraform and fake GitHub release/refresh/partial-merge protocols",
+    "R3: full browser/API module and consumer waves passed, including private release fetch, real checks, partial merge invalidation and remaining-wave confirmation; three PRs without duplicates",
+    "607 JavaScript tests, production build and dependency notices passed",
+    "Initial broad server run: 10 memory failures from absent default .memory-venv interpreter; configured AtMem 2.3.14 memory suite: all 18 passed; corrected broad run in progress",
+    "Configured full server regression: 672 ran in 183.680 seconds; 635 passed, 37 optional/platform/worker skips; zero failures. Real maintenance worker checks separately passed.",
+    "Current prior R2 real-worker browser passed: module/two consumers, exact overlays, release equality, partial-merge invalidation, fresh remaining wave and persistence."
   ],
-  "changedFilesScope": "Local R0/R1 implementation, privacy boundaries, fixtures, browser regression refresh and review artifacts; no public release or hosted rollout",
+  "changedFilesScope": "R0\u2013R3 local maintenance development, gated repository-publication API/UI and pause/resume operations; no public release or hosted maintenance rollout",
   "review": {
     "modelRequested": "claude-opus-5-5",
     "effort": "medium",
@@ -240,7 +267,7 @@
     ],
     "limits": "round2 full documents; round3 final clarification delta; read-only tools disabled"
   },
-  "authorAssessment": "R1/R2 local candidates implemented and qualified, including client matrix and repaired hosted CI. R3 broker implemented; exact module-wave coordinator passes fake protocol tests but remains inactive and incomplete. Consumer waves, checked refresh, UI and real remote acceptance remain. R4 not implemented.",
+  "authorAssessment": "R1/R2 local candidates previously qualified. R3 T013\u2013T015 implementation and browser/isolated-worker checks complete behind a default-closed developer gate. T016 actual GitHub qualification awaits separate disposable-repository authorization and fine-grained token setup. Current full server regression passed (635 passed, 37 skipped); prior R1/R2 real-worker browser regressions passed. R4 remains unimplemented and dependency-gated.",
   "productTests": "Real local Linux arm64 provider/schema and hostile-container checks; real browser and AtMem; model/audio/pricing fixtures explicitly distinguished. No cloud, state, deployment or publication qualification.",
   "changedFiles": [
     "README.md",
@@ -251,7 +278,9 @@
     "package.json",
     "scripts/delivery-smoke.mjs",
     "scripts/maintenance-campaign-smoke.mjs",
+    "scripts/maintenance-github-acceptance.py",
     "scripts/maintenance-github.py",
+    "scripts/maintenance-publication-smoke.mjs",
     "scripts/maintenance-smoke.mjs",
     "scripts/memory-e2e.mjs",
     "scripts/npm-installed-check.mjs",
@@ -294,12 +323,15 @@
     "server/maintenance/verification.py",
     "server/maintenance/workers.py",
     "server/maintenance_campaign_routes.py",
+    "server/maintenance_publication_routes.py",
     "server/maintenance_routes.py",
     "server/requirements.lock",
     "server/requirements.txt",
     "server/tests/e2e_app.py",
+    "server/tests/maintenance_publication_e2e.py",
     "server/tests/test_engineering_contexts.py",
     "server/tests/test_engineering_local_worker.py",
+    "server/tests/test_maintenance_acceptance_driver.py",
     "server/tests/test_maintenance_campaign.py",
     "server/tests/test_maintenance_campaign_store.py",
     "server/tests/test_maintenance_git_objects.py",
@@ -309,6 +341,7 @@
     "server/tests/test_maintenance_isolation.py",
     "server/tests/test_maintenance_publication.py",
     "server/tests/test_maintenance_publication_protocol.py",
+    "server/tests/test_maintenance_publication_routes.py",
     "server/tests/test_maintenance_routes.py",
     "server/tests/test_maintenance_service.py",
     "server/tests/test_maintenance_store.py",
@@ -327,11 +360,14 @@
     "specs/032-infrastructure-upgrades/evidence/r1.json",
     "specs/032-infrastructure-upgrades/evidence/r2-checks.json",
     "specs/032-infrastructure-upgrades/evidence/r2.json",
+    "specs/032-infrastructure-upgrades/evidence/r3-acceptance-scope.json",
     "specs/032-infrastructure-upgrades/evidence/r3-broker.json",
+    "specs/032-infrastructure-upgrades/evidence/r3-local-checks.json",
     "specs/032-infrastructure-upgrades/evidence/tool-artifacts.json",
     "specs/032-infrastructure-upgrades/plan.md",
     "specs/032-infrastructure-upgrades/progress.json",
     "specs/032-infrastructure-upgrades/quickstart.md",
+    "specs/032-infrastructure-upgrades/r3-acceptance.md",
     "specs/032-infrastructure-upgrades/releases.md",
     "specs/032-infrastructure-upgrades/research.md",
     "specs/032-infrastructure-upgrades/reviews/input-receipts.json",
@@ -344,6 +380,7 @@
     "src/main.jsx",
     "src/maintenance/CampaignPanel.jsx",
     "src/maintenance/MaintenancePanel.jsx",
+    "src/maintenance/PublicationPanel.jsx",
     "src/maintenance/maintenance.css",
     "src/maintenance/model.mjs",
     "src/project-file.mjs",
@@ -420,8 +457,12 @@
       }
     },
     "R3": {
-      "status": "in_progress_broker_and_module_publication_prototype",
-      "gate": "Exact disposable-repository write authorization and actual remote qualification required"
+      "status": "implemented_local_gated_remote_acceptance_pending",
+      "gate": "Exact disposable-repository write authorization and actual remote qualification required",
+      "evidence": [
+        "evidence/r3-local-checks.json",
+        "r3-acceptance.md"
+      ]
     },
     "R4": {
       "status": "todo",

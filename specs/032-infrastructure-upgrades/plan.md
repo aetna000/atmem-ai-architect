@@ -1,7 +1,7 @@
 # Implementation Plan: Infrastructure upgrade maintenance
 
 **Date**: 2026-11-16 | **Branch**: spec/infrastructure-upgrade-maintenance | **Spec**: spec.md
-**Status**: Design proposal. See releases.md for gated increments; no implementation authorized in this planning turn.
+**Status**: Owner-authorized development in progress. Follow tasks.md dependencies and progress.json evidence; publication and deployment remain separately scoped.
 
 ## Summary
 
