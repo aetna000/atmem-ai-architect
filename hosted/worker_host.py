@@ -56,7 +56,7 @@ class NativeWorkerHost:
    capability=await asyncio.to_thread(self.broker.bind,uid)
    environment={key:value for key,value in os.environ.items() if key in {'PATH','LANG','LC_ALL'}}
    # Only reviewed operator registrations are inherited; never provider/Google credentials.
-   for name in ['ENGINEERING_TOOL_ROOTS','ENGINEERING_TOOLCHAIN','ENGINEERING_VALIDATORS','ENGINEERING_VALIDATOR_ENDPOINT','ENGINEERING_ISOLATION_PROFILES','ENGINEERING_VALIDATOR_WORKERS','PROVIDER_CACHE','TERRAFORM_BIN','TFLINT_BIN','WHISPER_MODEL']:
+   for name in ['ENGINEERING_TOOL_ROOTS','ENGINEERING_TOOLCHAIN','ENGINEERING_VALIDATORS','ENGINEERING_VALIDATOR_ENDPOINT','ENGINEERING_ISOLATION_PROFILES','ENGINEERING_VALIDATOR_WORKERS','TERRAFORM_EMULATOR_IMAGE','PROVIDER_CACHE','TERRAFORM_BIN','TFLINT_BIN','WHISPER_MODEL']:
     key='ATMEM_ARCHITECT_'+name
     if key in os.environ:environment[key]=os.environ[key]
    errors=(tenant/'runtime.log').open('ab');os.chmod(tenant/'runtime.log',0o600)

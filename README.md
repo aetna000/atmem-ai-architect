@@ -74,7 +74,7 @@ Cost estimates remain partial where service prices or usage are missing. No clou
 
 Open in Orca requires its CLI; actual desktop launch remains unverified.
 
-[Local engineering](docs/LOCAL_ENGINEERING.md) · [Training](docs/TRAINING.md) · [Voice](docs/VOICE.md) · [Cloud emulation](docs/CLOUD_EMULATION.md)
+[Local engineering](docs/LOCAL_ENGINEERING.md) · [Training](docs/TRAINING.md) · [Voice](docs/VOICE.md) · [Cloud emulation](docs/CLOUD_EMULATION.md) · [Terraform apply emulation](docs/TERRAFORM_EMULATION.md)
 
 ## Licence
 

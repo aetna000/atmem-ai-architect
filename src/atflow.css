@@ -1138,3 +1138,57 @@ h1, h2, h3, .brand, .doc-head h2, .modal h2, .detail-title input, .indicator str
 .emulation-next-step .link { justify-self:start; }
 .intake-status { display:flex; align-items:center; gap:8px; padding:8px 16px; font-size:12px; color:var(--color-brand-text); background:var(--color-brand-soft); }
 .message-work-state { display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-top:6px; font-size:11px; color:var(--ink-2); }
+
+/* Terraform apply emulation */
+.apply-emulation{margin:20px 0;padding:18px;border:1px solid var(--line);border-radius:16px;background:var(--paper);text-align:left}
+.apply-emulation.is-passed{border-color:var(--accent)}
+.apply-emulation-head{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.apply-emulation-head h3{margin:3px 0;font-size:16px}
+.apply-emulation-caption{font-size:12px;line-height:1.5;color:var(--muted);margin:8px 0 0}
+.apply-emulation-stages{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:2px}
+.apply-emulation-stages li{display:grid;grid-template-columns:20px 1fr auto;gap:8px;align-items:center;padding:7px 8px;border-radius:9px;font-size:12px}
+.apply-emulation-stages li small{color:var(--muted);font-variant-numeric:tabular-nums}
+.apply-emulation-stages li.passed svg{color:var(--accent)}
+.apply-emulation-stages li.failed{background:color-mix(in srgb,#c0392b 9%,transparent)}
+.apply-emulation-stages li.failed svg{color:#c0392b}
+.apply-emulation-stages li.running{background:var(--accent-soft);font-weight:700}
+.apply-emulation-stages li.running svg{animation:apply-spin 1s linear infinite}
+.apply-emulation-stages li.pending,.apply-emulation-stages li.skipped{color:var(--muted)}
+.apply-emulation-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px;margin:14px 0}
+.apply-emulation-facts div{padding:10px 12px;border:1px solid var(--line);border-radius:12px}
+.apply-emulation-facts strong{display:block;font-size:20px;font-variant-numeric:tabular-nums}
+.apply-emulation-facts span{font-size:11px;color:var(--muted)}
+.apply-emulation details{margin-top:10px;font-size:12px}
+.apply-emulation table{width:100%;border-collapse:collapse;margin-top:6px}
+.apply-emulation th,.apply-emulation td{text-align:left;padding:4px 8px 4px 0;border-bottom:1px solid var(--line);font-size:11px;overflow-wrap:anywhere}
+.apply-emulation .btn{margin-top:12px}
+.apply-emulation-head .btn{margin-top:0}
+@keyframes apply-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.apply-emulation-stages li.running svg{animation:none}}
+
+/* Terraform apply emulation: Board dock, launcher and live diagram states */
+.apply-launcher{position:absolute;left:76px;bottom:24px;z-index:10;display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:999px;border:1px solid var(--line);background:var(--paper);color:var(--ink);font-weight:600;font-size:13px;box-shadow:0 8px 28px #153c3c18;cursor:pointer}
+.apply-launcher:hover,.apply-launcher:focus-visible{background:var(--accent-soft)}
+.apply-launcher.working{border-color:var(--accent);animation:mentor-pulse 1.6s ease-in-out infinite}
+.apply-dock .emulation-track .failed{color:var(--bad);font-weight:700}
+.apply-dock.is-passed{border-color:var(--good)}
+.apply-emulation-facts.compact{grid-template-columns:repeat(3,1fr);margin:10px 0 0}
+.apply-emulation-facts.compact strong{font-size:16px}
+.apply-emulation-facts.compact span{font-size:10px}
+.blk-count{position:absolute;right:-8px;bottom:-9px;padding:1px 7px;border-radius:999px;font-size:10px;font-weight:700;font-variant-numeric:tabular-nums;background:var(--paper);border:1px solid var(--line);color:var(--muted)}
+.blk-state .spin{animation:apply-spin 1s linear infinite}
+.blk.state-planned{border-style:dashed}
+.blk.state-creating{border-color:var(--warn);box-shadow:0 0 0 4px var(--color-warn-soft);animation:blk-pulse 1.1s ease-in-out infinite}
+.blk.state-creating .blk-state{color:var(--warn)}
+.blk.state-applied{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.blk.state-applied .blk-state{color:var(--accent)}
+.blk.state-verified{border-color:var(--good);box-shadow:0 0 0 4px var(--color-good-soft)}
+.blk.state-verified .blk-state{background:var(--good);color:#fff}
+.blk.state-verified .blk-count,.blk.state-applied .blk-count{border-color:currentColor;color:var(--good)}
+.blk.state-destroying{border-color:var(--color-signal);box-shadow:0 0 0 4px var(--color-signal-soft);animation:blk-pulse 1.1s ease-in-out infinite}
+.blk.state-destroying .blk-state{color:var(--color-signal)}
+.blk.state-gone{border-style:dashed;opacity:.6}
+.react-flow__edge.wire-live .react-flow__edge-path{stroke:var(--accent);stroke-width:2}
+@keyframes blk-pulse{50%{transform:scale(1.025)}}
+@media(prefers-reduced-motion:reduce){.blk.state-creating,.blk.state-destroying,.apply-launcher.working,.blk-state .spin{animation:none}}
+@media(max-width:700px){.apply-launcher{left:12px;bottom:12px}}

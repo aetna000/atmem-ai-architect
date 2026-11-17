@@ -32,6 +32,10 @@ jobs:
         run: |
           python -m venv .venv
           .venv/bin/python -m pip install --require-hashes -r server/requirements.lock
+      - name: Qualify AWS service engines in their isolated runtime
+        run: |
+          python scripts/setup-terraform-emulator.py
+          .local/terraform-emulator-runtime/bin/python -m unittest server.tests.test_terraform_emulator_engines server.tests.test_terraform_emulator_continuation server.tests.test_terraform_emulator_coverage -v
       - run: npm ci --ignore-scripts
       - run: npm test
       - run: npm run package:npm

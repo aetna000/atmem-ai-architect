@@ -74,10 +74,10 @@ class ValidationSpec:
         if self.platform not in {'linux/amd64','linux/arm64'}:raise ValueError('Unqualified container platform')
         if not isinstance(self.command,tuple) or not self.command or not all(isinstance(x,str) and x and '\0' not in x for x in self.command) or not self.command[0].startswith('/'):
             raise ValueError('Register an explicit trusted validator executable/argument vector')
-        if type(self.timeout_seconds) is not int or not 1<=self.timeout_seconds<=300:raise ValueError('Validator time budget must be bounded')
+        if type(self.timeout_seconds) is not int or not 1<=self.timeout_seconds<=(1500 if self.isolation_profile=='terraform-emulation-v1' else 300):raise ValueError('Validator time budget must be bounded')
         if not isinstance(self.bootstrap_python,str) or not self.bootstrap_python.startswith('/') or '\0' in self.bootstrap_python:
             raise ValueError('Register an absolute Python bootstrap executable in the reviewed image')
-        if self.isolation_profile not in {'standard-v1','chromium-userns-v1','postgresql-local-v1'}:raise ValueError('Unreviewed validator isolation profile')
+        if self.isolation_profile not in {'standard-v1','chromium-userns-v1','postgresql-local-v1','terraform-emulation-v1'}:raise ValueError('Unreviewed validator isolation profile')
         if type(self.executable_scratch)is not bool:raise ValueError('Executable dependency scratch requires an explicit operator boolean')
         if self.executable_scratch and self.isolation_profile=='chromium-userns-v1':raise ValueError('Executable dependency scratch is not qualified with the browser profile')
         if not isinstance(self.runtime_environment,tuple) or any(not isinstance(pair,tuple) or len(pair)!=2 or not isinstance(pair[0],str) or pair[0] not in {'ATMEM_PLAYWRIGHT_MODULE','PLAYWRIGHT_BROWSERS_PATH'} or not isinstance(pair[1],str) or not pair[1].startswith('/') or any(ord(c)<32 for c in pair[1]) for pair in self.runtime_environment) or len({pair[0] for pair in self.runtime_environment})!=len(self.runtime_environment):
@@ -99,7 +99,7 @@ class DockerValidationWorker:
     def __init__(self, endpoint, *, binary='docker', max_output_bytes=256000, isolation_profiles=None):
         if not isinstance(endpoint,str) or not endpoint.startswith('unix:///') or not Path(endpoint[7:]).is_socket():
             raise ValueError('Use an explicitly registered local Docker Unix socket')
-        if type(max_output_bytes) is not int or not 1024<=max_output_bytes<=1000000:
+        if type(max_output_bytes) is not int or not 1024<=max_output_bytes<=4500000:
             raise ValueError('Validator output budget must be bounded')
         self.endpoint,self.binary,self.max_output_bytes=endpoint,binary,max_output_bytes
         profiles={} if isolation_profiles is None else isolation_profiles
@@ -114,9 +114,9 @@ class DockerValidationWorker:
         self.policy_digest=hashlib.sha256(json.dumps({'code':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'profiles':{name:hashlib.sha256(content).hexdigest() for name,content in self.isolation_profiles.items()}},sort_keys=True).encode()).hexdigest()
         self.identity_digest=hashlib.sha256(endpoint.encode()).hexdigest()
 
-    def supports(self,spec):return spec.isolation_profile in {'standard-v1','postgresql-local-v1'} or spec.isolation_profile in self.isolation_profiles
+    def supports(self,spec):return spec.isolation_profile in {'standard-v1','postgresql-local-v1','terraform-emulation-v1'} or spec.isolation_profile in self.isolation_profiles
 
-    def run(self, archive, expected_digest, spec: ValidationSpec, *, execution_id=None, cancel_event=None):
+    def run(self, archive, expected_digest, spec: ValidationSpec, *, execution_id=None, cancel_event=None, progress=None):
         if not isinstance(archive,bytes) or len(archive)>64000000 or hashlib.sha256(archive).hexdigest()!=expected_digest:
             raise ValueError('Digest-bound artifact bytes are required')
         if not self.supports(spec):raise RuntimeError('The reviewed isolation profile is unavailable; no fallback was used')
@@ -143,22 +143,24 @@ class DockerValidationWorker:
                 raise RuntimeError('The reviewed cached platform is unavailable; no fallback or image pull was used')
             browser=spec.isolation_profile=='chromium-userns-v1'
             postgres=spec.isolation_profile=='postgresql-local-v1'
+            emulation=spec.isolation_profile=='terraform-emulation-v1'
             security=[]
             if browser:
                 policy=Path(folder)/'reviewed-seccomp.json';policy.write_bytes(self.isolation_profiles[spec.isolation_profile])
                 security=['--security-opt','seccomp='+str(policy)]
             runtime_env=[part for name,value in spec.runtime_environment for part in ['--env',name+'='+value]]
-            dependency_scratch=['--tmpfs','/dependencies:rw,exec,nosuid,nodev,size=128m,mode=1777','--env','TMPDIR=/dependencies','--env','ATMEM_TEST_DEPENDENCY_ROOT=/dependencies']if spec.executable_scratch else []
+            dependency_scratch=['--tmpfs',f'/dependencies:rw,exec,nosuid,nodev,size={512 if emulation else 128}m,mode=1777','--env','TMPDIR=/dependencies','--env','ATMEM_TEST_DEPENDENCY_ROOT=/dependencies']if spec.executable_scratch else []
             command=[*prefix,'run','--pull','never','--rm','--name',ident,'--platform',spec.platform,
                 '--network','none','--read-only','--cap-drop','ALL','--cap-add','SETUID','--cap-add','SETGID',
-                '--security-opt','no-new-privileges',*security,'--pids-limit','128' if browser else '64','--memory','512m' if browser or postgres else '256m','--cpus','1',
+                '--security-opt','no-new-privileges',*security,'--pids-limit','128' if browser or emulation else '64','--memory','1536m' if emulation else '512m' if browser or postgres else '256m','--cpus','1',
                 '--tmpfs','/work:rw,noexec,nosuid,nodev,size=128m,mode=0755',
-                '--tmpfs',f'/tmp:rw,noexec,nosuid,nodev,size={192 if postgres else 64 if browser else 32}m,mode=1777',
+                '--tmpfs',f'/tmp:rw,noexec,nosuid,nodev,size={256 if emulation else 192 if postgres else 64 if browser else 32}m,mode=1777',
                 '--env','HOME=/tmp','--env','PYTHONDONTWRITEBYTECODE=1','--env','AWS_EC2_METADATA_DISABLED=true',
                 *runtime_env,*dependency_scratch,'--entrypoint',spec.bootstrap_python,'-i',spec.image,'-I','-c',BOOTSTRAP,
                 json.dumps([expected_digest,list(spec.command)])]
             log=Path(folder)/'output.log'
             reason=None
+            progress_position=0;progress_pending=b''
             with log.open('wb') as output:
                 process=subprocess.Popen(command,env=env,stdin=subprocess.PIPE,stdout=output,stderr=subprocess.STDOUT)
                 def send():
@@ -170,6 +172,15 @@ class DockerValidationWorker:
                 writer=threading.Thread(target=send,daemon=True);writer.start()
                 try:
                     while process.poll() is None:
+                        if progress is not None:
+                            with log.open('rb') as live:
+                                live.seek(progress_position);chunk=live.read(self.max_output_bytes+1);progress_position=live.tell()
+                            progress_pending+=chunk
+                            while b'\n' in progress_pending:
+                                line,progress_pending=progress_pending.split(b'\n',1)
+                                if line.startswith(b'ATMEM_EMULATION_EVENT:'):
+                                    try:progress(json.loads(line[len(b'ATMEM_EMULATION_EVENT:'):]))
+                                    except (ValueError,TypeError):pass
                         if cancel_event is not None and cancel_event.is_set():reason='cancelled';break
                         if time.monotonic()-started>spec.timeout_seconds:reason='timeout';break
                         if log.stat().st_size>self.max_output_bytes:reason='output_limit';break
