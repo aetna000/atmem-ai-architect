@@ -73,6 +73,7 @@ __ENV__ARCHITECT_ENV
 # Start with only checks whose immutable runtime contracts are registered here.
 # Browser checks are added after the exact host/user-namespace policy is qualified.
 printf 'ATMEM_ARCHITECT_ENGINEERING_VALIDATORS=[{"id":"python-tests","label":"Python application tests","image":"%s","command":["/opt/architect/venv/bin/python","-m","unittest","discover","-v"],"bootstrapPython":"/opt/architect/venv/bin/python","timeoutSeconds":180,"applicability":{"anyOf":["**/test_*.py","**/*_test.py"]}},{"id":"node-tests","label":"Node application tests","image":"%s","command":["/usr/local/bin/node","--test","--test-reporter=tap","--test-concurrency=1"],"bootstrapPython":"/opt/architect/venv/bin/python","timeoutSeconds":180,"applicability":{"anyOf":["**/*.test.mjs","**/*.test.js"]}}]\n' "$IMAGE_ID" "$IMAGE_ID" >> "$STATE/config/worker.env"
+printf 'ATMEM_ARCHITECT_TERRAFORM_EMULATOR_IMAGE=%s\\n' "$IMAGE_ID" >> "$STATE/config/worker.env"
 chmod 600 "$STATE/config/worker.env"
 SOCKET_GROUP=$(stat -c '%g' /var/run/docker.sock)
 cat > /etc/systemd/system/architect-native-worker.service <<ARCHITECT_UNIT
@@ -112,7 +113,9 @@ registration_code='\n'.join([
  "   [row['applicability'].update(noneOf=['**/browser.test.mjs','**/*.browser.test.mjs']) for row in entries if row['id']=='node-tests']",
  "  line=key+json.dumps(entries+extra,separators=(',',':'))",' result.append(line)',"p.write_text('\\n'.join(result)+'\\n')"])
 registration='docker run --rm --network=none --read-only --user 0:0 --env CONFIG_ID="$IMAGE_ID" --mount type=bind,src="$STATE/config",dst=/config --entrypoint python "$IMAGE" -c '+shlex.quote(registration_code)+'\n'
-startup=startup.replace('chmod 600 "$STATE/config/worker.env"',registration+'chmod 600 "$STATE/config/worker.env"')
+startup=startup.replace('printf 'ATMEM_ARCHITECT_TERRAFORM_EMULATOR_IMAGE=%s\\n' "$IMAGE_ID" >> "$STATE/config/worker.env"
+chmod 600 "$STATE/config/worker.env"',registration+'printf 'ATMEM_ARCHITECT_TERRAFORM_EMULATOR_IMAGE=%s\\n' "$IMAGE_ID" >> "$STATE/config/worker.env"
+chmod 600 "$STATE/config/worker.env"')
 (out/'startup.sh').write_text(startup)
 plan={'instance':name,'project':project,'zone':zone,'machineType':'e2-medium','osImage':'cos-cloud/'+args.os_image,
  'workerImage':args.image,'stateDisk':name+'-state','stateDiskGiB':30,'stateDiskAutoDelete':False,

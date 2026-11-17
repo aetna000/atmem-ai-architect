@@ -11,6 +11,7 @@ KINDS=frozenset({'account_opened','project_created','project_saved','project_del
     'chat_requested','generation_requested','validation_requested','handoff_requested'})
 JOB_KINDS={'/api/architect':'chat_requested','/api/engineering/start':'generation_requested',
     '/api/engineering/validation/start':'validation_requested','/api/terraform/validate':'validation_requested',
+    '/api/terraform/emulate':'validation_requested',
     '/api/engineering/handoff':'handoff_requested'}
 
 class Activity:

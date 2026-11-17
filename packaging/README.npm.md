@@ -37,6 +37,10 @@ AtMem-owned code is Apache-2.0. Bundled third-party licences and notices are ret
 
 Contact: [hello@atmem.ai](mailto:hello@atmem.ai) · [atmem.ai](https://atmem.ai)
 
-## Version 0.2.3
+## Version 0.2.4
 
-Slimmer project/stage controls, a clearer responsive message field and reliable Delivery refresh after generation or reopening. The complete example remains available. Hosted account analytics deploy separately; local installations do not load website analytics.
+Terraform apply emulation now animates real resource lifecycle events on Board. The launcher installs its isolated emulator runtime. Hosted account analytics deploy separately; local installations do not load website analytics.
+
+## Terraform apply emulation
+
+Install Terraform 1.7+ separately. Architect prepares its isolated emulator Python environment automatically. On Board, choose **Emulate apply**. The real Terraform/provider lifecycle targets loopback AWS APIs, reads resources through the SDK, checks convergence and destroys the emulated resources. Reports identify measured behavior and gaps; they do not prove AWS deployment, IAM enforcement or actual compute execution.

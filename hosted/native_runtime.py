@@ -13,6 +13,7 @@ class NativeWorkspaceRuntime:
   if configured and Path(configured).resolve()!=self.root:raise RuntimeError('Each native tenant requires its own process and home')
   os.environ['ATMEM_ARCHITECT_HOME']=str(self.root)
   os.environ['ATMEM_ARCHITECT_ENABLE_ENGINEERING']='1'
+  os.environ['ATMEM_ARCHITECT_REQUIRE_EMULATION_SANDBOX']='1'
   os.environ['ATMEM_ARCHITECT_ENGINEERING_WORKSPACE_ROOT']=str(self.root)
   # Import after binding this private process to its tenant, never from public API.
   from fastapi import FastAPI
@@ -27,7 +28,7 @@ class NativeWorkspaceRuntime:
   self.app=FastAPI(docs_url=None,redoc_url=None,openapi_url=None)
   self.paths=registered_paths();self.methods=registered_methods()
   # Use public router inventories directly; FastAPI may defer include_router flattening.
-  sources=[native.app.router,native.memory_router,native.terraform_router,native.emulation_router,native.engineering_router,native.voice_router,native.openai_voice_router]
+  sources=[native.app.router,native.memory_router,native.terraform_router,native.terraform_emulation_router,native.emulation_router,native.engineering_router,native.voice_router,native.openai_voice_router]
   self.app.router.routes=[route for source in sources for route in source.routes if getattr(route,'path',None) in self.paths and set(getattr(route,'methods',{}))&set(self.methods.get(route.path,[]))]
   if {route.path for route in self.app.routes}!=self.paths:raise RuntimeError('Pinned native route inventory no longer matches this runtime')
   self.lock=asyncio.Lock()
@@ -57,6 +58,7 @@ class NativeWorkspaceRuntime:
   if method not in self.methods.get(job['path'],[]):raise ValueError('Worker method is not registered')
   pid=job['projectId']
   if body.get('projectId',pid)!=pid:raise ValueError('Worker operation belongs to another project')
+  if job['path']=='/api/terraform/emulate' and body.get('project',{}).get('id')!=pid:raise ValueError('Emulation belongs to another project')
   async with self.lock:
    self.snapshot(pid,job['projectSnapshot'],snapshot)
    if job['path']=='/api/architect':

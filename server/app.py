@@ -44,6 +44,8 @@ from .terraform_routes import router as terraform_router
 app.include_router(terraform_router)
 from .emulation_routes import router as emulation_router
 app.include_router(emulation_router)
+from .terraform_emulation_routes import router as terraform_emulation_router
+app.include_router(terraform_emulation_router)
 from .engineering_routes import router as engineering_router, close as close_engineering
 app.include_router(engineering_router)
 

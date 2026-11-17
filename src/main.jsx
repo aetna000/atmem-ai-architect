@@ -32,6 +32,9 @@ import {readAttachments,ATTACHMENT_ACCEPT} from "./chat-attachments.mjs";
 import {BrainActivity} from "./BrainActivity.jsx";
 import {useEmulation} from './useEmulation.jsx';
 import {EmulationPanel} from './EmulationPanel.jsx';
+import {TerraformApplyDock,useTerraformApplyEmulation} from './TerraformApplyPanel.jsx';
+import {applyNodeStates} from './terraform-apply-emulation.mjs';
+import {identityToken} from './identifiers.mjs';
 import {EngineeringPanel} from './EngineeringPanel.jsx';
 import {emulationPrompt,guardEmulationCorrection,groundEmulationMessage,emulationCoachReady} from './emulation-feedback.mjs';
 import {projectIdFromUrl} from './project-links.mjs';
@@ -115,6 +118,8 @@ import {
   FolderOpen,
   Moon,
   Sun,
+  Loader2,
+  Minus,
 } from "lucide-react";
 import { roleOf } from "./review.mjs";
 import {
@@ -233,6 +238,11 @@ const STATUS_GLYPH = {
   passed: <Check size={13} />,
   failed: <X size={13} />,
   running: <BrainActivity size={24} />,
+  creating: <Loader2 size={13} className="spin" />,
+  applied: <Check size={13} />,
+  verified: <ShieldCheck size={13} />,
+  destroying: <Loader2 size={13} className="spin" />,
+  gone: <Minus size={13} />,
 };
 
 // Terraform mark from Simple Icons (CC0), https://simpleicons.org/?q=terraform.
@@ -316,6 +326,7 @@ function BlockNode({ data, selected }) {
         {data.blockReview&&<ReviewBadge item={data.blockReview} onClick={data.onReview}/>}
       </span>
       <span className="blk-state">{STATUS_GLYPH[data.runState]}</span>
+      {data.runCount && data.runState && data.runState !== "idle" && <span className="blk-count" title="Resources live on the emulator">{data.runCount}</span>}
       {data.kind !== "output" && (
         <Handle type="source" position={handlePosition(data.outputPosition, Position.Right)} />
       )}
@@ -751,6 +762,11 @@ function App() {
 
   useEffect(()=>{saveCanvasView(project,{level,focus,selected,positions:topologyPositions});},[project.id,level,focus,selected,topologyPositions]);
   const emulation=useEmulation(project,environment,session);
+  // Terraform apply emulation: one run shared by the Board dock and the Terraform view.
+  const applyKey=useMemo(()=>JSON.stringify({projectId:project.id,files:terraformSketch(project,environment)}),[project,environment]);
+  const applyEmulation=useTerraformApplyEmulation(project,environment,session,applyKey);
+  const applyDiagram=useMemo(()=>applyEmulation.running||applyEmulation.report?applyNodeStates(project.nodes.map(n=>n.id),identityToken,applyEmulation.events,applyEmulation.report,applyEmulation.running):{states:{},counts:{}},[project.nodes,applyEmulation.running,applyEmulation.report,applyEmulation.events]);
+  const [applyDockOpen,setApplyDockOpen]=useState(false);
   const emulationWorking=emulation.running||(agentBusy&&!!emulation.result);
   const [pricingState,setPricingState]=useState({busy:false,errors:[]});
   const [generationPending,setGenerationPending]=useState(false);
@@ -1574,9 +1590,11 @@ function App() {
   const previewing = shown !== project;
   const blockReviews = useMemo(()=>componentReviews(shown),[shown]);
   const reviewBlock = id => {setMode('design');setDesignView('board');setFocus(null);openBlock(id);};
-  const system = useMemo(() => systemView(shown, runStates), [shown, runStates]);
+  // Live Terraform apply emulation states take precedence on the blocks they touch.
+  const liveStates = useMemo(() => ({ ...runStates, ...applyDiagram.states }), [runStates, applyDiagram]);
+  const system = useMemo(() => systemView(shown, liveStates), [shown, liveStates]);
   const wireClass = (source) =>
-    `wire ${runStates[source] === "failed" ? "wire-failed" : runStates[source] === "passed" ? "wire-passed" : ""}`;
+    `wire ${liveStates[source] === "failed" ? "wire-failed" : ["passed","verified"].includes(liveStates[source]) ? "wire-passed" : ["creating","applied"].includes(liveStates[source]) ? "wire-live" : ""}`;
   const canvasNodes =
     level === "system"
       ? system.nodes.map((n) => ({ ...n, position:topologyPositions[n.id]||n.position, data:{...n.data,onExplore:()=>n.data.blocks.length===1?reviewBlock(n.data.blocks[0]):goFlow(n.data.layer),onReview:()=>reviewBlock(blockReviews.find(r=>n.data.blocks.includes(r.id)&&r.issues.length)?.id||n.data.blocks[0]),reviewSummary:{reviewed:blockReviews.filter(r=>n.data.blocks.includes(r.id)&&r.status==='reviewed').length,issues:blockReviews.filter(r=>n.data.blocks.includes(r.id)).flatMap(r=>r.issues)}}, measured: measured[n.id], className: previewing ? "preview" : "" }))
@@ -1586,7 +1604,7 @@ function App() {
           measured: measured[n.id],
           className: `${previewing ? "preview" : ""} ${attention?.nodes.includes(n.id) ? "diagram-attention" : ""}`,
           selected: n.id === selected || picked.has(n.id),
-          data: { ...n.data, blockReview:blockReviews.find(r=>r.id===n.id), onReview:()=>reviewBlock(n.id), onText: noteText, fresh: n.id === freshNote.current, runState: runStates[n.id], dim: (focusBlocks && !focusBlocks.has(n.id)) || (testing && !n.data.poc && n.data.kind !== "resource" && project.nodes.some((x) => x.data.poc)) },
+          data: { ...n.data, blockReview:blockReviews.find(r=>r.id===n.id), onReview:()=>reviewBlock(n.id), onText: noteText, fresh: n.id === freshNote.current, runState: liveStates[n.id], runCount: applyDiagram.counts[n.id], dim: (focusBlocks && !focusBlocks.has(n.id)) || (testing && !n.data.poc && n.data.kind !== "resource" && project.nodes.some((x) => x.data.poc)) },
         }));
   const canvasEdges =
     level === "system"
@@ -1594,7 +1612,7 @@ function App() {
       : shown.edges.map((e) => ({
           ...e,
           className: `${previewing ? "preview" : ""} ${attention?.edges.includes(e.id) ? "diagram-attention" : ""} ${wireClass(e.source)} ${focusBlocks && !(focusBlocks.has(e.source) || focusBlocks.has(e.target)) ? "dim" : ""}`,
-          animated: busy && runStates[e.source] === "passed",
+          animated: (busy && liveStates[e.source] === "passed") || (applyEmulation.running && ["creating","applied","verified"].includes(liveStates[e.source])),
           markerEnd: { type: "arrowclosed", width: 14, height: 14 },
         }));
   const slug = project.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "atflow";
@@ -2231,10 +2249,13 @@ function App() {
 
 
 
+        {onBoard&&!emulationOpen&&(applyDockOpen
+          ?<div className="emulation-dock"><TerraformApplyDock project={project} emulation={applyEmulation} blocked={!hasDesign} onClose={()=>setApplyDockOpen(false)}/></div>
+          :hasDesign&&<button type="button" className={`apply-launcher ${applyEmulation.running?'working':''}`} onClick={()=>setApplyDockOpen(true)} aria-label="Open Terraform apply emulation"><Play size={16}/> {applyEmulation.running?'Emulating…':'Emulate apply'}</button>)}
         {onBoard&&emulationOpen&&<div className="emulation-dock"><EmulationPanel project={project} session={session} emulation={emulation} onDiscuss={discussEmulation} onOpenComponent={id=>{reviewBlock(id);setEmulationOpen(false);}} discussionBusy={busy||agentBusy||!!pending} onClose={()=>setEmulationOpen(false)} onBuild={session?.engineeringEnabled?()=>{setEmulationOpen(false);buildCurrentDesign('test');}:undefined}/></div>}
 
         {mode === "design" && designView === "outputs" && <OutputsView workStatus={engineeringStatus} onNavigate={async target=>{const [stage,selector]={requirements:['scope','.requirements-document'],location:['cloud','section[aria-label="Country and region"]'],cost:['review','.review-costs'],implementation:['review','.review-generation'],checks:['review','.project-checks']}[target];visitJourney(stage);await new Promise((resolve,reject)=>{const started=performance.now();function focus(){const element=document.querySelector(selector);if(element&&element.getClientRects().length){element.setAttribute('tabindex','-1');element.focus({preventScroll:true});element.scrollIntoView({block:'start',behavior:'instant'});resolve();}else if(performance.now()-started<5000)requestAnimationFrame(focus);else reject(Error('Section is unavailable. Use the stage tabs to continue.'));}requestAnimationFrame(focus);});}} checkReceipt={checkReceipt} onDownloaded={()=>{updateEngagement(acknowledgeStage(projectRef.current,'delivery'));setStarOffer(value=>value+1);}} onReview={()=>visitJourney('review')} onSave={expected=>saveEngineeringProject(project.id,expected)} project={project} run={run} environment={environment} session={session} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onDownload={downloadBundle} onBuild={session?.engineeringEnabled?()=>visitJourney('review'):undefined} onBack={()=>setDesignView("board")} />}
-        {mode === "design" && designView === "terraform" && <TerraformView project={project} environment={environment} session={session} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onDelivery={()=>visitJourney("delivery")} onBuild={session?.engineeringEnabled?()=>visitJourney('review'):undefined} onBack={()=>setDesignView("board")} />}
+        {mode === "design" && designView === "terraform" && <TerraformView project={project} environment={environment} session={session} applyEmulation={applyEmulation} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onDelivery={()=>visitJourney("delivery")} onBuild={session?.engineeringEnabled?()=>visitJourney('review'):undefined} onBack={()=>setDesignView("board")} />}
         <div className="choices-workspace" hidden={!(mode==="design"&&["options","decisions","location"].includes(designView))}>
         {mode === "design" && ["options","decisions"].includes(designView) && (
           <OptionsView project={project} busy={busy||agentBusy||!!pending} onChoose={chooseCloud} onContinue={()=>{updateEngagement(acknowledgeStage(projectRef.current,'cloud'));visitJourney('review');}} onPreview={(provider)=>{setDesignView("board");setLevel("flow");setChatOpen(true);send(`Preview a concrete ${OPTION_NAMES[provider]} implementation of our working scope, using actual named services in data.service and explicit connections. Keep existing systems and comments. Use the known country/residency constraints, or leave region undecided and ask the country question. This is an alternative preview, not a cloud choice or deployment. Return a graph proposal and explain key integration assumptions.`,"preview",{mode:"design",view:"board"});}} onDiscuss={(question) => { setChatOpen(true); send(question, "workflow"); }} />
