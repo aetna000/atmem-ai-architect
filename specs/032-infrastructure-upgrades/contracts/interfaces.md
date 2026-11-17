@@ -61,3 +61,20 @@ Egress confirmation binds an immutable source-selection digest (allowed paths, r
 Broker enforces `refs/heads/atmem-upgrades/` plus recorded campaign ownership independently of token scope; default/protected/unowned refs are denied even in an unprotected repo. PR base is read-only. Scope/token owner is bound per repository; one fine-grained token per resource owner, explicit organization approval/expiry states. No qualified OS keychain means publication blocked. Workflow permission is never requested. Unknown branch commits are detected by exact expected SHA/provenance ledger, never commit author identity. A competing campaign stops for reconciliation.
 
 Source policy permits a module ref finalized by an equality-passing current ReleaseObservation in addition to exact recipe sources; any other changed source/ref is denied. Publication preview also detects pull_request_target, workflow_run, check_suite and repository required-check apps where discoverable; unknown automation remains explicitly disclosed. Existing external/http/provisioner coverage limits are measured during R0 and published, never silently waived.
+
+## Implemented local adapters (R1/R2 development)
+
+The browser uploads explicitly selected bounded text; it cannot request arbitrary host paths. R1 uses `/projects/{id}/jobs/{jobId}/cancel` and project GET polling. Its prepare payload binds sourceDigest, recipeDigest, expectedProjectRevision and computeConfirmed; the first deterministic adapter has no model egress.
+
+R2 campaigns are separate from R1 source history:
+
+- POST `/api/maintenance/campaigns`: selected repository file maps, optional immutable commits and explicit root directories. Each repository materialization appears once.
+- GET `/api/maintenance/campaigns/{id}`: durable status, actual phase and revision.
+- POST `/{id}/bindings`: exact module declaration/materialization bindings and expected revision; unknown/dynamic/private/ranged source remains unresolved without explicit materialization.
+- POST `/{id}/prepare`: expected revision, graphDigest, shared module, computeConfirmed, Idempotency-Key.
+- POST `/{id}/release`: same binding plus complete released file map, actual source/version and immutable resolvedCommit; local operator simulation only.
+- POST `/{id}/partial-merge`: local simulated merged consumer IDs, expected revision and fresh remaining-consumer file maps; invalidates remaining checks.
+- POST `/{id}/cancel`: expected revision; fences late commits.
+- GET `/{id}/export` and POST `/campaigns/import`: versioned complete source/evidence; import binds the receiving owner/project and demotes readiness.
+
+R2 deliberately exposes no GitHub token, remote write, publication authorization or schedule. The proposed R3 publication commands above remain unimplemented until their dependency gates pass.

@@ -109,7 +109,7 @@
     },
     {
       "id": "T010",
-      "status": "in_progress",
+      "status": "done",
       "evidence": [
         "server/maintenance/graph.py",
         "server/tests/test_maintenance_graph.py"
@@ -118,20 +118,36 @@
     },
     {
       "id": "T011",
-      "status": "todo",
-      "evidence": [],
+      "status": "done",
+      "evidence": [
+        "server/maintenance/planner.py",
+        "server/maintenance/campaigns.py",
+        "server/tests/test_maintenance_campaign.py",
+        "server/tests/test_maintenance_campaign_store.py",
+        "evidence/r2.json",
+        "evidence/r2-checks.json"
+      ],
       "blockers": []
     },
     {
       "id": "T012",
-      "status": "todo",
-      "evidence": [],
+      "status": "done",
+      "evidence": [
+        "src/maintenance/CampaignPanel.jsx",
+        "scripts/maintenance-campaign-smoke.mjs",
+        "scripts/qualify-maintenance-campaign.py",
+        "evidence/r2.json",
+        "evidence/r2-checks.json"
+      ],
       "blockers": []
     },
     {
       "id": "T013",
-      "status": "todo",
-      "evidence": [],
+      "status": "in_progress",
+      "evidence": [
+        "research.md",
+        "contracts/interfaces.md"
+      ],
       "blockers": []
     },
     {
@@ -190,7 +206,12 @@
     "npm run test:browser passed: voice fixture, real AtMem 2.3.14, delivery ZIP/numeric/undo/reset/mobile",
     "Real maintenance browser and baseline/control/candidate/import qualification passed; zero model/cloud calls",
     "Production build and dependency notices passed",
-    "Unpublished npm tarball clean installation, five-stage browser and real migration passed on macOS arm64; client CI matrix pending"
+    "Unpublished npm tarball clean installation, five-stage browser and real migration passed on macOS arm64; client CI matrix pending",
+    "R1 GitHub package and installed Linux/macOS/Windows client checks passed; publish jobs skipped",
+    "R2 six graph tests passed, including 30 pre-materialized snapshots; four real campaign checks and four persistence/API tests passed",
+    "R2 full configured server: 639 ran, 617 passed, 22 platform/optional skips; final targeted import/history/failure tests passed",
+    "R2 final real browser and container qualification passed, including held-out monorepo; 30-snapshot discovery 20.640 seconds (fetch/clone excluded)",
+    "R2 production build and clean installed macOS package passed; candidate graph/import and real AtMem confirmed"
   ],
   "changedFilesScope": "Local R0/R1 implementation, privacy boundaries, fixtures, browser regression refresh and review artifacts; no public release or hosted rollout",
   "review": {
@@ -206,7 +227,7 @@
     ],
     "limits": "round2 full documents; round3 final clarification delta; read-only tools disabled"
   },
-  "authorAssessment": "R1 local candidate qualified, including installed package. R2 dependency graph under test; overlay/release workflow and R3/R4 not implemented.",
+  "authorAssessment": "R1 and R2 local candidates implemented and locally qualified. R1 client CI matrix passed; R2 CI pending. R3 broker/publication and R4 service remain unfinished.",
   "productTests": "Real local Linux arm64 provider/schema and hostile-container checks; real browser and AtMem; model/audio/pricing fixtures explicitly distinguished. No cloud, state, deployment or publication qualification.",
   "changedFiles": [
     "README.md",
@@ -214,9 +235,12 @@
     "docs/INFRASTRUCTURE_MAINTENANCE.md",
     "package.json",
     "scripts/delivery-smoke.mjs",
+    "scripts/maintenance-campaign-smoke.mjs",
     "scripts/maintenance-smoke.mjs",
     "scripts/memory-e2e.mjs",
+    "scripts/npm-installed-check.mjs",
     "scripts/package-npm.mjs",
+    "scripts/qualify-maintenance-campaign.py",
     "scripts/qualify-maintenance.py",
     "scripts/setup-maintenance-worker.py",
     "scripts/voice-smoke.mjs",
@@ -229,6 +253,7 @@
     "server/maintenance/THIRD_PARTY_NOTICES.txt",
     "server/maintenance/__init__.py",
     "server/maintenance/budget.py",
+    "server/maintenance/campaigns.py",
     "server/maintenance/catalog/aws-6-archive-checksums.json",
     "server/maintenance/catalog/aws-batch-queue-v6.json",
     "server/maintenance/catalog/tool-artifacts.json",
@@ -240,18 +265,22 @@
     "server/maintenance/models.py",
     "server/maintenance/parser_process.py",
     "server/maintenance/patches.py",
+    "server/maintenance/planner.py",
     "server/maintenance/portable.py",
     "server/maintenance/recipes.py",
     "server/maintenance/service.py",
     "server/maintenance/store.py",
     "server/maintenance/verification.py",
     "server/maintenance/workers.py",
+    "server/maintenance_campaign_routes.py",
     "server/maintenance_routes.py",
     "server/requirements.lock",
     "server/requirements.txt",
     "server/tests/e2e_app.py",
     "server/tests/test_engineering_contexts.py",
     "server/tests/test_engineering_local_worker.py",
+    "server/tests/test_maintenance_campaign.py",
+    "server/tests/test_maintenance_campaign_store.py",
     "server/tests/test_maintenance_graph.py",
     "server/tests/test_maintenance_inventory.py",
     "server/tests/test_maintenance_isolation.py",
@@ -259,6 +288,9 @@
     "server/tests/test_maintenance_service.py",
     "server/tests/test_maintenance_store.py",
     "server/tests/test_maintenance_verification.py",
+    "specs/032-infrastructure-upgrades/analysis.md",
+    "specs/032-infrastructure-upgrades/checklists/requirements.md",
+    "specs/032-infrastructure-upgrades/contracts/interfaces.md",
     "specs/032-infrastructure-upgrades/data-model.md",
     "specs/032-infrastructure-upgrades/decision-log.md",
     "specs/032-infrastructure-upgrades/evidence/construct-coverage.json",
@@ -268,15 +300,23 @@
     "specs/032-infrastructure-upgrades/evidence/qualification.json",
     "specs/032-infrastructure-upgrades/evidence/r1-checks.json",
     "specs/032-infrastructure-upgrades/evidence/r1.json",
+    "specs/032-infrastructure-upgrades/evidence/r2-checks.json",
+    "specs/032-infrastructure-upgrades/evidence/r2.json",
     "specs/032-infrastructure-upgrades/evidence/tool-artifacts.json",
     "specs/032-infrastructure-upgrades/plan.md",
     "specs/032-infrastructure-upgrades/progress.json",
     "specs/032-infrastructure-upgrades/quickstart.md",
     "specs/032-infrastructure-upgrades/releases.md",
     "specs/032-infrastructure-upgrades/research.md",
+    "specs/032-infrastructure-upgrades/reviews/input-receipts.json",
+    "specs/032-infrastructure-upgrades/reviews/opus-final.md",
+    "specs/032-infrastructure-upgrades/reviews/opus-round1.json",
+    "specs/032-infrastructure-upgrades/reviews/opus-round2.json",
     "specs/032-infrastructure-upgrades/spec.md",
     "specs/032-infrastructure-upgrades/tasks.md",
+    "specs/README.md",
     "src/main.jsx",
+    "src/maintenance/CampaignPanel.jsx",
     "src/maintenance/MaintenancePanel.jsx",
     "src/maintenance/maintenance.css",
     "src/maintenance/model.mjs",
@@ -322,14 +362,29 @@
       "status": "qualified_local_unpublished",
       "support": "AWS 5.100.0 to 6.0.0 Batch explicit tuples; one root; deterministic; no model calls",
       "publication": "not_authorized_or_attempted",
-      "ownerManualReview": "card provided; owner acceptance not claimed"
+      "ownerManualReview": "card provided; owner acceptance not claimed",
+      "clientCI": {
+        "commit": "786b9b06d044216140cdbb9601ac3daed3923dcd",
+        "run": "https://github.com/aetna000/atmem-ai-architect/actions/runs/44039015831",
+        "platforms": [
+          "ubuntu-latest passed",
+          "macos-latest passed",
+          "windows-latest passed"
+        ],
+        "limits": "Client install/UI checks; execution OS qualification remains macOS arm64 with Linux arm64 container."
+      }
     },
     "R2": {
-      "status": "in_progress_graph",
-      "fixtureManifest": "tests/maintenance/fixtures/campaign/manifest.json"
+      "status": "qualified_local_unpublished",
+      "fixtureManifest": "tests/maintenance/fixtures/campaign/manifest.json",
+      "evidence": [
+        "evidence/r2.json",
+        "evidence/r2-checks.json"
+      ],
+      "publication": "not_authorized_or_attempted"
     },
     "R3": {
-      "status": "todo",
+      "status": "in_progress_broker_contracts",
       "gate": "Exact disposable-repository write authorization and actual remote qualification required"
     },
     "R4": {

@@ -126,3 +126,20 @@ hashes establish exact bytes fetched over HTTPS; no publisher-signature verifica
 vulnerability clearance or cloud deployment certification is claimed.
 
 Maintenance-bearing Architect project exports use format 4.0.0. Older clients must be upgraded before opening them. Ordinary project formats remain unchanged. Complete migration JSON export is separate from the existing 2 MB Architect design-file bound; oversized design exports are refused without truncation. General generation receives a source-free projection, never the maintenance repositories or diagnostics.
+
+## Coordinated projects (R2 development)
+
+Select **Infrastructure upgrades → Coordinated projects**. Add a shared-module folder and each consumer folder, with readable root names. Supply the actual immutable Git revision of a materialized remote module; AtMem records this as operator evidence, not an independently fetched release. Inspect dependencies, bind each remote module declaration to its exact selected materialization, select the shared module, and prepare the campaign.
+
+This adapter checks one leaf shared module and its direct consumers against the pinned Batch migration. It preserves provider aliases and constraint declarations; it does not infer registry resolutions from provider locks. Source-local monorepo dependencies are supported when selected roots are separate leaf directories. Nested root assets, dependency chains, unknown refs and cycles remain blocked. The UI currently selects one root per uploaded folder; the local API also accepts explicit monorepo root directories in one materialization.
+
+Baseline, intended version-only schema break, candidate and lock-bound rechecks run for each consumer against exact module bytes. Temporary local module paths exist only in isolated validation copies, never downloaded customer patches. Consumer release references remain pending until the operator supplies a complete release artifact matching every tested byte and confirms fresh checks. The R2 release and partial-merge controls are explicitly **local simulations**; they do not establish that a remote tag exists or authorize GitHub writes.
+
+Campaigns persist separately in private SQLite. Export includes source and checks; import always marks evidence historical and grants no permission. Cancellation fences late results. A restarted process does not replay unknown work; an existing live lease remains respected until expiry. After a simulated partial merge, fresh remaining-consumer source is required and prior checks become stale. Changed source requires a new campaign.
+
+```sh
+ATMEM_MAINTENANCE_TEST_CONFIG=/absolute/path/maintenance-worker.json node scripts/maintenance-campaign-smoke.mjs
+.venv/bin/python scripts/qualify-maintenance-campaign.py --config /absolute/path/maintenance-worker.json --output specs/032-infrastructure-upgrades/evidence/r2.json
+```
+
+No remote release, repository publication, scheduled service or hosted rollout is qualified by these local checks. Those remain R3/R4 gates.

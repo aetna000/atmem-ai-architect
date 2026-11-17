@@ -2,11 +2,13 @@ import React,{useEffect,useRef,useState} from 'react';
 import {Download,FolderOpen,LoaderCircle,RefreshCw,ShieldCheck,Square,ArrowRight} from 'lucide-react';
 import {ACTIVE,progress,readSelection} from './model.mjs';
 import './maintenance.css';
+import CampaignPanel from './CampaignPanel.jsx';
 
 function download(name,value){const url=URL.createObjectURL(new Blob([JSON.stringify(value,null,2)],{type:'application/json'}));const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 function downloadPatch(changes){const url=URL.createObjectURL(new Blob([changes.map(c=>c.diff).join('\n')],{type:'text/x-patch'}));const a=document.createElement('a');a.href=url;a.download='atmem-infrastructure-upgrade.patch';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
 
 export default function MaintenancePanel({session,project,onSection}) {
+ const [mode,setMode]=useState('single');
  const [data,setData]=useState(null),[caps,setCaps]=useState(null),[error,setError]=useState(''),[busy,setBusy]=useState(false),[selected,setSelected]=useState(null),[inspected,setInspected]=useState(false);
  const folder=useRef(null),importer=useRef(null),current=useRef(null),mounted=useRef(true);
  const owner=useRef(project.id);owner.current=project.id;
@@ -50,6 +52,8 @@ export default function MaintenancePanel({session,project,onSection}) {
  const start=()=>action(async()=>{accept(await request('/projects/'+aggregate.projectId+'/prepare',{expectedProjectRevision:aggregate.revision,sourceDigest:aggregate.snapshots.at(-1).treeDigest,recipeDigest:data.recipeDigest,computeConfirmed:true},{'Idempotency-Key':crypto.randomUUID()}));});
  const cancel=()=>action(async()=>{const fresh=await request('/projects/'+aggregate.projectId);accept(await request('/projects/'+aggregate.projectId+'/jobs/'+job.id+'/cancel',{expectedProjectRevision:fresh.revision}));});
  return <div className="maintenance-panel">
+  <div className="maintenance-actions" aria-label="Maintenance workflow"><button className="btn" aria-pressed={mode==='single'} disabled={active} onClick={()=>setMode('single')}>Single repository</button><button className="btn" aria-pressed={mode==='campaign'} disabled={active} onClick={()=>setMode('campaign')}>Coordinated projects</button></div>
+  {mode==='campaign'?<CampaignPanel session={session} project={project} available={caps?.status==='available'}/>:<>
   <header><span className="maintenance-eyebrow">INFRASTRUCTURE MAINTENANCE</span><h2>Prepare an AWS upgrade</h2><p>AWS provider 5.100.0 → 6.0.0 · Batch queue migration.</p></header>
   <div className="maintenance-boundary"><ShieldCheck size={18}/><span>Local schema checks. Original files stay unchanged. No deployment or AI calls.</span></div>
   {error&&<p role="alert" className="maintenance-error">{error}</p>}
@@ -76,5 +80,6 @@ export default function MaintenancePanel({session,project,onSection}) {
     {!!job.receipts.length&&<details><summary>Check evidence · {job.receipts.length} receipts</summary><ul>{job.receipts.map(r=><li key={r.id}><strong>{r.kind}: {r.kind==='control'&&r.status==='failed'&&job.status==='ready_for_review'?'expected schema break':r.status}</strong> · {r.durationSeconds.toFixed(1)}s<details><summary>Diagnostics</summary><pre tabIndex={0}>{r.output}</pre></details></li>)}</ul></details>}
    </section>}
   </>}
+ </>}
  </div>;
 }

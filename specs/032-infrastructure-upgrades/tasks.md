@@ -26,9 +26,9 @@ Goal: meaningful checked single-root patch, original unchanged. Independent test
 
 Goal: module+consumer migration with an executable compatible order. Independent test: module, two consumers, unrelated repo and different composition.
 
-- [ ] T010 [US2] Implement explicit dependency graph/private-module unknowns/aliases/constraints/cycle detection in `server/maintenance/graph.py` and `server/tests/test_maintenance_graph.py` (T005,T009).
-- [ ] T011 [US2] Implement digest-bound candidate module overlays, actual-release mapping, module_release_pending/observation/equality/consumer-reverification states, per-wave authorization and compatible merge sequence in `server/maintenance/planner.py`, `patches.py` and `server/tests/test_maintenance_campaign.py` (T007,T010).
-- [ ] T012 [US2] Add graph/campaign review, simulated local operator release with tag-mismatch/range-drift denials and independent 30-snapshot affected-set/scale/partial-merge tests in `src/maintenance/MaintenancePanel.jsx`, `tests/maintenance/`, `scripts/maintenance-smoke.mjs` and `specs/032-infrastructure-upgrades/evidence/r2.json` (T011).
+- [x] T010 [US2] Implement explicit dependency graph/private-module unknowns/aliases/constraints/cycle detection in `server/maintenance/graph.py` and `server/tests/test_maintenance_graph.py` (T005,T009).
+- [x] T011 [US2] Implement digest-bound candidate module overlays, actual-release mapping, module_release_pending/observation/equality/consumer-reverification states, per-wave authorization and compatible merge sequence in `server/maintenance/planner.py`, `patches.py` and `server/tests/test_maintenance_campaign.py` (T007,T010).
+- [x] T012 [US2] Add graph/campaign review, simulated local operator release with tag-mismatch/range-drift denials and independent 30-snapshot affected-set/scale/partial-merge tests in `src/maintenance/MaintenancePanel.jsx`, `tests/maintenance/`, `scripts/maintenance-smoke.mjs` and `specs/032-infrastructure-upgrades/evidence/r2.json` (T011).
 
 ## Phase 5 — US3 / R3 repository delivery
 

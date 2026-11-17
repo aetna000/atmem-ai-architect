@@ -48,12 +48,15 @@ from .terraform_emulation_routes import router as terraform_emulation_router
 app.include_router(terraform_emulation_router)
 from .maintenance_routes import router as maintenance_router, close as close_maintenance
 app.include_router(maintenance_router)
+from .maintenance_campaign_routes import router as campaign_router, close as close_campaigns
+app.include_router(campaign_router)
 from .engineering_routes import router as engineering_router, close as close_engineering
 app.include_router(engineering_router)
 
 @app.on_event('shutdown')
 async def shutdown_engineering():
     await close_engineering()
+    close_campaigns()
     close_maintenance()
 TOKEN=secrets.token_urlsafe(32)
 ARCHITECT=AtMemArchitect()
@@ -79,7 +82,7 @@ async def local_boundary(request:Request,call_next):
             return JSONResponse({'detail':'Missing local session token'},status_code=401)
         limit=43_000_000 if request.url.path=='/api/engineering/orca/open' else 12_000_000 if request.url.path=='/api/architect' else 2_100_000 if request.url.path in {'/api/projects/save','/api/memory/sync','/api/voice/transcribe'} else 250000
         if request.url.path.startswith('/api/maintenance/'):
-            if request.url.path=='/api/maintenance/projects/import':limit=64_000_000
+            if request.url.path=='/api/maintenance/projects/import' or request.url.path.startswith('/api/maintenance/campaigns'):limit=64_000_000
             elif request.url.path=='/api/maintenance/projects' or request.url.path.endswith('/inventory'):limit=16_100_000
         if len(await request.body())>limit:
             return JSONResponse({'detail':'Request too large'},status_code=413)
