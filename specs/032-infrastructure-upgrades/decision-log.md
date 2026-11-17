@@ -32,3 +32,7 @@ Maintenance exports use project format 4.0.0; ordinary designs retain 2.3.0 or a
 ### R2 graph boundary
 
 Use separate selected roots and explicit remote materialization bindings; R1 snapshot history remains history. Preserve provider aliases, constraints and provider maps as declarations; do not infer registry resolutions from lockfiles or solve versions implicitly. Source-local modules resolve only inside the same selected repository snapshot. Unknown refs, missing modules, stale bindings and cycles block coordinated readiness. Graph discovery alone is not a checked migration. Frozen fixture module names differ between consumers; bindings must use each actual name.
+
+### CI-discovered hosted project creation race
+
+R2's hosted transactions CI exposed an existing interleaving: creation read an uploading receipt, another identical request completed it, then the first caller's duplicate chunk was rejected. Completed uploads now acknowledge only a byte-identical retained chunk, with the same index/size/hash, without writing or changing content. Altered, canceled, missing and foreign chunks remain denied. A deterministic test completes the real nested creation between begin and put; existing concurrent creation and storage tests remain required. This is a regression repair, not a hosted maintenance rollout.

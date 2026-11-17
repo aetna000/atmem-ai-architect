@@ -1,4 +1,7 @@
 import json
+import base64
+import hashlib
+from unittest.mock import patch
 import tempfile
 import unittest
 from pathlib import Path
@@ -27,6 +30,21 @@ class WorkspaceCreationTests(unittest.TestCase):
   with ThreadPoolExecutor(max_workers=4) as pool:results=list(pool.map(lambda _:self.workspace.create('1','same-request','Project'),range(8)))
   self.assertEqual(len({row['id'] for row in results}),1);self.assertEqual(len(self.projects.list('1')['projects']),1)
   with self.assertRaises(Conflict):self.workspace.create('1','same-request','Different title')
+
+ def test_completion_between_begin_and_chunk_acknowledges_only_identical_content(self):
+  original_begin=self.projects.begin
+  def completed_after_begin(*args,**kwargs):
+   upload=original_begin(*args,**kwargs)
+   with patch.object(self.projects,'begin',original_begin):
+    self.workspace.create('1','interleaved','Concurrent')
+   return upload
+  with patch.object(self.projects,'begin',side_effect=completed_after_begin):
+   saved=self.workspace.create('1','interleaved','Concurrent')
+  self.assertEqual(len(self.projects.list('1')['projects']),1)
+  before=self.projects.download('1',saved['id'])[1]
+  changed=before.replace(b'Concurrent',b'Different!')
+  with self.assertRaises(Conflict):self.projects.put_chunk('1',saved['snapshot'],0,base64.b64encode(changed).decode(),hashlib.sha256(changed).hexdigest())
+  self.assertEqual(self.projects.download('1',saved['id'])[1],before)
 
  def test_trash_and_restore_preserve_content_and_require_current_owned_revision(self):
   saved=self.workspace.create('1','new','Preserved project');original=self.projects.download('1',saved['id'])[1]
