@@ -25,3 +25,5 @@ H010/H011 provide provenance and observed evidence, not automatic semantic proof
 - [x] H015 Record actual step-by-step native demo, retain runtime failures, and qualify pricing/chat design-fingerprint corrections (H012; evidence/native-demo.json).
 
 H013 follow-up: actual native Codex implementation, capture, mappings and static review ran. Independent test acceptance remains open because the demo runtime could not launch Node and no independent validators were registered.
+
+- [x] H016 Reconcile infrastructure upgrades (#11) into native Architect integration (#13), preserve both safety contracts, and requalify the combined source (evidence/reconciliation.json).

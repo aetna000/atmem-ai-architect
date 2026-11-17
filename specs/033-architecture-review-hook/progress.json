@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "implementationStatus": "native_integration_locally_qualified_full_ide_acceptance_pending",
+  "implementationStatus": "consolidated_local_candidate_qualified_ci_pending",
   "releaseStatus": "unpublished_local_candidate",
   "baseCommit": "7601a8eabb11705014b0dd1b6fb200afc7eae46a",
   "branch": "feat/architecture-review-hook",
@@ -127,6 +127,15 @@
       "evidence": [
         "evidence/native-demo.json"
       ]
+    },
+    {
+      "id": "H016",
+      "status": "done",
+      "description": "Consolidate PR #11 into #13 with current-task binding, source consent and fresh offline policy evidence.",
+      "evidence": [
+        "evidence/reconciliation.json",
+        "evidence/reconciled-campaign.json"
+      ]
     }
   ],
   "testsRun": [
@@ -142,7 +151,8 @@
     "Follow-up: 25 source tests passed; CLI 2.19.1 interactive login and isolated live EC2/gp3 pricing returned USD 8.232/month; USD 20 budget passed and USD 5 failed. See evidence/live-pricing.json.",
     "Follow-up clean-installed wheel: 25 tests passed; real installed MCP stdio smoke passed. Wheel and workflow ZIPs rebuilt; artifact manifest refreshed.",
     "Native integration: 609 JavaScript tests, 141 backend tests and 7 hosted-worker tests passed; source browser and clean installed npm candidate with real AtMem review passed. See evidence/native-integration.json.",
-    "Demo follow-up: 611 JavaScript tests, 8 binding regressions, production build and real clean-installed npm native rules review passed. Native coding completed; generated tests did not run successfully."
+    "Demo follow-up: 611 JavaScript tests, 8 binding regressions, production build and real clean-installed npm native rules review passed. Native coding completed; generated tests did not run successfully.",
+    "Combined candidate: 616 JavaScript tests; 689 backend cases (667 passed, 22 skips); 31 hosted-worker, 25 context/privacy and 19 boundary checks; four browser flows; fresh offline campaign and clean installed candidate checks passed."
   ],
   "blockers": [
     "Live semantic model quality/usage qualification requires explicit model/egress configuration.",
@@ -223,5 +233,11 @@
     ],
     "publicationJobs": "skipped as expected; no tag/publication"
   },
-  "livePricingEvidence": "evidence/live-pricing.json"
+  "livePricingEvidence": "evidence/live-pricing.json",
+  "consolidation": {
+    "pullRequest": 13,
+    "supersedes": 11,
+    "preservedSourceBranch": "feat/infrastructure-upgrades",
+    "evidence": "evidence/reconciliation.json"
+  }
 }
