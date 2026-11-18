@@ -5,7 +5,7 @@ Design an application, review requirements, generate project files, run local ch
 [Watch the demo →](https://x.com/AtMemAi/status/2119386028108910659)
 
 ```sh
-npx @atmem/architect
+npx @atmem/architect@beta
 ```
 
 Requires Node.js 22+. First run installs checksum-verified Python and the pinned AtMem runtime in your private application directory.
@@ -13,7 +13,7 @@ Requires Node.js 22+. First run installs checksum-verified Python and the pinned
 For a persistent command:
 
 ```sh
-npm install -g @atmem/architect
+npm install -g @atmem/architect@beta
 atmem-architect
 ```
 
@@ -44,6 +44,10 @@ Available cost estimates include explicit exclusions where prices or usage are m
 AtMem-owned code is Apache-2.0. Bundled third-party licences and notices are retained.
 
 Contact: [hello@atmem.ai](mailto:hello@atmem.ai) · [atmem.ai](https://atmem.ai)
+
+## Version 0.2.5-beta.1
+
+Connect your ChatGPT or Claude subscription from Architect. This beta also includes native Spec Kit implementation reviews and local Terraform upgrade workflows.
 
 ## Version 0.2.4
 
