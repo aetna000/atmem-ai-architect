@@ -8,6 +8,7 @@ import {createHash} from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
 import {unzipSync} from 'fflate';
 import {createServer} from 'node:net';
+import {createInterface} from 'node:readline/promises';
 export const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 export const memoryVersion=fs.readFileSync(path.join(root,'server/memory-requirements.txt'),'utf8').match(/^atmem==(\d+\.\d+\.\d+)$/m)?.[1];
 if(!memoryVersion)throw Error('A stable AtMem runtime pin is required.');
@@ -112,7 +113,27 @@ export async function main(args=process.argv.slice(2)){
  if(options.desktopShortcut){console.log('Desktop shortcut created: '+createDesktopShortcut({version:metadata.version,home,port:options.port}));return;}
  if(options.doctor){console.log(JSON.stringify({version:metadata.version,node:process.version,platform:process.platform,arch:process.arch,home,runtimeReady:fs.existsSync(path.join(home,'runtimes',definition.id,'ready.json')),modelAuthentication:'Select a model and sign in from Connections'},null,2));return;}
  if(options.maintenanceSetup&&!options.dockerEndpoint)throw Error('--maintenance-setup requires --docker-endpoint unix:///path/to/docker.sock.');
- if(!options.setup&&!options.maintenanceSetup&&!options.maintenanceGithub)await checkPort(options.port);
+ if(!options.setup&&!options.maintenanceSetup&&!options.maintenanceGithub){
+  try {await checkPort(options.port);}
+  catch(error){
+   let existing=false;
+   try {const response=await fetch(`http://127.0.0.1:${options.port}/api/session`,{signal:AbortSignal.timeout(2000)});const data=await response.json();existing=data.status==='local-sidecar';} catch {}
+   let answer='new';
+   if(process.stdin.isTTY){
+    const prompt=createInterface({input:process.stdin,output:process.stdout});
+    try {answer=(await prompt.question(existing?'Architect is already running. Open it [Enter], or start on another port [n]? ':'Port is occupied. Start on another port [Enter], or cancel [c]? ')).trim().toLowerCase();}
+    finally {prompt.close();}
+   } else if(existing)answer='';
+   if(existing&&answer!=='n'&&answer!=='new'){openBrowser(`http://127.0.0.1:${options.port}`);return;}
+   if(!existing&&answer==='c')return;
+   let available=false;
+   for(let port=options.port+1;port<=Math.min(65535,options.port+100);port++){
+    try {await checkPort(port);options.port=port;available=true;break;}catch{}
+   }
+   if(!available)throw error;
+   console.log('Starting Architect on port '+options.port+'.');
+  }
+ }
  const runtime=await setupRuntime(home);if(options.setup){console.log('Architect and AtMem are installed. Run atmem-architect to open the app.');return;}
  if(options.maintenanceSetup){await run(runtime.serverPython,[path.join(root,'scripts/setup-maintenance-worker.py'),'--endpoint',options.dockerEndpoint,'--output',path.join(home,'maintenance-worker.json')],{cwd:root,env:process.env});return;}
  if(options.maintenanceGithub){await run(runtime.serverPython,[path.join(root,'scripts/maintenance-github.py'),'--home',home],{cwd:root,env:process.env});return;}

@@ -130,11 +130,35 @@ def strict_schema(schema):
     schema=json.loads(json.dumps(schema))
     def visit(value):
         if isinstance(value,dict):
+            if value.get('type')=='object' and 'properties' not in value:
+                value.clear();value.update({'type':'string','description':'A JSON-encoded object. Preserve every field required by the application contract.'})
             if value.get('type')=='object' and 'properties' in value:value['required']=list(value['properties']);value['additionalProperties']=False
             for child in value.values():visit(child)
         elif isinstance(value,list):
             for child in value:visit(child)
     visit(schema);return schema
+
+def restore_json_objects(value, schema, root=None):
+    root = root or schema
+    if '$ref' in schema:
+        target = root
+        for part in schema['$ref'].removeprefix('#/').split('/'):
+            target = target[part]
+        return restore_json_objects(value, target, root)
+    for branch in schema.get('anyOf', []):
+        kind = branch.get('type')
+        if '$ref' in branch or kind == 'object' and isinstance(value, (dict, str)) or kind == 'array' and isinstance(value, list):
+            return restore_json_objects(value, branch, root)
+    if schema.get('type') == 'object' and 'properties' not in schema and isinstance(value, str):
+        decoded = json.loads(value)
+        if not isinstance(decoded, dict):
+            raise ValueError('Expected a JSON object from the provider')
+        return decoded
+    if isinstance(value, dict):
+        return {key: restore_json_objects(item, schema.get('properties', {}).get(key, {}), root) for key, item in value.items()}
+    if isinstance(value, list):
+        return [restore_json_objects(item, schema.get('items', {}), root) for item in value]
+    return value
 
 def provider_failure(output=b'',error=b''):
     """Classify provider errors without exposing raw CLI output or account details."""
@@ -229,7 +253,7 @@ async def call_cli(provider,model,prompt,system,schema,is_disconnected,effort=No
                 args+=['--image',str(image_path)]
             if model not in ('default','auto'):args+=['--model',model]
             if effort:args+=['-c',f'model_reasoning_effort="{effort}"']
-            return extract_json(await communicate(args,system+'\n\n'+prompt,cwd,is_disconnected,env,timeout=timeout))
+            return restore_json_objects(extract_json(await communicate(args,system+'\n\n'+prompt,cwd,is_disconnected,env,timeout=timeout)), schema)
         if provider=='gemini-cli':
             settings=Path(cwd)/'settings.json';settings.write_text(json.dumps({'tools':{'core':[]},'hooksConfig':{'enabled':False},'mcp':{'allowed':['atforma-no-servers']},'telemetry':{'enabled':False},'general':{'enableAutoUpdate':False,'sessionRetention':{'enabled':False}}}))
             env['GEMINI_CLI_SYSTEM_SETTINGS_PATH']=str(settings)
