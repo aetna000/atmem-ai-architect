@@ -3,13 +3,13 @@ import base64,io,json,subprocess,sys,zipfile,zlib
 from urllib.parse import unquote_to_bytes
 from pathlib import Path
 from xml.etree import ElementTree
-MAX_FILE=4*1024*1024
-MAX_TOTAL=8*1024*1024
+MAX_FILE=20*1024*1024
+MAX_TOTAL=40*1024*1024
 
 def decode(item):
     try:data=base64.b64decode(item['data'],validate=True)
     except Exception:raise ValueError('Attachment encoding is invalid.')
-    if not data or len(data)>MAX_FILE:raise ValueError('Each attachment must be between 1 byte and 4 MB.')
+    if not data or len(data)>MAX_FILE:raise ValueError('Each attachment must be between 1 byte and 20 MB.')
     return data
 
 def diagram_text(data):
@@ -44,7 +44,7 @@ def diagram_text(data):
 def extract(items):
     if len(items)>4:raise ValueError('Attach up to four files per message.')
     decoded=[(item,decode(item)) for item in items]
-    if sum(len(data) for _,data in decoded)>MAX_TOTAL:raise ValueError('Attachments exceed the 8 MB total limit.')
+    if sum(len(data) for _,data in decoded)>MAX_TOTAL:raise ValueError('Attachments exceed the 40 MB total limit.')
     result=[]
     for item,data in decoded:
         mime=item['mime'];name=item['name']
@@ -67,7 +67,7 @@ def extract(items):
             if not any(value.strip() for value in pages):raise ValueError('This PDF has no readable text. Attach screenshots of the relevant pages instead.')
         elif mime=='application/vnd.openxmlformats-officedocument.wordprocessingml.document':
             with zipfile.ZipFile(io.BytesIO(data)) as archive:
-                if sum(i.file_size for i in archive.infolist())>16*1024*1024:raise ValueError('The expanded document exceeds 16 MB.')
+                if sum(i.file_size for i in archive.infolist())>64*1024*1024:raise ValueError('The expanded document exceeds 64 MB.')
                 xml=archive.read('word/document.xml')
                 if b'<!DOCTYPE' in xml or b'<!ENTITY' in xml:raise ValueError('Unsupported document XML.')
                 root=ElementTree.fromstring(xml)

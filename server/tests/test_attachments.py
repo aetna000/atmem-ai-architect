@@ -71,3 +71,16 @@ class DiagramInputTests(unittest.TestCase):
         with self.assertRaises(ValueError):diagram_text(b'<html/>')
         compressor=zlib.compressobj(wbits=-15);encoded=base64.b64encode(compressor.compress(b'x'*200000)+compressor.flush()).decode()
         with self.assertRaises(ValueError):diagram_text(('<mxfile><diagram>'+encoded+'</diagram></mxfile>').encode())
+
+class LargeDocumentTests(unittest.TestCase):
+    def test_twenty_megabyte_docx_passes_contract_and_real_extraction(self):
+        archive=io.BytesIO()
+        with zipfile.ZipFile(archive,'w') as z:
+            z.writestr('word/document.xml','<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:p>Customer requirements</w:p></w:document>')
+            z.writestr('word/media/image.bin',b'x'*(20*1024*1024-1000))
+        attachment=item(archive.getvalue(),'customer.docx','application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+        Attachment.model_validate(attachment)
+        self.assertIn('Customer requirements',prepare([attachment])[0]['text'])
+        from server.attachments import decode
+        self.assertEqual(len(decode(item(b'x'*(20*1024*1024)))),20*1024*1024)
+        with self.assertRaisesRegex(ValueError,'20 MB'):decode(item(b'x'*(20*1024*1024+1)))
