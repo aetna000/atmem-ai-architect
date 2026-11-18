@@ -17,6 +17,14 @@ npm install -g @atmem/architect@beta
 atmem-architect
 ```
 
+Create a desktop shortcut on macOS, Windows or Linux:
+
+```sh
+npx @atmem/architect@beta --desktop-shortcut
+```
+
+Double-click **AtMem AI Architect** to launch. Keep Node.js installed. Linux may ask you to allow launching the shortcut.
+
 Explore the complete AI example without connecting a model. Its ZIP includes costs, application source, infrastructure and local check evidence.
 
 Choose your model under **AI providers** when creating your own project. Model usage may incur provider costs.

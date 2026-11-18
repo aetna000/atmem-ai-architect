@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import {createDesktopShortcut} from './desktop-shortcut.mjs';
 import path from 'node:path';
 import os from 'node:os';
 import {fileURLToPath} from 'node:url';
@@ -25,6 +26,7 @@ export function parseArgs(args){
  const options={port:5174,open:true,setup:false,doctor:false};
  for(let i=0;i<args.length;i++){
   const arg=args[i];if(arg==='--no-open')options.open=false;
+  else if(arg==='--desktop-shortcut')options.desktopShortcut=true;
   else if(arg==='--setup')options.setup=true;
   else if(arg==='--doctor')options.doctor=true;
   else if(arg==='--maintenance-setup')options.maintenanceSetup=true;
@@ -105,8 +107,9 @@ function openBrowser(url){
 export async function main(args=process.argv.slice(2)){
  const options=parseArgs(args);
  if(options.version){console.log(metadata.version);return;}
- if(options.help){console.log(`AtMem AI Architect ${metadata.version}\n\nUsage: atmem-architect [--port 5174] [--no-open] [--data-dir PATH]\n       atmem-architect --setup | --doctor | --version\n       atmem-architect --maintenance-setup --docker-endpoint unix:///path/to/docker.sock\n       atmem-architect --maintenance-github\n\nFirst run downloads a checksum-verified Python installer, Python and pinned app/AtMem dependencies.\nData and runtimes stay in your app data directory; no administrator access is needed.\nA model login/API key is selected in the UI. No cloud deployment is performed.`);return;}
+ if(options.help){console.log(`AtMem AI Architect ${metadata.version}\n\nUsage: atmem-architect [--port 5174] [--no-open] [--data-dir PATH]\n       atmem-architect --desktop-shortcut\n       atmem-architect --setup | --doctor | --version\n       atmem-architect --maintenance-setup --docker-endpoint unix:///path/to/docker.sock\n       atmem-architect --maintenance-github\n\nFirst run downloads a checksum-verified Python installer, Python and pinned app/AtMem dependencies.\nData and runtimes stay in your app data directory; no administrator access is needed.\nA model login/API key is selected in the UI. No cloud deployment is performed.`);return;}
  const home=options.home||applicationHome(),definition=runtimeDefinition();
+ if(options.desktopShortcut){console.log('Desktop shortcut created: '+createDesktopShortcut({version:metadata.version,home,port:options.port}));return;}
  if(options.doctor){console.log(JSON.stringify({version:metadata.version,node:process.version,platform:process.platform,arch:process.arch,home,runtimeReady:fs.existsSync(path.join(home,'runtimes',definition.id,'ready.json')),modelAuthentication:'Select a model and sign in from Connections'},null,2));return;}
  if(options.maintenanceSetup&&!options.dockerEndpoint)throw Error('--maintenance-setup requires --docker-endpoint unix:///path/to/docker.sock.');
  if(!options.setup&&!options.maintenanceSetup&&!options.maintenanceGithub)await checkPort(options.port);
