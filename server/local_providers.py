@@ -140,6 +140,8 @@ def provider_failure(output=b'',error=b''):
     """Classify provider errors without exposing raw CLI output or account details."""
     text=(output.decode(errors='replace') if isinstance(output,bytes) else str(output))+' '+(error.decode(errors='replace') if isinstance(error,bytes) else str(error))
     text=text[:64000].lower()
+    if any(term in text for term in ['credits_required', 'model_requires_usage_credits', "out of usage credits"]):
+        return 'This model requires provider usage credits. Choose another model or connect ChatGPT in Connections.'
     if any(term in text for term in ['session limit','usage limit','hit your limit','rate limit','rate_limit','insufficient_quota','credit balance','too many requests']):
         return 'The selected architect has reached its usage or rate limit. Wait for the provider reset or choose another connected architect. Your design is preserved; no correction was applied.'
     if any(term in text for term in ['not logged in','authentication failed','invalid api key','unauthorized','login required']):
