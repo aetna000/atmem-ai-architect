@@ -7,11 +7,17 @@ from unittest.mock import patch
 from server.engineering_routes import LocalEngineeringService
 from server.engineering_sessions import ModelSelection, ProjectScope
 
+def project_context(requirements, project_id='project-one'):
+    return json.dumps({'format':'atmem.ai-architect.project','formatVersion':'2.3.0',
+        'meta':{'id':project_id,'revision':1,'name':'Owned worker fixture'},
+        'design':{'provider':'tools','nodes':[],'edges':[]},
+        'discovery':{'problem':requirements},'requirements':[]})
+
 
 class LocalWorkerRegistrationTests(unittest.IsolatedAsyncioTestCase):
     async def test_operator_workspace_disk_persists_existing_paths_across_configuration_changes(self):
         with tempfile.TemporaryDirectory() as folder:
-            root=Path(folder);context=root/'project.json';context.write_text('{"requirements":"Preserve the existing library"}')
+            root=Path(folder);context=root/'project.json';context.write_text(project_context('Preserve the existing library'))
             configured=root/'separate-disk/workspaces';configured.mkdir(parents=True);config={'ENGINEERING_WORKSPACE_ROOT':str(configured)}
             with patch('server.engineering_routes.home',return_value=root/'control'),patch('server.engineering_routes.setting',side_effect=config.get):
                 worker=LocalEngineeringService();scope=ProjectScope('local-owner','project-one')
@@ -22,6 +28,8 @@ class LocalWorkerRegistrationTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(path.parent,configured.resolve());self.assertEqual(path.stat().st_mode&0o777,0o700)
                 self.assertEqual((path/'project-context.json').read_bytes(),context.read_bytes())
                 pins=worker.pinned_inputs(scope,state['id']);await worker.close()
+                self.assertIn('atmem-inputs/handoff/spec-kit/tasks.json',pins)
+                self.assertIn('atmem-inputs/handoff/spec-kit/context.json',pins)
                 config['ENGINEERING_WORKSPACE_ROOT']=str(root/'another-disk/workspaces')
                 Path(config['ENGINEERING_WORKSPACE_ROOT']).mkdir(parents=True)
                 restarted=LocalEngineeringService()
@@ -45,8 +53,7 @@ class LocalWorkerRegistrationTests(unittest.IsolatedAsyncioTestCase):
         with tempfile.TemporaryDirectory() as folder:
             root=Path(folder);(root/'projects').mkdir()
             context=root/'projects/project-one.atforma.json'
-            original=json.dumps({'format':'atmem.ai-architect.project','meta':{'id':'project-one'},
-                'requirements':['Preserve the existing observatory.'],'design':{'provider':'tools'}}).encode()
+            original=project_context('Preserve the existing observatory.').encode()
             context.write_bytes(original)
             with patch('server.engineering_routes.home',return_value=root),patch('server.engineering_routes.setting',return_value=None):
                 worker=LocalEngineeringService();scope=ProjectScope('local-owner','project-one')
@@ -62,6 +69,10 @@ class LocalWorkerRegistrationTests(unittest.IsolatedAsyncioTestCase):
                     with self.assertRaises(SessionError):worker.attach_context(scope,state['id'],str(uuid.uuid4()),first['sha256'])
                     second=worker.attach_context(scope,state['id'],str(uuid.uuid4()),hashlib.sha256(changed).hexdigest())
                     self.assertEqual(second['revision'],2)
+                    self.assertEqual(first['specification']['contextSha256'],first['sha256'])
+                    self.assertEqual(second['specification']['contextSha256'],second['sha256'])
+                    self.assertNotEqual(first['specification']['contextSha256'],second['specification']['contextSha256'])
+                    self.assertTrue(second['specification']['tasks']['tasks'])
                     self.assertEqual((path/'project-context.json').read_bytes(),original)
                     self.assertEqual(worker.pinned_inputs(scope,state['id']),pins)
                     self.assertEqual(worker.contexts.get(scope,state['id'],first['id'])['content'].encode(),original)
@@ -76,7 +87,7 @@ class LocalWorkerRegistrationTests(unittest.IsolatedAsyncioTestCase):
             root=Path(folder);environment=root/'public-python';venv.EnvBuilder(with_pip=False).create(environment);binary=environment/'bin/python'
             probe=subprocess.run([str(binary),'-I','-c',"import sysconfig;print(sysconfig.get_path('purelib'))"],capture_output=True,text=True,check=True)
             (Path(probe.stdout.strip())/'atmem_dependency_canary.py').write_text('VALUE=41\n')
-            context=root/'project.json';context.write_text('{"requirements":"Keep shared worker dependencies"}')
+            context=root/'project.json';context.write_text(project_context('Keep shared worker dependencies', project_id='environment-test'))
             base_root=str(Path(sys.executable).resolve().parent)
             config={'ENGINEERING_TOOL_ROOTS':json.dumps([base_root]),'ENGINEERING_TOOLCHAIN':json.dumps({'python':str(binary)})}
             with patch('server.engineering_routes.home',return_value=root),patch('server.engineering_routes.setting',side_effect=config.get),self.assertRaisesRegex(RuntimeError,'qualified.*read root'):LocalEngineeringService()
@@ -91,11 +102,35 @@ class LocalWorkerRegistrationTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(worker.toolchain['python'],str(binary.absolute()))
                 finally:await worker.close();shutil.rmtree(path)
 
+    async def test_native_specification_and_pinned_handoff_withhold_maintenance_source(self):
+        import hashlib,uuid
+        from server.engineering_contexts import context_input
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);source=json.loads(project_context('Preserve the archive contract'))
+            source['formatVersion']='4.0.0'
+            source['extensions']={'maintenance':{'source':'private-repository-canary'},'maintenanceNeedsImport':False}
+            original=json.dumps(source).encode();(root/'projects').mkdir();path=root/'projects/project-one.atforma.json';path.write_bytes(original)
+            with patch('server.engineering_routes.home',return_value=root),patch('server.engineering_routes.setting',return_value=None):
+                worker=LocalEngineeringService();scope=ProjectScope('local-owner','project-one')
+                async def fake_create(scope,workspace,selection):return worker.sessions._public(worker.store.create(scope,workspace,worker.backend.name,'fake-thread',selection))
+                worker.sessions.create=fake_create;state=await worker.create(scope,path,ModelSelection('exact-model','medium'))
+                workspace=worker.backend._workspace(scope,worker.store.get(scope,state['id'])['workspace'])
+                try:
+                    context=worker.attach_context(scope,state['id'],str(uuid.uuid4()),hashlib.sha256(original).hexdigest())
+                    self.assertIn('private-repository-canary',context['content'])
+                    self.assertNotIn('private-repository-canary',json.dumps(context['specification']))
+                    self.assertNotIn('private-repository-canary',context_input(context)['text'])
+                    self.assertEqual(context['specification']['contextSha256'],hashlib.sha256(original).hexdigest())
+                    self.assertNotEqual(context['specification']['modelContextSha256'],context['sha256'])
+                    for file in (workspace/'atmem-inputs/handoff').rglob('*'):
+                        if file.is_file():self.assertNotIn(b'private-repository-canary',file.read_bytes())
+                finally:await worker.close();shutil.rmtree(workspace)
+
     async def test_operator_toolchain_staging_and_durable_project_registration(self):
         with tempfile.TemporaryDirectory() as folder:
             root=Path(folder);tools=root/'trusted-tools';tools.mkdir()
             binary=tools/'python';binary.write_text('synthetic tool, never executed')
-            context=root/'project.json';context.write_text('{"requirements":"Preserve telemetry API"}')
+            context=root/'project.json';context.write_text(project_context('Preserve telemetry API'))
             config={'ENGINEERING_TOOL_ROOTS':json.dumps([str(tools)]),
                     'ENGINEERING_TOOLCHAIN':json.dumps({'python':str(binary)})}
             with patch('server.engineering_routes.home',return_value=root),patch('server.engineering_routes.setting',side_effect=config.get):
@@ -116,7 +151,10 @@ class LocalWorkerRegistrationTests(unittest.IsolatedAsyncioTestCase):
                 self.assertTrue((path/'atmem-tools/prepare.py').is_file())
                 events=worker.jobs.journal.read(scope,state['id'])
                 self.assertEqual(events[0]['kind'],'created')
-                self.assertEqual(set(events[0]['inputDigests']),{'project-context.json','.agents/skills/composition/SKILL.md','ATMEM_DELIVERY.md','atmem-tools/prepare.py','atmem-tools/architecture-work.schema.json','atmem-tools/application-runtime.json','atmem-tools/materialize-runtime.py'})
+                expected={'project-context.json','.agents/skills/composition/SKILL.md','ATMEM_DELIVERY.md','atmem-tools/prepare.py','atmem-tools/architecture-work.schema.json','atmem-tools/application-runtime.json','atmem-tools/materialize-runtime.py'}
+                actual=set(events[0]['inputDigests']);self.assertEqual({name for name in actual if not name.startswith('atmem-inputs/handoff/')},expected)
+                self.assertIn('atmem-inputs/handoff/spec-kit/tasks.json',actual)
+                for name in actual:self.assertEqual(events[0]['inputDigests'][name],__import__('hashlib').sha256((path/name).read_bytes()).hexdigest())
                 import hashlib
                 schema=path/'atmem-tools/architecture-work.schema.json'
                 self.assertEqual(events[0]['inputDigests']['atmem-tools/architecture-work.schema.json'],hashlib.sha256(schema.read_bytes()).hexdigest())
@@ -134,7 +172,7 @@ class LocalWorkerRegistrationTests(unittest.IsolatedAsyncioTestCase):
         from server.local_validation import ValidationSpec
         import asyncio
         with tempfile.TemporaryDirectory() as folder:
-            root=Path(folder);context=root/'project.json';context.write_text('{"requirements":"Preserve measurement contracts"}')
+            root=Path(folder);context=root/'project.json';context.write_text(project_context('Preserve measurement contracts'))
             with patch('server.engineering_routes.home',return_value=root),patch('server.engineering_routes.setting',return_value=None):
                 worker=LocalEngineeringService();scope=ProjectScope('local-owner','project-one');selection=ModelSelection('exact-model','high')
                 async def fake_create(scope,workspace,selection):return worker.sessions._public(worker.store.create(scope,workspace,worker.backend.name,'private-thread',selection))
@@ -161,7 +199,7 @@ class LocalWorkerRegistrationTests(unittest.IsolatedAsyncioTestCase):
         import asyncio
         from server.tests.test_validation_jobs import Worker
         with tempfile.TemporaryDirectory()as folder:
-            root=Path(folder);context=root/'project.json';context.write_text('{"requirements":"Preserve source ownership"}')
+            root=Path(folder);context=root/'project.json';context.write_text(project_context('Preserve source ownership'))
             entry={'id':'placed-tests','label':'Explicit placed check','image':'sha256:'+'a'*64,
                    'command':['/usr/local/bin/python3','check.py'],'workerId':'approved-executor'}
             config={'ENGINEERING_VALIDATORS':json.dumps([entry]),'ENGINEERING_VALIDATOR_WORKERS':json.dumps({'approved-executor':{'endpoint':'unix:///owned/unavailable.sock'}})}

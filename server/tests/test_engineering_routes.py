@@ -110,12 +110,13 @@ class EngineeringRouteTests(unittest.TestCase):
                     self.assertEqual(self.client.post('/api/engineering/'+action,json={**body,**change},headers=self.headers).status_code,422)
 
     def test_mapping_reconciliation_is_exact_artifact_scoped_and_has_no_command_or_context_override(self):
-        with patch.object(routes,'service') as service:
+        with patch.object(routes,'service') as service,patch('server.architecture_rules.remember_bindings') as remembered:
             service.return_value.reconciliation.prepare.return_value={'status':'prepared','id':'receipt'}
             body={**self.payload,'artifactId':self.session}
             result=self.client.post('/api/engineering/reconciliation',json=body,headers=self.headers)
             self.assertEqual(result.status_code,200)
             service.return_value.reconciliation.prepare.assert_called_once_with(ProjectScope('local-owner',self.project),self.session,self.session)
+            self.assertEqual(remembered.call_args.args[1],self.project)
             for extra in ['context','command','records','sha256','tenant','workspace']:
                 self.assertEqual(self.client.post('/api/engineering/reconciliation',json={**body,extra:'untrusted'},headers=self.headers).status_code,422)
 

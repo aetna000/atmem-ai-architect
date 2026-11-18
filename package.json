@@ -1,13 +1,13 @@
 {
   "name": "atmem-ai-architect",
-  "version": "0.2.4",
+  "version": "0.2.5-beta.1",
   "private": true,
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "node scripts/embed-runtimes.mjs && vite build",
     "preview": "vite preview --host 127.0.0.1",
-    "test": "node scripts/embed-runtimes.mjs && node --test tests/*.test.mjs",
+    "test": "node scripts/embed-runtimes.mjs && node --test tests/*.test.mjs tests/maintenance/*.test.mjs",
     "local": "node scripts/local.mjs",
     "test:server": ".venv/bin/python -m unittest discover -s server/tests -v",
     "test:browser": "node scripts/voice-smoke.mjs && node scripts/smoke.mjs && node scripts/delivery-smoke.mjs",
@@ -34,7 +34,10 @@
     "test:enterprise:browser": "node scripts/enterprise-browser-check.mjs",
     "build:enterprise:web": "node scripts/build-enterprise-web.mjs",
     "package:npm": "npm run build && node scripts/package-npm.mjs",
-    "test:onboarding": "node scripts/onboarding-smoke.mjs"
+    "test:onboarding": "node scripts/onboarding-smoke.mjs",
+    "test:maintenance": "node --test tests/maintenance/*.test.mjs",
+    "test:maintenance:browser": "node scripts/maintenance-smoke.mjs",
+    "test:maintenance:campaign": "node scripts/maintenance-campaign-smoke.mjs"
   },
   "dependencies": {
     "@noble/hashes": "2.4.0",

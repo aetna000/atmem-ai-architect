@@ -49,4 +49,17 @@ class ProviderFailureExplanationTests(unittest.TestCase):
         from server.local_providers import provider_failure
         for text,expected in [("You've hit your session limit · resets tomorrow. secret-token",'usage or rate limit'),('Authentication failed secret-token','sign in again'),('model_not_found secret-token','not available')]:
             message=provider_failure(text);self.assertIn(expected,message);self.assertNotIn('secret-token',message)
+        message=provider_failure('model_requires_usage_credits secret-token')
+        self.assertIn('requires provider usage credits',message)
+        self.assertNotIn('secret-token',message)
         self.assertIn('No changes were applied',provider_failure('unknown raw secret-token'))
+
+class StrictObjectTransportTests(unittest.TestCase):
+    def test_unrestricted_nested_object_round_trips_through_strict_wire_schema(self):
+        from server.local_providers import strict_schema, restore_json_objects
+        schema={'type':'object','properties':{'profile':{'anyOf':[{'type':'object','additionalProperties':True},{'type':'null'}]}}}
+        wire=strict_schema(schema)
+        self.assertEqual(wire['properties']['profile']['anyOf'][0]['type'],'string')
+        self.assertEqual(restore_json_objects({'profile':'{"provider":"aws","nested":{"name":"test"}}'},schema),{'profile':{'provider':'aws','nested':{'name':'test'}}})
+        self.assertEqual(restore_json_objects({'profile':None},schema),{'profile':None})
+        with self.assertRaises(ValueError):restore_json_objects({'profile':'[]'},schema)

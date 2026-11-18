@@ -31,6 +31,8 @@ class ArchitectureActivityRequest(BaseModel):
 
 app=FastAPI(title='AtMem AI Architect helper',docs_url=None,redoc_url=None,openapi_url=None)
 app.include_router(memory_router)
+from .architecture_rules import router as architecture_rules_router
+app.include_router(architecture_rules_router)
 from .voice_routes import router as voice_router, engine as voice_engine
 from .openai_voice import router as openai_voice_router
 app.include_router(voice_router)
@@ -46,12 +48,21 @@ from .emulation_routes import router as emulation_router
 app.include_router(emulation_router)
 from .terraform_emulation_routes import router as terraform_emulation_router
 app.include_router(terraform_emulation_router)
+from .maintenance_routes import router as maintenance_router, close as close_maintenance
+app.include_router(maintenance_router)
+from .maintenance_campaign_routes import router as campaign_router, close as close_campaigns
+app.include_router(campaign_router)
+from .maintenance_publication_routes import router as publication_router, close as close_publication
+app.include_router(publication_router)
 from .engineering_routes import router as engineering_router, close as close_engineering
 app.include_router(engineering_router)
 
 @app.on_event('shutdown')
 async def shutdown_engineering():
     await close_engineering()
+    close_publication()
+    close_campaigns()
+    close_maintenance()
 TOKEN=secrets.token_urlsafe(32)
 ARCHITECT=AtMemArchitect()
 ALLOWED_HOSTS={'127.0.0.1:5174','localhost:5174','127.0.0.1:8766','localhost:8766','testserver'}
@@ -74,7 +85,10 @@ async def local_boundary(request:Request,call_next):
     if request.method=='POST':
         if not secrets.compare_digest(request.headers.get('authorization',''),f'Bearer {TOKEN}'):
             return JSONResponse({'detail':'Missing local session token'},status_code=401)
-        limit=43_000_000 if request.url.path=='/api/engineering/orca/open' else 12_000_000 if request.url.path=='/api/architect' else 2_100_000 if request.url.path in {'/api/projects/save','/api/memory/sync','/api/voice/transcribe'} else 250000
+        limit=43_000_000 if request.url.path=='/api/engineering/orca/open' else 60_000_000 if request.url.path=='/api/architect' else 2_100_000 if request.url.path in {'/api/projects/save','/api/memory/sync','/api/voice/transcribe','/api/memory/architecture/run'} else 250000
+        if request.url.path.startswith('/api/maintenance/'):
+            if request.url.path=='/api/maintenance/projects/import' or request.url.path.startswith('/api/maintenance/campaigns'):limit=64_000_000
+            elif request.url.path=='/api/maintenance/projects' or request.url.path.endswith('/inventory'):limit=16_100_000
         if len(await request.body())>limit:
             return JSONResponse({'detail':'Request too large'},status_code=413)
     response=await call_next(request)

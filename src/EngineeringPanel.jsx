@@ -3,10 +3,11 @@ import React,{useEffect,useRef,useState} from 'react';
 import {engineeringCall,engineeringConversation,mergeEngineeringEvents,engineeringSelectionSupported} from './engineering-client.mjs';
 import './engineering.css';
 import {ArtifactChecks} from './ArtifactChecks.jsx';
+import {ImplementationProgress} from './ImplementationProgress.jsx';
 import {verifyArtifactWork} from './artifact-work.mjs';
 import {hasArchitectureDesign,buildIntent,BUILD_AND_TEST_REQUEST} from './design-build-flow.mjs';
 
-export function EngineeringPanel({projectId,session,connection,saveProject,onConnections,project,onWorkModelChange,onIntentContext,onDesign,onDelivery,buildRequest,onBuildRequestHandled,contextBusy=false,onBusyChange}){
+export function EngineeringPanel({projectId,session,connection,saveProject,onConnections,project,onWorkModelChange,onIntentContext,onDesign,onDelivery,buildRequest,onBuildRequestHandled,contextBusy=false,policyGate,onBusyChange}){
   const draftKey=`atmem-engineering-draft-v1:${projectId}`;
   const [job,setJob]=useState(null),[events,setEvents]=useState([]),[draft,setDraft]=useState(()=>{try{return localStorage.getItem(draftKey)||'';}catch{return '';}}),
     [busy,setBusy]=useState(false),[error,setError]=useState(''),[loading,setLoading]=useState(true),[artifact,setArtifact]=useState(null);
@@ -73,7 +74,7 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
   function submitIntent(event,requestedText){
     event?.preventDefault();
     const submitted=requestedText??(running?draft:buildIntent(project,draft));
-    if(!submitted||submitted.length>80000||loading||restoreBlocked||actionLock.current||uncertain||contextBusy||(!job&&(!exactSelection||!hasDesign)))return false;
+    if(!submitted||submitted.length>80000||loading||restoreBlocked||actionLock.current||uncertain||contextBusy||policyGate?.blocked||(!job&&(!exactSelection||!hasDesign)))return false;
     void act(async()=>{
       let current=job;
       let saved=await saveProject();
@@ -93,11 +94,11 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
     return true;
   }
   useEffect(()=>{
-    if(!buildRequest||buildRequest.projectId!==projectId||consumedBuild.current===buildRequest.id||loading||restoreBlocked||contextBusy||uncertain||busy||(!job&&!exactSelection))return;
+    if(!buildRequest||buildRequest.projectId!==projectId||consumedBuild.current===buildRequest.id||loading||restoreBlocked||contextBusy||policyGate?.blocked||uncertain||busy||(!job&&!exactSelection))return;
     if(submitIntent(null,buildRequest.intent==='test'?BUILD_AND_TEST_REQUEST:buildIntent(project,''))){
       consumedBuild.current=buildRequest.id;onBuildRequestHandled?.(buildRequest.id);
     }
-  },[buildRequest,projectId,loading,restoreBlocked,contextBusy,uncertain,busy,exactSelection,job?.id]);
+  },[buildRequest,projectId,loading,restoreBlocked,contextBusy,policyGate?.blocked,uncertain,busy,exactSelection,job?.id]);
   async function linkMappings(){
     const result=await call('reconciliation',{artifactId:artifact.id});
     if(result.status==='proposal_missing'){setMappingStatus('File links missing from package.');return;}
@@ -110,7 +111,9 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
     mappedArtifacts.current.add(artifact.id);setMappingStatus('Connecting files to design blocks…');void act(linkMappings);
   },[artifact?.id,job?.run,job?.state,busy,contextBusy]);
   return <div className="engineering-panel">
-    <h2>2. Project files</h2>
+    <h2>Build and verify</h2>
+    <ImplementationProgress project={project} session={session} job={job} artifact={artifact}/>
+    {policyGate?.blocked&&<p role="status">{policyGate.reason}</p>}
     {onDesign&&<button onClick={onDesign}>Return to Design</button>}
 
     {buildRequest?.projectId===projectId&&<p role="status">{restoreBlocked?'Your implementation request is waiting. Retry loading earlier work before starting.':uncertain?'Your implementation request is waiting. Recover the existing request first to avoid duplicate work.':contextBusy?'Your implementation request is waiting for the current design changes.':!job&&!exactSelection?'Your implementation request is waiting here. Choose a model and reasoning level below; it will then start automatically.':'Your implementation request is queued.'} <button onClick={()=>onBuildRequestHandled?.(buildRequest.id)}>Cancel queued request</button></p>}
@@ -119,7 +122,7 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
       {job?<>
         {(running||uncertain)&&<div className="generation-progress" role="progressbar" aria-label="Project generation" aria-valuetext={activity}><span/></div>}
         {(running||uncertain)&&<p className="generation-activity" role="status">{activity}{lastReceived&&<> · Last update received {Math.max(0,Math.floor((now-lastReceived)/1000))}s ago</>}</p>}
-        <p className="generation-status" role="status">{(running||uncertain||busy)&&<BrainActivity size={24}/>} {running?'Working':uncertain?'Recovering acceptance of your last request':finalization?.kind==='finalization_needs_attention'?'Files generated · Checks need attention':job.last_status?({completed:'Work completed',interrupted:'Work stopped',failed:'Work needs attention'}[job.last_status]||job.last_status):'Ready'} · {job.model} · {job.effort}</p>
+        <p className="generation-status" role="status">{(running||uncertain||busy)&&<BrainActivity size={24}/>} {running?'Working':uncertain?'Recovering acceptance of your last request':finalization?.kind==='finalization_needs_attention'?'Files generated · Checks need attention':job.last_status?({completed:'Generation finished',interrupted:'Work stopped',failed:'Work needs attention'}[job.last_status]||job.last_status):'Ready'} · {job.model} · {job.effort}</p>
 
       </>:<>
         <p>{exactSelection?`${connection.model} · ${connection.effort}`:'Choose a Codex model and reasoning level to start.'}</p>
@@ -130,7 +133,7 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
         <details open={running||undefined}><summary>{running?'Add an update':'Additional instructions (optional)'}</summary><label htmlFor="engineering-intent">{running?'Add an implementation update':hasDesign?'Additional instructions (optional)':'Continue implementation'}</label>
         <textarea id="engineering-intent" rows={2} value={draft} onChange={e=>setDraft(e.target.value)}/></details>
         {draft.length>80000&&<p role="alert">This update exceeds 80,000 characters. Edit it before sending; your draft is retained.</p>}
-        <button disabled={busy||restoreBlocked||uncertain||contextBusy||!canSubmit||draft.length>80000||(!job&&!exactSelection)}>{busy?<><BrainActivity size={22}/> Sending…</>:running?'Send update':hasDesign?'Generate project files':'Continue implementation'}</button>
+        <button disabled={busy||restoreBlocked||uncertain||contextBusy||policyGate?.blocked||!canSubmit||draft.length>80000||(!job&&!exactSelection)}>{busy?<><BrainActivity size={22}/> Sending…</>:running?'Send update':hasDesign?'Code it':'Continue implementation'}</button>
       </form>}
       {job&&<>
         {running&&<button disabled={busy} onClick={()=>act(async()=>{const next=await call('interrupt');if(live.current)setJob(next);})}>Stop generation</button>}
@@ -140,7 +143,8 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
           {running&&<button disabled={busy} onClick={()=>act(async()=>{const next=await call('interrupt');if(live.current)setJob(next);})}>Stop work</button>}
           {!running&&!uncertain&&job.last_status&&<button disabled={busy} onClick={()=>act(async()=>{const captured=await call('capture');if(live.current)setArtifact(captured);})}>Refresh package snapshot</button>}
         </details>
-        <details><summary>Engineering progress (<span key={events.length} className={`engineering-progress-count${running||uncertain?' updated':''}`}>{events.length}</span>)</summary><ol>{events.filter(event=>!['message','accepted','steering_submitted'].includes(event.kind)).map(event=><li key={event.sequence}>{event.kind}{event.text?` · ${event.text}`:''}</li>)}</ol></details>
+        <section aria-label="Live implementation activity"><h3>Live activity</h3><ol className="implementation-activity">{events.filter(event=>event.text&&!['accepted','steering_submitted'].includes(event.kind)).slice(-8).map(event=>{const words=event.text.trim().split(/\s+/);return <li key={event.sequence}>{words.length<=20?event.text:<>{words.slice(0,20).join(' ')}…<details><summary>More details</summary><p>{event.text}</p></details></>}</li>;})}</ol></section>
+        <details><summary>All engineering events (<span key={events.length} className={`engineering-progress-count${running||uncertain?' updated':''}`}>{events.length}</span>)</summary><ol>{events.filter(event=>!['message','accepted','steering_submitted'].includes(event.kind)).map(event=><li key={event.sequence}>{event.kind}{event.text?` · ${event.text}`:''}</li>)}</ol></details>
       </>}
       {artifact&&<div className="engineering-artifact"><p>{artifact.runId!==job?.run||running||uncertain?'Previous files':'Project files'} · {artifact.files.filter(file=>file.kind==='file').length} {artifact.files.filter(file=>file.kind==='file').length===1?'file':'files'}</p>
         {artifact.runId!==job?.run&&<p>{running||uncertain?'Generating updated files…':'Generate updated files to include your changes.'}</p>}

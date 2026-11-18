@@ -19,6 +19,7 @@ from datetime import datetime, timezone
 ROOT = Path(__file__).resolve().parent.parent
 SECRET_KEY = re.compile(r'^(password|secret|api_?key|access_?key|token|client_?secret)$', re.I)
 SECRET_VALUE = re.compile(r'AKIA[0-9A-Z]{16}|sk-(?:ant-)?[A-Za-z0-9_-]{20,}|ghp_[A-Za-z0-9]{36}|AIza[\w-]{35}|-----BEGIN .*PRIVATE KEY-----')
+ARCHITECTURE_KEYS={'architecture.policy','architecture.review','architecture.implementation','architecture.artifact_review','architecture.bindings','architecture.specification','architecture.validation'}
 
 
 def safe(value):
@@ -56,6 +57,7 @@ class MemoryService:
               CREATE TABLE IF NOT EXISTS queue (seq INTEGER PRIMARY KEY AUTOINCREMENT, event_id TEXT UNIQUE, project TEXT, scope TEXT, key TEXT, text TEXT, source TEXT, state TEXT, created TEXT);
               CREATE TABLE IF NOT EXISTS activity (id TEXT PRIMARY KEY, project TEXT, created TEXT, payload TEXT);
               CREATE TABLE IF NOT EXISTS skill_settings (id TEXT PRIMARY KEY, enabled INTEGER);
+              CREATE TABLE IF NOT EXISTS architecture_index (project TEXT NOT NULL,key TEXT NOT NULL,record_id TEXT NOT NULL,PRIMARY KEY(project,key));
             ''')
             row = db.execute('SELECT id FROM identity').fetchone()
             if 'reason' not in {r[1] for r in db.execute('PRAGMA table_info(queue)')}:
@@ -97,7 +99,7 @@ class MemoryService:
         return {'enabled': enabled}
 
     def call(self, operations):
-        operations=[{**op,'owner':self.owner,'actor':'user:'+self.owner if (op.get('subject')==self.subject('user','') or op.get('action')=='forget') else 'atmem-project-sync','actorType':'user' if (op.get('subject')==self.subject('user','') or op.get('action')=='forget') else 'project-sync'}for op in operations]
+        operations=[{**op,'owner':self.owner,'actor':'user:'+self.owner if (op.get('subject')==self.subject('user','') or op.get('action')=='forget' or op.get('userApproved')) else 'atmem-project-sync','actorType':'user' if (op.get('subject')==self.subject('user','') or op.get('action')=='forget' or op.get('userApproved')) else 'project-sync'}for op in operations]
         result = subprocess.run([self.worker, '-I', str(ROOT / 'server/memory_worker.py')],
             input=json.dumps({'database': str(self.home / 'memories.db'), 'operations': operations}),
             text=True, capture_output=True, timeout=25, cwd=str(self.home))
@@ -110,6 +112,32 @@ class MemoryService:
         self.error = None
         self.engine_version = payload.get('version')
         return payload['results']
+
+    def architecture_fact(self,project,key,value=None,*,approved=False):
+        """Exact project policy/review identities, never approximate context recall."""
+        self.project(project)
+        if key not in ARCHITECTURE_KEYS:raise ValueError('Unknown architecture memory key')
+        with self.lock:
+            if not self.enabled(project):raise ValueError('Enable AtMem memory to save or review project rules.')
+            subject=self.subject('project',project)
+            with self.db() as db:index=db.execute('SELECT record_id FROM architecture_index WHERE project=? AND key=?',(project,key)).fetchone()
+            if value is None and not index:return None
+            if value is not None:
+                text=json.dumps(value,ensure_ascii=False,allow_nan=False)
+                if len(text.encode())>3_000_000 or not safe(value):raise ValueError('Architecture memory exceeds its safe content bound.')
+                # AtMem's interpreted facts are limited to 2,000 characters.
+                # Keep a short searchable fact and the complete typed snapshot
+                # in its audited source episode; never truncate policy/evidence.
+                summary=key+' snapshot '+digest(value)+' · '+str(value.get('state',value.get('revision','approved')))
+                receipt=self.call([{'action':'remember','subject':subject,'key':key,'text':summary,'structuredValue':value,'eventId':str(uuid.uuid4()),'source':'AtMem AI Architect / '+key,'userApproved':approved}])[0]
+                if receipt.get('refused') or not receipt.get('ids'):raise RuntimeError('AtMem did not accept the architecture record.')
+            record=self.call([{'action':'fact','subject':subject,'key':key}])[0]
+            if record is None:raise RuntimeError('The indexed architecture memory is unavailable.')
+            if value is None and record['id']!=index[0]:raise RuntimeError('Architecture memory changed outside its approval boundary.')
+            if 'structuredValue' not in record:raise RuntimeError('Architecture record lacks its exact structured snapshot.')
+            if value is not None:
+                with self.db() as db:db.execute('INSERT OR REPLACE INTO architecture_index VALUES (?,?,?)',(project,key,record['id']))
+            return {'recordId':record['id'],'value':record['structuredValue'],'governance':record['governance']}
 
     def enqueue(self, project, scope, key, text, event_id=None, source=''):
         if not safe(text) or len(text) > 1900:
@@ -258,6 +286,8 @@ class MemoryService:
             result = self.call([{'action': 'forget', 'subject': self.subject(scope, project), 'recordId': record_id}])[0]
             key = result.pop('key')
             with self.db() as db:
+                if scope=='project' and key in ARCHITECTURE_KEYS:
+                    db.execute('DELETE FROM architecture_index WHERE project=? AND key=?',(project,key))
                 # Remove plaintext outbox copies too, and cancel replay of this exact key.
                 if scope == 'user':
                     db.execute('DELETE FROM queue WHERE scope=? AND key=?', (scope, key))
@@ -275,6 +305,49 @@ class MemoryService:
             try:
                 rows = self.call([{'action': 'recall', 'subject': self.subject(s, project), 'query': query, 'limit': 6} for s in ('user', 'project')])
                 context = [{'scope': scope, 'id': r['id'], 'text': r['content'], 'sourceDate': r['created_at'], 'key': r.get('fact_key')} for scope, records in zip(('user','project'), rows) for r in records]
+                # Exact current policy/review identities must not depend on search ranking.
+                policy=self.architecture_fact(project,'architecture.policy')
+                review=self.architecture_fact(project,'architecture.review')
+                if policy:
+                    context.append({'scope':'project','id':policy['recordId'],'key':'architecture.policy','sourceDate':policy['value']['approvedAt'],
+                                    'text':'User-approved project infrastructure rules, revision '+policy['value']['revision']+':\n'+policy['value']['content']})
+                if review:
+                    value=review['value'];fresh=bool(policy and value['policyRevision']==policy['value']['revision'])
+                    context.append({'scope':'project','id':review['recordId'],'key':'architecture.review','sourceDate':value['startedAt'],
+                                    'text':json.dumps({'boundary':'Last recorded static design review, not proof of current code/tests/deployment. Compare design binding before claiming current readiness.',
+                                        'state':value['state'] if fresh else 'stale_policy','designSha256':value.get('designSha256'),'policyRevision':value['policyRevision'],
+                                        'verdict':value.get('report',{}).get('verdict'),'violations':value.get('report',{}).get('violations',[]),'unverified':value.get('report',{}).get('unverified',[])})})
+                implementation=self.architecture_fact(project,'architecture.implementation')
+                if implementation:
+                    context.append({'scope':'project','id':implementation['recordId'],'key':'architecture.implementation','sourceDate':implementation['value']['recordedAt'],
+                                    'text':json.dumps(implementation['value'])})
+                artifact_review=self.architecture_fact(project,'architecture.artifact_review')
+                if artifact_review:
+                    value=artifact_review['value']
+                    context.append({'scope':'project','id':artifact_review['recordId'],'key':'architecture.artifact_review','sourceDate':value['recordedAt'],
+                                    'text':json.dumps({'artifactId':value['artifactId'],'artifactSha256':value['artifactSha256'],'policyRevision':value['policyRevision'],
+                                        'state':value['state'] if policy and policy['value']['revision']==value['policyRevision'] else 'stale_policy',
+                                        'boundary':value['evidenceLevel'],'verdict':value['report']['verdict'],'violations':value['report']['violations'],'unverified':value['report']['unverified']})})
+                bindings=self.architecture_fact(project,'architecture.bindings')
+                if bindings:
+                    context.append({'scope':'project','id':bindings['recordId'],'key':'architecture.bindings','sourceDate':bindings['value']['recordedAt'],
+                                    'text':json.dumps(bindings['value'])})
+                specification=self.architecture_fact(project,'architecture.specification')
+                if specification:
+                    value=specification['value'];tasks=value['specification']['tasks']['tasks']
+                    selected=[task for task in tasks if re.search(r'(?<![A-Za-z0-9_-])'+re.escape(task['id'])+r'(?![A-Za-z0-9_-])',query,re.I)]
+                    details=[];size=0
+                    for task in selected:
+                        encoded=json.dumps(task)
+                        if size+len(encoded.encode())>32000:continue
+                        details.append(task);size+=len(encoded.encode())
+                    context.append({'scope':'project','id':specification['recordId'],'key':'architecture.specification','sourceDate':value['recordedAt'],
+                        'text':json.dumps({'boundary':'Last submitted Spec Kit inventory. Planned tasks are not implementation or test passes. Full snapshot remains in AtMem.',
+                            'contextSha256':value['contextSha256'],'taskCount':len(tasks),'requestedTasks':details,'omittedRequestedDetails':len(selected)-len(details)})})
+                validation=self.architecture_fact(project,'architecture.validation')
+                if validation:
+                    context.append({'scope':'project','id':validation['recordId'],'key':'architecture.validation','sourceDate':validation['value']['recordedAt'],
+                        'text':json.dumps(validation['value'])})
                 from .memory_context import retrieve
                 external,provider_status=retrieve(project,self.owner,query,safe)
                 return context+external,{**self.status(project),'contextProviders':provider_status}

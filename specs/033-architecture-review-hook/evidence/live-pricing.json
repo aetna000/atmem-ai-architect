@@ -1,0 +1,153 @@
+{
+  "recordedAt": "2026-11-17T12:37:42.968941+00:00",
+  "cliVersion": "2.19.1",
+  "authentication": "Operator-approved interactive CLI login; short-lived access token passed in memory only to isolated child environment. No refresh token copied.",
+  "scope": "Synthetic Terraform plan JSON; one Linux t3.micro in us-east-1 with 8 GiB gp3 storage; usage and ancillary charges outside this configuration are not included.",
+  "pricingInvocations": 1,
+  "plan": {
+    "format_version": "1.2",
+    "terraform_version": "1.9.8",
+    "planned_values": {
+      "root_module": {
+        "resources": [
+          {
+            "address": "aws_instance.pricing_probe",
+            "mode": "managed",
+            "type": "aws_instance",
+            "name": "pricing_probe",
+            "provider_name": "registry.terraform.io/hashicorp/aws",
+            "schema_version": 1,
+            "values": {
+              "instance_type": "t3.micro",
+              "region": "us-east-1",
+              "root_block_device": [
+                {
+                  "volume_type": "gp3",
+                  "volume_size": 8
+                }
+              ]
+            },
+            "sensitive_values": {}
+          }
+        ]
+      }
+    }
+  },
+  "planSha256": "fa2db616c2fba46fa198103ed75b67cedf912e8aa93f3babd209654410e82e18",
+  "cost": {
+    "status": "estimated",
+    "engine": "infracost-cli-2.19.1-format",
+    "currency": "USD",
+    "monthly_total": 8.232,
+    "usage_assumptions": "Explicitly free resources are counted as zero. Usage-dependent charges require supplied usage; this estimate is not a bill.",
+    "top_resources": [
+      {
+        "resource_address": "aws_instance.pricing_probe",
+        "monthly_cost": 8.232
+      }
+    ],
+    "budget_monthly": 5,
+    "over_budget": true
+  },
+  "reviews": {
+    "within_budget": {
+      "schema_version": "1.0",
+      "verdict": "pass",
+      "summary": "PASS: 0 policy findings; 0 unverified checks. Supplied artifacts only; no deployment verification.",
+      "rules_file": {
+        "path": "architecture.md",
+        "sha256": "ef0682a03fef99b0a04d60999e629fac68ffb54ed337957fc34df145d4495b95",
+        "rule_count": 1,
+        "adr_count": 0
+      },
+      "violations": [],
+      "cost": {
+        "status": "estimated",
+        "engine": "infracost-cli-2.19.1-format",
+        "currency": "USD",
+        "monthly_total": 8.232,
+        "usage_assumptions": "Explicitly free resources are counted as zero. Usage-dependent charges require supplied usage; this estimate is not a bill.",
+        "top_resources": [
+          {
+            "resource_address": "aws_instance.pricing_probe",
+            "monthly_cost": 8.232
+          }
+        ],
+        "budget_monthly": 5,
+        "over_budget": true
+      },
+      "risks": [],
+      "suggested_fixes": [],
+      "unverified": [],
+      "reviewer": {
+        "name": "atmem-review",
+        "version": "0.1.0",
+        "reviewed_at": "2026-11-17T12:37:42.967211+00:00",
+        "input_sha256": "97b1598972d1a4312edf3b39813f9589e7e11970213919d6aebdfab44754c858"
+      }
+    },
+    "over_budget": {
+      "schema_version": "1.0",
+      "verdict": "fail",
+      "summary": "FAIL: 1 policy findings; 0 unverified checks. Supplied artifacts only; no deployment verification.",
+      "rules_file": {
+        "path": "architecture.md",
+        "sha256": "c600dfaffe87a38f5060b517ca1e33e3b5ed9aeffe4f7577ba6d471dedf6193e",
+        "rule_count": 1,
+        "adr_count": 0
+      },
+      "violations": [
+        {
+          "rule_id": "PROBE-BUDGET",
+          "severity": "error",
+          "title": "Monthly estimate exceeds budget",
+          "evidence": [
+            {
+              "source": "cost_engine",
+              "attribute": "monthly_total",
+              "value": 8.232
+            }
+          ],
+          "explanation": "Estimate 8.232 USD; budget 5 USD.",
+          "exception_id": null
+        }
+      ],
+      "cost": {
+        "status": "estimated",
+        "engine": "infracost-cli-2.19.1-format",
+        "currency": "USD",
+        "monthly_total": 8.232,
+        "usage_assumptions": "Explicitly free resources are counted as zero. Usage-dependent charges require supplied usage; this estimate is not a bill.",
+        "top_resources": [
+          {
+            "resource_address": "aws_instance.pricing_probe",
+            "monthly_cost": 8.232
+          }
+        ],
+        "budget_monthly": 5,
+        "over_budget": true
+      },
+      "risks": [],
+      "suggested_fixes": [
+        {
+          "rule_id": "PROBE-BUDGET",
+          "target": "tfplan.json",
+          "change": "Reduce the priced resources or obtain an explicit budget exception."
+        }
+      ],
+      "unverified": [],
+      "reviewer": {
+        "name": "atmem-review",
+        "version": "0.1.0",
+        "reviewed_at": "2026-11-17T12:37:42.968441+00:00",
+        "input_sha256": "1bbbf7857661d03cb4d23acd8b571df717c4515c5cf2daf5ea9087e1a47e1a96"
+      }
+    }
+  },
+  "deployedResources": 0,
+  "modelCalls": 0,
+  "limitations": [
+    "This qualifies only the included synthetic plan and budget decisions, not all resources/providers/currencies.",
+    "Production automation still needs an operator-provisioned supported token; interactive login cache is not automatically read by the review runtime."
+  ]
+}

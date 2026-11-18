@@ -11,7 +11,7 @@ import {ChatResizeHandle} from './ChatResizeHandle.jsx';
 import {copyProject} from './project-copy.mjs';
 import './journey-workspace.css';
 import {synchronizeEngineeringIntent,applyArchitectureChange} from './architecture-work.mjs';
-import {applyArtifactWork} from './artifact-work.mjs';
+import {applyArtifactWork,artifactWorkProjection} from './artifact-work.mjs';
 import {hasArchitectureDesign} from './design-build-flow.mjs';
 import {ArchitectureTurn,EarlierArchitectureActivity} from './ArchitectureActivity.jsx';
 import {recordArchitectureTurn,finishArchitectureTurn,architectureChatEntries} from './architecture-activity.mjs';
@@ -139,6 +139,7 @@ import { adrMarkdown, OPTION_NAMES } from "./pack.mjs";
 import { deploymentDocument } from "./document.mjs";
 import { withDerived } from "./derive.mjs";
 import { MemoryPanel, ContextUsed } from "./MemoryPanel.jsx";
+import { ArchitectureRulesPanel } from './ArchitectureRulesPanel.jsx';
 import { defaultAssessment } from "./engagement.mjs";
 import { setUsage } from "./estimate.mjs";
 import { applyPriceQuotes, fetchPlanningPrices, storageNodes, lambdaNodes, googleNodes } from "./pricing.mjs";
@@ -169,6 +170,7 @@ import {
   FrontPanel,
 } from "./WorkbenchDialogs.jsx";
 import { discoverLocalAgent, projects as projectStore, requestArchitect } from "./local-agent.mjs";
+import MaintenancePanel from './maintenance/MaintenancePanel.jsx';
 import { EFFORT_LABEL } from "./WorkbenchDialogs.jsx";
 import { pulumiScaffold } from "./pulumi.mjs";
 import { zipSync, strToU8 } from "fflate";
@@ -324,6 +326,7 @@ function BlockNode({ data, selected }) {
           </small>
         )}
         {data.blockReview&&<ReviewBadge item={data.blockReview} onClick={data.onReview}/>}
+        {data.buildBinding&&<button className="blk-build-binding nodrag" onClick={e=>{e.stopPropagation();data.onBuild?.();}}>{data.buildBinding==='current'?'Code links recorded':'Code links need review'}</button>}
       </span>
       <span className="blk-state">{STATUS_GLYPH[data.runState]}</span>
       {data.runCount && data.runState && data.runState !== "idle" && <span className="blk-count" title="Resources live on the emulator">{data.runCount}</span>}
@@ -710,6 +713,7 @@ function App() {
     [selected, setSelected] = useState(initialCanvasView.selected),
     [messages, setMessagesState] = useState(() => conversationMessages(projectRef.current, [welcome(projectRef.current)])),
     [reviewView, setReviewView] = useState("findings"),
+    [policyGate,setPolicyGate]=useState({blocked:true}),
     [input, setInput] = useState(()=>{try{return localStorage.getItem('atmem-chat-draft:'+projectRef.current.id)||'';}catch{return '';}}),
     [pending, setPending] = useState(null),
     [busy, setBusy] = useState(false),
@@ -1005,6 +1009,7 @@ function App() {
   }, []);
   const syncEngineeringIntent=useCallback((owner,id,events)=>{const current=projectRef.current,next=synchronizeEngineeringIntent(current,id,events,owner);if(next!==current)updateEngagement(next);},[updateEngagement]);
   const changeArchitectureWork=useCallback((change,owner)=>{const current=projectRef.current,next=change.kind==='artifact'?applyArtifactWork(current,owner,change.verified):applyArchitectureChange(current,owner,change);if(next!==current){toProjectFile(next);updateEngagement(next);}},[updateEngagement]);
+  const rememberRulesSnapshot=useCallback(policy=>{const current=projectRef.current;if(current.extensions?.architecturePolicy?.revision===policy.revision&&current.extensions?.architecturePolicy?.recordId===policy.recordId)return;updateEngagement({...current,extensions:{...current.extensions,architecturePolicy:policy}});},[updateEngagement]);
   const allIssues = checkProject(project).filter((i) => i.level !== "info");
   // Fixture checks only matter for designs that can be test-run; sketches are reviewed in Review.
   const runnable = project.nodes.some((n) => n.data.kind !== "note") && !project.nodes.some((n) => n.data.kind === "resource");
@@ -1589,6 +1594,7 @@ function App() {
   const shown = pending?.next && mode === "design" ? pending.next : project;
   const previewing = shown !== project;
   const blockReviews = useMemo(()=>componentReviews(shown),[shown]);
+  const buildBindings=useMemo(()=>{try{const value=artifactWorkProjection(shown);return new Map(shown.nodes.filter(n=>n.data.kind!=='note').map(n=>{const ref='block:'+n.id,covered=value.coverage.find(c=>c.ref===ref)?.status==='file_reference_linked',older=value.mappings.some(m=>m.contextStatus!=='current'&&m.records.some(r=>r.dependsOn.includes(ref)));return[n.id,covered?'current':older?'stale':null];}));}catch{return new Map();}},[shown]);
   const reviewBlock = id => {setMode('design');setDesignView('board');setFocus(null);openBlock(id);};
   // Live Terraform apply emulation states take precedence on the blocks they touch.
   const liveStates = useMemo(() => ({ ...runStates, ...applyDiagram.states }), [runStates, applyDiagram]);
@@ -1604,7 +1610,7 @@ function App() {
           measured: measured[n.id],
           className: `${previewing ? "preview" : ""} ${attention?.nodes.includes(n.id) ? "diagram-attention" : ""}`,
           selected: n.id === selected || picked.has(n.id),
-          data: { ...n.data, blockReview:blockReviews.find(r=>r.id===n.id), onReview:()=>reviewBlock(n.id), onText: noteText, fresh: n.id === freshNote.current, runState: liveStates[n.id], runCount: applyDiagram.counts[n.id], dim: (focusBlocks && !focusBlocks.has(n.id)) || (testing && !n.data.poc && n.data.kind !== "resource" && project.nodes.some((x) => x.data.poc)) },
+          data: { ...n.data, blockReview:blockReviews.find(r=>r.id===n.id), onReview:()=>reviewBlock(n.id),buildBinding:buildBindings.get(n.id),onBuild:()=>visitJourney('review'), onText: noteText, fresh: n.id === freshNote.current, runState: liveStates[n.id], runCount: applyDiagram.counts[n.id], dim: (focusBlocks && !focusBlocks.has(n.id)) || (testing && !n.data.poc && n.data.kind !== "resource" && project.nodes.some((x) => x.data.poc)) },
         }));
   const canvasEdges =
     level === "system"
@@ -1921,6 +1927,7 @@ function App() {
           /><PencilRuler size={14} aria-hidden="true"/></label>
         </nav>
         <div className="bar-actions">
+          {!HOSTED&&<button className="btn maintenance-launch" onClick={()=>setModal('maintenance')} disabled={busy||!session} title={!session?'Connecting to the local helper':'Prepare checked infrastructure migrations'}>Infrastructure upgrades</button>}
           {HOSTED&&<><button className="btn" onClick={newProject} disabled={busy||agentBusy}><Plus size={16}/>New project</button><button className="btn" onClick={()=>hostedCall('account')}>Account</button></>}
           {isReadyExample(project)&&<><ReadyExampleDownload compact/>{!HOSTED&&<button className="btn" onClick={newProject} disabled={busy||agentBusy}>Create new project</button>}</>}
           {storageError && <span className="warn-text">Not saved</span>}
@@ -1956,6 +1963,7 @@ function App() {
             <hr/><button role="menuitem" onClick={() => setModal("import")} disabled={busy}><GitBranch size={16}/>Import diagram</button>
             <button role="menuitem" onClick={() => setModal("project-file")} disabled={busy}><FolderOpen size={16}/>Open project file</button>
             <hr/><button role="menuitem" onClick={() => setModal("memory")} disabled={!session}><BrainActivity size={18} active={false}/>AtMem memory</button>
+            {!HOSTED&&<button role="menuitem" onClick={()=>setModal('maintenance')} disabled={busy||!session}>Infrastructure upgrades</button>}
             <button role="menuitem" onClick={() => setModal("start-over")} disabled={busy || agentBusy}><RotateCcw size={16}/>Start over</button>
             <hr />
             {!HOSTED&&<button role="menuitem" onClick={() => showConnections()}><Waypoints size={16}/>AI providers</button>}
@@ -2240,7 +2248,8 @@ function App() {
         <section className="review-costs" aria-label="Project costs">
         {["review","estimate"].includes(mode) && <EstimateView project={project} result={costs} onChange={updateEngagement} busy={busy||agentBusy||!!pending} onEstimate={refreshEstimate} onChooseRegion={()=>{visitJourney('cloud');requestAnimationFrame(()=>{const input=document.querySelector('.location-region-form input');input?.focus();input?.scrollIntoView({block:'center',behavior:'instant'});});}} pricing={pricingState} onNext={()=>{const section=document.querySelector('.review-generation');const target=section?.querySelector('button')||section;if(target){target.setAttribute('tabindex','-1');target.focus({preventScroll:true});target.scrollIntoView({block:'center'});}}} />}
         </section>
-        {mode==='review'&&session?.engineeringEnabled&&<section className="review-generation" aria-label="Generation and verification"><EngineeringPanel key={project.id} project={project} onBusyChange={setGenerationPending} onWorkModelChange={changeArchitectureWork} onIntentContext={syncEngineeringIntent} projectId={project.id} session={session} connection={connection} contextBusy={busy||agentBusy||!!pending} saveProject={()=>saveEngineeringProject(project.id)} buildRequest={buildRequest} onBuildRequestHandled={id=>setBuildRequest(current=>current?.id===id?null:current)} onConnections={()=>showConnections()}/></section>}
+        {mode==='review'&&<ArchitectureRulesPanel key={project.id} session={session} project={project} environment={environment} onGate={setPolicyGate} onPolicy={rememberRulesSnapshot}/>}
+        {mode==='review'&&session?.engineeringEnabled&&<section className="review-generation" aria-label="Generation and verification"><EngineeringPanel key={project.id} project={project} onBusyChange={setGenerationPending} onWorkModelChange={changeArchitectureWork} onIntentContext={syncEngineeringIntent} projectId={project.id} session={session} connection={connection} policyGate={policyGate.projectId===project.id?policyGate:{blocked:true,reason:'Loading project rules.'}} contextBusy={busy||agentBusy||!!pending} saveProject={()=>saveEngineeringProject(project.id)} buildRequest={buildRequest} onBuildRequestHandled={id=>setBuildRequest(current=>current?.id===id?null:current)} onConnections={()=>showConnections()}/></section>}
         {mode==='review'&&!session?.engineeringEnabled&&<p>Generation and local checks require the engineering service. Your design is retained; Delivery can package the design and remaining tasks.</p>}
         {mode==='review'&&<ProjectChecks generationPending={generationPending} receipt={checkReceipt} project={project} environment={environment} session={session} onReceipt={setCheckReceipt} onBusy={setChecking}/>}
         {mode==='review'&&<footer className="review-finish"><div><strong>3. Package and download</strong><p>Explore all files and download one project ZIP in Delivery.</p></div><button className="btn primary" onClick={()=>{const next=acknowledgeStage(projectRef.current,'review');updateEngagement(costs.expected!==null&&!costs.mixedCurrencies?{...next,extensions:{...next.extensions,journey:{...next.extensions.journey,estimate:journey(next).keys.estimate}}}:next);visitJourney('delivery');}}>Complete →</button></footer>}
@@ -2480,11 +2489,11 @@ function App() {
       <StarPrompt offer={starOffer}/>
       {modal && (
         <div className="backdrop" onMouseDown={(e) => e.target === e.currentTarget && !(modal === "welcome" && !connection) && setModal(null)}>
-          <section className={`modal ${modal==="memory"?"memory-modal":""}`} role="dialog" aria-modal="true" aria-label={modal}>
+          <section className={`modal ${modal==="memory"?"memory-modal":""} ${modal==="maintenance"?"maintenance-modal":""}`} role="dialog" aria-modal="true" aria-label={modal}>
             {!(modal === "welcome" && !connection) && <button className="icon modal-close" onClick={() => setModal(null)} aria-label="Close dialog">
               <X size={16} />
             </button>}
-            {modal === "project-file" ? (<><h2>Open project</h2><button className="btn primary" onClick={()=>{fileImportAsCopy.current=false;fileRef.current.click();}}>Open project</button></>) : modal === "memory" ? (
+            {modal === 'maintenance' ? (<MaintenancePanel session={session} project={project} onSection={section=>updateEngagement({...projectRef.current,extensions:{...projectRef.current.extensions,maintenance:section,maintenanceNeedsImport:false}})}/>) : modal === "project-file" ? (<><h2>Open project</h2><button className="btn primary" onClick={()=>{fileImportAsCopy.current=false;fileRef.current.click();}}>Open project</button></>) : modal === "memory" ? (
               <MemoryPanel key={project.id} session={session} project={project} onError={notify} onStatus={status=>setMemorySync({projectId:project.id,...status})} />
             ) : modal === "templates" ? (
               <TemplateDialog onLoad={loadDesign} />

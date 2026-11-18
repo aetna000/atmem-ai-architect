@@ -113,9 +113,8 @@ registration_code='\n'.join([
  "   [row['applicability'].update(noneOf=['**/browser.test.mjs','**/*.browser.test.mjs']) for row in entries if row['id']=='node-tests']",
  "  line=key+json.dumps(entries+extra,separators=(',',':'))",' result.append(line)',"p.write_text('\\n'.join(result)+'\\n')"])
 registration='docker run --rm --network=none --read-only --user 0:0 --env CONFIG_ID="$IMAGE_ID" --mount type=bind,src="$STATE/config",dst=/config --entrypoint python "$IMAGE" -c '+shlex.quote(registration_code)+'\n'
-startup=startup.replace('printf 'ATMEM_ARCHITECT_TERRAFORM_EMULATOR_IMAGE=%s\\n' "$IMAGE_ID" >> "$STATE/config/worker.env"
-chmod 600 "$STATE/config/worker.env"',registration+'printf 'ATMEM_ARCHITECT_TERRAFORM_EMULATOR_IMAGE=%s\\n' "$IMAGE_ID" >> "$STATE/config/worker.env"
-chmod 600 "$STATE/config/worker.env"')
+registration_anchor = 'printf \'ATMEM_ARCHITECT_TERRAFORM_EMULATOR_IMAGE=%s\\n\' "$IMAGE_ID" >> "$STATE/config/worker.env"\nchmod 600 "$STATE/config/worker.env"'
+startup=startup.replace(registration_anchor,registration+registration_anchor)
 (out/'startup.sh').write_text(startup)
 plan={'instance':name,'project':project,'zone':zone,'machineType':'e2-medium','osImage':'cos-cloud/'+args.os_image,
  'workerImage':args.image,'stateDisk':name+'-state','stateDiskGiB':30,'stateDiskAutoDelete':False,

@@ -1,0 +1,60 @@
+schema_version: "1.0"
+
+extension:
+  id: "atmem"
+  name: "AtMem Architecture Review"
+  version: "0.1.0"
+  description: "Read-only architecture gate between plan and tasks: checks plan.md and Terraform plans against architecture.md rules, budget and ADRs."
+  category: "process"
+  effect: "read-only"
+  author: "AtMem (atmem.ai)"
+  repository: "https://github.com/aetna000/atmem-ai-architect"
+  license: "Apache-2.0"
+  homepage: "https://atmem.ai"
+
+requires:
+  speckit_version: ">=1.0.4"   # Local integration qualification uses 1.0.4
+  tools:
+    - name: "atmem-architect"   # MCP server exposing review_plan
+      version: ">=0.1.0"
+      required: true
+
+provides:
+  commands:
+    - name: "speckit.atmem.review"
+      file: "commands/speckit.atmem.review.md"
+      description: "Review plan.md (+ Terraform plan) against architecture.md; FAIL blocks /speckit.tasks"
+
+  config:
+    - name: "atmem-config.yml"
+      template: "config-template.yml"
+      description: "Where the rules file and Terraform plan JSON live; fail threshold"
+      required: false
+
+hooks:
+  # Gate: runs automatically when the user starts /speckit.tasks, before tasks.md is written.
+  before_tasks:
+    command: "speckit.atmem.review"
+    optional: false
+    description: "Architecture gate: plan must pass architecture.md before tasks are generated"
+    condition: null
+  # Nudge: offered right after /speckit.plan finishes, so problems surface early.
+  after_plan:
+    command: "speckit.atmem.review"
+    optional: true
+    prompt: "Run the AtMem architecture review on this plan now?"
+    description: "Early architecture review of the fresh plan"
+    condition: null
+
+tags:
+  - "architecture"
+  - "review"
+  - "terraform"
+  - "cost"
+  - "governance"
+
+defaults:
+  rules_path: ".specify/memory/architecture.md"
+  terraform_plan_json: ""        # e.g. "infra/tfplan.json" (output of `terraform show -json tfplan`)
+  fail_on: "error"               # "error" | "warning"
+  cost_estimate: "auto"          # "auto" | "off"

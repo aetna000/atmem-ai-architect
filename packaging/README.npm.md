@@ -5,7 +5,7 @@ Design an application, review requirements, generate project files, run local ch
 [Watch the demo →](https://x.com/AtMemAi/status/2119386028108910659)
 
 ```sh
-npx @atmem/architect
+npx @atmem/architect@beta
 ```
 
 Requires Node.js 22+. First run installs checksum-verified Python and the pinned AtMem runtime in your private application directory.
@@ -13,9 +13,17 @@ Requires Node.js 22+. First run installs checksum-verified Python and the pinned
 For a persistent command:
 
 ```sh
-npm install -g @atmem/architect
+npm install -g @atmem/architect@beta
 atmem-architect
 ```
+
+Create a desktop shortcut on macOS, Windows or Linux:
+
+```sh
+npx @atmem/architect@beta --desktop-shortcut
+```
+
+Double-click **AtMem AI Architect** to launch. Keep Node.js installed. Linux may ask you to allow launching the shortcut.
 
 Explore the complete AI example without connecting a model. Its ZIP includes costs, application source, infrastructure and local check evidence.
 
@@ -29,6 +37,14 @@ Packaged UI and AtMem startup are checked on Windows, macOS, and Linux. Full nat
 
 Native generation needs a supported signed-in agent. Independent Terraform/container checks require local tools and configuration.
 
+In the native development workflow, **Review → Project rules** saves approved
+rules in AtMem. Review your design, then press **Code it**. Architect supplies the
+Spec Kit, Terraform and rules before coding; the agent receives a new immutable
+task snapshot when the specification changes. Live activity, task/file links and
+recorded checks appear in the same workspace. Missing task bindings and stale
+rules block acceptance; linked files alone do not establish successful tests.
+CLI/MCP remain optional worker adapters, not a separate application.
+
 Available cost estimates include explicit exclusions where prices or usage are missing. Cloud deployment is not automatic. Orca desktop integration is verified on macOS; Windows/Linux Orca execution remains unqualified.
 
 [Configure application tests](https://github.com/aetna000/atmem-ai-architect/blob/main/docs/architecture/configuring-application-tests.md) · [Orca plugin](https://orca.dev/plugins/aetna000/atmem-ai-architect-orca)
@@ -36,6 +52,10 @@ Available cost estimates include explicit exclusions where prices or usage are m
 AtMem-owned code is Apache-2.0. Bundled third-party licences and notices are retained.
 
 Contact: [hello@atmem.ai](mailto:hello@atmem.ai) · [atmem.ai](https://atmem.ai)
+
+## Version 0.2.5-beta.1
+
+Connect your ChatGPT or Claude subscription from Architect. This beta also includes native Spec Kit implementation reviews and local Terraform upgrade workflows.
 
 ## Version 0.2.4
 

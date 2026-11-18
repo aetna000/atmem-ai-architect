@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import {createDesktopShortcut} from './desktop-shortcut.mjs';
 import path from 'node:path';
 import os from 'node:os';
 import {fileURLToPath} from 'node:url';
@@ -7,6 +8,7 @@ import {createHash} from 'node:crypto';
 import {gunzipSync} from 'node:zlib';
 import {unzipSync} from 'fflate';
 import {createServer} from 'node:net';
+import {createInterface} from 'node:readline/promises';
 export const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 export const memoryVersion=fs.readFileSync(path.join(root,'server/memory-requirements.txt'),'utf8').match(/^atmem==(\d+\.\d+\.\d+)$/m)?.[1];
 if(!memoryVersion)throw Error('A stable AtMem runtime pin is required.');
@@ -25,8 +27,12 @@ export function parseArgs(args){
  const options={port:5174,open:true,setup:false,doctor:false};
  for(let i=0;i<args.length;i++){
   const arg=args[i];if(arg==='--no-open')options.open=false;
+  else if(arg==='--desktop-shortcut')options.desktopShortcut=true;
   else if(arg==='--setup')options.setup=true;
   else if(arg==='--doctor')options.doctor=true;
+  else if(arg==='--maintenance-setup')options.maintenanceSetup=true;
+  else if(arg==='--maintenance-github')options.maintenanceGithub=true;
+  else if(arg==='--docker-endpoint'){const value=args[++i];if(!value?.startsWith('unix:///'))throw Error('--docker-endpoint needs an explicit local Unix socket URL.');options.dockerEndpoint=value;}
   else if(arg==='--help'||arg==='-h')options.help=true;
   else if(arg==='--version'||arg==='-v')options.version=true;
   else if(arg==='--port'){const value=args[++i];if(!/^\d+$/.test(value||'')||+value<1024||+value>65535)throw Error('--port needs a number from 1024 to 65535.');options.port=+value;}
@@ -102,11 +108,35 @@ function openBrowser(url){
 export async function main(args=process.argv.slice(2)){
  const options=parseArgs(args);
  if(options.version){console.log(metadata.version);return;}
- if(options.help){console.log(`AtMem AI Architect ${metadata.version}\n\nUsage: atmem-architect [--port 5174] [--no-open] [--data-dir PATH]\n       atmem-architect --setup | --doctor | --version\n\nFirst run downloads a checksum-verified Python installer, Python and pinned app/AtMem dependencies.\nData and runtimes stay in your app data directory; no administrator access is needed.\nA model login/API key is selected in the UI. No cloud deployment is performed.`);return;}
+ if(options.help){console.log(`AtMem AI Architect ${metadata.version}\n\nUsage: atmem-architect [--port 5174] [--no-open] [--data-dir PATH]\n       atmem-architect --desktop-shortcut\n       atmem-architect --setup | --doctor | --version\n       atmem-architect --maintenance-setup --docker-endpoint unix:///path/to/docker.sock\n       atmem-architect --maintenance-github\n\nFirst run downloads a checksum-verified Python installer, Python and pinned app/AtMem dependencies.\nData and runtimes stay in your app data directory; no administrator access is needed.\nA model login/API key is selected in the UI. No cloud deployment is performed.`);return;}
  const home=options.home||applicationHome(),definition=runtimeDefinition();
+ if(options.desktopShortcut){console.log('Desktop shortcut created: '+createDesktopShortcut({version:metadata.version,home,port:options.port}));return;}
  if(options.doctor){console.log(JSON.stringify({version:metadata.version,node:process.version,platform:process.platform,arch:process.arch,home,runtimeReady:fs.existsSync(path.join(home,'runtimes',definition.id,'ready.json')),modelAuthentication:'Select a model and sign in from Connections'},null,2));return;}
- if(!options.setup)await checkPort(options.port);
+ if(options.maintenanceSetup&&!options.dockerEndpoint)throw Error('--maintenance-setup requires --docker-endpoint unix:///path/to/docker.sock.');
+ if(!options.setup&&!options.maintenanceSetup&&!options.maintenanceGithub){
+  try {await checkPort(options.port);}
+  catch(error){
+   let existing=false;
+   try {const response=await fetch(`http://127.0.0.1:${options.port}/api/session`,{signal:AbortSignal.timeout(2000)});const data=await response.json();existing=data.status==='local-sidecar';} catch {}
+   let answer='new';
+   if(process.stdin.isTTY){
+    const prompt=createInterface({input:process.stdin,output:process.stdout});
+    try {answer=(await prompt.question(existing?'Architect is already running. Open it [Enter], or start on another port [n]? ':'Port is occupied. Start on another port [Enter], or cancel [c]? ')).trim().toLowerCase();}
+    finally {prompt.close();}
+   } else if(existing)answer='';
+   if(existing&&answer!=='n'&&answer!=='new'){openBrowser(`http://127.0.0.1:${options.port}`);return;}
+   if(!existing&&answer==='c')return;
+   let available=false;
+   for(let port=options.port+1;port<=Math.min(65535,options.port+100);port++){
+    try {await checkPort(port);options.port=port;available=true;break;}catch{}
+   }
+   if(!available)throw error;
+   console.log('Starting Architect on port '+options.port+'.');
+  }
+ }
  const runtime=await setupRuntime(home);if(options.setup){console.log('Architect and AtMem are installed. Run atmem-architect to open the app.');return;}
+ if(options.maintenanceSetup){await run(runtime.serverPython,[path.join(root,'scripts/setup-maintenance-worker.py'),'--endpoint',options.dockerEndpoint,'--output',path.join(home,'maintenance-worker.json')],{cwd:root,env:process.env});return;}
+ if(options.maintenanceGithub){await run(runtime.serverPython,[path.join(root,'scripts/maintenance-github.py'),'--home',home],{cwd:root,env:process.env});return;}
  const workspaces=path.join(home,'workspaces');fs.mkdirSync(workspaces,{recursive:true,mode:0o700});
  const env={...process.env,ATMEM_ARCHITECT_HOME:home,ATMEM_ARCHITECT_PORT:String(options.port),ATMEM_ARCHITECT_SIDECAR_PORT:String(options.port),ATMEM_ARCHITECT_MEMORY_PYTHON:runtime.memoryPython,ATMEM_ARCHITECT_TERRAFORM_EMULATOR_PYTHON:runtime.emulatorPython,ATMEM_ARCHITECT_ENABLE_ENGINEERING:'1',ATMEM_ARCHITECT_ENGINEERING_WORKSPACE_ROOT:workspaces};
  const child=spawn(runtime.serverPython,['-m','uvicorn','server.packaged_app:app','--host','127.0.0.1','--port',String(options.port),'--no-access-log'],{cwd:root,env,stdio:'inherit',windowsHide:true});

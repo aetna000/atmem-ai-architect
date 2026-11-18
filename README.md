@@ -24,7 +24,13 @@ npm install -g @atmem/architect
 atmem-architect
 ```
 
-[Stable release notes](docs/releases/v0.2.3.md) · [Application test configuration](docs/architecture/configuring-application-tests.md) · [Installation and troubleshooting](docs/INSTALLATION.md) · [Package options](packaging/README.npm.md) · [npm package](https://www.npmjs.com/package/@atmem/architect)
+[Stable release notes](docs/releases/v0.2.4.md) · [Application test configuration](docs/architecture/configuring-application-tests.md) · [Installation and troubleshooting](docs/INSTALLATION.md) · [Package options](packaging/README.npm.md) · [npm package](https://www.npmjs.com/package/@atmem/architect)
+
+For a local subscription, open **Connections**, choose **ChatGPT** or **Claude**, and sign in. If a terminal account is already connected, choose **Sign in for Architect** to use a separate account. Complete the provider’s browser approval and return to Architect. The official provider client must be installed. Architect remembers this connection across restarts.
+
+## Infrastructure maintenance (development branch)
+
+Prepare checked AWS Batch upgrades locally. Selected source stays outside general model context. [Setup, support matrix and limits](docs/INFRASTRUCTURE_MAINTENANCE.md).
 
 ## Workflow
 
@@ -92,3 +98,9 @@ Contact: [hello@atmem.ai](mailto:hello@atmem.ai). Release procedure: GitHub Acti
 The project toolbar and stage action share slim rows. Phone and tablet layouts keep the message field visibly labeled beside history. Delivery refreshes while engineering finishes and retains package binding when a project is reopened.
 
 Hosted workspace access, administrator activity reports and website analytics are deployed separately. Local installations do not load website analytics.
+
+## Infrastructure review gate for coding agents
+
+The development candidate connects infrastructure rules to Architect's existing **Review** screen and AtMem memory. Save rules, review the current design, then use **Code it**. Coding agents receive the same Spec Kit/Terraform/rules handoff; current task IDs, captured files, rule results and observed checks stay linked to their source revisions. Live activity and task/subsystem links are visible in Architect. CLI/MCP are worker adapters, not a second product to install.
+
+[Implementation and qualification](specs/033-architecture-review-hook/) · [Engine/adapter reference](atmem-review-hook/README.md). Full semantic acceptance and large multi-worktree orchestration remain tracked work; this candidate is not a new npm or hosted deployment.

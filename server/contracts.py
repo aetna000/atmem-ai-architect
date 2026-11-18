@@ -282,7 +282,7 @@ class ContextItem(Strict):
 class Attachment(Strict):
     name:str=Field(min_length=1,max_length=180,pattern=r'^[^/\\\x00-\x1f]+$')
     mime:Literal['image/png','image/jpeg','image/webp','application/pdf','application/vnd.openxmlformats-officedocument.wordprocessingml.document','text/plain','text/markdown','text/csv','application/json']
-    data:str=Field(min_length=1,max_length=5592408)
+    data:str=Field(min_length=1,max_length=27962028)
 
 class ChatRequest(Strict):
     activityId:str|None=Field(default=None,pattern=r'^[a-f0-9-]{36}$')

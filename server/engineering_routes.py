@@ -10,6 +10,8 @@ import json
 import os
 from pathlib import Path
 import tempfile
+import subprocess
+import shutil
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import Response
 from pydantic import BaseModel, ConfigDict, Field
@@ -180,10 +182,26 @@ Visible progress must be one short sentence of at most 20 words. Final progress 
         finally:
             os.close(fd)
         from .memory_service import safe
-        from .engineering_contexts import validate_context
+        from .engineering_contexts import validate_context, model_context_content
         if not safe(validate_context(content, scope.project)):
             raise SessionError('Saved project context looks like a credential')
-        return self.contexts.attach(scope, session, request, content, expected_sha256=expected_sha256)
+        context=self.contexts.attach(scope, session, request, content, expected_sha256=expected_sha256)
+        if 'specification' not in context:
+            node=shutil.which('node')
+            if not node:raise SessionError('Node is required to bind the current specification before coding.')
+            projected=model_context_content(content,scope.project)
+            result=subprocess.run([node,str(Path(__file__).resolve().parents[1]/'scripts/engineering-handoff.mjs'),'--tasks-only'],input=projected,capture_output=True,timeout=30)
+            if result.returncode:raise SessionError('The current specification could not be prepared; coding was not submitted.')
+            specification=json.loads(result.stdout)
+            if projected!=content:
+                specification['modelContextSha256']=specification['contextSha256']
+                specification['contextSha256']=context['sha256']
+            context=self.contexts.bind_specification(scope,session,context['id'],specification)
+        from .architecture_rules import remember_specification
+        from .memory_service import service as project_memory
+        try:remember_specification(project_memory(),scope.project,context)
+        except Exception:raise SessionError('AtMem could not record this specification. Restore memory before coding.') from None
+        return context
 
     def can_repair(self,scope,session):
         initial=self.jobs.journal.read(scope,session,limit=1)
@@ -234,7 +252,9 @@ Visible progress must be one short sentence of at most 20 words. Final progress 
             import uuid
             workspace_id = str(uuid.uuid4())
             workspace = Path(tempfile.mkdtemp(prefix='atm-job-',dir=self.workspace_root)).resolve()
-            context = project_path.read_bytes()
+            original_context = project_path.read_bytes()
+            from .engineering_contexts import model_context_content
+            context = model_context_content(original_context, scope.project)
             (workspace/'project-context.json').write_bytes(context)
             tools = workspace/'.tools'
             tools.mkdir()
@@ -253,6 +273,18 @@ Visible progress must be one short sentence of at most 20 words. Final progress 
             source = Path(__file__).resolve().parents[1]/'agent-skills/specialists/composition/SKILL.md'
             (skill/'SKILL.md').write_bytes(source.read_bytes())
             inputs=seed_delivery(workspace)
+            # Workers receive the same native Spec Kit/Terraform baseline the
+            # user reviews, before any implementation command is accepted.
+            node=shutil.which('node')
+            if not node:raise SessionError('Node is required to prepare the saved Architect handoff.')
+            handoff=subprocess.run([node,str(Path(__file__).resolve().parents[1]/'scripts/engineering-handoff.mjs')],input=context,capture_output=True,timeout=30)
+            if handoff.returncode:raise SessionError('The saved design could not produce its Spec Kit handoff.')
+            documents=json.loads(handoff.stdout)
+            for name,content in documents.items():
+                path=Path(name)
+                if path.is_absolute() or '..' in path.parts or '\\' in name or not isinstance(content,str):raise SessionError('Invalid native handoff document.')
+                relative='atmem-inputs/handoff/'+name;target=workspace/relative;target.parent.mkdir(parents=True,exist_ok=True);target.write_text(content)
+                inputs[relative]=hashlib.sha256(content.encode()).hexdigest()
             if current:
                 (workspace/'atmem-tools/dependencies.json').write_bytes(current['content'])
                 inputs['atmem-tools/dependencies.json']=current['sha256']
@@ -265,6 +297,7 @@ Visible progress must be one short sentence of at most 20 words. Final progress 
             self.backend.workspaces[scope,workspace_id] = workspace
             state = await self.sessions.create(scope,workspace_id,selection)
             self.jobs._record(scope,state['id'],'created',contextSha256=hashlib.sha256(context).hexdigest(),
+                              sourceContextSha256=hashlib.sha256(original_context).hexdigest(),
                               skillSha256=hashlib.sha256(source.read_bytes()).hexdigest(),inputDigests=inputs,**tool_inputs)
             return state
 
@@ -364,17 +397,47 @@ async def handoff(payload: HandoffRequest):
 
 async def action(payload, kind):
     available()
-    scope, _ = local_scope(payload.projectId)
+    scope, project_path = local_scope(payload.projectId)
+    if kind in {'start','steer'}:
+        from .architecture_rules import engineering_gate
+        from .memory_service import service as project_memory
+        try:
+            policy=await asyncio.to_thread(engineering_gate,project_memory(),payload.projectId,json.loads(project_path.read_bytes()))
+        except (ValueError,RuntimeError,OSError):
+            raise HTTPException(409,'Review the current project rules and design in Architect before coding.')
     worker = service()
     try:
         if kind == 'state': return worker.jobs.state(scope,payload.sessionId)
         if kind == 'artifacts':return {'artifacts':worker.artifacts.manifests(scope,payload.sessionId)}
-        if kind == 'reconciliation':return worker.reconciliation.prepare(scope,payload.sessionId,payload.artifactId)
+        if kind == 'specification':
+            context,_=worker.reconciliation.submitted_context(scope,payload.sessionId)
+            specification=context.get('specification')
+            if not specification:raise SessionError('This older job has no current native specification task snapshot.')
+            return {'contextId':context['id'],'contextSha256':context['sha256'],'revision':context['revision'],
+                    'tasks':[{key:task.get(key) for key in ('id','title','requirementIds','componentIds','dependsOn')} for task in specification['tasks']['tasks']],
+                    'boundary':'Approved-input task inventory, not completion or test evidence.'}
+        if kind == 'architecture-review':
+            from .architecture_rules import artifact_review
+            from .memory_service import service as project_memory
+            manifest,archive=worker.artifacts.get(scope,payload.sessionId,payload.artifactId)
+            return await asyncio.to_thread(artifact_review,project_memory(),payload.projectId,manifest,archive)
+        if kind == 'reconciliation':
+            result=worker.reconciliation.prepare(scope,payload.sessionId,payload.artifactId)
+            if result.get('status')=='prepared':
+                from .architecture_rules import remember_bindings
+                from .memory_service import service as project_memory
+                await asyncio.to_thread(remember_bindings,project_memory(),payload.projectId,result)
+            return result
         if kind == 'recheck':return await worker.finalization.recheck(scope,payload.sessionId,payload.runId,payload.artifactId)
         if kind == 'finalizations':return {'finalizations':worker.finalization.list(scope,payload.sessionId)}
         if kind == 'events':
-            return {'events':worker.jobs.journal.read(scope,payload.sessionId,payload.after),
-                    'session':worker.jobs.state(scope,payload.sessionId)}
+            events=worker.jobs.journal.read(scope,payload.sessionId,payload.after)
+            state=worker.jobs.state(scope,payload.sessionId)
+            from .architecture_rules import remember_engineering
+            from .memory_service import service as project_memory
+            try:memory_status=await asyncio.to_thread(remember_engineering,project_memory(),payload.projectId,state,events)
+            except Exception:memory_status='unavailable'
+            return {'events':events,'session':state,'memoryStatus':memory_status}
         if kind == 'start': return await worker.jobs.start(scope,payload.sessionId,payload.text,
             **({'context_sha256':payload.contextSha256} if payload.contextSha256 is not None else {}))
         if kind == 'recover': return await worker.jobs.recover(scope,payload.sessionId)
@@ -418,6 +481,10 @@ async def state(payload: SessionRequest): return await action(payload,'state')
 async def events(payload: EventsRequest): return await action(payload,'events')
 @router.post('/start')
 async def start(payload: IntentRequest): return await action(payload,'start')
+@router.post('/architecture-review')
+async def architecture_review(payload: ArtifactRequest):return await action(payload,'architecture-review')
+@router.post('/specification')
+async def specification(payload: SessionRequest):return await action(payload,'specification')
 @router.post('/recover')
 async def recover(payload: SessionRequest): return await action(payload,'recover')
 @router.post('/steer')
@@ -439,7 +506,13 @@ async def validation_action(payload,kind):
         checks=worker.validation_service()
         if kind=='catalog':return {'validators':checks.catalog(),'available':checks.available()}
         if kind=='start':return await checks.start(scope,payload.sessionId,payload.artifactId,payload.validatorId,retry=payload.retry)
-        if kind=='list':return {'checks':checks.list(scope,payload.sessionId,payload.artifactId)}
+        if kind=='list':
+            result=checks.list(scope,payload.sessionId,payload.artifactId)
+            from .architecture_rules import remember_validation
+            from .memory_service import service as project_memory
+            try:memory_status=await asyncio.to_thread(remember_validation,project_memory(),payload.projectId,payload.sessionId,payload.artifactId,result)
+            except Exception:memory_status='unavailable'
+            return {'checks':result,'memoryStatus':memory_status}
         if kind=='plan':return checks.plan(scope,payload.sessionId,payload.artifactId)
         if kind=='get':return checks.get(scope,payload.sessionId,payload.checkId)
         if kind=='recover':return await checks.recover(scope,payload.sessionId,payload.checkId)

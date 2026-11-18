@@ -28,7 +28,7 @@ class NativeWorkspaceRuntime:
   self.app=FastAPI(docs_url=None,redoc_url=None,openapi_url=None)
   self.paths=registered_paths();self.methods=registered_methods()
   # Use public router inventories directly; FastAPI may defer include_router flattening.
-  sources=[native.app.router,native.memory_router,native.terraform_router,native.terraform_emulation_router,native.emulation_router,native.engineering_router,native.voice_router,native.openai_voice_router]
+  sources=[native.app.router,native.memory_router,native.architecture_rules_router,native.terraform_router,native.terraform_emulation_router,native.emulation_router,native.engineering_router,native.voice_router,native.openai_voice_router]
   self.app.router.routes=[route for source in sources for route in source.routes if getattr(route,'path',None) in self.paths and set(getattr(route,'methods',{}))&set(self.methods.get(route.path,[]))]
   if {route.path for route in self.app.routes}!=self.paths:raise RuntimeError('Pinned native route inventory no longer matches this runtime')
   self.lock=asyncio.Lock()

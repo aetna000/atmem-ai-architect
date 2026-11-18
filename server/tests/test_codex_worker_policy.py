@@ -10,7 +10,7 @@ class WorkerPolicyTests(unittest.TestCase):
     def setUp(self):
         self.temp=tempfile.TemporaryDirectory();self.root=Path(self.temp.name)
         self.binary=self.root/'bin/codex';self.binary.parent.mkdir();self.binary.write_text('synthetic executable fixture')
-        self.which=patch('server.codex_worker_policy.shutil.which',return_value=str(self.binary));self.which.start()
+        self.which=patch('server.codex_worker_policy.provider_binary',return_value=str(self.binary));self.which.start()
         self.servers=patch('server.codex_worker_policy.configured_mcp_names',return_value=['local-server']);self.servers.start()
         self.overrides=patch('server.codex_worker_policy.configured_shell_override_names',return_value=['PRIVATE_TOKEN']);self.overrides.start()
     def tearDown(self):self.overrides.stop();self.servers.stop();self.which.stop();self.temp.cleanup()

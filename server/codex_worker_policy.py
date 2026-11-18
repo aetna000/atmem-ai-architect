@@ -8,11 +8,11 @@ import json
 import os
 import re
 from pathlib import Path
-import shutil
 import tomllib
 import platform
 import sys
 
+from .local_providers import account_environment, profile_dir, provider_binary
 from .codex_app_server import CodexAppServer
 
 PROFILE = 'atmem-engineering-v2'
@@ -26,7 +26,7 @@ def configured_mcp_names():
     still reject any server introduced by another effective configuration layer.
     """
     names=set()
-    paths=[Path('/etc/codex/config.toml'),Path(os.getenv('CODEX_HOME',str(Path.home()/'.codex')))/'config.toml']
+    paths=[Path('/etc/codex/config.toml'),Path(account_environment('codex').get('CODEX_HOME',str(Path.home()/'.codex')))/'config.toml']
     def collect(value):
         if not isinstance(value,dict):return
         servers=value.get('mcp_servers',{})
@@ -42,7 +42,7 @@ def configured_mcp_names():
 def configured_shell_override_names():
     """Return keys to blank in the worker; never forward their original values."""
     names=set()
-    paths=[Path('/etc/codex/config.toml'),Path(os.getenv('CODEX_HOME',str(Path.home()/'.codex')))/'config.toml']
+    paths=[Path('/etc/codex/config.toml'),Path(account_environment('codex').get('CODEX_HOME',str(Path.home()/'.codex')))/'config.toml']
     def collect(value):
         if not isinstance(value,dict):return
         policy=value.get('shell_environment_policy',{})
@@ -77,7 +77,7 @@ def native_codex(executable):
 
 
 def worker_command(read_roots=(),*,temporary_dir=None):
-    executable = shutil.which('codex')
+    executable = provider_binary('codex')
     if not executable:
         raise RuntimeError('The selected native worker is unavailable')
     binary, native_root = native_codex(executable)
@@ -89,6 +89,7 @@ def worker_command(read_roots=(),*,temporary_dir=None):
         if not path.is_dir():
             raise ValueError('A worker tool read root must be an existing directory')
         secrets = [Path.home()/name for name in ['.codex','.aws','.ssh','.kube']]
+        secrets.append(profile_dir('codex').parent)
         if Path.home().is_relative_to(path) or any(path.is_relative_to(p) or p.is_relative_to(path) for p in secrets):
             raise ValueError('Worker tools cannot expose a home or credential tree')
         roots.add(path)

@@ -1,0 +1,78 @@
+{
+  "schema_version": "1.0",
+  "verdict": "fail",
+  "summary": "ILLUSTRATIVE SAMPLE (cost figures are hand-estimated, not a real Infracost run). 4 errors: the Postgres instance is publicly reachable from the internet, it is deployed outside the allowed region (which also moves customer PII out of Australia), and the estimated monthly cost is about 5x the $150 budget.",
+  "rules_file": { "path": ".specify/memory/architecture.md", "sha256": "<sha256 of rules file>", "rule_count": 8, "adr_count": 3 },
+  "violations": [
+    {
+      "rule_id": "NET-001",
+      "severity": "error",
+      "title": "RDS instance is publicly accessible",
+      "evidence": [
+        { "source": "terraform_plan", "path": "infra/tfplan.json", "resource_address": "aws_db_instance.main", "attribute": "publicly_accessible", "value": true },
+        { "source": "artifact", "path": "specs/001-taskify/plan.md", "line_start": 15, "line_end": 15, "excerpt": "the instance is created with `publicly_accessible = true` and a security group allowing 5432 from 0.0.0.0/0" }
+      ],
+      "explanation": "NET-001 requires aws_db_instance.publicly_accessible == false. ADR-0002 also limits public endpoints to the ALB.",
+      "exception_id": null
+    },
+    {
+      "rule_id": "NET-002",
+      "severity": "error",
+      "title": "Security group opens Postgres (5432) to 0.0.0.0/0",
+      "evidence": [
+        { "source": "terraform_plan", "path": "infra/tfplan.json", "resource_address": "aws_security_group_rule.db_ingress", "attribute": "cidr_blocks", "value": ["0.0.0.0/0"] }
+      ],
+      "explanation": "Only the load balancer on 443 may accept ingress from 0.0.0.0/0.",
+      "exception_id": null
+    },
+    {
+      "rule_id": "REGION-001",
+      "severity": "error",
+      "title": "Deployment region us-east-1 is not allowed",
+      "evidence": [
+        { "source": "terraform_plan", "path": "infra/tfplan.json", "attribute": "provider.aws.region", "value": "us-east-1" },
+        { "source": "artifact", "path": "specs/001-taskify/plan.md", "line_start": 13, "line_end": 13, "excerpt": "- Region: `us-east-1` (widest instance availability)" }
+      ],
+      "explanation": "Allowed regions: ap-southeast-2. Because the database stores customer_pii, this also breaks RESIDENCY-001 (must stay in AU).",
+      "exception_id": null
+    },
+    {
+      "rule_id": "BUDGET-001",
+      "severity": "error",
+      "title": "Estimated monthly cost exceeds the $150 production budget",
+      "evidence": [
+        { "source": "cost_engine", "resource_address": "aws_db_instance.main", "excerpt": "db.r6g.xlarge Multi-AZ + 500 GB gp3 ≈ $770/month (illustrative)" },
+        { "source": "artifact", "path": "specs/001-taskify/plan.md", "line_start": 14, "line_end": 14, "excerpt": "- RDS `db.r6g.xlarge`, Multi-AZ, 500 GB gp3, so reporting tools can connect directly" }
+      ],
+      "explanation": "Estimate ≈ $790/month vs monthly_max 150 USD.",
+      "exception_id": null
+    }
+  ],
+  "cost": {
+    "status": "estimated",
+    "engine": "infracost (illustrative sample values)",
+    "currency": "USD",
+    "monthly_total": 790,
+    "budget_monthly": 150,
+    "over_budget": true,
+    "usage_assumptions": "Usage-based charges (data transfer, backups beyond free allocation) priced at 0; no usage file supplied.",
+    "top_resources": [
+      { "resource_address": "aws_db_instance.main", "monthly_cost": 770 },
+      { "resource_address": "aws_security_group_rule.db_ingress", "monthly_cost": 0 }
+    ]
+  },
+  "risks": [
+    { "id": "RISK-1", "severity": "error", "description": "Internet-exposed Postgres with password auth is a common breach path (credential stuffing, unpatched CVEs).", "related_rule_ids": ["NET-001", "NET-002"] },
+    { "id": "RISK-2", "severity": "warning", "description": "Plan's Constitution Check marks Security-First as passing although the database is public; the constitution check did not cover infrastructure.", "related_rule_ids": ["NET-001"] }
+  ],
+  "suggested_fixes": [
+    { "rule_id": "NET-001", "target": "aws_db_instance.main", "change": "Set publicly_accessible = false, place the instance in private subnets, and give reporting tools access through a bastion/SSM port-forward or a read replica inside the VPC." },
+    { "rule_id": "NET-002", "target": "aws_security_group_rule.db_ingress", "change": "Replace cidr_blocks 0.0.0.0/0 with source_security_group_id = the ECS service security group." },
+    { "rule_id": "REGION-001", "target": "plan.md + provider \"aws\"", "change": "Use region ap-southeast-2 (Sydney)." },
+    { "rule_id": "BUDGET-001", "target": "aws_db_instance.main", "change": "Start with db.t4g.small single-AZ + 50 GB gp3, or record an UPTIME-001 exception; re-run the review to confirm the estimate is under $150." }
+  ],
+  "unverified": [
+    { "rule_id": "UPTIME-001", "reason": "No load test or failover plan in the artifacts; Multi-AZ RDS satisfies the stateful-component part only." }
+  ],
+  "reviewer": { "name": "atmem-architect", "version": "0.1.0", "reviewed_at": "2026-11-18T09:00:00+11:00" }
+}

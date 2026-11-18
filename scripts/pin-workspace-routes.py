@@ -2,7 +2,7 @@
 import ast,hashlib,json
 from pathlib import Path
 root=Path(__file__).resolve().parents[1]
-files={'engineering_routes.py':'/api/engineering','emulation_routes.py':'','terraform_routes.py':'','memory_routes.py':'','voice_routes.py':'','openai_voice.py':''}
+files={'engineering_routes.py':'/api/engineering','architecture_rules.py':'/api/memory/architecture','emulation_routes.py':'','terraform_routes.py':'','terraform_emulation_routes.py':'','memory_routes.py':'','voice_routes.py':'','openai_voice.py':''}
 paths={'/api/architect','/api/architect/activity'};methods={path:['POST'] for path in paths};sources={}
 for name,prefix in files.items():
  raw=(root/'server'/name).read_bytes();sources[name]=hashlib.sha256(raw).hexdigest()

@@ -1,0 +1,89 @@
+{
+  "recordedAt": "2026-11-17T13:23:21.618769+00:00",
+  "client": "codex-cli 0.169.0",
+  "model": "gpt-6.1-sol",
+  "effort": "medium",
+  "specKit": "1.0.4",
+  "fixture": "Owned synthetic student equipment-library API; no customer project data",
+  "stages": {
+    "specify": {
+      "completed": true,
+      "transcriptSha256": "2faa42c4a840003b3d5496446d766ab820865765cbf4c8b4e7d635befb244bdf",
+      "actualMcpCalls": [],
+      "usage": {
+        "input_tokens": 210624,
+        "cached_input_tokens": 190592,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 3283,
+        "reasoning_output_tokens": 26
+      }
+    },
+    "plan": {
+      "completed": true,
+      "transcriptSha256": "e83bca486ae592a9d23eaf806c24772c4d138b29bad15d9b89f2ed29c589ddb1",
+      "actualMcpCalls": [],
+      "usage": {
+        "input_tokens": 256022,
+        "cached_input_tokens": 219008,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 7094,
+        "reasoning_output_tokens": 210
+      }
+    },
+    "tasks-fail": {
+      "completed": true,
+      "transcriptSha256": "9913d2d6336a65abb9f74d0d634f379b9bdfe861c98c16d27614ee51154ff9cd",
+      "actualMcpCalls": [
+        {
+          "tool": "review_plan",
+          "status": "completed",
+          "verdict": "fail",
+          "ruleIds": [
+            "PRIVATE-DATABASE"
+          ],
+          "inputSha256": "9cd339810a40fdb9f360630b70a84a80ba431a258fce12c5ce347412aa086c48",
+          "costStatus": "skipped"
+        }
+      ],
+      "usage": {
+        "input_tokens": 214651,
+        "cached_input_tokens": 188544,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 1373,
+        "reasoning_output_tokens": 27
+      }
+    },
+    "tasks-pass": {
+      "completed": true,
+      "transcriptSha256": "878fdca53ecf8f43810a1bf6f48264b6eda76339e6ab1be5180df2ccb7e4db7f",
+      "actualMcpCalls": [
+        {
+          "tool": "review_plan",
+          "status": "completed",
+          "verdict": "pass",
+          "ruleIds": [],
+          "inputSha256": "3ce10bf3d220d8563e7769ce0bdaa8cee153aee7c882f79f3066fb6db14bc536",
+          "costStatus": "skipped"
+        }
+      ],
+      "usage": {
+        "input_tokens": 305630,
+        "cached_input_tokens": 274816,
+        "cache_write_input_tokens": 0,
+        "output_tokens": 6402,
+        "reasoning_output_tokens": 199
+      }
+    }
+  },
+  "tasksAbsentAfterFailedReview": true,
+  "generatedTasksAfterPassedReview": 34,
+  "taskPrompt": "$speckit-tasks Generate the implementation tasks for the current equipment inventory feature. Do not implement or deploy.",
+  "hookDiscovery": "Task prompt did not mention AtMem. Installed Spec Kit tasks instructions resolved the mandatory extension and called the real MCP tool.",
+  "limitations": [
+    "One synthetic workflow; does not prove every agent/model always obeys hooks.",
+    "No application implementation, application tests, deployment or native Code it end-to-end execution is claimed by this workflow.",
+    "Native UI/backend/AtMem qualification is recorded separately."
+  ],
+  "cloudDeployments": 0,
+  "semanticReviewerModelCalls": 0
+}

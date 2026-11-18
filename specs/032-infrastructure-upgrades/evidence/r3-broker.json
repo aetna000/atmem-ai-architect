@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "scope": "R3 broker foundation only",
+  "keychain": {
+    "platform": "macOS arm64",
+    "evidence": "actual native Security framework dummy round-trip and confirmed deletion",
+    "accountCredentialUsed": false,
+    "sourceSha256": "5f2835bd03b9be70701c3f5567bf49b089839e4dfce7d6a4e98420c721b80c24"
+  },
+  "brokerTests": {
+    "passed": 6,
+    "network": "fake transport only; no actual repository access",
+    "coverage": [
+      "tenant/project/repository scope",
+      "keychain-only token storage",
+      "explicit expiry and revocation",
+      "immutable source Git blob hashes",
+      "complete root and automation selection",
+      "symlink/LFS/truncated tree denial",
+      "uncertain mutation responses never retried implicitly"
+    ]
+  },
+  "remoteQualification": "not_run; explicit disposable-repository authorization and selected fine-grained token required",
+  "publicationImplementation": "not_complete",
+  "cloudOperations": false,
+  "foundationTests": {
+    "passed": 13,
+    "evidenceLevel": "fake broker/ledger contracts plus independent local Git object verification"
+  },
+  "moduleCoordinatorPrototype": {
+    "fakeProtocolTestsPassed": 6,
+    "activeHTTPRoutes": false,
+    "limits": [
+      "No actual network or selected account token used.",
+      "Consumer wave authenticated observation, checked refresh and publication UI unfinished."
+    ]
+  }
+}

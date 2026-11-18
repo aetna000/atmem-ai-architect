@@ -1,5 +1,6 @@
 // Build a minimal allowlisted npm distribution. Never package local projects or credentials.
 import fs from 'node:fs';
+import {releaseChannel} from './npm-release-channel.mjs';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
 const root=process.cwd(),output=path.resolve(process.env.ATMEM_NPM_OUTPUT||'.local/npm-release'),stage=path.join(output,'package');
@@ -17,11 +18,13 @@ function copy(name){
   return true;
  }});
 }
-for(const name of ['LICENSE','NOTICE','CONSTITUTION.md','dist','src','server','agent-skills','knowledge','cli','packaging/uv-release-lock.json','scripts/terraform-render.mjs','scripts/setup-terraform-emulator.py','scripts/terraform-emulator-render.py','docs/TERRAFORM_EMULATION.md','docs/terraform-emulator-aws-coverage.json','docs/upstream-lock.json','public/licenses'])copy(name);
+for(const name of ['LICENSE','NOTICE','CONSTITUTION.md','dist','src','server','agent-skills','knowledge','cli','packaging/uv-release-lock.json','scripts/terraform-render.mjs','scripts/setup-terraform-emulator.py','scripts/terraform-emulator-render.py','docs/TERRAFORM_EMULATION.md','scripts/setup-maintenance-worker.py','scripts/maintenance-github.py','docs/INFRASTRUCTURE_MAINTENANCE.md','docs/terraform-emulator-aws-coverage.json','docs/upstream-lock.json','public/licenses'])copy(name);
+copy('atmem-review-hook/src/atmem_review');
+copy('scripts/engineering-handoff.mjs');
 const knowledge=JSON.parse(fs.readFileSync('knowledge/engineering-practices.json','utf8'));
 for(const record of knowledge.records){if(record.localVerification){const name=record.localVerification.receipt;if(!name.startsWith('specs/')||name.includes('..'))throw Error('Invalid evidence path.');copy(name);}}
 fs.copyFileSync('packaging/README.npm.md',path.join(stage,'README.md'));
-const packageJson={name:'@atmem/architect',version:meta.version,description:'AtMem AI Architect: design, requirements, review and verified project handoff',type:'module',bin:{'atmem-architect':'cli/architect.mjs'},engines:{node:'>=22.0.0'},license:'Apache-2.0',author:'AtMem <hello@atmem.ai>',homepage:'https://atmem.ai',repository:{type:'git',url:'git+https://github.com/aetna000/atmem-ai-architect.git'},publishConfig:{access:'public',tag:'latest'},dependencies:meta.dependencies};
+const packageJson={name:'@atmem/architect',version:meta.version,description:'AtMem AI Architect: design, requirements, review and verified project handoff',type:'module',bin:{'atmem-architect':'cli/architect.mjs'},engines:{node:'>=22.0.0'},license:'Apache-2.0',author:'AtMem <hello@atmem.ai>',homepage:'https://atmem.ai',repository:{type:'git',url:'git+https://github.com/aetna000/atmem-ai-architect.git'},publishConfig:{access:'public',tag:releaseChannel(meta.version)},dependencies:meta.dependencies};
 fs.writeFileSync(path.join(stage,'package.json'),JSON.stringify(packageJson,null,2)+'\n');fs.chmodSync(path.join(stage,'cli/architect.mjs'),0o755);
 const result=spawnSync(process.platform==='win32'?'npm.cmd':'npm',['pack','--json','--ignore-scripts','--pack-destination',output],{cwd:stage,encoding:'utf8',shell:process.platform==='win32'});
 if(result.status!==0)throw Error(result.stderr||'npm pack failed');

@@ -9,3 +9,10 @@ for(const mode of ['matching','changed-bytes','wrong-latest'])test('release veri
   if(mode==='matching'){assert.equal(result.status,0,result.stderr);assert.equal(JSON.parse(result.stdout).version,'0.2.2');}else{assert.notEqual(result.status,0);assert.match(result.stderr,mode==='changed-bytes'?/differs from the accepted CI artifact/:/latest points elsewhere/);}
  }finally{fs.rmSync(dir,{recursive:true,force:true})}
 });
+
+test('stable and beta publish to separate channels', async () => {
+  const {releaseChannel} = await import('../scripts/npm-release-channel.mjs');
+  assert.equal(releaseChannel('0.2.4'), 'latest');
+  assert.equal(releaseChannel('0.2.5-beta.1'), 'beta');
+  assert.throws(() => releaseChannel('0.2.5-unknown.1'));
+});

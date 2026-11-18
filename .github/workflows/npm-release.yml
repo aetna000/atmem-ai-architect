@@ -16,6 +16,8 @@ permissions:
   contents: read
 jobs:
   package:
+    outputs:
+      channel: ${{ steps.metadata.outputs.channel }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -38,7 +40,42 @@ jobs:
           .local/terraform-emulator-runtime/bin/python -m unittest server.tests.test_terraform_emulator_engines server.tests.test_terraform_emulator_continuation server.tests.test_terraform_emulator_coverage -v
       - run: npm ci --ignore-scripts
       - run: npm test
+      - name: Prepare real AtMem for native Spec Kit integration checks
+        run: |
+          python -m venv .memory-venv
+          .memory-venv/bin/python -m pip install --require-hashes -r server/memory-requirements.lock
+      - name: Qualify native rules, memory, task bindings and engineering adapters
+        env:
+          ATMEM_ARCHITECT_HOME: ${{ github.workspace }}/.local/native-test-home
+          ATMEM_ARCHITECT_MEMORY_PYTHON: ${{ github.workspace }}/.memory-venv/bin/python
+        run: .venv/bin/python -m unittest server.tests.test_architecture_rules server.tests.test_memory server.tests.test_memory_dashboard server.tests.test_memory_context server.tests.test_engineering_routes server.tests.test_engineering_handoff server.tests.test_engineering_delivery server.tests.test_engineering_reconciliation server.tests.test_engineering_finalization server.tests.test_engineering_local_worker server.tests.test_engineering_contexts server.tests.test_codex_engineering_backend -v
+      - name: Qualify local infrastructure upgrades and publication contracts
+        env:
+          ATMEM_ARCHITECT_HOME: ${{ github.workspace }}/.local/maintenance-test-home
+        run: .venv/bin/python -m unittest server.tests.test_maintenance_acceptance_driver server.tests.test_maintenance_campaign server.tests.test_maintenance_campaign_store server.tests.test_maintenance_git_objects server.tests.test_maintenance_github server.tests.test_maintenance_graph server.tests.test_maintenance_inventory server.tests.test_maintenance_isolation server.tests.test_maintenance_publication server.tests.test_maintenance_publication_protocol server.tests.test_maintenance_publication_routes server.tests.test_maintenance_routes server.tests.test_maintenance_service server.tests.test_maintenance_store server.tests.test_maintenance_verification -v
+      - name: Qualify native rules in the actual browser and AtMem backend
+        env:
+          ATMEM_ARCHITECT_HOME: ${{ github.workspace }}/.local/native-browser-home
+          ATMEM_ARCHITECT_MEMORY_PYTHON: ${{ github.workspace }}/.memory-venv/bin/python
+          ATMEM_ARCHITECT_PORT: '5197'
+          ATMEM_ARCHITECT_SIDECAR_PORT: '8771'
+        run: |
+          npx playwright install --with-deps chromium
+          mkdir -p .local/review-hook
+          .venv/bin/python -m uvicorn server.app:app --host 127.0.0.1 --port 8771 --no-access-log > .local/review-hook/native-api.log 2>&1 &
+          native_api_pid=$!
+          npm run dev > .local/review-hook/native-ui.log 2>&1 &
+          native_ui_pid=$!
+          trap 'kill "$native_api_pid" "$native_ui_pid" 2>/dev/null || true' EXIT
+          for attempt in $(seq 1 60); do
+            if curl --fail --silent http://127.0.0.1:5197/ >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/architecture-rules-browser.mjs
       - run: npm run package:npm
+      - name: Read the qualified package distribution tag
+        id: metadata
+        run: node -p '"channel=" + require("./.local/npm-release/package/package.json").publishConfig.tag' >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4
         with:
           name: architect-npm-candidate
@@ -92,6 +129,7 @@ jobs:
         with:
           sparse-checkout: |
             /scripts/verify-npm-release.mjs
+            /scripts/npm-release-channel.mjs
           sparse-checkout-cone-mode: false
       - uses: actions/setup-node@v4
         with:
@@ -102,8 +140,8 @@ jobs:
           name: architect-npm-candidate
           path: candidate
       - run: npm install --global npm@11.17.0
-      - run: npm publish ./candidate/*.tgz --access public --tag latest --provenance
-      - name: Verify public npm version, latest tag and artifact integrity
+      - run: npm publish ./candidate/*.tgz --access public --tag "${{ needs.package.outputs.channel }}" --provenance
+      - name: Verify public npm version, distribution tag and artifact integrity
         run: node scripts/verify-npm-release.mjs ./candidate/*.tgz
 
   github-package:
@@ -129,6 +167,6 @@ jobs:
           name: architect-npm-candidate
           path: candidate
       - run: node scripts/github-package.mjs candidate .local/github-package
-      - run: npm publish ./.local/github-package/package --registry=https://npm.pkg.github.com --access public --tag latest --ignore-scripts
+      - run: npm publish ./.local/github-package/package --registry=https://npm.pkg.github.com --access public --tag "${{ needs.package.outputs.channel }}" --ignore-scripts
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,13 @@
+{
+  "recordedAt": "2026-11-17T15:16:05.500762+00:00",
+  "scope": "PR 13 hosted native-worker CI repair",
+  "previousHead": "3dd88018841d8cf7aeb1e268d3a753273eaa9880",
+  "previousCI": "https://github.com/aetna000/atmem-ai-architect/actions/runs/44109034678",
+  "cause": "Native CI installed only Python dependencies. Native handoff preparation now invokes the real JavaScript generators and requires the locked production Node packages.",
+  "change": "Set up Node 24 and install the exact npm lock with --ignore-scripts --omit=dev; trigger hosted checks on generator/script/package changes.",
+  "localQualification": {
+    "hostedNativeSuitePassed": 31,
+    "logSha256": "0577f1f8a6241e8cef5135d67dd1142faa6bbf36fab44372898d48142ecc78f5"
+  },
+  "pending": "Verify the hosted native-worker job on the pushed revision; do not infer CI success from local tests."
+}

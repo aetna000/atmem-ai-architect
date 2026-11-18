@@ -2,12 +2,16 @@ import {approvalProfiles} from './approval-applications.mjs';
 import {validateArchitectureWork} from './architecture-work.mjs';
 import {validateStateCustody} from './state-custody.mjs';
 import {validateExternalReferences} from './external-identities.mjs';
+import {historicalSection,validateSection} from './maintenance/model.mjs';
 // The durable project file: atforma.project 2.0.0. See specs/002-project-model.
 import { validateImport } from "./core.mjs";
 
 export const FORMAT = "atmem.ai-architect.project";
 export const FORMAT_VERSION = "2.3.0";
 export const APPROVAL_FORMAT_VERSION = "3.0.0";
+// Older readers must refuse private maintenance source rather than forward unknown extensions.
+export const MAINTENANCE_FORMAT_VERSION = "4.0.0";
+const projectFormat=(nodes,extensions)=>extensions?.maintenance?MAINTENANCE_FORMAT_VERSION:approvalFormat(nodes)?APPROVAL_FORMAT_VERSION:FORMAT_VERSION;
 const approvalFormat=nodes=>Array.isArray(nodes)&&nodes.some(n=>n.data?.implementation==='approval-workflow'||n.data?.approvalProfile!=null);
 export const MAX_FILE_BYTES = 2_000_000;
 const GENERATOR = "atmem-ai-architect 0.2.1";
@@ -57,6 +61,7 @@ function unknown(section, allowed) {
 export function toProjectFile(project, now = new Date()) {
   validateStateCustody(project.extensions?.terraformState);
   validateExternalReferences(project);
+  if(project.extensions?.maintenance)validateSection(project.extensions.maintenance);
   approvalProfiles(project);
   const {
     version, revision, name, provider, domain, requirements, nodes, edges,
@@ -66,7 +71,7 @@ export function toProjectFile(project, now = new Date()) {
   } = project;
   const file = {
     format: FORMAT,
-    formatVersion: approvalFormat(nodes)?APPROVAL_FORMAT_VERSION:FORMAT_VERSION,
+    formatVersion: projectFormat(nodes,extensions),
     meta: {
       id: id || crypto.randomUUID(),
       name,
@@ -105,14 +110,44 @@ export function toProjectFile(project, now = new Date()) {
 }
 
 // Returns the browser project plus what happened, so the UI can say so.
+export function reviewDesignSnapshot(project){
+  const file=JSON.parse(JSON.stringify(toProjectFile(project)));
+  delete file.meta.updatedAt;delete file.meta.createdAt;
+  // Chat is retained as context, but does not change the approved design revision.
+  delete file.extensions.conversation;
+  // Maintenance repository evidence has its own reviewed source/consent contract.
+  // It does not change the Terraform draft of this general design.
+  if(file.extensions.maintenance){
+    delete file.extensions.maintenance;
+    file.formatVersion=approvalFormat(file.design.nodes)?APPROVAL_FORMAT_VERSION:FORMAT_VERSION;
+  }
+  delete file.extensions.maintenanceNeedsImport;delete file.extensions.maintenanceBoundary;
+  for(const edge of file.design.edges||[])delete edge.animated;
+  const estimate=file.estimate;
+  if(estimate)for(const [key,empty] of [['details',[]],['usage',{}],['prices',{}]]){
+    if(JSON.stringify(estimate[key])===JSON.stringify(empty))delete estimate[key];
+  }
+  const journey=file.extensions?.journey;
+  if(journey&&Object.keys(journey).every(k=>['scope','architecture','review','estimate','delivery'].includes(k))&&Object.values(journey).every(v=>typeof v==='string'&&/^[0-9]{1,8}-[a-f0-9]{1,8}-[a-f0-9]{1,8}$/.test(v)))delete file.extensions.journey;
+  return file;
+}
+
+export function reviewDesignContent(project){
+  const ordered=value=>Array.isArray(value)?value.map(ordered):value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(key=>[key,ordered(value[key])])):value;
+  return JSON.stringify(ordered(reviewDesignSnapshot(project)));
+}
+
 export function fromProjectFile(raw) {
   if (!raw || typeof raw !== "object") throw Error("Not a project file.");
   refuseCredentials(raw, "Import");
-  if (raw.format === undefined && raw.version === 1)
-    return { project: validateImport(raw), migrated: true, from: "workbench v1" };
+  if (raw.format === undefined && raw.version === 1) {
+    const project=validateImport(raw);
+    if(project.extensions?.maintenance)project.extensions={...project.extensions,maintenance:historicalSection(project.extensions.maintenance),maintenanceNeedsImport:true};
+    return { project, migrated: true, from: "workbench v1" };
+  }
   if (![FORMAT,"atforma.project"].includes(raw.format)) throw Error("Not an AtMem AI Architect project file.");
   const [major] = String(raw.formatVersion || "").split(".").map(Number);
-  if (major !== 2 && !(raw.formatVersion===APPROVAL_FORMAT_VERSION&&approvalFormat(raw.design?.nodes)))
+  if (major !== 2 && !(raw.formatVersion===APPROVAL_FORMAT_VERSION&&approvalFormat(raw.design?.nodes)) && !(raw.formatVersion===MAINTENANCE_FORMAT_VERSION&&raw.extensions?.maintenance))
     throw Error(`This file is format ${raw.formatVersion}; this version of AtMem AI Architect reads ${FORMAT_VERSION}. Update AtMem AI Architect to open it.`);
   const meta = raw.meta || {},
     design = raw.design || {},
@@ -127,6 +162,7 @@ export function fromProjectFile(raw) {
         .map(([section, extra]) => [`${section}.extra`, extra]),
     ),
   };
+  if(extensions.maintenance){extensions.maintenance=historicalSection(extensions.maintenance);extensions.maintenanceNeedsImport=true;}
   const project = validateImport({
     version: 1,
     revision: meta.revision,
@@ -151,7 +187,7 @@ export function fromProjectFile(raw) {
     ...(raw.options ? { assessment: raw.options } : {}),
     ...(Object.keys(extensions).length ? { extensions } : {}),
   });
-  return { project, migrated: raw.format !== FORMAT || raw.formatVersion !== (approvalFormat(project.nodes)?APPROVAL_FORMAT_VERSION:FORMAT_VERSION), from: raw.formatVersion };
+  return { project, migrated: raw.format !== FORMAT || raw.formatVersion !== projectFormat(project.nodes,project.extensions), from: raw.formatVersion };
 }
 
 export function parseProjectFile(textContent) {

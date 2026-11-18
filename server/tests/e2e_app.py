@@ -24,13 +24,13 @@ def node(id,label,kind,provider='tools',region='To be selected',x=0):
 
 class FixtureArchitect:
     keys={}
-    async def call(self,request,disconnected,runtime=None):
+    async def call(self,request,disconnected,runtime=None,activity=None):
         await asyncio.sleep(.08)
         msg=request.message.lower();runtime=runtime or {};p=request.project.model_dump(exclude_none=True)
         if msg.startswith('connection check'):return ArchitectResponse(message='Fixture connection ready.')
         if 'compare' in msg and 'optionassessment' in msg:
             return ArchitectResponse(message='All four clouds can support this design; existing systems and residency should drive the choice. Which cloud agreement do you already have?',optionAssessment=[OptionAssessment(provider=provider,scores=Scores(cost=3,risk=3,scalability=4,security=4),rationale=f'Provisional {provider} option for the current document assistant; exact cost and region still need verification.') for provider in ['current','aws','azure','gcp','ibm']])
-        if request.origin=='document':
+        if request.origin=='document' and ' — comment: ' in request.message:
             import re
             match=re.search(r'Requirement (\S+)(?: \(selected text: .*?\))? — comment: (.+)',request.message)
             return ArchitectResponse(message='I proposed new wording from your comment; review it in the document. What else should we clarify?',requirementUpdates=[RequirementUpdate(id=match[1],statement='Only HR managers may retrieve policy documents.',sourceText=match[2])])
@@ -53,7 +53,8 @@ class FixtureArchitect:
             region=next((n.data.config.region for n in request.project.nodes if n.data.provider==provider),'ap-southeast-2')
             return ArchitectResponse(message='Checking the appropriate provider price source.',toolRequests=[ToolRequest(name='pricing.lookup',query='{"provider":"'+provider+'","region":"'+region+'"}')])
         if 'only the hr team' in msg:
-            target=next((c.id for c in request.context if c.type=='requirement' and c.id=='drv-data-access'),'drv-data-access')
+            requirements=[c for c in request.context if c.type=='requirement']
+            target=next((c.id for c in requirements if 'access' in c.text.lower()),requirements[0].id if requirements else 'drv-data-access')
             return ArchitectResponse(message='Only the HR team should access these documents. Which sign-in system does the team already use?',requirementUpdates=[RequirementUpdate(id=target,statement='Only the HR team may access the documents and answers.',sourceText=request.message)])
         if 'remember about me:' in msg:return ArchitectResponse(message='Your confirmed preference is recorded. Which part of our design should we work on next?')
         if 'what do you remember' in msg or 'which region did' in msg:

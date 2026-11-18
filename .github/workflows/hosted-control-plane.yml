@@ -1,10 +1,10 @@
 name: Hosted control plane
 on:
   pull_request:
-    paths: ['hosted/**', 'server/**', 'src/**', 'scripts/build-hosted-workspace.mjs', '.github/workflows/hosted-control-plane.yml']
+    paths: ['hosted/**', 'server/**', 'src/**', 'scripts/**', 'package.json', 'package-lock.json', '.github/workflows/hosted-control-plane.yml']
   push:
     branches: [main]
-    paths: ['hosted/**', 'server/**', 'src/**', 'scripts/build-hosted-workspace.mjs', '.github/workflows/hosted-control-plane.yml']
+    paths: ['hosted/**', 'server/**', 'src/**', 'scripts/**', 'package.json', 'package-lock.json', '.github/workflows/hosted-control-plane.yml']
 permissions:
   contents: read
 jobs:
@@ -36,6 +36,12 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install the native handoff generator runtime
+        run: npm ci --ignore-scripts --omit=dev
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'

@@ -41,7 +41,7 @@ class CodexAppServer:
     async def start(self):
         if self.process is not None:
             raise ProtocolError('Codex transport has already started')
-        env = account_environment()
+        env = account_environment('codex')
         # Authentication remains CLI-owned. Do not forward deployment credentials.
         for key in list(env):
             if key.startswith(('AWS_', 'AZURE_', 'GOOGLE_', 'GCLOUD_', 'IBM_', 'WATSONX_', 'TF_')) or key in {'KUBECONFIG', 'DOCKER_HOST', 'DOCKER_CONFIG', 'CLOUDSDK_CONFIG', 'GOOGLE_APPLICATION_CREDENTIALS'}:

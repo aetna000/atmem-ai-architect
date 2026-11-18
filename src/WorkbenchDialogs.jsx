@@ -51,6 +51,7 @@ export function Connections({ session, connection, onCheck, onSave, onRetry, wel
     [list, setList] = useState([]),
     [effort, setEffort] = useState(connection?.effort || ""),
     [reason, setReason] = useState(""),
+    [loginUrl, setLoginUrl] = useState(""),
     [keyStored, setKeyStored] = useState(0);
   const kind = PROVIDER_OPTIONS.find((o) => o[0] === choice)?.[2];
   const capability = session?.providers?.[choice];
@@ -95,6 +96,7 @@ export function Connections({ session, connection, onCheck, onSave, onRetry, wel
 
   async function signIn() {
     setError("");
+    setLoginUrl("");
     setState("signing-in");
     try {
       const response = await fetch("/api/login", {
@@ -104,12 +106,14 @@ export function Connections({ session, connection, onCheck, onSave, onRetry, wel
       });
       const result = await response.json();
       if (!response.ok) throw Error(result.detail || "Couldn't start sign-in.");
-      if (result.url) window.open(result.url, "_blank", "noopener");
+      if (result.url?.startsWith("https://")) setLoginUrl(result.url);
       // Wait for the provider's page to finish; the CLI reports when it's done.
-      for (let i = 0; i < 60; i++) {
+      for (let i = 0; i < 150; i++) {
         await new Promise((r) => setTimeout(r, 2000));
         const latest = await onRetry();
-        if (latest?.providers?.[choice]?.signedIn) return setState("idle");
+        const account = latest?.providers?.[choice];
+        if (account?.loginStatus === "failed") throw Error("Sign-in ended. Try again.");
+        if (account?.loginStatus !== "pending" && (account?.signedIn || (account?.signedIn == null && account?.loginStatus === "completed"))) return setState("idle");
       }
       setState("idle");
       setError("Sign-in didn't finish. Try again.");
@@ -204,10 +208,12 @@ export function Connections({ session, connection, onCheck, onSave, onRetry, wel
         <div className="signin">
           {!capability?.installed ? (
             <span className="warn-text">{name} app not found on this computer.</span>
-          ) : signedIn ? (
-            <span className="ok-text">✓ Signed in</span>
           ) : state === "signing-in" ? (
-            <span className="muted">Finish signing in on the page that opened…</span>
+            <span role="status">{loginUrl ? <a href={loginUrl} target="_blank" rel="noopener noreferrer">Open provider sign-in ↗</a> : "Finish signing in with your provider… "}</span>
+          ) : signedIn ? (
+            <><span className="ok-text">✓ Signed in</span>{" "}
+              {["codex", "claude-code"].includes(choice) && <button className="link" onClick={signIn}>Sign in for Architect</button>}
+            </>
           ) : capability?.canSignInFromApp ? (
             <button className="btn" onClick={signIn}>
               Sign in to {name}

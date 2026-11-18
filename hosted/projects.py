@@ -129,7 +129,14 @@ class Projects:
             upload=self._upload(tx,uid,upload_id)
             key=upload_id+'-'+str(part)
             previous=tx.get('project_parts',key)
-            if upload['state']!='uploading':raise Conflict('This save no longer accepts chunks')
+            if upload['state']!='uploading':
+                # A concurrent completion may win after the caller read 'uploading'.
+                # A byte-identical retained chunk is an idempotent acknowledgement,
+                # never a new write or permission to change completed content.
+                if (upload['state']=='completed' and previous and previous['sha256']==sha256
+                    and part<upload['chunks'] and len(raw)==min(CHUNK_BYTES,upload['size']-part*CHUNK_BYTES)):
+                    return {'stored':True}
+                raise Conflict('This save no longer accepts chunks')
             expected=min(CHUNK_BYTES,upload['size']-part*CHUNK_BYTES)
             if part>=upload['chunks'] or len(raw)!=expected:raise CreditError('Project chunk has the wrong size')
             if previous:
