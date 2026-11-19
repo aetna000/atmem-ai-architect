@@ -5,6 +5,7 @@ workspace isolation and tools before exposing engineering turns to the product.
 Uses the official signed-in CLI; never reads or extracts account tokens.
 """
 import asyncio
+import base64
 import json
 import os
 from pathlib import Path
@@ -180,9 +181,21 @@ class CodexAppServer:
             result=await asyncio.wait_for(self.dynamic_tool_handler(message.get('params',{})),30)
             if not isinstance(result,dict) or set(result)!={'success','contentItems'} or type(result['success']) is not bool:
                 raise ValueError('Invalid tool response')
-            if not isinstance(result['contentItems'],list) or any(not isinstance(item,dict) or set(item)!={'type','text'} or item['type']!='inputText' or not isinstance(item['text'],str) for item in result['contentItems']):
-                raise ValueError('Only bounded text evidence is enabled')
-            if len(json.dumps(result,allow_nan=False).encode())>64000:raise ValueError('Tool response exceeds bound')
+            items=result['contentItems']
+            if not isinstance(items,list) or len(items)>8:raise ValueError('Tool content exceeds its count bound')
+            text_bytes=0;images=0
+            for item in items:
+                if not isinstance(item,dict):raise ValueError('Invalid tool content')
+                if set(item)=={'type','text'} and item['type']=='inputText' and isinstance(item['text'],str):
+                    text_bytes+=len(item['text'].encode())
+                elif set(item)=={'type','imageUrl'} and item['type']=='inputImage' and isinstance(item['imageUrl'],str) and item['imageUrl'].startswith('data:image/png;base64,'):
+                    from .source_figures import MAX_IMAGE_BYTES
+                    if len(item['imageUrl'])>MAX_IMAGE_BYTES*4//3+100:raise ValueError('Image evidence exceeds its byte bound')
+                    content=base64.b64decode(item['imageUrl'].split(',',1)[1],validate=True)
+                    if not content.startswith(b'\x89PNG\r\n\x1a\n') or len(content)>MAX_IMAGE_BYTES:raise ValueError('Only bounded inline PNG evidence is enabled')
+                    images+=1
+                else:raise ValueError('Unsupported tool content')
+            if text_bytes>48000 or images>1 or len(json.dumps(result,allow_nan=False).encode())>(4_300_000 if images else 64000):raise ValueError('Tool response exceeds bound')
         except asyncio.CancelledError:
             raise
         except Exception:

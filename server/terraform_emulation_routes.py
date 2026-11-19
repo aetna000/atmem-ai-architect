@@ -52,11 +52,11 @@ def emulate_terraform(payload, progress=None):
     if setting('REQUIRE_EMULATION_SANDBOX')=='1' and not image:
         return unavailable('The isolated emulator worker is not configured.')
     if not image and not python.is_file():
-        return unavailable('The Terraform emulator runtime is not installed. Run python3 scripts/setup-terraform-emulator.py.')
+        return unavailable('Local emulation setup is incomplete. Restart Architect to retry automatic setup.')
     terraform = setting('TERRAFORM_BIN') or shutil.which('terraform', path=str(ROOT / '.venv' / 'bin') + os.pathsep + os.getenv('PATH', ''))
     node = shutil.which('node')
     if not terraform or not node:
-        return unavailable('Terraform 1.7+ and Node are required on the server for apply emulation.')
+        return unavailable('Local emulation tools are unavailable. Restart Architect to repair setup.')
     with tempfile.TemporaryDirectory(prefix='atmem-tf-emulation-') as folder:
         source = Path(folder) / 'generated'
         source.mkdir()
@@ -84,7 +84,8 @@ def emulate_terraform(payload, progress=None):
         }
         unfinished = json.loads(files['main.tf.json']).get('locals', {}).get('unfinished_work')
         if unfinished:
-            return {**unavailable('Resolve the generated implementation gaps before emulation.'), **metadata, 'status': 'blocked', 'blockers': unfinished}
+            return {**unavailable('Resolve the generated implementation gaps before emulation.'), **metadata, 'status': 'blocked', 'blockers': unfinished,
+                    'blockerDetails': json.loads(files.get('emulation-blockers.json', '{"blockers":[]}')).get('blockers', [])}
         if image:
             from hosted.terraform_emulation import run_isolated
             result=run_isolated(files,image=image,endpoint=setting('ENGINEERING_VALIDATOR_ENDPOINT'),progress=progress)

@@ -3,13 +3,13 @@ import base64,io,json,subprocess,sys,zipfile,zlib
 from urllib.parse import unquote_to_bytes
 from pathlib import Path
 from xml.etree import ElementTree
-MAX_FILE=4*1024*1024
+MAX_FILE=8*1024*1024
 MAX_TOTAL=8*1024*1024
 
-def decode(item):
+def decode(item, limit=MAX_FILE):
     try:data=base64.b64decode(item['data'],validate=True)
     except Exception:raise ValueError('Attachment encoding is invalid.')
-    if not data or len(data)>MAX_FILE:raise ValueError('Each attachment must be between 1 byte and 4 MB.')
+    if not data or len(data)>limit:raise ValueError(f'Each attachment must be between 1 byte and {limit//(1024*1024)} MB.')
     return data
 
 def diagram_text(data):
@@ -41,9 +41,46 @@ def diagram_text(data):
     if len(text)>100000:raise ValueError('Combined diagram text exceeds 100,000 characters.')
     return text
 
-def extract(items):
+def docx_source(archive, root):
+    ns = {'w': 'http://schemas.openxmlformats.org/wordprocessingml/2006/main'}
+    tag = '{' + ns['w'] + '}'
+
+    def paragraph(node):
+        text = ''.join(part.text or '' for part in node.iter(tag + 't'))
+        style = node.find('w:pPr/w:pStyle', ns)
+        if style is not None and text.strip():
+            style_name = style.get(tag + 'val', '')
+            if style_name.lower().startswith(('heading', 'title')):
+                return f'[{style_name}] {text}'
+        return text
+
+    def blocks(node):
+        for child in node:
+            if child.tag == tag + 'p':
+                line = paragraph(child)
+                if line.strip():
+                    yield line
+            elif child.tag == tag + 'tbl':
+                yield '[Table]'
+                for row in child.findall('w:tr', ns):
+                    cells = [' / '.join(blocks(cell)) for cell in row.findall('w:tc', ns)]
+                    yield ' | '.join(cells)
+                yield '[/Table]'
+            else:
+                yield from blocks(child)
+
+    graphics = [name.removeprefix('word/media/') for name in archive.namelist()
+                if name.startswith('word/media/') and not name.endswith('/')]
+    return '\n'.join(blocks(root)), graphics
+
+
+def extract(items, design=False):
+    if __package__:
+        from .source_figures import docx_figures, raster_figure
+    else:
+        from source_figures import docx_figures, raster_figure
     if len(items)>4:raise ValueError('Attach up to four files per message.')
-    decoded=[(item,decode(item)) for item in items]
+    decoded=[(item,decode(item, MAX_TOTAL if design else MAX_FILE)) for item in items]
     if sum(len(data) for _,data in decoded)>MAX_TOTAL:raise ValueError('Attachments exceed the 8 MB total limit.')
     result=[]
     for item,data in decoded:
@@ -55,8 +92,16 @@ def extract(items):
                 if im.width*im.height>20_000_000:raise ValueError('Image exceeds 20 megapixels.')
                 if im.format not in {'PNG','JPEG','WEBP'} or Image.MIME[im.format]!=mime:raise ValueError('Image format does not match its content.')
                 im.verify()
-            result.append({'name':name,'mime':mime,'data':item['data']});continue
+            if design:
+                figure=raster_figure(data,'figure-1',name,['image:1'])
+                result.append({'name':name,'mime':mime,'text':'Image specification. Inspect figure-1 through the source figure tool; no OCR text was extracted.',
+                    'mode':'image evidence; no OCR or page layout extraction','graphics':[name],'_figures':[figure]})
+            else:
+                result.append({'name':name,'mime':mime,'data':item['data']})
+            continue
+        graphics=[];figures=[];visual_evidence=None
         if mime=='application/pdf':
+            if design:visual_evidence={'status':'not_rendered','reason':'PDF page graphics require rendered evidence; extracted text does not establish their contents.'}
             from pypdf import PdfReader,overwrite_configuration
             overwrite_configuration(maximum_declared_stream_length=8_000_000,zlib_maximum_output_length=8_000_000,lzw_maximum_output_length=8_000_000,run_length_maximum_output_length=8_000_000)
             reader=PdfReader(io.BytesIO(data))
@@ -71,20 +116,28 @@ def extract(items):
                 xml=archive.read('word/document.xml')
                 if b'<!DOCTYPE' in xml or b'<!ENTITY' in xml:raise ValueError('Unsupported document XML.')
                 root=ElementTree.fromstring(xml)
-                text='\n'.join(''.join(p.itertext()) for p in root.iter('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}p'))
+                if design:
+                    text, graphics = docx_source(archive, root)
+                    figures = docx_figures(archive, root)
+                    if figures:
+                        text += '\n\n[Embedded figure references]\n' + '\n'.join(
+                            f"{row['id']} · {row['name']} · {', '.join(row['locations']) or 'No inline paragraph relationship'}"
+                            for row in figures)
+                else:
+                    text='\n'.join(''.join(p.itertext()) for p in root.iter('{http://schemas.openxmlformats.org/wordprocessingml/2006/main}p'))
         elif mime=='text/plain' and name.lower().endswith(('.drawio','.xml')):text=diagram_text(data)
         elif mime in {'text/plain','text/markdown','text/csv','application/json'}:text=data.decode('utf-8-sig')
         else:raise ValueError('Use PNG, JPEG, WebP, PDF, DOCX, TXT, Markdown, CSV or JSON.')
         if not text.strip():raise ValueError('The document has no readable text.')
         if len(text)>100000:raise ValueError('Document text exceeds 100,000 characters. Attach a shorter excerpt.')
-        result.append({'name':name,'mime':mime,'text':text,'mode':'extracted text; embedded images and layout are not included'})
+        result.append({'name':name,'mime':mime,'text':text,'mode':'extracted text; page layout is not included',**({'graphics':graphics,'_figures':figures} if graphics else {}),**({'visualEvidence':visual_evidence} if visual_evidence else {})})
     if sum(len(i.get('text','')) for i in result)>150000:raise ValueError('Combined document text exceeds 150,000 characters.')
     return result
 
-def prepare(items):
+def prepare(items, *, design=False):
     if not items:return []
     try:
-        run=subprocess.run([sys.executable,str(Path(__file__).resolve()),'--worker'],input=json.dumps(items),text=True,capture_output=True,timeout=20)
+        run=subprocess.run([sys.executable,str(Path(__file__).resolve()),'--worker',*(['--design'] if design else [])],input=json.dumps(items),text=True,capture_output=True,timeout=20)
         response=json.loads(run.stdout)
         if 'error' in response:raise RuntimeError(response['error'])
         return response['attachments']
@@ -96,6 +149,6 @@ if __name__=='__main__':
             import resource
             resource.setrlimit(resource.RLIMIT_CPU,(12,12))
             if sys.platform!='darwin':resource.setrlimit(resource.RLIMIT_AS,(768*1024*1024,768*1024*1024))
-        print(json.dumps({'attachments':extract(json.load(sys.stdin))}))
+        print(json.dumps({'attachments':extract(json.load(sys.stdin), design='--design' in sys.argv)}))
     except (ValueError,UnicodeError,zipfile.BadZipFile,KeyError) as exc:print(json.dumps({'error':str(exc)[:250]}))
     except Exception:print(json.dumps({'error':'Cannot read this attachment. Export a standard PDF, DOCX, text file or image and try again.'}))

@@ -1,3 +1,4 @@
+import {diagramText,validateBlockSpecs} from './block-spec.mjs';
 import { requirementNumber } from "./derive.mjs";
 // Client pack: one Markdown document generated from the board.
 import { PROVIDERS, checkProject } from "./core.mjs";
@@ -13,19 +14,28 @@ export const OPTION_NAMES = {
   ibm: "IBM",
 };
 
-const clean = (s) => String(s ?? "").replace(/["[\]{}|<>]/g, "'");
-
 export function mermaid(project) {
-  const id = new Map(project.nodes.map((n, i) => [n.id, `n${i}`]));
+  validateBlockSpecs(project.nodes);
+  const id = new Map(project.nodes.map((node, index) => [node.id, `n${index}`]));
+  const children = new Map();
+  for (const node of project.nodes) {
+    const parent=node.data.parentBlockId||null;
+    if(!children.has(parent))children.set(parent,[]);
+    children.get(parent).push(node);
+  }
+  function draw(parent,indent) {
+    return (children.get(parent)||[]).flatMap(node=>{
+      const lines=[`${indent}${id.get(node.id)}["${diagramText(node.data.label)}"]`];
+      if(!children.has(node.id))return lines;
+      return [`${indent}subgraph group${id.get(node.id)}["${diagramText(node.data.label)}"]`,
+        ...lines,...draw(node.id,indent+'  '),indent+'end'];
+    });
+  }
   return [
-    "flowchart LR",
-    ...project.nodes.map(
-      (n) => `  ${id.get(n.id)}["${clean(n.data.label)}<br/>${clean(PROVIDERS[n.data.provider].name)}"]`,
-    ),
-    ...project.edges.map(
-      (e) => `  ${id.get(e.source)} -->|${clean(e.label || "data")}| ${id.get(e.target)}`,
-    ),
-  ].join("\n");
+    'flowchart LR',
+    ...draw(null,'  '),
+    ...project.edges.map(edge=>`  ${id.get(edge.source)} -->|"${diagramText(edge.label||'data')}"| ${id.get(edge.target)}`),
+  ].join('\n');
 }
 
 export function adrMarkdown(decisions = []) {

@@ -265,6 +265,21 @@ class MemoryService:
                     db.execute('DELETE FROM queue WHERE project=? AND scope=? AND key=?', (project, scope, key))
             return result
 
+    def recall_project(self, project, query):
+        """The engineering workspace may recall only its own AtMem project subject."""
+        self.project(project)
+        with self.lock:
+            if not self.enabled(project) or not self.flush():
+                return [], self.status(project)
+            try:
+                rows, = self.call([{'action': 'recall', 'subject': self.subject('project', project),
+                                   'query': query, 'limit': 6}])
+            except (OSError, RuntimeError, subprocess.TimeoutExpired):
+                self.error = 'AtMem project recall is unavailable'
+                return [], self.status(project)
+            return [{'id': row['id'], 'text': row['content'], 'sourceDate': row['created_at'],
+                     'key': row.get('fact_key')} for row in rows], self.status(project)
+
     def recall(self, project, query):
         self.project(project)
         with self.lock:

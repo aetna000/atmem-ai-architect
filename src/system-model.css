@@ -1,0 +1,119 @@
+.system-model-workspace {
+  --diagram-canvas: light-dark(#f9fbfc, #101719);
+  --diagram-dot: light-dark(#c8d7df, #36474f);
+  --diagram-component-fill: light-dark(#e8f4fc, #1b364a);
+  --diagram-component-line: light-dark(#4c7792, #8ab9d4);
+  --diagram-function-fill: light-dark(#e9f6e8, #203b2f);
+  --diagram-function-line: light-dark(#558064, #99c7a7);
+  --diagram-actor-fill: light-dark(#f5f0fa, #352c44);
+  --diagram-actor-line: light-dark(#7c699c, #c2a9df);
+  --diagram-wire-line: light-dark(#426176, #9dbbcc);
+  --diagram-wire-text: light-dark(#28475b, #d0e3ee);
+  --diagram-active: light-dark(#087396, #7bdbf5);
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  color: var(--ink);
+  background: var(--paper);
+  overflow: auto;
+}
+.system-model-header {
+  padding: 10px 16px;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  border-bottom: 1px solid var(--line);
+}
+.system-model-header h2 { margin: 0 0 5px; font-size: 22px; }
+.system-model-header span { color: var(--ink-2); font-size: 13px; }
+.system-model-layout { display: grid; grid-template-columns: 205px minmax(0, 1fr) 285px; flex: 1; min-height: 0; }
+.system-model-views, .system-model-inspector { padding: 16px; overflow: auto; min-height: 0; }
+.system-model-views { border-right: 1px solid var(--line); background: var(--color-card-raised); }
+.system-model-views h3, .system-model-type { font-size: 12px; color: var(--ink-2); }
+.system-model-views h3 { margin: 6px 0 5px; }
+.system-model-views section { margin-bottom: 18px; }
+.system-model-views button {
+  display: block; width: 100%; padding: 8px; margin: 2px 0;
+  text-align: left; color: inherit; background: transparent; border: 1px solid transparent; border-radius: 5px;
+  overflow-wrap: anywhere;
+}
+.system-model-views button[aria-current="true"] { background: light-dark(#e4f1f7, #243e4a); border-color: light-dark(#bbd6e4, #638fa1); color: light-dark(#074c69, #cdeefe); }
+.system-model-main { display: flex; flex-direction: column; min-width: 0; }
+.system-model-caption { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; padding: 13px 18px; }
+.system-model-caption span { display: block; color: var(--ink-2); font-size: 12px; }
+.system-model-drawing {
+  flex: 1; min-height: 280px; overflow: auto; border-top: 1px solid var(--line);
+  background-color: var(--diagram-canvas); background-image: radial-gradient(var(--diagram-dot) 1px, transparent 1px); background-size: 19px 19px;
+}
+.system-model-drawing svg { display: block; max-width: none; }
+.system-model-drawing[data-fit="true"] svg { max-width: 100%; height: auto; }
+.system-model-inspector { border-left: 1px solid var(--line); font-size: 13px; overflow-wrap: anywhere; }
+.system-model-inspector h3 { margin: 5px 0; font-size: 17px; }
+.system-model-inspector h4 { margin: 17px 0 5px; font-size: 13px; }
+.system-model-inspector p { margin: 8px 0; }
+.system-model-inspector ul { padding-left: 17px; margin: 4px 0; }
+.system-model-inspector li { margin-bottom: 5px; }
+.system-model-inspector dt { font-weight: 650; margin-top: 7px; }
+.system-model-inspector dd { margin: 1px 0 0; white-space: pre-wrap; }
+.system-model-inspector .link { text-align: left; }
+.system-model-empty { padding: 23px 24px 28px; }
+.system-model-symbol, .system-model-wire { cursor: pointer; outline: none; }
+.system-model-shape { fill: var(--diagram-component-fill); stroke: var(--diagram-component-line); stroke-width: 1.3; }
+.system-model-symbol[data-kind=function] .system-model-shape { fill: var(--diagram-function-fill); stroke: var(--diagram-function-line); }
+.system-model-symbol[data-kind=actor] .system-model-shape { fill: var(--diagram-actor-fill); stroke: var(--diagram-actor-line); }
+.system-model-symbol:is(:focus-visible,[aria-pressed=true]) .system-model-shape { stroke: var(--diagram-active); stroke-width: 3; }
+.system-model-glyph { fill: var(--diagram-component-fill); stroke: var(--diagram-component-line); }
+.system-model-actor { fill: none; stroke: var(--diagram-actor-line); stroke-width: 1.4; }
+.system-model-node-name { fill: var(--ink); font-size: 14px; font-weight: 650; }
+.system-model-metaclass, .system-model-context { font-size: 11px; fill: var(--ink-2); }
+.system-model-lifeline { stroke: var(--diagram-wire-line); stroke-dasharray: 5 5; }
+.system-model-arrow { stroke: var(--diagram-wire-line); }
+.system-model-wire :is(line,polyline) { fill: none; stroke: var(--diagram-wire-line); stroke-width: 1.6; }
+.system-model-wire .system-model-wire-hit { stroke: transparent; stroke-width: 14; }
+.system-model-wire rect { fill: var(--paper); stroke: var(--diagram-wire-line); }
+.system-model-wire text { fill: var(--diagram-wire-text); font-size: 12px; paint-order: stroke fill; stroke: var(--diagram-canvas); stroke-width: 4px; }
+.system-model-wire:is(:focus-visible,[aria-pressed=true]) :is(line,polyline):not(.system-model-wire-hit) { stroke: var(--diagram-active); stroke-width: 3; }
+.system-model-wire:is(:focus-visible,[aria-pressed=true]) text { fill: light-dark(#00566f, #7bdbf5); font-weight: 700; }
+@media (max-width: 1000px) {
+  .system-model-layout { grid-template-columns: 165px minmax(0, 1fr); }
+  .system-model-inspector { grid-column: 1/-1; max-height: none; border-left: 0; border-top: 1px solid var(--line); }
+}
+@media (max-width: 620px) {
+  .system-model-layout { grid-template-columns: minmax(0, 1fr); }
+  .system-model-views { display: flex; gap: 12px; max-height: 175px; border-bottom: 1px solid var(--line); }
+  .system-model-views section { flex: 1; margin: 0; min-width: 90px; }
+  .system-model-drawing { min-height: 280px; }
+}
+
+
+.system-model-heading { display: flex; gap: 12px; align-items: center; }
+.system-model-tools { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; padding: 4px 10px 6px; }
+.system-model-tools .btn { font-size: 12px; padding: 5px 8px; }
+.system-model-inspector .system-model-tools { padding-inline: 0; }
+.system-model-main { overflow: hidden; }
+.system-model-form { display: grid; gap: 10px; }
+.system-model-form label { display: grid; gap: 4px; font-weight: 600; }
+.system-model-form :is(input,select,textarea) {
+  width: 100%; min-width: 0; background: var(--color-card-raised); color: var(--ink);
+  border: 1px solid var(--line); padding: 6px 8px; border-radius: 6px;
+}
+.system-model-form .row { flex-wrap: wrap; }
+.system-model-wire[data-playing="true"] line:not(.system-model-wire-hit) { stroke: var(--diagram-active); stroke-width: 3; }
+.system-model-wire[data-playing="true"] text { fill: var(--diagram-active); font-weight: 700; }
+.system-model-drawing .system-model-symbol { touch-action: none; }
+@media (min-width: 1001px) {
+  .system-model-layout { min-height: 390px; }
+  .system-model-layout > * { min-height: 0; }
+}
+@media (max-width: 1000px) {
+  .system-model-layout { grid-template-rows: minmax(420px, 1fr) auto; }
+  .system-model-drawing { max-height: 58vh; }
+}
+@media (max-width: 620px) {
+  .system-model-layout { display: flex; flex-direction: column; }
+  .system-model-views { flex: none; max-height: 130px; }
+  .system-model-inspector { overflow: visible; }
+}

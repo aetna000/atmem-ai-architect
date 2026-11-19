@@ -50,3 +50,23 @@ class ProviderFailureExplanationTests(unittest.TestCase):
         for text,expected in [("You've hit your session limit · resets tomorrow. secret-token",'usage or rate limit'),('Authentication failed secret-token','sign in again'),('model_not_found secret-token','not available')]:
             message=provider_failure(text);self.assertIn(expected,message);self.assertNotIn('secret-token',message)
         self.assertIn('No changes were applied',provider_failure('unknown raw secret-token'))
+
+
+class StrictArchitectWireTests(unittest.TestCase):
+    def test_approval_payload_uses_json_text_only_on_strict_wire(self):
+        from server.contracts import architect_output_schema
+        from server.local_providers import cli_response_schema, decode_cli_response
+        source = architect_output_schema()
+        schema = cli_response_schema(source)
+        approval = schema['$defs']['Data']['properties']['approvalProfile']
+        self.assertEqual(approval['type'], ['string', 'null'])
+        self.assertIn('anyOf', source['$defs']['Data']['properties']['approvalProfile'])
+        profile = {'format': 'approval-application-v1', 'payloadContract': {'request': {'maxLength': 128}}}
+        response = {'patch': {'addNodes': [{'data': {'approvalProfile': json.dumps(profile)}}]}}
+        self.assertEqual(decode_cli_response(json.dumps(response))['patch']['addNodes'][0]['data']['approvalProfile'], profile)
+        response['patch']['addNodes'][0]['data']['approvalProfile'] = 'invalid JSON'
+        self.assertEqual(decode_cli_response(json.dumps(response)), response)
+
+    def test_provider_schema_error_is_reported_as_format_error(self):
+        from server.local_providers import provider_failure
+        self.assertIn('rejected Architect’s response format', provider_failure('invalid_json_schema'))

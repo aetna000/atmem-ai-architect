@@ -1,3 +1,9 @@
+import {validateRequirementsDocument} from './requirements-document.mjs';
+import {validateBlockSpecs,validateInterfaceSpec} from './block-spec.mjs';
+import {validateEngineeringModel} from './engineering-model.mjs';
+import {validateSystemModel} from './system-model.mjs';
+import {designDocumentFiles} from './design-documents.mjs';
+import {validateAmendmentHistory} from './canvas-amendments.mjs';
 import {approvalProfiles} from './approval-applications.mjs';
 import {validateArchitectureWork} from './architecture-work.mjs';
 import {validateStateCustody} from './state-custody.mjs';
@@ -9,7 +15,6 @@ export const FORMAT = "atmem.ai-architect.project";
 export const FORMAT_VERSION = "2.3.0";
 export const APPROVAL_FORMAT_VERSION = "3.0.0";
 const approvalFormat=nodes=>Array.isArray(nodes)&&nodes.some(n=>n.data?.implementation==='approval-workflow'||n.data?.approvalProfile!=null);
-export const MAX_FILE_BYTES = 2_000_000;
 const GENERATOR = "atmem-ai-architect 0.2.1";
 
 // Section keys the 2.0 reader understands; anything else is kept in extensions.
@@ -54,7 +59,16 @@ function unknown(section, allowed) {
   return Object.fromEntries(Object.entries(section || {}).filter(([k]) => !allowed.includes(k)));
 }
 
+// Persist intact model records even when an edit leaves their board bindings unresolved.
+// Architecture checks report those bindings. Generated proposals validate them strictly.
 export function toProjectFile(project, now = new Date()) {
+  if(project.extensions?.systemModel!==undefined)validateSystemModel(project.extensions.systemModel);
+  if(project.extensions?.engineeringModel!=null)validateEngineeringModel(project.extensions.engineeringModel);
+  designDocumentFiles(project.extensions?.architectureDocuments);
+  validateAmendmentHistory(project.extensions?.architectureAmendments);
+  validateRequirementsDocument(project.extensions?.requirementsDocument);
+  validateBlockSpecs(project.nodes);
+  for (const edge of project.edges) validateInterfaceSpec(edge.interfaceSpec);
   validateStateCustody(project.extensions?.terraformState);
   validateExternalReferences(project);
   approvalProfiles(project);
@@ -100,13 +114,13 @@ export function toProjectFile(project, now = new Date()) {
   };
   if(file.extensions.architectureWork!==undefined)validateArchitectureWork(file.extensions.architectureWork);
   refuseCredentials(file, "Export");
-  if(new TextEncoder().encode(JSON.stringify(file)).length>MAX_FILE_BYTES)throw Error("Project files must be 2 MB or smaller; no content was truncated.");
   return file;
 }
 
 // Returns the browser project plus what happened, so the UI can say so.
 export function fromProjectFile(raw) {
   if (!raw || typeof raw !== "object") throw Error("Not a project file.");
+  designDocumentFiles(raw.extensions?.architectureDocuments);
   refuseCredentials(raw, "Import");
   if (raw.format === undefined && raw.version === 1)
     return { project: validateImport(raw), migrated: true, from: "workbench v1" };
@@ -155,6 +169,5 @@ export function fromProjectFile(raw) {
 }
 
 export function parseProjectFile(textContent) {
-  if (new TextEncoder().encode(textContent).length > MAX_FILE_BYTES) throw Error("Project files must be 2 MB or smaller.");
   return fromProjectFile(JSON.parse(textContent));
 }

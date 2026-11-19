@@ -7,6 +7,7 @@ from pathlib import PurePosixPath
 import zipfile
 from .engineering_contexts import validate_context
 from .engineering_sessions import SessionError
+from .engineering_mapping_context import acknowledged_mapping,same_json
 
 
 def digest(content):
@@ -17,7 +18,11 @@ def design_value(content, project):
     value = validate_context(content, project)
     # Export time and validated navigation/download acknowledgement fingerprints
     # are UI state, not implementation intent. Exact source bytes remain in ZIPs.
+    # Project-container timestamps are metadata, not source/business chronology.
+    # Legacy drafts once regenerated createdAt on each save. Preserve original
+    # snapshot bytes while comparing actual design intent and owned project ID.
     value.get('meta', {}).pop('updatedAt', None)
+    value.get('meta', {}).pop('createdAt', None)
     # Reopening adds these exact empty pricing defaults through engagement import.
     estimate=value.get('estimate')
     if isinstance(estimate,dict):
@@ -46,7 +51,7 @@ def same_design(submitted, current, session, events):
     belong to the native conversation; all source snapshots stay unmodified.
     Preserve missing history, unresolved/forged entries, mappings and revisions.
     """
-    if submitted == current:
+    if same_json(submitted,current):
         return True
     accepted = {e.get('requestId') for e in events if e.get('kind') == 'steering_accepted'}
     trusted = {}
@@ -69,14 +74,14 @@ def same_design(submitted, current, session, events):
         if not isinstance(row, dict) or not isinstance(row.get('id'), str) or row['id'] in by_id:
             return False
         by_id[row['id']] = row
-    if any(not isinstance(row, dict) or not isinstance(row.get('id'), str) or by_id.get(row['id']) != row for row in before):
+    if any(not isinstance(row, dict) or not isinstance(row.get('id'), str) or not same_json(by_id.get(row['id']),row) for row in before):
         return False
     def projection(value):
         value = json.loads(json.dumps(value))
         extensions = value.get('extensions')
         work = extensions.get('architectureWork') if isinstance(extensions, dict) else None
         if isinstance(work, dict) and isinstance(work.get('intents'), list):
-            work['intents'] = [row for row in work['intents'] if trusted.get(row['id']) != row]
+            work['intents'] = [row for row in work['intents'] if not same_json(trusted.get(row['id']),row)]
             empty = {'version': 2, 'records': [], 'intents': [], 'snapshots': [],
                      'bindings': [], 'history': [], 'artifactMappings': []}
             if work == empty:
@@ -84,7 +89,7 @@ def same_design(submitted, current, session, events):
         if extensions == {}:
             del value['extensions']
         return value
-    return projection(submitted) == projection(current)
+    return same_json(projection(submitted),projection(current))
 
 
 class EngineeringHandoff:
@@ -117,12 +122,21 @@ class EngineeringHandoff:
             except SessionError:
                 pass
         relation = 'earlier_turn' if not current_run else 'unknown'
+        mapping_receipt = None
         if context:
-            relation = 'matches_saved_design' if same_design(design_value(context['content'].encode(), scope.project), current, row['session'], events) else 'design_changed'
+            submitted=design_value(context['content'].encode(), scope.project)
+            matches=same_design(submitted,current,row['session'],events)
+            if not matches:
+                projected=acknowledged_mapping(worker.store,scope,row['session'],manifest,submitted,current)
+                if projected is not None and same_design(submitted,projected,row['session'],events):
+                    matches=True
+                    mapping_receipt=current['extensions']['architectureWork']['artifactMappings'][-1]['id']
+            relation = 'matches_saved_design' if matches else 'design_changed'
         checks = worker.checks.list(scope, row['session'], manifest['id'])
         if any(check.get('artifactSha256') != manifest['sha256'] for check in checks):
             raise SessionError('A check receipt does not match this package. No combined handoff was prepared.')
         return {'session': job, 'artifact': manifest, 'checks': checks,
+                **({'derivedMappingReceiptId':mapping_receipt} if mapping_receipt else {}),
                 'context': context, 'relation': relation, 'canPackage': bool(context and current_run),
                 'savedDesignSha256': design_digest(saved, scope.project), 'savedFileSha256': digest(saved), 'acceptance': 'not_established_by_capture_or_local_checks'}
 

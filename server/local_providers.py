@@ -79,10 +79,44 @@ def strict_schema(schema):
             for child in value:visit(child)
     visit(schema);return schema
 
+def cli_response_schema(schema):
+    """Keep open approval payloads as JSON text on the strict CLI wire."""
+    result = strict_schema(schema)
+    data = result.get('$defs', {}).get('Data', {}).get('properties', {})
+    if 'approvalProfile' in data:
+        data['approvalProfile'] = {
+            'type': ['string', 'null'],
+            'description': 'For an approval workflow only, encode the complete validated approval profile object as JSON text. Otherwise return null.',
+        }
+    return result
+
+
+def decode_cli_response(text):
+    response = extract_json(text)
+    if not isinstance(response, dict):
+        return response
+    patch = response.get('patch')
+    if not isinstance(patch, dict) or not isinstance(patch.get('addNodes'), list):
+        return response
+    for node in patch['addNodes']:
+        data = node.get('data') if isinstance(node, dict) else None
+        if isinstance(data, dict) and isinstance(data.get('approvalProfile'), str):
+            # Preserve invalid input for the existing Pydantic rejection/repair path.
+            try:
+                profile = json.loads(data['approvalProfile'])
+            except ValueError:
+                continue
+            if isinstance(profile, dict):
+                data['approvalProfile'] = profile
+    return response
+
+
 def provider_failure(output=b'',error=b''):
     """Classify provider errors without exposing raw CLI output or account details."""
     text=(output.decode(errors='replace') if isinstance(output,bytes) else str(output))+' '+(error.decode(errors='replace') if isinstance(error,bytes) else str(error))
     text=text[:64000].lower()
+    if 'invalid_json_schema' in text or 'invalid schema for response_format' in text:
+        return 'The provider rejected Architect’s response format. Update Architect and retry. Your design is preserved.'
     if any(term in text for term in ['session limit','usage limit','hit your limit','rate limit','rate_limit','insufficient_quota','credit balance','too many requests']):
         return 'The selected architect has reached its usage or rate limit. Wait for the provider reset or choose another connected architect. Your design is preserved; no correction was applied.'
     if any(term in text for term in ['not logged in','authentication failed','invalid api key','unauthorized','login required']):
@@ -162,7 +196,7 @@ async def call_cli(provider,model,prompt,system,schema,is_disconnected,effort=No
             if result.get('is_error'):raise RuntimeError(provider_failure(json.dumps(result)))
             return result.get('structured_output') or extract_json(result.get('result',''))
         if provider=='codex':
-            schema_path=Path(cwd)/'response-schema.json';schema_path.write_text(json.dumps(strict_schema(schema)))
+            schema_path=Path(cwd)/'response-schema.json';schema_path.write_text(json.dumps(cli_response_schema(schema)))
             args=[binary,'exec','--sandbox','read-only','--skip-git-repo-check','--ephemeral','--ignore-user-config','--ignore-rules','--disable','shell_tool','--disable','unified_exec','--disable','plugins','--disable','apps','--disable','browser_use','--disable','in_app_browser','--disable','code_mode_host','-c','approval_policy="never"','-c','web_search="disabled"','--output-schema',str(schema_path),'--color','never','-']
             for index,item in enumerate(images or []):
                 image_path=Path(cwd)/f'attachment-{index}.{item["mime"].split("/")[1]}'
@@ -170,7 +204,7 @@ async def call_cli(provider,model,prompt,system,schema,is_disconnected,effort=No
                 args+=['--image',str(image_path)]
             if model not in ('default','auto'):args+=['--model',model]
             if effort:args+=['-c',f'model_reasoning_effort="{effort}"']
-            return extract_json(await communicate(args,system+'\n\n'+prompt,cwd,is_disconnected,env,timeout=timeout))
+            return decode_cli_response(await communicate(args,system+'\n\n'+prompt,cwd,is_disconnected,env,timeout=timeout))
         if provider=='gemini-cli':
             settings=Path(cwd)/'settings.json';settings.write_text(json.dumps({'tools':{'core':[]},'hooksConfig':{'enabled':False},'mcp':{'allowed':['atforma-no-servers']},'telemetry':{'enabled':False},'general':{'enableAutoUpdate':False,'sessionRetention':{'enabled':False}}}))
             env['GEMINI_CLI_SYSTEM_SETTINGS_PATH']=str(settings)
@@ -182,4 +216,4 @@ async def call_cli(provider,model,prompt,system,schema,is_disconnected,effort=No
             return extract_json(result.get('response',''))
         # Official Copilot SDK provides tool exclusion and permission denial without --allow-all.
         worker=Path(__file__).with_name('copilot_worker.py')
-        return extract_json(await communicate([sys.executable,str(worker)],json.dumps({'prompt':prompt,'system':system,'schema':strict_schema(schema),'model':model,'cwd':cwd,'cli':binary,'images':images or []}),cwd,is_disconnected,env,timeout=timeout))
+        return decode_cli_response(await communicate([sys.executable,str(worker)],json.dumps({'prompt':prompt,'system':system,'schema':cli_response_schema(schema),'model':model,'cwd':cwd,'cli':binary,'images':images or []}),cwd,is_disconnected,env,timeout=timeout))

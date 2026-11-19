@@ -55,6 +55,24 @@ class ValidationJobTests(unittest.IsolatedAsyncioTestCase):
     async def finish(self):
         await asyncio.gather(*list(self.jobs.tasks.values()))
 
+    async def test_block_validator_scope_is_owned_and_returned_with_receipt(self):
+        self.jobs.validators = {'python-tests': RegisteredValidator(
+            'Seat hold checks', self.spec, block_scope=(self.scope.tenant, self.scope.project, 'holds'))}
+        other = ProjectScope('another-owner', self.scope.project)
+        self.assertEqual(self.jobs.catalog(other), [])
+        self.assertEqual(self.jobs.catalog(self.scope)[0]['blockId'], 'holds')
+        other_session = self.store.create(
+            other, 'workspace-two', 'backend', 'another-thread', ModelSelection('exact-model', 'high'))['id']
+        with self.assertRaisesRegex(SessionError, 'not registered for this project'):
+            await self.jobs.start(other, other_session, self.artifact, 'python-tests')
+        self.worker.release.set()
+        started = await self.jobs.start(self.scope, self.session, self.artifact, 'python-tests')
+        await self.finish()
+        result = self.jobs.get(self.scope, self.session, started['id'])
+        self.assertEqual(result['blockId'], 'holds')
+        self.assertEqual(result['artifactSha256'], self.manifest['sha256'])
+        self.assertEqual(result['state'], 'finished')
+
     async def test_digest_bound_job_survives_http_reader_loss_and_replays_receipt(self):
         state=await self.jobs.start(self.scope,self.session,self.artifact,'python-tests')
         await self.finish()

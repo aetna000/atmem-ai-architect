@@ -63,7 +63,7 @@ RUN if [ ! -x /opt/architect/emulator/bin/python ]; then uv venv --python /opt/a
 RUN /opt/architect/emulator/bin/python -I /opt/architect/hosted/deploy/prepare-emulator-wheels.py
 RUN python -m unittest hosted.tests.test_model_metering hosted.tests.test_native_model_broker hosted.tests.test_native_worker_process hosted.tests.test_native_host server.tests.test_atbots_engineering_backend -v
 RUN node hosted/deploy/mirror-providers.mjs && python hosted/deploy/unpack-provider-mirror.py
-RUN node -e "import('./src/terraform.mjs').then(m=>{{if(typeof m.terraformSketch!=='function')process.exit(1)}})" && python -c "import atmem;import importlib.metadata as m;assert m.version('atmem')=='2.3.14'" && terraform version -json > /opt/architect/terraform-runtime.json
+RUN node -e "import('./src/terraform.mjs').then(m=>{{if(typeof m.terraformSketch!=='function')process.exit(1)}})" && python -c "import atmem;import importlib.metadata as m;from server.memory_worker import EXPECTED_ATMEM_VERSION;assert m.version('atmem')==EXPECTED_ATMEM_VERSION" && terraform version -json > /opt/architect/terraform-runtime.json
 RUN groupadd --gid 10001 architect && useradd --uid 10001 --gid 10001 --create-home architect && mkdir -p /var/lib/architect && chown 10001:10001 /var/lib/architect
 USER architect
 CMD ["python","-m","hosted.worker_main"]

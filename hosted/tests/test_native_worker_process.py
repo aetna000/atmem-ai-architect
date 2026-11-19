@@ -2,6 +2,7 @@
 import base64,hashlib,json,os,subprocess,sys,tempfile,unittest
 from importlib.util import find_spec
 from pathlib import Path
+from server.memory_worker import EXPECTED_ATMEM_VERSION
 
 @unittest.skipUnless(find_spec('atbots'),'Native worker qualification uses hosted/worker-requirements.lock')
 class NativeWorkerProcessTests(unittest.TestCase):
@@ -32,7 +33,7 @@ class NativeWorkerProcessTests(unittest.TestCase):
 
    self.assertTrue(responses[0]['ready'])
    for response in responses[1:]:self.assertEqual(response['response']['status'],200,response)
-   self.assertEqual(responses[1]['response']['body']['status'],'ready');self.assertIn('2.3.14',responses[1]['response']['body']['engine'])
+   self.assertEqual(responses[1]['response']['body']['status'],'ready');self.assertIn(EXPECTED_ATMEM_VERSION,responses[1]['response']['body']['engine'])
    self.assertTrue((Path(temporary)/'memory/memories.db').is_file())
    # The original session service pins the administrator-selected model, not browser model/effort.
    created=responses[3]['response']['body'];self.assertEqual(created['model'],'openai/gpt-6.1-sol');self.assertEqual(created['effort'],'medium')

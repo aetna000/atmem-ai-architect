@@ -131,9 +131,7 @@ export function proposalDiff(current, next) {
       .filter(
         (n) =>
           before.has(n.id) &&
-          (labels[n.id].label !== n.data.label ||
-            labels[n.id].provider !== n.data.provider ||
-            labels[n.id].kind !== n.data.kind),
+          JSON.stringify(labels[n.id]) !== JSON.stringify(n.data),
       )
       .map((n) => n.data.label),
     removed: current.nodes

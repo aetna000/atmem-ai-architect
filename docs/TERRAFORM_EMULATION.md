@@ -6,6 +6,8 @@ AWS is the first backend. Azure, Google Cloud and IBM use the same engine and re
 
 ## Use it
 
+Both the packaged launcher and `npm run local` install the private Terraform binary and hash-locked emulator runtime automatically. Existing configured tool paths are preserved. First setup needs internet access; users do not run a separate Python setup command.
+
 In the app, on the **Board**: **Emulate apply** opens the dock; the play button runs the lifecycle. Blocks follow the real run: creating, applied, SDK-verified, destroying, gone, then passed or failed. Each block shows how many of its resources are live. The same run appears under **Terraform → 2. Test Terraform**. Download the JSON report afterwards.
 
 Diagram states come only from Terraform's own event stream and the read-back checks. A resource maps to a block by its `block_<id>` address or its `Component` tag; nothing is animated on a timer.

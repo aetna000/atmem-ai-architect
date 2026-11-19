@@ -79,6 +79,7 @@ class EngineeringBackend(Protocol):
 class SessionStore(Protocol):
     def create(self,scope,workspace,backend,handle,selection): ...
     def get(self,scope,session): ...
+    def get_run(self,scope,session,run): ...
     def reserve(self,scope,session,run,text): ...
     def attach_turn(self,scope,session,run,turn): ...
     def terminal(self,scope,session,run,turn,status): ...
@@ -124,13 +125,21 @@ class SqliteSessionStore:
         return dict(row)
 
     def reserve(self,scope,session,run,text):
-        with self.db:
-            changed=self.db.execute("UPDATE engineering_sessions SET state='starting',run=?,turn=NULL WHERE id=? AND tenant=? AND project=? AND state='idle'",
-                                    (run,session,scope.tenant,scope.project)).rowcount
-            if changed!=1:
-                self.get(scope,session)
-                raise SessionError('An engineering turn is active or requires recovery')
-            self.db.execute("INSERT INTO engineering_runs (id,session,turn,status,intent) VALUES (?,?,NULL,'starting',?)",(run,session,text))
+        try:
+            with self.db:
+                changed=self.db.execute("UPDATE engineering_sessions SET state='starting',run=?,turn=NULL WHERE id=? AND tenant=? AND project=? AND state='idle'",
+                                        (run,session,scope.tenant,scope.project)).rowcount
+                if changed!=1:
+                    self.get(scope,session)
+                    raise SessionError('An engineering turn is active or requires recovery')
+                self.db.execute("INSERT INTO engineering_runs (id,session,turn,status,intent) VALUES (?,?,NULL,'starting',?)",(run,session,text))
+        except sqlite3.IntegrityError:
+            raise SessionError('The submission identity is unavailable. No new turn was reserved.') from None
+
+    def get_run(self,scope,session,run):
+        self.get(scope,session)
+        row=self.db.execute('SELECT id,status,intent FROM engineering_runs WHERE id=? AND session=?',(run,session)).fetchone()
+        return dict(row) if row else None
 
     def replace_empty_handle(self,scope,session,old_handle,new_handle):
         with self.db:

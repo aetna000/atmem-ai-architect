@@ -133,7 +133,7 @@ class EngineeringFinalization:
                 if any(check['state']=='recovery_required' for check in receipts):
                     state='recovery_required';break
                 if all(check['state']=='finished' for check in receipts):
-                    current={entry['id']:entry for entry in checks.catalog()}
+                    current={entry['id']:entry for entry in checks.catalog(scope)}
                     stale=any(check['contractSha256']!=current.get(check['validatorId'],{}).get('contractSha256') or not current.get(check['validatorId'],{}).get('available') for check in receipts)
                     if not self._current(scope,session,run):state='superseded'
                     elif stale or not receipts or any(d['state']=='unavailable' for d in payload['plan']['decisions']):state='needs_attention'

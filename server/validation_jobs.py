@@ -24,6 +24,7 @@ class RegisteredValidator:
     applicability: FileApplicability | None = None
     runtime_evidence: RuntimeEvidence | None = None
     worker_id: str | None = None
+    block_scope: tuple[str, str, str] | None = None
 
     def __post_init__(self):
         if not isinstance(self.label,str) or not self.label.strip() or len(self.label)>120:
@@ -32,6 +33,14 @@ class RegisteredValidator:
             raise ValueError('Use a reviewed file applicability contract')
         if self.runtime_evidence is not None and not isinstance(self.runtime_evidence,RuntimeEvidence):raise ValueError('Use pinned operator runtime evidence')
         if self.worker_id is not None:worker_id(self.worker_id)
+        if self.block_scope is not None and (
+            not isinstance(self.block_scope, tuple) or len(self.block_scope) != 3
+            or any(not isinstance(value, str) or not value.strip() or len(value) > 100 for value in self.block_scope)
+        ):
+            raise ValueError('A block validator requires an exact tenant, project and block IDs.')
+
+    def applies_to_project(self, scope):
+        return self.block_scope is None or (scope is not None and self.block_scope[:2] == (scope.tenant, scope.project))
 
 
 def registered_validators(entries):
@@ -39,7 +48,7 @@ def registered_validators(entries):
     if not isinstance(entries,list):raise ValueError('Validator configuration must be a list')
     result={}
     for entry in entries:
-        if not isinstance(entry,dict) or set(entry)-{'id','label','image','command','platform','timeoutSeconds','bootstrapPython','isolationProfile','runtimeEnvironment','executableScratch','applicability','runtimeReceipt','workerId'}:
+        if not isinstance(entry,dict) or set(entry)-{'id','label','image','command','platform','timeoutSeconds','bootstrapPython','isolationProfile','runtimeEnvironment','executableScratch','applicability','runtimeReceipt','workerId','blockScope'}:
             raise ValueError('Unrecognized validator registration')
         if not isinstance(entry.get('command'),list):raise ValueError('Register a validator argument vector')
         environment=entry.get('runtimeEnvironment',{})
@@ -49,8 +58,12 @@ def registered_validators(entries):
             bootstrap_python=entry.get('bootstrapPython','/usr/local/bin/python3'),isolation_profile=entry.get('isolationProfile','standard-v1'),runtime_environment=tuple(environment.items()),executable_scratch=entry.get('executableScratch',False))
         if spec.name in result:raise ValueError('Validator IDs must be unique')
         if 'workerId' in entry:worker_id(entry['workerId'])
+        block_scope=entry.get('blockScope')
+        if 'blockScope' in entry and (not isinstance(block_scope,dict) or set(block_scope)!={'tenantId','projectId','blockId'}):
+            raise ValueError('Register blockScope with tenantId, projectId and blockId.')
         result[spec.name]=RegisteredValidator(entry.get('label',''),spec,FileApplicability.parse(entry['applicability']) if 'applicability' in entry else None,
-            RuntimeEvidence.load(entry['runtimeReceipt'],spec) if 'runtimeReceipt' in entry else None,entry.get('workerId'))
+            RuntimeEvidence.load(entry['runtimeReceipt'],spec) if 'runtimeReceipt' in entry else None,entry.get('workerId'),
+            (block_scope['tenantId'],block_scope['projectId'],block_scope['blockId']) if block_scope else None)
     return result
 
 
@@ -75,20 +88,22 @@ class ValidationJobs:
             self.db.execute("UPDATE artifact_validation_jobs SET state='recovery_required' WHERE state IN ('queued','running')")
         self.tasks={};self.cancellations={};self.semaphore=asyncio.Semaphore(2);self.closed=False
 
-    def catalog(self):
+    def catalog(self, scope=None):
         return [{'id':key,'label':value.label,'evidenceLevel':'local_container_check',
                  'contractSha256':self._public_contract(value),
                  'available':self._available(value),
                  'applicability':value.applicability.public() if value.applicability else None,
                  **({'runtimeEvidence':value.runtime_evidence.public()} if value.runtime_evidence and self._observation_matches(value) else {}),
                  **self._placement(value),
-                 'runtime':{'imageId':value.spec.image,'platform':value.spec.platform,'isolationProfile':value.spec.isolation_profile,'environment':dict(value.spec.runtime_environment),'executable':value.spec.command[0],'testRunner':validation_test_runner(value.spec),'executableScratchDirectories':['/dependencies']if value.spec.executable_scratch else []}} for key,value in self.validators.items()]
+                 **({'blockId':value.block_scope[2]} if value.block_scope else {}),
+                 'runtime':{'imageId':value.spec.image,'platform':value.spec.platform,'isolationProfile':value.spec.isolation_profile,'environment':dict(value.spec.runtime_environment),'executable':value.spec.command[0],'testRunner':validation_test_runner(value.spec),'executableScratchDirectories':['/dependencies']if value.spec.executable_scratch else []}} for key,value in self.validators.items() if value.applies_to_project(scope)]
 
     def _contract(self,registered):
         worker=self._worker(registered)
         if worker is None:raise SessionError('The explicitly registered validator worker is unavailable; no fallback was applied')
         registration={'spec':asdict(registered.spec),'workerIdentity':worker.identity_digest}
         if registered.worker_id is not None:registration['workerId']=registered.worker_id
+        if registered.block_scope is not None:registration['blockScope']=registered.block_scope
         if not registered.spec.executable_scratch:registration['spec'].pop('executable_scratch')
         # Preserve historical manual-only contract hashes. Changing selection rules
         # invalidates evidence reuse even when the executable is unchanged.
@@ -138,6 +153,7 @@ class ValidationJobs:
             raise SessionError('Stored artifact bytes do not match their receipt')
         decisions=[]
         for ident,registered in self.validators.items():
+            if not registered.applies_to_project(scope):continue
             assessment=registered.applicability.assess(manifest['files']) if registered.applicability else None
             available=self._available(registered)
             state='manual_only' if assessment is None else 'not_applicable' if not assessment['applies'] else 'selected' if available else 'unavailable'
@@ -164,6 +180,7 @@ class ValidationJobs:
             'contractSha256':row['contract_sha256'],'state':row['state'],
             'result':json.loads(row['result']) if row['result'] else None,
             **({'placement':{'workerId':registration['workerId']}} if 'workerId' in registration else {}),
+            **({'blockId':registration['blockScope'][2]} if 'blockScope' in registration else {}),
             'acceptance':'not_established_by_local_check'}
 
     def get(self,scope,session,job):return self._public(self._row(scope,session,job))
@@ -184,7 +201,7 @@ class ValidationJobs:
         if self.closed:raise SessionError('The local check supervisor is closing')
         self.store.get(scope,session)
         registered=self.validators.get(validator)
-        if registered is None:raise SessionError('This validator is not registered by the server operator')
+        if registered is None or not registered.applies_to_project(scope):raise SessionError('This validator is not registered for this project')
         if not self._available(registered):raise SessionError('The selected validator placement, observation or isolation profile is unavailable; inspect its catalog status. No fallback was applied')
         worker=self._worker(registered)
         manifest,content=self.artifacts.get(scope,session,artifact)

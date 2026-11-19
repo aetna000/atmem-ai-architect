@@ -21,6 +21,10 @@ export async function engineeringCall(session, action, payload, {signal,fetcher=
 }
 
 export function mergeEngineeringEvents(current,incoming){
+  if(!incoming.length)return current;
+  if(incoming[0].sequence>(current.at(-1)?.sequence??0)&&incoming.every((event,index)=>!index||event.sequence>incoming[index-1].sequence)){
+    return [...current,...incoming];
+  }
   const bySequence=new Map(current.map(event=>[event.sequence,event]));
   for(const event of incoming)bySequence.set(event.sequence,event);
   return [...bySequence.values()].sort((a,b)=>a.sequence-b.sequence);
@@ -66,9 +70,13 @@ export async function verifiedHandoffDownload(session,payload,manifest,options){
 // User requests and model deltas remain separate from tool-progress/acceptance claims.
 export function engineeringConversation(events){
   const ordered=mergeEngineeringEvents([],events),accepted=new Set(ordered.filter(e=>e.kind==='steering_accepted').map(e=>e.requestId)),uncertain=new Set(ordered.filter(e=>e.kind==='steering_delivery_uncertain').map(e=>e.requestId));
+  const orders=new Map(ordered.filter(e=>e.kind==='work_order_prepared'&&e.workOrder?.version===1&&e.workOrder.kind==='build_block').map(e=>[e.runId,e]));
   const entries=[];
   for(const event of ordered){
-    if(event.kind==='accepted'&&event.origin!=='automatic_repair'&&typeof event.text==='string')entries.push({id:event.sequence,role:'user',text:event.text,status:'accepted'});
+    if(event.kind==='accepted'&&event.origin!=='automatic_repair'&&typeof event.text==='string'){
+      const order=orders.get(event.runId);
+      entries.push({id:event.sequence,role:'user',text:event.text,status:'accepted',...(order?.text===event.text?{workOrder:order.workOrder}:{})});
+    }
     else if(event.kind==='steering_submitted'&&typeof event.text==='string')entries.push({id:event.sequence,role:'user',text:event.text,status:accepted.has(event.requestId)?'accepted':uncertain.has(event.requestId)?'uncertain':'pending'});
     else if(event.kind==='message'&&typeof event.text==='string'){
       const previous=entries.at(-1);
