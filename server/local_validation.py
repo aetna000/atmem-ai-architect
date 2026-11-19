@@ -88,7 +88,7 @@ def validation_test_runner(spec):
     command=spec.command
     if spec.isolation_profile=='postgresql-local-v1' and command[1:3]==('-I','/opt/atmem/sql_validation.py'):
         command=(command[0],*command[3:])
-    if command[1:3]==('-m','unittest'):return 'unittest'
+    if command[1:3]==('-m','unittest') or command[1:4]==('-I','-m','unittest'):return 'unittest'
     if Path(command[0]).name in {'node','nodejs'}and command[1:2]==('--test',):return 'node:test'
     return 'operator_registered'
 

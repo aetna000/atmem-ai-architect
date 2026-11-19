@@ -12,6 +12,15 @@ if (!fs.existsSync(python)) {
   );
   process.exit(1);
 }
+// Source and packaged launches provision the same default emulation prerequisites.
+const env={...process.env};
+if((env.ATMEM_ARCHITECT_EMULATION_ENABLED||env.ATFORMA_EMULATION_ENABLED)!=='0'){
+  const {setupRuntime,applicationHome}=await import('../cli/runtime.mjs');
+  const home=applicationHome(),runtime=await setupRuntime(home);
+  env.ATMEM_ARCHITECT_TERRAFORM_EMULATOR_PYTHON=env.ATMEM_ARCHITECT_TERRAFORM_EMULATOR_PYTHON||env.ATFORMA_TERRAFORM_EMULATOR_PYTHON||runtime.emulatorPython;
+  env.ATMEM_ARCHITECT_TERRAFORM_BIN=runtime.terraformBinary;
+  env.ATMEM_ARCHITECT_PROVIDER_CACHE=env.ATMEM_ARCHITECT_PROVIDER_CACHE||env.ATFORMA_PROVIDER_CACHE||path.join(home,'cache','terraform-providers');
+}
 const children = [];
 let ending = false;
 function stop(code = 0) {
@@ -39,7 +48,7 @@ for (const [binary, args] of [
   const child = spawn(binary, args, {
     cwd: root,
     stdio: "inherit",
-    env: process.env,
+    env,
   });
   children.push(child);
   child.on("exit", (code) => stop(code || 0));

@@ -18,9 +18,10 @@ export function saveCanvasView(project,view,storage){
  try{storage=storage||globalThis.localStorage;storage.setItem(key(project),JSON.stringify(view));return true;}catch{return false;}
 }
 // Arrange only the overview projection. Component positions and project semantics stay intact.
-export function arrangeOverview(view,sizes={}){
+export function arrangeOverview(view,sizes={},direction='LR'){
+ if(!['LR','TB'].includes(direction))throw Error('Unsupported diagram direction');
  const graph=new dagre.graphlib.Graph();graph.setDefaultEdgeLabel(()=>({}));
- graph.setGraph({rankdir:'LR',nodesep:80,ranksep:170,marginx:40,marginy:40});
+ graph.setGraph({rankdir:direction,nodesep:80,ranksep:direction==='TB'?90:170,marginx:40,marginy:40});
  for(const n of view.nodes)graph.setNode(n.id,{width:sizes[n.id]?.width||240,height:sizes[n.id]?.height||190});
  for(const e of view.edges)graph.setEdge(e.source,e.target,{width:Math.min(240,String(e.label||'').length*6),height:24});
  dagre.layout(graph);

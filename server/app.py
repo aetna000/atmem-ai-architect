@@ -2,9 +2,9 @@ from .settings import setting, home as product_home
 """Loopback-only AtMem AI Architect sidecar. No cloud discovery or deployment endpoints."""
 import asyncio, os, secrets, shutil, hashlib
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
 from .architect import AtMemArchitect
-from .contracts import ChatRequest
+from .contracts import Attachment, ChatRequest
 from .local_providers import capabilities, models, start_login
 from .memory_routes import router as memory_router
 from .agent_runtime import run as run_architect
@@ -74,9 +74,11 @@ async def local_boundary(request:Request,call_next):
     if request.method=='POST':
         if not secrets.compare_digest(request.headers.get('authorization',''),f'Bearer {TOKEN}'):
             return JSONResponse({'detail':'Missing local session token'},status_code=401)
-        limit=43_000_000 if request.url.path=='/api/engineering/orca/open' else 12_000_000 if request.url.path=='/api/architect' else 2_100_000 if request.url.path in {'/api/projects/save','/api/memory/sync','/api/voice/transcribe'} else 250000
-        if len(await request.body())>limit:
-            return JSONResponse({'detail':'Request too large'},status_code=413)
+        path=request.url.path
+        if path!='/api/projects/save':
+            limit=43_000_000 if path=='/api/engineering/orca/open' else 12_000_000 if path in {'/api/architect','/api/design-sources'} else 2_100_000 if path in {'/api/memory/sync','/api/voice/transcribe'} else 250000
+            if len(await request.body())>limit:
+                return JSONResponse({'detail':'Request too large'},status_code=413)
     response=await call_next(request)
     response.headers['Cache-Control']='no-store'
     response.headers['X-Content-Type-Options']='nosniff'
@@ -92,6 +94,114 @@ async def session():
         'xai':{'available':bool(ARCHITECT.keys.get('xai') or os.getenv('XAI_API_KEY')),'description':'xAI API key for Grok'},
         'bedrock':{'available':bool(setting('ENABLE_BEDROCK')),'description':'Explicit opt-in plus AWS SDK credential chain; credentials not probed'},
     },'cloudExecution':False,'mcpEnabled':False,'architectureActivityEnabled':True,'engineeringEnabled':setting('ENABLE_ENGINEERING')=='1','sdkTimeoutNote':'Stopping a submitted remote model request may not stop provider-side computation or billing.'}
+
+class DesignSourceRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    projectId: str | None = Field(default=None, pattern=r'^[A-Za-z0-9-]{8,64}$')
+    attachments: list[Attachment] = Field(min_length=1, max_length=4)
+
+
+@app.post('/api/design-sources')
+async def design_sources(payload: DesignSourceRequest):
+    from .attachments import MAX_TOTAL, decode, prepare
+    files = [item.model_dump() for item in payload.attachments]
+    try:
+        scope = None
+        if payload.projectId:
+            from .engineering_routes import local_scope
+            scope, _ = local_scope(payload.projectId)
+        extracted = await asyncio.to_thread(prepare, files, design=True)
+        sources = []
+        for original, result in zip(files, extracted, strict=True):
+            figures = result.pop('_figures', [])
+            source = {**result, 'sha256': hashlib.sha256(decode(original, MAX_TOTAL)).hexdigest()}
+            if figures:
+                if scope is not None:
+                    from .source_evidence import SourceEvidence
+                    store = SourceEvidence(product_home()/'source-evidence'/'figures.sqlite')
+                    source['figureEvidence'] = await asyncio.to_thread(store.retain, scope, source['sha256'], figures)
+                else:
+                    source['figureEvidence'] = {'version': 1, 'status': 'not_retained_without_project',
+                        'figures': [{key: value for key, value in row.items() if key != 'data'} for row in figures]}
+            sources.append(source)
+        return {'sources': sources}
+    except (RuntimeError, ValueError) as error:
+        raise HTTPException(422, str(error)) from None
+
+
+class SourceFigureRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    projectId: str = Field(pattern=r'^[A-Za-z0-9-]{8,64}$')
+    sourceSha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+    manifestSha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+    figureId: str = Field(max_length=20, pattern=r'^figure-[1-9][0-9]*$')
+
+
+@app.post('/api/design-sources/figure')
+async def source_figure(payload: SourceFigureRequest):
+    from .engineering_routes import local_scope
+    from .engineering_sessions import SessionError
+    from .source_evidence import SourceEvidence
+    try:
+        scope, _ = local_scope(payload.projectId)
+        store = SourceEvidence(product_home()/'source-evidence'/'figures.sqlite')
+        image = await asyncio.to_thread(store.image, scope, payload.sourceSha256, payload.figureId, payload.manifestSha256)
+        return Response(image.content, media_type='image/png', headers={
+            'X-Source-Sha256': payload.sourceSha256, 'X-Figure-Sha256': image.metadata['sha256'],
+            'X-Manifest-Sha256': payload.manifestSha256})
+    except SessionError as error:
+        raise HTTPException(409, str(error)) from None
+    except ValueError as error:
+        raise HTTPException(422, str(error)) from None
+
+
+class ReviewedDraftRequest(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    projectId: str = Field(pattern=r'^[A-Za-z0-9-]{8,64}$')
+    artifactId: str = Field(pattern=r'^[a-f0-9-]{36}$')
+    draftSha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+    contextSha256: str = Field(pattern=r'^[a-f0-9]{64}$')
+
+
+@app.post('/api/design-evidence/draft')
+async def reviewed_draft(payload: ReviewedDraftRequest):
+    from .engineering_routes import local_scope
+    from .engineering_sessions import SessionError
+    from .reviewed_drafts import LocalReviewedDrafts
+    try:
+        scope, _ = local_scope(payload.projectId)
+        source=LocalReviewedDrafts(product_home()/'engineering'/'control.sqlite')
+        draft=await asyncio.to_thread(source.read,scope,payload.artifactId,payload.draftSha256,payload.contextSha256)
+        return Response(draft.content,media_type='application/json',headers={
+            'X-Artifact-Id':payload.artifactId,'X-Artifact-Sha256':draft.receipt['artifactSha256'],
+            'X-Draft-Sha256':payload.draftSha256,'X-Context-Sha256':payload.contextSha256,
+            'X-Review-Sha256':draft.receipt['reviewSha256']})
+    except SessionError as error:
+        raise HTTPException(409,str(error))from None
+    except ValueError as error:
+        raise HTTPException(422,str(error))from None
+
+
+@app.post('/api/design-evidence/capture')
+async def captured_evidence(payload: ReviewedDraftRequest):
+    from .engineering_routes import local_scope
+    from .engineering_sessions import SessionError
+    from .captured_evidence import LocalCapturedEvidence
+    try:
+        scope, _ = local_scope(payload.projectId)
+        source=LocalCapturedEvidence(product_home()/'engineering'/'control.sqlite')
+        capture=await asyncio.to_thread(source.read,scope,payload.artifactId,payload.draftSha256,payload.contextSha256)
+        return Response(capture.content,media_type='application/zip',headers={
+            'X-Artifact-Id':payload.artifactId,'X-Artifact-Sha256':capture.receipt['artifactSha256'],
+            'X-Draft-Sha256':payload.draftSha256,'X-Context-Sha256':payload.contextSha256,
+            'X-Review-Sha256':capture.receipt['reviewSha256'],
+            'X-Evidence-Sha256':capture.receipt['bundleSha256'],
+            'X-Initial-Context-Sha256':capture.receipt['initialContextSha256']})
+    except SessionError as error:
+        raise HTTPException(409,str(error))from None
+    except ValueError as error:
+        raise HTTPException(422,str(error))from None
+
 
 @app.post('/api/architect/activity')
 async def architect_activity(payload:ArchitectureActivityRequest):

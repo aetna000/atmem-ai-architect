@@ -21,6 +21,14 @@ from server.engineering_sessions import SqliteSessionStore, ProjectScope, ModelS
 
 
 class HandoffTests(unittest.TestCase):
+    def test_project_container_dates_do_not_replace_business_date_checks(self):
+        original=json.loads(self.saved);original['meta']['createdAt']='2026-11-01T00:00:00Z'
+        original['discovery']={'brief':{'deadline':'2026-12-01T17:00:00Z'}}
+        restored=json.loads(json.dumps(original));restored['meta']['createdAt']='2026-11-19T01:00:00Z';restored['meta']['updatedAt']='later'
+        self.assertEqual(design_digest(json.dumps(original).encode(),self.scope.project),design_digest(json.dumps(restored).encode(),self.scope.project))
+        restored['discovery']['brief']['deadline']='2026-12-02T17:00:00Z'
+        self.assertNotEqual(design_digest(json.dumps(original).encode(),self.scope.project),design_digest(json.dumps(restored).encode(),self.scope.project))
+
     def test_empty_pricing_defaults_added_on_reopen_preserve_design_binding(self):
         original=json.loads(self.saved);original['estimate']={'projectSize':'small'}
         reopened=json.loads(json.dumps(original));reopened['estimate'].update(details=[],usage={},prices={})
@@ -67,6 +75,28 @@ class HandoffTests(unittest.TestCase):
 
     def capture(self):
         return self.artifacts.capture(self.scope, self.session, self.workspace)
+
+    def test_exact_javascript_artifact_links_keep_delivery_current_but_owner_edits_do_not(self):
+        import subprocess
+        file={'format':'atmem.ai-architect.project','meta':{'id':self.scope.project,'revision':4},
+            'design':{'provider':'tools','nodes':[{'id':'accessions','type':'resource','position':{'x':0,'y':0},'data':{'label':'Accessions','provider':'tools','kind':'resource','origin':'proposed'}}],'edges':[]},
+            'discovery':{'problem':'Preserve museum intake evidence.'},'requirements':[{'id':'retain','statement':'Preserve evidence','links':['accessions']}],
+            'decisions':[],'assumptions':[],'openQuestions':[]}
+        self.run=str(uuid.uuid4());self.store.reserve(self.scope,self.session,self.run,'Build the accession block.')
+        self.store.attach_turn(self.scope,self.session,self.run,'native-turn-two');self.store.terminal(self.scope,self.session,self.run,'native-turn-two','completed')
+        self.journal.append(self.scope,self.session,{'kind':'accepted','runId':self.run,'text':'Build the accession block.'})
+        self.saved=json.dumps(file).encode();self.contexts.attach(self.scope,self.session,self.run,self.saved)
+        (self.workspace/'project-context.json').write_bytes(self.saved)
+        (self.workspace/'architecture-work-proposal.json').write_text(json.dumps({'version':1,'records':[{'id':'accession-code','kind':'implementation','title':'Accession code','description':'Bound source file','dependsOn':['block:accessions','requirement:retain'],'data':{'files':['run.sh']}}]}))
+        artifact=self.capture();receipt=self.worker.reconciliation.prepare(self.scope,self.session,artifact['id'])
+        script="""import fs from 'node:fs';import {applyArtifactWork} from './src/artifact-work.mjs';
+const x=JSON.parse(fs.readFileSync(0,'utf8')),f=x.file,p={id:f.meta.id,provider:f.design.provider,nodes:f.design.nodes,edges:f.design.edges,requirements:f.discovery.problem,needs:f.requirements,decisions:f.decisions,assumptions:f.assumptions,openQuestions:f.openQuestions,extensions:{}};
+const result=applyArtifactWork(p,p.id,{id:x.receipt.id,receiptSha256:x.receipt.sha256,payload:JSON.parse(x.receipt.content)},{now:new Date('2026-11-19T00:00:00.000Z')});console.log(JSON.stringify({...f,extensions:result.extensions}));"""
+        output=subprocess.run(['node','--input-type=module','-e',script],input=json.dumps({'file':file,'receipt':receipt}),text=True,capture_output=True,check=True,cwd=Path(__file__).resolve().parents[2])
+        linked=json.loads(output.stdout);report=self.delivery.inspect(self.scope,json.dumps(linked).encode())
+        self.assertEqual(report['relation'],'matches_saved_design');self.assertEqual(report['derivedMappingReceiptId'],receipt['id'])
+        linked['requirements'][0]['statement']='Discard evidence'
+        self.assertEqual(self.delivery.inspect(self.scope,json.dumps(linked).encode())['relation'],'design_changed')
 
     def test_lossless_receiving_tree_original_archive_context_and_check_identity(self):
         artifact = self.capture()

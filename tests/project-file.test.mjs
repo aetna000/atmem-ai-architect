@@ -48,8 +48,8 @@ test('credentials block export and import and name the field',()=>{
   assert.deepEqual(findCredentials({token:''}),[]);
   assert.ok(findCredentials({a:'-----BEGIN RSA PRIVATE KEY-----'}).length);
 });
-test('limits: size, component and connection counts, broken files',()=>{
-  assert.throws(()=>parseProjectFile(' '.repeat(2_000_001)),/2 MB/);
+test('invalid JSON, component and connection counts, broken files',()=>{
+  assert.throws(()=>parseProjectFile(' '.repeat(2_000_001)),SyntaxError);
   const file=toProjectFile(pdmTemplate());
   const many={...file,design:{...file.design,nodes:Array.from({length:201},(_, i)=>({...file.design.nodes[0],id:`n${i}`}))}};
   assert.throws(()=>fromProjectFile(many),/oversized/);

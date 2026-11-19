@@ -1,0 +1,11 @@
+import test from 'node:test';import assert from 'node:assert/strict';import fs from 'node:fs';import os from 'node:os';import path from 'node:path';import{zipSync}from'fflate';
+import{terraformTarget,extractTerraform,ensureTerraform,terraformStatus}from'../cli/terraform-runtime.mjs';
+test('each supported platform uses a pinned official Terraform archive and native executable',()=>{
+ for(const platform of['darwin','linux','win32'])for(const arch of['x64','arm64']){const t=terraformTarget(platform,arch);assert.equal(t.version,'1.17.1');assert.match(t.url,/^https:\/\/releases\.hashicorp\.com\/terraform\/1\.17\.1\/terraform_1\.17\.1_[a-z]+_(amd64|arm64)\.zip$/);assert.match(t.sha256,/^[a-f0-9]{64}$/);assert.equal(t.binary,platform==='win32'?'terraform.exe':'terraform');}assert.throws(()=>terraformTarget('freebsd','x64'),/No managed/);
+});
+test('archive extraction accepts the exact executable and retains its licence without extracting unrelated paths',()=>{
+ const target=terraformTarget(),binary=Buffer.from('fixture, never executed'),archive=zipSync({[target.binary]:binary,'LICENSE.txt':Buffer.from('fixture licence'),'../../unrelated':Buffer.from('untrusted')});const result=extractTerraform(archive,target);assert.deepEqual(result.binary,binary);assert.equal(result.license.toString(),'fixture licence');assert.throws(()=>extractTerraform(zipSync({['../../'+target.binary]:binary}),target),/Expected the native/);
+});
+test('a corrupt download never replaces an existing binary or marks setup ready',async()=>{
+ const home=fs.mkdtempSync(path.join(os.tmpdir(),'atmem-terraform-install-'));try{const target=terraformTarget(),folder=path.join(home,'runtime-tools',`terraform-${target.version}-${process.platform}-${process.arch}`);fs.mkdirSync(folder,{recursive:true});const binary=path.join(folder,target.binary);fs.writeFileSync(binary,'previous installation');await assert.rejects(ensureTerraform(home,{downloadArchive:async()=>Buffer.from('corrupt')}),/checksum mismatch/);assert.equal(fs.readFileSync(binary,'utf8'),'previous installation');assert.equal(terraformStatus(home).ready,false);assert.ok(!fs.existsSync(path.join(folder,'install.lock')));assert.ok(!fs.existsSync(path.join(folder,'ready.json')));}finally{fs.rmSync(home,{recursive:true,force:true});}
+});

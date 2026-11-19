@@ -112,6 +112,15 @@ class ProjectStoreTests(unittest.TestCase):
         content=(Path(self.dir.name)/'projects/project-unicode.atforma.json').read_bytes()
         self.assertEqual(result.json()['sha256'],hashlib.sha256(content).hexdigest())
         self.assertIn('🛰️'.encode(),content)
+    def test_large_project_round_trips_through_local_store(self):
+        file=self.file('Large project')
+        file['extensions']={'notes':'⚙️'*400_000}
+        self.assertGreater(len(json.dumps(file,ensure_ascii=False).encode()),2_100_000)
+        with patch('server.app.memory_service'):
+            result=self.post('/api/projects/save',{'id':'project-large','file':file})
+        self.assertEqual(result.status_code,200)
+        self.assertEqual(self.post('/api/projects/get',{'id':'project-large'}).json(),file)
+
     def test_ids_and_files_are_validated_and_token_required(self):
         self.assertEqual(self.post('/api/projects/get',{'id':'../../etc/passwd'}).status_code,422)
         self.assertEqual(self.post('/api/projects/save',{'id':'project-0002','file':{'format':'other'}}).status_code,422)

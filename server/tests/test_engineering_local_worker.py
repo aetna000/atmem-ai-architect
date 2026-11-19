@@ -9,6 +9,84 @@ from server.engineering_sessions import ModelSelection, ProjectScope
 
 
 class LocalWorkerRegistrationTests(unittest.IsolatedAsyncioTestCase):
+    async def test_source_catalog_distinguishes_text_from_unavailable_visuals_under_submitted_scope(self):
+        import uuid
+        from server.engineering_sessions import SessionError
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);(root/'projects').mkdir();scope=ProjectScope('local-owner','project-one')
+            text={'name':'brief.txt','mime':'text/plain','sha256':'a'*64,'text':'Preserve the local archive.'}
+            pdf={'name':'source.pdf','mime':'application/pdf','sha256':'b'*64,'text':'Extracted page text.',
+                 'visualEvidence':{'status':'not_rendered','reason':'Page graphics are not rendered.'}}
+            formats=[{'name':name,'mime':mime,'sha256':str(index)*64,'text':'Submitted format fixture.'}
+                for index,(name,mime) in enumerate([('notes.md','text/markdown'),('rows.csv','text/csv'),('contract.json','application/json'),('diagram.drawio','text/plain'),('diagram.xml','text/plain'),('legacy.docx','application/vnd.openxmlformats-officedocument.wordprocessingml.document'),('unknown.bin','application/octet-stream')],1)]
+            value={'format':'atmem.ai-architect.project','meta':{'id':scope.project},'design':{'provider':'tools'},'extensions':{'designSources':[text,pdf,*formats]}}
+            context=root/'projects/project-one.atforma.json';context.write_text(json.dumps(value))
+            with patch('server.engineering_routes.home',return_value=root),patch('server.engineering_routes.setting',return_value=None):
+                worker=LocalEngineeringService()
+                async def fake_create(scope,workspace,selection):return worker.sessions._public(worker.store.create(scope,workspace,worker.backend.name,'fake-thread',selection))
+                worker.sessions.create=fake_create
+                state=await worker.create(scope,context,ModelSelection('exact-model','high'));session=state['id']
+                try:
+                    with self.assertRaises(SessionError):worker.source_catalog(scope,session,text['sha256'])
+                    request=str(uuid.uuid4());worker.attach_context(scope,session,request,None)
+                    catalog=worker.source_catalog(scope,session,text['sha256'])
+                    self.assertEqual(catalog['status'],'not_applicable');self.assertEqual(catalog['figures'],[])
+                    unavailable=worker.source_catalog(scope,session,pdf['sha256'])
+                    self.assertEqual(unavailable['status'],'unavailable');self.assertEqual(unavailable['visualEvidence'],pdf['visualEvidence'])
+                    for index,source in enumerate(formats):
+                        self.assertEqual(worker.source_catalog(scope,session,source['sha256'])['status'],'not_applicable' if index<3 else 'unavailable')
+                    self.assertFalse((root/'source-evidence/figures.sqlite').exists())
+                    with self.assertRaises(SessionError):worker.source_catalog(scope,session,'c'*64)
+                    with self.assertRaises(SessionError):worker.source_catalog(ProjectScope('other-owner',scope.project),session,text['sha256'])
+                    with self.assertRaises(SessionError):worker.source_figure(scope,session,text['sha256'],'figure-1')
+                    worker.store.reserve(scope,session,request,'Inspect sources');worker.store.attach_turn(scope,session,request,'source-turn')
+                    workspace=worker.store.get(scope,session)['workspace']
+                    text_reply=await worker.native_tools.invoke(scope,workspace,'source-turn','text-call','atmem_source_figures',{'sourceSha256':text['sha256']})
+                    self.assertTrue(text_reply['success']);self.assertEqual(json.loads(text_reply['contentItems'][0]['text'])['status'],'not_applicable')
+                    # The active tool sees only submitted evidence, never unsent edits.
+                    text['graphics']=['unretained.png'];context.write_text(json.dumps(value))
+                    self.assertEqual(worker.source_catalog(scope,session,text['sha256'])['status'],'not_applicable')
+                    worker.attach_context(scope,session,str(uuid.uuid4()),None)
+                    self.assertEqual(worker.source_catalog(scope,session,text['sha256'])['status'],'unavailable')
+                    self.assertEqual(await worker.native_tools.invoke(scope,workspace,'source-turn','text-call','atmem_source_figures',{'sourceSha256':text['sha256']}),text_reply)
+                    reply=await worker.native_tools.invoke(scope,workspace,'source-turn','catalog-call','atmem_source_figures',{'sourceSha256':pdf['sha256']})
+                    self.assertTrue(reply['success']);self.assertEqual(json.loads(reply['contentItems'][0]['text'])['status'],'unavailable')
+                    denied=await worker.native_tools.invoke(scope,workspace,'source-turn','foreign-call','atmem_source_figures',{'sourceSha256':'c'*64})
+                    self.assertFalse(denied['success']);self.assertEqual(worker.native_tools.source_deliveries(scope,session),[])
+                finally:await worker.close()
+
+    async def test_figure_access_requires_the_immutable_submitted_source_receipt(self):
+        import hashlib,uuid
+        from server.attachments import prepare
+        from server.source_evidence import SourceEvidence
+        from server.engineering_sessions import SessionError
+        from server.tests.test_source_evidence import document
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);(root/'projects').mkdir();scope=ProjectScope('local-owner','project-one')
+            item,raw=document();source=hashlib.sha256(raw).hexdigest();parsed,=prepare([item],design=True)
+            evidence=SourceEvidence(root/'source-evidence'/'figures.sqlite');receipt=evidence.retain(scope,source,parsed['_figures'])
+            value={'format':'atmem.ai-architect.project','meta':{'id':scope.project},'design':{'provider':'tools'},
+                'extensions':{'designSources':[{'sha256':source,'figureEvidence':receipt}]}}
+            context=root/'projects/project-one.atforma.json';context.write_text(json.dumps(value))
+            with patch('server.engineering_routes.home',return_value=root),patch('server.engineering_routes.setting',return_value=None):
+                worker=LocalEngineeringService()
+                async def fake_create(scope,workspace,selection):return worker.sessions._public(worker.store.create(scope,workspace,worker.backend.name,'fake-thread',selection))
+                worker.sessions.create=fake_create
+                state=await worker.create(scope,context,ModelSelection('exact-model','high'))
+                try:
+                    with self.assertRaises(SessionError):worker.source_figure(scope,state['id'],source,'figure-1')
+                    worker.attach_context(scope,state['id'],str(uuid.uuid4()),None)
+                    catalog=worker.source_catalog(scope,state['id'],source)
+                    self.assertEqual(catalog['manifestSha256'],receipt['manifestSha256']);self.assertEqual(catalog['status'],'retained')
+                    self.assertEqual(hashlib.sha256(worker.source_figure(scope,state['id'],source,'figure-1').content).hexdigest(),receipt['figures'][0]['sha256'])
+                    with self.assertRaises(SessionError):worker.source_figure(ProjectScope('other-owner',scope.project),state['id'],source,'figure-1')
+                    value['extensions']['designSources']=[];context.write_text(json.dumps(value))
+                    # Unsubmitted browser edits cannot change the active evidence context.
+                    self.assertEqual(worker.source_catalog(scope,state['id'],source)['manifestSha256'],receipt['manifestSha256'])
+                    worker.attach_context(scope,state['id'],str(uuid.uuid4()),None)
+                    with self.assertRaises(SessionError):worker.source_catalog(scope,state['id'],source)
+                finally:await worker.close()
+
     async def test_operator_workspace_disk_persists_existing_paths_across_configuration_changes(self):
         with tempfile.TemporaryDirectory() as folder:
             root=Path(folder);context=root/'project.json';context.write_text('{"requirements":"Preserve the existing library"}')
@@ -55,6 +133,9 @@ class LocalWorkerRegistrationTests(unittest.IsolatedAsyncioTestCase):
                 state=await worker.create(scope,context,ModelSelection('exact-model','high'))
                 path=worker.backend._workspace(scope,worker.store.get(scope,state['id'])['workspace'])
                 try:
+                    retained=worker.store.db.execute('SELECT sha256,content FROM engineering_initial_inputs WHERE session=?',(state['id'],)).fetchone()
+                    self.assertEqual(bytes(retained['content']),original)
+                    self.assertEqual(retained['sha256'],hashlib.sha256(original).hexdigest())
                     pins=worker.pinned_inputs(scope,state['id']).copy()
                     first=worker.attach_context(scope,state['id'],str(uuid.uuid4()),hashlib.sha256(original).hexdigest())
                     changed=original.replace(b'observatory',b'observatory; report non-BMP Unicode labels')
@@ -112,12 +193,19 @@ class LocalWorkerRegistrationTests(unittest.IsolatedAsyncioTestCase):
                 manifest=json.loads((path/'.tools/toolchain.json').read_text())
                 self.assertEqual(manifest['tools'],{'python':'./.tools/python'})
                 self.assertTrue((path/'.agents/skills/composition/SKILL.md').is_file())
+                self.assertTrue((path/'.agents/skills/enterprise-architecture/SKILL.md').is_file())
                 self.assertTrue((path/'ATMEM_DELIVERY.md').is_file())
                 self.assertTrue((path/'atmem-tools/prepare.py').is_file())
                 events=worker.jobs.journal.read(scope,state['id'])
                 self.assertEqual(events[0]['kind'],'created')
-                self.assertEqual(set(events[0]['inputDigests']),{'project-context.json','.agents/skills/composition/SKILL.md','ATMEM_DELIVERY.md','atmem-tools/prepare.py','atmem-tools/architecture-work.schema.json','atmem-tools/application-runtime.json','atmem-tools/materialize-runtime.py'})
+                self.assertEqual(set(events[0]['inputDigests']),{'project-context.json','.agents/skills/composition/SKILL.md','.agents/skills/enterprise-architecture/SKILL.md','ATMEM_DELIVERY.md','atmem-tools/prepare.py','atmem-tools/architecture-work.schema.json','atmem-tools/application-runtime.json','atmem-tools/materialize-runtime.py',*{'.agents/skills/enterprise-architecture/references/'+name for name in ['diagram-catalog.json','modeling-depth.md','engineering-model-v1.md']}})
                 import hashlib
+                for name in ['diagram-catalog.json','modeling-depth.md','engineering-model-v1.md']:
+                    relative='.agents/skills/enterprise-architecture/references/'+name
+                    resource=(path/relative).read_bytes()
+                    trusted=Path(__file__).resolve().parents[2]/'agent-skills/specialists/enterprise-architecture/references'/name
+                    self.assertEqual(resource,trusted.read_bytes())
+                    self.assertEqual(events[0]['inputDigests'][relative],hashlib.sha256(resource).hexdigest())
                 schema=path/'atmem-tools/architecture-work.schema.json'
                 self.assertEqual(events[0]['inputDigests']['atmem-tools/architecture-work.schema.json'],hashlib.sha256(schema.read_bytes()).hexdigest())
                 self.assertEqual(json.loads(schema.read_text())['properties']['version']['const'],1)

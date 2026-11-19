@@ -90,3 +90,41 @@ class EngineeringToolTests(unittest.IsolatedAsyncioTestCase):
   self.assertEqual(self.value(await self.call('atmem_check_artifacts',{}))['artifacts'],[])
   for args in [{'artifactId':'foreign-artifact','validatorId':'local-tests'},{'artifactId':'x','validatorId':'unknown'}]:self.assertFalse((await self.call('atmem_check_start',args))['success'])
   self.assertFalse((await self.call('atmem_check_read',{'checkId':'foreign-check'}))['success']);self.assertEqual(self.worker.calls,[])
+
+ async def test_native_project_recall_uses_the_bound_scope(self):
+  def recalled(scope,query):
+   self.assertEqual(scope,self.scope)
+   self.assertEqual(query,'which owners approved the retention boundary')
+   return ([{'id':'decision-1','text':'A retained project decision.'}],{'status':'ready'})
+  self.tools.project_recall=recalled
+  outcome=self.value(await self.call('atmem_project_recall',{'query':'which owners approved the retention boundary'}))
+  self.assertEqual(outcome['records'][0]['id'],'decision-1')
+  rejected=await self.call('atmem_project_recall',{'query':'owner','projectId':'other-project'})
+  self.assertFalse(rejected['success'])
+
+ async def test_reference_tool_admits_only_catalog_ids(self):
+  catalog=self.value(await self.call('atmem_reference_catalog',{}))['references']
+  self.assertIn('c4-views',{row['id'] for row in catalog})
+  outcome=await self.call('atmem_reference_read',{'id':'https://127.0.0.1/private'})
+  self.assertFalse(outcome['success'])
+
+ async def test_source_figure_tools_bind_scope_journal_image_and_do_not_trust_caller_paths(self):
+  from server.source_evidence import SourceImage
+  from server.tests.test_attachments import png
+  metadata={'id':'figure-1','sourceSha256':'a'*64,'manifestSha256':'b'*64,'sha256':'c'*64}
+  calls=[]
+  def read(scope,session,source,figure):
+   self.assertEqual((scope,session,source,figure),(self.scope,self.session,'a'*64,'figure-1'))
+   calls.append(figure);return SourceImage(metadata,png())
+  self.tools.source_figure=read
+  args={'sourceSha256':'a'*64,'figureId':'figure-1'}
+  first=await self.call('atmem_source_figure_read',args,'figure-call')
+  self.assertTrue(first['success']);self.assertEqual(first['contentItems'][1]['type'],'inputImage')
+  self.assertEqual(await self.call('atmem_source_figure_read',args,'figure-call'),first);self.assertEqual(calls,['figure-1'])
+  for extra in [{'path':'/private/image.png'},{'projectId':'foreign'},{'url':'https://private'}]:
+   self.assertFalse((await self.call('atmem_source_figure_read',{**args,**extra}))['success'])
+  self.assertEqual(self.tools.source_deliveries(self.scope,self.session),[])
+  self.store.terminal(self.scope,self.session,'run-one','turn-one','completed')
+  delivered=self.tools.source_deliveries(self.scope,self.session)
+  self.assertEqual(delivered[0]['sha256'],metadata['sha256']);self.assertNotIn('imageUrl',str(delivered))
+  self.assertEqual(len(delivered[0]['receiptId']),64);self.assertNotIn('turnId',delivered[0]);self.assertEqual(delivered[0]['runId'],'run-one')

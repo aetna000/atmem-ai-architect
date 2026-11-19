@@ -61,6 +61,13 @@ class ValidationContractTests(unittest.TestCase):
 
 
 class SqlValidatorContractTests(unittest.TestCase):
+    def test_isolated_unittest_driver_keeps_test_count_and_skip_interpretation(self):
+        from server.local_validation import validation_test_runner
+        spec=ValidationSpec('isolated-oracle','sha256:'+'a'*64,('/usr/bin/python3','-I','-m','unittest','discover','-s','/opt/atmem','-v'))
+        self.assertEqual(validation_test_runner(spec),'unittest')
+        unrelated=ValidationSpec('isolated-script','sha256:'+'a'*64,('/usr/bin/python3','-I','/opt/atmem/check.py'))
+        self.assertEqual(validation_test_runner(unrelated),'operator_registered')
+
     def test_sql_wrapper_is_reported_as_unittest_and_keeps_secret_environment_denial(self):
         from server.local_validation import validation_test_runner
         spec=ValidationSpec('sql-tests','sha256:'+'a'*64,('/usr/local/bin/python3','-I','/opt/atmem/sql_validation.py','-m','unittest','discover','-v'),isolation_profile='postgresql-local-v1')

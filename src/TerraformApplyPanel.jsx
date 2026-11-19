@@ -1,3 +1,4 @@
+import {applyBlockers} from './terraform-emulation-blockers.mjs';
 import React,{useEffect,useRef,useState} from 'react';
 import {Play,CheckCircle2,AlertCircle,CircleDashed,Loader2,MinusCircle,X,Download,ChevronDown,ChevronUp,RotateCw} from 'lucide-react';
 import {BrainActivity} from './BrainActivity.jsx';
@@ -39,7 +40,7 @@ function saveApplyReport(project,report){const url=URL.createObjectURL(new Blob(
 
 const ICONS={passed:CheckCircle2,failed:AlertCircle,running:Loader2,pending:CircleDashed,skipped:MinusCircle};
 
-export function TerraformApplyPanel({project,emulation,blocked}){
+export function TerraformApplyPanel({project,emulation,blocked,onOpenBlock}){
   const {running,events,report}=emulation;
   const stages=applyStages(events,report,running),summary=applyEmulationSummary(report);
   const title=running?'Applying on the local emulator…':report?APPLY_STATUS_TITLES[report.status]||'Apply emulation failed':'Apply on a local emulator';
@@ -48,6 +49,7 @@ export function TerraformApplyPanel({project,emulation,blocked}){
     <div className="apply-emulation-head"><div><span className="emulation-eyebrow">TERRAFORM APPLY · LOCAL EMULATOR</span><h3 aria-live="polite">{title}</h3></div>
       <button type="button" className="btn primary" disabled={running||blocked} aria-busy={running} onClick={emulation.run}><Play size={17}/> {report?'Run again':'Run apply emulation'}</button></div>
     <p className="apply-emulation-caption">{blocked?'Finish the unfinished tasks first.':report?.message||'Real Terraform and provider. Loopback cloud API. No account, credentials or cost.'}</p>
+    <ApplyBlockerList report={report} project={project} onOpenBlock={onOpenBlock}/>
     {!!stages.length&&<ol className="apply-emulation-stages" aria-label="Lifecycle stages">{stages.map(stage=>{const Icon=ICONS[stage.status]||CircleDashed;return <li key={stage.name} className={stage.status}><Icon size={16} aria-hidden="true"/><span>{stage.name}</span><small>{stage.detail}</small></li>;})}</ol>}
     {summary&&<div className="apply-emulation-facts" role="status">{summary.facts.map(fact=><div key={fact.label}><strong>{fact.value}</strong><span>{fact.label}</span></div>)}</div>}
     {report&&<>
@@ -62,7 +64,7 @@ export function TerraformApplyPanel({project,emulation,blocked}){
 }
 
 // Board dock: one click runs the real Terraform lifecycle; the diagram follows its events.
-export function TerraformApplyDock({project,emulation,blocked,onClose}){
+export function TerraformApplyDock({project,emulation,blocked,onClose,onOpenBlock}){
   const {running,events,report}=emulation;
   const [expanded,setExpanded]=useState(false);
   const track=applyTrack(events,report,running),stages=applyStages(events,report,running),summary=applyEmulationSummary(report);
@@ -78,6 +80,7 @@ export function TerraformApplyDock({project,emulation,blocked,onClose}){
     <div className="emulation-track" aria-label="Apply emulation progress">{track.map((step,i)=><React.Fragment key={step.label}>{i>0&&<i/>}<span className={step.state}>{step.label}</span></React.Fragment>)}</div>
     {running&&<div className="emulation-progress" role="progressbar" aria-label="Running apply emulation"><span/></div>}
     <p className="emulation-caption" role="status">{blocked?'Finish the unfinished tasks first.':applyCaption(events,report,running)}</p>
+    <ApplyBlockerList report={report} project={project} onOpenBlock={onOpenBlock}/>
     {summary&&!running&&<div className="apply-emulation-facts compact">{summary.facts.slice(0,3).map(fact=><div key={fact.label}><strong>{fact.value}</strong><span>{fact.label}</span></div>)}</div>}
     {expanded&&<div className="emulation-evidence">
       {!!stages.length&&<ol className="apply-emulation-stages" aria-label="Lifecycle stages">{stages.map(stage=>{const Icon=ICONS[stage.status]||CircleDashed;return <li key={stage.name} className={stage.status}><Icon size={16} aria-hidden="true"/><span>{stage.name}</span><small>{stage.detail}</small></li>;})}</ol>}
@@ -87,4 +90,13 @@ export function TerraformApplyDock({project,emulation,blocked,onClose}){
       {!stages.length&&<p>Real Terraform CLI and provider run against a private loopback AWS API. Blocks light up as their resources are created.</p>}
     </div>}
   </aside>;
+}
+
+function ApplyBlockerList({report,project,onOpenBlock}){
+ const rows=applyBlockers(report);if(!rows.length)return null;
+ const nodes=new Map(project.nodes.map(n=>[n.id,n]));
+ return <section className="apply-blockers" aria-label="Gaps blocking emulation"><h4>{rows.length} {rows.length===1?'gap':'gaps'} to resolve</h4><ol>{rows.map((row,index)=>{
+  const ids=[...new Set([...(row.componentIds||[]),...(row.edgeIds||[]).flatMap(id=>{const edge=project.edges.find(e=>e.id===id);return edge?[edge.source,edge.target]:[];})])];
+  return <li key={String(row.id)+'-'+index}><p>{row.message}</p>{row.action&&<p className="apply-blocker-action">{row.action}</p>}{ids.map(id=>nodes.has(id)&&(onOpenBlock?<button key={id} className="link" onClick={()=>onOpenBlock(id)}>Open {nodes.get(id).data.label}</button>:<small key={id}>{nodes.get(id).data.label}</small>))}{row.taskId&&<small>Task: {row.taskId}</small>}</li>;
+ })}</ol></section>;
 }

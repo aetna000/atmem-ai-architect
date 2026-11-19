@@ -61,6 +61,75 @@ class Measure(Strict):
         if isinstance(value,str) and len(value)>100:raise ValueError('Target too long')
         return value
 
+BlockName = Annotated[StrictStr, Field(min_length=1, max_length=150, pattern=r'\S')]
+SpecText = Annotated[StrictStr, Field(min_length=1, max_length=4000, pattern=r'\S')]
+
+class ScenarioStep(Strict):
+    operationId: Annotated[StrictStr, Field(min_length=1,max_length=100,pattern=r'\S')] | None = None
+    sender: BlockName
+    receiver: BlockName
+    action: StrictStr = Field(min_length=1, max_length=400, pattern=r'\S')
+    messageKind: Literal['command','event','query','result'] | None = None
+    senderBlockId: Annotated[StrictStr, Field(min_length=1,max_length=100,pattern=r'\S')] | None = None
+    receiverBlockId: Annotated[StrictStr, Field(min_length=1,max_length=100,pattern=r'\S')] | None = None
+    interfaceId: Annotated[StrictStr, Field(min_length=1,max_length=100,pattern=r'\S')] | None = None
+    requirementIds: list[Annotated[StrictStr, Field(min_length=1,max_length=100,pattern=r'\S')]] | None = Field(default=None,min_length=1,max_length=50)
+
+    @field_validator('requirementIds')
+    @classmethod
+    def unique_requirements(cls,value):
+        if value is not None and len(value)!=len(set(value)):raise ValueError('Scenario requirement IDs must be unique')
+        return value
+
+
+class BlockScenario(Strict):
+    name: BlockName
+    steps: list[ScenarioStep] = Field(min_length=1, max_length=30)
+
+class VerificationCase(Strict):
+    id: Annotated[StrictStr, Field(min_length=1,max_length=100,pattern=r'\S')]
+    name: BlockName
+    category: Literal['unit','contract','integration','security','recovery','load','acceptance']
+    requirementIds: list[Annotated[StrictStr, Field(min_length=1,max_length=100,pattern=r'\S')]] = Field(min_length=1,max_length=50)
+    environment: SpecText
+    setup: SpecText
+    input: SpecText
+    action: SpecText
+    expected: SpecText
+    evidence: SpecText
+    interfaceId: Annotated[StrictStr, Field(min_length=1,max_length=100,pattern=r'\S')] | None = None
+    operationId: Annotated[StrictStr, Field(min_length=1,max_length=100,pattern=r'\S')] | None = None
+
+    @field_validator('requirementIds')
+    @classmethod
+    def unique_ids(cls,value):
+        if len(set(value))!=len(value):raise ValueError('Verification requirement IDs must be unique')
+        return value
+
+class BuildSpec(Strict):
+    inputs: SpecText | None = None
+    outputs: SpecText | None = None
+    behavior: SpecText | None = None
+    failures: SpecText | None = None
+    implementation: SpecText | None = None
+    infrastructure: SpecText | None = None
+    operations: SpecText | None = None
+    tests: SpecText | None = None
+    scenarios: list[BlockScenario] | None = Field(default=None, min_length=1, max_length=24)
+    verificationCases: list[VerificationCase] | None = Field(default=None,min_length=1,max_length=100)
+
+    @field_validator('verificationCases')
+    @classmethod
+    def unique_cases(cls,value):
+        if value is not None and len({row.id for row in value})!=len(value):raise ValueError('Verification case IDs must be unique per block')
+        return value
+
+    @model_validator(mode='after')
+    def populated(self):
+        if not any(getattr(self, key) is not None for key in self.model_fields_set):
+            raise ValueError('Provide populated block specification sections.')
+        return self
+
 class Data(Strict):
     label:str=Field(max_length=16000)
     kind:Literal['source','predict','agent','guard','output','tool','resource','stream','history','features','train','registry','monitor','note']
@@ -74,6 +143,8 @@ class Data(Strict):
     poc:bool=False
     role:Literal['data','ingest','index','llm','guard','human','app','output','model','monitor']|None=None
     measures:list[Measure]|None=Field(default=None,max_length=10)
+    parentBlockId: StrictStr | None = Field(default=None, min_length=1, max_length=100, pattern=r'\S')
+    buildSpec: BuildSpec | None = None
     topologyGroup:str|None=Field(default=None,max_length=100)
     service:str|None=Field(default=None,max_length=150)
     category:str|None=Field(default=None,max_length=150)
@@ -117,11 +188,20 @@ class Node(Strict):
         if self.data.approvalProfile is not None and self.data.approvalProfile['componentId']!=self.id:raise ValueError('Approval profile component identity differs from its owner')
         return self
 
+class InterfaceSpec(Strict):
+    transport: SpecText
+    input: SpecText
+    output: SpecText
+    authorization: SpecText
+    failure: SpecText
+    verification: SpecText
+
 class Edge(Strict):
     id:str=Field(min_length=1,max_length=150)
     source:str=Field(max_length=100)
     target:str=Field(max_length=100)
     type:Literal['smoothstep']='smoothstep'
+    interfaceSpec: InterfaceSpec | None = None
     label:str=Field(default='data',max_length=150)
     integration:Literal['approved-accounting-api','public-catalog-edit','browser-https','web-rag-api','oauth-pkce','jwt-authorizer','source-catalog-sync','http-api-lambda','lambda-catalog-read','bedrock-converse','s3-object-created','sqs-lambda','lambda-s3-read','lambda-dynamodb-write','sqs-redrive']|None=None
     access:Literal['storage-object-admin','s3-read','s3-read-write','lambda-invoke','api-invoke']|None=None
@@ -145,6 +225,17 @@ class Project(Strict):
         from src.runtime.workflow_bindings import application_declaration
         nodes={n.id:n for n in self.nodes}
         for node in self.nodes:
+            if node.data.kind == 'note' and (node.data.parentBlockId or node.data.buildSpec):
+                raise ValueError('Notes cannot have block specifications or parents.')
+            visited = {node.id}
+            parent = node.data.parentBlockId
+            while parent is not None:
+                if parent not in nodes or nodes[parent].data.kind == 'note':
+                    raise ValueError('A block parent must be an existing component.')
+                if parent in visited:
+                    raise ValueError('Block nesting contains a cycle.')
+                visited.add(parent)
+                parent = nodes[parent].data.parentBlockId
             if node.data.approvalProfile is None:continue
             declaration=application_declaration(node.data.approvalProfile)
             for ref in getattr(declaration,'references',[]):
@@ -226,6 +317,7 @@ class ComponentReviewResult(Strict):
         return values
 
 class FollowUpQuestion(Strict):
+    componentId: StrictStr | None = Field(default=None, min_length=1, max_length=100)
     question:str=Field(min_length=1,max_length=400)
     why:str=Field(min_length=1,max_length=400)
     example:str=Field(default='',max_length=400)
@@ -233,13 +325,13 @@ class FollowUpQuestion(Strict):
 
 class NodeFieldUpdate(Strict):
     id:StrictStr=Field(min_length=1,max_length=100)
-    field:Literal['label','description','kind','provider','service','role','origin','binding','implementation','deploymentMode','topologyGroup','config.maxPdfBytes','config.maxPdfPages','config.retentionDays','config.region','config.classification','config.maxInputBytes','config.maxOutputTokens','config.memoryMb','config.containerMemoryBytes','config.functionTimeoutSeconds','config.concurrency','config.logRetentionDays','config.modelId','config.outputContract']
-    value:StrictStr|StrictInt|StrictBool|OutputContract|None
+    field:Literal['label','description','kind','provider','service','role','origin','binding','implementation','deploymentMode','topologyGroup','parentBlockId','buildSpec','config.maxPdfBytes','config.maxPdfPages','config.retentionDays','config.region','config.classification','config.maxInputBytes','config.maxOutputTokens','config.memoryMb','config.containerMemoryBytes','config.functionTimeoutSeconds','config.concurrency','config.logRetentionDays','config.modelId','config.outputContract']
+    value:StrictStr|StrictInt|StrictBool|OutputContract|BuildSpec|None
 
 class EdgeFieldUpdate(Strict):
     id:StrictStr=Field(min_length=1,max_length=150)
-    field:Literal['label','source','target','integration','access']
-    value:StrictStr|None
+    field:Literal['label','source','target','integration','access','interfaceSpec']
+    value:StrictStr|InterfaceSpec|None
 
 class DesignPatch(Strict):
     projectName:StrictStr|None=Field(default=None,min_length=1,max_length=200)
@@ -282,7 +374,7 @@ class ContextItem(Strict):
 class Attachment(Strict):
     name:str=Field(min_length=1,max_length=180,pattern=r'^[^/\\\x00-\x1f]+$')
     mime:Literal['image/png','image/jpeg','image/webp','application/pdf','application/vnd.openxmlformats-officedocument.wordprocessingml.document','text/plain','text/markdown','text/csv','application/json']
-    data:str=Field(min_length=1,max_length=5592408)
+    data:str=Field(min_length=1,max_length=11184812)
 
 class ChatRequest(Strict):
     activityId:str|None=Field(default=None,pattern=r'^[a-f0-9-]{36}$')

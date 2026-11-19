@@ -912,10 +912,16 @@ class Run:
             self.env['TF_CLI_CONFIG_FILE'] = str(config)
             self.provider_source = 'local mirror'
         else:
-            # Without a mirror, init must reach the registry; cloud APIs stay loopback.
-            for name in ('HTTP_PROXY', 'HTTPS_PROXY', 'NO_PROXY'):
-                self.env.pop(name)
             self.provider_source = 'registry download'
+
+    def command_environment(self, arguments):
+        environment = dict(self.env)
+        # Registry access belongs only to init. Every plan/apply/refresh/destroy
+        # keeps loopback proxying, including account-prefixed S3 Control hosts.
+        if arguments and arguments[0] == 'init' and self.provider_source == 'registry download':
+            for name in ('HTTP_PROXY', 'HTTPS_PROXY', 'NO_PROXY'):
+                environment.pop(name, None)
+        return environment
 
     def command(self, *arguments, timeout=None, on_line=None):
         self.backend.log.recording = True
@@ -923,7 +929,7 @@ class Run:
         command = [self.terraform, f'-chdir={self.folder}', *arguments]
         # Own process group: at the limit Terraform and its provider plugin die
         # together, so no orphan keeps the output pipes open.
-        process = subprocess.Popen(command, env=self.env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, start_new_session=True)
+        process = subprocess.Popen(command, env=self.command_environment(arguments), stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, start_new_session=True)
         output, errors = [], []
 
         def read_output():

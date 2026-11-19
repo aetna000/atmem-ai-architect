@@ -87,7 +87,7 @@ export function architectureSources(project,state=stateOf(project)){
   const linked=(rows,type)=>rows.filter(r=>r.links?.includes(n.id)).map(r=>type+':'+r.id);
   const decisions=(project.decisions||[]).filter(d=>d.status==='Accepted'&&(!d.links?.length||d.links.includes(n.id))).map(d=>'decision:'+d.id);
   const identity=externalIdentity(project,n.id);
-  add('block:'+n.id,'responsibility',n.data.label,{...meaning,...(identity?{externalProvenance:identity}:{})},[...global,...(n.data.approvalProfile?approvalReferences(n.data.approvalProfile).map(ref=>'block:'+ref.componentId):[]),...linked(project.needs||[],'requirement'),...linked(project.assumptions||[],'assumption'),...linked(project.openQuestions||[],'question'),...decisions]);
+  add('block:'+n.id,'responsibility',n.data.label,{...meaning,...(identity?{externalProvenance:identity}:{})},[...global,...(n.data.parentBlockId?['block:'+n.data.parentBlockId]:[]),...(n.data.approvalProfile?approvalReferences(n.data.approvalProfile).map(ref=>'block:'+ref.componentId):[]),...linked(project.needs||[],'requirement'),...linked(project.assumptions||[],'assumption'),...linked(project.openQuestions||[],'question'),...decisions]);
  }
  for(const e of project.edges||[]){
   const {id,source,target,label}=e;
@@ -164,7 +164,7 @@ export function synchronizeEngineeringIntent(project,sessionId,events,owner=proj
  if(project.id!==owner)return project;
  text(sessionId,100,'session ID');const state=stateOf(project),byId=new Map(state.intents.map(i=>[i.id,i]));let changed=false;
  const rank={pending:0,uncertain:1,accepted:2};
- for(const entry of engineeringConversation(events).filter(e=>e.role==='user')){
+ for(const entry of engineeringConversation(events).filter(e=>e.role==='user'&&!e.workOrder)){
   const id=`${sessionId}:${entry.id}`,old=byId.get(id);
   if(old&&old.text!==entry.text)throw Error('Saved engineering intent changed identity; retain both histories for reconciliation.');
   const status=old&&rank[old.status]>rank[entry.status]?old.status:entry.status;

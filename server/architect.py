@@ -48,6 +48,10 @@ class AtMemArchitect:
                     result=result.model_copy(update={'proposal':apply_design_patch(request.project,result.patch),'patch':None})
                 if result.proposal and result.proposal.baseRevision!=request.project.revision:
                     raise ValueError('Architect returned a proposal for the wrong revision.')
+                if result.followUp and result.followUp.componentId is not None and not any(
+                    node.id == result.followUp.componentId and node.data.kind != 'note' for node in request.project.nodes
+                ):
+                    raise ValueError('A follow-up must link to an existing architecture block.')
                 if result.proposal:validate_proposed_regions(result.proposal.next)
                 result._response_repair_attempts=attempt
                 result._model_response_encoding=encoding

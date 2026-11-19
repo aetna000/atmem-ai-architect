@@ -383,3 +383,40 @@ class LifecycleTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
+
+class CommandEnvironmentTests(unittest.TestCase):
+    def test_registry_download_does_not_remove_emulator_routing_from_later_commands(self):
+        from types import SimpleNamespace
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);module=root/'module';module.mkdir()
+            backend=SimpleNamespace(endpoint='http://127.0.0.1:12345',environment=lambda home:{})
+            with patch.dict(os.environ,{'AWS_ACCESS_KEY_ID':'must-not-be-inherited'}):
+                run=emulator.Run(module,'unused',None,backend,lambda event:None)
+            self.assertNotIn('AWS_ACCESS_KEY_ID',run.env)
+            initial=dict(run.env)
+            self.assertNotIn('HTTPS_PROXY',run.command_environment(('init','-backend=false')))
+            for operation in ['plan','apply','refresh','destroy','show']:
+                environment=run.command_environment((operation,))
+                self.assertEqual(environment['HTTP_PROXY'],backend.endpoint)
+                self.assertEqual(environment['HTTPS_PROXY'],'http://127.0.0.1:9')
+                self.assertEqual(environment['NO_PROXY'],'127.0.0.1,localhost')
+            self.assertEqual(run.env,initial)
+
+    def test_explicit_local_mirror_never_enables_registry_access(self):
+        from types import SimpleNamespace
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);module=root/'module';module.mkdir();mirror=root/'mirror';mirror.mkdir()
+            backend=SimpleNamespace(endpoint='http://127.0.0.1:12345',environment=lambda home:{})
+            run=emulator.Run(module,'unused',mirror,backend,lambda event:None)
+            self.assertEqual(run.command_environment(('init',))['HTTPS_PROXY'],'http://127.0.0.1:9')
+            self.assertIn('filesystem_mirror',Path(run.env['TF_CLI_CONFIG_FILE']).read_text())
+
+class BlockerDetailsTests(unittest.TestCase):
+    def test_generated_blockers_include_labels_actions_and_module_identity_without_running_terraform(self):
+        import sys
+        project={'id':'blocked-claims','version':1,'revision':1,'name':'Claims architecture','provider':'tools','nodes':[{'id':'claims-api','type':'resource','position':{'x':0,'y':0},'data':{'label':'Claims API','kind':'resource','provider':'tools'}}],'edges':[]}
+        with patch('server.terraform_emulation_routes.runtime_python',return_value=Path(sys.executable)):
+            result=emulate_terraform(TerraformEmulationRequest(project=project))
+        self.assertEqual(result['status'],'blocked');self.assertEqual(result['terraformApply'],'not_run')
+        self.assertEqual(result['blockers'],[r['id']for r in result['blockerDetails']])
+        self.assertTrue(any('Claims API'in r['message']and r.get('componentIds')==['claims-api']and r.get('action')for r in result['blockerDetails']))

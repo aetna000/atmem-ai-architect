@@ -38,6 +38,8 @@ export function toAgentProject(p) {
         },
         inputPosition: n.data.inputPosition || "left",
         outputPosition: n.data.outputPosition || "right",
+        ...(n.data.parentBlockId != null ? {parentBlockId:n.data.parentBlockId}:{}),
+        ...(n.data.buildSpec != null ? {buildSpec:structuredClone(n.data.buildSpec)}:{}),
         ...(n.data.topologyGroup ? {topologyGroup:String(n.data.topologyGroup)}:{}),
         ...(["reference","create"].includes(n.data.deploymentMode)?{deploymentMode:n.data.deploymentMode}:{}),
         origin: String(n.data.origin || "proposed").slice(0, 100),
@@ -52,6 +54,7 @@ export function toAgentProject(p) {
     })),
     edges: p.edges.map((e) => ({
       id: e.id,
+      ...(e.interfaceSpec != null ? {interfaceSpec:structuredClone(e.interfaceSpec)}:{}),
       source: e.source,
       target: e.target,
       type: "smoothstep",

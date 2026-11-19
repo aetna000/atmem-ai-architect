@@ -1,3 +1,9 @@
+import {validateRequirementsDocument} from './requirements-document.mjs';
+import {BLOCK_SYMBOLS} from './block-symbols.mjs';
+import {validateEngineeringModel} from './engineering-model.mjs';
+import {validateSystemModel} from './system-model.mjs';
+import {validateBlockSpecs,validateInterfaceSpec} from './block-spec.mjs';
+import {validateAmendmentHistory} from './canvas-amendments.mjs';
 import {approvalProfiles} from './approval-applications.mjs';
 import {validateArchitectureWork} from './architecture-work.mjs';
 import {validateStateCustody} from './state-custody.mjs';
@@ -625,8 +631,12 @@ export function validateImport(p) {
     p.edges.length > 600
   )
     throw Error("Unsupported or oversized project file.");
+  if(p?.extensions?.systemModel!==undefined)validateSystemModel(p.extensions.systemModel);
+  if(p?.extensions?.engineeringModel!=null)validateEngineeringModel(p.extensions.engineeringModel);
   if(String(p.requirements||"").length>64000)throw Error("Project requirements exceed 64,000 characters; no content was truncated.");
   if(p.extensions?.architectureWork!==undefined)validateArchitectureWork(p.extensions.architectureWork);
+  validateAmendmentHistory(p.extensions?.architectureAmendments);
+  validateRequirementsDocument(p.extensions?.requirementsDocument);
   validateStateCustody(p.extensions?.terraformState);
   validateExternalReferences(p);
   approvalProfiles(p);
@@ -649,6 +659,7 @@ export function validateImport(p) {
     validateDeploymentOwnership(n.data);
     ids.add(n.id);
   }
+  validateBlockSpecs(p.nodes);
   const edgeIds = new Set();
   for (const e of p.edges) {
     if (
@@ -659,6 +670,7 @@ export function validateImport(p) {
       e.source === e.target
     )
       throw Error("Invalid connection in project.");
+    validateInterfaceSpec(e.interfaceSpec);
     edgeIds.add(e.id);
   }
   return {
@@ -680,6 +692,7 @@ export function validateImport(p) {
           ? n.data.outputPosition
           : "right",
         label: n.data.label,
+        ...(Object.hasOwn(BLOCK_SYMBOLS, n.data.symbol) ? {symbol:n.data.symbol} : {}),
         provider: n.data.provider,
         kind: n.data.kind,
         description: String(n.data.description || ""),
@@ -695,6 +708,8 @@ export function validateImport(p) {
           timeout: 5000,
         },
         ...(n.data.approvalProfile!=null ? {approvalProfile:structuredClone(n.data.approvalProfile)}:{}),
+        ...(n.data.parentBlockId != null ? {parentBlockId:n.data.parentBlockId}:{}),
+        ...(n.data.buildSpec != null ? {buildSpec:structuredClone(n.data.buildSpec)}:{}),
         ...(n.data.topologyGroup ? {topologyGroup:String(n.data.topologyGroup)}:{}),
         ...(["reference","create"].includes(n.data.deploymentMode)?{deploymentMode:n.data.deploymentMode}:{}),
         origin: String(n.data.origin || "proposed").slice(0, 100),
@@ -729,6 +744,7 @@ export function validateImport(p) {
     })),
     edges: p.edges.map((e) => ({
       id: e.id,
+      ...(e.interfaceSpec != null ? {interfaceSpec:structuredClone(e.interfaceSpec)}:{}),
       source: e.source,
       target: e.target,
       type: "smoothstep",

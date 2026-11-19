@@ -10,6 +10,7 @@ export function ImplementationDelivery({project,session,workStatus,onBuild,onSav
  const [orcaResult,setOrcaResult]=useState(null);
  const projectRef=useRef(project);projectRef.current=project;
  const [prepared,setPrepared]=useState(null),[preparing,setPreparing]=useState(false);
+ const [captureNotice,setCaptureNotice]=useState('');
  const [loaded,setLoaded]=useState(null),[error,setError]=useState(''),[retry,setRetry]=useState(0),[busy,setBusy]=useState(false);
  const report=loaded?.project===project?loaded.report:null;
  useEffect(()=>{
@@ -66,6 +67,7 @@ export function ImplementationDelivery({project,session,workStatus,onBuild,onSav
    if(designBundle?.project!==project)throw Error('The design documents are refreshing. Try downloading again when preparation finishes.');
    const full=await(designBundle.prepare?.()||designBundle);
    if(projectRef.current!==project)throw Error('Design changed while preparing files. Try again.');
+   const captureEvidence=full.files['captured-evidence.json']?JSON.parse(full.files['captured-evidence.json']):null;setCaptureNotice(captureEvidence?.status==='unavailable'?'Capture evidence unavailable. Download again to retry; see captured-evidence.json.':'');
    const blob=await completeProjectZip(captured,full);
    if(openInOrca){await launchOrca(blob);return;}
    const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;
@@ -74,11 +76,12 @@ export function ImplementationDelivery({project,session,workStatus,onBuild,onSav
  }
  return <section aria-label="Implementation delivery">
   <h3>Your project ZIP</h3>
+  {captureNotice&&<p role="status">{captureNotice}</p>}
   {!report&&!error&&<p role="status">Preparing package…</p>}
   {report&&!report.artifact&&<p>Design package · implementation not generated.</p>}
   {report&&!report.canPackage&&<button className="btn primary" disabled={busy||!designBundle||designBundle.project!==project||contextBusy} onClick={downloadDesign}>{busy?'Preparing ZIP…':'Download project ZIP'}</button>}
   {report?.artifact&&<>
-   <p className="delivery-state">{report.relation==='matches_saved_design'?'✓ Current design':report.relation==='design_changed'?'! Design changed since generation':'! Earlier or unverified implementation'}</p>
+   <p className="delivery-state">{report.relation==='matches_saved_design'?'✓ Current design':report.relation==='design_changed'?'! Design changed since generation':'! Earlier or unverified capture'}</p>
 
    <p>{report.artifact.files.filter(file=>file.kind==='file').length} files · {report.artifact.model} · {report.artifact.effort}</p>
    {report.canPackage&&<button className="btn primary" disabled={busy||preparing||!prepared||contextBusy||!designBundle||designBundle.project!==project} onClick={()=>download()}>Download project ZIP</button>}

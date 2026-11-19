@@ -12,6 +12,7 @@ out=Path('.local/worker-cloud-qualification');out.mkdir(parents=True,exist_ok=Tr
 if not args.apply:
  print(json.dumps({'project':args.project,'existingAdminOwnedProject':True,'realCloudQueue':True,'modelRequest':args.models,'providerKeysReadLocally':False}));raise SystemExit(0)
 from google.oauth2.credentials import Credentials
+from server.memory_worker import EXPECTED_ATMEM_VERSION
 from google.cloud import firestore,storage
 from hosted.firestore_store import FirestoreTransactions
 from hosted.projects import Profiles
@@ -63,9 +64,9 @@ if not file['requirements']:
  upload=projects.begin(actor.uid,'fixture-requirement-'+uuid.uuid4().hex,title=saved['title'],size=len(snapshot),sha256=sha,pid=pid,revision=saved['revision'])
  projects.put_chunk(actor.uid,upload['id'],0,base64.b64encode(snapshot).decode(),sha);projects.complete(actor.uid,upload['id'])
 evidence,body=run('/api/memory/sync',{'projectId':pid,'file':json.loads(snapshot)});checks.append({**evidence,'engine':body.get('engine'),'nativeMemoryStatus':body.get('status')})
-if '2.3.14' not in body.get('engine',''):
+if EXPECTED_ATMEM_VERSION not in body.get('engine',''):
  evidence,body=run('/api/memory/inspect',{'projectId':pid});checks.append({**evidence,'engine':body.get('engine'),'nativeMemoryStatus':body.get('status')})
-if body.get('status')!='ready' or '2.3.14' not in body.get('engine',''):raise RuntimeError('The actual AtMem SDK did not confirm the persisted fixture requirement')
+if body.get('status')!='ready' or EXPECTED_ATMEM_VERSION not in body.get('engine',''):raise RuntimeError('The actual AtMem SDK did not confirm the persisted fixture requirement')
 evidence,body=run('/api/memory/overview',{'projectId':pid});checks.append({**evidence,'engine':body.get('engine'),'nativeMemoryStatus':body.get('status')})
 if args.models:
  access=XWhitelist(store,admin_ids=[actor.uid]);settings=PilotSettings(store,access,OpenRouterCatalog());policy=settings.current()

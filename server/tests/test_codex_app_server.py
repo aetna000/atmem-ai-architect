@@ -98,6 +98,19 @@ class CodexTransportTests(unittest.IsolatedAsyncioTestCase):
             result=await self.client.notification(timeout=1)
             self.assertFalse(result['params']['result']['success']);self.assertNotIn('PRIVATE-WORKER',str(result))
 
+    async def test_figure_delivery_admits_one_bounded_inline_png_and_denies_remote_images(self):
+        import base64,io
+        from PIL import Image
+        output=io.BytesIO();Image.new('RGB',(20,10),'white').save(output,format='PNG')
+        valid='data:image/png;base64,'+base64.b64encode(output.getvalue()).decode()
+        for url,expected in [(valid,True),('https://example.com/figure.png',False),('data:image/png;base64,invalid!',False)]:
+            async def handler(params):
+                return {'success':True,'contentItems':[{'type':'inputText','text':'Figure digest receipt'}, {'type':'inputImage','imageUrl':url}]}
+            self.client.dynamic_tool_handler=handler
+            await self.client.request('tool');result=await self.client.notification(timeout=1)
+            self.assertEqual(result['params']['result']['success'],expected)
+            if expected:self.assertEqual(result['params']['result']['contentItems'][1]['imageUrl'],valid)
+
     async def test_provider_error_is_not_exposed_as_success_or_raw_diagnostics(self):
         with self.assertRaises(ProtocolError) as caught:await self.client.request('reject')
         self.assertIn('-32602',str(caught.exception));self.assertNotIn('private diagnostic',str(caught.exception))

@@ -29,8 +29,20 @@ class EngineeringRouteTests(unittest.TestCase):
 
     def test_every_native_endpoint_requires_local_token(self):
         for endpoint in ['orca/open','create','list','state','events','start','recover','steer','interrupt','capture','download',
-                         'artifacts','reconciliation','finalizations','recheck','validators','validation/start','validation/list','validation/plan','validation/get','validation/recover']:
+                         'artifacts','reconciliation','finalizations','recheck','work-orders/block','validators','validation/start','validation/list','validation/plan','validation/get','validation/recover']:
             self.assertEqual(self.client.post('/api/engineering/'+endpoint,json={}).status_code,401)
+
+    def test_block_order_uses_typed_owned_scope_and_rejects_browser_prose(self):
+        body={**self.payload,'requestId':'00000000-0000-0000-0000-000000000021','blockId':'award-review','contextSha256':'b'*64}
+        with patch.object(routes,'service') as service:
+            worker=service.return_value;worker.work_orders.start_block=AsyncMock(return_value={'acceptedRunId':body['requestId']})
+            response=self.client.post('/api/engineering/work-orders/block',json=body,headers=self.headers)
+            self.assertEqual(response.status_code,200)
+            args=worker.work_orders.start_block.call_args.args
+            self.assertEqual(args[:5],(ProjectScope('local-owner',self.project),self.session,body['requestId'],'award-review','b'*64))
+            args[5]();worker.read_saved_context.assert_called_once_with(ProjectScope('local-owner',self.project))
+            for field in ['text','origin','workOrder','tenant','workspace','command']:
+                self.assertEqual(self.client.post('/api/engineering/work-orders/block',json={**body,field:'forged'},headers=self.headers).status_code,422)
 
     def test_orca_handoff_uses_saved_project_and_rejects_command_injection(self):
         payload={'projectId':self.project,'zipBase64':'dGVzdA=='}
@@ -56,6 +68,22 @@ class EngineeringRouteTests(unittest.TestCase):
     def test_cross_origin_and_rebinding_denied(self):
         for header in [{'Origin':'https://evil.example'},{'Host':'evil.example'}]:
             self.assertEqual(self.client.post('/api/engineering/list',json={'projectId':self.project},headers={**self.headers,**header}).status_code,403)
+
+    def test_identified_start_binds_exact_context_and_keeps_legacy_start_compatible(self):
+        request='00000000-0000-0000-0000-000000000019'
+        body={**self.payload,'text':'Build only the library loans block.','contextSha256':'a'*64,'requestId':request}
+        with patch.object(routes,'service') as service:
+            service.return_value.jobs.start=AsyncMock(return_value={'id':self.session,'state':'running','acceptedRunId':request,'replayed':False})
+            response=self.client.post('/api/engineering/start',json=body,headers=self.headers)
+            self.assertEqual(response.status_code,200)
+            service.return_value.jobs.start.assert_awaited_once_with(ProjectScope('local-owner',self.project),self.session,body['text'],context_sha256='a'*64,request_id=request)
+            service.return_value.jobs.start.reset_mock()
+            self.assertEqual(self.client.post('/api/engineering/start',json={**body,'contextSha256':None},headers=self.headers).status_code,422)
+            self.assertEqual(self.client.post('/api/engineering/steer',json=body,headers=self.headers).status_code,422)
+            service.return_value.jobs.start.assert_not_awaited()
+            legacy={k:v for k,v in body.items()if k!='requestId'}
+            self.assertEqual(self.client.post('/api/engineering/start',json=legacy,headers=self.headers).status_code,200)
+            service.return_value.jobs.start.assert_awaited_once_with(ProjectScope('local-owner',self.project),self.session,body['text'],context_sha256='a'*64)
 
     def test_browser_cannot_select_tenant_workspace_native_handle_or_commands(self):
         for field in ['tenant','workspace','workspaceRoot','validatorWorkers','handle','command','readRoots']:

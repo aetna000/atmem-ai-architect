@@ -21,7 +21,7 @@ class AttachmentTests(unittest.TestCase):
         result=prepare([item(b'Budget AUD 200 monthly'),item(archive.getvalue(),'scope.docx','application/vnd.openxmlformats-officedocument.wordprocessingml.document'),item(png(),'diagram.png','image/png')])
         self.assertIn('AUD 200',result[0]['text']);self.assertIn('Inventory remains',result[1]['text']);self.assertEqual(base64.b64decode(result[2]['data']),png())
     def test_corrupt_spoofed_oversized_and_path_inputs_rejected(self):
-        for payload in [item(b'not an image','x.png','image/png'),item(b'a'*(4*1024*1024+1)),{'name':'bad','mime':'text/plain','data':'%%%'}]:
+        for payload in [item(b'not an image','x.png','image/png'),item(b'a'*(8*1024*1024+1)),{'name':'bad','mime':'text/plain','data':'%%%'}]:
             with self.assertRaises((ValueError,Exception)):extract([payload])
         with self.assertRaises(ValidationError):Attachment(**item(b'hi','../../secret'))
         with self.assertRaises(ValueError):extract([item(b'hi')]*5)
@@ -71,3 +71,48 @@ class DiagramInputTests(unittest.TestCase):
         with self.assertRaises(ValueError):diagram_text(b'<html/>')
         compressor=zlib.compressobj(wbits=-15);encoded=base64.b64encode(compressor.compress(b'x'*200000)+compressor.flush()).decode()
         with self.assertRaises(ValueError):diagram_text(('<mxfile><diagram>'+encoded+'</diagram></mxfile>').encode())
+
+
+class DesignSourceTests(unittest.TestCase):
+    def test_design_source_receipt_uses_original_bytes_and_keeps_readable_text(self):
+        import base64
+        import hashlib
+        from fastapi.testclient import TestClient
+        from server.app import app, TOKEN
+        raw = b'Section 1\nAllocate a single seat hold.'
+        client = TestClient(app)
+        result = client.post('/api/design-sources', json={'attachments': [{
+            'name': 'brief.txt', 'mime': 'text/plain', 'data': base64.b64encode(raw).decode(),
+        }]}, headers={'Authorization': f'Bearer {TOKEN}'})
+        self.assertEqual(result.status_code, 200)
+        row, = result.json()['sources']
+        self.assertEqual(row['sha256'], hashlib.sha256(raw).hexdigest())
+        self.assertEqual(row['text'], raw.decode())
+        self.assertNotIn('data', row)
+
+    def test_large_word_source_preserves_sections_and_table_cells(self):
+        import base64
+        import io
+        from zipfile import ZipFile
+        from fastapi.testclient import TestClient
+        from server.app import app, TOKEN
+        archive = io.BytesIO()
+        with ZipFile(archive, 'w') as doc:
+            doc.writestr('word/document.xml', '''<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+              <w:body><w:p><w:pPr><w:pStyle w:val="Heading1"/></w:pPr><w:r><w:t>Rules</w:t></w:r></w:p>
+              <w:tbl><w:tr><w:tc><w:p><w:r><w:t>Input</w:t></w:r></w:p></w:tc>
+              <w:tc><w:p><w:r><w:t>Outcome</w:t></w:r></w:p></w:tc></w:tr></w:tbl></w:body></w:document>''')
+            doc.writestr('word/media/image1.png', b'x' * (5 * 1024 * 1024))
+        result = TestClient(app).post('/api/design-sources', json={'attachments': [{
+            'name': 'large.docx', 'mime': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            'data': base64.b64encode(archive.getvalue()).decode(),
+        }]}, headers={'Authorization': f'Bearer {TOKEN}'})
+        self.assertEqual(result.status_code, 200)
+        row, = result.json()['sources']
+        self.assertIn('[Heading1] Rules', row['text'])
+        self.assertIn('Input | Outcome', row['text'])
+        self.assertEqual(row['graphics'], ['image1.png'])
+        chat = request([item(archive.getvalue(), 'large.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document')])
+        parsed, = prepare([entry.model_dump() for entry in chat.attachments])
+        self.assertIn('Input', parsed['text'])
+        self.assertIn('Outcome', parsed['text'])

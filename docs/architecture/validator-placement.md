@@ -83,3 +83,20 @@ fresh context qualification. This change supplies neither automatic freshness
 leases nor hosted multi-tenant worker/store security. Hosted adapters must preserve
 the same scoped immutable contract and qualify their own transport/authorization/
 transactional leases. Browser access remains through the backend session service.
+
+## Block-scoped checks
+
+An operator can add `blockScope` to an entry in `ATMEM_ARCHITECT_ENGINEERING_VALIDATORS`.
+Set `tenantId`, `projectId` and `blockId` to the exact saved identities. The local
+sidecar uses `local-owner` as its tenant ID. Choose an independently reviewed
+command and assertions for that block. An optional file applicability rule still
+controls automatic selection. The registration is available only inside that
+tenant and project, and changes to its scope change the validator contract digest.
+
+Open the block's Spec Kit and use **Build and test block** to start a scoped turn
+in the project's engineering workspace. A block can run its registered validator
+from the Spec Kit after the current build is captured and its files are linked.
+The local pass indicator requires a receipt for the same artifact and validator
+contract, with at least one executed test and zero skips. A project-wide check
+cannot turn an individual block green. Integration, full-system acceptance and
+staging approval still depend on their respective evidence.

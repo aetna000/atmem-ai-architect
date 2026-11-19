@@ -56,6 +56,7 @@ export function cleanRequirement(r) {
     category: pick(r?.category, CATEGORIES, "other"),
     statement: text(r?.statement, 1000),
     ...(r?.rationale ? {rationale:text(r.rationale,1000)} : {}),
+    ...(r?.acceptance ? {acceptance:text(r.acceptance,1000)} : {}),
     ...(r?.basis ? {basis:text(r.basis,1000)} : {}),
     priority: pick(r?.priority, PRIORITIES, "should"),
     status: pick(r?.status, REQUIREMENT_STATUSES, "open"),

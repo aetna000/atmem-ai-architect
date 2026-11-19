@@ -36,7 +36,7 @@ def apply_design_patch(project,patch):
         if key in touched:raise ValueError('Duplicate compact field update')
         touched.add(key)
         if update.value is None:edges[update.id].pop(update.field,None)
-        else:edges[update.id][update.field]=update.value
+        else:edges[update.id][update.field]=update.value.model_dump(exclude_none=True) if hasattr(update.value,'model_dump') else update.value
     result['nodes']=list(nodes.values());result['edges']=list(edges.values())
     # Revalidate the whole candidate after all edits. Source project is never mutated.
     candidate=Project.model_validate(result)

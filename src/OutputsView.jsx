@@ -37,22 +37,24 @@ function Preview({name,content}){
  if(name.endsWith('.md'))return <Document text={content}/>;
  return <CodePreview className="output-code" content={content} name={name}/>;
 }
-export function OutputsView({project,run,environment,session,workStatus,onDownload,onBack,emulation,onDiscuss,discussionBusy,onBuild,onSave,onDownloaded,onReview,checkReceipt,onNavigate}){
- const [exploration,setExploration]=useState(null);
+export function OutputsView({project,run,environment,session,workStatus,onDownload,onBack,emulation,onDiscuss,discussionBusy,onBuild,onSave,onPrepareSources,onDownloaded,onReview,checkReceipt,onNavigate}){
+ const [exploration,setExploration]=useState(null),[captureOpen,setCaptureOpen]=useState(false);
+ const hasCapturedCode=!!project.extensions?.architectureWork?.artifactMappings?.length;
+ const prepareSourcesRef=useRef(onPrepareSources);prepareSourcesRef.current=onPrepareSources;
  const projectRef=useRef(project);projectRef.current=project;
  const [packing,setPacking]=useState(false);
  const [bundle,setBundle]=useState(null),[error,setError]=useState(''),[loading,setLoading]=useState(true),[retry,setRetry]=useState(0),[selected,setSelected]=useState('spec-kit/implementation-spec.md');
  useEffect(()=>{
    let active=true;setLoading(true);setError('');
-   outputBundle(project,run,environment,checkReceipt,{deferVisuals:true}).then(value=>{if(active){setBundle(value);setLoading(false);}}).catch(e=>{if(active){setError(e.message);setLoading(false);}});
+   outputBundle(project,run,environment,checkReceipt,{deferVisuals:true,session,prepareSources:expected=>prepareSourcesRef.current?.(expected)||session}).then(value=>{if(active){setBundle(value);setLoading(false);}}).catch(e=>{if(active){setError(e.message);setLoading(false);}});
    return ()=>{active=false;};
- },[project,run,environment,retry,checkReceipt]);
+ },[project,run,environment,retry,checkReceipt,session?.token]);
  const readiness=bundle?.files['spec-kit/readiness.json']?JSON.parse(bundle.files['spec-kit/readiness.json']):null;
  const artifactMode=exploration?.project===project,prefix=artifactMode?'design-documents/':'';
  const fileValues=useMemo(()=>artifactMode?{...exploration.files,...Object.fromEntries(Object.entries(bundle?.files||{}).map(([name,value])=>[prefix+name,value]))}:bundle?.files||{},[artifactMode,exploration,bundle,prefix]);
  const treeFiles=useMemo(()=>({...Object.fromEntries((bundle?.visualPaths||[]).map(path=>[prefix+path,null])),...fileValues}),[bundle,fileValues,prefix]);
  async function selectFile(name){setSelected(name);if(treeFiles[name]===null){try{const full=await bundle.prepare();if(projectRef.current===project)setBundle(full);}catch(error){if(projectRef.current===project)setError(error.message);}}}
- async function downloadDesign(){if(packing)return;setPacking(true);setError('');try{const full=await bundle.prepare();if(projectRef.current!==project)return;setBundle(full);await onDownload(full);}catch(error){if(projectRef.current===project)setError(error.message);}finally{setPacking(false);}}
+ async function downloadDesign(){if(packing)return;setPacking(true);setError('');try{const full=await bundle.prepare();if(projectRef.current!==project)throw Error('Design changed while preparing files. Download again.');setBundle(full);await onDownload(full);}catch(error){if(projectRef.current.id===project.id)setError(error.message);}finally{setPacking(false);}}
  const selectedPath=Object.hasOwn(treeFiles,selected)?selected:fileValues['START_HERE.md']?'START_HERE.md':Object.keys(fileValues).find(name=>name.endsWith('implementation-spec.md'))||Object.keys(fileValues)[0];
  const raw=treeFiles[selectedPath],content=typeof raw==='string'?raw:raw&&/\.(?:md|txt|json|py|js|mjs|tf|sh|yaml|yml|toml|html|css)$/.test(selectedPath)?strFromU8(raw):raw;
 
@@ -60,11 +62,12 @@ export function OutputsView({project,run,environment,session,workStatus,onDownlo
   <header className="doc-head"><h2>Delivery</h2></header>
   <button className="link" onClick={onReview||onBack}>Back to Review</button>
   {isReadyExample(project)&&<ReadyExampleChecklist/>}
-  {session?.engineeringEnabled&&(isReadyExample(project)?<details><summary>Checks for your edited project</summary><ImplementationDelivery key={project.id} project={project} session={session} workStatus={workStatus} onBuild={onBuild} onSave={onSave} contextBusy={discussionBusy} designBundle={loading?null:bundle} onDesignDownload={onDownload} onDownloaded={onDownloaded} checkReceipt={checkReceipt} onExplore={setExploration} onNavigate={onNavigate}/></details>:<ImplementationDelivery key={project.id} project={project} session={session} workStatus={workStatus} onBuild={onBuild} onSave={onSave} contextBusy={discussionBusy} designBundle={loading?null:bundle} onDesignDownload={onDownload} onDownloaded={onDownloaded} checkReceipt={checkReceipt} onExplore={setExploration} onNavigate={onNavigate}/>)}
+  {session?.engineeringEnabled&&(hasCapturedCode?<ImplementationDelivery key={project.id} project={project} session={session} workStatus={workStatus} onBuild={onBuild} onSave={onSave} contextBusy={discussionBusy} designBundle={loading?null:bundle} onDesignDownload={onDownload} onDownloaded={onDownloaded} checkReceipt={checkReceipt} onExplore={setExploration} onNavigate={onNavigate}/>:<details onToggle={event=>{setCaptureOpen(event.currentTarget.open);if(!event.currentTarget.open)setExploration(null);}}><summary>{isReadyExample(project)?'Checks for your edited project':'Captured workspace details'}</summary>{captureOpen&&<ImplementationDelivery key={project.id} project={project} session={session} workStatus={workStatus} onBuild={onBuild} onSave={onSave} contextBusy={discussionBusy} designBundle={loading?null:bundle} onDesignDownload={onDownload} onDownloaded={onDownloaded} checkReceipt={checkReceipt} onExplore={setExploration} onNavigate={onNavigate}/>}</details>)}
   <section aria-label="Project file explorer"><h3>Explore files</h3>
 
-  {!session?.engineeringEnabled&&<><p>Design package · no implementation generated.</p><button className="btn" disabled={!bundle||loading||!!error||packing} onClick={downloadDesign}>{packing?'Preparing ZIP…':'Download project ZIP'}</button></>}
+  {(!session?.engineeringEnabled||!hasCapturedCode)&&<><p>Current design, Spec Kit and recorded evidence. Check readiness before implementation.</p><button className="btn" disabled={!bundle||loading||!!error||packing} onClick={downloadDesign}>{packing?'Preparing ZIP…':'Download project ZIP'}</button></>}
 
+  {readiness?.capturedEvidence?.status==='unavailable'&&<p role="status">Capture evidence unavailable. Download again to retry; see captured-evidence.json.</p>}
   {loading&&<p role="status"><BrainActivity/> Preparing the current outputs…</p>}
   {error&&<div role="alert"><p>{error}</p><button className="btn" onClick={()=>setRetry(n=>n+1)}>Retry preparing outputs</button></div>}
   {bundle&&!loading&&!error&&<>

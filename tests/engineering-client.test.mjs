@@ -82,3 +82,13 @@ test('automatic repair intent remains durable progress rather than an invented c
   assert.deepEqual(engineeringConversation(events).map(entry=>[entry.role,entry.text]),[
     ['user','Preserve all customer records.'],['assistant','Repaired the connection failure.']]);
 });
+
+test('progress paging appends native bursts and tolerates an overlapping replay',()=>{
+ const ordered=Array.from({length:25000},(_,index)=>({sequence:index+1,kind:'progress',text:'trace'}));
+ let observed=[];
+ for(let offset=0;offset<ordered.length;offset+=200)observed=mergeEngineeringEvents(observed,ordered.slice(offset,offset+200));
+ assert.equal(observed.length,25000);
+ assert.equal(mergeEngineeringEvents(observed,[]),observed);
+ assert.deepEqual(mergeEngineeringEvents(observed,[ordered[24999],{sequence:25001,kind:'completed'}]).slice(-2),
+   [ordered[24999],{sequence:25001,kind:'completed'}]);
+});

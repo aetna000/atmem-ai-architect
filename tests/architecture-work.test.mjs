@@ -90,12 +90,12 @@ test('context snapshots deduplicate shared long intent without deleting prior re
  for(let i=0;i<20;i++)p=reviewWorkContext(p,'work:r'+i,{now});
  assert.equal(state(p).snapshots.filter(s=>s.ref==='intent:project').length,1);assert.equal(state(p).bindings.length,20);assert(JSON.stringify(state(p)).length<100000);
 });
-test('non-JSON proposal values and UTF-8 oversized project files are refused without normalization or clipping',()=>{
+test('non-JSON proposal values reject and large UTF-8 project files survive without clipping',()=>{
  const p=project();assert.throws(()=>proposeWorkRecords(p,[record('nan','responsibility',[],{target:NaN})]),/lossless finite JSON/);
  assert.throws(()=>proposeWorkRecords(p,[record('missing','responsibility',[],{target:undefined})]),/lossless finite JSON/);
  const large=project();large.nodes=Array.from({length:70},(_,i)=>({...large.nodes[0],id:'node-'+i,data:{...large.nodes[0].data,description:'😀'.repeat(8000)}}));large.edges=[];
- assert.throws(()=>toProjectFile(large),/2 MB/);assert.equal(large.nodes[0].data.description.length,16000);
- assert.throws(()=>parseProjectFile(JSON.stringify({data:'😀'.repeat(500001)})),/2 MB/);
+ const saved=JSON.stringify(toProjectFile(large));assert.ok(Buffer.byteLength(saved)>2_000_000);
+ assert.deepEqual(parseProjectFile(saved).project.nodes.map(n=>n.data.description),large.nodes.map(n=>n.data.description));
 });
 
 test('Design consultation receives complete native intent/proposed work with uncertainty and no internal repair text',async()=>{
@@ -114,4 +114,15 @@ test('late project callbacks cannot contaminate another project or overwrite new
 test('recording review rejects a context that changed after the displayed source snapshot',async()=>{
  const {applyArchitectureChange,workContextIdentity}=await import('../src/architecture-work.mjs');const p=proposeWorkRecords(project(),[record('mapping','implementation',['block:sensor'])]);const change={kind:'review',ref:'work:mapping',expectedContext:workContextIdentity(p,'work:mapping')};
  const latest=structuredClone(p);latest.needs[0].statement='Changed before review applied.';assert.throws(()=>applyArchitectureChange(latest,p.id,change),/Work context changed/);assert.equal(state(latest).bindings.length,0);assert.equal(entity(applyArchitectureChange(p,p.id,change),'work:mapping').contextStatus,'current');
+});
+
+test('typed block controls preserve other work freshness; identical free-form prose remains a global demand',()=>{
+ let p=proposeWorkRecords(project('library'),[record('catalog-code','implementation',['block:catalog'],{files:['catalog.mjs']})]);
+ p=reviewWorkContext(p,'work:catalog-code',{now});
+ const text='Build and test only block "sensor" in the saved design.';
+ const control={sequence:201,kind:'work_order_prepared',runId:'typed-run',text,workOrder:{version:1,kind:'build_block',blockId:'sensor',contextSha256:'a'.repeat(64)}};
+ const accepted={sequence:202,kind:'accepted',runId:'typed-run',text};
+ const unchanged=synchronizeEngineeringIntent(p,'owned-session',[control,accepted]);assert.strictEqual(unchanged,p);assert.equal(entity(unchanged,'work:catalog-code').contextStatus,'current');
+ const demand=synchronizeEngineeringIntent(p,'owned-session',[{...accepted,runId:'user-run'}]);assert.equal(entity(demand,'work:catalog-code').contextStatus,'changed');assert.equal(state(demand).intents[0].text,text);
+ const mismatch=synchronizeEngineeringIntent(p,'owned-session',[control,{...accepted,text:text+' Add a global compliance obligation.'}]);assert.equal(entity(mismatch,'work:catalog-code').contextStatus,'changed');
 });

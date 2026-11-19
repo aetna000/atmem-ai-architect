@@ -1,3 +1,18 @@
+import {updateRequirementsDocument} from './requirements-document.mjs';
+import {DesignComments} from './DesignComments.jsx';
+import {applyCommentProposal,commentBasis,commentPrompt,commentTarget,parseCommentProposal} from './design-comments.mjs';
+import {architectureConsistency} from './architecture-consistency.mjs';
+import {SystemModelWorkspace} from './SystemModelView.jsx';
+import {validateSystemModel} from './system-model.mjs';
+import {BLOCK_SYMBOLS} from './block-symbols.mjs';
+import {copyBoardItems,pasteBoardItems} from './board-clipboard.mjs';
+import {appliedQualityBasis} from './canvas-quality.mjs';
+import {canvasProposal,canvasBasis,canvasProposalRecords} from './codex-canvas.mjs';
+import {engineeringCall,verifiedEngineeringDownload} from './engineering-client.mjs';
+import {BlockBuildSpec,BlockHierarchy,NestedBlocks} from './BlockBuildSpec.jsx';
+import {removeBlocks} from './block-spec.mjs';
+import {nestedCanvas,preferredNestedScope} from './nested-canvas.mjs';
+import {validateCapturedDiagrams} from './captured-diagrams.mjs';
 import {HOSTED,connectHostedWorkspace,hostedInitial,hostedCall,hostedRevision,noteHostedChange} from './hosted-workspace.mjs';
 import {readyExample,isReadyExample} from './ready-example.mjs';
 import {ReadyExampleDownload} from './ReadyExample.jsx';
@@ -9,6 +24,7 @@ import {ProjectChecks} from './ProjectChecks.jsx';
 import {useEngineeringStatus} from './useEngineeringStatus.mjs';
 import {ChatResizeHandle} from './ChatResizeHandle.jsx';
 import {copyProject} from './project-copy.mjs';
+import {initializeProjectIdentity} from './project-identity.mjs';
 import './journey-workspace.css';
 import {synchronizeEngineeringIntent,applyArchitectureChange} from './architecture-work.mjs';
 import {applyArtifactWork} from './artifact-work.mjs';
@@ -58,6 +74,7 @@ import {
   applyEdgeChanges,
   addEdge,
   useReactFlow,
+  useNodesInitialized,
 } from "@xyflow/react";
 import {
   AlertTriangle,
@@ -90,6 +107,7 @@ import {
   CheckCheck,
   Code2,
   Cloud,
+  Boxes,
   LayoutTemplate,
   ZoomIn,
   ZoomOut,
@@ -120,6 +138,11 @@ import {
   Sun,
   Loader2,
   Minus,
+  Save,
+  Download,
+  ExternalLink,
+  Mail,
+  Github,
 } from "lucide-react";
 import { roleOf } from "./review.mjs";
 import {
@@ -150,7 +173,7 @@ import { setProjectSize, estimate } from "./estimate.mjs";
 import { DeployView, EstimateView, ProjectsDialog, ReviewView, TestCard } from "./JourneyViews.jsx";
 import { newRequirement } from "./records.mjs";
 import { DiscoverView, OptionsView, DecisionsView, MeasuresEditor, RequirementsView } from "./EngagementViews.jsx";
-import { fromProjectFile, parseProjectFile, toProjectFile, MAX_FILE_BYTES } from "./project-file.mjs";
+import { fromProjectFile, parseProjectFile, toProjectFile } from "./project-file.mjs";
 import { linkedTo, slugSubject } from "./records.mjs";
 import "./atmem-tokens.css";
 import "./brand.css";
@@ -178,8 +201,14 @@ const STORAGE = "atforma-workspace-v3";
 // A new project starts empty: the user describes what they want first.
 import './onboarding.css';
 import './chat-composer.css';
-const emptyProject = () => ({ id: crypto.randomUUID(), version: 1, revision: 1, name: "New project", provider: "tools", requirements: "", nodes: [], edges: [] });
-const ALL_CATALOG = [...CATALOG, ...UPSTREAM_CATALOG];
+const emptyProject = () => initializeProjectIdentity({version: 1, revision: 1, name: "New project", provider: "tools", requirements: "", nodes: [], edges: []});
+const MANUAL_BLOCK = {id:'manual-block',kind:'resource',provider:'tools',label:'New block',description:''};
+const ALL_CATALOG = [MANUAL_BLOCK, ...CATALOG, ...UPSTREAM_CATALOG];
+const SYMBOL_ICONS = {
+  component: Boxes, application: AppWindow, database: Database, cloud: Cloud,
+  workflow: Workflow, actor: UserCheck, security: ShieldCheck,
+  document: StickyNote, code: Code2, sensor: Radio,
+};
 const KIND_ICON = {
   source: Database,
   predict: Activity,
@@ -285,12 +314,16 @@ function saveConnection(c) {
     localStorage.setItem(CONNECTION, JSON.stringify({ provider: c.provider, model: c.model, effort: c.effort }));
   } catch {}
 }
+function shouldSaveLocalProject(project, messages) {
+  return project.revision>1 || project.nodes.length>0 || !!project.brief?.application?.trim() || messages.length>1;
+}
+
 function readSaved() {
   if(HOSTED)return withDerived(fromProjectFile(hostedInitial().file).project);
   try {
     const raw = localStorage.getItem(STORAGE);
     const p = validateImport(raw ? JSON.parse(raw) : emptyProject());
-    return withDerived(p.id ? p : { ...p, id: crypto.randomUUID() });
+    return withDerived(initializeProjectIdentity(p));
   } catch {
     return validateImport(emptyProject());
   }
@@ -302,7 +335,7 @@ function handlePosition(side, fallback) {
 
 function BlockNode({ data, selected }) {
   const p = PROVIDERS[data.provider] || PROVIDERS.tools;
-  const [color, RoleIcon] = ROLE_STYLE[roleOf({ data })] || ["#5f6b7a", KIND_ICON[data.kind] || Cloud];
+  const [color, RoleIcon] = ROLE_STYLE[roleOf({ data })] || ["#5f6b7a", (data.kind==='resource'&&data.provider==='tools'?Boxes:KIND_ICON[data.kind]||Cloud)];
   return (
     <div
       className={`blk kind-${data.kind} ${data.origin === "existing" ? "existing" : ""} ${selected ? "selected" : ""} ${data.dim ? "dim" : ""} state-${data.runState || "idle"}`}
@@ -312,7 +345,7 @@ function BlockNode({ data, selected }) {
         <Handle type="target" position={handlePosition(data.inputPosition, Position.Left)} />
       )}
       <span className="blk-icon">
-        <RoleIcon size={18} />
+        {React.createElement(SYMBOL_ICONS[data.symbol] || RoleIcon, {size:18})}
       </span>
       <span className="blk-text">
         <strong>{data.label}</strong>
@@ -320,10 +353,11 @@ function BlockNode({ data, selected }) {
         {(data.origin === "existing" || data.provider !== "tools") && (
           <small>
             <i className="pdot" />
-            {data.origin === "existing" ? "your system" : p.name}
+            {data.origin === "existing" ? "Existing system" : p.name}
           </small>
         )}
         {data.blockReview&&<ReviewBadge item={data.blockReview} onClick={data.onReview}/>}
+        {!!data.childCount&&<button className="link nodrag" onClick={event=>{event.stopPropagation();data.onExploreChildren();}}>Explore {data.childCount} subsystems →</button>}
       </span>
       <span className="blk-state">{STATUS_GLYPH[data.runState]}</span>
       {data.runCount && data.runState && data.runState !== "idle" && <span className="blk-count" title="Resources live on the emulator">{data.runCount}</span>}
@@ -388,7 +422,7 @@ const nodeTypes = { resource: BlockNode, layer: LayerNode, note: NoteNode };
 function Palette({ onAdd, onClose, disabled }) {
   const [query, setQuery] = useState(""),
     [provider, setProvider] = useState("all"),
-    [scope, setScope] = useState("ai");
+    [scope, setScope] = useState("all");
   const items = ALL_CATALOG.filter(
     (c) =>
       (scope === "all" ||
@@ -439,13 +473,14 @@ function Palette({ onAdd, onClose, disabled }) {
           <button
             key={item.id}
             className="palette-item"
+            aria-label={item === MANUAL_BLOCK ? "Blank block" : undefined}
             draggable={!disabled}
             disabled={disabled}
             onDragStart={(e) => e.dataTransfer.setData("application/atforma-block", item.id)}
             onClick={() => onAdd(item)}
           >
             {React.createElement(KIND_ICON[item.kind] || Cloud, { size: 15 })}
-            <span>{item.label}</span>
+            <span>{item === MANUAL_BLOCK ? "Blank block" : item.label}</span>
             <span className="dot" title={PROVIDERS[item.provider].name} style={{ background: PROVIDERS[item.provider].color }} />
           </button>
         ))}
@@ -480,7 +515,10 @@ function Linked({ project, id, hideNeeds = false }) {
   );
 }
 
-function BlockDetail({ project, node, run, probe, busy, reviewItems, onReviewConfirm, onReviewDiscuss, onReviewQuestion, onReviewResolve, onRequirementSave, onWorkModelChange, onChange, onRemove, onOpen, onBack,onSpec }) {
+function BlockDetail({ project, node, run, probe, busy, reviewItems, onReviewConfirm, onReviewDiscuss, onReviewQuestion, onReviewResolve, onRequirementSave, onWorkModelChange, onChange, onRemove, onOpen, onBack,onSpec,onDraft,onInterface,onSaveInterface,onPrepareSources,onSystemDiagrams,renderComments,session }) {
+  const hasSpecKit = node.data.kind !== "note";
+  const [tab, setTab] = useState(hasSpecKit ? "spec-kit" : "overview");
+  const activeTab = hasSpecKit ? tab : "overview";
   const trace = run?.steps.find((s) => s.id === node.id);
   const inputs = project.edges.filter((e) => e.target === node.id);
   const outputs = project.edges.filter((e) => e.source === node.id);
@@ -491,10 +529,27 @@ function BlockDetail({ project, node, run, probe, busy, reviewItems, onReviewCon
   return (
     <section className="detail" aria-label="Block detail">
       <div className="detail-navigation">
-        <button className="back" onClick={onBack} aria-label="Back to the board">
+        <button className="back" onClick={onBack} aria-label="Back one level">
           <ArrowLeft size={15} /><kbd>Esc</kbd>
         </button>
+        {hasSpecKit && <div className="block-detail-tabs" role="tablist" aria-label="Block detail views"
+          onKeyDown={event => {
+            if (!["ArrowLeft", "ArrowRight", "Home", "End"].includes(event.key)) return;
+            event.preventDefault();
+            const next = event.key === "Home" ? "overview" : event.key === "End" ? "spec-kit" : activeTab === "overview" ? "spec-kit" : "overview";
+            setTab(next);
+            event.currentTarget.querySelector(`#block-tab-${next}`)?.focus();
+          }}>
+          {[["overview", "Overview"], ["spec-kit", "Block Spec Kit"]].map(([id, label]) =>
+            <button key={id} type="button" id={`block-tab-${id}`} role="tab" aria-selected={activeTab === id}
+              aria-controls={`block-panel-${id}`} tabIndex={activeTab === id ? 0 : -1} onClick={() => setTab(id)}>{label}</button>)}
+        </div>}
+        {onSystemDiagrams&&<button type="button" className="btn" onClick={onSystemDiagrams}>System diagrams</button>}
       </div>
+      {hasSpecKit && <BlockHierarchy nodes={project.nodes} node={node} busy={busy} onOpen={onOpen}
+        onReparent={parentBlockId => set({parentBlockId})}/>}
+      <div className="block-detail-overview" role={hasSpecKit ? "tabpanel" : undefined} id="block-panel-overview"
+        aria-labelledby={hasSpecKit ? "block-tab-overview" : undefined} hidden={activeTab !== "overview"}>
       <div className="detail-col">
         <h3 aria-label="Inputs" title="Inputs"><ArrowRightToLine size={20}/></h3>
         {inputs.length ? (
@@ -521,9 +576,21 @@ function BlockDetail({ project, node, run, probe, busy, reviewItems, onReviewCon
             aria-label="Block name"
             disabled={busy}
             value={node.data.label}
+            maxLength={hasSpecKit ? 150 : 16000}
             onChange={(e) => set({ label: e.target.value })}
           />
         </div>
+        {hasSpecKit && <div className="fields manual-block-fields">
+          <label>Block symbol
+            <select aria-label="Block symbol" value={node.data.symbol || ''} disabled={busy} onChange={e=>set({symbol:e.target.value || undefined})}>
+              <option value="">Automatic</option>
+              {Object.entries(BLOCK_SYMBOLS).map(([id, name]) => <option key={id} value={id}>{name}</option>)}
+            </select>
+          </label>
+          <label className="field-wide">Description
+            <textarea aria-label="Description" value={node.data.description || ''} maxLength={16000} disabled={busy} onChange={e=>set({description:e.target.value})}/>
+          </label>
+        </div>}
         <button className="link" onClick={onSpec}>Specification ↗</button>
         <BlockRequirements project={project} nodeId={node.id} busy={busy} onSave={onRequirementSave}/>
         <ComponentReview key={node.id} item={reviewItems.find(r=>r.id===node.id)} items={reviewItems} busy={busy} onOpen={onOpen} onConfirm={onReviewConfirm} onDiscuss={onReviewDiscuss} onQuestion={onReviewQuestion} onResolve={onReviewResolve} onDetailAnswer={patch=>onChange({...node,data:{...node.data,...patch,...(patch.config?{config:{...node.data.config,...patch.config}}:{})}})}/>
@@ -610,7 +677,7 @@ function BlockDetail({ project, node, run, probe, busy, reviewItems, onReviewCon
             {trace.error && <p className="error-box">{trace.error}</p>}
           </div>
         ) : (
-          <p className="muted">Not run yet. Run a test to see payloads.</p>
+          <p className="muted">{"Not run yet."}</p>
         )}
         <button className="btn ghost danger" disabled={busy} onClick={onRemove}>
           <Trash2 size={13} /> Remove block
@@ -635,6 +702,15 @@ function BlockDetail({ project, node, run, probe, busy, reviewItems, onReviewCon
           </>
         )}
       </div>
+      </div>
+      {hasSpecKit && <div className="block-build-spec" role="tabpanel" id="block-panel-spec-kit"
+        aria-labelledby="block-tab-spec-kit" hidden={activeTab !== "spec-kit"}>
+        <BlockBuildSpec project={project} node={node} busy={busy} onOpen={onOpen} onDraft={onDraft} renderComments={renderComments}
+          onInterface={onInterface} onSaveInterface={onSaveInterface} onSaveSpec={buildSpec=>{
+            toProjectFile({...project,nodes:project.nodes.map(block=>block.id===node.id?{...block,data:{...block.data,buildSpec}}:block)});
+            set({buildSpec});
+          }} onPrepareSources={onPrepareSources} session={session}/>
+      </div>}
     </section>
   );
 }
@@ -699,9 +775,9 @@ function App() {
     [ctx, setCtx] = useState(null),
     [drawLive, setDrawLive] = useState(() => {
       try {
-        return localStorage.getItem("atforma-draw-live") !== "off";
+        return localStorage.getItem("atforma-draw-live") === "on";
       } catch {
-        return true;
+        return false;
       }
     }),
     [designView, setDesignView] = useState("board"),
@@ -748,16 +824,91 @@ function App() {
   const [session, setSession] = useState(null),
     [connection, setConnection] = useState(readConnection),
     [agentBusy, setAgentBusy] = useState(false);
-  const [workspaceView,setWorkspaceView]=useState('canvas'),[buildRequest,setBuildRequest]=useState(null);
+  const sessionRef=useRef(session),sessionProbe=useRef(null);
+  sessionRef.current=session;
+  const [buildRequest,setBuildRequest]=useState(null);
   const [memorySync,setMemorySync]=useState(null);
   const currentMemory=memorySync?.projectId===project.id?memorySync:null;
   const memoryLabel=!session?'AtMem memory':currentMemory?.enabled===false?'AtMem off':currentMemory?.status==='unavailable'?'AtMem unavailable':currentMemory?.pending>0||currentMemory?.status==='sync_failed'?'AtMem sync pending':currentMemory?.status==='ready'?'AtMem on':'AtMem memory';
   const buildView=false;
   const hasDesign=hasArchitectureDesign(project);
-  function chooseWorkspace(value){if(value==='build'){setMode('review');setDesignView('board');setReviewView('findings');}setWorkspaceView('canvas');}
-  function buildCurrentDesign(intent){
-    if(!hasArchitectureDesign(projectRef.current)||busy||agentBusy||pending)return;
-    setBuildRequest({id:crypto.randomUUID(),projectId:projectRef.current.id,...(intent==='test'?{intent:'test'}:{})});chooseWorkspace('build');
+  const modelLinkIssues=useMemo(()=>mode==='review'?architectureConsistency(project).issues.filter(issue=>issue.modelElementId||issue.caseId):[],[project,mode]);
+
+  function openSystemDiagrams(){setMode('design');setDesignView('system-diagrams');}
+  const [boardProgress,setBoardProgress]=useState(false);
+  const [sourceBatch,setSourceBatch]=useState(null);
+  const sourceDocuments=project.extensions?.designSources||[];
+  const currentSourceBatch=sourceBatch?.owner===project.id?sourceBatch:null;
+  useEffect(()=>setBoardProgress(false),[project.id]);
+  function showSourceBoard(){
+    setMode('design');
+    setDesignView('board');
+    setLevel('flow');
+  }
+  const nativeDesignEnabled=!!session?.engineeringEnabled&&!HOSTED;
+  const [nestedScope,setNestedScope]=useState(()=>preferredNestedScope(project));
+  useEffect(()=>setNestedScope(preferredNestedScope(project)),[project.id]);
+  function startArchitecture(sources=projectRef.current.extensions?.designSources,live=sessionRef.current) {
+    if (!live?.engineeringEnabled||HOSTED) return;
+    if (!sources?.length) { requirementsInput.current.click(); return; }
+    if (sources===projectRef.current.extensions?.designSources&&['running','starting'].includes(engineeringStatus?.state)){
+      showSourceBoard();return;
+    }
+    const current=projectRef.current;
+    const next={...current,extensions:{...current.extensions,designSources:sources}};
+    toProjectFile(next);
+    updateEngagement(next);
+    setBuildRequest({id:crypto.randomUUID(),projectId:current.id,intent:'design'});
+    showSourceBoard();
+    if(connection?.provider!=='codex'||!connection.model||connection.model==='default'||!connection.effort)showConnections();
+  }
+  async function readArchitectureDraft(artifact, sessionId) {
+    const current=projectRef.current;
+    const basis=canvasBasis(current);
+    const saved=await saveEngineeringProject(current.id,current);
+    const report=await engineeringCall(session,'delivery',{projectId:current.id});
+    if(report.relation!=='matches_saved_design'||report.savedFileSha256!==saved.sha256
+      ||report.artifact?.id!==artifact.id||report.session?.id!==sessionId)throw Error('This Codex package belongs to another design revision.');
+    const blob=await verifiedEngineeringDownload(session,{projectId:current.id,sessionId,artifactId:artifact.id},artifact);
+    const bytes=new Uint8Array(await blob.arrayBuffer());
+    if(canvasBasis(projectRef.current)!==basis)throw Error('The current design changed during canvas review.');
+    try{
+      const proposal=canvasProposal(projectRef.current,bytes,artifact.id,report.context?.sha256,report.sourceFigureEvidence);
+      toProjectFile({...proposal.next,...canvasProposalRecords(current,proposal)});
+      proposal.quality.capturedDiagrams=await validateCapturedDiagrams(proposal.designDocuments);
+      proposal.quality.gates.authoredDiagramSyntax=true;
+      return proposal;
+    }
+    catch(error){error.canvasDraftInvalid=!error.validationUnavailable;throw error;}
+  }
+  async function previewArchitectureDraft(artifact, sessionId) {
+    const proposal=await readArchitectureDraft(artifact,sessionId);
+    setSelected(null);setLevel('flow');setFocus(null);setMode('design');setDesignView('board');
+    setTreeOpen(true);
+    if(drawLive)applyProposal(proposal,{live:true});
+    else setPending(proposal);
+    refit();
+  }
+  async function receiveDesignSources(files, owner, live=sessionRef.current) {
+    const batch={owner,names:files.map(file=>file.name)};
+    showSourceBoard();
+    setSourceBatch(batch);
+    try{
+      const received=await readAttachments(files);
+      await saveEngineeringProject(owner);
+      if(projectRef.current.id!==owner)return;
+      const response=await fetch('/api/design-sources',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${live.token}`},
+        body:JSON.stringify({projectId:owner,attachments:received.map(({name,mime,data})=>({name,mime,data}))})});
+      const result=await response.json();
+      if(!response.ok)throw Error(typeof result.detail==='string'?result.detail:'The source document could not be read.');
+      if(projectRef.current.id!==owner)return;
+      const prior=projectRef.current.extensions?.designSources||[];
+      startArchitecture([...new Map([...prior,...result.sources].map(source=>[source.sha256,source])).values()],live);
+      setSourceBatch(null);
+    }catch(error){
+      if(projectRef.current.id===owner)setSourceBatch({...batch,error:error.message});
+      throw error;
+    }
   }
 
   useEffect(()=>{saveCanvasView(project,{level,focus,selected,positions:topologyPositions});},[project.id,level,focus,selected,topologyPositions]);
@@ -804,7 +955,7 @@ function App() {
   const [dismissedStarts,setDismissedStarts]=useState(()=>{try{const ids=JSON.parse(localStorage.getItem('atforma-dismissed-starts-v1')||'[]');return Array.isArray(ids)?ids.filter(id=>typeof id==='string').slice(-64):[];}catch{return [];}});
   function dismissStart(){setDismissedStarts(ids=>{const next=[...ids.filter(id=>id!==project.id),project.id].slice(-64);try{localStorage.setItem('atforma-dismissed-starts-v1',JSON.stringify(next));}catch{}return next;});}
   const [emulationOpen,setEmulationOpen]=useState(false),[treeOpen,setTreeOpen]=useState(false);
-  useEffect(()=>{if(!treeOpen)return;const close=e=>{if(e.type==="keydown"?e.key==="Escape":!e.target.closest(".component-navigator,.palette"))setTreeOpen(false);};document.addEventListener("pointerdown",close);document.addEventListener("keydown",close);return()=>{document.removeEventListener("pointerdown",close);document.removeEventListener("keydown",close);};},[treeOpen]);
+  useEffect(()=>{if(!treeOpen)return;const close=e=>{if(e.type==="keydown"?e.key==="Escape":!e.target.closest(".board-top-controls,.palette,.board-controls"))setTreeOpen(false);};document.addEventListener("pointerdown",close);document.addEventListener("keydown",close);return()=>{document.removeEventListener("pointerdown",close);document.removeEventListener("keydown",close);};},[treeOpen]);
   const consultationAttempts = useRef(new Set());
   const agentAbort = useRef(null);
   const messageInput = useRef(null);
@@ -888,14 +1039,59 @@ function App() {
   const [attention, setAttention] = useState(null);
   const attentionRef = useRef(null);
   const fileRef = useRef(),fileImportAsCopy=useRef(false),requirementsInput=useRef();
+  const menuTrigger=useRef(null),projectMenu=useRef(null);
+  const [savingProject,setSavingProject]=useState(false);
+  const [runningComment,setRunningComment]=useState(null);
+  const commentQueue=useRef({working:false,activeId:null,items:[]});
+
+  useEffect(()=>{
+    if(!menu)return;
+    const panel=projectMenu.current;
+    panel.querySelector('[role="menuitem"]:not(:disabled)')?.focus();
+    function dismiss(event){
+      if(!panel.contains(event.target)&&!menuTrigger.current?.contains(event.target))setMenu(false);
+    }
+    document.addEventListener('pointerdown',dismiss);
+    return ()=>document.removeEventListener('pointerdown',dismiss);
+  },[menu]);
+  function navigateProjectMenu(event){
+    const items=[...projectMenu.current.querySelectorAll('[role="menuitem"]:not(:disabled)')];
+    const index=items.indexOf(document.activeElement);
+    switch(event.key){
+      case 'Escape':
+        event.preventDefault();
+        event.stopPropagation();
+        setMenu(false);
+        menuTrigger.current?.focus();
+        return;
+      case 'Tab':
+        setMenu(false);
+        return;
+      case 'Home': items[0]?.focus(); break;
+      case 'End': items.at(-1)?.focus(); break;
+      case 'ArrowDown': items[(index+1)%items.length]?.focus(); break;
+      case 'ArrowUp': items[(index+items.length-1)%items.length]?.focus(); break;
+      default: return;
+    }
+    event.preventDefault();
+    event.stopPropagation();
+  }
   const attachmentInput=useRef();
   const [attachments,setAttachments]=useState([]),[attachmentError,setAttachmentError]=useState(''),[readingAttachments,setReadingAttachments]=useState(false);
   const attachmentReadLock=useRef(false);
   async function attachFiles(files){
-    if(!files.length||attachmentReadLock.current)return;
+    const selectedFiles=[...files];
+    if(!selectedFiles.length||attachmentReadLock.current)return;
     attachmentReadLock.current=true;const projectAtStart=projectRef.current.id;
     setReadingAttachments(true);setAttachmentError('');
-    try {const next=await readAttachments([...files],attachments);if(projectRef.current.id===projectAtStart)setAttachments(previous=>[...previous,...next]);}
+    try {
+      const live=sessionRef.current||await refreshSession();
+      if(live?.engineeringEnabled&&!HOSTED){
+        await receiveDesignSources(selectedFiles,projectAtStart,live);return;
+      }
+      const next=await readAttachments(selectedFiles,attachments);
+      if(projectRef.current.id===projectAtStart)setAttachments(previous=>[...previous,...next]);
+    }
     catch(error){setAttachmentError(error.message);}
     finally{attachmentReadLock.current=false;setReadingAttachments(false);}
   }
@@ -939,15 +1135,19 @@ function App() {
 
   function showConnections(){if(HOSTED){void hostedCall('account').catch(error=>notify(error.message));return;}setModal('connections');}
   const refreshSession = useCallback(async () => {
-    try {
-      const next = await discoverLocalAgent();
+    if(sessionProbe.current)return sessionProbe.current;
+    const lookup=discoverLocalAgent().then(next=>{
+      sessionRef.current=next;
       setSession(next);
       if(HOSTED&&next.defaultConnection)setConnection(current=>current?.model===next.defaultConnection.model&&current?.effort===next.defaultConnection.effort?current:next.defaultConnection);
       return next;
-    } catch {
+    }).catch(()=>{
+      sessionRef.current=null;
       setSession(null);
       return null;
-    }
+    }).finally(()=>{sessionProbe.current=null;});
+    sessionProbe.current=lookup;
+    return lookup;
   }, []);
   useEffect(()=>{if(HOSTED&&session?.token)void hostedCall('ready').catch(()=>{});},[session?.token]);
   useEffect(() => {
@@ -1036,13 +1236,17 @@ function App() {
     if (n && focus && layerOf(n).id !== focus) setFocus(layerOf(n).id);
   }
   function goUp() {
-    if (level === "block") goFlow(focus);
+    const parent = projectRef.current.nodes.find(node => node.id === selected)?.data.parentBlockId;
+    if (level === "block" && parent) openBlock(parent);
+    else if (level === "block") goFlow(focus);
+    else if(nestedScope&&nestedScope!=='*')exploreSubsystem(projectRef.current.nodes.find(node=>node.id===nestedScope)?.data.parentBlockId||null);
     else if (focus) goFlow(null);
   }
 
   useEffect(() => {
     function keys(e) {
-      const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName);
+      const typing = /INPUT|TEXTAREA|SELECT/.test(document.activeElement?.tagName) || document.activeElement?.isContentEditable;
+      if (designView==='system-diagrams'&&e.key==='Escape'&&!modal&&!menu&&!typing){setDesignView('board');return;}
       if (e.key === "Escape") {
         if (modal || menu || palette || issuesOpen) {
           if (!(modal === "welcome" && !connection)) setModal(null);
@@ -1052,7 +1256,24 @@ function App() {
         } else if (agentAbort.current) agentAbort.current.abort();
         else if (!typing&&!buildView) goUp();
       }
+      if(designView==='system-diagrams'){
+        if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'&&!typing){
+          e.preventDefault();
+          if(e.shiftKey)redo();else undo();
+        }
+        return;
+      }
       if(buildView)return;
+      if (onBoard && level !== "block" && !typing && !modal && !palette && !window.getSelection()?.toString() && (e.ctrlKey || e.metaKey)) {
+        if (e.key.toLowerCase() === "c" && (selected || picked.size)) {
+          e.preventDefault();
+          copySelection();
+        }
+        if (e.key.toLowerCase() === "v" && boardClipboard?.projectId === project.id) {
+          e.preventDefault();
+          pasteSelection();
+        }
+      }
       if (e.key === "/" && !typing) {
         e.preventDefault();
         setPalette(true);
@@ -1060,13 +1281,13 @@ function App() {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "a" && !typing && mode === "design") {
         e.preventDefault();
         setLevel("flow");
-        setPicked(new Set(projectRef.current.nodes.map((n) => n.id)));
+        setPicked(new Set((nested.projected?nested.nodes:projectRef.current.nodes).map((n) => n.id)));
       }
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "z" && !typing && !modal) {
         e.preventDefault();
         if (e.shiftKey) redo(); else undo();
       }
-      if ((e.key === "Delete" || e.key === "Backspace") && !typing && picked.size > 1) {
+      if ((e.key === "Delete" || e.key === "Backspace") && !typing && !nested.projected && picked.size > 1) {
         e.preventDefault();
         removeNodes(picked);
       }
@@ -1092,7 +1313,9 @@ function App() {
       const remember = !commitGroup.current;
       commitGroup.current = dragging;
       const current = projectRef.current;
-      commit({ ...current, nodes: applyNodeChanges(real, current.nodes) }, remember);
+      const removed = new Set(real.filter(change => change.type === 'remove').map(change => change.id));
+      const nodes = applyNodeChanges(real.filter(change => change.type !== 'remove'), current.nodes);
+      commit({ ...current, nodes: removeBlocks(nodes, removed), edges: current.edges.filter(edge => !removed.has(edge.source) && !removed.has(edge.target)) }, remember);
     },
     [commit, busy, level],
   );
@@ -1136,7 +1359,7 @@ function App() {
   }
   function removeNodes(ids) {
     const p = projectRef.current;
-    commit({ ...p, nodes: p.nodes.filter((n) => !ids.has(n.id)), edges: p.edges.filter((e) => !ids.has(e.source) && !ids.has(e.target)) });
+    commit({ ...p, nodes: removeBlocks(p.nodes, ids), edges: p.edges.filter((e) => !ids.has(e.source) && !ids.has(e.target)) });
     setPicked(new Set());
     setSelected(null);
   }
@@ -1145,6 +1368,7 @@ function App() {
   const seen = useRef(null);
   if (!seen.current) seen.current = structuredClone(project);
   const paletteAt = useRef(null);
+  const [boardClipboard, setBoardClipboard] = useState(null);
   const freshNote = useRef(null);
   function canvasChanges(now) {
     const was = seen.current;
@@ -1165,36 +1389,88 @@ function App() {
     return out.slice(0, 40);
   }
   function addComponent(item, position) {
-    if (busy) return;
-    const next = structuredClone(project);
+    if (busy || agentBusy || pending) return;
+    const current = projectRef.current;
     const id = crypto.randomUUID();
-    next.nodes.push({
-      id,
-      type: "resource",
-      position: position || centre(next.nodes.length),
-      data: {
-        ...item,
-        config: { region: "To be selected", classification: "Internal", timeout: 5000 },
-        origin: "proposed",
-      },
-    });
+    const parentBlockId = nested.scope || undefined;
+    const next = {
+      ...current,
+      nodes: [...current.nodes, {id, type:"resource", position:position || centre(current.nodes.length),
+        data:{...item, parentBlockId,
+          config:{region:"To be selected", classification:"Internal", timeout:5000}, origin:"proposed"}}],
+    };
+    try { toProjectFile(next); } catch (error) { notify(error.message); return; }
     commit(next);
+    setPicked(new Set());
     setSelected(id);
     setPalette(false);
-    if (level !== "flow") goFlow(null);
-    notify(`${item.label} added — wire its ports.`);
+    paletteAt.current = null;
+    if (item === MANUAL_BLOCK) openBlock(id);
+    else if (level !== "flow") goFlow(null);
+    notify(`${item.label} added.`);
   }
+
+  function copySelection(ids = picked.size > 1 ? picked : selected ? [selected] : picked) {
+    try {
+      const contents = copyBoardItems(projectRef.current, ids);
+      if (!contents) return;
+      setBoardClipboard(contents);
+      notify(`Copied ${contents.nodes.length} ${contents.nodes.length === 1 ? 'item' : 'items'}.`);
+    } catch (error) { notify(error.message); }
+  }
+
+  function pasteSelection(position) {
+    if (!boardClipboard || busy || agentBusy || pending) return;
+    const current = projectRef.current;
+    try {
+      const {nodes, edges} = pasteBoardItems(current, boardClipboard, position || centre(current.nodes.length), nested.scope || undefined);
+      const next = {...current, nodes:[...current.nodes,...nodes], edges:[...current.edges,...edges]};
+      validateImport(next);
+      toProjectFile(next);
+      commit(next);
+      if (level !== "flow") goFlow(null);
+      setPicked(new Set(nodes.map(node => node.id)));
+      setSelected(nodes.length === 1 ? nodes[0].id : null);
+      notify(`Pasted ${nodes.length} ${nodes.length === 1 ? 'item' : 'items'}.`);
+    } catch (error) { notify(error.message); }
+  }
+
+  function saveBlockInterface(edge) {
+    const current = projectRef.current;
+    const edges = current.edges.some(item => item.id === edge.id)
+      ? current.edges.map(item => item.id === edge.id ? edge : item)
+      : [...current.edges, edge];
+    const next = {...current, edges};
+    validateImport(next);
+    toProjectFile(next);
+    commit(next);
+  }
+
   function updateNode(node) {
     commit({ ...project, nodes: project.nodes.map((n) => (n.id === node.id ? node : n)) });
   }
   function removeNode(id) {
     commit({
       ...project,
-      nodes: project.nodes.filter((n) => n.id !== id),
+      nodes: removeBlocks(project.nodes, new Set([id])),
       edges: project.edges.filter((e) => e.source !== id && e.target !== id),
     });
     setSelected(null);
     goFlow(focus);
+  }
+  function restoreDesign(snapshot) {
+    const restored=keepEngagement(snapshot,projectRef.current);
+    const extensions={...restored.extensions};
+    if(snapshot.extensions?.systemModel)extensions.systemModel=snapshot.extensions.systemModel;
+    else delete extensions.systemModel;
+    commit({...restored,extensions},false);
+  }
+  function saveDiagramModel(model) {
+    validateSystemModel(model);
+    const current=projectRef.current;
+    const next={...current,extensions:{...current.extensions,systemModel:model}};
+    toProjectFile(next);
+    commit(next);
   }
   function undo() {
     if (!history.length || busy || agentBusy) return;
@@ -1202,7 +1478,7 @@ function App() {
     setFuture((f) => [...f.slice(-29), structuredClone(projectRef.current)]);
     setHistory((h) => h.slice(0, -1));
     // Undo takes back the design, never what the user has told us since.
-    commit(keepEngagement(previous, projectRef.current), false);
+    restoreDesign(previous);
     setSelected(null);
     setPending(null);
     notify("Board change undone. Redo restores it.");
@@ -1212,7 +1488,7 @@ function App() {
     const next = future.at(-1);
     setHistory((h) => [...h.slice(-29), structuredClone(projectRef.current)]);
     setFuture((f) => f.slice(0, -1));
-    commit(keepEngagement(next, projectRef.current), false);
+    restoreDesign(next);
     setSelected(null);
     setPending(null);
     notify("Board change redone.");
@@ -1234,7 +1510,6 @@ function App() {
     const file = e.target.files?.[0];
     if (!file) return;
     try {
-      if (file.size > MAX_FILE_BYTES) throw Error("Project files must be 2 MB or smaller.");
       const content = await file.text();
       const raw = JSON.parse(content);
       if (raw.format || raw.version === 1) {
@@ -1425,7 +1700,10 @@ function App() {
       if (!["document","emulation","block-review"].includes(origin) && result.priceQuotes?.length) updateEngagement(applyPriceQuotes(projectRef.current, result.priceQuotes));
       if(['chat','workflow','block-review'].includes(origin)){
         const p=projectRef.current,q=result.followUp;
-        updateEngagement({...p,lastAsked:q?{id:'architect-question',topic:q.topic||'',question:q.question,why:q.why,beginner:q.example||''}:null,extensions:{...p.extensions,activeConsultation:{hasQuestion:!!q}}});
+        const questions = p.openQuestions || [];
+        const linked = q?.componentId && origin !== 'block-review' && p.nodes.some(node=>node.id===q.componentId)
+          && !questions.some(row=>row.question.trim()===q.question.trim()&&row.links.includes(q.componentId));
+        updateEngagement({...p,openQuestions:linked?[...questions,newQuestion({question:q.question,links:[q.componentId]})]:questions,lastAsked:q?{id:'architect-question',topic:q.topic||'',question:q.question,why:q.why,beginner:q.example||''}:null,extensions:{...p.extensions,activeConsultation:{hasQuestion:!!q}}});
       }
       if(origin==='block-review'&&reviewTarget&&result.componentReview){
         try {updateEngagement(applyComponentReview(projectRef.current,reviewTarget,result.componentReview));signals.push('block review and linked questions recorded');}
@@ -1467,7 +1745,7 @@ function App() {
   // Applying a proposal is a design decision: it is recorded, and Undo restores the previous design.
   function applyProposal(proposal = pending, { live = false, quiet = false } = {}) {
     const current = projectRef.current;
-    if (proposal.baseRevision !== current.revision) {
+    if (proposal.baseRevision !== current.revision || proposal.sourceBasis && proposal.sourceBasis!==canvasBasis(current)) {
       notify("The design changed since this proposal. Ask again.");
       setPending(null);
       return;
@@ -1491,7 +1769,15 @@ function App() {
     attentionRef.current = emphasis;
     setAttention(emphasis);
     // Remember the concept we drew so we can keep evolving it until the user takes over.
-    commit({ ...keepEngagement(proposal.next, current), decisions: [...(current.decisions || []), decision], conceptSig: quiet ? conceptSignature(proposal.next) : null });
+    const next={...keepEngagement(proposal.next,current),decisions:[...(current.decisions||[]),decision],
+      conceptSig:quiet?conceptSignature(proposal.next):null};
+    if(proposal.sourceRequirements){
+      Object.assign(next,canvasProposalRecords(current,proposal));
+      const applied=withDerived({...next,revision:current.revision+1});
+      next.extensions.architectureDraftQuality={...proposal.quality,appliedBasis:appliedQualityBasis(applied)};
+    }
+    commit(next);
+    if(proposal.sourceRequirements)setNestedScope(preferredNestedScope(next));
     seen.current = structuredClone(proposal.next);
     const summary = [
       ...change.added.map((l) => `+ ${l}`),
@@ -1593,23 +1879,34 @@ function App() {
   // Live Terraform apply emulation states take precedence on the blocks they touch.
   const liveStates = useMemo(() => ({ ...runStates, ...applyDiagram.states }), [runStates, applyDiagram]);
   const system = useMemo(() => systemView(shown, liveStates), [shown, liveStates]);
+  const nested = useMemo(()=>nestedCanvas(shown,nestedScope),[shown,nestedScope]);
+  const nestedPositions = useMemo(()=>nested.projected?arrangeOverview(nested,measured,nested.nodes.length<=5?'TB':'LR'):{},[nested,measured]);
+  const nodesReady=useNodesInitialized();
+  const nestedViewKey=nested.nodes.map(node=>node.id).join('|');
+  useEffect(()=>{
+    if(!nested.projected||!nodesReady||mode!=='design'||designView!=='board'||level!=='flow')return;
+    const timer=setTimeout(()=>fitView({padding:0.1,maxZoom:1.1,duration:150}),350);
+    return()=>clearTimeout(timer);
+  },[nested.projected,nested.scope,nestedViewKey,nestedPositions,nodesReady,mode,designView,level,treeOpen,chatWidth,fitView]);
+  function exploreSubsystem(id){setNestedScope(id);setSelected(null);setPicked(new Set());setLevel('flow');refit();}
   const wireClass = (source) =>
     `wire ${liveStates[source] === "failed" ? "wire-failed" : ["passed","verified"].includes(liveStates[source]) ? "wire-passed" : ["creating","applied"].includes(liveStates[source]) ? "wire-live" : ""}`;
   const canvasNodes =
     level === "system"
       ? system.nodes.map((n) => ({ ...n, position:topologyPositions[n.id]||n.position, data:{...n.data,onExplore:()=>n.data.blocks.length===1?reviewBlock(n.data.blocks[0]):goFlow(n.data.layer),onReview:()=>reviewBlock(blockReviews.find(r=>n.data.blocks.includes(r.id)&&r.issues.length)?.id||n.data.blocks[0]),reviewSummary:{reviewed:blockReviews.filter(r=>n.data.blocks.includes(r.id)&&r.status==='reviewed').length,issues:blockReviews.filter(r=>n.data.blocks.includes(r.id)).flatMap(r=>r.issues)}}, measured: measured[n.id], className: previewing ? "preview" : "" }))
-      : shown.nodes.map((n) => ({
+      : nested.nodes.map((n) => ({
           ...n,
+          position:nestedPositions[n.id]||n.position,
           type: n.data.kind === "note" ? "note" : n.type,
           measured: measured[n.id],
           className: `${previewing ? "preview" : ""} ${attention?.nodes.includes(n.id) ? "diagram-attention" : ""}`,
           selected: n.id === selected || picked.has(n.id),
-          data: { ...n.data, blockReview:blockReviews.find(r=>r.id===n.id), onReview:()=>reviewBlock(n.id), onText: noteText, fresh: n.id === freshNote.current, runState: liveStates[n.id], runCount: applyDiagram.counts[n.id], dim: (focusBlocks && !focusBlocks.has(n.id)) || (testing && !n.data.poc && n.data.kind !== "resource" && project.nodes.some((x) => x.data.poc)) },
+          data: { ...n.data, childCount:n.id===nested.scope?0:shown.nodes.filter(child=>child.data.parentBlockId===n.id).length,onExploreChildren:()=>exploreSubsystem(n.id),blockReview:blockReviews.find(r=>r.id===n.id), onReview:()=>reviewBlock(n.id), onText: noteText, fresh: n.id === freshNote.current, runState: liveStates[n.id], runCount: applyDiagram.counts[n.id], dim: (focusBlocks && !focusBlocks.has(n.id)) || (testing && !n.data.poc && n.data.kind !== "resource" && project.nodes.some((x) => x.data.poc)) },
         }));
   const canvasEdges =
     level === "system"
       ? system.edges.map((e) => ({ ...e, className: wireClass(e.data.sources[0]), markerEnd: { type: "arrowclosed", width: 14, height: 14 } }))
-      : shown.edges.map((e) => ({
+      : nested.edges.map((e) => ({
           ...e,
           className: `${previewing ? "preview" : ""} ${attention?.edges.includes(e.id) ? "diagram-attention" : ""} ${wireClass(e.source)} ${focusBlocks && !(focusBlocks.has(e.source) || focusBlocks.has(e.target)) ? "dim" : ""}`,
           animated: (busy && liveStates[e.source] === "passed") || (applyEmulation.running && ["creating","applied","verified"].includes(liveStates[e.source])),
@@ -1633,7 +1930,7 @@ function App() {
   const exportPack = async () => {
     try {
       notify("Preparing documents and diagram exports…");
-      await downloadBundle(await outputBundle(project,run,environment));
+      await downloadBundle(await outputBundle(project,run,environment,null,{session:sessionRef.current,prepareSources:prepareSourceEvidence}));
     } catch(e) { notify(e.message); }
   };
   const exportTerraform = async (validation = null) => {
@@ -1682,7 +1979,7 @@ function App() {
   // Autosave through the selected local or hosted session service.
   const binned = useRef(new Set());
   useEffect(() => {
-    if (!session || binned.current.has(project.id) || (!HOSTED && !project.nodes.length && !project.brief?.application?.trim() && messages.length < 2)) return;
+    if (!session || binned.current.has(project.id) || (!HOSTED && !shouldSaveLocalProject(project,messages))) return;
     const bridgeVersion=HOSTED?hostedRevision(project.id):undefined;
     const t = setTimeout(async () => {
       try {
@@ -1692,12 +1989,24 @@ function App() {
     }, 800);
     return () => clearTimeout(t);
   }, [project, messages, session?.token]);
+  async function prepareSourceEvidence(expected){
+    const basis=canvasBasis(expected);
+    const live=sessionRef.current||await refreshSession();
+    if(!live?.token)return live;
+    const unchanged=()=>{if(canvasBasis(projectRef.current)!==basis)throw Error('The design changed while preparing source images. Retry the handoff.');};
+    unchanged();
+    // Figure authorization needs the owned saved project, not a frozen chat journal.
+    // Source/manifest/pixel pins independently bind the exported snapshot.
+    await saveEngineeringProject(expected.id);
+    unchanged();
+    return live;
+  }
   async function saveEngineeringProject(owner,expected){
     const current=projectRef.current;
     if(current.id!==owner)throw Error('The project changed while opening engineering work. Return to that project before submitting its draft.');
     if(expected&&expected!==current)throw Error('The design changed before saving the handoff. Review Delivery again.');
     const conversation=messagesRef.current;
-    const result=await projectStore(session,'save',{id:owner,file:toProjectFile(withConversation(current,conversation))});
+    const result=await projectStore(sessionRef.current,'save',{id:owner,file:toProjectFile(withConversation(current,conversation))});
     if(expected&&(projectRef.current!==expected||messagesRef.current!==conversation))throw Error('The design changed while saving the handoff. Review Delivery again.');
     return result;
   }
@@ -1710,12 +2019,13 @@ function App() {
     }
   }
   function switchTo(next) {
+    next=initializeProjectIdentity(next);
     setIntroOpen(false);setVoiceOpenRequest(0);
     const address=new URL(window.location.href);if(address.searchParams.get('project')!==next.id){address.searchParams.delete('project');address.searchParams.delete('example');window.history.replaceState(null,'',address);}
-    chooseWorkspace('canvas');setBuildRequest(null);
+    setBuildRequest(null);
     next = withDerived(next);
     const leaving = projectRef.current;
-    if (session && !binned.current.has(leaving.id) && (leaving.nodes.length || leaving.brief?.application?.trim() || messages.length > 1))
+    if (session && !binned.current.has(leaving.id) && shouldSaveLocalProject(leaving,messages))
       projectStore(session, "save", { id: leaving.id, file: toProjectFile(withConversation(leaving, messages)) }).catch(() => {});
     setHistory([]);
     setFuture([]);
@@ -1760,7 +2070,7 @@ function App() {
         const { project: opened } = fromProjectFile(await projectStore(session, "get", { id }));
         if (!active) return;
         const leaving = projectRef.current;
-        if (leaving.id !== id && !binned.current.has(leaving.id) && (leaving.nodes.length || leaving.brief?.application?.trim() || messages.length > 1)) {
+        if (leaving.id !== id && !binned.current.has(leaving.id) && shouldSaveLocalProject(leaving,messages)) {
           await projectStore(session, "save", { id: leaving.id, file: toProjectFile(withConversation(leaving, messages)) });
         }
         if (!active) return;
@@ -1833,6 +2143,7 @@ function App() {
   function visitJourney(id,event){
     const section=DESIGN_SECTIONS.find(item=>item.id===journeySectionId(id));
     if(!section)return;
+    if(section.id!=='scope'&&document.querySelector('[data-unsaved-requirements="true"]')&&!window.confirm('Leave Requirements and discard unsaved document edits?'))return;
     event?.currentTarget.closest("details")?.removeAttribute("open");
     setMode(section.mode);setDesignView(section.view);
     if(section.mode==='review')setReviewView('findings');
@@ -1860,9 +2171,108 @@ function App() {
   const topics = progress(project);
   const blockerCount = findings.filter((f) => f.severity === "blocker" && f.status === "open").length;
   const ask = project.extensions?.activeConsultation ? (project.extensions.activeConsultation.hasQuestion ? project.lastAsked : null) : project.lastAsked?.question ? project.lastAsked : nextQuestion(project);
-  function saveProjectFile() {
+  function updateComments(owner,transform){
+    const current=projectRef.current;
+    if(current.id!==owner)return;
+    const next={...current,extensions:{...current.extensions,designComments:transform(current.extensions?.designComments||[])}};
+    toProjectFile(next);
+    updateEngagement(next);
+  }
+  function saveDesignComment(target,value,ask,quote){
+    const current=projectRef.current;
+    const text=value.trim();
+    if(!text||text.length>1800)throw Error('Enter a comment up to 1,800 characters.');
+    if(!commentTarget(current,target))throw Error('This part of the design is unavailable.');
+    if((current.extensions?.designComments?.length||0)>=300)throw Error('This project already has 300 design comments.');
+    const comment={id:crypto.randomUUID(),target,text,status:'queued',...(quote?{quote:quote.slice(0,1500)}:{})};
+    updateComments(current.id,rows=>[...rows,comment]);
+    if(ask)void runDesignComments([comment.id]);
+  }
+  function replyToDesignComment(id,value){
+    const text=value.trim();
+    if(!text||text.length>1800)throw Error('Enter a reply up to 1,800 characters.');
+    const current=projectRef.current;
+    if(!current.extensions?.designComments?.some(row=>row.id===id))throw Error('This comment is no longer available.');
+    const reply={id:crypto.randomUUID(),text,createdAt:new Date().toISOString()};
+    updateComments(current.id,rows=>rows.map(row=>row.id===id?{...row,replies:[...(Array.isArray(row.replies)?row.replies:[]),reply]}:row));
+  }
+  async function runDesignComments(ids){
+    if(!ids.length)return;
+    const owner=projectRef.current.id;
+    const live=sessionRef.current||await refreshSession();
+    if(projectRef.current.id!==owner)return;
+    if(!live||!connection){notify('Connect an AI provider to review saved comments.');showConnections();return;}
+    const queue=commentQueue.current;
+    for(const id of ids)if(queue.activeId!==id&&!queue.items.some(item=>item.id===id))queue.items.push({owner,id});
+    if(queue.working)return;
+    queue.working=true;
+    try{
+      while(queue.items.length){
+        const job=queue.items.shift();
+        const current=projectRef.current;
+        if(current.id!==job.owner)continue;
+        const row=current.extensions?.designComments?.find(comment=>comment.id===job.id);
+        if(!row||row.status==='applied')continue;
+        queue.activeId=row.id;
+        setRunningComment(row.id);
+        const update=values=>updateComments(job.owner,comments=>comments.map(comment=>comment.id===row.id?{...comment,...values}:comment));
+        try{
+          const binding=commentTarget(current,row.target);
+          if(!binding)throw Error('This part of the design is unavailable.');
+          const basis=commentBasis(binding);
+          update({status:'queued',proposal:null,error:null});
+          await saveEngineeringProject(job.owner);
+          const response=await requestArchitect({session:sessionRef.current,connection,message:commentPrompt(current,row,binding),
+            project:current,history:[],origin:'document',stage:'design',signal:AbortSignal.timeout(120000)});
+          const proposal=parseCommentProposal(response.message,binding);
+          const ready=Object.keys(proposal.changes).length>0;
+          if(ready)toProjectFile(applyCommentProposal(current,{...row,basis},proposal));
+          update({status:ready?'ready':'answered',proposal,basis,error:null});
+        }catch(failure){
+          update({status:'failed',error:failure.name==='TimeoutError'?'AI review timed out.':failure.message,proposal:null});
+        }
+        finally{queue.activeId=null;setRunningComment(null);}
+      }
+    }finally{queue.working=false;}
+  }
+  function applyDesignComment(id){
+    const current=projectRef.current;
+    if(busy||agentBusy||pending)throw Error('Finish the current design change before applying this edit.');
+    const comment=current.extensions?.designComments?.find(row=>row.id===id);
+    if(comment?.status!=='ready')throw Error('This AI edit is unavailable.');
+    const next=applyCommentProposal(current,comment);
+    const extensions={...next.extensions,designComments:next.extensions.designComments.map(row=>row.id===id?{...row,status:'applied'}:row)};
+    validateImport(next);
+    toProjectFile({...next,extensions});
+    commit({...next,extensions});
+  }
+  function renderDesignComments(target,label){
+    return <DesignComments key={JSON.stringify(target)} project={project} target={target} label={label} onSave={saveDesignComment}
+      onRun={id=>void runDesignComments([id])} onApply={applyDesignComment} onReply={replyToDesignComment} running={runningComment}/>;
+  }
+  async function saveCurrentProject() {
+    if(savingProject)return;
+    setSavingProject(true);
     try {
-      download(JSON.stringify(toProjectFile(withConversation(project, messages)), null, 2), `${slug}.atmem-ai-architect.json`);
+      const current=projectRef.current;
+      if(sessionRef.current){
+        const receipt=await saveEngineeringProject(current.id);
+        if(receipt.saved!==true&&!/^[a-f0-9]{64}$/.test(receipt.sha256||''))throw Error('Project save could not be confirmed.');
+        notify('Project saved.');
+        if(projectRef.current.id===current.id)void runDesignComments((current.extensions?.designComments||[]).filter(row=>row.status==='queued').map(row=>row.id));
+      }else{
+        const draft=withConversation(current,messagesRef.current);
+        toProjectFile(draft);
+        localStorage.setItem(STORAGE,JSON.stringify(draft));
+        setStorageError(false);
+        notify('Project saved in this browser.');
+      }
+    }catch(error){notify(error.message);}
+    finally{setSavingProject(false);}
+  }
+  function saveProjectFile(filename = `${slug}.atmem-ai-architect.json`) {
+    try {
+      download(JSON.stringify(toProjectFile(withConversation(projectRef.current, messagesRef.current)), null, 2), filename);
       notify("Project file saved. Open it later from ⋯ → Open project file.");
       return true;
     } catch (error) {
@@ -1883,6 +2293,7 @@ function App() {
   }
   const scenarioReady = ([, , needs]) => !needs || project.nodes.some((n) => n.data.kind === needs);
   const onBoard = testing || (mode === "design" && designView === "board");
+  const boardProgressVisible=mode==='design'&&onBoard&&boardProgress;
   const diff = pending?.next ? proposalDiff(project, pending.next) : null;
 
   const specificationChecks=(
@@ -1921,6 +2332,7 @@ function App() {
           /><PencilRuler size={14} aria-hidden="true"/></label>
         </nav>
         <div className="bar-actions">
+          {!chatOpen&&designView==='system-diagrams'&&<button className="icon" title="Show chat" aria-label="Show chat" onClick={()=>setChatOpen(true)}><PanelRightOpen size={18}/></button>}
           {HOSTED&&<><button className="btn" onClick={newProject} disabled={busy||agentBusy}><Plus size={16}/>New project</button><button className="btn" onClick={()=>hostedCall('account')}>Account</button></>}
           {isReadyExample(project)&&<><ReadyExampleDownload compact/>{!HOSTED&&<button className="btn" onClick={newProject} disabled={busy||agentBusy}>Create new project</button>}</>}
           {storageError && <span className="warn-text">Not saved</span>}
@@ -1939,28 +2351,39 @@ function App() {
           >
             {theme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
           </button>
-          <button className="icon" title="More" aria-label="More" onClick={() => setMenu((m) => !m)}>
+          <button ref={menuTrigger} className="icon" title="More" aria-label="More" aria-haspopup="menu" aria-expanded={menu} aria-controls={menu?"project-menu":undefined} onClick={() => setMenu((m) => !m)}>
             <MoreHorizontal size={16} />
           </button>
 
         </div>
         {menu && (
-          <div className="menu" role="menu" onClick={() => setMenu(false)}>
-            <button role="menuitem" onClick={() => (refreshProjects(), setModal("projects"))} disabled={busy}><FolderOpen size={16}/>Projects</button>
-            <a role="menuitem" href="https://atmem.ai" target="_blank" rel="noopener noreferrer">atmem.ai ↗</a>
-            <a role="menuitem" href="mailto:hello@atmem.ai">Contact us: hello@atmem.ai</a>
-            <button role="menuitem" onClick={openReadyExample} disabled={busy||agentBusy}><LayoutGrid size={16}/>Open complete AI example</button>
-            <button role="menuitem" onClick={newProject} disabled={busy}><Plus size={16}/>New project</button>
-            <hr/><button role="menuitem" onClick={() => setPalette(true)} disabled={busy}><Plus size={16}/>Add a block</button>
-            <button role="menuitem" onClick={() => setModal("templates")} disabled={busy}><LayoutTemplate size={16}/>Templates</button>
-            <hr/><button role="menuitem" onClick={() => setModal("import")} disabled={busy}><GitBranch size={16}/>Import diagram</button>
-            <button role="menuitem" onClick={() => setModal("project-file")} disabled={busy}><FolderOpen size={16}/>Open project file</button>
-            <hr/><button role="menuitem" onClick={() => setModal("memory")} disabled={!session}><BrainActivity size={18} active={false}/>AtMem memory</button>
-            <button role="menuitem" onClick={() => setModal("start-over")} disabled={busy || agentBusy}><RotateCcw size={16}/>Start over</button>
-            <hr />
-            {!HOSTED&&<button role="menuitem" onClick={() => showConnections()}><Waypoints size={16}/>AI providers</button>}
-            <button role="menuitem" onClick={() => setModal("licenses")}><ShieldCheck size={16}/>Licences</button>
-            <a role="menuitem" href={STAR_URL} target="_blank" rel="noopener noreferrer">Star on GitHub ↗</a>
+          <div ref={projectMenu} id="project-menu" className="menu project-menu" role="menu"
+            aria-label="Project actions" onKeyDown={navigateProjectMenu}
+            onClick={event=>{if(event.target.closest('[role="menuitem"]'))setMenu(false);}}>
+            <div className="project-menu-group" role="group" aria-label="Project files">
+              <button role="menuitem" tabIndex={-1} onClick={() => (refreshProjects(), setModal("projects"))} disabled={busy}><FolderOpen/>Projects</button>
+              <button role="menuitem" tabIndex={-1} onClick={newProject} disabled={busy||agentBusy}><Plus/>New project</button>
+              <button role="menuitem" tabIndex={-1} onClick={()=>{fileImportAsCopy.current=false;fileRef.current.click();}} disabled={busy}><FolderOpen/>Open project file</button>
+              <button role="menuitem" tabIndex={-1} onClick={saveCurrentProject} disabled={savingProject}><Save/>Save</button>
+              <button role="menuitem" tabIndex={-1} onClick={()=>setModal("save-as")}><Download/>Save as…</button>
+            </div>
+            <div className="project-menu-group" role="group" aria-label="Design">
+              <button role="menuitem" tabIndex={-1} onClick={() => setPalette(true)} disabled={busy}><Plus/>Add a block</button>
+              <button role="menuitem" tabIndex={-1} onClick={() => setModal("import")} disabled={busy}><GitBranch/>Import diagram</button>
+              <button role="menuitem" tabIndex={-1} onClick={() => setModal("templates")} disabled={busy}><LayoutTemplate/>Templates</button>
+              <button role="menuitem" tabIndex={-1} onClick={openReadyExample} disabled={busy||agentBusy}><LayoutGrid/>Open complete AI example</button>
+            </div>
+            <div className="project-menu-group" role="group" aria-label="Workspace settings">
+              {!HOSTED&&<button role="menuitem" tabIndex={-1} onClick={() => showConnections()}><Waypoints/>AI providers</button>}
+              <button role="menuitem" tabIndex={-1} onClick={() => setModal("memory")} disabled={!session}><BrainActivity size={16} active={false}/>AtMem memory</button>
+              <button role="menuitem" tabIndex={-1} onClick={() => setModal("licenses")}><ShieldCheck/>Licences</button>
+              <button role="menuitem" tabIndex={-1} onClick={() => setModal("start-over")} disabled={busy || agentBusy}><RotateCcw/>Start over</button>
+            </div>
+            <div className="project-menu-footer" role="group" aria-label="Links">
+              <a role="menuitem" tabIndex={-1} href="https://atmem.ai" target="_blank" rel="noopener noreferrer"><ExternalLink/>Website</a>
+              <a role="menuitem" tabIndex={-1} href="mailto:hello@atmem.ai"><Mail/>Contact</a>
+              <a role="menuitem" tabIndex={-1} href={STAR_URL} target="_blank" rel="noopener noreferrer"><Github/>GitHub</a>
+            </div>
           </div>
         )}
       </header>
@@ -1984,10 +2407,81 @@ function App() {
         }}
       >
         <div className={`board-surface ${treeOpen&&level!=="block"?"has-component-sidebar":""}`} hidden={!onBoard}>
-          {level!=="block"&&<aside className="board-components component-navigator" data-expanded={treeOpen} aria-label="Board components"><button className="btn" aria-label="Toggle components and layers" aria-expanded={treeOpen} onClick={()=>setTreeOpen(!treeOpen)}><LayoutGrid size={16}/> Components &amp; layers</button>
-{treeOpen&&<nav className="board-component-tree" aria-label="Component tree"><strong>{project.name}</strong><div className="tree-views"><button disabled={!blockReviews.length} onClick={()=>{reviewBlock((blockReviews.find(r=>r.status!=='reviewed')||blockReviews[0]).id);}}><CheckCheck size={16}/> Review blocks · {blockReviews.filter(r=>r.status==='reviewed').length}/{blockReviews.length}</button></div>{[...new Map(project.nodes.filter(n=>n.data.kind!=='note').map(n=>[layerOf(n).id,layerOf(n)])).values()].map(layer=><details open key={layer.id}><summary>{layer.label}</summary>{project.nodes.filter(n=>n.data.kind!=='note'&&layerOf(n).id===layer.id).map(n=><button key={n.id} aria-current={selected===n.id?'true':undefined} onClick={()=>{setMode('design');setDesignView('board');setFocus(null);setLevel('flow');setSelected(n.id);setTimeout(()=>fitView({nodes:[{id:n.id}],padding:1,maxZoom:1.2,duration:350}),100);}}><Database size={14}/><span>{n.data.label}<small>{n.data.service||n.data.provider}</small><small className={`tree-review-state ${blockReviews.find(r=>r.id===n.id)?.status}`}>{blockReviews.find(r=>r.id===n.id)?.statusLabel}</small></span></button>)}</details>)}</nav>}
+          <div className="board-overlays">
+          <div className="board-top-controls">
+          {level!=="block"&&<aside className="board-components component-navigator" data-expanded={treeOpen} aria-label="Board components"><button className="btn" aria-label="Toggle components and layers" aria-expanded={treeOpen} onClick={()=>setTreeOpen(!treeOpen)}><LayoutGrid size={16}/><span className="board-components-label">Components &amp; layers</span><span className="board-components-short" aria-hidden="true">Layers</span></button>
+{treeOpen&&<nav className="board-component-tree" aria-label="Component tree"><strong>{project.name}</strong><div className="tree-views"><button disabled={!blockReviews.length} onClick={()=>{reviewBlock((blockReviews.find(r=>r.status!=='reviewed')||blockReviews[0]).id);}}><CheckCheck size={16}/> Review blocks · {blockReviews.filter(r=>r.status==='reviewed').length}/{blockReviews.length}</button></div>{project.nodes.some(n=>n.data.parentBlockId)?<NestedBlocks nodes={project.nodes} selected={selected} onOpen={reviewBlock}/>: [...new Map(project.nodes.filter(n=>n.data.kind!=='note').map(n=>[layerOf(n).id,layerOf(n)])).values()].map(layer=><details open key={layer.id}><summary>{layer.label}</summary>{project.nodes.filter(n=>n.data.kind!=='note'&&layerOf(n).id===layer.id).map(n=><button key={n.id} aria-current={selected===n.id?'true':undefined} onClick={()=>{setMode('design');setDesignView('board');setFocus(null);setLevel('flow');setSelected(n.id);setTimeout(()=>fitView({nodes:[{id:n.id}],padding:1,maxZoom:1.2,duration:350}),100);}}><Database size={14}/><span>{n.data.label}<small>{n.data.service||n.data.provider}</small><small className={`tree-review-state ${blockReviews.find(r=>r.id===n.id)?.status}`}>{blockReviews.find(r=>r.id===n.id)?.statusLabel}</small></span></button>)}</details>)}</nav>}
           {treeOpen&&<button className="btn" disabled={busy} onClick={()=>setPalette(true)}><Plus size={16}/> Add component</button>}</aside>}
-          {!hasDesign&&!palette&&!dismissedStarts.includes(project.id)&&<section className="board-start" aria-label="Start your project"><button type="button" className="icon board-start-close" aria-label="Dismiss welcome card" title="Dismiss welcome card" onClick={dismissStart}><X size={16}/></button><h2>What would you like to create?</h2><div className="row"><button className="btn primary" onClick={openReadyExample}>Explore complete AI example</button><button className="btn primary" onClick={()=>{dismissStart();setChatOpen(true);document.querySelector('.composer textarea, .chat textarea')?.focus();}}>Start chatting</button><button className="btn" onClick={()=>{setChatOpen(true);requirementsInput.current.click();}}>Upload requirements or diagram</button><button className="btn" onClick={()=>setModal("project-file")}>Open project</button></div><InlineNote label="Supported starting files">Word, PDF, text, Markdown, draw.io, images and Architect project JSON.</InlineNote></section>}
+          <div className="board-top-actions">
+            {level!=='block'&&<div className="nested-view-control">
+          {nested.projected&&<label className="nested-scope-control">View
+            <select aria-label="Architecture level" value={nested.scope||''} onChange={event=>exploreSubsystem(event.target.value||null)}>
+              <option value="">Top level</option><option value="*">All blocks</option>
+              {shown.nodes.filter(node=>shown.nodes.some(child=>child.data.parentBlockId===node.id)).map(node=><option key={node.id} value={node.id}>{node.data.label}</option>)}
+            </select>
+          </label>}
+          {!nested.projected&&shown.nodes.some(node=>node.data.parentBlockId)&&<button className="btn" onClick={()=>exploreSubsystem(null)}>Top level</button>}
+        </div>}
+            {nativeDesignEnabled&&hasDesign&&treeOpen&&<div className="native-canvas-action"><button className="btn" disabled={busy||agentBusy||!!pending} onClick={()=>startArchitecture()}>Update architecture</button><button className="link" disabled={readingAttachments||agentBusy||!!pending} onClick={()=>requirementsInput.current.click()}>Add specification</button></div>}
+          </div>
+        </div>
+        <div className="board-controls">
+        <div className="toolbar" aria-label="Tools">
+          {level !== "block" && <>
+            <button className="btn" type="button" disabled={busy||agentBusy||!!pending} onClick={()=>{paletteAt.current=null;setPalette(true);}}><Plus size={16}/> Add block</button>
+            {(selected || picked.size>0) && <button className="btn" type="button" onClick={()=>copySelection()}>Copy</button>}
+            {boardClipboard?.projectId === project.id && <button className="btn" type="button" disabled={busy||agentBusy||!!pending} onClick={()=>pasteSelection()}>Paste</button>}
+          </>}
+          {level!=='block'&&<button className="btn" type="button"
+            onClick={openSystemDiagrams}>System diagrams</button>}
+          {level!=='block'&&renderDesignComments({kind:'project'})}
+          <button
+            className="icon"
+            title="Auto-arrange"
+            aria-label="Auto-arrange"
+            disabled={busy || previewing || nested.projected || level==='block' || !project.nodes.length}
+            onClick={() => {
+              if(level==='system')setTopologyPositions(arrangeOverview(system,measured));
+              else commit(autoLayout(projectRef.current));
+              refit();
+            }}
+          >
+            <LayoutGrid size={17} />
+          </button>
+          <button className="btn reset-board" title="Reset board and context" aria-label="Reset board and context" disabled={busy||agentBusy||intake.length>0} onClick={newProject}>
+            <Trash2 size={17} /> Reset board
+          </button>
+          <button className="icon" title="Undo board change" aria-label="Undo" disabled={!history.length || busy || agentBusy} onClick={undo}>
+            <Undo2 size={17} />
+          </button>
+          <button className="icon" title="Redo board change" aria-label="Redo" disabled={!future.length || busy || agentBusy} onClick={redo}><Redo2 size={17} /></button>
+          {onBoard&&level!=='block'&&!emulationOpen&&!applyDockOpen&&hasDesign&&<button type="button" className={`apply-launcher ${applyEmulation.running?'working':''}`} onClick={()=>setApplyDockOpen(true)} aria-label="Open Terraform apply emulation"><Play size={16}/> {applyEmulation.running?'Emulating…':'Emulate apply'}</button>}
+        </div>
+        {level !== "block" && (
+          <div className="zoom">
+            <button className="icon" aria-label="Zoom out" onClick={() => zoomOut()}><ZoomOut size={15} /></button>
+            <button className="icon" aria-label="Fit" title="Fit" onClick={() => refit()}><Maximize2 size={14} /></button>
+            <button className="icon" aria-label="Zoom in" onClick={() => zoomIn()}><ZoomIn size={15} /></button>
+          </div>
+        )}
+        </div>
+          </div>
+          {level!=='block'&&(sourceDocuments.length>0||currentSourceBatch)&&<aside className="board-source-dock" aria-label="Uploaded specifications">
+            <details open>
+              <summary>{sourceDocuments.length} {sourceDocuments.length===1?'specification':'specifications'} loaded</summary>
+              <ul aria-label="Loaded files">{sourceDocuments.map(source=><li key={source.sha256}>{source.name}</li>)}</ul>
+              {currentSourceBatch&&<>
+                <p role={currentSourceBatch.error?'alert':'status'}>{currentSourceBatch.error||'Reading files…'}</p>
+                <ul aria-label="Selected files">{currentSourceBatch.names.map((name,index)=><li key={index}>{name}</li>)}</ul>
+              </>}
+              <div className="board-source-actions">
+                <button className="link" disabled={readingAttachments||!!pending} onClick={()=>requirementsInput.current.click()}>Add files</button>
+                {nativeDesignEnabled&&<button className="link" aria-expanded={boardProgress} onClick={()=>setBoardProgress(!boardProgress)}>{boardProgress?'Hide progress':'Architecture progress'}</button>}
+                {(buildRequest?.intent==='design'||['running','starting'].includes(engineeringStatus?.state))&&<span role="status">Designing…</span>}
+              </div>
+            </details>
+          </aside>}
+          {!hasDesign&&!palette&&!dismissedStarts.includes(project.id)&&<section className="board-start" aria-label="Start your project"><button type="button" className="icon board-start-close" aria-label="Dismiss welcome card" title="Dismiss welcome card" onClick={dismissStart}><X size={16}/></button><h2>What would you like to create?</h2><div className="row"><button className="btn primary" onClick={openReadyExample}>Explore complete AI example</button><button className="btn primary" onClick={()=>{dismissStart();setChatOpen(true);document.querySelector('.composer textarea, .chat textarea')?.focus();}}>Start chatting</button><button className="btn primary" onClick={()=>requirementsInput.current.click()}>Upload specification</button><button className="btn" onClick={()=>setModal("project-file")}>Open project</button></div><InlineNote label="Supported starting files">Word, PDF, text, Markdown, draw.io, images and Architect project JSON.</InlineNote></section>}
         <ReactFlow
           nodes={canvasNodes}
           edges={canvasEdges}
@@ -2007,7 +2501,7 @@ function App() {
             setSelected(n.id);
             setProbe(null);
           }}
-          onNodeDoubleClick={(_, n) => (level === "system" ? n.data.blocks.length===1?reviewBlock(n.data.blocks[0]):goFlow(n.data.layer) : openBlock(n.id))}
+          onNodeDoubleClick={(_, n) => (level === "system" ? n.data.blocks.length===1?reviewBlock(n.data.blocks[0]):goFlow(n.data.layer) : nested.projected&&n.data.childCount&&nested.scope!==n.id?exploreSubsystem(n.id):openBlock(n.id))}
           onEdgeClick={(_, e) => (level === "system" ? goFlow(null) : openBlock(e.source, e))}
           onPaneContextMenu={(e) => {
             e.preventDefault();
@@ -2025,10 +2519,10 @@ function App() {
             setSelected(null);
             setPalette(false);
           }}
-          nodesDraggable={!busy && !previewing && level === "flow"}
-          nodesConnectable={!busy && !previewing && level === "flow"}
+          nodesDraggable={!busy && !previewing && !nested.projected && level === "flow"}
+          nodesConnectable={!busy && !previewing && !nested.projected && level === "flow"}
           elementsSelectable={!busy}
-          deleteKeyCode={busy || level !== "flow" ? null : ["Backspace", "Delete"]}
+          deleteKeyCode={busy || nested.projected || level !== "flow" ? null : ["Backspace", "Delete"]}
           fitView
           fitViewOptions={{ padding: 0.25, maxZoom: 1.2 }}
           minZoom={0.25}
@@ -2039,47 +2533,18 @@ function App() {
           <Background gap={20} size={1} />
         </ReactFlow>
 
-        <div className="toolbar" aria-label="Tools">
-          <button
-            className="icon"
-            title="Auto-arrange"
-            aria-label="Auto-arrange"
-            disabled={busy || previewing || level==='block' || !project.nodes.length}
-            onClick={() => {
-              if(level==='system')setTopologyPositions(arrangeOverview(system,measured));
-              else commit(autoLayout(projectRef.current));
-              refit();
-            }}
-          >
-            <LayoutGrid size={17} />
-          </button>
-          <button className="btn reset-board" title="Reset board and context" aria-label="Reset board and context" disabled={busy||agentBusy||intake.length>0} onClick={newProject}>
-            <Trash2 size={17} /> Reset board
-          </button>
-          <button className="icon" title="Undo board change" aria-label="Undo" disabled={!history.length || busy || agentBusy} onClick={undo}>
-            <Undo2 size={17} />
-          </button>
-          <button className="icon" title="Redo board change" aria-label="Redo" disabled={!future.length || busy || agentBusy} onClick={redo}><Redo2 size={17} /></button>
-        </div>
-        {level !== "block" && (
-          <div className="zoom">
-            <button className="icon" aria-label="Zoom out" onClick={() => zoomOut()}><ZoomOut size={15} /></button>
-            <button className="icon" aria-label="Fit" title="Fit" onClick={() => refit()}><Maximize2 size={14} /></button>
-            <button className="icon" aria-label="Zoom in" onClick={() => zoomIn()}><ZoomIn size={15} /></button>
-          </div>
-        )}
         {palette && <Palette onAdd={(item) => addComponent(item, paletteAt.current || undefined)} onClose={() => ((paletteAt.current = null), setPalette(false))} disabled={busy} />}
 
-        {level === "system" && project.nodes.length > 0 && (
-          <p className="hint">Double-click to open</p>
-        )}
-        {level === "flow" && selectedNode && (
-          <p className="hint">Double-click for detail · Esc back</p>
-        )}
         {ctx && (
           <div className="ctx-menu" role="menu" style={{ left: Math.min(ctx.x,window.innerWidth-210), top: Math.min(ctx.y,window.innerHeight-200) }} onMouseLeave={() => setCtx(null)}>
             {ctx.node ? (
               <>
+                <button role="menuitem" onClick={()=>{copySelection(picked.size>1&&picked.has(ctx.node.id)?picked:[ctx.node.id]);setCtx(null);}}>Copy</button>
+                <button role="menuitem" onClick={()=>{reviewBlock(ctx.node.id);setCtx(null);}}>Edit block</button>
+                <button role="menuitem" onClick={()=>{openBlock(ctx.node.id);setCtx(null);requestAnimationFrame(()=>{
+                  const control=document.querySelector('.block-spec-content .module-facts + .design-comments');
+                  if(control){control.open=true;control.querySelector('textarea')?.focus();}
+                });}}>Comment on block</button>
                 <button role="menuitem" onClick={() => (addNote({ x: ctx.at.x + 40, y: ctx.at.y - 120 }, ctx.node.id), setCtx(null))}>
                   <StickyNote size={16}/> Add comment
                 </button>
@@ -2093,6 +2558,7 @@ function App() {
                 <button role="menuitem" onClick={() => ((paletteAt.current = ctx.at), setPalette(true), setCtx(null))}>
                   <Plus size={16}/> Add block here
                 </button>
+                {boardClipboard?.projectId === project.id && <button role="menuitem" disabled={busy||agentBusy||!!pending} onClick={()=>{pasteSelection(ctx.at);setCtx(null);}}>Paste here</button>}
                 <button role="menuitem" onClick={() => (addNote(ctx.at), setCtx(null))}>
                   <StickyNote size={16}/> Add comment here
                 </button>
@@ -2121,7 +2587,7 @@ function App() {
         {previewing && (
           <div className="preview-bar" role="status">
             <span>
-              Preview · <strong>{pending.title}</strong>
+              Preview · <strong>{pending.title}</strong>{pending.sourceRequirements&&` · ${pending.sourceRequirements.length} source-linked requirements · ${pending.quality.score}% structural coverage`}
             </span>
             <button className="btn primary" disabled={busy} onClick={() => applyProposal()}>
               Apply
@@ -2139,6 +2605,7 @@ function App() {
 
         {level === "block" && selectedNode && (
           <BlockDetail
+            key={selectedNode.id}
             project={project}
             node={selectedNode}
             run={run}
@@ -2159,6 +2626,13 @@ function App() {
             onRemove={() => removeNode(selectedNode.id)}
             onOpen={(id) => openBlock(id)}
             onSpec={()=>{visitJourney('scope');setTimeout(()=>document.getElementById('component-spec-'+selectedNode.id)?.scrollIntoView({block:'start'}),0);}}
+            session={session}
+            onPrepareSources={prepareSourceEvidence}
+            onSaveInterface={saveBlockInterface}
+            renderComments={renderDesignComments}
+            onSystemDiagrams={project.extensions?.systemModel?openSystemDiagrams:undefined}
+            onInterface={session?edgeId=>{setChatOpen(true);return send(`Define the directional interface for existing connection ${JSON.stringify(edgeId)}. Use a compact interfaceSpec update. Cover transport and version, request, result, authorization, failure and verifiable contract tests. Leave unverified vendor or owner details explicit and ask at most one material question.`,'workflow');}:null}
+            onDraft={session?()=>{setChatOpen(true);return send(`Draft or refine the Block Spec Kit for ${selectedNode.data.label} (id ${selectedNode.id}) using its saved requirements, dependencies and source evidence. Propose a compact buildSpec update for just this block. Ask one linked question if a material decision is needed.`,'workflow');}:null}
             onBack={goUp}
           />
         )}
@@ -2234,28 +2708,49 @@ function App() {
         {testing && runnable && level !== "block" && <TestCard project={project} run={run} onOpen={(id) => openBlock(id)} />}
 
         </div>
-        <div className="review-workspace" hidden={mode!=="review"&&mode!=="estimate"}>
+        {mode==='design'&&designView==='system-diagrams'&&<SystemModelWorkspace
+          key={project.id}
+          project={pending?.systemModel?{...pending.next,...canvasProposalRecords(project,pending)}:project}
+          onBack={()=>setDesignView('board')}
+          onUndo={undo} onRedo={redo} canUndo={history.length>0} canRedo={future.length>0}
+          onSave={busy||agentBusy||pending?undefined:saveDiagramModel}
+          onSaveProject={saveCurrentProject}
+          renderComments={pending?undefined:renderDesignComments}
+          onOpenBlock={pending?undefined:id=>{setDesignView('board');openBlock(id);}}
+          onGenerate={nativeDesignEnabled?()=>startArchitecture():undefined}/>}
+        <div className={`review-workspace${boardProgressVisible?' board-engineering-panel':''}`}
+          hidden={mode!=='review'&&mode!=='estimate'&&!(boardProgressVisible)}>
         <header className="review-intro"><h2>Review</h2></header>
+        {mode==='review'&&modelLinkIssues.length>0&&<details className="review-generation">
+          <summary>{modelLinkIssues.length} model and test links need review</summary>
+          <ul>{modelLinkIssues.map((issue,index)=><li key={index}>
+            <strong>{issue.modelElementId||issue.caseId}</strong> · {issue.message} <code>{issue.ref}</code>
+          </li>)}</ul>
+        </details>}
         <div className="review-design-status"><ShieldCheck size={18}/><span>{findings.filter(f=>f.status==='open').length} design items</span><button className="icon" aria-label="Open design checks in specification" title="Specification" onClick={()=>visitJourney('scope')}><Code2 size={16}/></button></div>
+        {mode==='review'&&nativeDesignEnabled&&project.extensions?.designSources?.length>0&&<section className="review-generation" aria-label="Source documents">
+          <h3>Source documents</h3>
+          <ul>{project.extensions.designSources.map(source=><li key={source.sha256}>{source.name} · {source.text.length.toLocaleString()} characters{source.figureEvidence?.manifestSha256?` · ${source.figureEvidence.figures.filter(figure=>figure.status==='available').length} figures available for inspection`:source.graphics?.length?` · ${source.graphics.length} figures need source re-upload`:null}</li>)}</ul>
+        </section>}
+        {session?.engineeringEnabled&&<section hidden={mode!=='review'&&!(boardProgressVisible)} className="review-generation engineering-workspace-panel" aria-label="Generation and verification">{boardProgressVisible&&<button className="icon board-progress-close" aria-label="Close architecture progress" onClick={()=>setBoardProgress(false)}><X size={16}/></button>}<EngineeringPanel key={project.id} project={project} onBusyChange={setGenerationPending} onWorkModelChange={changeArchitectureWork} onIntentContext={syncEngineeringIntent} projectId={project.id} session={session} connection={connection} onRequestArchitecture={()=>startArchitecture()} contextBusy={busy||agentBusy||!!pending} saveProject={()=>saveEngineeringProject(project.id)} buildRequest={buildRequest} onCanvas={nativeDesignEnabled?previewArchitectureDraft:null} onAssessCanvas={nativeDesignEnabled?readArchitectureDraft:null} onBuildRequestHandled={id=>setBuildRequest(current=>current?.id===id?null:current)} onConnections={()=>showConnections()}/></section>}
+        {hasDesign&&<>
         <section className="review-costs" aria-label="Project costs">
         {["review","estimate"].includes(mode) && <EstimateView project={project} result={costs} onChange={updateEngagement} busy={busy||agentBusy||!!pending} onEstimate={refreshEstimate} onChooseRegion={()=>{visitJourney('cloud');requestAnimationFrame(()=>{const input=document.querySelector('.location-region-form input');input?.focus();input?.scrollIntoView({block:'center',behavior:'instant'});});}} pricing={pricingState} onNext={()=>{const section=document.querySelector('.review-generation');const target=section?.querySelector('button')||section;if(target){target.setAttribute('tabindex','-1');target.focus({preventScroll:true});target.scrollIntoView({block:'center'});}}} />}
         </section>
-        {mode==='review'&&session?.engineeringEnabled&&<section className="review-generation" aria-label="Generation and verification"><EngineeringPanel key={project.id} project={project} onBusyChange={setGenerationPending} onWorkModelChange={changeArchitectureWork} onIntentContext={syncEngineeringIntent} projectId={project.id} session={session} connection={connection} contextBusy={busy||agentBusy||!!pending} saveProject={()=>saveEngineeringProject(project.id)} buildRequest={buildRequest} onBuildRequestHandled={id=>setBuildRequest(current=>current?.id===id?null:current)} onConnections={()=>showConnections()}/></section>}
+        </>}
         {mode==='review'&&!session?.engineeringEnabled&&<p>Generation and local checks require the engineering service. Your design is retained; Delivery can package the design and remaining tasks.</p>}
-        {mode==='review'&&<ProjectChecks generationPending={generationPending} receipt={checkReceipt} project={project} environment={environment} session={session} onReceipt={setCheckReceipt} onBusy={setChecking}/>}
-        {mode==='review'&&<footer className="review-finish"><div><strong>3. Package and download</strong><p>Explore all files and download one project ZIP in Delivery.</p></div><button className="btn primary" onClick={()=>{const next=acknowledgeStage(projectRef.current,'review');updateEngagement(costs.expected!==null&&!costs.mixedCurrencies?{...next,extensions:{...next.extensions,journey:{...next.extensions.journey,estimate:journey(next).keys.estimate}}}:next);visitJourney('delivery');}}>Complete →</button></footer>}
+        {mode==='review'&&hasDesign&&<ProjectChecks generationPending={generationPending} receipt={checkReceipt} project={project} environment={environment} session={session} onReceipt={setCheckReceipt} onBusy={setChecking}/>}
+        {mode==='review'&&hasDesign&&<footer className="review-finish"><div><strong>3. Package and download</strong><p>Explore all files and download one project ZIP in Delivery.</p></div><button className="btn primary" onClick={()=>{const next=acknowledgeStage(projectRef.current,'review');updateEngagement(costs.expected!==null&&!costs.mixedCurrencies?{...next,extensions:{...next.extensions,journey:{...next.extensions.journey,estimate:journey(next).keys.estimate}}}:next);visitJourney('delivery');}}>Complete →</button></footer>}
         </div>
 
 
 
 
-        {onBoard&&!emulationOpen&&(applyDockOpen
-          ?<div className="emulation-dock"><TerraformApplyDock project={project} emulation={applyEmulation} blocked={!hasDesign} onClose={()=>setApplyDockOpen(false)}/></div>
-          :hasDesign&&<button type="button" className={`apply-launcher ${applyEmulation.running?'working':''}`} onClick={()=>setApplyDockOpen(true)} aria-label="Open Terraform apply emulation"><Play size={16}/> {applyEmulation.running?'Emulating…':'Emulate apply'}</button>)}
-        {onBoard&&emulationOpen&&<div className="emulation-dock"><EmulationPanel project={project} session={session} emulation={emulation} onDiscuss={discussEmulation} onOpenComponent={id=>{reviewBlock(id);setEmulationOpen(false);}} discussionBusy={busy||agentBusy||!!pending} onClose={()=>setEmulationOpen(false)} onBuild={session?.engineeringEnabled?()=>{setEmulationOpen(false);buildCurrentDesign('test');}:undefined}/></div>}
+        {onBoard&&level!=='block'&&!emulationOpen&&applyDockOpen&&<div className="emulation-dock"><TerraformApplyDock project={project} emulation={applyEmulation} blocked={!hasDesign} onClose={()=>setApplyDockOpen(false)} onOpenBlock={id=>{setApplyDockOpen(false);reviewBlock(id);}}/></div>}
+        {onBoard&&emulationOpen&&<div className="emulation-dock"><EmulationPanel project={project} session={session} emulation={emulation} onDiscuss={discussEmulation} onOpenComponent={id=>{reviewBlock(id);setEmulationOpen(false);}} discussionBusy={busy||agentBusy||!!pending} onClose={()=>setEmulationOpen(false)} onBuild={()=>{setEmulationOpen(false);visitJourney('delivery');}}/></div>}
 
-        {mode === "design" && designView === "outputs" && <OutputsView workStatus={engineeringStatus} onNavigate={async target=>{const [stage,selector]={requirements:['scope','.requirements-document'],location:['cloud','section[aria-label="Country and region"]'],cost:['review','.review-costs'],implementation:['review','.review-generation'],checks:['review','.project-checks']}[target];visitJourney(stage);await new Promise((resolve,reject)=>{const started=performance.now();function focus(){const element=document.querySelector(selector);if(element&&element.getClientRects().length){element.setAttribute('tabindex','-1');element.focus({preventScroll:true});element.scrollIntoView({block:'start',behavior:'instant'});resolve();}else if(performance.now()-started<5000)requestAnimationFrame(focus);else reject(Error('Section is unavailable. Use the stage tabs to continue.'));}requestAnimationFrame(focus);});}} checkReceipt={checkReceipt} onDownloaded={()=>{updateEngagement(acknowledgeStage(projectRef.current,'delivery'));setStarOffer(value=>value+1);}} onReview={()=>visitJourney('review')} onSave={expected=>saveEngineeringProject(project.id,expected)} project={project} run={run} environment={environment} session={session} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onDownload={downloadBundle} onBuild={session?.engineeringEnabled?()=>visitJourney('review'):undefined} onBack={()=>setDesignView("board")} />}
-        {mode === "design" && designView === "terraform" && <TerraformView project={project} environment={environment} session={session} applyEmulation={applyEmulation} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onDelivery={()=>visitJourney("delivery")} onBuild={session?.engineeringEnabled?()=>visitJourney('review'):undefined} onBack={()=>setDesignView("board")} />}
+        {mode === "design" && designView === "outputs" && <OutputsView workStatus={engineeringStatus} onNavigate={async target=>{const [stage,selector]={requirements:['scope','.requirements-document'],location:['cloud','section[aria-label="Country and region"]'],cost:['review','.review-costs'],implementation:['review','.review-generation'],checks:['review','.project-checks']}[target];visitJourney(stage);await new Promise((resolve,reject)=>{const started=performance.now();function focus(){const element=document.querySelector(selector);if(element&&element.getClientRects().length){element.setAttribute('tabindex','-1');element.focus({preventScroll:true});element.scrollIntoView({block:'start',behavior:'instant'});resolve();}else if(performance.now()-started<5000)requestAnimationFrame(focus);else reject(Error('Section is unavailable. Use the stage tabs to continue.'));}requestAnimationFrame(focus);});}} checkReceipt={checkReceipt} onDownloaded={()=>{updateEngagement(acknowledgeStage(projectRef.current,'delivery'));setStarOffer(value=>value+1);}} onReview={()=>visitJourney('review')} onSave={expected=>saveEngineeringProject(project.id,expected)} onPrepareSources={prepareSourceEvidence} project={project} run={run} environment={environment} session={session} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onDownload={downloadBundle} onBuild={session?.engineeringEnabled?()=>visitJourney('review'):undefined} onBack={()=>setDesignView("board")} />}
+        {mode === "design" && designView === "terraform" && <TerraformView onOpenBlock={id=>reviewBlock(id)} project={project} environment={environment} session={session} applyEmulation={applyEmulation} emulation={emulation} onDiscuss={discussEmulation} discussionBusy={busy||agentBusy||!!pending} onDelivery={()=>visitJourney("delivery")} onBuild={session?.engineeringEnabled?()=>visitJourney('review'):undefined} onBack={()=>setDesignView("board")} />}
         <div className="choices-workspace" hidden={!(mode==="design"&&["options","decisions","location"].includes(designView))}>
         {mode === "design" && ["options","decisions"].includes(designView) && (
           <OptionsView project={project} busy={busy||agentBusy||!!pending} onChoose={chooseCloud} onContinue={()=>{updateEngagement(acknowledgeStage(projectRef.current,'cloud'));visitJourney('review');}} onPreview={(provider)=>{setDesignView("board");setLevel("flow");setChatOpen(true);send(`Preview a concrete ${OPTION_NAMES[provider]} implementation of our working scope, using actual named services in data.service and explicit connections. Keep existing systems and comments. Use the known country/residency constraints, or leave region undecided and ask the country question. This is an alternative preview, not a cloud choice or deployment. Return a graph proposal and explain key integration assumptions.`,"preview",{mode:"design",view:"board"});}} onDiscuss={(question) => { setChatOpen(true); send(question, "workflow"); }} />
@@ -2263,11 +2758,17 @@ function App() {
         {mode === "design" && ["options","decisions","location"].includes(designView) && <LocationChoices project={project} onChange={commit} onDiscuss={()=>{setChatOpen(true);send('Review the accepted cloud, data country and cloud region. Ask one material unresolved location question. Preserve selected regions and residency.','workflow');}}/>}
         </div>
         {mode === "design" && designView === "requirements" && (
-          <RequirementsView checks={specificationChecks} onContinue={()=>{updateEngagement(acknowledgeStage(projectRef.current,'scope'));visitJourney('cloud');}} onUpload={()=>{setChatOpen(true);requirementsInput.current.click();}} onOpenProject={()=>setModal("project-file")} project={project} onChange={updateEngagement} reviewing={agentBusy} onReview={(comments)=>{setChatOpen(true);send("Propose revisions for these user comments on the requirements document. The document will remain unchanged until the user applies each suggestion. Explain the proposed change; never say you have already changed the document. Return requirementUpdates for the existing IDs where the feedback is clear, quoting the user's comment exactly in sourceText. Preserve other requirements and the diagram. Ask one question if a comment is ambiguous.\n" + comments.map(c=>`Requirement ${c.requirementId}${c.selectedText ? ` (selected text: ${c.selectedText.slice(0,300)})` : ""} — comment: ${c.text}`).join("\n"), "document");}} onDiscuss={(question) => { setChatOpen(true); send(question, "workflow"); }} />
+          <RequirementsView onDocumentChange={command=>{
+            const next=updateRequirementsDocument(projectRef.current,command);
+            validateImport(next);
+            toProjectFile(next);
+            updateEngagement(next);
+            return next;
+          }} onCommentSave={saveDesignComment} renderComments={renderDesignComments} checks={specificationChecks} onContinue={()=>{updateEngagement(acknowledgeStage(projectRef.current,'scope'));visitJourney('cloud');}} onUpload={()=>{setChatOpen(true);requirementsInput.current.click();}} onOpenProject={()=>setModal("project-file")} project={project} onChange={updateEngagement} reviewing={agentBusy} onReview={(comments)=>{setChatOpen(true);send("Propose revisions for these user comments on the requirements document. The document will remain unchanged until the user applies each suggestion. Explain the proposed change; never say you have already changed the document. Return requirementUpdates for the existing IDs where the feedback is clear, quoting the user's comment exactly in sourceText. Preserve other requirements and the diagram. Ask one question if a comment is ambiguous.\n" + comments.map(c=>`Requirement ${c.requirementId}${c.selectedText ? ` (selected text: ${c.selectedText.slice(0,300)})` : ""} — comment: ${c.text}`).join("\n"), "document");}} onDiscuss={(question) => { setChatOpen(true); send(question, "workflow"); }} />
         )}
       </main>
 
-      {!chatOpen&&!buildView && <button className="icon chat-reopen" title="Show chat" aria-label="Show chat" onClick={()=>setChatOpen(true)}><PanelRightOpen size={18}/></button>}
+      {!chatOpen&&!buildView&&designView!=='system-diagrams' && <button className="icon chat-reopen" title="Show chat" aria-label="Show chat" onClick={()=>setChatOpen(true)}><PanelRightOpen size={18}/></button>}
       {chatOpen&&!buildView && (
         <aside className={`chat ${idleChat?"idle":""}`} aria-label="Chat"><ChatResizeHandle width={chatWidth} onChange={resizeChat}/>
           <div className="chat-head">
@@ -2470,7 +2971,7 @@ function App() {
         </aside>
       )}
 
-      <input type="file" id="requirements-file-input" ref={requirementsInput} accept={ATTACHMENT_ACCEPT} multiple hidden onChange={async e=>{const files=[...e.target.files];e.target.value='';if(!files.length||readingAttachments)return;const uploadOwner=projectRef.current.id;setReadingAttachments(true);setAttachmentError('');try{const added=await readAttachments(files,attachments);if(projectRef.current.id!==uploadOwner)return;const all=[...attachments,...added];setAttachments(all);setChatOpen(true);setInput('Read these requirements and diagrams. Summarise what you understand, propose requirements and a connected design, and ask one focused question about anything important that is unclear. Preserve existing systems and distinguish source facts from assumptions.');if(connection&&session){setReadingAttachments(false);void send('Read these requirements and diagrams. Summarise what you understand, propose requirements and a connected design, and ask one focused question about anything important that is unclear. Preserve existing systems and distinguish source facts from assumptions.','chat',null,null,{attachments:all});}else{showConnections();}}catch(error){setAttachmentError(error.message);}finally{setReadingAttachments(false);}}}/>
+      <input type="file" id="requirements-file-input" ref={requirementsInput} accept={ATTACHMENT_ACCEPT} multiple hidden onChange={async e=>{const files=[...e.target.files];e.target.value='';if(!files.length||readingAttachments)return;const uploadOwner=projectRef.current.id;setReadingAttachments(true);setAttachmentError('');try{const live=sessionRef.current||await refreshSession();if(live?.engineeringEnabled&&!HOSTED){await receiveDesignSources(files,uploadOwner,live);return;}const added=await readAttachments(files,attachments);if(projectRef.current.id!==uploadOwner)return;const all=[...attachments,...added];setAttachments(all);setChatOpen(true);setInput('Read these requirements and diagrams. Summarise what you understand, propose requirements and a connected design, and ask one focused question about anything important that is unclear. Preserve existing systems and distinguish source facts from assumptions.');if(connection&&session){setReadingAttachments(false);void send('Read these requirements and diagrams. Summarise what you understand, propose requirements and a connected design, and ask one focused question about anything important that is unclear. Preserve existing systems and distinguish source facts from assumptions.','chat',null,null,{attachments:all});}else{showConnections();}}catch(error){setAttachmentError(error.message);notify(error.message);}finally{setReadingAttachments(false);}}}/>
       <input id="project-file-input" type="file" ref={fileRef} accept="application/json,.json" hidden onChange={importProject} />
       {toast && (
         <div className="toast" role="status">
@@ -2478,13 +2979,25 @@ function App() {
         </div>
       )}
       <StarPrompt offer={starOffer}/>
+
       {modal && (
         <div className="backdrop" onMouseDown={(e) => e.target === e.currentTarget && !(modal === "welcome" && !connection) && setModal(null)}>
-          <section className={`modal ${modal==="memory"?"memory-modal":""}`} role="dialog" aria-modal="true" aria-label={modal}>
+          <section className={`modal ${modal==="memory"?"memory-modal":""}`} role="dialog" aria-modal="true" aria-label={modal==="save-as"?"Save as":modal}>
             {!(modal === "welcome" && !connection) && <button className="icon modal-close" onClick={() => setModal(null)} aria-label="Close dialog">
               <X size={16} />
             </button>}
-            {modal === "project-file" ? (<><h2>Open project</h2><button className="btn primary" onClick={()=>{fileImportAsCopy.current=false;fileRef.current.click();}}>Open project</button></>) : modal === "memory" ? (
+            {modal === "save-as" ? <>
+              <h2>Save as</h2>
+              <form className="project-save-as" onSubmit={event=>{
+                event.preventDefault();
+                const name=String(new FormData(event.currentTarget).get('filename')).trim().replace(/[<>:"/\\|?*]/g,'-');
+                if(!name){notify('Enter a file name.');return;}
+                if(saveProjectFile(/\.json$/i.test(name)?name:`${name}.json`))setModal(null);
+              }}>
+                <label>File name<input name="filename" defaultValue={`${slug}.atmem-ai-architect.json`} required maxLength={200} autoFocus onFocus={event=>event.target.select()}/></label>
+                <button className="btn primary" type="submit"><Download size={16}/>Download project</button>
+              </form>
+            </> : modal === "project-file" ? (<><h2>Open project</h2><button className="btn primary" onClick={()=>{fileImportAsCopy.current=false;fileRef.current.click();}}>Open project</button></>) : modal === "memory" ? (
               <MemoryPanel key={project.id} session={session} project={project} onError={notify} onStatus={status=>setMemorySync({projectId:project.id,...status})} />
             ) : modal === "templates" ? (
               <TemplateDialog onLoad={loadDesign} />
@@ -2500,7 +3013,7 @@ function App() {
                 environment={environment}
               />
             ) : modal === "projects" ? (
-              <div><div className="row"><button className="btn" onClick={()=>setModal("project-file")}>Open project</button><button className="btn" onClick={saveProjectFile}>Save project</button></div><ProjectsDialog
+              <div><div className="row"><button className="btn" onClick={()=>setModal("project-file")}>Open project</button><button className="btn" onClick={saveCurrentProject} disabled={savingProject}>Save project</button><button className="btn" onClick={()=>setModal("save-as")}>Save as…</button></div><ProjectsDialog
                 list={saved}
                 folder={saved.folder}
                 currentId={project.id}
