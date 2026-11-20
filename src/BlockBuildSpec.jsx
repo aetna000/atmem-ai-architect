@@ -5,6 +5,7 @@ import { artifactWorkProjection } from './artifact-work.mjs';
 import { ArtifactChecks } from './ArtifactChecks.jsx';
 import { engineeringCall } from './engineering-client.mjs';
 import { blockChildren, blockSpecSections, interfaceFields } from './block-spec.mjs';
+import {verificationCategories} from './verification-cases.mjs';
 import {BlockAgentHandoff} from './BlockAgentHandoff.jsx';
 
 const DiagramPreview=lazy(()=>import('./DiagramPreview.jsx'));
@@ -59,6 +60,7 @@ export function BlockHierarchy({ nodes, node, busy, onOpen, onReparent }) {
 export function BlockBuildSpec({ project, node, busy, onOpen, onDraft, onInterface, onSaveInterface, onSaveSpec, onPrepareSources, renderComments, session }) {
   const [tab, setTab] = useState('specification');
   const [editingInterface, setEditingInterface] = useState(null);
+  const [editingCase,setEditingCase] = useState(null);
   const [editingSpec, setEditingSpec] = useState(false);
   const [focusedOperation,setFocusedOperation]=useState(null);
   const operationNames=useMemo(()=>new Map((project.extensions?.engineeringModel?.elements||[]).flatMap(e=>(e.operations||[]).map(op=>[op.id,op.name]))),[project.extensions?.engineeringModel]);
@@ -70,16 +72,15 @@ export function BlockBuildSpec({ project, node, busy, onOpen, onDraft, onInterfa
   const children = blockChildren(project.nodes, node.id);
   const edges = project.edges.filter(edge => edge.source === node.id || edge.target === node.id);
   const sections = blockSpecSections(node.data.buildSpec);
+  const groups = [
+    ['Block behavior', ['behavior','inputs','outputs','failures']],
+    ['Implementation and operations', ['implementation','infrastructure','operations']],
+    ['Acceptance criteria', ['tests']],
+  ];
+  const documented = sections.filter(section => section.content);
+  const missing = sections.filter(section => !section.content);
+  const linkedRequirements = (project.needs || []).filter(need => need.links?.includes(node.id));
   return <div className="block-spec-content">
-      <div className="block-spec-toolbar">
-        <div className="module-facts" aria-label="Block contents">
-          <span>{children.length} submodules</span><span>{edges.length} connections</span>
-          <span>{node.data.buildSpec?.scenarios?.length || 0} {node.data.buildSpec?.scenarios?.length === 1 ? 'scenario' : 'scenarios'}</span>
-          <span>{sections.filter(section=>section.content).length}/{sections.length} spec sections documented</span>
-        </div>
-        {renderComments?.({kind:'block',id:node.id},'Block comments')}
-        <button className="btn" onClick={()=>setTab('handoff')}>Prepare agent handoff</button>
-      </div>
       <nav className="block-spec-tabs" aria-label="Module details">
         {['specification','interfaces','model','diagrams','tests','handoff'].map(id=><button key={id} aria-pressed={tab===id} onClick={()=>setTab(id)}>{({specification:'Specification',interfaces:'Interfaces',model:'Design model',diagrams:'Diagrams',tests:'Test cases',handoff:'Agent handoff'})[id]}</button>)}
       </nav>
@@ -90,10 +91,27 @@ export function BlockBuildSpec({ project, node, busy, onOpen, onDraft, onInterfa
           {onDraft && <button className="btn" disabled={busy || editingSpec} onClick={onDraft}>Ask AI to draft</button>}
         </div>
       </div>
+      {renderComments?.({kind:'block',id:node.id},'Block comments')}
+      {linkedRequirements.length > 0 && <details><summary>Linked requirements ({linkedRequirements.length})</summary>
+        <ul>{linkedRequirements.map(need => <li key={need.id}><strong>{need.id}</strong> {need.statement}</li>)}</ul>
+      </details>}
       {editingSpec ? <SpecEditor node={node} busy={busy} onSave={onSaveSpec} onClose={()=>setEditingSpec(false)}/> :
-        <dl className="module-spec-grid">{sections.map(section => <div key={section.key} className="module-spec-card" data-empty={!section.content}>
-          <dt>{section.title}</dt><dd>{section.content || 'Not specified'}{renderComments?.({kind:'specification',id:node.id,field:section.key})}</dd>
-        </div>)}</dl>}
+        <div className="module-spec-document">
+          {groups.map(([title, keys]) => {
+            const rows = keys.map(key => documented.find(section => section.key === key)).filter(Boolean);
+            if (!rows.length) return null;
+            return <section key={title}><h5>{title}</h5>
+              <dl>{rows.map(section => <div key={section.key}>
+                <dt>{section.title}</dt><dd>{section.content}</dd>
+                <dd>{renderComments?.({kind:'specification',id:node.id,field:section.key})}</dd>
+              </div>)}</dl>
+            </section>;
+          })}
+          {!documented.length && <p>Start with what this block does. Choose Edit specification to add its behavior, inputs and outputs.</p>}
+          {!!missing.length && <details><summary>Unspecified fields ({missing.length})</summary>
+            <ul>{missing.map(section => <li key={section.key}>{section.title}{renderComments?.({kind:'specification',id:node.id,field:section.key})}</li>)}</ul>
+          </details>}
+        </div>}
       {!!children.length && <section className="module-children" aria-label="Nested modules"><h4>Submodules</h4><NestedBlocks nodes={project.nodes} parent={node.id} onOpen={onOpen}/></section>}
       </section>
       <section hidden={tab!=='interfaces'} aria-label="Module interfaces">
@@ -116,13 +134,23 @@ export function BlockBuildSpec({ project, node, busy, onOpen, onDraft, onInterfa
       {!edges.length && !editingInterface && <p>{project.nodes.some(other=>other.id!==node.id&&other.data.kind!=='note')?'No interfaces yet. Use Add interface to connect a block.':'Add another block to create an interface.'}</p>}
       </section>
       <section hidden={tab!=='tests'} aria-label="Module verification cases">
-      <p>Specified cases · Execution not run</p>
-      {!(node.data.buildSpec?.verificationCases?.length)&&<p>No structured cases yet. Refine this module’s test specification.</p>}
-      {(node.data.buildSpec?.verificationCases||[]).map(row=><details key={row.id}><summary>{row.name} · {row.category}</summary><p>{row.id} · {row.requirementIds.join(', ')}</p><dl>{['environment','setup','input','action','expected','evidence'].map(key=><React.Fragment key={key}><dt>{key[0].toUpperCase()+key.slice(1)}</dt><dd style={{whiteSpace:'pre-wrap'}}>{row[key]}</dd></React.Fragment>)}</dl>{row.interfaceId&&<p>Interface: {row.interfaceId}</p>}{row.operationId&&<p>Operation: {row.operationId}</p>}</details>)}
+      <div className="module-section-heading"><h4>Planned test cases</h4><button className="btn" disabled={busy || !!editingCase} onClick={()=>setEditingCase({})}>Add test case</button></div>
+      {editingCase && <VerificationEditor row={editingCase} project={project} busy={busy} onClose={()=>setEditingCase(null)} onSave={row=>{
+        const cases=node.data.buildSpec?.verificationCases || [];
+        const verificationCases=editingCase.id ? cases.map(item=>item.id===row.id?row:item) : [...cases,row];
+        onSaveSpec({...node.data.buildSpec,verificationCases});
+        setEditingCase(null);
+      }}/>}
+      {!(node.data.buildSpec?.verificationCases?.length)&&<p>No test cases recorded.</p>}
+      {(node.data.buildSpec?.verificationCases||[]).map(row=><details key={row.id}><summary>{row.name} · {row.category}</summary><p>{row.id} · {row.requirementIds.join(', ')}</p><dl>{['environment','setup','input','action','expected','evidence'].map(key=><React.Fragment key={key}><dt>{key[0].toUpperCase()+key.slice(1)}</dt><dd style={{whiteSpace:'pre-wrap'}}>{row[key]}</dd></React.Fragment>)}</dl>{row.interfaceId&&<p>Interface: {row.interfaceId}</p>}{row.operationId&&<p>Operation: {row.operationId}</p>}<button className="btn" disabled={busy || !!editingCase} onClick={()=>setEditingCase(row)}>Edit test case</button></details>)}
+      <h4>Execution evidence</h4>
+      {session?.engineeringEnabled && project.extensions?.architectureWork?.artifactMappings?.length
+        ? tab==='tests' && <BlockEvidence project={project} blockId={node.id} session={session}/>
+        : <p>No execution evidence linked.</p>}
       </section>
       <section hidden={tab!=='model'} aria-label="Module design model"><EngineeringModelView key={node.id+'-'+(focusedOperation||'')} model={project.extensions?.engineeringModel} blockId={node.id} focusId={focusedOperation} renderComments={renderComments}/></section>
       <section hidden={tab!=='diagrams'} aria-label="Module diagrams">
-      <p>Behavior references: {issues.filter(row=>row.severity==='error').length} conflicts · {issues.filter(row=>row.severity==='review').length} links to review.</p>
+      <h4>Behavior scenarios</h4><p>Behavior references: {issues.filter(row=>row.severity==='error').length} conflicts · {issues.filter(row=>row.severity==='review').length} links to review.</p>
       {!!issues.length&&<details><summary>Review behavior links</summary><ul>{issues.map((issue,index)=><li key={index}>{issue.journey?`${issue.journey}, step ${issue.stepIndex+1}: `:''}{issue.message}{issue.ref?` (${issue.ref})`:''}</li>)}</ul></details>}
 
       {(node.data.buildSpec?.scenarios || []).map((scenario, index) => <Scenario key={index} scenario={scenario} comments={(step)=>renderComments?.(step===undefined?{kind:'scenario',id:node.id,index}:{kind:'scenario-step',id:node.id,index,field:String(step)})} operationNames={operationNames} onOperation={id=>{setFocusedOperation(id);setTab('model');}}/>)}
@@ -130,7 +158,7 @@ export function BlockBuildSpec({ project, node, busy, onOpen, onDraft, onInterfa
       </section>
       <section hidden={tab!=='handoff'} aria-label="Module agent handoff">
       <BlockAgentHandoff key={node.id} project={project} node={node} busy={busy} session={session} onPrepareSources={onPrepareSources}/>
-      {session?.engineeringEnabled&&project.extensions?.architectureWork?.artifactMappings?.length>0&&<details><summary>Recorded implementation evidence</summary><BlockEvidence project={project} blockId={node.id} session={session}/></details>}
+      {tab==='handoff'&&session?.engineeringEnabled&&project.extensions?.architectureWork?.artifactMappings?.length>0&&<details><summary>Recorded implementation evidence</summary><BlockEvidence project={project} blockId={node.id} session={session}/></details>}
       </section>
   </div>;
 }
@@ -171,6 +199,30 @@ function InterfaceEditor({edge, node, nodes, busy, onSave, onClose}) {
     </label>)}
     {error && <p className="field-wide" role="alert">{error}</p>}
     <div className="row field-wide"><button className="btn primary" disabled={busy}>Save interface</button><button className="btn" type="button" onClick={onClose}>Cancel</button></div>
+  </form>;
+}
+
+function VerificationEditor({row,project,busy,onSave,onClose}) {
+  const [error,setError]=useState('');
+  function save(event) {
+    event.preventDefault();
+    const data=new FormData(event.currentTarget);
+    if (!data.getAll('requirementIds').length) { setError('Choose at least one requirement covered by this case.'); return; }
+    const fields=Object.fromEntries([...data.entries()].filter(([key])=>key!=='requirementIds').map(([key,value])=>[key,value.trim()]));
+    try {
+      onSave({...row,...fields,id:row.id || crypto.randomUUID(),requirementIds:data.getAll('requirementIds')});
+    } catch (failure) { setError(failure.message); }
+  }
+  return <form className="module-manual-editor fields" aria-label="Test case" onSubmit={save}>
+    <label>Case name<input name="name" defaultValue={row.name} required maxLength={150}/></label>
+    <label>Category<select name="category" defaultValue={row.category || 'acceptance'}>{verificationCategories.map(category=><option key={category}>{category}</option>)}</select></label>
+    <details className="field-wide"><summary>Choose requirements covered</summary>
+      {!project.needs?.length && <p>Add a requirement in Requirements before saving a test case.</p>}
+      {project.needs?.map(need=><label key={need.id}><input type="checkbox" name="requirementIds" value={need.id} defaultChecked={row.requirementIds?.includes(need.id)}/> {need.id} · {need.statement}</label>)}
+    </details>
+    {Object.entries({environment:'Environment',setup:'Setup',input:'Input',action:'Action',expected:'Expected result',evidence:'Evidence to collect'}).map(([key,label])=><label key={key}>{label}<textarea name={key} rows={2} defaultValue={row[key]} required maxLength={4000}/></label>)}
+    {error && <p role="alert">{error}</p>}
+    <div className="row field-wide"><button className="btn primary" disabled={busy || !project.needs?.length}>Save test case</button><button className="btn" type="button" onClick={onClose}>Cancel</button></div>
   </form>;
 }
 

@@ -43,10 +43,11 @@ function capturedDesign(saved){
  return {archive,artifact};
 }
 try{
- for(const [inputId,selectedFile] of [['requirements-file-input',file],['chat-attachment-input',file],['requirements-file-input',imageFile],['chat-attachment-input',imageFile]]){
+ let sourceRun=0;
+ for(const [inputId,selectedFile] of [['requirements-file-input',file],['requirements-file-input',file],['requirements-file-input',imageFile]]){
   const bytes=fs.readFileSync(selectedFile),illustrated=selectedFile===imageFile;
   const delayedSession=selectedFile===file;
-  const previewOnly=inputId==='chat-attachment-input'&&!illustrated;
+  const previewOnly=++sourceRun===2;
   const selectedFiles=previewOnly?[selectedFile,extra]:[selectedFile];
   let sessionRequests=0;
   const page=await browser.newPage({viewport:{width:1570,height:1020}});
@@ -80,25 +81,27 @@ try{
      sourceFigureEvidence:{artifactId:capture.artifact.id,contextSha256:'b'.repeat(64),deliveries:illustrated?[{sourceSha256:'a'.repeat(64),manifestSha256:'f'.repeat(64),figureId:'figure-1',sha256:'e'.repeat(64)}]:[]}};
    if(pathname==='/api/engineering/reconciliation')result={status:'proposal_missing'};
    if(pathname==='/api/engineering/download')return route.fulfill({body:Buffer.from(capture.archive),contentType:'application/zip',headers:{'X-Artifact-Sha256':capture.artifact.sha256}});
-   if(pathname==='/api/architect')oldCalls++;
+   if(pathname==='/api/architect'){oldCalls++;result={message:'Source received.',contextUsed:[]};}
    await route.fulfill({json:result});
   });
   await page.goto(base);
-  await page.getByRole('button',{name:'Upload specification',exact:true}).waitFor();
+  await page.getByRole('button',{name:'Upload specification',exact:true}).first().waitFor();
   assert.equal(await page.getByText('Design with Codex',{exact:true}).count(),0);
   await page.locator('#'+inputId).setInputFiles(selectedFiles);
   const uploaded=page.getByRole('complementary',{name:'Uploaded specifications'});
   await uploaded.getByRole('list',{name:'Loaded files'}).getByText(path.basename(selectedFile),{exact:true}).waitFor();
   if(previewOnly)await uploaded.getByText('exceptions.md',{exact:true}).waitFor();
   assert.equal(await page.getByRole('tab',{name:'Board',exact:true}).getAttribute('aria-selected'),'true');
-  await uploaded.getByRole('button',{name:'Architecture progress',exact:true}).click();
-  await page.getByRole('heading',{name:'Architecture workspace',exact:true}).waitFor();
-  await page.getByRole('button',{name:'Close architecture progress',exact:true}).click();
+  await page.getByText('Source received.',{exact:true}).waitFor();
+  assert.equal(startCount,0,'Upload must use the connected chat provider');
+  await page.getByRole('tab',{name:'Review',exact:true}).click();
+  await page.getByRole('button',{name:'Refine architecture',exact:true}).click();
   for(let i=0;i<60&&!started;i++)await page.waitForTimeout(100);
-  assert.ok(started,inputId+' must automatically submit the same engineering workflow');
+  assert.ok(started,'Explicit engineering request must start the worker');
+  await page.getByRole('tab',{name:'Board',exact:true}).click();
   assert.equal(started.contextSha256,'b'.repeat(64));
   assert.equal(saved.extensions.designSources[0].name,path.basename(selectedFile));
-  assert.equal(oldCalls,0);
+  assert.equal(oldCalls,1);
   if(delayedSession)assert.equal(sessionRequests,1,'An immediate upload must await the in-flight session lookup');
   if(previewOnly){
    const preview=page.locator('.preview-bar').filter({hasText:'Fixture architecture'});
@@ -119,8 +122,8 @@ try{
   }
   assert.equal(await page.getByText('Design with Codex',{exact:true}).count(),0);
   assert.equal(await page.getByRole('button',{name:'Apply to canvas',exact:true}).count(),0);
-  console.log(inputId,path.basename(selectedFile),'saved source and automatically started the single workflow');
-  if(inputId==='requirements-file-input'&&!illustrated){
+  console.log(inputId,path.basename(selectedFile),'saved source and ran explicitly requested engineering work');
+  if(!previewOnly&&!illustrated){
    assert.match(started.text,/systemModel.*functional flow and sequence/);
    await page.getByRole('button',{name:'System diagrams',exact:true}).click();
    const model=page.getByRole('region',{name:'System diagrams'});
@@ -152,7 +155,7 @@ try{
    await model.getByRole('button',{name:'Inventory ledger',exact:true}).click();
    await model.getByRole('button',{name:'Open module',exact:true}).click();
    await page.getByRole('region',{name:'Block detail',exact:true}).getByRole('heading',{name:'Ledger',exact:true}).waitFor();
-   await page.getByRole('button',{name:'Prepare agent handoff',exact:true}).click();
+   await page.getByRole('button',{name:'Agent handoff',exact:true}).click();
    const ready=page.waitForEvent('download');
    await page.getByRole('button',{name:'Download agent handoff',exact:true}).click();
    const modelFiles=unzipSync(fs.readFileSync(await (await ready).path()));
@@ -253,9 +256,9 @@ try{
  await page.getByText('Block Spec Kit',{exact:true}).click();
  const hierarchy=page.getByRole('navigation',{name:'Block hierarchy'});
  assert.match(await hierarchy.innerText(),/Theatre[\s\S]*Reservations[\s\S]*Seat holds/);
- assert.equal(await page.locator('.module-spec-card').count(),8);
- assert.equal(await page.getByLabel('Block contents').getByText('8/8 spec sections documented',{exact:true}).count(),1);
- await page.getByRole('button',{name:'Prepare agent handoff',exact:true}).click();
+ assert.equal(await page.locator('.module-spec-document dt').count(),8);
+ assert.equal(await page.getByRole('heading',{name:'Block behavior',exact:true}).count(),1);
+ await page.getByRole('button',{name:'Agent handoff',exact:true}).click();
  assert.ok(await page.getByRole('region',{name:'Module agent handoff'}).isVisible());
  const downloadPending=page.waitForEvent('download');
  await page.getByRole('button',{name:'Download agent handoff',exact:true}).click();
@@ -300,7 +303,7 @@ try{
  assert.ok((await diagram.boundingBox()).width>200);
  if(process.env.ATMEM_WORKFLOW_SCREENSHOT_DIR)await page.screenshot({path:path.join(process.env.ATMEM_WORKFLOW_SCREENSHOT_DIR,'module-mobile.png')});
  await page.getByRole('navigation',{name:'Module details'}).getByRole('button',{name:'Specification',exact:true}).click();
- assert.ok(await page.locator('.module-spec-card').evaluateAll(cards=>cards.every(card=>{const box=card.getBoundingClientRect();return box.left>=0&&box.right<=innerWidth;})),'Specification cards must fit the mobile viewport');
+ assert.ok(await page.locator('.module-spec-document dt').evaluateAll(cards=>cards.every(card=>{const box=card.getBoundingClientRect();return box.left>=0&&box.right<=innerWidth;})),'Specification cards must fit the mobile viewport');
  await page.getByRole('button',{name:'Hide chat',exact:true}).click();
  await page.locator('.module-overview').evaluate(element=>element.scrollIntoView({block:'start'}));
  assert.ok(await hierarchy.evaluate(element=>element.getBoundingClientRect().top>=document.querySelector('.detail-navigation').getBoundingClientRect().bottom),'Hierarchy must stay below the sticky back control');

@@ -705,7 +705,7 @@ function BlockDetail({ project, node, run, probe, busy, reviewItems, onReviewCon
       </div>
       {hasSpecKit && <div className="block-build-spec" role="tabpanel" id="block-panel-spec-kit"
         aria-labelledby="block-tab-spec-kit" hidden={activeTab !== "spec-kit"}>
-        <BlockBuildSpec project={project} node={node} busy={busy} onOpen={onOpen} onDraft={onDraft} renderComments={renderComments}
+        <BlockBuildSpec key={node.id} project={project} node={node} busy={busy} onOpen={onOpen} onDraft={onDraft} renderComments={renderComments}
           onInterface={onInterface} onSaveInterface={onSaveInterface} onSaveSpec={buildSpec=>{
             toProjectFile({...project,nodes:project.nodes.map(block=>block.id===node.id?{...block,data:{...block.data,buildSpec}}:block)});
             set({buildSpec});
@@ -862,6 +862,15 @@ function App() {
     showSourceBoard();
     if(connection?.provider!=='codex'||!connection.model||connection.model==='default'||!connection.effort)showConnections();
   }
+  function updateArchitectureFromSpecification() {
+    const sources=projectRef.current.extensions?.designSources || [];
+    if (!sources.length) {
+      requirementsInput.current.click();
+      return;
+    }
+    const files=sources.map(source=>new File([source.text],source.name+'.txt',{type:'text/plain'}));
+    void attachFiles(files,{specification:true,retained:true});
+  }
   async function readArchitectureDraft(artifact, sessionId) {
     const current=projectRef.current;
     const basis=canvasBasis(current);
@@ -889,26 +898,18 @@ function App() {
     else setPending(proposal);
     refit();
   }
-  async function receiveDesignSources(files, owner, live=sessionRef.current) {
-    const batch={owner,names:files.map(file=>file.name)};
-    showSourceBoard();
-    setSourceBatch(batch);
-    try{
-      const received=await readAttachments(files);
-      await saveEngineeringProject(owner);
-      if(projectRef.current.id!==owner)return;
-      const response=await fetch('/api/design-sources',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${live.token}`},
-        body:JSON.stringify({projectId:owner,attachments:received.map(({name,mime,data})=>({name,mime,data}))})});
-      const result=await response.json();
-      if(!response.ok)throw Error(typeof result.detail==='string'?result.detail:'The source document could not be read.');
-      if(projectRef.current.id!==owner)return;
-      const prior=projectRef.current.extensions?.designSources||[];
-      startArchitecture([...new Map([...prior,...result.sources].map(source=>[source.sha256,source])).values()],live);
-      setSourceBatch(null);
-    }catch(error){
-      if(projectRef.current.id===owner)setSourceBatch({...batch,error:error.message});
-      throw error;
-    }
+  async function retainSpecificationSources(received, owner, live) {
+    await saveEngineeringProject(owner);
+    if(projectRef.current.id!==owner)return;
+    const response=await fetch('/api/design-sources',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${live.token}`},
+      body:JSON.stringify({projectId:owner,attachments:received.map(({name,mime,data})=>({name,mime,data}))})});
+    const result=await response.json();
+    if(!response.ok)throw Error(result.detail||'Could not save the source documents.');
+    const current=projectRef.current;
+    if(current.id!==owner)return;
+    const prior=current.extensions?.designSources||[];
+    const sources=[...new Map([...prior,...result.sources].map(source=>[source.sha256,source])).values()];
+    updateEngagement({...current,extensions:{...current.extensions,designSources:sources}});
   }
 
   useEffect(()=>{saveCanvasView(project,{level,focus,selected,positions:topologyPositions});},[project.id,level,focus,selected,topologyPositions]);
@@ -1079,21 +1080,45 @@ function App() {
   const attachmentInput=useRef();
   const [attachments,setAttachments]=useState([]),[attachmentError,setAttachmentError]=useState(''),[readingAttachments,setReadingAttachments]=useState(false);
   const attachmentReadLock=useRef(false);
-  async function attachFiles(files){
+  async function attachFiles(files, {specification=false,retained=false}={}) {
     const selectedFiles=[...files];
     if(!selectedFiles.length||attachmentReadLock.current)return;
-    attachmentReadLock.current=true;const projectAtStart=projectRef.current.id;
-    setReadingAttachments(true);setAttachmentError('');
+    const owner=projectRef.current.id;
+    const batch={owner,names:selectedFiles.map(file=>file.name)};
+    attachmentReadLock.current=true;
+    setReadingAttachments(true);
+    setAttachmentError('');
+    if(specification)setSourceBatch(batch);
     try {
-      const live=sessionRef.current||await refreshSession();
-      if(live?.engineeringEnabled&&!HOSTED){
-        await receiveDesignSources(selectedFiles,projectAtStart,live);return;
-      }
-      const next=await readAttachments(selectedFiles,attachments);
-      if(projectRef.current.id===projectAtStart)setAttachments(previous=>[...previous,...next]);
+      const added=await readAttachments(selectedFiles,attachments);
+      if(projectRef.current.id!==owner)return;
+      const all=[...attachments,...added];
+      setAttachments(all);
+      if(!specification)return;
+      const prompt='Use the attached specification to propose requirements and a connected, nested architecture. Preserve existing systems. Follow stated deployment constraints and leave unspecified cloud, on-premises or hybrid placement open for discussion.';
+      setChatOpen(true);
+      setInput(prompt);
+      const live=sessionRef.current || await refreshSession();
+      if(projectRef.current.id!==owner)return;
+      if(!retained&&live?.engineeringEnabled&&!HOSTED){
+        try {
+          await retainSpecificationSources(added,owner,live);
+          if(projectRef.current.id===owner)setSourceBatch(null);
+        } catch {
+          if(projectRef.current.id===owner)setSourceBatch({...batch,error:'Source copy could not be saved. The files are attached to chat.'});
+        }
+      }else setSourceBatch(null);
+      if(projectRef.current.id!==owner)return;
+      if((connection||live?.defaultConnection)&&live)void send(prompt,'chat',null,null,{attachments:all});
+      else showConnections();
+    } catch(error) {
+      if(projectRef.current.id!==owner)return;
+      setAttachmentError(error.message);
+      if(specification){setSourceBatch({...batch,error:error.message});notify(error.message);}
+    } finally {
+      attachmentReadLock.current=false;
+      setReadingAttachments(false);
     }
-    catch(error){setAttachmentError(error.message);}
-    finally{attachmentReadLock.current=false;setReadingAttachments(false);}
   }
   const chatScroll = useChatScroll(project.id,chatOpen);
   const latestArchitectureTurn=Array.isArray(project.extensions?.architectureActivity?.turns)?project.extensions.architectureActivity.turns.at(-1):null;
@@ -1586,7 +1611,10 @@ function App() {
     if(intent!=='coach')setMessages(m=>[...m,{role:'user',text:'Help me with the next test step.'}]);
     await send(emulationPrompt(projectRef.current,report,intent),'emulation',{mode:'design',view:'emulation'});
   }
+  const activeConnection=connection;
   async function send(text = input, origin = "chat", destination = null, reviewTarget = null, intakeOptions = {}) {
+    const session=sessionRef.current;
+    const connection=activeConnection || session?.defaultConnection;
     if ((!text.trim() && !(origin === "chat" && attachments.length)) || busy || readingAttachments) return;
     if(origin!=='chat'&&(agentBusy||agentAbort.current))return;
     if(text.length>8000){notify('Keep each message within 8,000 characters; your draft is unchanged.');return;}
@@ -2413,6 +2441,7 @@ function App() {
 {treeOpen&&<nav className="board-component-tree" aria-label="Component tree"><strong>{project.name}</strong><div className="tree-views"><button disabled={!blockReviews.length} onClick={()=>{reviewBlock((blockReviews.find(r=>r.status!=='reviewed')||blockReviews[0]).id);}}><CheckCheck size={16}/> Review blocks · {blockReviews.filter(r=>r.status==='reviewed').length}/{blockReviews.length}</button></div>{project.nodes.some(n=>n.data.parentBlockId)?<NestedBlocks nodes={project.nodes} selected={selected} onOpen={reviewBlock}/>: [...new Map(project.nodes.filter(n=>n.data.kind!=='note').map(n=>[layerOf(n).id,layerOf(n)])).values()].map(layer=><details open key={layer.id}><summary>{layer.label}</summary>{project.nodes.filter(n=>n.data.kind!=='note'&&layerOf(n).id===layer.id).map(n=><button key={n.id} aria-current={selected===n.id?'true':undefined} onClick={()=>{setMode('design');setDesignView('board');setFocus(null);setLevel('flow');setSelected(n.id);setTimeout(()=>fitView({nodes:[{id:n.id}],padding:1,maxZoom:1.2,duration:350}),100);}}><Database size={14}/><span>{n.data.label}<small>{n.data.service||n.data.provider}</small><small className={`tree-review-state ${blockReviews.find(r=>r.id===n.id)?.status}`}>{blockReviews.find(r=>r.id===n.id)?.statusLabel}</small></span></button>)}</details>)}</nav>}
           {treeOpen&&<button className="btn" disabled={busy} onClick={()=>setPalette(true)}><Plus size={16}/> Add component</button>}</aside>}
           <div className="board-top-actions">
+            {level!=='block'&&<button type="button" className="btn board-upload" disabled={busy||readingAttachments} onClick={()=>requirementsInput.current.click()}><Paperclip size={16}/> Upload specification</button>}
             {level!=='block'&&<div className="nested-view-control">
           {nested.projected&&<label className="nested-scope-control">View
             <select aria-label="Architecture level" value={nested.scope||''} onChange={event=>exploreSubsystem(event.target.value||null)}>
@@ -2422,7 +2451,7 @@ function App() {
           </label>}
           {!nested.projected&&shown.nodes.some(node=>node.data.parentBlockId)&&<button className="btn" onClick={()=>exploreSubsystem(null)}>Top level</button>}
         </div>}
-            {nativeDesignEnabled&&hasDesign&&treeOpen&&<div className="native-canvas-action"><button className="btn" disabled={busy||agentBusy||!!pending} onClick={()=>startArchitecture()}>Update architecture</button><button className="link" disabled={readingAttachments||agentBusy||!!pending} onClick={()=>requirementsInput.current.click()}>Add specification</button></div>}
+            {hasDesign&&treeOpen&&<div className="native-canvas-action"><button className="btn" disabled={busy||agentBusy||!!pending} onClick={updateArchitectureFromSpecification}>Update architecture</button></div>}
           </div>
         </div>
         <div className="board-controls">
@@ -2476,7 +2505,7 @@ function App() {
               </>}
               <div className="board-source-actions">
                 <button className="link" disabled={readingAttachments||!!pending} onClick={()=>requirementsInput.current.click()}>Add files</button>
-                {nativeDesignEnabled&&<button className="link" aria-expanded={boardProgress} onClick={()=>setBoardProgress(!boardProgress)}>{boardProgress?'Hide progress':'Architecture progress'}</button>}
+                {nativeDesignEnabled&&['running','starting'].includes(engineeringStatus?.state)&&<button className="link" aria-expanded={boardProgress} onClick={()=>setBoardProgress(!boardProgress)}>{boardProgress?'Hide progress':'Architecture progress'}</button>}
                 {(buildRequest?.intent==='design'||['running','starting'].includes(engineeringStatus?.state))&&<span role="status">Designing…</span>}
               </div>
             </details>
@@ -2717,7 +2746,7 @@ function App() {
           onSaveProject={saveCurrentProject}
           renderComments={pending?undefined:renderDesignComments}
           onOpenBlock={pending?undefined:id=>{setDesignView('board');openBlock(id);}}
-          onGenerate={nativeDesignEnabled?()=>startArchitecture():undefined}/>}
+          onGenerate={updateArchitectureFromSpecification}/>}
         <div className={`review-workspace${boardProgressVisible?' board-engineering-panel':''}`}
           hidden={mode!=='review'&&mode!=='estimate'&&!(boardProgressVisible)}>
         <header className="review-intro"><h2>Review</h2></header>
@@ -2971,7 +3000,7 @@ function App() {
         </aside>
       )}
 
-      <input type="file" id="requirements-file-input" ref={requirementsInput} accept={ATTACHMENT_ACCEPT} multiple hidden onChange={async e=>{const files=[...e.target.files];e.target.value='';if(!files.length||readingAttachments)return;const uploadOwner=projectRef.current.id;setReadingAttachments(true);setAttachmentError('');try{const live=sessionRef.current||await refreshSession();if(live?.engineeringEnabled&&!HOSTED){await receiveDesignSources(files,uploadOwner,live);return;}const added=await readAttachments(files,attachments);if(projectRef.current.id!==uploadOwner)return;const all=[...attachments,...added];setAttachments(all);setChatOpen(true);setInput('Read these requirements and diagrams. Summarise what you understand, propose requirements and a connected design, and ask one focused question about anything important that is unclear. Preserve existing systems and distinguish source facts from assumptions.');if(connection&&session){setReadingAttachments(false);void send('Read these requirements and diagrams. Summarise what you understand, propose requirements and a connected design, and ask one focused question about anything important that is unclear. Preserve existing systems and distinguish source facts from assumptions.','chat',null,null,{attachments:all});}else{showConnections();}}catch(error){setAttachmentError(error.message);notify(error.message);}finally{setReadingAttachments(false);}}}/>
+      <input type="file" id="requirements-file-input" ref={requirementsInput} accept={ATTACHMENT_ACCEPT} multiple hidden onChange={event=>{void attachFiles(event.target.files,{specification:true});event.target.value='';}}/>
       <input id="project-file-input" type="file" ref={fileRef} accept="application/json,.json" hidden onChange={importProject} />
       {toast && (
         <div className="toast" role="status">

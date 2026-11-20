@@ -16,6 +16,8 @@ permissions:
   contents: read
 jobs:
   package:
+    outputs:
+      channel: ${{ steps.metadata.outputs.channel }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -39,6 +41,9 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: npm test
       - run: npm run package:npm
+      - name: Read the qualified package distribution tag
+        id: metadata
+        run: node -p '"channel=" + require("./.local/npm-release/package/package.json").publishConfig.tag' >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4
         with:
           name: architect-npm-candidate
@@ -92,6 +97,7 @@ jobs:
         with:
           sparse-checkout: |
             /scripts/verify-npm-release.mjs
+            /scripts/npm-release-channel.mjs
           sparse-checkout-cone-mode: false
       - uses: actions/setup-node@v4
         with:
@@ -102,8 +108,8 @@ jobs:
           name: architect-npm-candidate
           path: candidate
       - run: npm install --global npm@11.17.0
-      - run: npm publish ./candidate/*.tgz --access public --tag latest --provenance
-      - name: Verify public npm version, latest tag and artifact integrity
+      - run: npm publish ./candidate/*.tgz --access public --tag "${{ needs.package.outputs.channel }}" --provenance
+      - name: Verify public npm version, distribution tag and artifact integrity
         run: node scripts/verify-npm-release.mjs ./candidate/*.tgz
 
   github-package:
@@ -129,6 +135,6 @@ jobs:
           name: architect-npm-candidate
           path: candidate
       - run: node scripts/github-package.mjs candidate .local/github-package
-      - run: npm publish ./.local/github-package/package --registry=https://npm.pkg.github.com --access public --tag latest --ignore-scripts
+      - run: npm publish ./.local/github-package/package --registry=https://npm.pkg.github.com --access public --tag "${{ needs.package.outputs.channel }}" --ignore-scripts
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
