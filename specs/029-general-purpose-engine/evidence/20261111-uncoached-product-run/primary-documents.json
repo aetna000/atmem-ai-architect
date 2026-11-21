@@ -1,0 +1,59 @@
+{
+  "observedAt": "2026-11-11T01:08:53.473200+00:00",
+  "sources": [
+    {
+      "id": "nova-micro",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-amazon-nova-micro.html",
+      "finalUrl": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-amazon-nova-micro.html",
+      "sha256": "7128161981cf9fbaa9827974dff27e22fdcc50dbb0da5ccc0e8a79d73d590bee",
+      "bytes": 45141,
+      "retrievedAt": "2026-11-11T01:08:52.959520+00:00"
+    },
+    {
+      "id": "retention",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/data-retention.html",
+      "finalUrl": "https://docs.aws.amazon.com/bedrock/latest/userguide/data-retention.html",
+      "sha256": "32d1102a6b6581d6d4fb40b4ba3de946e7aec8e4ce5ae64b56db2cdbc28eabb9",
+      "bytes": 44735,
+      "retrievedAt": "2026-11-11T01:08:53.227175+00:00"
+    },
+    {
+      "id": "structured-output",
+      "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/structured-output.html",
+      "finalUrl": "https://docs.aws.amazon.com/bedrock/latest/userguide/structured-output.html",
+      "sha256": "cdbf4b796ed8c9e6e3be430a1fa086710916cb9ce2c27b16f9a87ed6ca4b4432",
+      "bytes": 37474,
+      "retrievedAt": "2026-11-11T01:08:53.473180+00:00"
+    }
+  ],
+  "facts": [
+    {
+      "sourceId": "nova-micro",
+      "facts": [
+        "The card documents amazon.nova-micro-v1:0, text input/output and Converse support on bedrock-runtime.",
+        "Sydney ap-southeast-2 is marked for in-region access.",
+        "Client-side tool calling is supported; Bedrock structured outputs are marked unsupported.",
+        "Documented service availability is not account entitlement, quota, model-quality or deployed-path evidence."
+      ]
+    },
+    {
+      "sourceId": "retention",
+      "facts": [
+        "Retention policy has regional account scope; project scope is specific to bedrock-mantle.",
+        "A restrictive retention mode can make a retention-requiring model unavailable.",
+        "Application storage, inference protocol storage, provider retention and logging require separate checks.",
+        "This source does not establish a particular AWS account configuration."
+      ]
+    },
+    {
+      "sourceId": "structured-output",
+      "facts": [
+        "Structured-output support depends on the chosen model and API.",
+        "A prompt or ordinary tool schema does not establish constrained-decoding support.",
+        "Enforced schema subsets differ from application validation needs, including length and numeric constraints.",
+        "Unsupported strict output fields must not be inferred from generic Converse support."
+      ]
+    }
+  ],
+  "boundary": "Primary public documentation reviewed outside the model worker. No AWS-account or inference call; no deployment. Fact notes are evidence for an independent audit and future reviewed knowledge, not instructions or case-specific production templates."
+}

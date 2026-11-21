@@ -1,0 +1,49 @@
+{
+  "status": "passed",
+  "backend": "azurite",
+  "backendVersion": "3.37.0",
+  "checks": [
+    {
+      "name": "blob-store: generated upload/read preserves UTF-8 bytes",
+      "passed": true
+    },
+    {
+      "name": "blob-store: overwrite and listing",
+      "passed": true
+    },
+    {
+      "name": "blob-store: deletion and missing-object error",
+      "passed": true
+    }
+  ],
+  "capabilities": [
+    {
+      "service": "azure object storage",
+      "mode": "generated-client data-plane checks"
+    }
+  ],
+  "limitations": [
+    "Local API checks do not validate Terraform apply, real IAM, account policy, region availability, networking, billing or production operations.",
+    "Synthetic client credentials are not deployment identities.",
+    "Only the explicit private object storage contract is exercised; other provider services are not emulated.",
+    "Azure Entra authorization, custom role enforcement, storage-account versioning and soft-delete retention remain unverified; Azurite CRUD does not establish these behaviors."
+  ],
+  "message": "Generated client functions exercised against local storage APIs. Review the unverified boundaries before planning deployment.",
+  "version": 1,
+  "workerDigest": "b39ff2d2d594aa734e298d2a79b252b709d1cc19c2eabbf8eac3509114e998b2",
+  "designRevision": 2,
+  "environment": "staging",
+  "artifactDigest": "d2d3a77683a271013536adf2f9803faf29558ab9fe7610db62791c9b5301ddbe",
+  "fileDigests": {
+    "main.tf.json": "393fed18bd34684911d8f24c73d11b0300f7aec604f0ce572db7a4a2c78610d0",
+    "resource-schedule.json": "7c0c9796e0d852633860a9c3f8ed709600ff2baf1352514651ea4addf9ae5fe0",
+    "storage_client.py": "bc68bf9a0d6d99116a58592ea9808cf6f9a8c0d92d6d468fb5c07031d1b1554e",
+    "deployment.tfvars.json.example": "a4a1a706849f491e42088378bf834323b4eeb75b064064854a31ccd9970aa1e3",
+    ".gitignore": "9a60f6bfb5f6e76ea84be64714359d1e607d46b6404e2b1ec97683148252af28",
+    "tests/storage.tftest.hcl": "486e798b6b2717702fd215ec516bbae01772451b6aecfa8045b014296d26eb4d",
+    "README.md": "387f3ab5118f60cc198fb0173b3d15390ab9214630bfb3a7d41b003822d9fa78"
+  },
+  "cloudOperations": false,
+  "terraformApply": "not_run",
+  "workspaceCleanup": "passed"
+}

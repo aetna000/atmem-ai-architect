@@ -1,0 +1,178 @@
+{
+  "version": 1,
+  "kind": "local-aws-emulation",
+  "backend": "moto",
+  "status": "passed",
+  "cloudOperations": false,
+  "terraformApply": "not_run",
+  "modelMode": "scripted-fixture",
+  "checks": [
+    {
+      "name": "Stateful emulator resource setup",
+      "passed": true,
+      "evidence": "stateful-emulation"
+    },
+    {
+      "name": "Versioned storage and prior-version recovery: block_6275636b6574",
+      "passed": true,
+      "evidence": "stateful-emulation"
+    },
+    {
+      "name": "Generated async pipeline, duplicate safety, DLQ and replay",
+      "passed": true,
+      "evidence": "stateful-emulation"
+    }
+  ],
+  "capabilities": [
+    {
+      "service": "S3",
+      "mode": "stateful-service-API"
+    },
+    {
+      "service": "SQS",
+      "mode": "stateful-service-API"
+    },
+    {
+      "service": "DynamoDB",
+      "mode": "stateful-service-API"
+    },
+    {
+      "service": "S3 \u2192 SQS \u2192 worker",
+      "mode": "Moto notification and redrive; harness polls/invokes/acks; visibility advanced explicitly"
+    }
+  ],
+  "limitations": [
+    "Terraform apply and real AWS account prerequisites are not emulated; run provider checks separately.",
+    "IAM enforcement, API Gateway routing/signatures, Cognito sign-in/MFA and CloudFront delivery remain unverified.",
+    "Generated Python handlers execute on this host, not the AWS Lambda ARM64 runtime; event polling is driven by the harness.",
+    "Bedrock responses and authenticated request envelopes are deterministic fixtures, not model-quality or authentication evidence.",
+    "Quotas, billing, latency, service outages and native SharePoint/Confluence APIs require separate qualification."
+  ],
+  "cleanup": "passed",
+  "emulatorPatches": [
+    {
+      "id": "moto-s3-notification-version-id-v1",
+      "motoVersion": "5.2.5",
+      "reason": "Moto drops versionId from S3 notifications although its exact event key retains version_id.",
+      "reference": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/notification-content-structure.html",
+      "scope": "Add only the exact triggering key version; do not look up current/latest objects or alter generated handlers."
+    }
+  ],
+  "backendVersion": "5.2.5",
+  "resourceCoverage": [
+    {
+      "type": "aws_s3_bucket",
+      "count": 1,
+      "mode": "stateful-api-adapter"
+    },
+    {
+      "type": "aws_s3_bucket_public_access_block",
+      "count": 1,
+      "mode": "stateful-api-adapter"
+    },
+    {
+      "type": "aws_s3_bucket_server_side_encryption_configuration",
+      "count": 1,
+      "mode": "stateful-api-adapter"
+    },
+    {
+      "type": "aws_s3_bucket_versioning",
+      "count": 1,
+      "mode": "stateful-api-adapter"
+    },
+    {
+      "type": "aws_s3_bucket_ownership_controls",
+      "count": 1,
+      "mode": "not-emulated"
+    },
+    {
+      "type": "aws_s3_bucket_policy",
+      "count": 1,
+      "mode": "not-emulated"
+    },
+    {
+      "type": "aws_iam_role",
+      "count": 1,
+      "mode": "not-emulated"
+    },
+    {
+      "type": "aws_cloudwatch_log_group",
+      "count": 1,
+      "mode": "not-emulated"
+    },
+    {
+      "type": "aws_iam_role_policy",
+      "count": 1,
+      "mode": "not-emulated"
+    },
+    {
+      "type": "aws_lambda_function",
+      "count": 1,
+      "mode": "host-executed-code"
+    },
+    {
+      "type": "aws_lambda_alias",
+      "count": 1,
+      "mode": "not-emulated"
+    },
+    {
+      "type": "aws_sqs_queue",
+      "count": 2,
+      "mode": "stateful-api-adapter"
+    },
+    {
+      "type": "aws_sqs_queue_policy",
+      "count": 2,
+      "mode": "not-emulated"
+    },
+    {
+      "type": "aws_sqs_queue_redrive_allow_policy",
+      "count": 1,
+      "mode": "not-emulated"
+    },
+    {
+      "type": "aws_dynamodb_table",
+      "count": 1,
+      "mode": "stateful-api-adapter"
+    },
+    {
+      "type": "aws_lambda_event_source_mapping",
+      "count": 1,
+      "mode": "not-emulated"
+    },
+    {
+      "type": "aws_cloudwatch_metric_alarm",
+      "count": 1,
+      "mode": "not-emulated"
+    },
+    {
+      "type": "aws_s3_bucket_notification",
+      "count": 1,
+      "mode": "stateful-api-adapter"
+    }
+  ],
+  "message": "Supported local emulation checks passed. Review the unverified boundaries before deployment.",
+  "workerDigest": "686b045fc4eec6ff5273da36b976d966a599f0b687389afc76556e1158425dac",
+  "designRevision": 2,
+  "environment": "staging",
+  "artifactDigest": "8f66e53d8f9f3d814a75014b833e678b997baa19f74ea8a101c6d80239ef8269",
+  "fileDigests": {
+    "preflight-requirements.lock": "17322a01f8cf7f5d85ddb1203853fb1bdc87e716971f4efb2559c0c49fb2ef17",
+    "preflight-aws.py": "4eb9d90ffdc2c8cf2262bf6a87e0231ffd7e71ae0ae86dca202c87ec9ca35231",
+    "PREFLIGHT.md": "00c7b9a27e4d768aa44570a6b5c80685bcfcb7f57fda2c6ee7b6dcd648cf1209",
+    ".gitignore": "bcaa9b020d6c4a5721412085a5024d510f1bd8c9fce03dd8c918881b31e26980",
+    "tests/storage-access.tftest.hcl": "bf1566bb0e62394fda8faf7bac450b8645bfd222a1fe3fc5dd064bfec3663cb2",
+    "deployment.tfvars.json.example": "b9edf90945e3ee242b0a946b07fa16a324346cb0a41f89fa56179737472d1cb1",
+    "VALIDATION.md": "556baa226715d9d2633bf9aa637681a1b36a09ab5b1523fbb8e9f3beecb6aeb7",
+    "handlers/block_776f726b6572.py": "85b00ddfde50ec2929e8f9ab923555a05ce86add6b8da70b76e6cdb1f080a7e3",
+    "app-tests/block_776f726b6572_test.py": "fed14737be50bc52d1a91b15b6843395508a1616ebc93b3012eb6946956aec96",
+    "runtime-requirements.lock": "17322a01f8cf7f5d85ddb1203853fb1bdc87e716971f4efb2559c0c49fb2ef17",
+    "runtime-dependency-sources.json": "b15242b2a094cd53df1a374f0a8aad5b255edf2092cf0494c467725fdf852bc3",
+    "build-runtime.py": "988e099438f8b6bddfca996fb38807166fbc828caecf5c0b6422dbaa5328d3c3",
+    "BUILD.md": "cb6615260d4289346c16544761daf8f79155af6f77750af07fade17e41d61ed1",
+    "main.tf.json": "79acb32f42499393405bacba45eded857c1f276f28ad097362811f2e2b083e43",
+    "resource-schedule.json": "35e6250cad1d0e2a9e5b918103cbdbcc03ad551e01c3ff46fa1fa74af890453d",
+    "README.md": "39a286452dc5fb3df05b133639c28e814680b8ae177eabf0fb0054d247f7cb88"
+  },
+  "workspaceCleanup": "passed"
+}

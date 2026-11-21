@@ -1,0 +1,69 @@
+{
+  "artifactSha256": "22d35c9d11612c91094b4b1e89b1a429000e5ae0be9dc3a6697758ab8843f7ab",
+  "reviewedAgainstSharedCommit": "c11fdbc",
+  "items": [
+    {
+      "module": "workflow_application.py",
+      "generatedModuleSha256": "89c123cb73cefcc99d47daeb03373a3a10cbe9ac9fb9d1efb438389a97a4f6e2",
+      "retainedDiffSha256": "dd3de89c13f26045708bffe6b5b9e742f722ecf2e93b5de28e176ce4203ac674",
+      "status": "application_specific_assembly_do_not_extract",
+      "finding": "The native client removes supplied generic factory helpers and assembles its own fixed policy/bootstrap. Retain shared factories; removing interfaces would break other clients. Custom assembly is not a replacement for generic support.",
+      "requiredInterfaceOrCounterexample": "Shared factory hooks must preserve owned account/kind/namespace/native identity and explicit trusted stage boundaries."
+    },
+    {
+      "module": "workflow_http.py",
+      "generatedModuleSha256": "d94419469f7aff4af90ed9a1fe801ad4efef6595bae792224e100a37adfa720d",
+      "retainedDiffSha256": "1e2c379611f924e5cc6db0960ddd2926717ce3a13646a679a7aaade0303cf0c8",
+      "status": "requires_explicit_policy_and_observation_interfaces",
+      "finding": "Direct accessionCode/caption fields and labels.fingerprint imports are museum-specific. GET inspection changes persisted state; exact reviewer acknowledgement is distinct from server delivery of a representation. Readiness checks contain a fixed schema1 literal.",
+      "requiredInterfaceOrCounterexample": "Use versioned intake/representation/review policy interfaces and one shared schema admission helper. Any inspection acknowledgement must bind current source/result/revision/policy, actor/account and live role; a GET is not proof a human read it."
+    },
+    {
+      "module": "workflow_database.py",
+      "generatedModuleSha256": "e14f6c545d997913af08c3b4818fef1c889739f8fe2281cda0755ba964d4ea17",
+      "retainedDiffSha256": "cad9ada6bbce10e34c9156d8442bb74fc82fdbbfab333a66e744a9d4a1b5177c",
+      "status": "inspection_table_grants_not_yet_generic",
+      "finding": "SELECT/INSERT on review_inspections applies only when that explicit policy/table exists. Do not grant a nonexistent table or infer all workflows need it.",
+      "requiredInterfaceOrCounterexample": "Version schema/grants together; retain no membership administration, schema migration or audit/history deletion authority for runtime identities."
+    },
+    {
+      "module": "workflow_worker.py",
+      "generatedModuleSha256": "7e30306b64824f33802ae088093a1b03a2823c5fcfb7a03fd0528845cf682fe1",
+      "retainedDiffSha256": "bfe139b0180d477b88a9988e2b26987d5ba2deeacc21059a329d9f9d50bb734a",
+      "status": "domain_neutral_error_taxonomy_candidate",
+      "finding": "Native code replaces model_unavailable with processing_unavailable for deterministic work. The generic failure-state and replay semantics are unchanged; classify processor failures without implying AI use.",
+      "requiredInterfaceOrCounterexample": "If extracted, preserve old observed reason codes/history and prove temporary/permanent/uncertain behavior across deterministic/model adapters."
+    },
+    {
+      "module": "durable_workflow.py",
+      "generatedModuleSha256": "ff7ea5a7875538c95c141b6a7b029a868d6718742cc0b0568e65e6b60b232a58",
+      "retainedDiffSha256": "52b69b28e04b1398107a8e640c3d146d201799fb7308d3e0d1e66d2747db7b93",
+      "status": "mixed_generic_mechanism_and_client_policies",
+      "finding": "Unicode storage was independently repaired in shared schema2, not copied verbatim. Native labels imports, source-derived validation and ordinary-staff own-read policy must not become global domain assumptions. Inspection receipt uses actor/revision/fingerprint; scope/privacy choices need explicit contracts.",
+      "requiredInterfaceOrCounterexample": "Provide versioned owned validation/read-scope/review interfaces with approval-binding and rollback evidence; test private versus collaborative policies, both derived-field directions, live revocation, foreign-account/cursor/history access and stale inspection races."
+    },
+    {
+      "module": "workflow_process_stage.py",
+      "generatedModuleSha256": "8ad07b5c92663717c2ce0e810b5abe84933648f85a196000043dccb5d57e0805",
+      "retainedDiffSha256": "bcd826a490fdfff8aeb5235e8ffb4ccef192f8476c0e39225aa7d7325f12883a",
+      "status": "fixed_uid_policy_not_portable_generic_default",
+      "finding": "Native UID65534/65533 drop occurs only when parent is root. Nonroot execution silently retains one UID. Copying this would imply a credential/process isolation guarantee it cannot provide on every platform or runtime.",
+      "requiredInterfaceOrCounterexample": "Any privilege policy must be trusted operator configuration, explicit platform/capability admission and fail closed when unavailable. Verify parent protection, groups/capabilities/FDs/credentials and actual image behavior. ProcessStage currently promises deadlines, not hostile-code isolation."
+    },
+    {
+      "module": "workflow_schema.sql",
+      "generatedModuleSha256": "2dace9801572d7de511918f0a0660ce7b09629c65ba002a311551fc1746cd98b",
+      "retainedDiffSha256": "c68b328dd932cd2e12731c522daeb8db3ad3764ec2c4e7817cd65b5f728ef7f7",
+      "status": "unicode_mechanism_repaired_inspection_schema_pending",
+      "finding": "Shared schema2 now stores canonical UTF8 JSON source/result/history/receipt with exact version/hash admission. Native inspection table remains a client specialization with its own schema/grant/retention obligations.",
+      "requiredInterfaceOrCounterexample": "Do not adopt native schema1 or copy a new table into existing databases. Any future receipt mechanism needs tenant/actor/revision/policy constraints, bounded retention/lifecycle and explicit migration review."
+    }
+  ],
+  "scope": "Source/interface review plus previously recorded local image evidence. Proposed generic interfaces are not implemented or newly accepted client requirements.",
+  "completedGenericExtraction": [
+    "canonical Unicode JSON persistence and exact schema2 admission, independently qualified separately"
+  ],
+  "remainingGenericPolicyWork": true,
+  "copiedClientCodeIntoEngine": false,
+  "cloudOperations": false
+}

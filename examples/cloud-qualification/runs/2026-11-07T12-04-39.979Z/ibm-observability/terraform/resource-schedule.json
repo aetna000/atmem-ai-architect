@@ -1,0 +1,467 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "synthetic-services",
+      "address": "block_73796e7468657469632d7365727669636573",
+      "label": "Synthetic services (logs + traces)",
+      "provider": "tools",
+      "service": "Storage or existing data connector",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "collector",
+      "address": "block_636f6c6c6563746f72",
+      "label": "Collection",
+      "provider": "ibm",
+      "service": "IBM Cloud Logs Routing + OpenTelemetry Collector on Code Engine",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "synthetic-services"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "redaction",
+      "address": "block_726564616374696f6e",
+      "label": "Redaction",
+      "provider": "ibm",
+      "service": "IBM Cloud Code Engine (redaction job)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "collector"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "search-store",
+      "address": "block_7365617263682d73746f7265",
+      "label": "Log & trace search",
+      "provider": "ibm",
+      "service": "IBM Cloud Databases for OpenSearch",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "redaction"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "archive",
+      "address": "block_61726368697665",
+      "label": "Redacted archive",
+      "provider": "ibm",
+      "service": "IBM Cloud Object Storage",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "redaction"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "analysis-runtime",
+      "address": "block_616e616c797369732d72756e74696d65",
+      "label": "Incident analysis runtime",
+      "provider": "ibm",
+      "service": "IBM Cloud Code Engine (application)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "operator",
+        "search-store"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "watsonx",
+      "address": "block_776174736f6e78",
+      "label": "Foundation model",
+      "provider": "ibm",
+      "service": "IBM watsonx.ai",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "analysis-runtime"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "operator",
+      "address": "block_6f70657261746f72",
+      "label": "Incident operator",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "observability",
+      "address": "block_6f62736572766162696c697479",
+      "label": "Audit & monitoring",
+      "provider": "ibm",
+      "service": "IBM Cloud Activity Tracker / Cloud Monitoring",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "analysis-runtime"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e-src-col",
+      "source": "synthetic-services",
+      "target": "collector",
+      "data": "logs + OTLP traces",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-col-red",
+      "source": "collector",
+      "target": "redaction",
+      "data": "normalised events",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-red-search",
+      "source": "redaction",
+      "target": "search-store",
+      "data": "index redacted events/spans",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-red-arch",
+      "source": "redaction",
+      "target": "archive",
+      "data": "write redacted batches",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-op-run",
+      "source": "operator",
+      "target": "analysis-runtime",
+      "data": "incident question / cited answer",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-run-search",
+      "source": "search-store",
+      "target": "analysis-runtime",
+      "data": "correlated evidence by trace_id",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-run-model",
+      "source": "analysis-runtime",
+      "target": "watsonx",
+      "data": "prompt with untrusted evidence",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-run-mon",
+      "source": "analysis-runtime",
+      "target": "observability",
+      "data": "audit events + metrics",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Synthetic services (logs + traces): Existing — reference/import plan needed.",
+    "Collection: Implementation needed.",
+    "Redaction: Implementation needed.",
+    "Log & trace search: Implementation needed.",
+    "Redacted archive: Implementation needed.",
+    "Incident analysis runtime: Implementation needed.",
+    "Foundation model: Implementation needed.",
+    "Incident operator: Existing — reference/import plan needed.",
+    "Audit & monitoring: Implementation needed.",
+    "Wire synthetic-services → collector: implement data flow, access policy and acceptance test.",
+    "Wire collector → redaction: implement data flow, access policy and acceptance test.",
+    "Wire redaction → search-store: implement data flow, access policy and acceptance test.",
+    "Wire redaction → archive: implement data flow, access policy and acceptance test.",
+    "Wire operator → analysis-runtime: implement data flow, access policy and acceptance test.",
+    "Wire search-store → analysis-runtime: implement data flow, access policy and acceptance test.",
+    "Wire analysis-runtime → watsonx: implement data flow, access policy and acceptance test.",
+    "Wire analysis-runtime → observability: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "resource-block_73796e7468657469632d7365727669636573",
+      "componentIds": [
+        "synthetic-services"
+      ],
+      "taskId": "TASK-RESOURCE-73796e7468657469632d7365727669636573",
+      "message": "Synthetic services (logs + traces): Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_636f6c6c6563746f72",
+      "componentIds": [
+        "collector"
+      ],
+      "taskId": "TASK-RESOURCE-636f6c6c6563746f72",
+      "message": "Collection: Implementation needed."
+    },
+    {
+      "id": "resource-block_726564616374696f6e",
+      "componentIds": [
+        "redaction"
+      ],
+      "taskId": "TASK-RESOURCE-726564616374696f6e",
+      "message": "Redaction: Implementation needed."
+    },
+    {
+      "id": "resource-block_7365617263682d73746f7265",
+      "componentIds": [
+        "search-store"
+      ],
+      "taskId": "TASK-RESOURCE-7365617263682d73746f7265",
+      "message": "Log & trace search: Implementation needed."
+    },
+    {
+      "id": "resource-block_61726368697665",
+      "componentIds": [
+        "archive"
+      ],
+      "taskId": "TASK-RESOURCE-61726368697665",
+      "message": "Redacted archive: Implementation needed."
+    },
+    {
+      "id": "resource-block_616e616c797369732d72756e74696d65",
+      "componentIds": [
+        "analysis-runtime"
+      ],
+      "taskId": "TASK-RESOURCE-616e616c797369732d72756e74696d65",
+      "message": "Incident analysis runtime: Implementation needed."
+    },
+    {
+      "id": "resource-block_776174736f6e78",
+      "componentIds": [
+        "watsonx"
+      ],
+      "taskId": "TASK-RESOURCE-776174736f6e78",
+      "message": "Foundation model: Implementation needed."
+    },
+    {
+      "id": "resource-block_6f70657261746f72",
+      "componentIds": [
+        "operator"
+      ],
+      "taskId": "TASK-RESOURCE-6f70657261746f72",
+      "message": "Incident operator: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_6f62736572766162696c697479",
+      "componentIds": [
+        "observability"
+      ],
+      "taskId": "TASK-RESOURCE-6f62736572766162696c697479",
+      "message": "Audit & monitoring: Implementation needed."
+    },
+    {
+      "id": "connection-652d7372632d636f6c",
+      "edgeIds": [
+        "e-src-col"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7372632d636f6c",
+      "message": "Wire synthetic-services → collector: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d636f6c2d726564",
+      "edgeIds": [
+        "e-col-red"
+      ],
+      "taskId": "TASK-INTEGRATION-652d636f6c2d726564",
+      "message": "Wire collector → redaction: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d7265642d736561726368",
+      "edgeIds": [
+        "e-red-search"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7265642d736561726368",
+      "message": "Wire redaction → search-store: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d7265642d61726368",
+      "edgeIds": [
+        "e-red-arch"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7265642d61726368",
+      "message": "Wire redaction → archive: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6f702d72756e",
+      "edgeIds": [
+        "e-op-run"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6f702d72756e",
+      "message": "Wire operator → analysis-runtime: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d72756e2d736561726368",
+      "edgeIds": [
+        "e-run-search"
+      ],
+      "taskId": "TASK-INTEGRATION-652d72756e2d736561726368",
+      "message": "Wire search-store → analysis-runtime: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d72756e2d6d6f64656c",
+      "edgeIds": [
+        "e-run-model"
+      ],
+      "taskId": "TASK-INTEGRATION-652d72756e2d6d6f64656c",
+      "message": "Wire analysis-runtime → watsonx: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d72756e2d6d6f6e",
+      "edgeIds": [
+        "e-run-mon"
+      ],
+      "taskId": "TASK-INTEGRATION-652d72756e2d6d6f6e",
+      "message": "Wire analysis-runtime → observability: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

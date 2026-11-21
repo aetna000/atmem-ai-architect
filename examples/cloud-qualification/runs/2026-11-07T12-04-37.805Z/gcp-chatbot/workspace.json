@@ -1,0 +1,412 @@
+{
+  "version": 1,
+  "revision": 2,
+  "name": "GCP authenticated conversational assistant",
+  "provider": "gcp",
+  "requirements": "",
+  "nodes": [
+    {
+      "id": "user",
+      "type": "resource",
+      "position": {
+        "x": 50,
+        "y": 610
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Synthetic user (browser)",
+        "provider": "tools",
+        "kind": "tool",
+        "description": "Synthetic test user in a browser. This is a client reference and is not provisioned.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "role": "human"
+      }
+    },
+    {
+      "id": "idp",
+      "type": "resource",
+      "position": {
+        "x": 470,
+        "y": 685
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Sign-in",
+        "provider": "gcp",
+        "kind": "guard",
+        "description": "Issues ID tokens to synthetic users. Self sign-up is off and accounts are created by an admin. MFA policy is still to be decided.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "Identity Platform"
+      }
+    },
+    {
+      "id": "app",
+      "type": "resource",
+      "position": {
+        "x": 890,
+        "y": 610
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Chat application",
+        "provider": "gcp",
+        "kind": "agent",
+        "description": "Serves the chat UI and API, verifies the Identity Platform token on every request and loads that user's conversation. It applies bounded context (last N turns plus a token cap), calls the model and returns the answer. It decides on escalation. It takes no external actions.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "app",
+        "service": "Cloud Run"
+      }
+    },
+    {
+      "id": "context",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 50
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Bounded context policy",
+        "provider": "gcp",
+        "kind": "guard",
+        "description": "A conceptual node owned by the Chat application, not a separate deployment. It trims history to a turn and token budget, strips other users' data and treats user text as untrusted.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "Cloud Run (in-app module)"
+      }
+    },
+    {
+      "id": "state",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Conversation state",
+        "provider": "gcp",
+        "kind": "history",
+        "description": "Per-user conversation documents keyed by the verified user ID. Only the app's service account can read or write them. The retention period is still to be decided.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "data",
+        "service": "Firestore (Native mode)"
+      }
+    },
+    {
+      "id": "model",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 610
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Model runtime",
+        "provider": "gcp",
+        "kind": "predict",
+        "description": "Gemini model called through the Vertex AI API using the app's service account. The model ID, regional availability and quotas have not been verified. In the local test it is replaced by scripted mock responses.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "llm",
+        "service": "Vertex AI (Gemini)"
+      }
+    },
+    {
+      "id": "escalate",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 890
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Escalation queue",
+        "provider": "gcp",
+        "kind": "stream",
+        "description": "The app publishes an escalation event (conversation ID and reason) when the model abstains, the user asks for a person or the policy triggers. A dead-letter topic catches failed deliveries.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "Pub/Sub"
+      }
+    },
+    {
+      "id": "human",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 890
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Human support reviewer",
+        "provider": "tools",
+        "kind": "tool",
+        "description": "A person who picks up escalations. The review tool is to be decided. Nothing is sent automatically outside the system.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "role": "human"
+      }
+    },
+    {
+      "id": "ops",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 1170
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Logs & monitoring",
+        "provider": "gcp",
+        "kind": "monitor",
+        "description": "Request, latency, model-error and escalation-rate logs and metrics. Prompt contents are excluded by default.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "role": "monitor",
+        "service": "Cloud Logging & Cloud Monitoring"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-user-idp",
+      "source": "user",
+      "target": "idp",
+      "type": "smoothstep",
+      "label": "sign in"
+    },
+    {
+      "id": "e-user-app",
+      "source": "user",
+      "target": "app",
+      "type": "smoothstep",
+      "label": "HTTPS chat with ID token"
+    },
+    {
+      "id": "e-idp-app",
+      "source": "idp",
+      "target": "app",
+      "type": "smoothstep",
+      "label": "token verification"
+    },
+    {
+      "id": "e-app-state",
+      "source": "app",
+      "target": "state",
+      "type": "smoothstep",
+      "label": "read/write own conversation"
+    },
+    {
+      "id": "e-app-context",
+      "source": "app",
+      "target": "context",
+      "type": "smoothstep",
+      "label": "trim to bounded context"
+    },
+    {
+      "id": "e-app-model",
+      "source": "app",
+      "target": "model",
+      "type": "smoothstep",
+      "label": "generateContent (bounded prompt)"
+    },
+    {
+      "id": "e-app-esc",
+      "source": "app",
+      "target": "escalate",
+      "type": "smoothstep",
+      "label": "publish escalation"
+    },
+    {
+      "id": "e-esc-human",
+      "source": "escalate",
+      "target": "human",
+      "type": "smoothstep",
+      "label": "review handoff"
+    },
+    {
+      "id": "e-app-ops",
+      "source": "app",
+      "target": "ops",
+      "type": "smoothstep",
+      "label": "logs & metrics"
+    }
+  ],
+  "id": "360522a5-0134-4897-b065-a735ab250837",
+  "brief": {
+    "application": "Use Google Cloud for this synthetic architecture qualification. Build an authenticated conversational assistant for synthetic users. Include an application, per-user conversation state, model runtime, bounded context and an escalation path. No external actions in this first test. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+    "cloud": "Google Cloud"
+  },
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use Google Cloud for this synthetic architecture qualification.",
+      "options": "",
+      "decision": "gcp",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.authenticated-conversational-assistant-on-google-cloud-first-sketch",
+      "title": "Authenticated conversational assistant on Google Cloud (first sketch)",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: browser user signs in through Identity Platform, then chats with a Cloud Run app. The app stores conversation state per user in Firestore, limits the context it sends, calls a Gemini model on Vertex AI and sends escalations through Pub/Sub to a human review queue. No external actions. Assumptions: the region, model ID, quotas and project/account access are unverified. The local test uses a mocked model and synthetic tokens and does not prove IAM, model quality or deployment. Native Terraform for this GCP workload is not yet available and needs engineering.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "needs": [
+    {
+      "id": "ai-user-isolation",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Each signed-in user can read and continue only their own conversation. A request without a valid token, or one for another user's conversation, is denied.",
+      "rationale": "If conversations aren't kept separate, one user could see another user's chat history. This is the main access boundary to test.",
+      "basis": "The user asked for an authenticated conversational assistant with per-user conversation state.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "idp",
+        "app",
+        "state"
+      ]
+    },
+    {
+      "id": "ai-bounded-context",
+      "kind": "functional",
+      "category": "security",
+      "statement": "The app sends the model only a limited context taken from the current user's conversation, capped by turn count and token count. The exact limits are to be confirmed.",
+      "rationale": "Limiting the context controls cost and latency and stops data from other conversations reaching the model.",
+      "basis": "The user asked for bounded context.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "app",
+        "context",
+        "model"
+      ]
+    },
+    {
+      "id": "ai-escalation",
+      "kind": "functional",
+      "category": "reliability",
+      "statement": "When the assistant cannot answer confidently, or the user asks for a person, the conversation is escalated to a human reviewer. No external action is taken automatically.",
+      "rationale": "Without a hand-off to a person, users can get stuck with unhelpful or uncertain answers.",
+      "basis": "The user asked for an escalation path and said there should be no external actions in this first test.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "app",
+        "escalate",
+        "human"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "extensions": {
+    "requirementNumbers": {
+      "drv-data-access": 1,
+      "drv-data-location": 2,
+      "ai-user-isolation": 3,
+      "ai-bounded-context": 4,
+      "ai-escalation": 5
+    }
+  },
+  "facts": [
+    {
+      "id": "fact-59a7ef55",
+      "name": "cloud.preference",
+      "value": "gcp",
+      "unit": "provider",
+      "text": "Use Google Cloud for this synthetic architecture qualification. Build an authenticated conversational assistant for synthetic users. Include an application, per-user conversation state, model runtime, bounded context and an escalation path. No external actions in this first test. Draw the complete e",
+      "madeAt": "2026-11-07"
+    }
+  ],
+  "workflow": "general",
+  "asked": [],
+  "lastAsked": {
+    "id": "general:0",
+    "topic": "data",
+    "question": "What information will it work with, and where does it live?",
+    "beginner": "For example a database, documents, or another system's data.",
+    "why": "It shapes the AI architecture design."
+  },
+  "choices": {},
+  "conceptSig": null
+}

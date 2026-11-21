@@ -1,0 +1,17 @@
+PASS Signed-out controls prohibit submission
+PASS No token, forged signature and expired signed token denied by cryptographic emulator
+PASS Valid signature with an unapproved staff subject denied by packaged handler
+PASS OAuth state mismatch never exchanges the code and removes pending state
+PASS Actual browser performs code/S256-PKCE exchange and enables the tool
+PASS Browser-to-packaged-handler suggestion shows uncertainty and human review
+PASS Reviewer clear removes all transient fields and review checkbox
+PASS Empty and UTF-8-oversized browser input never reaches the API
+PASS Exact UTF-8 byte limit succeeds through the connected journey
+PASS Model failure safely clears suggestions and a subsequent request recovers
+PASS Malformed model object is rejected by the actual handler
+PASS HTML-looking model output renders inert text with real CSP
+PASS Clearing an in-flight request prevents late suggestion restoration
+PASS Five simultaneous requests stay isolated through the signed gateway and packaged handler
+PASS No ticket/token persistence and reload returns to signed-out state
+PASS Explicit logout clears the session and visible result
+PASS Token response expiry clears transient content and requires sign-in again

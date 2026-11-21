@@ -1,0 +1,18 @@
+tests/invoice.tftest.hcl... in progress
+  run "private_database_and_parser"... fail
+  run "foundation_only"... skip
+  run "review_required"... skip
+tests/invoice.tftest.hcl... tearing down
+tests/invoice.tftest.hcl... fail
+
+Failure! 0 passed, 1 failed, 2 skipped.
+
+
+Error: Operation failed
+
+  on main.tf.json line 164, in resource.terraform_data.review_gate.lifecycle.precondition[1]:
+ 164:               "condition": "${data.aws_caller_identity.destination.account_id == var.account_id && !data.aws_route53_zone.destination.private_zone && length(data.aws_availability_zones.destination.names) >= 2}",
+    ├────────────────
+    │ data.aws_route53_zone.destination.private_zone is null
+
+Error during operation: argument must not be null.

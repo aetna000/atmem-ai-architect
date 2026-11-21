@@ -1,0 +1,28 @@
+{
+  "validator": "node-failure",
+  "artifactSha256": "0d067b2c4cf4390f12390bdc7607108e3c3af7b9702dcb61c54c78e33831c269",
+  "imageId": "sha256:df7f71a8588253403dfa833c5c4aacc95ca340204a88d5483edd58131c7f1128",
+  "runtimeConfigImageId": "sha256:df7f71a8588253403dfa833c5c4aacc95ca340204a88d5483edd58131c7f1128",
+  "platform": "linux/arm64",
+  "isolationProfile": "chromium-userns-v1",
+  "runtimeEnvironment": {
+    "ATMEM_PLAYWRIGHT_MODULE": "/opt/atmem/playwright-core/index.mjs"
+  },
+  "command": [
+    "/usr/bin/node",
+    "--test",
+    "--test-reporter=tap",
+    "--test-concurrency=1"
+  ],
+  "status": "failed",
+  "exitCode": 1,
+  "skipped": 0,
+  "testsReported": 1,
+  "reason": null,
+  "output": "TAP version 13\n# Subtest: counterexample\nnot ok 1 - counterexample\n  ---\n  duration_ms: 0.648549\n  type: 'test'\n  location: '/work/source/failed.test.mjs:1:70'\n  failureType: 'testCodeFailure'\n  error: 'Deliberate independent failure'\n  code: 'ERR_ASSERTION'\n  name: 'AssertionError'\n  operator: 'fail'\n  stack: |-\n    TestContext.<anonymous> (file:///work/source/failed.test.mjs:1:103)\n    Test.runInAsyncScope (node:async_hooks:226:14)\n    Test.run (node:internal/test_runner/test:1402:25)\n    Test.start (node:internal/test_runner/test:1262:17)\n    startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 0\n# fail 1\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 37.503613\n",
+  "outputTruncated": false,
+  "durationSeconds": 0.279,
+  "evidenceLevel": "local_container_check",
+  "cloudOperations": false,
+  "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+}

@@ -1,0 +1,12 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {CONTAINER_SERVICES,containerContract} from '../src/container-contracts.mjs';import {terraformSketch} from '../src/terraform.mjs';import {resourcePlan} from '../src/resources.mjs';import {generationQuality} from '../src/generation-quality.mjs';
+const project=provider=>({version:1,revision:1,name:'Container',provider,nodes:[{id:'app',position:{x:0,y:0},data:{label:'Application',kind:'resource',provider,origin:'proposed',service:CONTAINER_SERVICES[provider].service,implementation:'container-service'}}],edges:[]});
+for(const [cloud,c] of Object.entries(CONTAINER_SERVICES))test(`${cloud}: native container uses immutable image, bounded footprint, no public grant and explicit inputs`,()=>{
+ const p=project(cloud),plan=resourcePlan(p),files=terraformSketch(p),tf=JSON.parse(files['main.tf.json']);assert.ok(tf.resource[c.type].block_617070);assert.ok(tf.variable.block_617070_image.validation);assert.ok(!JSON.stringify(tf.resource).includes('allUsers'));assert.ok(!JSON.stringify(tf.resource).includes('AdministratorAccess'));assert.equal(tf.variable.review_approved.default,false);assert.ok(files['tests/container.tftest.hcl']);assert.ok(!files['README.md'].includes('AWS')||cloud==='aws');assert.equal(generationQuality(p,plan,files).findings.length,0);assert.ok(generationQuality(p,plan,files).components[0].contracts.includes(cloud+'-container'));assert.ok(JSON.parse(terraformSketch(p,'production')['main.tf.json']).locals.unfinished_work.length);
+});
+test('existing deployments are not recreated and labels cannot opt into a compiler',()=>{
+ const p=project('gcp');p.nodes[0].data.origin='existing';assert.equal(containerContract(p.nodes[0]),null);p.nodes[0].data.origin='proposed';delete p.nodes[0].data.implementation;assert.equal(containerContract(p.nodes[0]),null);
+});
+test('connections, other proposed components and cross-cloud composition remain explicit work',()=>{
+ const p=project('gcp');p.nodes.push({id:'db',position:{x:1,y:1},data:{label:'Required data',kind:'resource',provider:'gcp',origin:'proposed'}});p.edges.push({id:'db-access',source:'app',target:'db'});const tf=JSON.parse(terraformSketch(p)['main.tf.json']);assert.ok(tf.locals.unfinished_work.some(x=>x.startsWith('resource-')));assert.ok(tf.locals.unfinished_work.some(x=>x.startsWith('connection-')));p.nodes[1].data.provider='aws';assert.equal(JSON.parse(terraformSketch(p)['main.tf.json']).provider,undefined);
+});

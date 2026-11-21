@@ -1,0 +1,23 @@
+test_connection_input_cannot_downgrade_tls_or_put_password_inline (__main__.OperatorCliTests.test_connection_input_cannot_downgrade_tls_or_put_password_inline) ... ok
+test_default_is_a_review_preview_and_never_opens_a_database_connection (__main__.OperatorCliTests.test_default_is_a_review_preview_and_never_opens_a_database_connection) ... ok
+test_ibm_initialize_binds_both_private_password_files_to_their_owned_native_roles (__main__.OperatorCliTests.test_ibm_initialize_binds_both_private_password_files_to_their_owned_native_roles) ... ERROR
+test_private_files_reject_world_readable_data_duplicate_json_and_nonobjects (__main__.OperatorCliTests.test_private_files_reject_world_readable_data_duplicate_json_and_nonobjects) ... ok
+
+======================================================================
+ERROR: test_ibm_initialize_binds_both_private_password_files_to_their_owned_native_roles (__main__.OperatorCliTests.test_ibm_initialize_binds_both_private_password_files_to_their_owned_native_roles)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/invoice_operator_acceptance.py", line 38, in test_ibm_initialize_binds_both_private_password_files_to_their_owned_native_roles
+    with patch('invoice_operator.connection_settings',return_value=settings),redirect_stdout(output):main(['initialize','--connection-file','/owned-local-fixture','--deployment-file',str(deployment),'--input-file',str(payload),'--execute'])
+                                                                                                     ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/invoice_operator.py", line 64, in main
+    bootstrap_runtime_roles(conn,provider=deployment['provider'],deployment_id=deployment['deploymentId'],bindings=deployment['bindings'],tenant_id=deployment['tenantId'],passwords=passwords if deployment['provider']=='ibm'else None)
+    ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/workflow_role_bootstrap.py", line 71, in bootstrap_runtime_roles
+    secret=passwords(purpose,binding['principal'])
+TypeError: main.<locals>.passwords() takes 1 positional argument but 2 were given
+
+----------------------------------------------------------------------
+Ran 4 tests in 0.060s
+
+FAILED (errors=1)

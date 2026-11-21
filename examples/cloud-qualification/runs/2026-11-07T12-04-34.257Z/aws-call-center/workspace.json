@@ -1,0 +1,639 @@
+{
+  "version": 1,
+  "revision": 2,
+  "name": "Synthetic call agent-assist (AWS)",
+  "provider": "aws",
+  "requirements": "",
+  "nodes": [
+    {
+      "id": "agent",
+      "type": "resource",
+      "position": {
+        "x": 50,
+        "y": 750
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Support agent",
+        "provider": "tools",
+        "kind": "tool",
+        "description": "Person handling the synthetic call; reviews suggestions and approves the summary and CRM draft.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "binding": "web-browser",
+        "role": "human"
+      }
+    },
+    {
+      "id": "audio",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Synthetic call audio",
+        "provider": "tools",
+        "kind": "stream",
+        "description": "Pre-recorded synthetic caller/agent audio played as a stream. No real calls are placed.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "poc": true
+      }
+    },
+    {
+      "id": "web",
+      "type": "resource",
+      "position": {
+        "x": 470,
+        "y": 610
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Agent assist web app",
+        "provider": "aws",
+        "kind": "output",
+        "description": "Agent desktop showing the live redacted transcript and suggestions with sources. It records consent, summary approval and CRM draft approval.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "app",
+        "service": "Amazon CloudFront"
+      }
+    },
+    {
+      "id": "cognito",
+      "type": "resource",
+      "position": {
+        "x": 890,
+        "y": 460
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Agent sign-in",
+        "provider": "aws",
+        "kind": "guard",
+        "description": "Agent authentication with MFA; issues the tokens the API checks.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "service": "Amazon Cognito"
+      }
+    },
+    {
+      "id": "api",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 610
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Assist API",
+        "provider": "aws",
+        "kind": "resource",
+        "description": "Authenticated WebSocket/HTTP API for consent, suggestions and approvals. Uses a JWT authorizer; no anonymous access.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "service": "Amazon API Gateway"
+      }
+    },
+    {
+      "id": "consent",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 340
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Consent gate",
+        "provider": "aws",
+        "kind": "guard",
+        "description": "Blocks audio processing until consent is recorded for the call ID, and stops processing if consent is withdrawn.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "AWS Lambda"
+      }
+    },
+    {
+      "id": "kvs",
+      "type": "resource",
+      "position": {
+        "x": 2150,
+        "y": 340
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Audio ingestion",
+        "provider": "aws",
+        "kind": "stream",
+        "description": "Receives the call audio stream once consent is recorded.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "service": "Amazon Kinesis Video Streams"
+      }
+    },
+    {
+      "id": "transcribe",
+      "type": "resource",
+      "position": {
+        "x": 2570,
+        "y": 340
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Transcription",
+        "provider": "aws",
+        "kind": "predict",
+        "description": "Streaming speech-to-text with speaker labels; returns transcript segments to the orchestrator.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "Amazon Transcribe"
+      }
+    },
+    {
+      "id": "pii",
+      "type": "resource",
+      "position": {
+        "x": 2990,
+        "y": 340
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "PII redaction",
+        "provider": "aws",
+        "kind": "guard",
+        "description": "Detects and masks personal information in each segment before storage or any model call.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "Amazon Comprehend"
+      }
+    },
+    {
+      "id": "orch",
+      "type": "resource",
+      "position": {
+        "x": 3410,
+        "y": 470
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Assist orchestrator",
+        "provider": "aws",
+        "kind": "agent",
+        "description": "Receives redacted segments, retrieves knowledge, calls the model through guardrails, and returns cited suggestions, a draft summary and a CRM draft. It has no CRM write permission.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "AWS Lambda"
+      }
+    },
+    {
+      "id": "kb",
+      "type": "resource",
+      "position": {
+        "x": 3830,
+        "y": 50
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Support knowledge base",
+        "provider": "aws",
+        "kind": "source",
+        "description": "Approved support articles used for grounding. Source content is treated as untrusted data, and every suggestion cites its articles.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "Amazon Bedrock Knowledge Bases"
+      }
+    },
+    {
+      "id": "guardrails",
+      "type": "resource",
+      "position": {
+        "x": 3830,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Output guardrails",
+        "provider": "aws",
+        "kind": "guard",
+        "description": "Filters prompts and outputs (PII, denied topics, grounding check) around model calls.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "service": "Amazon Bedrock Guardrails"
+      }
+    },
+    {
+      "id": "bedrock",
+      "type": "resource",
+      "position": {
+        "x": 4250,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Foundation model",
+        "provider": "aws",
+        "kind": "predict",
+        "description": "Direct foundation model, not yet selected. Model access, region and quotas are unverified; mocked locally with scripted replies.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "binding": "aws-bedrock-model",
+        "service": "Amazon Bedrock"
+      }
+    },
+    {
+      "id": "session",
+      "type": "resource",
+      "position": {
+        "x": 3830,
+        "y": 610
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Call session and audit store",
+        "provider": "aws",
+        "kind": "history",
+        "description": "Stores consent records, redacted transcript, suggestions, the approved summary, the CRM draft and the approval audit trail, keyed by call ID with idempotent writes.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "Amazon DynamoDB"
+      }
+    },
+    {
+      "id": "logs",
+      "type": "resource",
+      "position": {
+        "x": 3830,
+        "y": 890
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Monitoring",
+        "provider": "aws",
+        "kind": "monitor",
+        "description": "Logs, metrics and alarms for latency, errors and redaction failures. Logs contain no unredacted content.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "service": "Amazon CloudWatch"
+      }
+    },
+    {
+      "id": "crm",
+      "type": "resource",
+      "position": {
+        "x": 470,
+        "y": 890
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Existing CRM",
+        "provider": "tools",
+        "kind": "tool",
+        "description": "Existing CRM, outside the provisioning scope. The agent submits the approved draft manually; the system never writes to it.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "existing"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-agent-web",
+      "source": "agent",
+      "target": "web",
+      "type": "smoothstep",
+      "label": "uses assist desktop",
+      "integration": "browser-https"
+    },
+    {
+      "id": "e-web-cognito",
+      "source": "web",
+      "target": "cognito",
+      "type": "smoothstep",
+      "label": "sign-in (PKCE + MFA)"
+    },
+    {
+      "id": "e-cognito-api",
+      "source": "cognito",
+      "target": "api",
+      "type": "smoothstep",
+      "label": "JWT authorizer"
+    },
+    {
+      "id": "e-web-api",
+      "source": "web",
+      "target": "api",
+      "type": "smoothstep",
+      "label": "consent, approvals, live updates"
+    },
+    {
+      "id": "e-api-consent",
+      "source": "api",
+      "target": "consent",
+      "type": "smoothstep",
+      "label": "record consent"
+    },
+    {
+      "id": "e-audio-consent",
+      "source": "audio",
+      "target": "consent",
+      "type": "smoothstep",
+      "label": "call start"
+    },
+    {
+      "id": "e-consent-kvs",
+      "source": "consent",
+      "target": "kvs",
+      "type": "smoothstep",
+      "label": "allow stream if consented"
+    },
+    {
+      "id": "e-kvs-transcribe",
+      "source": "kvs",
+      "target": "transcribe",
+      "type": "smoothstep",
+      "label": "audio stream"
+    },
+    {
+      "id": "e-transcribe-pii",
+      "source": "transcribe",
+      "target": "pii",
+      "type": "smoothstep",
+      "label": "transcript segments"
+    },
+    {
+      "id": "e-pii-orch",
+      "source": "pii",
+      "target": "orch",
+      "type": "smoothstep",
+      "label": "redacted segments"
+    },
+    {
+      "id": "e-orch-kb",
+      "source": "orch",
+      "target": "kb",
+      "type": "smoothstep",
+      "label": "retrieve cited articles"
+    },
+    {
+      "id": "e-orch-guard",
+      "source": "orch",
+      "target": "guardrails",
+      "type": "smoothstep",
+      "label": "apply guardrail"
+    },
+    {
+      "id": "e-guard-bedrock",
+      "source": "guardrails",
+      "target": "bedrock",
+      "type": "smoothstep",
+      "label": "Converse (guarded)"
+    },
+    {
+      "id": "e-orch-session",
+      "source": "orch",
+      "target": "session",
+      "type": "smoothstep",
+      "label": "write transcript, drafts, audit"
+    },
+    {
+      "id": "e-orch-api",
+      "source": "orch",
+      "target": "api",
+      "type": "smoothstep",
+      "label": "cited suggestions, summary and CRM drafts"
+    },
+    {
+      "id": "e-orch-logs",
+      "source": "orch",
+      "target": "logs",
+      "type": "smoothstep",
+      "label": "metrics and logs"
+    },
+    {
+      "id": "e-agent-crm",
+      "source": "agent",
+      "target": "crm",
+      "type": "smoothstep",
+      "label": "manual submit of approved draft"
+    }
+  ],
+  "id": "f42f1b7e-6d27-4ab9-a3e7-0d1002ff6f1b",
+  "brief": {
+    "application": "Use AWS for this synthetic architecture qualification. Assist an agent during a synthetic support call. Include consent, audio ingestion, transcription, PII redaction, grounded agent suggestions, an approved call summary and a draft update to an existing CRM. Do not place calls or write CRM records automatically. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+    "cloud": "AWS"
+  },
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use AWS for this synthetic architecture qualification",
+      "options": "",
+      "decision": "aws",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.first-aws-sketch-agent-assist-for-synthetic-support-calls",
+      "title": "First AWS sketch: agent-assist for synthetic support calls",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: consent check, audio ingestion, streaming transcription, PII redaction, grounded suggestions, agent-approved summary and CRM draft. Assumptions: synthetic audio only. The existing CRM is never written automatically; the agent submits approved drafts manually. Region, account, model ID and Bedrock access are not selected or verified. Most components are design only and outside current native generator coverage.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "needs": [
+    {
+      "id": "ai-consent-gate",
+      "kind": "functional",
+      "category": "compliance",
+      "statement": "Proposed: no audio may be ingested, transcribed or stored for a call until consent is recorded. Processing stops if consent is withdrawn.",
+      "rationale": "Processing call audio without consent risks a privacy or legal breach.",
+      "basis": "User asked to include consent before audio ingestion.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "consent",
+        "kvs",
+        "session"
+      ]
+    },
+    {
+      "id": "ai-pii-before-model",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Proposed: personal information must be redacted from transcripts before storage, logging or any model call.",
+      "rationale": "Unredacted personal information could leak to model prompts or logs.",
+      "basis": "User asked for PII redaction.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "pii",
+        "orch",
+        "session",
+        "logs"
+      ]
+    },
+    {
+      "id": "ai-human-approval-crm",
+      "kind": "functional",
+      "category": "security",
+      "statement": "Proposed: the system must never place calls or write CRM records; the agent approves the summary and submits the CRM draft manually, and each approval is audited.",
+      "rationale": "Automatic writes could corrupt customer records with unreviewed AI output.",
+      "basis": "User: \"Do not place calls or write CRM records automatically.\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "orch",
+        "web",
+        "crm",
+        "session"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "extensions": {
+    "requirementNumbers": {
+      "drv-data-access": 1,
+      "drv-data-location": 2,
+      "ai-consent-gate": 3,
+      "ai-pii-before-model": 4,
+      "ai-human-approval-crm": 5
+    }
+  },
+  "facts": [
+    {
+      "id": "fact-f2e1adb6",
+      "name": "cloud.preference",
+      "value": "aws",
+      "unit": "provider",
+      "text": "Use AWS for this synthetic architecture qualification. Assist an agent during a synthetic support call. Include consent, audio ingestion, transcription, PII redaction, grounded agent suggestions, an approved call summary and a draft update to an existing CRM. Do not place calls or write CRM records ",
+      "madeAt": "2026-11-07"
+    },
+    {
+      "id": "fact-78d33080",
+      "name": "data.sensitive",
+      "value": true,
+      "unit": "flag",
+      "text": "Use AWS for this synthetic architecture qualification. Assist an agent during a synthetic support call. Include consent, audio ingestion, transcription, PII redaction, grounded agent suggestions, an approved call summary and a draft update to an existing CRM. Do not place calls or write CRM records ",
+      "madeAt": "2026-11-07"
+    }
+  ],
+  "workflow": "agentic-automation",
+  "asked": [],
+  "lastAsked": {
+    "id": "agentic-automation:0",
+    "topic": "systems",
+    "question": "Which tools should it be allowed to use?",
+    "beginner": "For example “read and update tickets, send emails, look up orders”.",
+    "why": "It shapes the An agent with tools design."
+  },
+  "choices": {},
+  "conceptSig": null
+}

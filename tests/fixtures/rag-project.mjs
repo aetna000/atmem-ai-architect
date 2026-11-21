@@ -1,0 +1,4 @@
+export function ragProject(){
+ const node=(id,service,implementation)=>({id,position:{x:0,y:0},data:{kind:'resource',label:id,provider:'aws',service,...(implementation?{implementation}:{})}});
+ return {version:1,revision:1,name:'Bounded RAG',provider:'aws',nodes:[{id:'alice',position:{x:0,y:0},data:{kind:'resource',label:'Alice',provider:'tools',origin:'existing',binding:'aws-iam-principal'}},node('api','Amazon API Gateway','iam-rag-api'),node('worker','AWS Lambda','bounded-keyword-rag'),node('catalog','Amazon DynamoDB','bounded-rag-catalog'),{...node('model','Amazon Bedrock'),data:{...node('model','Amazon Bedrock').data,origin:'existing',binding:'aws-bedrock-model'}}],edges:[{id:'caller',source:'alice',target:'api',access:'api-invoke'},{id:'http',source:'api',target:'worker',integration:'http-api-lambda'},{id:'read',source:'worker',target:'catalog',integration:'lambda-catalog-read'},{id:'generate',source:'worker',target:'model',integration:'bedrock-converse'}]};
+}

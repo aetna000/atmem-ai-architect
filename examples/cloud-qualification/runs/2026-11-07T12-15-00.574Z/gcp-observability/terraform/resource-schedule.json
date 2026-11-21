@@ -1,0 +1,504 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "services",
+      "address": "block_7365727669636573",
+      "label": "Synthetic services",
+      "provider": "tools",
+      "service": "Storage or existing data connector",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "logging",
+      "address": "block_6c6f6767696e67",
+      "label": "Log collection",
+      "provider": "gcp",
+      "service": "Cloud Logging (Log Router sink)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "services"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "trace",
+      "address": "block_7472616365",
+      "label": "Trace collection",
+      "provider": "gcp",
+      "service": "Cloud Trace",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "services"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "pubsub",
+      "address": "block_707562737562",
+      "label": "Ingest queue",
+      "provider": "gcp",
+      "service": "Pub/Sub (with dead-letter topic)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "logging",
+        "trace"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "redact",
+      "address": "block_726564616374",
+      "label": "Redaction worker",
+      "provider": "gcp",
+      "service": "Cloud Run + Sensitive Data Protection",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "pubsub"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "bq",
+      "address": "block_6271",
+      "label": "Redacted log & span store",
+      "provider": "gcp",
+      "service": "BigQuery (search indexes)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "redact"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "analysis",
+      "address": "block_616e616c79736973",
+      "label": "Incident analysis service",
+      "provider": "gcp",
+      "service": "Cloud Run",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "bq",
+        "operator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "gemini",
+      "address": "block_67656d696e69",
+      "label": "Analysis model",
+      "provider": "gcp",
+      "service": "Vertex AI Gemini",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "analysis"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "operator",
+      "address": "block_6f70657261746f72",
+      "label": "Incident operator",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "analysis"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e-svc-log",
+      "source": "services",
+      "target": "logging",
+      "data": "structured logs",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-svc-trace",
+      "source": "services",
+      "target": "trace",
+      "data": "OTel spans",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-log-ps",
+      "source": "logging",
+      "target": "pubsub",
+      "data": "Log Router sink",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-trace-ps",
+      "source": "trace",
+      "target": "pubsub",
+      "data": "span export",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-ps-redact",
+      "source": "pubsub",
+      "target": "redact",
+      "data": "push subscription",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-redact-bq",
+      "source": "redact",
+      "target": "bq",
+      "data": "redacted rows (Storage Write API)",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-bq-analysis",
+      "source": "bq",
+      "target": "analysis",
+      "data": "search + trace-ID join",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-analysis-gemini",
+      "source": "analysis",
+      "target": "gemini",
+      "data": "generateContent (evidence as data)",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-op-analysis",
+      "source": "operator",
+      "target": "analysis",
+      "data": "IAP-authenticated request",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-analysis-op",
+      "source": "analysis",
+      "target": "operator",
+      "data": "cited explanation / abstain",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Synthetic services: Existing — reference/import plan needed.",
+    "Log collection: Implementation needed.",
+    "Trace collection: Implementation needed.",
+    "Ingest queue: Implementation needed.",
+    "Redaction worker: Implementation needed.",
+    "Redacted log & span store: Implementation needed.",
+    "Incident analysis service: Implementation needed.",
+    "Analysis model: Implementation needed.",
+    "Incident operator: Existing — reference/import plan needed.",
+    "Wire services → logging: implement data flow, access policy and acceptance test.",
+    "Wire services → trace: implement data flow, access policy and acceptance test.",
+    "Wire logging → pubsub: implement data flow, access policy and acceptance test.",
+    "Wire trace → pubsub: implement data flow, access policy and acceptance test.",
+    "Wire pubsub → redact: implement data flow, access policy and acceptance test.",
+    "Wire redact → bq: implement data flow, access policy and acceptance test.",
+    "Wire bq → analysis: implement data flow, access policy and acceptance test.",
+    "Wire analysis → gemini: implement data flow, access policy and acceptance test.",
+    "Wire operator → analysis: implement data flow, access policy and acceptance test.",
+    "Wire analysis → operator: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "resource-block_7365727669636573",
+      "componentIds": [
+        "services"
+      ],
+      "taskId": "TASK-RESOURCE-7365727669636573",
+      "message": "Synthetic services: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_6c6f6767696e67",
+      "componentIds": [
+        "logging"
+      ],
+      "taskId": "TASK-RESOURCE-6c6f6767696e67",
+      "message": "Log collection: Implementation needed."
+    },
+    {
+      "id": "resource-block_7472616365",
+      "componentIds": [
+        "trace"
+      ],
+      "taskId": "TASK-RESOURCE-7472616365",
+      "message": "Trace collection: Implementation needed."
+    },
+    {
+      "id": "resource-block_707562737562",
+      "componentIds": [
+        "pubsub"
+      ],
+      "taskId": "TASK-RESOURCE-707562737562",
+      "message": "Ingest queue: Implementation needed."
+    },
+    {
+      "id": "resource-block_726564616374",
+      "componentIds": [
+        "redact"
+      ],
+      "taskId": "TASK-RESOURCE-726564616374",
+      "message": "Redaction worker: Implementation needed."
+    },
+    {
+      "id": "resource-block_6271",
+      "componentIds": [
+        "bq"
+      ],
+      "taskId": "TASK-RESOURCE-6271",
+      "message": "Redacted log & span store: Implementation needed."
+    },
+    {
+      "id": "resource-block_616e616c79736973",
+      "componentIds": [
+        "analysis"
+      ],
+      "taskId": "TASK-RESOURCE-616e616c79736973",
+      "message": "Incident analysis service: Implementation needed."
+    },
+    {
+      "id": "resource-block_67656d696e69",
+      "componentIds": [
+        "gemini"
+      ],
+      "taskId": "TASK-RESOURCE-67656d696e69",
+      "message": "Analysis model: Implementation needed."
+    },
+    {
+      "id": "resource-block_6f70657261746f72",
+      "componentIds": [
+        "operator"
+      ],
+      "taskId": "TASK-RESOURCE-6f70657261746f72",
+      "message": "Incident operator: Existing — reference/import plan needed."
+    },
+    {
+      "id": "connection-652d7376632d6c6f67",
+      "edgeIds": [
+        "e-svc-log"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7376632d6c6f67",
+      "message": "Wire services → logging: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d7376632d7472616365",
+      "edgeIds": [
+        "e-svc-trace"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7376632d7472616365",
+      "message": "Wire services → trace: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6c6f672d7073",
+      "edgeIds": [
+        "e-log-ps"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6c6f672d7073",
+      "message": "Wire logging → pubsub: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d74726163652d7073",
+      "edgeIds": [
+        "e-trace-ps"
+      ],
+      "taskId": "TASK-INTEGRATION-652d74726163652d7073",
+      "message": "Wire trace → pubsub: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d70732d726564616374",
+      "edgeIds": [
+        "e-ps-redact"
+      ],
+      "taskId": "TASK-INTEGRATION-652d70732d726564616374",
+      "message": "Wire pubsub → redact: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d7265646163742d6271",
+      "edgeIds": [
+        "e-redact-bq"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7265646163742d6271",
+      "message": "Wire redact → bq: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d62712d616e616c79736973",
+      "edgeIds": [
+        "e-bq-analysis"
+      ],
+      "taskId": "TASK-INTEGRATION-652d62712d616e616c79736973",
+      "message": "Wire bq → analysis: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d616e616c797369732d67656d696e69",
+      "edgeIds": [
+        "e-analysis-gemini"
+      ],
+      "taskId": "TASK-INTEGRATION-652d616e616c797369732d67656d696e69",
+      "message": "Wire analysis → gemini: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6f702d616e616c79736973",
+      "edgeIds": [
+        "e-op-analysis"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6f702d616e616c79736973",
+      "message": "Wire operator → analysis: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d616e616c797369732d6f70",
+      "edgeIds": [
+        "e-analysis-op"
+      ],
+      "taskId": "TASK-INTEGRATION-652d616e616c797369732d6f70",
+      "message": "Wire analysis → operator: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

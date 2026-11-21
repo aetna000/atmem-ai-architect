@@ -1,0 +1,547 @@
+[
+  {
+    "provider": "azure-iot",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "passed": false,
+    "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.model .led.on') to be visible\u001b[22m\n"
+  },
+  {
+    "provider": "azure-observability",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "emulation": "blocked",
+    "mentorResponded": true,
+    "architecturePresent": true,
+    "acceptanceRequirements": [
+      "Redact secrets before model input",
+      "Link conclusions to exact trace or log IDs",
+      "Prompt injection in a log cannot issue tool calls",
+      "Missing spans yield uncertainty rather than invented causes",
+      "Repeated ingestion preserves a consistent incident timeline"
+    ],
+    "components": [
+      {
+        "id": "svc-synthetic"
+      },
+      {
+        "id": "collect",
+        "service": "Azure Event Hubs (via OpenTelemetry Collector)"
+      },
+      {
+        "id": "redact",
+        "service": "Azure Functions (Event Hubs trigger)"
+      },
+      {
+        "id": "store",
+        "service": "Azure Data Explorer"
+      },
+      {
+        "id": "analysis",
+        "service": "Azure Container Apps"
+      },
+      {
+        "id": "shield",
+        "service": "Azure AI Content Safety (Prompt Shields)"
+      },
+      {
+        "id": "model",
+        "service": "Azure OpenAI Service"
+      },
+      {
+        "id": "operator-app",
+        "service": "Azure App Service (Entra ID sign-in)"
+      },
+      {
+        "id": "operator"
+      },
+      {
+        "id": "observe",
+        "service": "Azure Monitor + Application Insights"
+      }
+    ],
+    "passed": false,
+    "mentorJourneyPassed": true
+  },
+  {
+    "provider": "azure-rag",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "emulation": "blocked",
+    "mentorResponded": true,
+    "architecturePresent": true,
+    "acceptanceRequirements": [
+      "Denied documents never reach the model",
+      "Known questions cite current source revisions",
+      "Unsupported questions abstain",
+      "Updates and deletions change retrieval",
+      "Revocation during generation suppresses the answer"
+    ],
+    "components": [
+      {
+        "id": "user"
+      },
+      {
+        "id": "webapp",
+        "service": "Azure Static Web Apps"
+      },
+      {
+        "id": "entra",
+        "service": "Microsoft Entra ID"
+      },
+      {
+        "id": "api",
+        "service": "Azure Functions"
+      },
+      {
+        "id": "catalog",
+        "service": "Azure Cosmos DB for NoSQL"
+      },
+      {
+        "id": "docs",
+        "service": "Azure Blob Storage"
+      },
+      {
+        "id": "ingest",
+        "service": "Azure Functions (blob trigger)"
+      },
+      {
+        "id": "model",
+        "service": "Azure OpenAI Service"
+      },
+      {
+        "id": "monitor",
+        "service": "Azure Monitor / Application Insights"
+      }
+    ],
+    "passed": false,
+    "mentorJourneyPassed": true
+  },
+  {
+    "provider": "azure-chatbot",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "emulation": "blocked",
+    "mentorResponded": true,
+    "architecturePresent": true,
+    "acceptanceRequirements": [
+      "One user cannot read another conversation",
+      "Context and response sizes are bounded",
+      "Model outage produces a recoverable response",
+      "Deleting a conversation removes its stored context",
+      "Escalation retains the approved conversation context"
+    ],
+    "components": [
+      {
+        "id": "chat-user"
+      },
+      {
+        "id": "entra-auth",
+        "service": "Microsoft Entra External ID"
+      },
+      {
+        "id": "chat-app",
+        "service": "Azure App Service"
+      },
+      {
+        "id": "conversation-store",
+        "service": "Azure Cosmos DB for NoSQL"
+      },
+      {
+        "id": "model-runtime",
+        "service": "Azure OpenAI (Azure AI Foundry)"
+      },
+      {
+        "id": "content-safety",
+        "service": "Azure AI Content Safety"
+      },
+      {
+        "id": "escalation-queue",
+        "service": "Azure Service Bus"
+      },
+      {
+        "id": "human-reviewer"
+      },
+      {
+        "id": "monitoring",
+        "service": "Azure Monitor / Application Insights"
+      }
+    ],
+    "passed": false,
+    "mentorJourneyPassed": true
+  },
+  {
+    "provider": "azure-version-control",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "emulation": "blocked",
+    "mentorResponded": true,
+    "architecturePresent": true,
+    "acceptanceRequirements": [
+      "Repository and branch permissions enforced",
+      "Untrusted repository instructions cannot trigger execution",
+      "Findings link to lines in the reviewed commit",
+      "A changed head commit invalidates the review",
+      "Retry does not post duplicate comments and posting requires approval"
+    ],
+    "components": [
+      {
+        "id": "repo",
+        "service": "Existing Git host (to be confirmed)"
+      },
+      {
+        "id": "queue",
+        "service": "Azure Service Bus (queue)"
+      },
+      {
+        "id": "orchestrator",
+        "service": "Azure Functions"
+      },
+      {
+        "id": "vault",
+        "service": "Azure Key Vault"
+      },
+      {
+        "id": "guard",
+        "service": "Azure AI Content Safety (Prompt Shields)"
+      },
+      {
+        "id": "model",
+        "service": "Azure OpenAI Service (Azure AI Foundry deployment)"
+      },
+      {
+        "id": "drafts",
+        "service": "Azure Cosmos DB"
+      },
+      {
+        "id": "reviewer"
+      },
+      {
+        "id": "insights",
+        "service": "Azure Monitor + Application Insights"
+      }
+    ],
+    "passed": false,
+    "mentorJourneyPassed": true
+  },
+  {
+    "provider": "azure-maintenance",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "emulation": "blocked",
+    "mentorResponded": true,
+    "architecturePresent": true,
+    "acceptanceRequirements": [
+      "Time-based split prevents future-label leakage",
+      "Missing sensors produce an explicit degraded result",
+      "Prediction records include feature and model versions",
+      "Evaluate false alarms and missed faults on held-out data",
+      "Work orders require approval and are idempotent"
+    ],
+    "components": [
+      {
+        "id": "sensors"
+      },
+      {
+        "id": "records"
+      },
+      {
+        "id": "ingest",
+        "service": "Azure Event Hubs"
+      },
+      {
+        "id": "lake",
+        "service": "Azure Data Lake Storage Gen2"
+      },
+      {
+        "id": "features",
+        "service": "Azure Machine Learning pipeline"
+      },
+      {
+        "id": "train",
+        "service": "Azure Machine Learning training job"
+      },
+      {
+        "id": "registry",
+        "service": "Azure Machine Learning model registry"
+      },
+      {
+        "id": "predict",
+        "service": "Azure Machine Learning batch endpoint"
+      },
+      {
+        "id": "monitor",
+        "service": "Azure Machine Learning model monitoring + Azure Monitor"
+      },
+      {
+        "id": "workorder",
+        "service": "Azure Functions"
+      },
+      {
+        "id": "operator"
+      }
+    ],
+    "passed": false,
+    "mentorJourneyPassed": true
+  },
+  {
+    "provider": "azure-customer-support",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "emulation": "blocked",
+    "mentorResponded": true,
+    "architecturePresent": true,
+    "acceptanceRequirements": [
+      "Customer and tenant boundaries preserved",
+      "Answers cite approved knowledge",
+      "Unsupported promises escalate to staff",
+      "Sensitive customer fields excluded from model input",
+      "Approved ticket updates are idempotent and auditable"
+    ],
+    "components": [
+      {
+        "id": "staff"
+      },
+      {
+        "id": "entra",
+        "service": "Microsoft Entra ID"
+      },
+      {
+        "id": "webapp",
+        "service": "Azure App Service"
+      },
+      {
+        "id": "orchestrator",
+        "service": "Azure Functions"
+      },
+      {
+        "id": "tickets"
+      },
+      {
+        "id": "crm"
+      },
+      {
+        "id": "knowledge",
+        "service": "Azure Blob Storage"
+      },
+      {
+        "id": "search",
+        "service": "Azure AI Search"
+      },
+      {
+        "id": "llm",
+        "service": "Azure OpenAI Service"
+      },
+      {
+        "id": "guard",
+        "service": "Azure AI Content Safety"
+      },
+      {
+        "id": "escalation",
+        "service": "Azure Service Bus"
+      },
+      {
+        "id": "monitor",
+        "service": "Azure Monitor / Application Insights"
+      }
+    ],
+    "passed": false,
+    "mentorJourneyPassed": true
+  },
+  {
+    "provider": "azure-call-center",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "emulation": "blocked",
+    "mentorResponded": true,
+    "architecturePresent": true,
+    "acceptanceRequirements": [
+      "No audio processed before consent",
+      "Partial and final transcripts remain ordered",
+      "Sensitive audio-derived fields are redacted before generation",
+      "Unsupported suggestions are withheld or escalated",
+      "An approved CRM update uses the final transcript and cannot duplicate on retry"
+    ],
+    "components": [
+      {
+        "id": "caller"
+      },
+      {
+        "id": "acs",
+        "service": "Azure Communication Services (Call Automation, media streaming)"
+      },
+      {
+        "id": "consent",
+        "service": "Azure Functions"
+      },
+      {
+        "id": "speech",
+        "service": "Azure AI Speech (real-time speech to text)"
+      },
+      {
+        "id": "pii",
+        "service": "Azure AI Language (PII detection)"
+      },
+      {
+        "id": "orchestrator",
+        "service": "Azure Container Apps"
+      },
+      {
+        "id": "search",
+        "service": "Azure AI Search"
+      },
+      {
+        "id": "llm",
+        "service": "Azure OpenAI Service"
+      },
+      {
+        "id": "agentapp",
+        "service": "Azure App Service (web app)"
+      },
+      {
+        "id": "entra",
+        "service": "Microsoft Entra ID"
+      },
+      {
+        "id": "agent"
+      },
+      {
+        "id": "crm"
+      },
+      {
+        "id": "cosmos",
+        "service": "Azure Cosmos DB"
+      },
+      {
+        "id": "monitor",
+        "service": "Azure Monitor / Application Insights"
+      }
+    ],
+    "passed": false,
+    "mentorJourneyPassed": true
+  },
+  {
+    "provider": "azure-cloud-operations",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "emulation": "blocked",
+    "mentorResponded": true,
+    "architecturePresent": true,
+    "acceptanceRequirements": [
+      "Inventory credentials are read-only",
+      "Untrusted resource tags cannot trigger commands",
+      "Plans identify affected resources and costs as estimates",
+      "Drift after review invalidates approval",
+      "Apply requires separate authorization and a rollback or recovery plan"
+    ],
+    "components": [
+      {
+        "id": "inventory"
+      },
+      {
+        "id": "resgraph",
+        "service": "Azure Resource Graph"
+      },
+      {
+        "id": "desired"
+      },
+      {
+        "id": "orchestrator",
+        "service": "Azure Functions (Durable Functions)"
+      },
+      {
+        "id": "policy",
+        "service": "Azure Policy (compliance state, read-only)"
+      },
+      {
+        "id": "drift",
+        "service": "Azure Functions (timer trigger)"
+      },
+      {
+        "id": "llm",
+        "service": "Azure OpenAI Service"
+      },
+      {
+        "id": "artifacts",
+        "service": "Azure Blob Storage (versioned, immutable)"
+      },
+      {
+        "id": "approval",
+        "service": "Azure DevOps Environments approval check"
+      },
+      {
+        "id": "reviewer"
+      },
+      {
+        "id": "audit",
+        "service": "Azure Monitor Log Analytics"
+      }
+    ],
+    "passed": false,
+    "mentorJourneyPassed": true
+  },
+  {
+    "provider": "azure-cybersecurity",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "emulation": "blocked",
+    "mentorResponded": true,
+    "architecturePresent": true,
+    "acceptanceRequirements": [
+      "Payloads and log instructions are treated as untrusted data",
+      "Restricted security evidence stays within analyst permissions",
+      "Severity claims cite observed evidence and uncertainty",
+      "Duplicate alerts preserve the investigation audit trail",
+      "Containment requires explicit approval and reversible action planning"
+    ],
+    "components": [
+      {
+        "id": "alert-source"
+      },
+      {
+        "id": "asset-context"
+      },
+      {
+        "id": "ingest",
+        "service": "Azure Event Hubs"
+      },
+      {
+        "id": "redact",
+        "service": "Azure Functions + Azure AI Language (PII detection)"
+      },
+      {
+        "id": "evidence-store",
+        "service": "Azure Blob Storage (private, versioned)"
+      },
+      {
+        "id": "evidence-search",
+        "service": "Azure AI Search"
+      },
+      {
+        "id": "triage",
+        "service": "Azure Functions (Durable)"
+      },
+      {
+        "id": "model",
+        "service": "Azure OpenAI Service"
+      },
+      {
+        "id": "analyst-queue",
+        "service": "Azure Service Bus (queue + dead-letter)"
+      },
+      {
+        "id": "analyst-console",
+        "service": "Azure App Service + Microsoft Entra ID sign-in"
+      },
+      {
+        "id": "analyst"
+      },
+      {
+        "id": "audit",
+        "service": "Azure Monitor Log Analytics + immutable Blob archive"
+      }
+    ],
+    "passed": false,
+    "mentorJourneyPassed": true
+  }
+]

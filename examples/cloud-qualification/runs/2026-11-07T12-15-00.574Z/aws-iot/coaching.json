@@ -1,0 +1,118 @@
+{
+  "message": "Where things stand: emulation ran 0 checks and stopped early, so nothing has been tested and the design isn't validated yet. The empty failures list doesn't mean the design is sound. The first blocker is the Ingestion step (AWS IoT Core → Kinesis), and no other block can be checked until it's built. That's because none of our blocks match a contract the export tool knows how to generate yet: IoT Core, Kinesis, the Kinesis-triggered Lambda scorer, the SageMaker endpoint, the SQS quarantine and SNS alerts all need product engineering work, and changing the drawing can't fix that. The reproducer for that work is this revision-2 artifact (digest b2f9847c…). I don't recommend switching to the S3/SQS word-count pipeline just to get a green check, because it counts words in documents and doesn't score sensor events. Doing that would quietly shrink our scope, so I've kept the diagram and requirements as they are.\n\nThe most useful thing we can decide now: for the first version, should the anomaly model be a simple fixed threshold per device and unit (for example, \"temperature above 80 °C\"), or a trained model? A threshold could live inside the scorer Lambda, which removes the SageMaker endpoint and its hourly cost from the first test. It also gives REQ-005 (the operator alert) a clear trigger to agree on. A trained model needs labelled anomalies before we can show it works.",
+  "phase": "Architecture Review",
+  "contextUsed": {
+    "status": "unavailable",
+    "enabled": true,
+    "engine": "AtMem 2.3.10 core SDK",
+    "recordsUsed": [],
+    "knowledgeRecordIds": [],
+    "skills": [
+      {
+        "id": "architecture",
+        "name": "AI architecture and discovery",
+        "provider": "all",
+        "stages": [
+          "discover",
+          "design",
+          "review"
+        ],
+        "version": "1.1.0",
+        "digest": "448a3d2854feb60d82c926656c4a04905141989fdbdffeb3add6082df7889f5d",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "security",
+        "name": "Security and reliability",
+        "provider": "all",
+        "stages": [
+          "design",
+          "review",
+          "deploy"
+        ],
+        "version": "1.0.0",
+        "digest": "c75cf46b29eb786b27d88d36604f521d6d287182d47df7d5c03845585d64f914",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "devops",
+        "name": "Infrastructure and DevOps handoff",
+        "provider": "all",
+        "stages": [
+          "deploy",
+          "review"
+        ],
+        "version": "1.1.0",
+        "digest": "cd5a428597fbf388a12a863721d93e551c200f4ed30be3469fd8eae78262884c",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "aws",
+        "name": "AWS architecture guidance",
+        "provider": "aws",
+        "stages": [
+          "design",
+          "review",
+          "estimate",
+          "deploy"
+        ],
+        "version": "1.4.0",
+        "digest": "82147cbfe99396d8e659bc7c8d62ce57b0868983bc88c1ace0aaa860ecb9ba29",
+        "source": "https://raw.githubusercontent.com/aws/agent-toolkit-for-aws/fb298e0b6bf2b308a3d2c212b2a09b9bace8e090/plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+        "reference": {
+          "id": "aws",
+          "repository": "aws/agent-toolkit-for-aws",
+          "commit": "fb298e0b6bf2b308a3d2c212b2a09b9bace8e090",
+          "sourcePath": "plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+          "url": "https://raw.githubusercontent.com/aws/agent-toolkit-for-aws/fb298e0b6bf2b308a3d2c212b2a09b9bace8e090/plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+          "sha256": "aa8fef39ef6d64365e48827d9acc90b2b8755023f5c177341cf1c954c1057811",
+          "file": "agent-skills/upstream/aws/SKILL.md",
+          "status": "reference-only",
+          "note": "Imported source reference, not an enabled script/tool package. AtMem AI Architect specialist guidance is reviewed separately; referenced upstream companion files are not bundled.",
+          "integrity": true
+        },
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup",
+          "pricing.lookup"
+        ],
+        "enabled": true
+      }
+    ],
+    "tools": [],
+    "boundary": "AtMem AI Architect → native client",
+    "contextDigest": "2c8cf6237d4999abbd6ee295c5ae338f66c6d1fd97162510ecc20e820d80b2f1",
+    "projectId": "cf9f5e02-59b6-41db-8f1f-4724f9527611"
+  },
+  "priceQuotes": []
+}

@@ -1,0 +1,620 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "support-staff",
+      "address": "block_737570706f72742d7374616666",
+      "label": "Support staff",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "Existing location; country unresolved",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "support-app"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "staff-identity",
+      "address": "block_73746166662d6964656e74697479",
+      "label": "Staff authentication",
+      "provider": "ibm",
+      "service": "IBM Cloud App ID",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "support-staff",
+        "support-app"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "support-app",
+      "address": "block_737570706f72742d617070",
+      "label": "Support application and staff interface",
+      "provider": "ibm",
+      "service": "IBM Cloud Code Engine",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "support-staff",
+        "ticket-queue",
+        "approved-knowledge"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "ticket-queue",
+      "address": "block_7469636b65742d7175657565",
+      "label": "Synthetic ticket queue",
+      "provider": "tools",
+      "service": "Storage or existing data connector",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "Local synthetic fixture",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "support-app"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "existing-crm",
+      "address": "block_6578697374696e672d63726d",
+      "label": "Existing CRM",
+      "provider": "tools",
+      "service": "Storage or existing data connector",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "Existing placement; country unresolved",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "support-app"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "approved-knowledge",
+      "address": "block_617070726f7665642d6b6e6f776c65646765",
+      "label": "Approved knowledge source",
+      "provider": "tools",
+      "service": "Storage or existing data connector",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "Existing placement; country unresolved",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "knowledge-storage",
+      "address": "block_6b6e6f776c656467652d73746f72616765",
+      "label": "Approved knowledge snapshots",
+      "provider": "ibm",
+      "service": "IBM Cloud Object Storage",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "support-app"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "support-state",
+      "address": "block_737570706f72742d7374617465",
+      "label": "Authorized catalog and workflow state",
+      "provider": "ibm",
+      "service": "IBM Cloud Databases for PostgreSQL",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "support-app"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "draft-model",
+      "address": "block_64726166742d6d6f64656c",
+      "label": "Grounded draft generation",
+      "provider": "ibm",
+      "service": "IBM watsonx.ai",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "support-app"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "app-secrets",
+      "address": "block_6170702d73656372657473",
+      "label": "Application credentials",
+      "provider": "ibm",
+      "service": "IBM Cloud Secrets Manager",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "support-app"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "application-logs",
+      "address": "block_6170706c69636174696f6e2d6c6f6773",
+      "label": "Redacted operational logs",
+      "provider": "ibm",
+      "service": "IBM Cloud Logs",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "support-app"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "staff-login",
+      "source": "support-staff",
+      "target": "staff-identity",
+      "data": "Proposed OIDC sign-in; federation unresolved",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "staff-app",
+      "source": "support-staff",
+      "target": "support-app",
+      "data": "HTTPS: ticket review, questions and explicit approval",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "app-identity",
+      "source": "support-app",
+      "target": "staff-identity",
+      "data": "Validate issuer, audience and session; integration required",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "tickets-app",
+      "source": "ticket-queue",
+      "target": "support-app",
+      "data": "Synthetic ticket read/receive; source contract unresolved",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "app-tickets",
+      "source": "support-app",
+      "target": "ticket-queue",
+      "data": "Escalate or write approved update with idempotency key",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "app-crm",
+      "source": "support-app",
+      "target": "existing-crm",
+      "data": "Read authorized customer fields; API adapter required",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "knowledge-app",
+      "source": "approved-knowledge",
+      "target": "support-app",
+      "data": "Import approved revisions and ACLs; adapter required",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "app-storage",
+      "source": "support-app",
+      "target": "knowledge-storage",
+      "data": "Object API: write snapshots and read authorized revisions",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "app-state",
+      "source": "support-app",
+      "target": "support-state",
+      "data": "TLS SQL: filtered retrieval, approvals, outbox and audit",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "app-model",
+      "source": "support-app",
+      "target": "draft-model",
+      "data": "HTTPS inference: filtered context → cited draft or abstention",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "app-staff",
+      "source": "support-app",
+      "target": "support-staff",
+      "data": "Return cited draft, escalation and update status",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "app-secrets-read",
+      "source": "support-app",
+      "target": "app-secrets",
+      "data": "Scoped secret retrieval; integration requires verification",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "app-logs",
+      "source": "support-app",
+      "target": "application-logs",
+      "data": "Redacted diagnostics and failure events; routing required",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Support staff: Existing — reference/import plan needed.",
+    "Staff authentication: Implementation needed.",
+    "Support application and staff interface: Implementation needed.",
+    "Synthetic ticket queue: Existing — reference/import plan needed.",
+    "Existing CRM: Existing — reference/import plan needed.",
+    "Approved knowledge source: Existing — reference/import plan needed.",
+    "Approved knowledge snapshots: Implementation needed.",
+    "Authorized catalog and workflow state: Implementation needed.",
+    "Grounded draft generation: Implementation needed.",
+    "Application credentials: Implementation needed.",
+    "Redacted operational logs: Implementation needed.",
+    "Wire support-staff → staff-identity: implement data flow, access policy and acceptance test.",
+    "Wire support-staff → support-app: implement data flow, access policy and acceptance test.",
+    "Wire support-app → staff-identity: implement data flow, access policy and acceptance test.",
+    "Wire ticket-queue → support-app: implement data flow, access policy and acceptance test.",
+    "Wire support-app → ticket-queue: implement data flow, access policy and acceptance test.",
+    "Wire support-app → existing-crm: implement data flow, access policy and acceptance test.",
+    "Wire approved-knowledge → support-app: implement data flow, access policy and acceptance test.",
+    "Wire support-app → knowledge-storage: implement data flow, access policy and acceptance test.",
+    "Wire support-app → support-state: implement data flow, access policy and acceptance test.",
+    "Wire support-app → draft-model: implement data flow, access policy and acceptance test.",
+    "Wire support-app → support-staff: implement data flow, access policy and acceptance test.",
+    "Wire support-app → app-secrets: implement data flow, access policy and acceptance test.",
+    "Wire support-app → application-logs: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "resource-block_737570706f72742d7374616666",
+      "componentIds": [
+        "support-staff"
+      ],
+      "taskId": "TASK-RESOURCE-737570706f72742d7374616666",
+      "message": "Support staff: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_73746166662d6964656e74697479",
+      "componentIds": [
+        "staff-identity"
+      ],
+      "taskId": "TASK-RESOURCE-73746166662d6964656e74697479",
+      "message": "Staff authentication: Implementation needed."
+    },
+    {
+      "id": "resource-block_737570706f72742d617070",
+      "componentIds": [
+        "support-app"
+      ],
+      "taskId": "TASK-RESOURCE-737570706f72742d617070",
+      "message": "Support application and staff interface: Implementation needed."
+    },
+    {
+      "id": "resource-block_7469636b65742d7175657565",
+      "componentIds": [
+        "ticket-queue"
+      ],
+      "taskId": "TASK-RESOURCE-7469636b65742d7175657565",
+      "message": "Synthetic ticket queue: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_6578697374696e672d63726d",
+      "componentIds": [
+        "existing-crm"
+      ],
+      "taskId": "TASK-RESOURCE-6578697374696e672d63726d",
+      "message": "Existing CRM: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_617070726f7665642d6b6e6f776c65646765",
+      "componentIds": [
+        "approved-knowledge"
+      ],
+      "taskId": "TASK-RESOURCE-617070726f7665642d6b6e6f776c65646765",
+      "message": "Approved knowledge source: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_6b6e6f776c656467652d73746f72616765",
+      "componentIds": [
+        "knowledge-storage"
+      ],
+      "taskId": "TASK-RESOURCE-6b6e6f776c656467652d73746f72616765",
+      "message": "Approved knowledge snapshots: Implementation needed."
+    },
+    {
+      "id": "resource-block_737570706f72742d7374617465",
+      "componentIds": [
+        "support-state"
+      ],
+      "taskId": "TASK-RESOURCE-737570706f72742d7374617465",
+      "message": "Authorized catalog and workflow state: Implementation needed."
+    },
+    {
+      "id": "resource-block_64726166742d6d6f64656c",
+      "componentIds": [
+        "draft-model"
+      ],
+      "taskId": "TASK-RESOURCE-64726166742d6d6f64656c",
+      "message": "Grounded draft generation: Implementation needed."
+    },
+    {
+      "id": "resource-block_6170702d73656372657473",
+      "componentIds": [
+        "app-secrets"
+      ],
+      "taskId": "TASK-RESOURCE-6170702d73656372657473",
+      "message": "Application credentials: Implementation needed."
+    },
+    {
+      "id": "resource-block_6170706c69636174696f6e2d6c6f6773",
+      "componentIds": [
+        "application-logs"
+      ],
+      "taskId": "TASK-RESOURCE-6170706c69636174696f6e2d6c6f6773",
+      "message": "Redacted operational logs: Implementation needed."
+    },
+    {
+      "id": "connection-73746166662d6c6f67696e",
+      "edgeIds": [
+        "staff-login"
+      ],
+      "taskId": "TASK-INTEGRATION-73746166662d6c6f67696e",
+      "message": "Wire support-staff → staff-identity: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-73746166662d617070",
+      "edgeIds": [
+        "staff-app"
+      ],
+      "taskId": "TASK-INTEGRATION-73746166662d617070",
+      "message": "Wire support-staff → support-app: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6170702d6964656e74697479",
+      "edgeIds": [
+        "app-identity"
+      ],
+      "taskId": "TASK-INTEGRATION-6170702d6964656e74697479",
+      "message": "Wire support-app → staff-identity: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-7469636b6574732d617070",
+      "edgeIds": [
+        "tickets-app"
+      ],
+      "taskId": "TASK-INTEGRATION-7469636b6574732d617070",
+      "message": "Wire ticket-queue → support-app: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6170702d7469636b657473",
+      "edgeIds": [
+        "app-tickets"
+      ],
+      "taskId": "TASK-INTEGRATION-6170702d7469636b657473",
+      "message": "Wire support-app → ticket-queue: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6170702d63726d",
+      "edgeIds": [
+        "app-crm"
+      ],
+      "taskId": "TASK-INTEGRATION-6170702d63726d",
+      "message": "Wire support-app → existing-crm: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6b6e6f776c656467652d617070",
+      "edgeIds": [
+        "knowledge-app"
+      ],
+      "taskId": "TASK-INTEGRATION-6b6e6f776c656467652d617070",
+      "message": "Wire approved-knowledge → support-app: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6170702d73746f72616765",
+      "edgeIds": [
+        "app-storage"
+      ],
+      "taskId": "TASK-INTEGRATION-6170702d73746f72616765",
+      "message": "Wire support-app → knowledge-storage: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6170702d7374617465",
+      "edgeIds": [
+        "app-state"
+      ],
+      "taskId": "TASK-INTEGRATION-6170702d7374617465",
+      "message": "Wire support-app → support-state: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6170702d6d6f64656c",
+      "edgeIds": [
+        "app-model"
+      ],
+      "taskId": "TASK-INTEGRATION-6170702d6d6f64656c",
+      "message": "Wire support-app → draft-model: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6170702d7374616666",
+      "edgeIds": [
+        "app-staff"
+      ],
+      "taskId": "TASK-INTEGRATION-6170702d7374616666",
+      "message": "Wire support-app → support-staff: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6170702d736563726574732d72656164",
+      "edgeIds": [
+        "app-secrets-read"
+      ],
+      "taskId": "TASK-INTEGRATION-6170702d736563726574732d72656164",
+      "message": "Wire support-app → app-secrets: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6170702d6c6f6773",
+      "edgeIds": [
+        "app-logs"
+      ],
+      "taskId": "TASK-INTEGRATION-6170702d6c6f6773",
+      "message": "Wire support-app → application-logs: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

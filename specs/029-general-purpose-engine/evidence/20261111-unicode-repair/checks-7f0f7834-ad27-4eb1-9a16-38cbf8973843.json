@@ -1,0 +1,120 @@
+{
+  "checks": [
+    {
+      "id": "a0149092-2b84-4b35-aad7-65c91ea30c68",
+      "sessionId": "869051d9-e6ec-4bb2-95d6-58221e985d2c",
+      "artifactId": "db542a47-bf51-4802-b5eb-104bd5e2fa49",
+      "artifactSha256": "1b3bdaac06abece237c58fe5742aff6ef58d38ca3f54c35edb075c1c2cda6996",
+      "validatorId": "lambda-python312-tests",
+      "label": "Lambda Python 3.12 ARM64 tests",
+      "contractSha256": "e61c4ac765008487ac61c2f9b628331c59dcfae8bb35c09c689aeeb574c6b363",
+      "state": "finished",
+      "result": {
+        "validator": "lambda-python312-tests",
+        "artifactSha256": "1b3bdaac06abece237c58fe5742aff6ef58d38ca3f54c35edb075c1c2cda6996",
+        "imageId": "sha256:cdb746c1eb56b61de56e1b5e78f6194392eb00494a1bb257a592852e72d8314b",
+        "runtimeConfigImageId": "sha256:efb920a19905e2b73c3e56eb22d52b052026b62050ec32eb3c7b28aba449cfc7",
+        "platform": "linux/arm64",
+        "isolationProfile": "standard-v1",
+        "runtimeEnvironment": {},
+        "command": [
+          "/var/lang/bin/python3.12",
+          "-m",
+          "unittest",
+          "discover",
+          "-v"
+        ],
+        "status": "passed",
+        "exitCode": 0,
+        "skipped": 0,
+        "testsReported": 13,
+        "reason": null,
+        "output": "test_bad_model_results_never_exposed (tests.test_handler.HandlerTests.test_bad_model_results_never_exposed) ... ok\ntest_denied_never_calls_model (tests.test_handler.HandlerTests.test_denied_never_calls_model) ... ok\ntest_five_parallel_requests_keep_independent_results (tests.test_handler.HandlerTests.test_five_parallel_requests_keep_independent_results) ... ok\ntest_malformed_inputs_and_size (tests.test_handler.HandlerTests.test_malformed_inputs_and_size) ... ok\ntest_prompt_injection_is_only_user_content (tests.test_handler.HandlerTests.test_prompt_injection_is_only_user_content) ... ok\ntest_public_files (tests.test_handler.HandlerTests.test_public_files) ... ok\ntest_retention_unknown_denied_throttled_timeout_logging (tests.test_handler.HandlerTests.test_retention_unknown_denied_throttled_timeout_logging) ... ok\ntest_success_validated_and_no_cache_or_logs (tests.test_handler.HandlerTests.test_success_validated_and_no_cache_or_logs) ... ok\ntest_build_contains_complete_sdk_and_runtime_only (tests.test_package.PackageTests.test_build_contains_complete_sdk_and_runtime_only) ... ok\ntest_exported_schema_matches_enforced_contract (tests.test_package.PackageTests.test_exported_schema_matches_enforced_contract) ... ok\ntest_artifact_versions_and_operations (tests.test_sdk.SDKTests.test_artifact_versions_and_operations) ... ok\ntest_converse_actual_sdk_contract (tests.test_sdk.SDKTests.test_converse_actual_sdk_contract) ... ok\ntest_signed_transport_retention_modes_errors_and_timeout (tests.test_sdk.SDKTests.test_signed_transport_retention_modes_errors_and_timeout) ... ok\n\n----------------------------------------------------------------------\nRan 13 tests in 1.635s\n\nOK\nBuilt function.zip with verified dependencies and runtime files only\n",
+        "outputTruncated": false,
+        "durationSeconds": 2.603,
+        "evidenceLevel": "local_container_check",
+        "cloudOperations": false,
+        "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+      },
+      "acceptance": "not_established_by_local_check"
+    },
+    {
+      "id": "1d67504d-a56c-4e32-b94e-e85615a2a326",
+      "sessionId": "869051d9-e6ec-4bb2-95d6-58221e985d2c",
+      "artifactId": "db542a47-bf51-4802-b5eb-104bd5e2fa49",
+      "artifactSha256": "1b3bdaac06abece237c58fe5742aff6ef58d38ca3f54c35edb075c1c2cda6996",
+      "validatorId": "node-browser-tests",
+      "label": "Node and Chromium tests (Playwright 1.64.1)",
+      "contractSha256": "745cc90f598477c0adec233ee207760e9e463abb1d53fd2c184e755a14b26e61",
+      "state": "finished",
+      "result": {
+        "validator": "node-browser-tests",
+        "artifactSha256": "1b3bdaac06abece237c58fe5742aff6ef58d38ca3f54c35edb075c1c2cda6996",
+        "imageId": "sha256:df7f71a8588253403dfa833c5c4aacc95ca340204a88d5483edd58131c7f1128",
+        "runtimeConfigImageId": "sha256:df7f71a8588253403dfa833c5c4aacc95ca340204a88d5483edd58131c7f1128",
+        "platform": "linux/arm64",
+        "isolationProfile": "chromium-userns-v1",
+        "runtimeEnvironment": {
+          "ATMEM_PLAYWRIGHT_MODULE": "/opt/atmem/playwright-core/index.mjs"
+        },
+        "command": [
+          "/usr/bin/node",
+          "--test",
+          "--test-reporter=tap",
+          "--test-concurrency=1"
+        ],
+        "status": "passed",
+        "exitCode": 0,
+        "skipped": 0,
+        "testsReported": 1,
+        "reason": null,
+        "output": "TAP version 13\n# Executed browser version: 156.0.8078.80\n# Subtest: actual Chromium: initialization, review, clear, failures, reload and recovery\nok 1 - actual Chromium: initialization, review, clear, failures, reload and recovery\n  ---\n  duration_ms: 2109.523219\n  type: 'test'\n  ...\n1..1\n# tests 1\n# suites 0\n# pass 1\n# fail 0\n# cancelled 0\n# skipped 0\n# todo 0\n# duration_ms 2385.099605\n",
+        "outputTruncated": false,
+        "durationSeconds": 2.881,
+        "evidenceLevel": "local_container_check",
+        "cloudOperations": false,
+        "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+      },
+      "acceptance": "not_established_by_local_check"
+    },
+    {
+      "id": "81ad8b09-a3b6-4fb2-881d-3d4541983f61",
+      "sessionId": "869051d9-e6ec-4bb2-95d6-58221e985d2c",
+      "artifactId": "db542a47-bf51-4802-b5eb-104bd5e2fa49",
+      "artifactSha256": "1b3bdaac06abece237c58fe5742aff6ef58d38ca3f54c35edb075c1c2cda6996",
+      "validatorId": "independent-unicode-contract",
+      "label": "Independent Unicode output contract",
+      "contractSha256": "9542d63dada9e90e767479a211f6daf9ee320929097081fd28031237babd38d5",
+      "state": "finished",
+      "result": {
+        "validator": "independent-unicode-contract",
+        "artifactSha256": "1b3bdaac06abece237c58fe5742aff6ef58d38ca3f54c35edb075c1c2cda6996",
+        "imageId": "sha256:df7f71a8588253403dfa833c5c4aacc95ca340204a88d5483edd58131c7f1128",
+        "runtimeConfigImageId": "sha256:df7f71a8588253403dfa833c5c4aacc95ca340204a88d5483edd58131c7f1128",
+        "platform": "linux/arm64",
+        "isolationProfile": "chromium-userns-v1",
+        "runtimeEnvironment": {
+          "ATMEM_PLAYWRIGHT_MODULE": "/opt/atmem/playwright-core/index.mjs"
+        },
+        "command": [
+          "/usr/bin/node",
+          "--input-type=module",
+          "-e",
+          "// Independent UI contract adapter. No project code is changed; only API/identity\n// responses are fixtures. Length limits follow the delivered JSON Schema.\nimport assert from 'node:assert/strict';\nimport fs from 'node:fs';\nimport http from 'node:http';\nconst {chromium}=await import(process.env.ATMEM_PLAYWRIGHT_MODULE);\nconst schema=JSON.parse(fs.readFileSync('/work/source/docs/response.schema.json','utf8'));\nconst limit=schema.properties.uncertainty.properties.reason.maxLength;\nassert.equal(limit,300,'Observed public contract changed: review this evaluator adapter');\nlet result,origin,calls=0;\nconst server=http.createServer((req,res)=>{\n const url=new URL(req.url,'http://local');\n res.setHeader('Cache-Control','no-store');\n if(url.pathname==='/config'){res.setHeader('Content-Type','application/json');res.end(JSON.stringify({CLIENT_ID:'unicodefixture',AUTH_DOMAIN:'https://independent.auth.ap-southeast-2.amazoncognito.com',REDIRECT_URI:origin+'/'}));return;}\n if(url.pathname==='/suggest'){calls++;req.resume();res.setHeader('Content-Type','application/json');res.end(JSON.stringify(result));return;}\n const file={'/':'index.html','/app.js':'app.js','/style.css':'style.css'}[url.pathname];\n if(!file){res.writeHead(404);res.end();return;}\n res.setHeader('Content-Type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'text/html');res.end(fs.readFileSync('/work/source/web/'+file));\n});\nawait new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));origin='http://127.0.0.1:'+server.address().port;\nconst browser=await chromium.launch({headless:true,chromiumSandbox:true});\nconst checks=[];\ntry{\n for(const example of [{name:'BMP reason boundary',reason:'x'.repeat(limit),valid:true},{name:'Non-BMP valid reason',reason:'😀'.repeat(151),valid:true},{name:'Non-BMP reason boundary',reason:'😀'.repeat(limit),valid:true},{name:'Non-BMP reason over bound',reason:'😀'.repeat(limit+1),valid:false},{name:'Non-BMP valid summary',summary:'😀'.repeat(301),valid:true},{name:'Non-BMP summary over bound',summary:'😀'.repeat(601),valid:false}]){\n  result={summary:example.summary??'Independent synthetic summary',topic:'technical',urgency:'normal',uncertainty:{level:'high',reason:example.reason??'Synthetic uncertainty'}};\n  const page=await browser.newPage();page.setDefaultTimeout(5000);const errors=[];page.on('pageerror',e=>errors.push(e.message));\n  await page.addInitScript(()=>sessionStorage.setItem('oauth',JSON.stringify({verifier:'synthetic-verifier',state:'synthetic-state',at:Date.now()})));\n  await page.route('https://independent.auth.ap-southeast-2.amazoncognito.com/oauth2/token',route=>route.fulfill({contentType:'application/json',headers:{'access-control-allow-origin':origin},body:JSON.stringify({access_token:'synthetic-access-token',expires_in:300})}));\n  await page.goto(origin+'/?code=synthetic-code&state=synthetic-state');await page.waitForFunction(()=>!document.querySelector('#suggest').disabled);\n  await page.locator('#ticket').fill('Synthetic contract fixture');const before=calls;await page.locator('#suggest').click();\n  await page.waitForFunction(()=>/Suggestion ready|No suggestion/.test(document.querySelector('#status').textContent));\n  const state=await page.locator('#status').textContent(),visible=await page.locator('#result').isVisible();\n  const diagnostic={case:example.name,expectedValid:example.valid,actualVisible:visible,status:state,reasonCodePoints:[...result.uncertainty.reason].length,reasonUtf16Units:result.uncertainty.reason.length,summaryCodePoints:[...result.summary].length,summaryUtf16Units:result.summary.length};\n  assert.equal(calls,before+1);assert.deepEqual(errors,[]);assert.equal(visible,example.valid,JSON.stringify(diagnostic));\n  if(example.valid){assert.equal(await page.locator('#summary').textContent(),result.summary);assert((await page.locator('#uncertainty').textContent()).endsWith(result.uncertainty.reason));}\n  checks.push({...diagnostic,passed:true});await page.close();\n }\n console.log('INDEPENDENT_UNICODE_CONTRACT_PASSED',JSON.stringify(checks));\n}finally{await browser.close();await new Promise(resolve=>server.close(resolve));}\n"
+        ],
+        "status": "failed",
+        "exitCode": 1,
+        "skipped": 0,
+        "testsReported": null,
+        "reason": null,
+        "output": "node:internal/modules/run_main:111\n    triggerUncaughtException(\n    ^\n\nAssertionError [ERR_ASSERTION]: {\"case\":\"Non-BMP valid reason\",\"expectedValid\":true,\"actualVisible\":false,\"status\":\"No suggestion available. Your text remains here. You can retry; a retry may cause another model charge.\",\"reasonCodePoints\":151,\"reasonUtf16Units\":302,\"summaryCodePoints\":29,\"summaryUtf16Units\":29}\n\nfalse !== true\n\n    at file:///work/source/[eval1]:34:67 {\n  generatedMessage: false,\n  code: 'ERR_ASSERTION',\n  actual: false,\n  expected: true,\n  operator: 'strictEqual',\n  diff: 'simple'\n}\n\nNode.js v26.13.0\n",
+        "outputTruncated": false,
+        "durationSeconds": 1.373,
+        "evidenceLevel": "local_container_check",
+        "cloudOperations": false,
+        "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+      },
+      "acceptance": "not_established_by_local_check"
+    }
+  ]
+}

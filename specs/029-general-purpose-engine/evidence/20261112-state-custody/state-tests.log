@@ -1,0 +1,72 @@
+✖ aws: explicit state backend is independent of target provider and owns only the root (31.885917ms)
+✖ azure: explicit state backend is independent of target provider and owns only the root (7.055708ms)
+✖ gcp: explicit state backend is independent of target provider and owns only the root (5.927459ms)
+✖ ibm: explicit state backend is independent of target provider and owns only the root (5.458708ms)
+✔ unknown state contracts retain original input instead of accepting fields or choosing a substitute (0.534333ms)
+✔ independent admission rejects root backend diversion even when module addresses are unchanged (12.921417ms)
+✔ state examples separate environments, factory settings cannot poison later generations, and decisions do not grant acceptance (6.985417ms)
+✖ Spec Kit supplies concrete custody files and makes authorized planning depend on verification (0.824167ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 3
+ℹ fail 5
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 182.536583
+
+✖ failing tests:
+
+test at tests/state-custody.test.mjs:6:51
+✖ aws: explicit state backend is independent of target provider and owns only the root (31.885917ms)
+  TypeError: Cannot read properties of undefined (reading 'terraformState')
+      at TestContext.<anonymous> (file:///Users/javadtaghia/gitlab/ai-architect-workbench/tests/state-custody.test.mjs:11:64)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.start (node:internal/test_runner/test:1242:17)
+      at startSubtestAfterBootstrap (node:internal/test_runner/harness:387:17)
+
+test at tests/state-custody.test.mjs:6:51
+✖ azure: explicit state backend is independent of target provider and owns only the root (7.055708ms)
+  TypeError: Cannot read properties of undefined (reading 'terraformState')
+      at TestContext.<anonymous> (file:///Users/javadtaghia/gitlab/ai-architect-workbench/tests/state-custody.test.mjs:11:64)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3)
+
+test at tests/state-custody.test.mjs:6:51
+✖ gcp: explicit state backend is independent of target provider and owns only the root (5.927459ms)
+  TypeError: Cannot read properties of undefined (reading 'terraformState')
+      at TestContext.<anonymous> (file:///Users/javadtaghia/gitlab/ai-architect-workbench/tests/state-custody.test.mjs:11:64)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at tests/state-custody.test.mjs:6:51
+✖ ibm: explicit state backend is independent of target provider and owns only the root (5.458708ms)
+  TypeError: Cannot read properties of undefined (reading 'terraformState')
+      at TestContext.<anonymous> (file:///Users/javadtaghia/gitlab/ai-architect-workbench/tests/state-custody.test.mjs:11:64)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)
+
+test at tests/state-custody.test.mjs:40:1
+✖ Spec Kit supplies concrete custody files and makes authorized planning depend on verification (0.824167ms)
+  TypeError: Cannot destructure property 'snapshotId' of 'undefined' as it is undefined.
+      at specKit (file:///Users/javadtaghia/gitlab/ai-architect-workbench/src/spec-kit.mjs:17:34)
+      at TestContext.<anonymous> (file:///Users/javadtaghia/gitlab/ai-architect-workbench/tests/state-custody.test.mjs:41:69)
+      at Test.runInAsyncScope (node:async_hooks:226:14)
+      at Test.run (node:internal/test_runner/test:1382:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:960:18)
+      at Test.postRun (node:internal/test_runner/test:1522:19)
+      at Test.run (node:internal/test_runner/test:1447:12)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:960:7)

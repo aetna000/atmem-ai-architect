@@ -1,0 +1,25 @@
+{
+  "validator": "context-independent",
+  "artifactSha256": "ab3c362ac29219d8deaefd33e327f3101d422fe091a4945bef4980a3a5c3e887",
+  "imageId": "sha256:df7f71a8588253403dfa833c5c4aacc95ca340204a88d5483edd58131c7f1128",
+  "runtimeConfigImageId": "sha256:df7f71a8588253403dfa833c5c4aacc95ca340204a88d5483edd58131c7f1128",
+  "platform": "linux/arm64",
+  "isolationProfile": "standard-v1",
+  "runtimeEnvironment": {},
+  "command": [
+    "/usr/bin/node",
+    "-e",
+    "const assert=require('node:assert/strict');const m=require('/work/source/depth.cjs');let n=0;\nassert.equal(m.unit,\"cm\");n++;\nfor(const value of [0,0.001,0.25,1,13.75]){assert.equal(m.normalize(value),value*100);n++;}\nfor(const value of [true,false,'1','',null,undefined,{},[],NaN,Infinity,-Infinity,-1]){assert.throws(()=>m.normalize(value),TypeError);n++;}\nconsole.log('1..'+n);console.log('# tests '+n);console.log('# pass '+n);console.log('# fail 0');\n"
+  ],
+  "status": "failed",
+  "exitCode": 1,
+  "skipped": 0,
+  "testsReported": null,
+  "reason": null,
+  "output": "node:internal/assert/utils:146\n  throw error;\n  ^\n\nAssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\n'mm' !== 'cm'\n\n    at [eval]:2:8\n    at runScriptInThisContext (node:internal/vm:219:10)\n    at node:internal/process/execution:485:12\n    at [eval]-wrapper:6:24\n    at runScriptInContext (node:internal/process/execution:483:60)\n    at evalFunction (node:internal/process/execution:317:30)\n    at evalTypeScript (node:internal/process/execution:329:3)\n    at node:internal/main/eval_string:71:3 {\n  generatedMessage: true,\n  code: 'ERR_ASSERTION',\n  actual: 'mm',\n  expected: 'cm',\n  operator: 'strictEqual',\n  diff: 'simple'\n}\n\nNode.js v26.13.0\n",
+  "outputTruncated": false,
+  "durationSeconds": 0.221,
+  "evidenceLevel": "local_container_check",
+  "cloudOperations": false,
+  "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+}

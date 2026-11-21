@@ -1,0 +1,2036 @@
+ <!DOCTYPE html>
+		<html
+			class="layout layout-holy-grail   show-table-of-contents conceptual show-breadcrumb default-focus"
+			lang="en-us"
+			dir="ltr"
+			data-authenticated="false"
+			data-auth-status-determined="false"
+			data-target="docs"
+			x-ms-format-detection="none"
+		>
+			
+		<head>
+			<title>Managed identities in Azure Container Apps | Microsoft Learn</title>
+			<meta charset="utf-8" />
+			<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+			<meta name="color-scheme" content="light dark" />
+
+			<meta name="description" content="Using managed identities in Container Apps" />
+			<link rel="canonical" href="https://learn.microsoft.com/en-us/azure/container-apps/managed-identity" /> 
+
+			<!-- Non-customizable open graph and sharing-related metadata -->
+			<meta name="twitter:card" content="summary_large_image" />
+			<meta name="twitter:site" content="@MicrosoftLearn" />
+			<meta property="og:type" content="website" />
+			<meta property="og:image:alt" content="Microsoft Learn" />
+			<meta property="og:image" content="https://learn.microsoft.com/en-us/media/open-graph-image.png" />
+			<!-- Page specific open graph and sharing-related metadata -->
+			<meta property="og:title" content="Managed identities in Azure Container Apps" />
+			<meta property="og:url" content="https://learn.microsoft.com/en-us/azure/container-apps/managed-identity" />
+			<meta property="og:description" content="Using managed identities in Container Apps" />
+			<meta name="platform_id" content="5db43ed1-9cb3-73c2-94a1-20d7692007b5" /> <meta name="scope" content="Azure" />
+			<meta name="locale" content="en-us" />
+			 
+			<meta name="uhfHeaderId" content="azure" />
+
+			<meta name="page_type" content="conceptual" />
+
+			<!--page specific meta tags-->
+			
+
+			<!-- custom meta tags -->
+			
+		<meta name="breadcrumb_path" content="/azure/bread/toc.json" />
+	
+		<meta name="feedback_help_link_url" content="https://learn.microsoft.com/answers/tags/418/azure-container-apps/" />
+	
+		<meta name="feedback_help_link_type" content="get-help-at-qna" />
+	
+		<meta name="feedback_product_url" content="https://feedback.azure.com/d365community/forum/79b1327d-d925-ec11-b6e6-000d3a4f06a4" />
+	
+		<meta name="feedback_system" content="Standard" />
+	
+		<meta name="permissioned-type" content="public" />
+	
+		<meta name="recommendations" content="true" />
+	
+		<meta name="recommendation_types" content="Training" />
+	
+		<meta name="recommendation_types" content="Certification" />
+	
+		<meta name="ms.suite" content="office" />
+	
+		<meta name="adobe-target" content="true" />
+	
+		<meta name="learn_banner_products" content="azure" />
+	
+		<meta name="services" content="container-apps" />
+	
+		<meta name="author" content="craigshoemaker" />
+	
+		<meta name="ms.service" content="azure-container-apps" />
+	
+		<meta name="ms.custom" content="devx-track-azurecli" />
+	
+		<meta name="ms.custom" content="build-2025" />
+	
+		<meta name="ms.topic" content="how-to" />
+	
+		<meta name="ms.date" content="2025-06-03T00:00:00Z" />
+	
+		<meta name="ms.author" content="cshoe" />
+	
+		<meta name="document_id" content="1bae7356-5237-f004-16e8-3f89b1dfeac6" />
+	
+		<meta name="document_version_independent_id" content="841a9a04-8bc8-8bfd-a57d-f57945829a66" />
+	
+		<meta name="updated_at" content="2026-02-13T12:10:00Z" />
+	
+		<meta name="original_content_git_url" content="https://github.com/MicrosoftDocs/azure-docs-pr/blob/live/articles/container-apps/managed-identity.md" />
+	
+		<meta name="gitcommit" content="https://github.com/MicrosoftDocs/azure-docs-pr/blob/fb2bffef7c187084d68e891abfcef957fb752117/articles/container-apps/managed-identity.md" />
+	
+		<meta name="git_commit_id" content="fb2bffef7c187084d68e891abfcef957fb752117" />
+	
+		<meta name="site_name" content="Docs" />
+	
+		<meta name="depot_name" content="Azure.azure-documents" />
+	
+		<meta name="schema" content="Conceptual" />
+	
+		<meta name="toc_rel" content="toc.json" />
+	
+		<meta name="pdf_url_template" content="https://learn.microsoft.com/pdfstore/en-us/Azure.azure-documents/{branchName}{pdfName}" />
+	
+		<meta name="word_count" content="3248" />
+	
+		<meta name="asset_id" content="container-apps/managed-identity" />
+	
+		<meta name="moniker_range_name" content="" />
+	
+		<meta name="item_type" content="Content" />
+	
+		<meta name="source_path" content="articles/container-apps/managed-identity.md" />
+	
+		<meta name="previous_tlsh_hash" content="44E9D792428EEA06FDC30D0EBE57D33861F3C14A3E7096D8086695EA90962C73E71D5C92B39787F48631D2A310C9FE1D50D9FF1A401D4AE2EA7164BA80DF51633A4D7AB2C1" />
+	
+		<meta name="github_feedback_content_git_url" content="https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/container-apps/managed-identity.md" />
+	
+		<meta name="markdown_url" content="https://learn.microsoft.com/en-us/azure/container-apps/managed-identity?accept=text/markdown" />
+	 
+		<meta name="cmProducts" content="https://microsoft-devrel.poolparty.biz/DevRelOfferingOntology/32e8f006-5597-4144-9ccc-778e20833eca" data-source="generated" />
+	
+		<meta name="cmProducts" content="https://authoring-docs-microsoft.poolparty.biz/devrel/68ec7f3a-2bc6-459f-b959-19beb729907d" data-source="generated" />
+	
+		<meta name="cmProducts" content="https://authoring-docs-microsoft.poolparty.biz/devrel/4e834929-0ce1-4c1d-9c81-fcb14721edfb" data-source="generated" />
+	
+		<meta name="spProducts" content="https://microsoft-devrel.poolparty.biz/DevRelOfferingOntology/bfbda2e5-bc4e-4e83-8c2a-41b7c4914a07" data-source="generated" />
+	
+		<meta name="spProducts" content="https://authoring-docs-microsoft.poolparty.biz/devrel/90370425-aca4-4a39-9533-d52e5e002a5d" data-source="generated" />
+	
+		<meta name="spProducts" content="https://authoring-docs-microsoft.poolparty.biz/devrel/75670257-a3f0-4627-9981-8046f99219e6" data-source="generated" />
+	
+
+			<!-- Apply persisted/system theme before first paint to prevent wrong-theme flash when scripts are deferred. -->
+			<script id="theme-preference">
+				(function () {
+			try {
+				var stored = localStorage.getItem('theme');
+				var theme = /^(light|dark|high-contrast)$/.test(stored)
+					? stored
+					: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+				document.documentElement.classList.add('theme-' + theme);
+			} catch (e) {}
+		})();;
+			</script>
+
+			<script id="atlas-layout-preferences">
+				(function () {
+			try {
+				var state = JSON.parse(localStorage.getItem('atlas-layout-preferences') || '{}');
+				var view = state["docs-layout-persistence"] || {};
+				var excludesKey = "";
+				var blocked = {};
+				if (excludesKey) {
+					var exclusions = JSON.parse(localStorage.getItem('atlas-layout-exclusions') || '{}');
+					if (Object.prototype.hasOwnProperty.call(exclusions, excludesKey)) {
+						var scoped = exclusions[excludesKey];
+						if (scoped) {
+							if (typeof scoped === 'object') blocked = scoped;
+						}
+					}
+				}
+				var html = document.documentElement;
+				for (var c in view) {
+					if (Object.prototype.hasOwnProperty.call(blocked, c)) continue;
+					if (view[c]) html.classList.add(c);
+					else html.classList.remove(c);
+				}
+			} catch (e) {}
+		})();;
+			</script>
+
+			<!-- assets and js globals -->
+			
+			<link rel="stylesheet" href="/static/assets/0.4.03599.8368-c2fd945c/styles/site.css" />
+			
+			<script src="https://wcpstatic.microsoft.com/mscc/lib/v2/wcp-consent.js"></script>
+			<!-- Keep this URL in sync with oneDSScriptSelector in instrumentation/one-ds.ts. -->
+			<script async src="https://js.monitor.azure.com/scripts/c/ms.jsll-4.min.js"></script>
+			
+
+			<!-- msdocs global object -->
+			<script id="msdocs-script">
+		var msDocs = {
+  "environment": {
+    "accessLevel": "online",
+    "azurePortalHostname": "portal.azure.com",
+    "reviewFeatures": false,
+    "supportLevel": "production",
+    "systemContent": true,
+    "siteName": "learn",
+    "legacyHosting": false
+  },
+  "data": {
+    "contentLocale": "en-us",
+    "contentDir": "ltr",
+    "userLocale": "en-us",
+    "userDir": "ltr",
+    "pageTemplate": "Conceptual",
+    "layoutStateStorageKey": "docs-layout-persistence",
+    "brand": "azure",
+    "context": {},
+    "standardFeedback": true,
+    "showFeedbackReport": false,
+    "feedbackHelpLinkType": "get-help-at-qna",
+    "feedbackHelpLinkUrl": "https://learn.microsoft.com/answers/tags/418/azure-container-apps/",
+    "feedbackSystem": "Standard",
+    "feedbackGitHubRepo": "MicrosoftDocs/azure-docs",
+    "feedbackProductUrl": "https://feedback.azure.com/d365community/forum/79b1327d-d925-ec11-b6e6-000d3a4f06a4",
+    "extendBreadcrumb": false,
+    "isEditDisplayable": true,
+    "isPrivateUnauthorized": false,
+    "hideViewSource": false,
+    "isPermissioned": false,
+    "hasRecommendations": true
+  },
+  "functions": {}
+};;
+	</script>
+
+			<!-- base scripts, msdocs global should be before this -->
+			<script
+				src="/static/assets/0.4.03599.8368-c2fd945c/scripts/en-us/index-docs.js"
+				async
+			></script>
+			
+
+			<!-- json-ld -->
+			
+		<script >bazadebezolkohpepadr="1030137535"</script><script type="text/javascript" src="https://learn.microsoft.com/akam/13/3d66a5cd"  defer></script></head>
+	
+			<body
+				id="body"
+				data-bi-name="body"
+				class="layout-body "
+				lang="en-us"
+				dir="ltr"
+			>
+				<header class="layout-body-header background-color-body-medium">
+		<div class="header-holder has-default-focus">
+			
+		<a
+			href="#main"
+			
+			style="z-index: 1070"
+			class="outline-color-text visually-hidden-until-focused position-fixed inner-focus focus-visible top-0 left-0 right-0 padding-xs text-align-center background-color-body"
+			
+		>
+			Skip to main content
+		</a>
+	
+		<a
+			href="#"
+			data-skip-to-ask-learn
+			style="z-index: 1070"
+			class="outline-color-text visually-hidden-until-focused position-fixed inner-focus focus-visible top-0 left-0 right-0 padding-xs text-align-center background-color-body"
+			hidden
+		>
+			Skip to Ask Learn chat experience
+		</a>
+	
+
+			<div hidden id="cookie-consent-holder" data-test-id="cookie-consent-container"></div>
+			<!-- Unsupported browser warning -->
+			<div
+				id="unsupported-browser"
+				style="background-color: white; color: black; padding: 16px; border-bottom: 1px solid grey;"
+				hidden
+			>
+				<div style="max-width: 800px; margin: 0 auto;">
+					<p style="font-size: 24px">This browser is no longer supported.</p>
+					<p style="font-size: 16px; margin-top: 16px;">
+						Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+					</p>
+					<div style="margin-top: 12px;">
+						<a
+							href="https://go.microsoft.com/fwlink/p/?LinkID=2092881 "
+							style="background-color: #0078d4; border: 1px solid #0078d4; color: white; padding: 6px 12px; border-radius: 2px; display: inline-block;"
+						>
+							Download Microsoft Edge
+						</a>
+						<a
+							href="https://learn.microsoft.com/en-us/lifecycle/faq/internet-explorer-microsoft-edge"
+							style="background-color: white; padding: 6px 12px; border: 1px solid #505050; color: #171717; border-radius: 2px; display: inline-block;"
+						>
+							More info about Internet Explorer and Microsoft Edge
+						</a>
+					</div>
+				</div>
+			</div>
+			<!-- site header -->
+			<div
+				id="ms--site-header"
+				data-test-id="site-header-wrapper"
+				itemscope="itemscope"
+				itemtype="http://schema.org/Organization"
+			>
+				<div
+					id="ms--mobile-nav"
+					class="site-header display-none-tablet padding-inline-none gap-none"
+					data-bi-name="mobile-header"
+					data-test-id="mobile-header"
+				></div>
+				<div
+					id="ms--primary-nav"
+					class="site-header display-none display-flex-tablet"
+					data-bi-name="L1-header"
+					data-test-id="primary-header"
+				></div>
+				<div
+					id="ms--secondary-nav"
+					class="site-header display-none display-flex-tablet"
+					data-bi-name="L2-header"
+					data-test-id="secondary-header"
+					
+				></div>
+			</div>
+			
+		<!-- banner -->
+		<div data-banner>
+			<div id="disclaimer-holder"></div>
+			
+		</div>
+		<!-- banner end -->
+	
+		</div>
+	</header>
+				 <section
+					id="layout-body-menu"
+					class="layout-body-menu border-right display-flex background-color-body-medium"
+					data-bi-name="menu"
+			  >
+					
+		<div
+			id="left-container"
+			class="left-container display-none padding-none display-block-tablet width-full display-none-until-layout-restored"
+			data-toc-container="true"
+		>
+			<div
+				id="ms--toc-content"
+				class="padding-left-sm padding-right-none padding-bottom-sm height-full"
+			>
+				<nav
+					id="affixed-left-container"
+					class="margin-top-xxs-tablet position-sticky display-flex flex-direction-column width-full"
+					aria-label="Primary"
+					data-bi-name="left-toc"
+					role="navigation"
+				>
+					<div
+						id="ms--collapsible-toc-header"
+						class="display-flex flex-direction-row-reverse justify-content-center align-items-center margin-bottom-xxs margin-right-xxs"
+					>
+						<button
+							type="button"
+							class="button button-clear button-sm inner-focus"
+							data-collapsible-toc-toggle
+							aria-expanded="true"
+							hidden
+							aria-controls="ms--toc-content"
+							aria-label="Table of contents"
+						>
+							<span class="icon icon-mirrored-rtl" aria-hidden="true">
+								<span
+									class="docon docon-panel-left-contract display-none-layout-menu-collapsed"
+								></span>
+								<span
+									class="docon docon-panel-left-expand display-none display-inline-layout-menu-collapsed"
+								></span>
+							</span>
+						</button>
+						<div
+							id="ms--collapsible-toc-moniker-slot"
+							class="flex-grow-1 display-none-layout-menu-collapsed"
+						></div>
+					</div>
+				</nav>
+			</div>
+		</div>
+	
+			  </section>
+
+				<main
+					id="main"
+					role="main"
+					class="layout-body-main "
+					data-bi-name="content"
+					lang="en-us"
+					dir="ltr"
+				>
+					
+			<div
+		id="ms--content-header"
+		class="content-header default-focus border-bottom-none"
+		data-bi-name="content-header"
+	>
+		<div class="content-header-controls margin-xxs margin-inline-sm-tablet">
+			<button
+				type="button"
+				class="contents-button button button-sm margin-right-xxs"
+				data-bi-name="contents-expand"
+				aria-haspopup="true"
+				data-contents-button
+			>
+				<span class="icon" aria-hidden="true"><span class="docon docon-menu"></span></span>
+				<span class="contents-expand-title"> Table of contents </span>
+			</button>
+			<button
+				type="button"
+				class="ap-collapse-behavior ap-expanded button button-sm"
+				data-bi-name="ap-collapse"
+				aria-controls="action-panel"
+			>
+				<span class="icon" aria-hidden="true"><span class="docon docon-exit-mode"></span></span>
+				<span>Exit editor mode</span>
+			</button>
+		</div>
+	</div> 
+		<div
+			id="action-panel"
+			role="region"
+			aria-label="Action Panel"
+			class="action-panel"
+			tabindex="-1"
+		></div>
+	
+			<div
+				data-main-column
+				class="reading-width margin-inline-auto layout-padding padding-top-none padding-top-sm-tablet padding-bottom-sm"
+			>
+				<div>
+					
+		<div id="article-header" class="background-color-body margin-bottom-xs display-none-print">
+			<div class="display-flex align-items-center justify-content-space-between">
+				
+		<details
+			id="article-header-breadcrumbs-overflow-popover"
+			class="popover popover-left"
+			data-for="article-header-breadcrumbs"
+		>
+			<summary
+				class="button button-clear button-primary button-sm inner-focus"
+				aria-label="All breadcrumbs"
+			>
+				<span class="icon" aria-hidden="true">
+					<span class="docon docon-more"></span>
+				</span>
+			</summary>
+			<div id="article-header-breadcrumbs-overflow" class="popover-content"></div>
+		</details>
+
+		<bread-crumbs
+			id="article-header-breadcrumbs"
+			role="group"
+			aria-label="Breadcrumbs"
+			data-test-id="article-header-breadcrumbs"
+			class="overflow-hidden flex-grow-1 margin-right-sm margin-right-md-tablet margin-right-lg-desktop margin-left-negative-xxs padding-left-xxs"
+		></bread-crumbs>
+	 
+		<div
+			id="article-header-page-actions"
+			class="opacity-none margin-left-auto display-flex flex-wrap-no-wrap align-items-stretch"
+		>
+			
+		<button
+			class="button button-sm border-none inner-focus display-none-tablet flex-shrink-0 "
+			data-bi-name="ask-learn-assistant-entry"
+			data-test-id="ask-learn-assistant-modal-entry-mobile"
+			data-ask-learn-modal-entry
+			
+			type="button"
+			style="min-width: max-content;"
+			aria-expanded="false"
+			aria-label="Ask Learn"
+			hidden
+		>
+			<span class="icon" aria-hidden="true">
+				<span class="docon docon-chat-sparkle-fill gradient-ask-learn-logo"></span>
+			</span>
+		</button>
+		<button
+			class="button button-sm display-none display-inline-flex-tablet display-none-desktop flex-shrink-0 margin-right-xxs border-color-ask-learn "
+			data-bi-name="ask-learn-assistant-entry"
+			
+			data-test-id="ask-learn-assistant-modal-entry-tablet"
+			data-ask-learn-modal-entry
+			type="button"
+			style="min-width: max-content;"
+			aria-expanded="false"
+			hidden
+		>
+			<span class="icon font-size-lg" aria-hidden="true">
+				<span class="docon docon-chat-sparkle-fill gradient-ask-learn-logo"></span>
+			</span>
+			<span>Ask Learn</span>
+		</button>
+		<button
+			class="button button-sm display-none flex-shrink-0 display-inline-flex-desktop margin-right-xxs border-color-ask-learn "
+			data-bi-name="ask-learn-assistant-entry"
+			
+			data-test-id="ask-learn-assistant-flyout-entry"
+			data-ask-learn-flyout-entry
+			data-flyout-button="toggle"
+			type="button"
+			style="min-width: max-content;"
+			aria-expanded="false"
+			aria-controls="ask-learn-flyout"
+			hidden
+		>
+			<span class="icon font-size-lg" aria-hidden="true">
+				<span class="docon docon-chat-sparkle-fill gradient-ask-learn-logo"></span>
+			</span>
+			<span>Ask Learn</span>
+		</button>
+	 
+
+			<details class="popover popover-right" id="article-header-page-actions-overflow">
+				<summary
+					class="justify-content-flex-start button button-clear button-sm button-primary inner-focus"
+					aria-label="More actions"
+					aria-expanded="false"
+					title="More actions"
+				>
+					<span class="icon" aria-hidden="true">
+						<span class="docon docon-more-vertical"></span>
+					</span>
+				</summary>
+				<div class="popover-content">
+					
+		<button
+			type="button"
+			id="ms--focus-mode-button"
+			data-focus-mode
+			data-bi-name="focus-mode-entry"
+			data-page-action-item="overflow-all"
+			data-popover-close
+			class="button button-clear button-sm button-block justify-content-flex-start text-align-left inner-focus display-none display-inline-flex-tablet"
+		>
+			<span class="icon" aria-hidden="true">
+				<span class="docon docon-glasses"></span>
+			</span>
+			<span>Reading mode</span>
+		</button>
+	 
+		<button
+			data-page-action-item="overflow-mobile"
+			type="button"
+			class="display-block-layout-menu-collapsed button-block button-sm inner-focus button button-clear display-none-tablet justify-content-flex-start text-align-left"
+			data-bi-name="contents-expand"
+			data-contents-button
+			data-popover-close
+		>
+			<span class="icon" aria-hidden="true"
+				><span class="docon docon-editor-list-bullet"></span
+			></span>
+			<span class="contents-expand-title">Table of contents</span>
+		</button>
+	 
+		<a
+			id="lang-link-overflow"
+			class="button-sm inner-focus button button-clear button-block justify-content-flex-start text-align-left"
+			data-bi-name="language-toggle"
+			data-page-action-item="overflow-all"
+			data-check-hidden="true"
+			data-read-in-link
+			href="#"
+			hidden
+		>
+			<span class="icon" aria-hidden="true" data-read-in-link-icon>
+				<span class="docon docon-locale-globe"></span>
+			</span>
+			<span data-read-in-link-text>Read in English</span>
+		</a>
+	
+					
+		<button
+			type="button"
+			class="collection button button-clear button-sm button-block justify-content-flex-start text-align-left inner-focus"
+			data-list-type="collection"
+			data-bi-name="collection"
+			data-page-action-item="overflow-all"
+			data-check-hidden="true"
+			data-popover-close
+		>
+			<span class="icon" aria-hidden="true">
+				<span class="docon docon-circle-addition"></span>
+			</span>
+			<span class="collection-status">Add</span>
+		</button>
+	 
+		<button
+			type="button"
+			class="collection button button-block button-clear button-sm justify-content-flex-start text-align-left inner-focus"
+			data-list-type="plan"
+			data-bi-name="plan"
+			data-page-action-item="overflow-all"
+			data-check-hidden="true"
+			data-popover-close
+			hidden
+		>
+			<span class="icon" aria-hidden="true">
+				<span class="docon docon-circle-addition"></span>
+			</span>
+			<span class="plan-status">Add to Plans</span>
+		</button>
+	 
+					
+		<a
+			data-contenteditbtn
+			class="button button-clear button-block button-sm inner-focus justify-content-flex-start text-align-left text-decoration-none"
+			data-bi-name="edit"
+			data-page-action-item="overflow-all"
+			data-check-hidden="true"
+			
+			href="https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/container-apps/managed-identity.md"
+			data-original_content_git_url="https://github.com/MicrosoftDocs/azure-docs-pr/blob/live/articles/container-apps/managed-identity.md"
+			data-original_content_git_url_template="{repo}/blob/{branch}/articles/container-apps/managed-identity.md"
+			data-pr_repo=""
+			data-pr_branch=""
+		>
+			<span class="icon" aria-hidden="true">
+				<span class="docon docon-edit-outline"></span>
+			</span>
+			<span>Edit</span>
+		</a>
+	  
+		<hr class="margin-block-xxs" />
+		
+				<button
+					class="button button-block button-clear button-sm justify-content-flex-start text-align-left inner-focus"
+					type="button"
+					data-bi-name="copy-markdown"
+					data-page-action-item="overflow-all"
+					data-copy-markdown
+					data-copy-state="idle"
+					data-check-hidden="true"
+				>
+					<span class="icon color-primary" aria-hidden="true">
+						<span data-show-when="idle" class="docon docon-code-lang"></span>
+						<span data-show-when="loading" class="loader" hidden></span>
+						<span data-show-when="success" class="docon docon-check-mark" hidden></span>
+					</span>
+					<span>Copy Markdown</span>
+				</button>
+		   
+				<button
+					class="button button-block button-clear button-sm justify-content-flex-start text-align-left inner-focus"
+					type="button"
+					data-bi-name="print"
+					data-page-action-item="overflow-all"
+					data-popover-close
+					data-print-page
+					data-check-hidden="true"
+				>
+					<span class="icon color-primary" aria-hidden="true">
+						<span class="docon docon-print"></span>
+					</span>
+					<span>Print</span>
+				</button>
+		  
+	
+				</div>
+			</details>
+		</div>
+	
+			</div>
+		</div>
+	  
+		<!-- privateUnauthorizedTemplate is hidden by default -->
+		<div unauthorized-private-section data-bi-name="permission-content-unauthorized-private" hidden>
+			<hr class="hr margin-top-xs margin-bottom-sm" />
+			<div class="notification notification-info">
+				<div class="notification-content">
+					<p class="margin-top-none notification-title">
+						<span class="icon" aria-hidden="true"
+							><span class="docon docon-exclamation-circle-solid"></span
+						></span>
+						<span>Note</span>
+					</p>
+					<p class="margin-top-none authentication-determined not-authenticated">
+						Access to this page requires authorization. You can try <a class="docs-sign-in" href="#" data-bi-name="permission-content-sign-in">signing in</a> or <a  class="docs-change-directory" data-bi-name="permisson-content-change-directory">changing directories</a>.
+					</p>
+					<p class="margin-top-none authentication-determined authenticated">
+						Access to this page requires authorization. You can try <a class="docs-change-directory" data-bi-name="permisson-content-change-directory">changing directories</a>.
+					</p>
+				</div>
+			</div>
+		</div>
+	
+					<div class="content"><h1 id="managed-identities-in-azure-container-apps">Managed identities in Azure Container Apps</h1></div>
+					
+		<div
+			id="article-metadata"
+			data-bi-name="article-metadata"
+			data-test-id="article-metadata"
+			class="page-metadata-container display-flex gap-xxs justify-content-space-between align-items-center flex-wrap-wrap"
+		>
+			 
+				<div
+					id="user-feedback"
+					class="margin-block-xxs display-none display-none-print"
+					hidden
+					data-hide-on-archived
+				>
+					
+		<button
+			id="user-feedback-button"
+			data-test-id="conceptual-feedback-button"
+			class="button button-sm button-clear button-primary display-none"
+			type="button"
+			data-bi-name="user-feedback-button"
+			data-user-feedback-button
+			hidden
+		>
+			<span class="icon" aria-hidden="true">
+				<span class="docon docon-like"></span>
+			</span>
+			<span>Feedback</span>
+		</button>
+	
+				</div>
+		  
+		</div>
+	 
+		<div data-id="ai-summary" class="display-none-print">
+			<div id="ms--ai-summary-cta" class="margin-top-xs display-flex align-items-center">
+				<span class="icon" aria-hidden="true">
+					<span class="docon docon-sparkle-fill gradient-text-vivid"></span>
+				</span>
+				<button
+					id="ms--ai-summary"
+					type="button"
+					class="tag tag-sm tag-suggestion margin-left-xxs"
+					data-test-id="ai-summary-cta"
+					data-bi-name="ai-summary-cta"
+					data-an="ai-summary"
+				>
+					<span class="ai-summary-cta-text">
+						Summarize this article for me
+					</span>
+				</button>
+			</div>
+			<!-- Slot where the client will render the summary card after the user clicks the CTA -->
+			<div id="ms--ai-summary-header" class="margin-top-xs"></div>
+		</div>
+	 
+		<nav
+			id="center-doc-outline"
+			class="doc-outline display-none-desktop display-none-print margin-bottom-sm"
+			data-bi-name="intopic toc"
+			aria-label="In this article"
+		>
+			<h2 id="ms--in-this-article" class="title is-6 margin-block-xs">
+				In this article
+			</h2>
+		</nav>
+	 <div class="content"><p>A managed identity from Microsoft Entra ID allows your container app to access other Microsoft Entra protected resources. For more about managed identities in Microsoft Entra ID, see <a href="../active-directory/managed-identities-azure-resources/overview" data-linktype="relative-path">Managed identities for Azure resources</a>.</p>
+<p>Your container app can be granted two types of identities:</p>
+<ul>
+<li>A <strong>system-assigned identity</strong> is tied to your container app and is deleted when your container app is deleted. An app can only have one system-assigned identity.</li>
+<li>A <strong>user-assigned identity</strong> is a standalone Azure resource that you can assign to your container app and other resources. A container app can have multiple user-assigned identities. User-assigned identities exist until you delete them.</li>
+</ul>
+<h2 id="why-use-a-managed-identity">Why use a managed identity?</h2>
+<p>You can use a managed identity in a running container app to authenticate to any <a href="../active-directory/managed-identities-azure-resources/services-support-managed-identities#azure-services-that-support-azure-ad-authentication" data-linktype="relative-path">service that supports Microsoft Entra authentication</a>.</p>
+<p>With managed identities:</p>
+<ul>
+<li>Your app connects to resources with the managed identity. You don't need to manage credentials in your container app.</li>
+<li>You can use role-based access control to grant specific permissions to a managed identity.</li>
+<li>System-assigned identities are automatically created and managed. They're deleted when your container app is deleted.</li>
+<li>You can add and delete user-assigned identities and assign them to multiple resources. They're independent of your container app's lifecycle.</li>
+<li>You can use managed identity to <a href="managed-identity-image-pull" data-linktype="relative-path">authenticate with a private Azure Container Registry</a> without a username and password to pull containers for your container app.</li>
+<li>You can use a <a href="dapr-overview" data-linktype="relative-path">managed identity to create connections for Dapr-enabled applications via Dapr components</a></li>
+</ul>
+<h3 id="common-use-cases">Common use cases</h3>
+<p>System-assigned identities are best for workloads that:</p>
+<ul>
+<li>are contained within a single resource</li>
+<li>need independent identities</li>
+</ul>
+<p>User-assigned identities are ideal for workloads that:</p>
+<ul>
+<li>run on multiple resources and can share a single identity</li>
+<li>need pre-authorization to a secure resource</li>
+</ul>
+<h2 id="limitations">Limitations</h2>
+<p><a href="containers#init-containers" data-linktype="relative-path">Init containers</a> can't access managed identities in <a href="environment#types" data-linktype="relative-path">consumption-only environments</a> and <a href="environment#types" data-linktype="relative-path">dedicated workload profile environments</a></p>
+<h2 id="configure-managed-identities">Configure managed identities</h2>
+<p>You can configure your managed identities through:</p>
+<ul>
+<li>the Azure portal</li>
+<li>the Azure CLI</li>
+<li>your Azure Resource Manager (ARM) template</li>
+</ul>
+<p>When a managed identity is added, deleted, or modified on a running container app, the app doesn't automatically restart and a new revision isn't created.</p>
+<div class="NOTE">
+<p>Note</p>
+<p>When adding a managed identity to a container app deployed before April 11, 2022, you must create a new revision.</p>
+</div>
+<h3 id="add-a-system-assigned-identity">Add a system-assigned identity</h3>
+<div class="tabGroup" id="tabgroup_1">
+<ul role="tablist">
+<li role="presentation">
+<a href="#tabpanel_1_portal" role="tab" aria-controls="tabpanel_1_portal" data-tab="portal" tabindex="0" aria-selected="true" data-linktype="self-bookmark">Azure portal</a>
+</li>
+<li role="presentation">
+<a href="#tabpanel_1_cli" role="tab" aria-controls="tabpanel_1_cli" data-tab="cli" tabindex="-1" data-linktype="self-bookmark">Azure CLI</a>
+</li>
+<li role="presentation">
+<a href="#tabpanel_1_arm" role="tab" aria-controls="tabpanel_1_arm" data-tab="arm" tabindex="-1" data-linktype="self-bookmark">ARM template</a>
+</li>
+<li role="presentation">
+<a href="#tabpanel_1_yaml" role="tab" aria-controls="tabpanel_1_yaml" data-tab="yaml" tabindex="-1" data-linktype="self-bookmark">YAML</a>
+</li>
+<li role="presentation">
+<a href="#tabpanel_1_bicep" role="tab" aria-controls="tabpanel_1_bicep" data-tab="bicep" tabindex="-1" data-linktype="self-bookmark">Bicep</a>
+</li>
+</ul>
+<section id="tabpanel_1_portal" role="tabpanel" data-tab="portal">
+
+<ol>
+<li><p>Go to your container app in the Azure portal.</p>
+</li>
+<li><p>From the <em>Settings</em> group, select <strong>Identity</strong>.</p>
+</li>
+<li><p>Within the <em>System assigned</em> tab, switch <em>Status</em> to <strong>On</strong>.</p>
+</li>
+<li><p>Select <strong>Save</strong>.</p>
+</li>
+</ol>
+<p><span class="mx-imgBorder">
+<img src="media/managed-identity/screenshot-system-assigned-identity.png" alt="Screenshot of system-assigned identities." data-linktype="relative-path">
+</span>
+</p>
+</section>
+<section id="tabpanel_1_cli" role="tabpanel" data-tab="cli" aria-hidden="true" hidden="hidden">
+
+<p>Run the <code>az containerapp identity assign</code> command to create a system-assigned identity:</p>
+<pre><code class="lang-azurecli">az containerapp identity assign --name myApp --resource-group myResourceGroup --system-assigned
+</code></pre>
+</section>
+<section id="tabpanel_1_arm" role="tabpanel" data-tab="arm" aria-hidden="true" hidden="hidden">
+
+<p>An ARM template can be used to automate deployment of your container app and resources. To add a system-assigned identity, add an <code>identity</code> section to your ARM template.</p>
+<pre><code class="lang-json">"identity": {
+    "type": "SystemAssigned"
+}
+</code></pre>
+<p>Adding the system-assigned type tells Azure to create and manage the identity for your application. For a complete ARM template example, see <a href="azure-resource-manager-api-spec?tabs=arm-template#container-app-examples" data-linktype="relative-path">ARM API Specification</a>.</p>
+</section>
+<section id="tabpanel_1_yaml" role="tabpanel" data-tab="yaml" aria-hidden="true" hidden="hidden">
+
+<p>Some Azure CLI commands, including <code>az containerapp create</code> and <code>az containerapp job create</code>, support YAML files for input. To add a system-assigned identity, add an <code>identity</code> section to your YAML file.</p>
+<pre><code class="lang-yaml">identity:
+  type: SystemAssigned
+</code></pre>
+<p>Adding the system-assigned type tells Azure to create and manage the identity for your application. For a complete YAML template example, see <a href="azure-resource-manager-api-spec?tabs=yaml#container-app-examples" data-linktype="relative-path">ARM API Specification</a>.</p>
+</section>
+<section id="tabpanel_1_bicep" role="tabpanel" data-tab="bicep" aria-hidden="true" hidden="hidden">
+
+<p>A Bicep file can be used to automate deployment of your container app and resources. To add a system-assigned identity, add an <code>identity</code> section to your Bicep file.</p>
+<pre><code class="lang-bicep">identity: {
+  type: 'SystemAssigned'
+}
+</code></pre>
+<p>Adding the system-assigned type tells Azure to create and manage the identity for your application. For a complete Bicep file example, see <a href="/en-us/azure/templates/microsoft.app/containerapps?pivots=deployment-language-bicep" data-linktype="absolute-path">Microsoft.App containerApps Bicep, ARM template &amp; Terraform AzAPI reference</a>.</p>
+</section>
+</div>
+<h3 id="add-a-user-assigned-identity">Add a user-assigned identity</h3>
+<p>Configuring a container app with a user-assigned identity requires that you first create the identity then add its resource identifier to your container app's configuration. You can create user-assigned identities via the Azure portal or the Azure CLI. For information on creating and managing user-assigned identities, see <a href="../active-directory/managed-identities-azure-resources/how-manage-user-assigned-managed-identities" data-linktype="relative-path">Manage user-assigned managed identities</a>.</p>
+<div class="tabGroup" id="tabgroup_2">
+<ul role="tablist">
+<li role="presentation">
+<a href="#tabpanel_2_portal" role="tab" aria-controls="tabpanel_2_portal" data-tab="portal" tabindex="0" aria-selected="true" data-linktype="self-bookmark">Azure portal</a>
+</li>
+<li role="presentation">
+<a href="#tabpanel_2_cli" role="tab" aria-controls="tabpanel_2_cli" data-tab="cli" tabindex="-1" data-linktype="self-bookmark">Azure CLI</a>
+</li>
+<li role="presentation">
+<a href="#tabpanel_2_arm" role="tab" aria-controls="tabpanel_2_arm" data-tab="arm" tabindex="-1" data-linktype="self-bookmark">ARM template</a>
+</li>
+<li role="presentation">
+<a href="#tabpanel_2_yaml" role="tab" aria-controls="tabpanel_2_yaml" data-tab="yaml" tabindex="-1" data-linktype="self-bookmark">YAML</a>
+</li>
+<li role="presentation">
+<a href="#tabpanel_2_bicep" role="tab" aria-controls="tabpanel_2_bicep" data-tab="bicep" tabindex="-1" data-linktype="self-bookmark">Bicep</a>
+</li>
+</ul>
+<section id="tabpanel_2_portal" role="tabpanel" data-tab="portal">
+
+<p>First, you'll need to create a user-assigned identity resource.</p>
+<ol>
+<li><p>Create a user-assigned managed identity resource according to the steps found in <a href="../active-directory/managed-identities-azure-resources/how-to-manage-ua-identity-portal#create-a-user-assigned-managed-identity" data-linktype="relative-path">Manage user-assigned managed identities</a>.</p>
+</li>
+<li><p>Go to your container app in the Azure portal.</p>
+</li>
+<li><p>From the <em>Settings</em> group, select <strong>Identity</strong>.</p>
+</li>
+<li><p>Within the <em>User assigned</em> tab, select <strong>Add</strong>.</p>
+</li>
+<li><p>Search for and select the identity you created earlier.</p>
+</li>
+<li><p>Select <strong>Add</strong>.</p>
+</li>
+</ol>
+<p><span class="mx-imgBorder">
+<img src="media/managed-identity/screenshot-user-assigned-identity.png" alt="Screenshot of user-assigned identities." data-linktype="relative-path">
+</span>
+</p>
+</section>
+<section id="tabpanel_2_cli" role="tabpanel" data-tab="cli" aria-hidden="true" hidden="hidden">
+
+<ol>
+<li><p>Create a user-assigned identity.</p>
+<pre><code class="lang-azurecli">az identity create --resource-group &lt;GROUP_NAME&gt; --name &lt;IDENTITY_NAME&gt; --output json
+</code></pre>
+<p>Note the <code>id</code> property of the new identity.</p>
+</li>
+<li><p>Run the <code>az containerapp identity assign</code> command to assign the identity to the app. The identities parameter is a space separated list.</p>
+<pre><code class="lang-azurecli">az containerapp identity assign --resource-group &lt;GROUP_NAME&gt; --name &lt;APP_NAME&gt; \
+    --user-assigned &lt;IDENTITY_RESOURCE_ID&gt;
+</code></pre>
+<p>Replace <code>&lt;IDENTITY_RESOURCE_ID&gt;</code> with the <code>id</code> property of the identity. To assign more than one user-assigned identity, supply a space-separated list of identity IDs to the <code>--user-assigned</code> parameter.</p>
+</li>
+</ol>
+</section>
+<section id="tabpanel_2_arm" role="tabpanel" data-tab="arm" aria-hidden="true" hidden="hidden">
+
+<p>To add one or more user-assigned identities, add an <code>identity</code> section to your ARM template. Replace <code>&lt;IDENTITY1_RESOURCE_ID&gt;</code> and <code>&lt;IDENTITY2_RESOURCE_ID&gt;</code> with the resource identifiers of the identities you want to add.</p>
+<p>Specify each user-assigned identity by adding an item to the <code>userAssignedIdentities</code> object with the identity's resource identifier as the key. Use an empty object as the value.</p>
+<pre><code class="lang-json">"identity": {
+    "type": "UserAssigned",
+    "userAssignedIdentities": {
+        "&lt;IDENTITY1_RESOURCE_ID&gt;": {},
+        "&lt;IDENTITY2_RESOURCE_ID&gt;": {}
+    }
+}
+</code></pre>
+<p>For a complete ARM template example, see <a href="azure-resource-manager-api-spec?tabs=arm-template#container-app-examples" data-linktype="relative-path">ARM API Specification</a>.</p>
+<div class="NOTE">
+<p>Note</p>
+<p>An application can have both system-assigned and user-assigned identities at the same time. In this case, the value for the <code>type</code> property would be <code>SystemAssigned,UserAssigned</code>.</p>
+</div>
+</section>
+<section id="tabpanel_2_yaml" role="tabpanel" data-tab="yaml" aria-hidden="true" hidden="hidden">
+
+<p>To add one or more user-assigned identities, add an <code>identity</code> section to your YAML configuration file. Replace <code>&lt;IDENTITY1_RESOURCE_ID&gt;</code> and <code>&lt;IDENTITY2_RESOURCE_ID&gt;</code> with the resource identifiers of the identities you want to add.</p>
+<p>Specify each user-assigned identity by adding an item to the <code>userAssignedIdentities</code> object with the identity's resource identifier as the key. Use an empty object as the value.</p>
+<pre><code class="lang-yaml">identity:
+    type: UserAssigned
+    userAssignedIdentities:
+        &lt;IDENTITY1_RESOURCE_ID&gt;: {}
+        &lt;IDENTITY2_RESOURCE_ID&gt;: {}
+</code></pre>
+<p>For a complete YAML template example, see <a href="azure-resource-manager-api-spec?tabs=yaml#container-app-examples" data-linktype="relative-path">ARM API Specification</a>.</p>
+<div class="NOTE">
+<p>Note</p>
+<p>An application can have both system-assigned and user-assigned identities at the same time. In this case, the <code>type</code> property would be <code>SystemAssigned,UserAssigned</code>.</p>
+</div>
+</section>
+<section id="tabpanel_2_bicep" role="tabpanel" data-tab="bicep" aria-hidden="true" hidden="hidden">
+
+<p>To add one or more user-assigned identities, add an <code>identity</code> section to your Bicep file. Replace <code>&lt;IDENTITY1_RESOURCE_ID&gt;</code> and <code>&lt;IDENTITY2_RESOURCE_ID&gt;</code> with the resource identifiers of the identities you want to add.</p>
+<p>Specify each user-assigned identity by adding an item to the <code>userAssignedIdentities</code> object with the identity's resource identifier as the key. Use an empty object as the value.</p>
+<pre><code class="lang-bicep">identity: {
+  type: 'UserAssigned'
+  userAssignedIdentities: {
+    &lt;IDENTITY1_RESOURCE_ID&gt;: {}
+    &lt;IDENTITY2_RESOURCE_ID&gt;: {}
+  }
+}
+</code></pre>
+<p>For a complete Bicep file example, see <a href="/en-us/azure/templates/microsoft.app/containerapps?pivots=deployment-language-bicep" data-linktype="absolute-path">Microsoft.App containerApps Bicep, ARM template &amp; Terraform AzAPI reference</a>.</p>
+<div class="NOTE">
+<p>Note</p>
+<p>An application can have both system-assigned and user-assigned identities at the same time. In this case, the <code>type</code> property would be <code>SystemAssigned,UserAssigned</code>.</p>
+</div>
+</section>
+</div>
+<h2 id="configure-a-target-resource">Configure a target resource</h2>
+<p>For some resources, you need to configure role assignments for your app's managed identity to grant access. Otherwise, calls from your app to services, such as Azure Key Vault and Azure SQL Database, are rejected even when you use a valid token for that identity. To learn more about Azure role-based access control (Azure RBAC), see <a href="../role-based-access-control/overview" data-linktype="relative-path">What is RBAC?</a> To learn more about which resources support Microsoft Entra tokens, see <a href="../active-directory/managed-identities-azure-resources/services-support-managed-identities#azure-services-that-support-azure-ad-authentication" data-linktype="relative-path">Azure services that support Microsoft Entra authentication</a>.</p>
+<div class="IMPORTANT">
+<p>Important</p>
+<p>The back-end services for managed identities maintain a cache per resource URI for around 24 hours. If you update the access policy of a particular target resource and immediately retrieve a token for that resource, you may continue to get a cached token with outdated permissions until that token expires. Forcing a token refresh isn't supported.</p>
+</div>
+<h2 id="connect-to-azure-services-in-app-code">Connect to Azure services in app code</h2>
+<p>With managed identities, an app can obtain tokens to access Azure resources that use Microsoft Entra ID, such as Azure SQL Database, Azure Key Vault, and Azure Storage. These tokens represent the application accessing the resource, and not any specific user of the application.</p>
+<p>Container Apps provides an internally accessible <a href="managed-identity?tabs=cli,http#rest-endpoint-reference" data-linktype="relative-path">REST endpoint</a> to retrieve tokens. The REST endpoint is available from within the app with a standard HTTP <code>GET</code> request, which you can send with a generic HTTP client in your preferred language. For .NET, JavaScript, Java, and Python, the Azure Identity client library provides an abstraction over this REST endpoint. You can connect to other Azure services by adding a credential object to the service-specific client.</p>
+<div class="NOTE">
+<p>Note</p>
+<p>When using Azure Identity client library, you need to explicitly specify the user-assigned managed identity client ID.</p>
+</div>
+<div class="tabGroup" id="tabgroup_3">
+<ul role="tablist">
+<li role="presentation">
+<a href="#tabpanel_3_dotnet" role="tab" aria-controls="tabpanel_3_dotnet" data-tab="dotnet" tabindex="0" aria-selected="true" data-linktype="self-bookmark">.NET</a>
+</li>
+<li role="presentation">
+<a href="#tabpanel_3_javascript" role="tab" aria-controls="tabpanel_3_javascript" data-tab="javascript" tabindex="-1" data-linktype="self-bookmark">JavaScript</a>
+</li>
+<li role="presentation">
+<a href="#tabpanel_3_python" role="tab" aria-controls="tabpanel_3_python" data-tab="python" tabindex="-1" data-linktype="self-bookmark">Python</a>
+</li>
+<li role="presentation">
+<a href="#tabpanel_3_java" role="tab" aria-controls="tabpanel_3_java" data-tab="java" tabindex="-1" data-linktype="self-bookmark">Java</a>
+</li>
+<li role="presentation">
+<a href="#tabpanel_3_powershell" role="tab" aria-controls="tabpanel_3_powershell" data-tab="powershell" tabindex="-1" data-linktype="self-bookmark">PowerShell</a>
+</li>
+<li role="presentation">
+<a href="#tabpanel_3_http" role="tab" aria-controls="tabpanel_3_http" data-tab="http" tabindex="-1" data-linktype="self-bookmark">HTTP GET</a>
+</li>
+</ul>
+<section id="tabpanel_3_dotnet" role="tabpanel" data-tab="dotnet">
+
+<div class="NOTE">
+<p>Note</p>
+<p>When connecting to Azure SQL data sources with <a href="/en-us/ef/core/" data-linktype="absolute-path">Entity Framework Core</a>, consider using <a href="/en-us/sql/connect/ado-net/sql/azure-active-directory-authentication" data-linktype="absolute-path">Microsoft.Data.SqlClient</a>, which provides special connection strings for managed identity connectivity.</p>
+</div>
+<p>For .NET apps, the simplest way to work with a managed identity is through the <a href="/en-us/dotnet/api/overview/azure/identity-readme" data-linktype="absolute-path">Azure Identity client library for .NET</a>. See the following resources for more information:</p>
+<ul>
+<li><a href="/en-us/dotnet/api/overview/azure/identity-readme#getting-started" data-linktype="absolute-path">Add Azure Identity client library to your project</a></li>
+<li><a href="/en-us/dotnet/api/overview/azure/identity-readme#authenticating-with-defaultazurecredential" data-linktype="absolute-path">Access Azure service with a system-assigned identity</a></li>
+<li><a href="/en-us/dotnet/api/overview/azure/identity-readme#specify-a-user-assigned-managed-identity-with-defaultazurecredential" data-linktype="absolute-path">Access Azure service with a user-assigned identity</a></li>
+</ul>
+<p>The linked examples use <a href="/en-us/dotnet/api/overview/azure/identity-readme#defaultazurecredential" data-linktype="absolute-path"><code>DefaultAzureCredential</code></a>. This object is effective in most scenarios as the same pattern works in Azure (with managed identities) and on your local machine (without managed identities).</p>
+</section>
+<section id="tabpanel_3_javascript" role="tabpanel" data-tab="javascript" aria-hidden="true" hidden="hidden">
+
+<p>For Node.js apps, the simplest way to work with a managed identity is through the <a href="/en-us/javascript/api/overview/azure/identity-readme?" data-linktype="absolute-path">Azure Identity client library for JavaScript</a>. See the following resources for more information:</p>
+<ul>
+<li><a href="/en-us/javascript/api/overview/azure/identity-readme#install-the-package" data-linktype="absolute-path">Add Azure Identity client library to your project</a></li>
+<li><a href="/en-us/javascript/api/overview/azure/identity-readme#authenticating-with-defaultazurecredential" data-linktype="absolute-path">Access Azure service with a system-assigned identity</a></li>
+<li><a href="/en-us/javascript/api/overview/azure/identity-readme#authenticating-a-user-assigned-managed-identity-with-defaultazurecredential" data-linktype="absolute-path">Access Azure service with a user-assigned identity</a></li>
+</ul>
+<p>The linked examples use <a href="/en-us/javascript/api/overview/azure/identity-readme#defaultazurecredential" data-linktype="absolute-path"><code>DefaultAzureCredential</code></a>. This object is effective in most scenarios as the same pattern works in Azure (with managed identities) and on your local machine (without managed identities).</p>
+<p>For more code examples of the Azure Identity client library for JavaScript, see <a href="https://github.com/Azure/azure-sdk-for-js/blob/%40azure/identity_2.0.1/sdk/identity/identity/samples/AzureIdentityExamples.md" data-linktype="external">Azure Identity examples</a>.</p>
+</section>
+<section id="tabpanel_3_python" role="tabpanel" data-tab="python" aria-hidden="true" hidden="hidden">
+
+<p>For Python apps, the simplest way to work with a managed identity is through the <a href="/en-us/python/api/overview/azure/identity-readme" data-linktype="absolute-path">Azure Identity client library for Python</a>. See the following resources for more information:</p>
+<ul>
+<li><a href="/en-us/python/api/overview/azure/identity-readme#getting-started" data-linktype="absolute-path">Add Azure Identity client library to your project</a></li>
+<li><a href="/en-us/python/api/overview/azure/identity-readme#authenticating-with-defaultazurecredential" data-linktype="absolute-path">Access Azure service with a system-assigned identity</a></li>
+<li><a href="/en-us/python/api/overview/azure/identity-readme#authenticating-a-user-assigned-managed-identity-with-defaultazurecredential" data-linktype="absolute-path">Access Azure service with a user-assigned identity</a></li>
+</ul>
+<p>The linked examples use <a href="/en-us/python/api/overview/azure/identity-readme#defaultazurecredential" data-linktype="absolute-path"><code>DefaultAzureCredential</code></a>. This object is effective in most scenarios as the same pattern works in Azure (with managed identities) and on your local machine (without managed identities).</p>
+</section>
+<section id="tabpanel_3_java" role="tabpanel" data-tab="java" aria-hidden="true" hidden="hidden">
+
+<p>For Java apps and functions, the simplest way to work with a managed identity is through the <a href="/en-us/java/api/overview/azure/identity-readme" data-linktype="absolute-path">Azure Identity client library for Java</a>. See the following resources for more information:</p>
+<ul>
+<li><a href="/en-us/java/api/overview/azure/identity-readme#include-the-package" data-linktype="absolute-path">Add Azure Identity client library to your project</a></li>
+<li><a href="/en-us/java/api/overview/azure/identity-readme#authenticating-with-defaultazurecredential" data-linktype="absolute-path">Access Azure service with a system-assigned identity</a></li>
+<li><a href="/en-us/java/api/overview/azure/identity-readme#authenticating-a-user-assigned-managed-identity-with-defaultazurecredential" data-linktype="absolute-path">Access Azure service with a user-assigned identity</a></li>
+</ul>
+<p>The linked examples use <a href="/en-us/azure/developer/java/sdk/identity-azure-hosted-auth#default-azure-credential" data-linktype="absolute-path"><code>DefaultAzureCredential</code></a>. This object is effective in most scenarios as the same pattern works in Azure (with managed identities) and on your local machine (without managed identities).</p>
+<p>For more code examples of the Azure Identity client library for Java, see <a href="https://github.com/Azure/azure-sdk-for-java/wiki/Azure-Identity-Examples" data-linktype="external">Azure Identity Examples</a>.</p>
+</section>
+<section id="tabpanel_3_powershell" role="tabpanel" data-tab="powershell" aria-hidden="true" hidden="hidden">
+
+<p>Use the following script to retrieve a token from the local endpoint by specifying a resource URI of an Azure service. Replace the placeholder with the resource URI to obtain the token.</p>
+<pre><code class="lang-powershell">$resourceURI = "https://&lt;AAD-resource-URI&gt;"
+$tokenAuthURI = $env:IDENTITY_ENDPOINT + "?resource=$resourceURI&amp;api-version=2019-08-01"
+$tokenResponse = Invoke-RestMethod -Method Get -Headers @{"X-IDENTITY-HEADER"="$env:IDENTITY_HEADER"} -Uri $tokenAuthURI
+$accessToken = $tokenResponse.access_token
+</code></pre>
+</section>
+<section id="tabpanel_3_http" role="tabpanel" data-tab="http" aria-hidden="true" hidden="hidden">
+
+<p>A raw HTTP <code>GET</code> request looks like the following example.</p>
+<p>Obtain the token endpoint URL from the <code>IDENTITY_ENDPOINT</code> environment variable. <code>x-identity-header</code> contains the GUID that is stored in the <code>IDENTITY_HEADER</code> environment variable.</p>
+<pre><code class="lang-http">GET http://${IDENTITY_ENDPOINT}?resource=https://vault.azure.net&amp;api-version=2019-08-01 HTTP/1.1
+x-identity-header: 853b9a84-5bfa-4b22-a3f3-0b9a43d9ad8a
+</code></pre>
+<p>A response might look like this example:</p>
+<pre><code class="lang-http">HTTP/1.1 200 OK
+Content-Type: application/json
+
+{
+    "access_token": "eyJ0eXAi…",
+    "expires_on": "1586984735",
+    "resource": "https://vault.azure.net",
+    "token_type": "Bearer",
+    "client_id": "aaaaaaaaa-0000-1111-2222-bbbbbbbbbbbb"
+}
+</code></pre>
+<p>This response is the same as the <a href="../active-directory/develop/v2-oauth2-client-creds-grant-flow#successful-response" data-linktype="relative-path">response for the Microsoft Entra service-to-service access token request</a>. To access Key Vault, add the value of <code>access_token</code> to a client connection with the vault.</p>
+<h3 id="rest-endpoint-reference">REST endpoint reference</h3>
+<p>A container app with a managed identity exposes the identity endpoint by defining two environment variables:</p>
+<ul>
+<li><code>IDENTITY_ENDPOINT</code>: Local URL from which your container app can request tokens.</li>
+<li><code>IDENTITY_HEADER</code>: A header used to help mitigate server-side request forgery (SSRF) attacks. The value is rotated by the platform.</li>
+</ul>
+<p>To get a token for a resource, make an HTTP <code>GET</code> request to the endpoint, including the following parameters:</p>
+<table>
+<thead>
+<tr>
+<th>Parameter name</th>
+<th>In</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>resource</td>
+<td>Query</td>
+<td>The Microsoft Entra resource URI of the resource for which a token should be obtained. The resource could be one of the <a href="../active-directory/managed-identities-azure-resources/services-support-managed-identities#azure-services-that-support-azure-ad-authentication" data-linktype="relative-path">Azure services that support Microsoft Entra authentication</a> or any other resource URI.</td>
+</tr>
+<tr>
+<td>api-version</td>
+<td>Query</td>
+<td>The version of the token API to be used. Use "2019-08-01" or later.</td>
+</tr>
+<tr>
+<td>X-IDENTITY-HEADER</td>
+<td>Header</td>
+<td>The value of the <code>IDENTITY_HEADER</code> environment variable. This header mitigates server-side request forgery (SSRF) attacks.</td>
+</tr>
+<tr>
+<td>client_id</td>
+<td>Query</td>
+<td>(Optional) The client ID of the user-assigned identity to be used. Can't be used on a request that includes <code>principal_id</code>, <code>mi_res_id</code>, or <code>object_id</code>. If all ID parameters (<code>client_id</code>, <code>principal_id</code>, <code>object_id</code>, and <code>mi_res_id</code>) are omitted, the system-assigned identity is used.</td>
+</tr>
+<tr>
+<td>principal_id</td>
+<td>Query</td>
+<td>(Optional) The principal ID of the user-assigned identity to be used. <code>object_id</code> is an alias that may be used instead. Can't be used on a request that includes client_id, mi_res_id, or object_id. If all ID parameters (<code>client_id</code>, <code>principal_id</code>, <code>object_id</code>, and <code>mi_res_id</code>) are omitted, the system-assigned identity is used.</td>
+</tr>
+<tr>
+<td>mi_res_id</td>
+<td>Query</td>
+<td>(Optional) The Azure resource ID of the user-assigned identity to be used. Can't be used on a request that includes <code>principal_id</code>, <code>client_id</code>, or <code>object_id</code>. If all ID parameters (<code>client_id</code>, <code>principal_id</code>, <code>object_id</code>, and <code>mi_res_id</code>) are omitted, the system-assigned identity is used.</td>
+</tr>
+</tbody>
+</table>
+<div class="IMPORTANT">
+<p>Important</p>
+<p>If you are attempting to obtain tokens for user-assigned identities, you must include one of the optional properties. Otherwise the token service will attempt to obtain a token for a system-assigned identity, which may or may not exist.</p>
+</div>
+</section>
+</div>
+<h2 id="scale-rules">Use managed identity for scale rules</h2>
+<p>You can use managed identities in your scale rules to authenticate with Azure services that support managed identities. To use a managed identity in your scale rule, use the <code>identity</code> property instead of the <code>auth</code> property in your scale rule. Acceptable values for the <code>identity</code> property are either the Azure resource ID of a user-assigned identity, or <code>system</code> to use a system-assigned identity.</p>
+<p>The following ARM template example shows how to use a managed identity with an Azure Queue Storage scale rule:</p>
+<p>The queue storage account uses the <code>accountName</code> property to identify the storage account, while the <code>identity</code> property specifies which managed identity to use. You do not need to use the <code>auth</code> property.</p>
+<pre><code class="lang-json">"scale": {
+    "minReplicas": 1,
+    "maxReplicas": 10,
+    "rules": [{
+        "name": "myQueueRule",
+        "azureQueue": {
+            "accountName": "mystorageaccount",
+            "queueName": "myqueue",
+            "queueLength": 2,
+            "identity": "&lt;IDENTITY1_RESOURCE_ID&gt;"
+        }
+    }]
+}
+</code></pre>
+<p>To learn more about using managed identity with scale rules, see <a href="scale-app?pivots=azure-portal#authentication-2" data-linktype="relative-path">Set scaling rules in Azure Container Apps</a>.</p>
+<h2 id="control-managed-identity-availability">Control managed identity availability</h2>
+<p>Container Apps allows you to specify <a href="containers#init-containers" data-linktype="relative-path">init containers</a> and main containers. By default, both main and init containers in a consumption workload profile environment can use managed identity to access other Azure services. In consumption-only environments and dedicated workload profile environments, only main containers can use managed identity. Managed identity access tokens are available for every managed identity configured on the container app. However, in some situations only the init container or the main container require access tokens for a managed identity. Other times, you may use a managed identity only to access your Azure Container Registry to pull the container image, and your application itself doesn't need to have access to your Azure Container Registry.</p>
+<p>Starting in API version <code>2024-02-02-preview</code>, you can control which managed identities are available to your container app during the init and main phases to follow the security principle of least privilege. The following options are available:</p>
+<ul>
+<li><code>Init</code>: Available only to init containers. Use this when you want to perform some initialization work that requires a managed identity, but you no longer need the managed identity in the main container. This option is currently only supported in <a href="environment#types" data-linktype="relative-path">workload profile consumption environments</a></li>
+<li><code>Main</code>: Available only to main containers. Use this if your init container does not need managed identity.</li>
+<li><code>All</code>: Available to all containers. This value is the default setting.</li>
+<li><code>None</code>: Not available to any containers. Use this when you have a managed identity that is only used for ACR image pull, scale rules, or Key Vault secrets and does not need to be available to the code running in your containers.</li>
+</ul>
+<p>The following ARM template example shows how to configure a container app on a workload profile consumption environment that:</p>
+<ul>
+<li>Restricts the container app's system-assigned identity to main containers only.</li>
+<li>Restricts a specific user-assigned identity to init containers only.</li>
+<li>Uses a specific user-assigned identity for Azure Container Registry image pull without allowing the code in the containers to use that managed identity to access the registry. In this example, the containers themselves don't need to access the registry.</li>
+</ul>
+<p>This approach limits the resources that can be accessed if a malicious actor were to gain unauthorized access to the containers.</p>
+<pre><code class="lang-json">{
+    "location": "eastus2",
+    "identity":{
+    "type": "SystemAssigned, UserAssigned",
+        "userAssignedIdentities": {
+            "&lt;IDENTITY1_RESOURCE_ID&gt;":{},
+            "&lt;ACR_IMAGEPULL_IDENTITY_RESOURCE_ID&gt;":{}
+         }
+     },
+    "properties": {
+        "workloadProfileName":"Consumption",
+        "environmentId": "&lt;CONTAINER_APPS_ENVIRONMENT_ID&gt;",
+        "configuration": {
+            "registries": [
+            {
+                "server": "myregistry.azurecr.io",
+                "identity": "ACR_IMAGEPULL_IDENTITY_RESOURCE_ID"
+            }],
+            "identitySettings":[
+            {
+                "identity": "ACR_IMAGEPULL_IDENTITY_RESOURCE_ID",
+                "lifecycle": "None"
+            },
+            {
+                "identity": "&lt;IDENTITY1_RESOURCE_ID&gt;",
+                "lifecycle": "Init"
+            },
+            {
+                "identity": "system",
+                "lifecycle": "Main"
+            }]
+        },
+        "template": {
+            "containers":[
+                {
+                    "image":"myregistry.azurecr.io/main:1.0",
+                    "name":"app-main"
+                }
+            ],
+            "initContainers":[
+                {
+                    "image":"myregistry.azurecr.io/init:1.0",
+                    "name":"app-init",
+                }
+            ]
+        }
+    }
+}
+</code></pre>
+<h2 id="view-managed-identities">View managed identities</h2>
+<p>You can show the system-assigned and user-assigned managed identities using the following Azure CLI command. The output shows the managed identity type, tenant IDs and principal IDs of all managed identities assigned to your container app.</p>
+<pre><code class="lang-azurecli">az containerapp identity show --name &lt;APP_NAME&gt; --resource-group &lt;GROUP_NAME&gt;
+</code></pre>
+<h2 id="remove-a-managed-identity">Remove a managed identity</h2>
+<p>When you remove a system-assigned identity, it's deleted from Microsoft Entra ID. System-assigned identities are also automatically removed from Microsoft Entra ID when you delete the container app resource itself. Removing user-assigned managed identities from your container app doesn't remove them from Microsoft Entra ID.</p>
+<div class="tabGroup" id="tabgroup_4">
+<ul role="tablist">
+<li role="presentation">
+<a href="#tabpanel_4_portal" role="tab" aria-controls="tabpanel_4_portal" data-tab="portal" tabindex="0" aria-selected="true" data-linktype="self-bookmark">Azure portal</a>
+</li>
+<li role="presentation">
+<a href="#tabpanel_4_cli" role="tab" aria-controls="tabpanel_4_cli" data-tab="cli" tabindex="-1" data-linktype="self-bookmark">Azure CLI</a>
+</li>
+<li role="presentation">
+<a href="#tabpanel_4_arm" role="tab" aria-controls="tabpanel_4_arm" data-tab="arm" tabindex="-1" data-linktype="self-bookmark">ARM template</a>
+</li>
+<li role="presentation">
+<a href="#tabpanel_4_yaml" role="tab" aria-controls="tabpanel_4_yaml" data-tab="yaml" tabindex="-1" data-linktype="self-bookmark">YAML</a>
+</li>
+<li role="presentation">
+<a href="#tabpanel_4_bicep" role="tab" aria-controls="tabpanel_4_bicep" data-tab="bicep" tabindex="-1" data-linktype="self-bookmark">Bicep</a>
+</li>
+</ul>
+<section id="tabpanel_4_portal" role="tabpanel" data-tab="portal">
+
+<ol>
+<li><p>In the left navigation of your app's page, scroll down to the <strong>Settings</strong> group.</p>
+</li>
+<li><p>Select <strong>Identity</strong>. Then follow the steps based on the identity type:</p>
+<ul>
+<li><strong>System-assigned identity</strong>: Within the <strong>System assigned</strong> tab, switch <strong>Status</strong> to <strong>Off</strong>. Select <strong>Save</strong>.</li>
+<li><strong>User-assigned identity</strong>: Select the <strong>User assigned</strong> tab, select the checkbox for the identity, and select <strong>Remove</strong>. Select <strong>Yes</strong> to confirm.</li>
+</ul>
+</li>
+</ol>
+</section>
+<section id="tabpanel_4_cli" role="tabpanel" data-tab="cli" aria-hidden="true" hidden="hidden">
+
+<p>To remove the system-assigned identity:</p>
+<pre><code class="lang-azurecli">az containerapp identity remove --name &lt;APP_NAME&gt; --resource-group &lt;GROUP_NAME&gt; --system-assigned
+</code></pre>
+<p>To remove one or more user-assigned identities:</p>
+<pre><code class="lang-azurecli">az containerapp identity remove --name &lt;APP_NAME&gt; --resource-group &lt;GROUP_NAME&gt; \
+    --user-assigned &lt;IDENTITY1_RESOURCE_ID&gt; &lt;IDENTITY2_RESOURCE_ID&gt;
+</code></pre>
+<p>To remove all user-assigned identities:</p>
+<pre><code class="lang-azurecli">az containerapp identity remove --name &lt;APP_NAME&gt; --resource-group &lt;GROUP_NAME&gt; \
+    --user-assigned $(az containerapp show \
+    --name &lt;APP_NAME&gt; \
+    --resource-group &lt;GROUP_NAME&gt; \
+    --query "identity.userAssignedIdentities | keys(@)" \
+    --output tsv)
+</code></pre>
+<p>Replace the <code>&lt;PLACEHOLDERS&gt;</code> with your values.</p>
+<p>The command to remove all user-assigned identities works as follows.</p>
+<table>
+<thead>
+<tr>
+<th>Command or argument</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>--user-assigned $(...)</code></td>
+<td>Run the command enclosed by the parentheses. Send the output to <code>--user-assigned</code>.</td>
+</tr>
+<tr>
+<td><code>az containerapp show...</code></td>
+<td>Get information about the specified container app.</td>
+</tr>
+<tr>
+<td><code>--query "identity.userAssignedIdentities...</code></td>
+<td>Get the user-assigned identities for the specified container app.</td>
+</tr>
+<tr>
+<td><code>\|</code></td>
+<td>The pipe operator sends the user-assigned identities to the <code>keys</code> command.</td>
+</tr>
+<tr>
+<td><code>keys(@)</code></td>
+<td>The user-assigned identities are returned as a set of key/value pairs. Each key is the ID of a user-assigned identity. This command extracts each key.</td>
+</tr>
+<tr>
+<td><code>--output tsv</code></td>
+<td>Output the results in tab-separated format.</td>
+</tr>
+</tbody>
+</table>
+<p>For more information see <a href="/en-us/cli/azure/use-azure-cli-successfully-query" data-linktype="absolute-path">How to query Azure CLI command output using a JMESPath query</a>.</p>
+</section>
+<section id="tabpanel_4_arm" role="tabpanel" data-tab="arm" aria-hidden="true" hidden="hidden">
+
+<p>To remove all identities, set the <code>type</code> of the container app's identity to <code>None</code> in the ARM template:</p>
+<pre><code class="lang-json">"identity": {
+    "type": "None"
+}
+</code></pre>
+</section>
+<section id="tabpanel_4_yaml" role="tabpanel" data-tab="yaml" aria-hidden="true" hidden="hidden">
+
+<p>To remove all identities, set the <code>type</code> of the container app's identity to <code>None</code> in the YAML configuration file:</p>
+<pre><code class="lang-yaml">identity:
+    type: None
+</code></pre>
+</section>
+<section id="tabpanel_4_bicep" role="tabpanel" data-tab="bicep" aria-hidden="true" hidden="hidden">
+
+<p>To remove all identities, set the <code>type</code> of the container app's identity to <code>None</code> in the Bicep file:</p>
+<pre><code class="lang-bicep">identity: {
+  type: 'None'
+}
+</code></pre>
+</section>
+</div>
+<h2 id="next-steps">Next steps</h2>
+<div class="nextstepaction">
+<p><a href="monitor" data-linktype="relative-path">Monitor an app</a></p>
+</div>
+</div>
+					
+		<div
+			id="ms--inline-notifications"
+			class="margin-block-xs"
+			data-bi-name="inline-notification"
+		></div>
+	 
+		<div
+			id="assertive-live-region"
+			role="alert"
+			aria-live="assertive"
+			class="visually-hidden"
+			aria-relevant="additions"
+			aria-atomic="true"
+		></div>
+		<div
+			id="polite-live-region"
+			role="status"
+			aria-live="polite"
+			class="visually-hidden"
+			aria-relevant="additions"
+			aria-atomic="true"
+		></div>
+	
+					
+		<!-- feedback section -->
+		<section
+			id="site-user-feedback-footer"
+			class="font-size-sm margin-top-md display-none-print display-none-desktop"
+			data-test-id="site-user-feedback-footer"
+			data-bi-name="site-feedback-section"
+		>
+			<hr class="hr" />
+			<h2 id="ms--feedback" class="title is-3">Feedback</h2>
+			<div class="display-flex flex-wrap-wrap align-items-center">
+				<p class="font-weight-semibold margin-xxs margin-left-none">
+					Was this page helpful?
+				</p>
+				<div class="buttons">
+					<button
+						class="thumb-rating-button like button button-primary button-sm"
+						data-test-id="footer-rating-yes"
+						data-binary-rating-response="rating-yes"
+						type="button"
+						title="This article is helpful"
+						data-bi-name="button-rating-yes"
+						aria-pressed="false"
+					>
+						<span class="icon" aria-hidden="true">
+							<span class="docon docon-like"></span>
+						</span>
+						<span>Yes</span>
+					</button>
+					<button
+						class="thumb-rating-button dislike button button-primary button-sm"
+						id="standard-rating-no-button"
+						hidden
+						data-test-id="footer-rating-no"
+						data-binary-rating-response="rating-no"
+						type="button"
+						title="This article is not helpful"
+						data-bi-name="button-rating-no"
+						aria-pressed="false"
+					>
+						<span class="icon" aria-hidden="true">
+							<span class="docon docon-dislike"></span>
+						</span>
+						<span>No</span>
+					</button>
+					<details
+						class="popover popover-top"
+						id="mobile-help-popover"
+						data-test-id="footer-feedback-popover"
+					>
+						<summary
+							class="thumb-rating-button dislike button button-primary button-sm"
+							data-test-id="details-footer-rating-no"
+							data-binary-rating-response="rating-no"
+							title="This article is not helpful"
+							data-bi-name="button-rating-no"
+							aria-pressed="false"
+							data-bi-an="feedback-unhelpful-popover"
+						>
+							<span class="icon" aria-hidden="true">
+								<span class="docon docon-dislike"></span>
+							</span>
+							<span>No</span>
+						</summary>
+						<div
+							class="popover-content width-200 width-300-tablet"
+							role="dialog"
+							aria-labelledby="popover-heading"
+							aria-describedby="popover-description"
+						>
+							<p id="popover-heading" class="font-size-lg margin-bottom-xxs font-weight-semibold">
+								Need help with this topic?
+							</p>
+							<p id="popover-description" class="font-size-sm margin-bottom-xs">
+								Want to try using Ask Learn to clarify or guide you through this topic?
+							</p>
+							
+		<div class="buttons flex-direction-row flex-wrap justify-content-center gap-xxs">
+			<div>
+		<button
+			class="button button-sm border inner-focus display-none margin-right-xxs"
+			data-bi-name="ask-learn-assistant-entry-troubleshoot"
+			data-test-id="ask-learn-assistant-modal-entry-mobile-feedback"
+			data-ask-learn-modal-entry-feedback
+			data-bi-an=feedback-unhelpful-popover
+			type="button"
+			style="min-width: max-content;"
+			aria-expanded="false"
+			aria-label="Ask Learn"
+			hidden
+		>
+			<span class="icon" aria-hidden="true">
+				<span class="docon docon-chat-sparkle-fill gradient-ask-learn-logo"></span>
+			</span>
+		</button>
+		<button
+			class="button button-sm display-inline-flex display-none-desktop flex-shrink-0 margin-right-xxs border-color-ask-learn margin-right-xxs"
+			data-bi-name="ask-learn-assistant-entry-troubleshoot"
+			data-bi-an=feedback-unhelpful-popover
+			data-test-id="ask-learn-assistant-modal-entry-tablet-feedback"
+			data-ask-learn-modal-entry-feedback
+			type="button"
+			style="min-width: max-content;"
+			aria-expanded="false"
+			hidden
+		>
+			<span class="icon font-size-lg" aria-hidden="true">
+				<span class="docon docon-chat-sparkle-fill gradient-ask-learn-logo"></span>
+			</span>
+			<span>Ask Learn</span>
+		</button>
+		<button
+			class="button button-sm display-none flex-shrink-0 display-inline-flex-desktop margin-right-xxs border-color-ask-learn margin-right-xxs"
+			data-bi-name="ask-learn-assistant-entry-troubleshoot"
+			data-bi-an=feedback-unhelpful-popover
+			data-test-id="ask-learn-assistant-flyout-entry-feedback"
+			data-ask-learn-flyout-entry-show-only
+			data-flyout-button="toggle"
+			type="button"
+			style="min-width: max-content;"
+			aria-expanded="false"
+			aria-controls="ask-learn-flyout"
+			hidden
+		>
+			<span class="icon font-size-lg" aria-hidden="true">
+				<span class="docon docon-chat-sparkle-fill gradient-ask-learn-logo"></span>
+			</span>
+			<span>Ask Learn</span>
+		</button>
+	</div>
+			<button
+				type="button"
+				class="button button-sm margin-right-xxs"
+				data-help-option="suggest-fix"
+				data-bi-name="feedback-suggest"
+				data-bi-an="feedback-unhelpful-popover"
+				data-test-id="suggest-fix"
+			>
+				<span class="icon" aria-hidden="true">
+					<span class="docon docon-feedback"></span>
+				</span>
+				<span> Suggest a fix? </span>
+			</button>
+		</div>
+	
+						</div>
+					</details>
+				</div>
+			</div>
+		</section>
+		<!-- end feedback section -->
+	
+				</div>
+				
+		<div id="ms--additional-resources-mobile" class="display-none-print">
+			<hr class="hr" hidden />
+			<h2 id="ms--additional-resources-mobile-heading" class="title is-3" hidden>
+				Additional resources
+			</h2>
+			
+		<section
+			id="right-rail-recommendations-mobile"
+			class=""
+			data-bi-name="recommendations"
+			hidden
+		></section>
+	 
+		<section
+			id="right-rail-training-mobile"
+			class=""
+			data-bi-name="learning-resource-card"
+			hidden
+		></section>
+	 
+		<section
+			id="right-rail-events-mobile"
+			class=""
+			data-bi-name="events-card"
+			hidden
+		></section>
+	
+		</div>
+	 
+		<div
+			id="article-metadata-footer"
+			data-bi-name="article-metadata-footer"
+			data-test-id="article-metadata-footer"
+			class="page-metadata-container"
+		>
+			<hr class="hr" />
+			<ul class="metadata page-metadata" data-bi-name="page info" lang="en-us" dir="ltr">
+				<li class="visibility-hidden-visual-diff">
+			<span class="badge badge-sm text-wrap-pretty">
+				<span>Last updated on <local-time format="twoDigitNumeric"
+		datetime="2025-06-03T22:06:00.000Z"
+		data-article-date-source="calculated"
+		class="is-invisible"
+	>
+		2025-06-03
+	</local-time></span>
+			</span>
+		</li>
+			</ul>
+		</div>
+	
+			</div>
+		
+				</main>
+				<aside
+					id="layout-body-aside"
+					class="layout-body-aside  "
+					data-bi-name="aside"
+					aria-label="Additional resources"
+			  >
+					
+		<div
+			id="ms--additional-resources"
+			class="right-container padding-sm display-none display-block-desktop height-full"
+			data-bi-name="pageactions"
+		>
+			<div id="affixed-right-container" data-bi-name="right-column">
+				
+		<nav
+			id="side-doc-outline"
+			class="doc-outline border-bottom padding-bottom-xs margin-bottom-xs scrollbar-width-thin"
+			data-bi-name="intopic toc"
+			aria-label="In this article"
+		>
+			<h3>In this article</h3>
+		</nav>
+	
+				<!-- Feedback -->
+				
+		<section
+			id="ms--site-user-feedback-right-rail"
+			class="font-size-sm display-none-print"
+			data-test-id="site-user-feedback-right-rail"
+			data-bi-name="site-feedback-right-rail"
+		>
+			<div class="display-flex flex-wrap-wrap align-items-center">
+				<p class="font-weight-semibold margin-xxs margin-left-none">
+					Was this page helpful?
+				</p>
+				<div class="display-flex flex-wrap-nowrap">
+					<button
+						class="thumb-rating-button like inner-focus"
+						data-test-id="right-rail-rating-yes"
+						data-binary-rating-response="rating-yes"
+						type="button"
+						title="This article is helpful"
+						aria-label="This article is helpful"
+						data-bi-name="button-rating-yes"
+						aria-pressed="false"
+					>
+						<span class="icon" aria-hidden="true">
+							<span class="docon docon-like"></span>
+						</span>
+					</button>
+					<button
+						class="thumb-rating-button dislike inner-focus"
+						id="right-rail-no-button"
+						hidden
+						data-test-id="right-rail-rating-no"
+						data-binary-rating-response="rating-no"
+						type="button"
+						title="This article is not helpful"
+						aria-label="This article is not helpful"
+						data-bi-name="button-rating-no"
+						aria-pressed="false"
+					>
+						<span class="icon" aria-hidden="true">
+							<span class="docon docon-dislike"></span>
+						</span>
+					</button>
+					<details class="popover popover-right" id="help-popover" data-test-id="feedback-popover">
+						<summary
+							tabindex="0"
+							class="thumb-rating-button dislike inner-focus"
+							data-test-id="details-right-rail-rating-no"
+							data-binary-rating-response="rating-no"
+							title="This article is not helpful"
+							aria-label="This article is not helpful"
+							data-bi-name="button-rating-no"
+							aria-pressed="false"
+							data-bi-an="feedback-unhelpful-popover"
+						>
+							<span class="icon" aria-hidden="true">
+								<span class="docon docon-dislike"></span>
+							</span>
+						</summary>
+						<div
+							class="popover-content width-200 width-300-tablet"
+							role="dialog"
+							aria-labelledby="popover-heading-right-rail"
+							aria-describedby="popover-description-right-rail"
+						>
+							<p
+								id="popover-heading-right-rail"
+								class="font-size-lg margin-bottom-xxs font-weight-semibold"
+							>
+								Need help with this topic?
+							</p>
+							<p id="popover-description-right-rail" class="font-size-sm margin-bottom-xs">
+								Want to try using Ask Learn to clarify or guide you through this topic?
+							</p>
+							
+		<div class="buttons flex-direction-row flex-wrap justify-content-center gap-xxs">
+			<div>
+		<button
+			class="button button-sm border inner-focus display-none margin-right-xxs"
+			data-bi-name="ask-learn-assistant-entry-troubleshoot"
+			data-test-id="ask-learn-assistant-modal-entry-mobile-feedback"
+			data-ask-learn-modal-entry-feedback
+			data-bi-an=feedback-unhelpful-popover
+			type="button"
+			style="min-width: max-content;"
+			aria-expanded="false"
+			aria-label="Ask Learn"
+			hidden
+		>
+			<span class="icon" aria-hidden="true">
+				<span class="docon docon-chat-sparkle-fill gradient-ask-learn-logo"></span>
+			</span>
+		</button>
+		<button
+			class="button button-sm display-inline-flex display-none-desktop flex-shrink-0 margin-right-xxs border-color-ask-learn margin-right-xxs"
+			data-bi-name="ask-learn-assistant-entry-troubleshoot"
+			data-bi-an=feedback-unhelpful-popover
+			data-test-id="ask-learn-assistant-modal-entry-tablet-feedback"
+			data-ask-learn-modal-entry-feedback
+			type="button"
+			style="min-width: max-content;"
+			aria-expanded="false"
+			hidden
+		>
+			<span class="icon font-size-lg" aria-hidden="true">
+				<span class="docon docon-chat-sparkle-fill gradient-ask-learn-logo"></span>
+			</span>
+			<span>Ask Learn</span>
+		</button>
+		<button
+			class="button button-sm display-none flex-shrink-0 display-inline-flex-desktop margin-right-xxs border-color-ask-learn margin-right-xxs"
+			data-bi-name="ask-learn-assistant-entry-troubleshoot"
+			data-bi-an=feedback-unhelpful-popover
+			data-test-id="ask-learn-assistant-flyout-entry-feedback"
+			data-ask-learn-flyout-entry-show-only
+			data-flyout-button="toggle"
+			type="button"
+			style="min-width: max-content;"
+			aria-expanded="false"
+			aria-controls="ask-learn-flyout"
+			hidden
+		>
+			<span class="icon font-size-lg" aria-hidden="true">
+				<span class="docon docon-chat-sparkle-fill gradient-ask-learn-logo"></span>
+			</span>
+			<span>Ask Learn</span>
+		</button>
+	</div>
+			<button
+				type="button"
+				class="button button-sm margin-right-xxs"
+				data-help-option="suggest-fix"
+				data-bi-name="feedback-suggest"
+				data-bi-an="feedback-unhelpful-popover"
+				data-test-id="suggest-fix"
+			>
+				<span class="icon" aria-hidden="true">
+					<span class="docon docon-feedback"></span>
+				</span>
+				<span> Suggest a fix? </span>
+			</button>
+		</div>
+	
+						</div>
+					</details>
+				</div>
+			</div>
+		</section>
+	
+			</div>
+		</div>
+	
+			  </aside> <section
+					id="layout-body-flyout"
+					class="layout-body-flyout "
+					data-bi-name="flyout"
+			  >
+					 <div
+	class="height-full border-left background-color-body-medium"
+	id="ask-learn-flyout"
+></div>
+			  </section> <div class="layout-body-footer " data-bi-name="layout-footer">
+		<footer
+			id="footer"
+			data-test-id="footer"
+			data-bi-name="footer"
+			class="footer-layout padding-xs padding-sm-desktop has-default-focus border-top"
+			role="contentinfo"
+		>
+			<div class="display-flex gap-xs flex-wrap-wrap is-full-height padding-right-lg-desktop">
+				
+		<a
+			data-mscc-ic="false"
+			href="#"
+			data-bi-name="select-locale"
+			class="locale-selector-link flex-shrink-0 button button-sm button-clear external-link-indicator"
+			id=""
+			title=""
+			><span class="icon" aria-hidden="true"
+				><span class="docon docon-world"></span></span
+			><span class="local-selector-link-text">en-us</span></a
+		>
+	 <div class="ccpa-privacy-link" data-ccpa-privacy-link hidden>
+		
+		<a
+			data-mscc-ic="false"
+			href="https://aka.ms/yourcaliforniaprivacychoices"
+			data-bi-name="your-privacy-choices"
+			class="button button-sm button-clear flex-shrink-0 external-link-indicator"
+			id=""
+			title=""
+			>
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			viewBox="0 0 30 14"
+			xml:space="preserve"
+			height="16"
+			width="43"
+			aria-hidden="true"
+			focusable="false"
+		>
+			<path
+				d="M7.4 12.8h6.8l3.1-11.6H7.4C4.2 1.2 1.6 3.8 1.6 7s2.6 5.8 5.8 5.8z"
+				style="fill-rule:evenodd;clip-rule:evenodd;fill:#fff"
+			></path>
+			<path
+				d="M22.6 0H7.4c-3.9 0-7 3.1-7 7s3.1 7 7 7h15.2c3.9 0 7-3.1 7-7s-3.2-7-7-7zm-21 7c0-3.2 2.6-5.8 5.8-5.8h9.9l-3.1 11.6H7.4c-3.2 0-5.8-2.6-5.8-5.8z"
+				style="fill-rule:evenodd;clip-rule:evenodd;fill:#06f"
+			></path>
+			<path
+				d="M24.6 4c.2.2.2.6 0 .8L22.5 7l2.2 2.2c.2.2.2.6 0 .8-.2.2-.6.2-.8 0l-2.2-2.2-2.2 2.2c-.2.2-.6.2-.8 0-.2-.2-.2-.6 0-.8L20.8 7l-2.2-2.2c-.2-.2-.2-.6 0-.8.2-.2.6-.2.8 0l2.2 2.2L23.8 4c.2-.2.6-.2.8 0z"
+				style="fill:#fff"
+			></path>
+			<path
+				d="M12.7 4.1c.2.2.3.6.1.8L8.6 9.8c-.1.1-.2.2-.3.2-.2.1-.5.1-.7-.1L5.4 7.7c-.2-.2-.2-.6 0-.8.2-.2.6-.2.8 0L8 8.6l3.8-4.5c.2-.2.6-.2.9 0z"
+				style="fill:#06f"
+			></path>
+		</svg>
+	
+			<span>Your Privacy Choices</span></a
+		>
+	
+	</div>
+				<div class="flex-shrink-0">
+		<div class="dropdown has-caret-up">
+			<button
+				data-test-id="theme-selector-button"
+				class="dropdown-trigger button button-clear button-sm inner-focus theme-dropdown-trigger"
+				aria-controls="{{ themeMenuId }}"
+				aria-haspopup="true"
+				aria-expanded="false"
+				data-bi-name="theme"
+			>
+				<span class="icon" aria-hidden="true"><span class="docon docon-sun"></span></span>
+				<span>Theme</span>
+				<span class="icon expanded-indicator" aria-hidden="true">
+					<span class="docon docon-chevron-down-light"></span>
+				</span>
+			</button>
+			<div class="dropdown-menu" id="{{ themeMenuId }}" role="menu">
+				<ul class="theme-selector padding-xxs" data-test-id="theme-dropdown-menu" role="none">
+					<li class="theme display-block" role="none">
+						<button
+							class="button button-clear button-sm theme-control button-block justify-content-flex-start text-align-left"
+							role="menuitemradio"
+							aria-checked="false"
+							data-theme-to="light"
+							tabindex="-1"
+						>
+							<span class="theme-light margin-right-xxs">
+								<span
+									class="theme-selector-icon border display-inline-block has-body-background"
+									aria-hidden="true"
+								>
+									<svg class="svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 14">
+										<rect width="22" height="14" class="has-fill-body-background" />
+										<rect x="5" y="5" width="12" height="4" class="has-fill-secondary" />
+										<rect x="5" y="2" width="2" height="1" class="has-fill-secondary" />
+										<rect x="8" y="2" width="2" height="1" class="has-fill-secondary" />
+										<rect x="11" y="2" width="3" height="1" class="has-fill-secondary" />
+										<rect x="1" y="1" width="2" height="2" class="has-fill-secondary" />
+										<rect x="5" y="10" width="7" height="2" rx="0.3" class="has-fill-primary" />
+										<rect x="19" y="1" width="2" height="2" rx="1" class="has-fill-secondary" />
+									</svg>
+								</span>
+							</span>
+							<span> Light </span>
+						</button>
+					</li>
+					<li class="theme display-block" role="none">
+						<button
+							class="button button-clear button-sm theme-control button-block justify-content-flex-start text-align-left"
+							role="menuitemradio"
+							aria-checked="false"
+							data-theme-to="dark"
+							tabindex="-1"
+						>
+							<span class="theme-dark margin-right-xxs">
+								<span
+									class="border theme-selector-icon display-inline-block has-body-background"
+									aria-hidden="true"
+								>
+									<svg class="svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 14">
+										<rect width="22" height="14" class="has-fill-body-background" />
+										<rect x="5" y="5" width="12" height="4" class="has-fill-secondary" />
+										<rect x="5" y="2" width="2" height="1" class="has-fill-secondary" />
+										<rect x="8" y="2" width="2" height="1" class="has-fill-secondary" />
+										<rect x="11" y="2" width="3" height="1" class="has-fill-secondary" />
+										<rect x="1" y="1" width="2" height="2" class="has-fill-secondary" />
+										<rect x="5" y="10" width="7" height="2" rx="0.3" class="has-fill-primary" />
+										<rect x="19" y="1" width="2" height="2" rx="1" class="has-fill-secondary" />
+									</svg>
+								</span>
+							</span>
+							<span> Dark </span>
+						</button>
+					</li>
+					<li class="theme display-block" role="none">
+						<button
+							class="button button-clear button-sm theme-control button-block justify-content-flex-start text-align-left"
+							role="menuitemradio"
+							aria-checked="false"
+							data-theme-to="high-contrast"
+							tabindex="-1"
+						>
+							<span class="theme-high-contrast margin-right-xxs">
+								<span
+									class="border theme-selector-icon display-inline-block has-body-background"
+									aria-hidden="true"
+								>
+									<svg class="svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 14">
+										<rect width="22" height="14" class="has-fill-body-background" />
+										<rect x="5" y="5" width="12" height="4" class="has-fill-secondary" />
+										<rect x="5" y="2" width="2" height="1" class="has-fill-secondary" />
+										<rect x="8" y="2" width="2" height="1" class="has-fill-secondary" />
+										<rect x="11" y="2" width="3" height="1" class="has-fill-secondary" />
+										<rect x="1" y="1" width="2" height="2" class="has-fill-secondary" />
+										<rect x="5" y="10" width="7" height="2" rx="0.3" class="has-fill-primary" />
+										<rect x="19" y="1" width="2" height="2" rx="1" class="has-fill-secondary" />
+									</svg>
+								</span>
+							</span>
+							<span> High contrast </span>
+						</button>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</div>
+			</div>
+			<ul class="links" data-bi-name="footerlinks">
+				<li class="manage-cookies-holder" hidden=""></li>
+				<li>
+		
+		<a
+			data-mscc-ic="false"
+			href="https://learn.microsoft.com/en-us/principles-for-ai-generated-content"
+			data-bi-name="aiDisclaimer"
+			class=" external-link-indicator"
+			id=""
+			title=""
+			>AI Disclaimer</a
+		>
+	
+	</li><li>
+		
+		<a
+			data-mscc-ic="false"
+			href="https://learn.microsoft.com/en-us/previous-versions/"
+			data-bi-name="archivelink"
+			class=" external-link-indicator"
+			id=""
+			title=""
+			>Previous Versions</a
+		>
+	
+	</li> <li>
+		
+		<a
+			data-mscc-ic="false"
+			href="https://techcommunity.microsoft.com/t5/microsoft-learn-blog/bg-p/MicrosoftLearnBlog"
+			data-bi-name="bloglink"
+			class=" external-link-indicator"
+			id=""
+			title=""
+			>Blog</a
+		>
+	
+	</li> <li>
+		
+		<a
+			data-mscc-ic="false"
+			href="https://learn.microsoft.com/en-us/contribute"
+			data-bi-name="contributorGuide"
+			class=" external-link-indicator"
+			id=""
+			title=""
+			>Contribute</a
+		>
+	
+	</li><li>
+		
+		<a
+			data-mscc-ic="false"
+			href="https://go.microsoft.com/fwlink/?LinkId=521839"
+			data-bi-name="privacy"
+			class=" external-link-indicator"
+			id=""
+			title=""
+			>Privacy</a
+		>
+	
+	</li><li>
+		
+		<a
+			data-mscc-ic="false"
+			href="https://go.microsoft.com/fwlink/?linkid=2259814"
+			data-bi-name="consumer-health-privacy"
+			class=" external-link-indicator"
+			id=""
+			title=""
+			>Consumer Health Privacy</a
+		>
+	
+	</li><li>
+		
+		<a
+			data-mscc-ic="false"
+			href="https://learn.microsoft.com/en-us/legal/termsofuse"
+			data-bi-name="termsofuse"
+			class=" external-link-indicator"
+			id=""
+			title=""
+			>Terms of Use</a
+		>
+	
+	</li><li>
+		
+		<a
+			data-mscc-ic="false"
+			href="https://www.microsoft.com/legal/intellectualproperty/Trademarks/"
+			data-bi-name="trademarks"
+			class=" external-link-indicator"
+			id=""
+			title=""
+			>Trademarks</a
+		>
+	
+	</li>
+				<li>&copy; Microsoft 2026</li>
+			</ul>
+		</footer>
+	</footer>
+			<noscript><img src="https://learn.microsoft.com/akam/13/pixel_3d66a5cd?a=dD1hYmJkNjY2MmUyYTYxOGNjMGYxM2E3OGRlYzVkOTI2YzlmZWM1MWQxJmpzPW9mZg==" style="visibility: hidden; position: absolute; left: -999px; top: -999px;" /></noscript></body>
+		</html>

@@ -1,0 +1,867 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "agent",
+      "address": "block_6167656e74",
+      "label": "Support agent",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "audio",
+      "address": "block_617564696f",
+      "label": "Synthetic call audio",
+      "provider": "tools",
+      "service": "Storage or existing data connector",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "web",
+      "address": "block_776562",
+      "label": "Agent assist web app",
+      "provider": "aws",
+      "service": "Amazon CloudFront",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_cloudfront_distribution"
+      ],
+      "costDrivers": "Requests, transfer and private static assets",
+      "dependencies": [
+        "agent"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "cognito",
+      "address": "block_636f676e69746f",
+      "label": "Agent sign-in",
+      "provider": "aws",
+      "service": "Amazon Cognito",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_cognito_user_pool"
+      ],
+      "costDrivers": "Active users and authentication features",
+      "dependencies": [
+        "web"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "api",
+      "address": "block_617069",
+      "label": "Assist API",
+      "provider": "aws",
+      "service": "Amazon API Gateway",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_apigatewayv2_api"
+      ],
+      "costDrivers": "API requests, transfer and access logs",
+      "dependencies": [
+        "cognito",
+        "web",
+        "orch"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "consent",
+      "address": "block_636f6e73656e74",
+      "label": "Consent gate",
+      "provider": "aws",
+      "service": "AWS Lambda",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_lambda_function",
+        "aws_iam_role"
+      ],
+      "costDrivers": "Requests, duration, memory and logs",
+      "dependencies": [
+        "api",
+        "audio"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "kvs",
+      "address": "block_6b7673",
+      "label": "Audio ingestion",
+      "provider": "aws",
+      "service": "AWS ingestion service",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Messages, connections, processing and retention",
+      "dependencies": [
+        "consent"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "transcribe",
+      "address": "block_7472616e736372696265",
+      "label": "Transcription",
+      "provider": "aws",
+      "service": "Amazon Transcribe",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "kvs"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "pii",
+      "address": "block_706969",
+      "label": "PII redaction",
+      "provider": "aws",
+      "service": "Amazon Comprehend",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "transcribe"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "orch",
+      "address": "block_6f726368",
+      "label": "Assist orchestrator",
+      "provider": "aws",
+      "service": "AWS Lambda",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_lambda_function",
+        "aws_iam_role"
+      ],
+      "costDrivers": "Requests, duration, memory and logs",
+      "dependencies": [
+        "pii"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "kb",
+      "address": "block_6b62",
+      "label": "Support knowledge base",
+      "provider": "aws",
+      "service": "Amazon Bedrock Knowledge Bases",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_bedrockagent_knowledge_base",
+        "aws_iam_role"
+      ],
+      "costDrivers": "Embeddings, ingestion, vector store and retrieval; select the backing store",
+      "dependencies": [
+        "orch"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "guardrails",
+      "address": "block_67756172647261696c73",
+      "label": "Output guardrails",
+      "provider": "aws",
+      "service": "Amazon Bedrock Guardrails",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_bedrock_guardrail"
+      ],
+      "costDrivers": "Enabled policy checks and text units; confirm each policy's charge",
+      "dependencies": [
+        "orch"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "bedrock",
+      "address": "block_626564726f636b",
+      "label": "Foundation model",
+      "provider": "aws",
+      "service": "Amazon Bedrock",
+      "selection": "Explicit service field; deployment review required",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Model-specific input/output tokens; guardrails, embeddings and knowledge bases separately",
+      "dependencies": [
+        "guardrails"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "session",
+      "address": "block_73657373696f6e",
+      "label": "Call session and audit store",
+      "provider": "aws",
+      "service": "Amazon DynamoDB",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_dynamodb_table"
+      ],
+      "costDrivers": "Read/write requests, storage and backup",
+      "dependencies": [
+        "orch"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "logs",
+      "address": "block_6c6f6773",
+      "label": "Monitoring",
+      "provider": "aws",
+      "service": "Amazon CloudWatch",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_cloudwatch_log_group"
+      ],
+      "costDrivers": "Logs, metrics, alarms and retention",
+      "dependencies": [
+        "orch"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "crm",
+      "address": "block_63726d",
+      "label": "Existing CRM",
+      "provider": "tools",
+      "service": "Application runtime and API",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "agent"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e-agent-web",
+      "source": "agent",
+      "target": "web",
+      "data": "uses assist desktop",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-web-cognito",
+      "source": "web",
+      "target": "cognito",
+      "data": "sign-in (PKCE + MFA)",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-cognito-api",
+      "source": "cognito",
+      "target": "api",
+      "data": "JWT authorizer",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-web-api",
+      "source": "web",
+      "target": "api",
+      "data": "consent, approvals, live updates",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-api-consent",
+      "source": "api",
+      "target": "consent",
+      "data": "record consent",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-audio-consent",
+      "source": "audio",
+      "target": "consent",
+      "data": "call start",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-consent-kvs",
+      "source": "consent",
+      "target": "kvs",
+      "data": "allow stream if consented",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-kvs-transcribe",
+      "source": "kvs",
+      "target": "transcribe",
+      "data": "audio stream",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-transcribe-pii",
+      "source": "transcribe",
+      "target": "pii",
+      "data": "transcript segments",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-pii-orch",
+      "source": "pii",
+      "target": "orch",
+      "data": "redacted segments",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-orch-kb",
+      "source": "orch",
+      "target": "kb",
+      "data": "retrieve cited articles",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-orch-guard",
+      "source": "orch",
+      "target": "guardrails",
+      "data": "apply guardrail",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-guard-bedrock",
+      "source": "guardrails",
+      "target": "bedrock",
+      "data": "Converse (guarded)",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-orch-session",
+      "source": "orch",
+      "target": "session",
+      "data": "write transcript, drafts, audit",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-orch-api",
+      "source": "orch",
+      "target": "api",
+      "data": "cited suggestions, summary and CRM drafts",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-orch-logs",
+      "source": "orch",
+      "target": "logs",
+      "data": "metrics and logs",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-agent-crm",
+      "source": "agent",
+      "target": "crm",
+      "data": "manual submit of approved draft",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Support agent: Existing — reference/import plan needed.",
+    "Synthetic call audio: Existing — reference/import plan needed.",
+    "Agent assist web app: Implementation needed.",
+    "Agent sign-in: Implementation needed.",
+    "Assist API: Implementation needed.",
+    "Consent gate: Implementation needed.",
+    "Audio ingestion: Implementation needed.",
+    "Transcription: Implementation needed.",
+    "PII redaction: Implementation needed.",
+    "Assist orchestrator: Implementation needed.",
+    "Support knowledge base: Implementation needed.",
+    "Output guardrails: Implementation needed.",
+    "Foundation model: Existing — reference/import plan needed.",
+    "Call session and audit store: Implementation needed.",
+    "Monitoring: Implementation needed.",
+    "Existing CRM: Existing — reference/import plan needed.",
+    "Wire agent → web: implement data flow, access policy and acceptance test.",
+    "Wire web → cognito: implement data flow, access policy and acceptance test.",
+    "Wire cognito → api: implement data flow, access policy and acceptance test.",
+    "Wire web → api: implement data flow, access policy and acceptance test.",
+    "Wire api → consent: implement data flow, access policy and acceptance test.",
+    "Wire audio → consent: implement data flow, access policy and acceptance test.",
+    "Wire consent → kvs: implement data flow, access policy and acceptance test.",
+    "Wire kvs → transcribe: implement data flow, access policy and acceptance test.",
+    "Wire transcribe → pii: implement data flow, access policy and acceptance test.",
+    "Wire pii → orch: implement data flow, access policy and acceptance test.",
+    "Wire orch → kb: implement data flow, access policy and acceptance test.",
+    "Wire orch → guardrails: implement data flow, access policy and acceptance test.",
+    "Wire guardrails → bedrock: implement data flow, access policy and acceptance test.",
+    "Wire orch → session: implement data flow, access policy and acceptance test.",
+    "Wire orch → api: implement data flow, access policy and acceptance test.",
+    "Wire orch → logs: implement data flow, access policy and acceptance test.",
+    "Wire agent → crm: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "resource-block_6167656e74",
+      "componentIds": [
+        "agent"
+      ],
+      "taskId": "TASK-RESOURCE-6167656e74",
+      "message": "Support agent: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_617564696f",
+      "componentIds": [
+        "audio"
+      ],
+      "taskId": "TASK-RESOURCE-617564696f",
+      "message": "Synthetic call audio: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_776562",
+      "componentIds": [
+        "web"
+      ],
+      "taskId": "TASK-RESOURCE-776562",
+      "message": "Agent assist web app: Implementation needed."
+    },
+    {
+      "id": "resource-block_636f676e69746f",
+      "componentIds": [
+        "cognito"
+      ],
+      "taskId": "TASK-RESOURCE-636f676e69746f",
+      "message": "Agent sign-in: Implementation needed."
+    },
+    {
+      "id": "resource-block_617069",
+      "componentIds": [
+        "api"
+      ],
+      "taskId": "TASK-RESOURCE-617069",
+      "message": "Assist API: Implementation needed."
+    },
+    {
+      "id": "resource-block_636f6e73656e74",
+      "componentIds": [
+        "consent"
+      ],
+      "taskId": "TASK-RESOURCE-636f6e73656e74",
+      "message": "Consent gate: Implementation needed."
+    },
+    {
+      "id": "resource-block_6b7673",
+      "componentIds": [
+        "kvs"
+      ],
+      "taskId": "TASK-RESOURCE-6b7673",
+      "message": "Audio ingestion: Implementation needed."
+    },
+    {
+      "id": "resource-block_7472616e736372696265",
+      "componentIds": [
+        "transcribe"
+      ],
+      "taskId": "TASK-RESOURCE-7472616e736372696265",
+      "message": "Transcription: Implementation needed."
+    },
+    {
+      "id": "resource-block_706969",
+      "componentIds": [
+        "pii"
+      ],
+      "taskId": "TASK-RESOURCE-706969",
+      "message": "PII redaction: Implementation needed."
+    },
+    {
+      "id": "resource-block_6f726368",
+      "componentIds": [
+        "orch"
+      ],
+      "taskId": "TASK-RESOURCE-6f726368",
+      "message": "Assist orchestrator: Implementation needed."
+    },
+    {
+      "id": "resource-block_6b62",
+      "componentIds": [
+        "kb"
+      ],
+      "taskId": "TASK-RESOURCE-6b62",
+      "message": "Support knowledge base: Implementation needed."
+    },
+    {
+      "id": "resource-block_67756172647261696c73",
+      "componentIds": [
+        "guardrails"
+      ],
+      "taskId": "TASK-RESOURCE-67756172647261696c73",
+      "message": "Output guardrails: Implementation needed."
+    },
+    {
+      "id": "resource-block_626564726f636b",
+      "componentIds": [
+        "bedrock"
+      ],
+      "taskId": "TASK-RESOURCE-626564726f636b",
+      "message": "Foundation model: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_73657373696f6e",
+      "componentIds": [
+        "session"
+      ],
+      "taskId": "TASK-RESOURCE-73657373696f6e",
+      "message": "Call session and audit store: Implementation needed."
+    },
+    {
+      "id": "resource-block_6c6f6773",
+      "componentIds": [
+        "logs"
+      ],
+      "taskId": "TASK-RESOURCE-6c6f6773",
+      "message": "Monitoring: Implementation needed."
+    },
+    {
+      "id": "resource-block_63726d",
+      "componentIds": [
+        "crm"
+      ],
+      "taskId": "TASK-RESOURCE-63726d",
+      "message": "Existing CRM: Existing — reference/import plan needed."
+    },
+    {
+      "id": "connection-652d6167656e742d776562",
+      "edgeIds": [
+        "e-agent-web"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6167656e742d776562",
+      "message": "Wire agent → web: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d7765622d636f676e69746f",
+      "edgeIds": [
+        "e-web-cognito"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7765622d636f676e69746f",
+      "message": "Wire web → cognito: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d636f676e69746f2d617069",
+      "edgeIds": [
+        "e-cognito-api"
+      ],
+      "taskId": "TASK-INTEGRATION-652d636f676e69746f2d617069",
+      "message": "Wire cognito → api: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d7765622d617069",
+      "edgeIds": [
+        "e-web-api"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7765622d617069",
+      "message": "Wire web → api: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6170692d636f6e73656e74",
+      "edgeIds": [
+        "e-api-consent"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6170692d636f6e73656e74",
+      "message": "Wire api → consent: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d617564696f2d636f6e73656e74",
+      "edgeIds": [
+        "e-audio-consent"
+      ],
+      "taskId": "TASK-INTEGRATION-652d617564696f2d636f6e73656e74",
+      "message": "Wire audio → consent: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d636f6e73656e742d6b7673",
+      "edgeIds": [
+        "e-consent-kvs"
+      ],
+      "taskId": "TASK-INTEGRATION-652d636f6e73656e742d6b7673",
+      "message": "Wire consent → kvs: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6b76732d7472616e736372696265",
+      "edgeIds": [
+        "e-kvs-transcribe"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6b76732d7472616e736372696265",
+      "message": "Wire kvs → transcribe: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d7472616e7363726962652d706969",
+      "edgeIds": [
+        "e-transcribe-pii"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7472616e7363726962652d706969",
+      "message": "Wire transcribe → pii: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d7069692d6f726368",
+      "edgeIds": [
+        "e-pii-orch"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7069692d6f726368",
+      "message": "Wire pii → orch: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6f7263682d6b62",
+      "edgeIds": [
+        "e-orch-kb"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6f7263682d6b62",
+      "message": "Wire orch → kb: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6f7263682d6775617264",
+      "edgeIds": [
+        "e-orch-guard"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6f7263682d6775617264",
+      "message": "Wire orch → guardrails: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d67756172642d626564726f636b",
+      "edgeIds": [
+        "e-guard-bedrock"
+      ],
+      "taskId": "TASK-INTEGRATION-652d67756172642d626564726f636b",
+      "message": "Wire guardrails → bedrock: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6f7263682d73657373696f6e",
+      "edgeIds": [
+        "e-orch-session"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6f7263682d73657373696f6e",
+      "message": "Wire orch → session: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6f7263682d617069",
+      "edgeIds": [
+        "e-orch-api"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6f7263682d617069",
+      "message": "Wire orch → api: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6f7263682d6c6f6773",
+      "edgeIds": [
+        "e-orch-logs"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6f7263682d6c6f6773",
+      "message": "Wire orch → logs: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6167656e742d63726d",
+      "edgeIds": [
+        "e-agent-crm"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6167656e742d63726d",
+      "message": "Wire agent → crm: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

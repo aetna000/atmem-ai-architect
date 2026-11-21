@@ -1,0 +1,462 @@
+{
+  "format": "atmem.ai-architect.project",
+  "formatVersion": "2.3.0",
+  "meta": {
+    "id": "9864c6a2-c7ee-4f64-86d9-8e316a054467",
+    "name": "Authenticated conversational assistant (AWS)",
+    "createdAt": "2026-11-07T12:07:54.829Z",
+    "updatedAt": "2026-11-07T12:07:54.829Z",
+    "revision": 2,
+    "generator": "atmem-ai-architect 0.2.0"
+  },
+  "design": {
+    "provider": "aws",
+    "nodes": [
+      {
+        "id": "user",
+        "type": "resource",
+        "position": {
+          "x": 50,
+          "y": 470
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Synthetic user (browser)",
+          "provider": "tools",
+          "kind": "tool",
+          "description": "Test user's browser. A client reference, not a provisioned service.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "binding": "web-browser",
+          "role": "human"
+        }
+      },
+      {
+        "id": "web",
+        "type": "resource",
+        "position": {
+          "x": 470,
+          "y": 470
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Chat web app",
+          "provider": "aws",
+          "kind": "output",
+          "description": "Serves the chat interface from private S3 assets that CloudFront owns. Signs users in with authorization code + PKCE and sends their token with each chat request.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "app",
+          "service": "Amazon CloudFront"
+        }
+      },
+      {
+        "id": "idp",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 395
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "User sign-in",
+          "provider": "aws",
+          "kind": "guard",
+          "description": "User pool for synthetic users created by an admin. MFA is proposed. Issues the JWTs that the API checks.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "service": "Amazon Cognito"
+        }
+      },
+      {
+        "id": "api",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 470
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Chat API",
+          "provider": "aws",
+          "kind": "guard",
+          "description": "HTTP API with a JWT authorizer. Rejects requests without a valid token and applies throttling.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "service": "Amazon API Gateway"
+        }
+      },
+      {
+        "id": "chat",
+        "type": "resource",
+        "position": {
+          "x": 1730,
+          "y": 470
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Chat orchestrator",
+          "provider": "aws",
+          "kind": "agent",
+          "description": "Takes the user ID from the verified token, loads that user's conversation, trims context to a limited window (the last N turns or a token budget), calls the model, saves the turn and returns the reply. Decides when to escalate. Has no tools or external actions. Owns its execution role, logs, version and alias.",
+          "config": {
+            "memoryMb": 256,
+            "functionTimeoutSeconds": 30,
+            "maxOutputTokens": 512,
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "app",
+          "service": "AWS Lambda"
+        }
+      },
+      {
+        "id": "state",
+        "type": "resource",
+        "position": {
+          "x": 2150,
+          "y": 50
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Conversation state",
+          "provider": "aws",
+          "kind": "history",
+          "description": "Partitioned by user ID and keyed by conversation and turn. A TTL removes old conversations. Access is scoped to the calling user's partition.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "service": "Amazon DynamoDB"
+        }
+      },
+      {
+        "id": "model",
+        "type": "resource",
+        "position": {
+          "x": 2150,
+          "y": 330
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Model runtime",
+          "provider": "aws",
+          "kind": "predict",
+          "description": "A direct foundation model is called through the Converse API. The model ID, access, quotas and region availability are not yet verified.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "poc": true,
+          "binding": "aws-bedrock-model",
+          "role": "llm",
+          "service": "Amazon Bedrock"
+        }
+      },
+      {
+        "id": "escalation",
+        "type": "resource",
+        "position": {
+          "x": 2150,
+          "y": 610
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Escalation queue",
+          "provider": "aws",
+          "kind": "stream",
+          "description": "Holds escalated conversations, with their reason and a conversation reference, for human review. A dead-letter queue and alarm are still to be designed.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "service": "Amazon SQS"
+        }
+      },
+      {
+        "id": "agent_human",
+        "type": "resource",
+        "position": {
+          "x": 2570,
+          "y": 610
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Support reviewer",
+          "provider": "tools",
+          "kind": "tool",
+          "description": "The person who picks up escalations. How they work (queue console or ticketing tool) is still open.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "role": "human"
+        }
+      },
+      {
+        "id": "logs",
+        "type": "resource",
+        "position": {
+          "x": 2150,
+          "y": 890
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Logs & metrics",
+          "provider": "aws",
+          "kind": "monitor",
+          "description": "Logs, latency, error and escalation metrics for the API and Lambda. Retention is to be agreed.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "service": "Amazon CloudWatch"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e-user-web",
+        "source": "user",
+        "target": "web",
+        "type": "smoothstep",
+        "label": "HTTPS",
+        "integration": "browser-https"
+      },
+      {
+        "id": "e-web-idp",
+        "source": "web",
+        "target": "idp",
+        "type": "smoothstep",
+        "label": "sign-in (PKCE)",
+        "integration": "oauth-pkce"
+      },
+      {
+        "id": "e-idp-api",
+        "source": "idp",
+        "target": "api",
+        "type": "smoothstep",
+        "label": "JWT validation",
+        "integration": "jwt-authorizer"
+      },
+      {
+        "id": "e-web-api",
+        "source": "web",
+        "target": "api",
+        "type": "smoothstep",
+        "label": "chat message + token / reply"
+      },
+      {
+        "id": "e-api-chat",
+        "source": "api",
+        "target": "chat",
+        "type": "smoothstep",
+        "label": "invoke",
+        "integration": "http-api-lambda"
+      },
+      {
+        "id": "e-chat-state",
+        "source": "chat",
+        "target": "state",
+        "type": "smoothstep",
+        "label": "read/write user turns"
+      },
+      {
+        "id": "e-chat-model",
+        "source": "chat",
+        "target": "model",
+        "type": "smoothstep",
+        "label": "Converse (limited context)",
+        "integration": "bedrock-converse"
+      },
+      {
+        "id": "e-chat-esc",
+        "source": "chat",
+        "target": "escalation",
+        "type": "smoothstep",
+        "label": "send escalation"
+      },
+      {
+        "id": "e-esc-human",
+        "source": "escalation",
+        "target": "agent_human",
+        "type": "smoothstep",
+        "label": "review handoff"
+      },
+      {
+        "id": "e-chat-logs",
+        "source": "chat",
+        "target": "logs",
+        "type": "smoothstep",
+        "label": "logs/metrics"
+      }
+    ]
+  },
+  "discovery": {
+    "problem": "",
+    "brief": {
+      "application": "Use AWS for this synthetic architecture qualification. Build an authenticated conversational assistant for synthetic users. Include an application, per-user conversation state, model runtime, bounded context and an escalation path. No external actions in this first test. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+      "cloud": "AWS"
+    },
+    "facts": [
+      {
+        "id": "fact-96f43804",
+        "name": "cloud.preference",
+        "value": "aws",
+        "unit": "provider",
+        "text": "Use AWS for this synthetic architecture qualification. Build an authenticated conversational assistant for synthetic users. Include an application, per-user conversation state, model runtime, bounded context and an escalation path. No external actions in this first test. Draw the complete end-to-end",
+        "madeAt": "2026-11-07"
+      }
+    ],
+    "workflow": "general",
+    "asked": [],
+    "lastAsked": {
+      "id": "general:0",
+      "topic": "data",
+      "question": "What information will it work with, and where does it live?",
+      "beginner": "For example a database, documents, or another system's data.",
+      "why": "It shapes the AI architecture design."
+    }
+  },
+  "requirements": [
+    {
+      "id": "ai-user-isolation",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Proposed: each authenticated user can read and continue only their own conversations; requests without a valid token are rejected.",
+      "rationale": "Without this, one user could see another user's chat history.",
+      "basis": "Brief: 'authenticated conversational assistant' with 'per-user conversation state'.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "idp",
+        "api",
+        "chat",
+        "state"
+      ]
+    },
+    {
+      "id": "ai-bounded-context",
+      "kind": "nonfunctional",
+      "category": "cost",
+      "statement": "Proposed: the assistant sends the model only a limited window of recent conversation, with input and output limits set as configuration.",
+      "rationale": "Unlimited history makes cost and latency grow and can push past the model's limits.",
+      "basis": "Brief: 'bounded context'.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "chat",
+        "model"
+      ]
+    },
+    {
+      "id": "ai-escalation",
+      "kind": "functional",
+      "category": "reliability",
+      "statement": "Proposed: when the assistant cannot help or the user asks for a person, it records an escalation for human review and takes no other external action.",
+      "rationale": "Gives users a safe handoff while keeping the first test free of side effects.",
+      "basis": "Brief: 'an escalation path. No external actions in this first test.'",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "chat",
+        "escalation",
+        "agent_human"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use AWS for this synthetic architecture qualification.",
+      "options": "",
+      "decision": "aws",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.authenticated-conversational-assistant-on-aws-first-sketch",
+      "title": "Authenticated conversational assistant on AWS (first sketch)",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: a signed-in web chat for synthetic users, with conversation history kept separately for each user, a limited context window, Bedrock model calls and escalation to a person. No external actions. Assumptions: the region, account, model ID and who handles escalations are not decided yet. The chat Lambda, conversation table and escalation queue have no typed generator yet and still need engineering work. Nothing here is verified or deployed.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "extensions": {
+    "requirementNumbers": {
+      "drv-data-access": 1,
+      "drv-data-location": 2,
+      "ai-user-isolation": 3,
+      "ai-bounded-context": 4,
+      "ai-escalation": 5
+    },
+    "choices": {},
+    "conceptSig": null
+  }
+}

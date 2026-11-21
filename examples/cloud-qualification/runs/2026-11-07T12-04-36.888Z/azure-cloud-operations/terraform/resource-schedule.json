@@ -1,0 +1,582 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "inventory",
+      "address": "block_696e76656e746f7279",
+      "label": "Synthetic cloud inventory",
+      "provider": "tools",
+      "service": "Storage or existing data connector",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "resgraph",
+      "address": "block_7265736772617068",
+      "label": "Azure Resource Graph (read-only)",
+      "provider": "azure",
+      "service": "Azure Resource Graph",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "desired",
+      "address": "block_64657369726564",
+      "label": "Desired state (IaC repo)",
+      "provider": "tools",
+      "service": "Storage or existing data connector",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "orchestrator",
+      "address": "block_6f7263686573747261746f72",
+      "label": "Analysis orchestrator",
+      "provider": "azure",
+      "service": "Azure Functions (Durable Functions)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "inventory",
+        "resgraph"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "policy",
+      "address": "block_706f6c696379",
+      "label": "Policy checks",
+      "provider": "azure",
+      "service": "Azure Policy (compliance state, read-only)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "orchestrator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "drift",
+      "address": "block_6472696674",
+      "label": "Drift detection",
+      "provider": "azure",
+      "service": "Azure Functions (timer trigger)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "desired",
+        "orchestrator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "llm",
+      "address": "block_6c6c6d",
+      "label": "Plan generation model",
+      "provider": "azure",
+      "service": "Azure OpenAI Service",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "orchestrator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "artifacts",
+      "address": "block_617274696661637473",
+      "label": "Plan & diff store",
+      "provider": "azure",
+      "service": "Azure Blob Storage (versioned, immutable)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "orchestrator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "approval",
+      "address": "block_617070726f76616c",
+      "label": "Human review & approval",
+      "provider": "azure",
+      "service": "Azure DevOps Environments approval check",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "artifacts"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "reviewer",
+      "address": "block_7265766965776572",
+      "label": "Platform reviewer",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "approval"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "audit",
+      "address": "block_6175646974",
+      "label": "Audit log",
+      "provider": "azure",
+      "service": "Azure Monitor Log Analytics",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "orchestrator",
+        "approval"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "source": "inventory",
+      "target": "orchestrator",
+      "data": "synthetic snapshot",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e2",
+      "source": "resgraph",
+      "target": "orchestrator",
+      "data": "read-only query (Reader)",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e3",
+      "source": "desired",
+      "target": "drift",
+      "data": "baseline state",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e4",
+      "source": "orchestrator",
+      "target": "policy",
+      "data": "evaluate inventory",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e5",
+      "source": "orchestrator",
+      "target": "drift",
+      "data": "compare to baseline",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e6",
+      "source": "orchestrator",
+      "target": "llm",
+      "data": "findings → draft plan",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e7",
+      "source": "orchestrator",
+      "target": "artifacts",
+      "data": "write plan + diff",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e8",
+      "source": "artifacts",
+      "target": "approval",
+      "data": "diff for review",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e9",
+      "source": "approval",
+      "target": "reviewer",
+      "data": "approve / reject",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e10",
+      "source": "orchestrator",
+      "target": "audit",
+      "data": "run events",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e11",
+      "source": "approval",
+      "target": "audit",
+      "data": "decision record",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Synthetic cloud inventory: Existing — reference/import plan needed.",
+    "Azure Resource Graph (read-only): Implementation needed.",
+    "Desired state (IaC repo): Existing — reference/import plan needed.",
+    "Analysis orchestrator: Implementation needed.",
+    "Policy checks: Implementation needed.",
+    "Drift detection: Implementation needed.",
+    "Plan generation model: Implementation needed.",
+    "Plan & diff store: Implementation needed.",
+    "Human review & approval: Implementation needed.",
+    "Platform reviewer: Existing — reference/import plan needed.",
+    "Audit log: Implementation needed.",
+    "Wire inventory → orchestrator: implement data flow, access policy and acceptance test.",
+    "Wire resgraph → orchestrator: implement data flow, access policy and acceptance test.",
+    "Wire desired → drift: implement data flow, access policy and acceptance test.",
+    "Wire orchestrator → policy: implement data flow, access policy and acceptance test.",
+    "Wire orchestrator → drift: implement data flow, access policy and acceptance test.",
+    "Wire orchestrator → llm: implement data flow, access policy and acceptance test.",
+    "Wire orchestrator → artifacts: implement data flow, access policy and acceptance test.",
+    "Wire artifacts → approval: implement data flow, access policy and acceptance test.",
+    "Wire approval → reviewer: implement data flow, access policy and acceptance test.",
+    "Wire orchestrator → audit: implement data flow, access policy and acceptance test.",
+    "Wire approval → audit: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "resource-block_696e76656e746f7279",
+      "componentIds": [
+        "inventory"
+      ],
+      "taskId": "TASK-RESOURCE-696e76656e746f7279",
+      "message": "Synthetic cloud inventory: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_7265736772617068",
+      "componentIds": [
+        "resgraph"
+      ],
+      "taskId": "TASK-RESOURCE-7265736772617068",
+      "message": "Azure Resource Graph (read-only): Implementation needed."
+    },
+    {
+      "id": "resource-block_64657369726564",
+      "componentIds": [
+        "desired"
+      ],
+      "taskId": "TASK-RESOURCE-64657369726564",
+      "message": "Desired state (IaC repo): Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_6f7263686573747261746f72",
+      "componentIds": [
+        "orchestrator"
+      ],
+      "taskId": "TASK-RESOURCE-6f7263686573747261746f72",
+      "message": "Analysis orchestrator: Implementation needed."
+    },
+    {
+      "id": "resource-block_706f6c696379",
+      "componentIds": [
+        "policy"
+      ],
+      "taskId": "TASK-RESOURCE-706f6c696379",
+      "message": "Policy checks: Implementation needed."
+    },
+    {
+      "id": "resource-block_6472696674",
+      "componentIds": [
+        "drift"
+      ],
+      "taskId": "TASK-RESOURCE-6472696674",
+      "message": "Drift detection: Implementation needed."
+    },
+    {
+      "id": "resource-block_6c6c6d",
+      "componentIds": [
+        "llm"
+      ],
+      "taskId": "TASK-RESOURCE-6c6c6d",
+      "message": "Plan generation model: Implementation needed."
+    },
+    {
+      "id": "resource-block_617274696661637473",
+      "componentIds": [
+        "artifacts"
+      ],
+      "taskId": "TASK-RESOURCE-617274696661637473",
+      "message": "Plan & diff store: Implementation needed."
+    },
+    {
+      "id": "resource-block_617070726f76616c",
+      "componentIds": [
+        "approval"
+      ],
+      "taskId": "TASK-RESOURCE-617070726f76616c",
+      "message": "Human review & approval: Implementation needed."
+    },
+    {
+      "id": "resource-block_7265766965776572",
+      "componentIds": [
+        "reviewer"
+      ],
+      "taskId": "TASK-RESOURCE-7265766965776572",
+      "message": "Platform reviewer: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_6175646974",
+      "componentIds": [
+        "audit"
+      ],
+      "taskId": "TASK-RESOURCE-6175646974",
+      "message": "Audit log: Implementation needed."
+    },
+    {
+      "id": "connection-6531",
+      "edgeIds": [
+        "e1"
+      ],
+      "taskId": "TASK-INTEGRATION-6531",
+      "message": "Wire inventory → orchestrator: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6532",
+      "edgeIds": [
+        "e2"
+      ],
+      "taskId": "TASK-INTEGRATION-6532",
+      "message": "Wire resgraph → orchestrator: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6533",
+      "edgeIds": [
+        "e3"
+      ],
+      "taskId": "TASK-INTEGRATION-6533",
+      "message": "Wire desired → drift: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6534",
+      "edgeIds": [
+        "e4"
+      ],
+      "taskId": "TASK-INTEGRATION-6534",
+      "message": "Wire orchestrator → policy: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6535",
+      "edgeIds": [
+        "e5"
+      ],
+      "taskId": "TASK-INTEGRATION-6535",
+      "message": "Wire orchestrator → drift: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6536",
+      "edgeIds": [
+        "e6"
+      ],
+      "taskId": "TASK-INTEGRATION-6536",
+      "message": "Wire orchestrator → llm: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6537",
+      "edgeIds": [
+        "e7"
+      ],
+      "taskId": "TASK-INTEGRATION-6537",
+      "message": "Wire orchestrator → artifacts: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6538",
+      "edgeIds": [
+        "e8"
+      ],
+      "taskId": "TASK-INTEGRATION-6538",
+      "message": "Wire artifacts → approval: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6539",
+      "edgeIds": [
+        "e9"
+      ],
+      "taskId": "TASK-INTEGRATION-6539",
+      "message": "Wire approval → reviewer: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-653130",
+      "edgeIds": [
+        "e10"
+      ],
+      "taskId": "TASK-INTEGRATION-653130",
+      "message": "Wire orchestrator → audit: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-653131",
+      "edgeIds": [
+        "e11"
+      ],
+      "taskId": "TASK-INTEGRATION-653131",
+      "message": "Wire approval → audit: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

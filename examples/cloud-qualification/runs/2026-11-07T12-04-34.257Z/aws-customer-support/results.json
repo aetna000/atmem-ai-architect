@@ -1,0 +1,63 @@
+{
+  "provider": "aws-customer-support",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Customer and tenant boundaries preserved",
+    "Answers cite approved knowledge",
+    "Unsupported promises escalate to staff",
+    "Sensitive customer fields excluded from model input",
+    "Approved ticket updates are idempotent and auditable"
+  ],
+  "components": [
+    {
+      "id": "staff",
+      "binding": "web-browser"
+    },
+    {
+      "id": "web",
+      "service": "Amazon CloudFront"
+    },
+    {
+      "id": "auth",
+      "service": "Amazon Cognito"
+    },
+    {
+      "id": "api",
+      "service": "Amazon API Gateway"
+    },
+    {
+      "id": "assistant",
+      "service": "AWS Lambda"
+    },
+    {
+      "id": "knowledge",
+      "service": "Amazon DynamoDB"
+    },
+    {
+      "id": "tickets"
+    },
+    {
+      "id": "crm"
+    },
+    {
+      "id": "model",
+      "service": "Amazon Bedrock",
+      "binding": "aws-bedrock-model"
+    },
+    {
+      "id": "escalation",
+      "service": "Amazon SQS"
+    },
+    {
+      "id": "audit",
+      "service": "Amazon CloudWatch Logs"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

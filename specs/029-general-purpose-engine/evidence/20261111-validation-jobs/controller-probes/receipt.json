@@ -1,0 +1,146 @@
+{
+  "passed": true,
+  "checks": [
+    {
+      "expectedStatus": "passed",
+      "validator": "policy-http-probe",
+      "artifactSha256": "73c4822e2f906d8c9fb6b9156204344ad9919184939ed33d0ecee418a57561e0",
+      "imageId": "sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20",
+      "platform": "linux/amd64",
+      "command": [
+        "/usr/local/bin/python3",
+        "policy_probe.py"
+      ],
+      "status": "passed",
+      "exitCode": 0,
+      "skipped": 0,
+      "testsReported": null,
+      "reason": null,
+      "output": "PASS: nonroot/no-groups/no-effective-capabilities/no-new-privileges/read-only-source/no-Docker/no-host-mount/no-host-secret/no-raw-socket/no-external-or-host-network/actual-isolated-loopback-HTTP\nPython: 3.13.18 (main, Nov  5 2026, 07:59:38) [GCC 14.2.0]\n",
+      "outputTruncated": false,
+      "durationSeconds": 0.734,
+      "evidenceLevel": "local_container_check",
+      "cloudOperations": false,
+      "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+    },
+    {
+      "expectedStatus": "failed",
+      "validator": "timeout-probe",
+      "artifactSha256": "8cdf3b0e592704e0ddbaa0b1482587315d41d3ff43ff946a7692bbf3035837a2",
+      "imageId": "sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20",
+      "platform": "linux/amd64",
+      "command": [
+        "/usr/local/bin/python3",
+        "wait.py"
+      ],
+      "status": "failed",
+      "exitCode": 137,
+      "skipped": 0,
+      "testsReported": null,
+      "reason": "timeout",
+      "output": "",
+      "outputTruncated": false,
+      "durationSeconds": 2.157,
+      "evidenceLevel": "local_container_check",
+      "cloudOperations": false,
+      "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+    },
+    {
+      "expectedStatus": "incomplete",
+      "validator": "skip-probe",
+      "artifactSha256": "86768457c32c36f4a81a38544ea8ba6bae82f1b1c5232a90f08f47598438bba7",
+      "imageId": "sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20",
+      "platform": "linux/amd64",
+      "command": [
+        "/usr/local/bin/python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-v"
+      ],
+      "status": "incomplete",
+      "exitCode": 0,
+      "skipped": 1,
+      "testsReported": 1,
+      "reason": null,
+      "output": "test_missing (test_skip.Missing.test_missing) ... skipped 'deliberately missing evidence'\n\n----------------------------------------------------------------------\nRan 1 test in 0.001s\n\nOK (skipped=1)\n",
+      "outputTruncated": false,
+      "durationSeconds": 0.691,
+      "evidenceLevel": "local_container_check",
+      "cloudOperations": false,
+      "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+    },
+    {
+      "expectedStatus": "failed",
+      "validator": "zero-tests-probe",
+      "artifactSha256": "0f484f34c9316b0ca9f478b8dd36d9d96755e529b7b10a27d49a8bdd0bb8cf74",
+      "imageId": "sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20",
+      "platform": "linux/amd64",
+      "command": [
+        "/usr/local/bin/python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-v"
+      ],
+      "status": "failed",
+      "exitCode": 5,
+      "skipped": 0,
+      "testsReported": 0,
+      "reason": "no_tests_reported",
+      "output": "\n----------------------------------------------------------------------\nRan 0 tests in 0.000s\n\nNO TESTS RAN\n",
+      "outputTruncated": false,
+      "durationSeconds": 0.738,
+      "evidenceLevel": "local_container_check",
+      "cloudOperations": false,
+      "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+    },
+    {
+      "expectedStatus": "failed",
+      "validator": "zip-slip-probe",
+      "artifactSha256": "2847e73d272f1ad7fff504835733f82f2df0a6617ad648cb54c794e22e8224f9",
+      "imageId": "sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20",
+      "platform": "linux/amd64",
+      "command": [
+        "/usr/local/bin/python3",
+        "escape.py"
+      ],
+      "status": "failed",
+      "exitCode": 1,
+      "skipped": 0,
+      "testsReported": null,
+      "reason": null,
+      "output": "Traceback (most recent call last):\n  File \"<string>\", line 16, in <module>\n    raise RuntimeError('Unsafe or duplicate archive entry')\nRuntimeError: Unsafe or duplicate archive entry\n",
+      "outputTruncated": false,
+      "durationSeconds": 0.445,
+      "evidenceLevel": "local_container_check",
+      "cloudOperations": false,
+      "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+    },
+    {
+      "expectedStatus": "failed",
+      "validator": "output-limit-probe",
+      "artifactSha256": "561b485704a7ca9d61dd70463e1d0a02beb25f41da08081da46e4d14487457de",
+      "imageId": "sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20",
+      "platform": "linux/amd64",
+      "command": [
+        "/usr/local/bin/python3",
+        "loud.py"
+      ],
+      "status": "failed",
+      "exitCode": 0,
+      "skipped": 0,
+      "testsReported": null,
+      "reason": "output_limit",
+      "output": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "outputTruncated": true,
+      "durationSeconds": 0.486,
+      "evidenceLevel": "local_container_check",
+      "cloudOperations": false,
+      "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+    }
+  ],
+  "hostCanaryConnections": 0,
+  "cloudOperations": false,
+  "boundary": "Actual isolated cached Linux container execution: policy/loopback success plus timeout, skipped evidence, traversal and output-limit rejection. No generated application or full-system acceptance."
+}

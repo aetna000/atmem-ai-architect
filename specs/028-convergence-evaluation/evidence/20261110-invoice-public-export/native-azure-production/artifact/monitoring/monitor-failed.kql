@@ -1,0 +1,19 @@
+union (
+ContainerAppConsoleLogs
+| where TimeGenerated > ago(1h)
+| where EnvironmentName == '${local.name}'
+| where JobName == '${local.name}-monitor' or JobName startswith '${local.name}-monitor-' or ContainerGroupName startswith '${local.name}-monitor-'
+| where ContainerName == 'operator'
+| extend receipt=parse_json(Log)
+| where receipt.format == 'invoice-operator-v1' and receipt.status in ('failed','attention','backlog')
+| project TimeGenerated
+), (
+ContainerAppSystemLogs
+| where TimeGenerated > ago(1h)
+| where EnvironmentName == '${local.name}'
+| where JobName == '${local.name}-monitor' or JobName startswith '${local.name}-monitor-' or ReplicaName startswith '${local.name}-monitor-'
+| where Type =~ 'Warning' or Type =~ 'Error'
+| project TimeGenerated
+)
+| summarize Failures=count()
+| where Failures > 0

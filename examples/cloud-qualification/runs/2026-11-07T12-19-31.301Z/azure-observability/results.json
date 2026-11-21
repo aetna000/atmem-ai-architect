@@ -1,0 +1,90 @@
+{
+  "provider": "azure-observability",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Redact secrets before model input",
+    "Link conclusions to exact trace or log IDs",
+    "Prompt injection in a log cannot issue tool calls",
+    "Missing spans yield uncertainty rather than invented causes",
+    "Repeated ingestion preserves a consistent incident timeline"
+  ],
+  "staticAssessment": {
+    "kind": "static-graph-checks",
+    "checks": [
+      {
+        "name": "Application contains at least three required components",
+        "passed": true
+      },
+      {
+        "name": "Required components form one connected graph",
+        "passed": true
+      },
+      {
+        "name": "Proposed cloud resources retain the requested provider",
+        "passed": true
+      },
+      {
+        "name": "Proposed cloud components name concrete services",
+        "passed": true
+      },
+      {
+        "name": "AI application has not collapsed into only object storage",
+        "passed": true
+      }
+    ],
+    "passed": true,
+    "limitations": [
+      "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+    ],
+    "acceptanceRequirements": [
+      "Redact secrets before model input",
+      "Link conclusions to exact trace or log IDs",
+      "Prompt injection in a log cannot issue tool calls",
+      "Missing spans yield uncertainty rather than invented causes",
+      "Repeated ingestion preserves a consistent incident timeline"
+    ]
+  },
+  "components": [
+    {
+      "id": "svc"
+    },
+    {
+      "id": "eh",
+      "service": "Azure Event Hubs"
+    },
+    {
+      "id": "redact",
+      "service": "Azure Functions"
+    },
+    {
+      "id": "adx",
+      "service": "Azure Data Explorer"
+    },
+    {
+      "id": "runtime",
+      "service": "Azure Container Apps"
+    },
+    {
+      "id": "aoai",
+      "service": "Azure OpenAI Service"
+    },
+    {
+      "id": "operator"
+    },
+    {
+      "id": "entra",
+      "service": "Microsoft Entra ID"
+    },
+    {
+      "id": "mon",
+      "service": "Azure Monitor Application Insights"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

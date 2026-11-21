@@ -1,0 +1,105 @@
+{
+  "terraform": {
+    "required_version": ">= 1.7.0, < 2.0.0",
+    "required_providers": {
+      "google": {
+        "source": "hashicorp/google",
+        "version": "~> 7.0"
+      }
+    }
+  },
+  "provider": {
+    "google": {
+      "project": "${var.project_id}",
+      "region": "${var.region}"
+    }
+  },
+  "variable": {
+    "review_approved": {
+      "type": "bool",
+      "default": false,
+      "description": "Explicitly review the real destination, permissions, cost and plan before apply."
+    },
+    "region": {
+      "type": "string",
+      "description": "Reviewed provider-native region; emulator region does not select a deployment location."
+    },
+    "project_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Reviewed existing Google Cloud project."
+    },
+    "principal_member": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing serviceAccount:email identity for object CRUD; no allUsers or allAuthenticatedUsers.",
+      "validation": {
+        "condition": "${can(regex(\"^serviceAccount:[^@ ]+@[^ ]+\\\\.iam\\\\.gserviceaccount\\\\.com$\", var.principal_member))}",
+        "error_message": "Select a specific existing service account."
+      }
+    },
+    "block_6275636b6574_name": {
+      "type": "string",
+      "nullable": false,
+      "description": "Globally unique reviewed storage name."
+    }
+  },
+  "locals": {
+    "unfinished_work": []
+  },
+  "resource": {
+    "terraform_data": {
+      "review_gate": {
+        "input": {
+          "design_revision": 2,
+          "environment": "staging"
+        },
+        "lifecycle": {
+          "precondition": [
+            {
+              "condition": "${var.review_approved && length(local.unfinished_work) == 0}",
+              "error_message": "Unfinished work or missing review blocks deployment."
+            }
+          ]
+        }
+      }
+    },
+    "google_storage_bucket": {
+      "block_6275636b6574": {
+        "name": "${var.block_6275636b6574_name}",
+        "project": "${var.project_id}",
+        "location": "${var.region}",
+        "uniform_bucket_level_access": true,
+        "public_access_prevention": "enforced",
+        "versioning": {
+          "enabled": true
+        },
+        "force_destroy": false,
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "google_storage_bucket_iam_member": {
+      "block_6275636b6574": {
+        "bucket": "${google_storage_bucket.block_6275636b6574.name}",
+        "role": "roles/storage.objectUser",
+        "member": "${var.principal_member}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    }
+  },
+  "output": {
+    "design_revision": {
+      "value": 2
+    },
+    "environment": {
+      "value": "staging"
+    }
+  }
+}

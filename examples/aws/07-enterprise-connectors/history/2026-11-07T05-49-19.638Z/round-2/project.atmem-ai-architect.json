@@ -1,0 +1,465 @@
+{
+  "format": "atmem.ai-architect.project",
+  "formatVersion": "2.3.0",
+  "meta": {
+    "id": "7c2bdfaa-3ca0-42a6-9553-ee11dcb0d9be",
+    "name": "AWS knowledge assistant (SharePoint/Confluence, cited answers)",
+    "createdAt": "2026-11-07T05:54:29.024Z",
+    "updatedAt": "2026-11-07T05:54:29.024Z",
+    "revision": 3,
+    "generator": "atmem-ai-architect 0.2.0"
+  },
+  "design": {
+    "provider": "aws",
+    "nodes": [
+      {
+        "id": "rag-web",
+        "type": "resource",
+        "position": {
+          "x": 470,
+          "y": 60
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Web app (CloudFront)",
+          "provider": "aws",
+          "kind": "output",
+          "description": "Browser web app used by signed-in staff, who are outside the provisioning scope. It owns its private S3 assets and CloudFront access control. It signs users in with authorization code plus PKCE, calls the RAG API and shows answers with citations. Candidate region: ap-southeast-2 (not approved).",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "implementation": "rag-web-app",
+          "role": "app",
+          "service": "Amazon CloudFront"
+        }
+      },
+      {
+        "id": "rag-cognito",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 135
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "User sign-in (Cognito)",
+          "provider": "aws",
+          "kind": "guard",
+          "description": "User pool with admin-created users, required software-token MFA and an access-token scope. Users are onboarded through the generated operator tool. Their identity and employee-region mappings are kept in the catalog.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "implementation": "rag-user-pool",
+          "role": "guard",
+          "service": "Amazon Cognito"
+        }
+      },
+      {
+        "id": "rag-api",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 60
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "RAG API (API Gateway)",
+          "provider": "aws",
+          "kind": "tool",
+          "description": "Bounded, authenticated HTTP API with a JWT browser route. There is no anonymous access. Access logs support audit.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "implementation": "iam-rag-api",
+          "role": "app",
+          "service": "Amazon API Gateway"
+        }
+      },
+      {
+        "id": "rag-lambda",
+        "type": "resource",
+        "position": {
+          "x": 1730,
+          "y": 60
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Keyword RAG (Lambda)",
+          "provider": "aws",
+          "kind": "agent",
+          "description": "Runs keyword retrieval (this is not vector search) over the catalog. It filters by ACL and employee region, rechecks each document's revision, and returns a cited answer. Unknown identities fail closed. It owns its execution role, logs, version and alias.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "implementation": "bounded-keyword-rag",
+          "role": "app",
+          "service": "AWS Lambda"
+        }
+      },
+      {
+        "id": "rag-catalog",
+        "type": "resource",
+        "position": {
+          "x": 2150,
+          "y": 340
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Document catalog (DynamoDB)",
+          "provider": "aws",
+          "kind": "history",
+          "description": "Holds up to 100 small UTF-8 documents with explicit ACLs, revisions, sync checkpoints and identity mappings. Caller roles cannot write to it.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "implementation": "bounded-rag-catalog",
+          "role": "index",
+          "service": "Amazon DynamoDB"
+        }
+      },
+      {
+        "id": "bedrock",
+        "type": "resource",
+        "position": {
+          "x": 2150,
+          "y": 50
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Amazon Bedrock model",
+          "provider": "aws",
+          "kind": "predict",
+          "description": "A direct foundation model chosen through a required model-ID input. Its access, Converse support, quotas and availability in the candidate region are not verified.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "poc": true,
+          "binding": "aws-bedrock-model",
+          "role": "llm",
+          "service": "Amazon Bedrock"
+        }
+      },
+      {
+        "id": "src-sharepoint",
+        "type": "resource",
+        "position": {
+          "x": 1730,
+          "y": 340
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "SharePoint (local test server)",
+          "provider": "tools",
+          "kind": "source",
+          "description": "Approved local normalized source-contract test server. It sends a snapshot with explicit ACLs, updates and deletes. This is not the native SharePoint API or a real tenant.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "poc": true,
+          "binding": "normalized-source-contract",
+          "role": "data"
+        }
+      },
+      {
+        "id": "src-confluence",
+        "type": "resource",
+        "position": {
+          "x": 1730,
+          "y": 620
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Confluence (local test server)",
+          "provider": "tools",
+          "kind": "source",
+          "description": "Approved local normalized source-contract test server. It sends a snapshot with explicit ACLs, updates and deletes. This is not the native Confluence API or a real tenant.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "poc": true,
+          "binding": "normalized-source-contract",
+          "role": "data"
+        }
+      },
+      {
+        "id": "teams-later",
+        "type": "resource",
+        "position": {
+          "x": 50,
+          "y": 340
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Microsoft Teams (later)",
+          "provider": "tools",
+          "kind": "resource",
+          "description": "Deferred channel, out of scope for this stage. It has no integration yet. This is an open unresolved gate: it needs a Teams bot channel calling the RAG API, or an explicit scope exclusion.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e-web-cognito",
+        "source": "rag-web",
+        "target": "rag-cognito",
+        "type": "smoothstep",
+        "label": "sign in (PKCE + MFA)",
+        "integration": "oauth-pkce"
+      },
+      {
+        "id": "e-cognito-api",
+        "source": "rag-cognito",
+        "target": "rag-api",
+        "type": "smoothstep",
+        "label": "JWT authorizer",
+        "integration": "jwt-authorizer"
+      },
+      {
+        "id": "e-web-api",
+        "source": "rag-web",
+        "target": "rag-api",
+        "type": "smoothstep",
+        "label": "question / cited answer",
+        "integration": "web-rag-api"
+      },
+      {
+        "id": "e-api-lambda",
+        "source": "rag-api",
+        "target": "rag-lambda",
+        "type": "smoothstep",
+        "label": "invoke",
+        "integration": "http-api-lambda"
+      },
+      {
+        "id": "e-lambda-catalog",
+        "source": "rag-lambda",
+        "target": "rag-catalog",
+        "type": "smoothstep",
+        "label": "ACL-filtered keyword lookup",
+        "integration": "lambda-catalog-read"
+      },
+      {
+        "id": "e-lambda-bedrock",
+        "source": "rag-lambda",
+        "target": "bedrock",
+        "type": "smoothstep",
+        "label": "Converse (grounded answer)",
+        "integration": "bedrock-converse"
+      },
+      {
+        "id": "e-sp-catalog",
+        "source": "src-sharepoint",
+        "target": "rag-catalog",
+        "type": "smoothstep",
+        "label": "sync docs, ACLs, deletes",
+        "integration": "source-catalog-sync"
+      },
+      {
+        "id": "e-cf-catalog",
+        "source": "src-confluence",
+        "target": "rag-catalog",
+        "type": "smoothstep",
+        "label": "sync docs, ACLs, deletes",
+        "integration": "source-catalog-sync"
+      }
+    ]
+  },
+  "discovery": {
+    "problem": "",
+    "brief": {
+      "application": "Design an AWS knowledge assistant that reads approved documents from existing SharePoint and Confluence systems and provides cited answers through a web application, with Teams as a later channel. Preserve source permissions, updates and deletes. For this stage use the approved local normalized source-contract test servers and bounded keyword retrieval. Keep the requested web application as required scope; an HTTP API alone does not complete that channel. Treat those existing systems as external dependencies; include recovery and audit behavior without claiming native vendor API or real tenant compatibility. Use AWS for this synthetic qualification design. Propose Sydney as a candidate region, but do not record that as an approved deployment region. Draw the architecture and identify the next missing decision. This is a test design, not an instruction to deploy.",
+      "cloud": "AWS",
+      "data": "Review this same architecture and its generated Terraform. Keep the original scenario scope and preserve valid component IDs and existing systems. Validation findings: [{\"id\":\"architecture-connected-graph\",\"owner\":\"architecture\",\"message\":\"Architecture check failed: connected-graph\"},{\"id\":\"architecture-connected-components\",\"owner\":\"architecture\",\"message\":\"Architecture check failed: connected-components\"},{\"id\":\"unfinished-resource-block_75736572\",\"owner\":\"implementation\",\"message\":\"Unresolved generated work: resource-block_75736572\"},{\"id\":\"unfinished-resource-block_7465616d732d6c61746572\",\"owner\":\"implementation\",\"message\":\"Unresolved generated work: resource-block_7465616d732d6c61746572\"},{\"id\":\"unfinished-connection-652d757365722d776562\",\"owner\":\"implementation\",\"message\":\"Unresolved generated work: connection-652d757365722d776562\"},{\"id\":\"application-not-qualified\",\"owner\":\"application\",\"message\":\"No executable application acceptance evidence for this artifact.\"},{\"id\":\"provider-schema-unverified\",\"owner\":\"validation\",\"message\":\"Run provider-schema validation against this exact export.\"},{\"id\":\"requirements-review-unverified\",\"owner\":\"review\",\"message\":\"Review requirements against emitted configuration, including identity, limits, region, costs and cleanup.\"}]. Correct architecture defects through a proposal where supported. For missing native resources, application code or integrations, explain the product implementation gap and next concrete engineering action; do not claim a diagram edit implemented it. Do not remove required components, weaken acceptance checks or clear unfinished-work gates to obtain a pass. Do not claim tests ran or request deployment. Identify what remains unverified."
+    },
+    "facts": [
+      {
+        "id": "fact-eddb1af6",
+        "name": "cloud.preference",
+        "value": "aws",
+        "unit": "provider",
+        "text": "Design an AWS knowledge assistant that reads approved documents from existing SharePoint and Confluence systems and provides cited answers through a web application, with Teams as a later channel. Preserve source permissions, updates and deletes. For this stage use the approved local normalized sour",
+        "madeAt": "2026-11-07"
+      }
+    ],
+    "workflow": "document-processing",
+    "asked": [
+      "knowledge-assistant:0"
+    ],
+    "lastAsked": {
+      "id": "document-processing:0",
+      "topic": "data",
+      "question": "What kinds of documents arrive, and how many a month?",
+      "beginner": "For example “invoices, about 3,000 a month, mostly PDF”.",
+      "why": "It shapes the Document extraction design."
+    }
+  },
+  "requirements": [
+    {
+      "id": "req-8019f715",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Every answer shows its sources",
+      "priority": "should",
+      "status": "open",
+      "source": "user",
+      "links": []
+    },
+    {
+      "id": "ai-source-permissions",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Proposed: answers only use documents the signed-in user is allowed to open, based on explicit ACLs synced from each source; unknown identities are denied.",
+      "rationale": "Without permission checks, people could see confidential content through answers.",
+      "basis": "User: \"Preserve source permissions, updates and deletes.\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "src-sharepoint",
+        "src-confluence",
+        "rag-catalog",
+        "rag-lambda"
+      ]
+    },
+    {
+      "id": "ai-source-freshness",
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "statement": "Proposed: source updates and deletes reach the catalog with conditional writes and recovery checkpoints, so deleted documents are never cited again.",
+      "rationale": "Out-of-date or deleted content in answers causes wrong or non-compliant responses.",
+      "basis": "User: \"Preserve source permissions, updates and deletes\" and \"include recovery and audit behavior\".",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "src-sharepoint",
+        "src-confluence",
+        "rag-catalog"
+      ]
+    },
+    {
+      "id": "ai-web-channel",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Proposed: staff use a web application with MFA sign-in to ask questions and see cited answers. Teams is out of scope for this stage.",
+      "rationale": "The HTTP API alone does not give people somewhere to use the assistant.",
+      "basis": "User: \"provides cited answers through a web application, with Teams as a later channel\".",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "rag-web",
+        "rag-cognito",
+        "rag-api"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use AWS for this synthetic qualification design",
+      "options": "",
+      "decision": "aws",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.first-aws-sketch-bounded-keyword-rag-with-web-app",
+      "title": "First AWS sketch: bounded keyword RAG with web app",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: this is a synthetic qualification design. Local normalized source-contract test servers stand in for SharePoint and Confluence. They sync into a bounded DynamoDB catalog of up to 100 small documents with explicit ACLs. People use a CloudFront web app that signs them in through Cognito (PKCE plus MFA). The app calls an API Gateway endpoint with a JWT authorizer. A Lambda does keyword retrieval, checks ACLs and user region, and asks Bedrock for a cited answer. Assumptions: Sydney (ap-southeast-2) is a candidate region only. The Bedrock model ID, its access in that region and its quotas are still unverified. This design does not include native vendor APIs, group expansion or inherited permissions. Teams is deferred. Nothing has been deployed.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    },
+    {
+      "id": "adr-003",
+      "subject": "design.fold-the-person-actor-into-the-web-app-keep-the-teams-gate",
+      "title": "Fold the person actor into the web app; keep the Teams gate",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: same bounded keyword RAG qualification design on AWS. This removes the 'user' node, which represents a person rather than a deployable resource, and its edge 'e-user-web'. Signed-in staff are now described in the rag-web component. All other IDs, typed integrations, existing local source-contract servers and the deferred Teams placeholder are preserved. Assumptions: the browser web app is the only required channel at this stage. The Teams gap stays deliberately unresolved. Sydney is a candidate region only. Nothing is verified or deployed.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 3.",
+      "consequences": "",
+      "revision": 2,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "extensions": {
+    "requirementNumbers": {
+      "req-8019f715": 1,
+      "drv-data-access": 2,
+      "drv-data-location": 3,
+      "ai-source-permissions": 4,
+      "ai-source-freshness": 5,
+      "ai-web-channel": 6
+    },
+    "conceptSig": null,
+    "choices": {}
+  }
+}

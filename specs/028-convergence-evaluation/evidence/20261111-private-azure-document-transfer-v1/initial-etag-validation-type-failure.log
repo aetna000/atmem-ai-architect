@@ -1,0 +1,27 @@
+test_alias_and_symlink_mounts_are_rejected (__main__.AzureTransferContract.test_alias_and_symlink_mounts_are_rejected) ... ok
+test_bounded_metadata_selects_only_transfer_identity (__main__.AzureTransferContract.test_bounded_metadata_selects_only_transfer_identity) ... ERROR
+test_cli_errors_do_not_print_metadata_or_document (__main__.AzureTransferContract.test_cli_errors_do_not_print_metadata_or_document) ... ok
+test_download_preserves_bytes_with_native_uid_compatible_permissions (__main__.AzureTransferContract.test_download_preserves_bytes_with_native_uid_compatible_permissions) ... ok
+test_existing_content_is_never_adopted (__main__.AzureTransferContract.test_existing_content_is_never_adopted) ... ok
+test_mismatched_native_bytes_publish_no_file (__main__.AzureTransferContract.test_mismatched_native_bytes_publish_no_file) ... ok
+test_symlink_and_fifo_outputs_are_not_followed_or_blocked_on (__main__.AzureTransferContract.test_symlink_and_fifo_outputs_are_not_followed_or_blocked_on) ... ok
+test_upload_checks_outer_and_inner_byte_identity (__main__.AzureTransferContract.test_upload_checks_outer_and_inner_byte_identity) ... ok
+
+======================================================================
+ERROR: test_bounded_metadata_selects_only_transfer_identity (__main__.AzureTransferContract.test_bounded_metadata_selects_only_transfer_identity)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_azure_transfer_acceptance.py", line 57, in test_bounded_metadata_selects_only_transfer_identity
+    with self.assertRaises(ValueError): metadata(json.dumps(changed))
+                                        ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/enterprise_azure_transfer.py", line 33, in metadata
+    etag(value['inputETag'])
+    ~~~~^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/enterprise_azure_objects.py", line 33, in etag
+    raise SourceUnavailable('document_object_unavailable')
+enterprise_sources.SourceUnavailable: document_object_unavailable
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.014s
+
+FAILED (errors=1)

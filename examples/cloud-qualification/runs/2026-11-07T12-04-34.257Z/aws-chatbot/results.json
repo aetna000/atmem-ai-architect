@@ -1,0 +1,60 @@
+{
+  "provider": "aws-chatbot",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "One user cannot read another conversation",
+    "Context and response sizes are bounded",
+    "Model outage produces a recoverable response",
+    "Deleting a conversation removes its stored context",
+    "Escalation retains the approved conversation context"
+  ],
+  "components": [
+    {
+      "id": "user",
+      "binding": "web-browser"
+    },
+    {
+      "id": "web",
+      "service": "Amazon CloudFront"
+    },
+    {
+      "id": "idp",
+      "service": "Amazon Cognito"
+    },
+    {
+      "id": "api",
+      "service": "Amazon API Gateway"
+    },
+    {
+      "id": "chat",
+      "service": "AWS Lambda"
+    },
+    {
+      "id": "state",
+      "service": "Amazon DynamoDB"
+    },
+    {
+      "id": "model",
+      "service": "Amazon Bedrock",
+      "binding": "aws-bedrock-model"
+    },
+    {
+      "id": "escalation",
+      "service": "Amazon SQS"
+    },
+    {
+      "id": "agent_human"
+    },
+    {
+      "id": "logs",
+      "service": "Amazon CloudWatch"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

@@ -1,0 +1,475 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "devices",
+      "address": "block_64657669636573",
+      "label": "Synthetic sensor devices",
+      "provider": "tools",
+      "service": "Storage or existing data connector",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "iot",
+      "address": "block_696f74",
+      "label": "Ingestion",
+      "provider": "aws",
+      "service": "AWS ingestion service",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Messages, connections, processing and retention",
+      "dependencies": [
+        "devices"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "buffer",
+      "address": "block_627566666572",
+      "label": "Durable buffer",
+      "provider": "aws",
+      "service": "AWS ingestion service",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Messages, connections, processing and retention",
+      "dependencies": [
+        "iot"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "scorer",
+      "address": "block_73636f726572",
+      "label": "Validation & scoring",
+      "provider": "aws",
+      "service": "AWS Lambda",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_lambda_function",
+        "aws_iam_role"
+      ],
+      "costDrivers": "Requests, duration, memory and logs",
+      "dependencies": [
+        "buffer"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "quarantine",
+      "address": "block_71756172616e74696e65",
+      "label": "Invalid event quarantine",
+      "provider": "aws",
+      "service": "Amazon SQS",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_sqs_queue"
+      ],
+      "costDrivers": "Requests, payload size and transfer",
+      "dependencies": [
+        "scorer"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "model",
+      "address": "block_6d6f64656c",
+      "label": "Anomaly model",
+      "provider": "aws",
+      "service": "Amazon SageMaker AI",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Training, serving instances, processing and storage",
+      "dependencies": [
+        "scorer"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "results",
+      "address": "block_726573756c7473",
+      "label": "Anomaly results",
+      "provider": "aws",
+      "service": "Amazon DynamoDB",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_dynamodb_table"
+      ],
+      "costDrivers": "Read/write requests, storage and backup",
+      "dependencies": [
+        "scorer"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "alerts",
+      "address": "block_616c65727473",
+      "label": "Operator alert",
+      "provider": "aws",
+      "service": "Amazon SNS",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "scorer"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "operator",
+      "address": "block_6f70657261746f72",
+      "label": "Operator",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "alerts"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e-devices-iot",
+      "source": "devices",
+      "target": "iot",
+      "data": "MQTT sensor events",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-iot-buffer",
+      "source": "iot",
+      "target": "buffer",
+      "data": "IoT rule → PutRecord",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-buffer-scorer",
+      "source": "buffer",
+      "target": "scorer",
+      "data": "Event source mapping (batches)",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-scorer-quarantine",
+      "source": "scorer",
+      "target": "quarantine",
+      "data": "Invalid/failed events",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-scorer-model",
+      "source": "scorer",
+      "target": "model",
+      "data": "InvokeEndpoint → score",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-scorer-results",
+      "source": "scorer",
+      "target": "results",
+      "data": "Conditional write result",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-scorer-alerts",
+      "source": "scorer",
+      "target": "alerts",
+      "data": "Publish anomaly",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-alerts-operator",
+      "source": "alerts",
+      "target": "operator",
+      "data": "Alert notification",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Synthetic sensor devices: Existing — reference/import plan needed.",
+    "Ingestion: Implementation needed.",
+    "Durable buffer: Implementation needed.",
+    "Validation & scoring: Implementation needed.",
+    "Invalid event quarantine: Implementation needed.",
+    "Anomaly model: Implementation needed.",
+    "Anomaly results: Implementation needed.",
+    "Operator alert: Implementation needed.",
+    "Operator: Existing — reference/import plan needed.",
+    "Wire devices → iot: implement data flow, access policy and acceptance test.",
+    "Wire iot → buffer: implement data flow, access policy and acceptance test.",
+    "Wire buffer → scorer: implement data flow, access policy and acceptance test.",
+    "Wire scorer → quarantine: implement data flow, access policy and acceptance test.",
+    "Wire scorer → model: implement data flow, access policy and acceptance test.",
+    "Wire scorer → results: implement data flow, access policy and acceptance test.",
+    "Wire scorer → alerts: implement data flow, access policy and acceptance test.",
+    "Wire alerts → operator: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "resource-block_64657669636573",
+      "componentIds": [
+        "devices"
+      ],
+      "taskId": "TASK-RESOURCE-64657669636573",
+      "message": "Synthetic sensor devices: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_696f74",
+      "componentIds": [
+        "iot"
+      ],
+      "taskId": "TASK-RESOURCE-696f74",
+      "message": "Ingestion: Implementation needed."
+    },
+    {
+      "id": "resource-block_627566666572",
+      "componentIds": [
+        "buffer"
+      ],
+      "taskId": "TASK-RESOURCE-627566666572",
+      "message": "Durable buffer: Implementation needed."
+    },
+    {
+      "id": "resource-block_73636f726572",
+      "componentIds": [
+        "scorer"
+      ],
+      "taskId": "TASK-RESOURCE-73636f726572",
+      "message": "Validation & scoring: Implementation needed."
+    },
+    {
+      "id": "resource-block_71756172616e74696e65",
+      "componentIds": [
+        "quarantine"
+      ],
+      "taskId": "TASK-RESOURCE-71756172616e74696e65",
+      "message": "Invalid event quarantine: Implementation needed."
+    },
+    {
+      "id": "resource-block_6d6f64656c",
+      "componentIds": [
+        "model"
+      ],
+      "taskId": "TASK-RESOURCE-6d6f64656c",
+      "message": "Anomaly model: Implementation needed."
+    },
+    {
+      "id": "resource-block_726573756c7473",
+      "componentIds": [
+        "results"
+      ],
+      "taskId": "TASK-RESOURCE-726573756c7473",
+      "message": "Anomaly results: Implementation needed."
+    },
+    {
+      "id": "resource-block_616c65727473",
+      "componentIds": [
+        "alerts"
+      ],
+      "taskId": "TASK-RESOURCE-616c65727473",
+      "message": "Operator alert: Implementation needed."
+    },
+    {
+      "id": "resource-block_6f70657261746f72",
+      "componentIds": [
+        "operator"
+      ],
+      "taskId": "TASK-RESOURCE-6f70657261746f72",
+      "message": "Operator: Existing — reference/import plan needed."
+    },
+    {
+      "id": "connection-652d646576696365732d696f74",
+      "edgeIds": [
+        "e-devices-iot"
+      ],
+      "taskId": "TASK-INTEGRATION-652d646576696365732d696f74",
+      "message": "Wire devices → iot: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d696f742d627566666572",
+      "edgeIds": [
+        "e-iot-buffer"
+      ],
+      "taskId": "TASK-INTEGRATION-652d696f742d627566666572",
+      "message": "Wire iot → buffer: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6275666665722d73636f726572",
+      "edgeIds": [
+        "e-buffer-scorer"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6275666665722d73636f726572",
+      "message": "Wire buffer → scorer: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d73636f7265722d71756172616e74696e65",
+      "edgeIds": [
+        "e-scorer-quarantine"
+      ],
+      "taskId": "TASK-INTEGRATION-652d73636f7265722d71756172616e74696e65",
+      "message": "Wire scorer → quarantine: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d73636f7265722d6d6f64656c",
+      "edgeIds": [
+        "e-scorer-model"
+      ],
+      "taskId": "TASK-INTEGRATION-652d73636f7265722d6d6f64656c",
+      "message": "Wire scorer → model: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d73636f7265722d726573756c7473",
+      "edgeIds": [
+        "e-scorer-results"
+      ],
+      "taskId": "TASK-INTEGRATION-652d73636f7265722d726573756c7473",
+      "message": "Wire scorer → results: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d73636f7265722d616c65727473",
+      "edgeIds": [
+        "e-scorer-alerts"
+      ],
+      "taskId": "TASK-INTEGRATION-652d73636f7265722d616c65727473",
+      "message": "Wire scorer → alerts: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d616c657274732d6f70657261746f72",
+      "edgeIds": [
+        "e-alerts-operator"
+      ],
+      "taskId": "TASK-INTEGRATION-652d616c657274732d6f70657261746f72",
+      "message": "Wire alerts → operator: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

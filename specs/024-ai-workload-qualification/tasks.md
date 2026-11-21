@@ -1,0 +1,7 @@
+- [x] Define forty cloud/workload prompt and behavioral acceptance cases
+- [x] Initial real prompt/UI architecture assessment across all forty cases, with preserved failures and follow-up runs; later provider-limited repeats are not full application qualification
+- [ ] Native application infrastructure/runtime contracts for all critical paths
+- [ ] Per-case fault, authorization, recovery, model-quality and artifact identity tests
+- [ ] Mentor correction/question/retest and user-control regressions
+- [ ] Authorized account planning/deployment evidence where available
+- [ ] Production operational qualification and hosted worker isolation

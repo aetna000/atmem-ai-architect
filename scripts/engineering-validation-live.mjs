@@ -1,0 +1,33 @@
+// Actual UI/native generation -> immutable artifact -> durable isolated test job.
+import {chromium} from '@playwright/test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import path from 'node:path';
+import {createHash} from 'node:crypto';
+const base=process.env.ATMEM_ENGINEERING_PREVIEW_URL||'http://127.0.0.1:5274',out=path.resolve(process.env.ATMEM_ENGINEERING_EVIDENCE_DIR||'.local/engine-product/native-intake-live-validation');fs.mkdirSync(out,{recursive:true});
+const files=['server/app.py','server/engineering_routes.py','server/engineering_artifacts.py','server/validation_jobs.py','server/local_validation.py','src/EngineeringPanel.jsx','src/ArtifactChecks.jsx','src/engineering-client.mjs'];
+const sourceHashes=Object.fromEntries(files.map(file=>[file,createHash('sha256').update(fs.readFileSync(file)).digest('hex')]));
+fs.writeFileSync(path.join(out,'source-at-start.json'),JSON.stringify(sourceHashes,null,2)+'\n');
+const browser=await chromium.launch({headless:true});const errors=[],starts=[];let receipt={passed:false,model:'gpt-6.1-sol',effort:'high',cloudOperations:false};
+try{
+ const page=await browser.newPage({viewport:{width:1440,height:1000}});page.on('pageerror',e=>errors.push(e.message));page.on('request',request=>{if(request.url().endsWith('/api/engineering/validation/start'))starts.push(request.postDataJSON());});
+ const project={id:'native-intake-lines-'+Date.now(),version:1,revision:1,name:'Audit line summary library',provider:'tools',requirements:'Build an independent summary library for synthetic audit lines. Preserve the existing audit collector; no cloud or network dependencies.',nodes:[],edges:[]};
+ await page.addInitScript(project=>{if(!localStorage.getItem('atforma-workspace-v3'))localStorage.setItem('atforma-workspace-v3',JSON.stringify(project));localStorage.setItem('atforma-connection-v1',JSON.stringify({provider:'codex',model:'gpt-6.1-sol',effort:'high'}));},project);
+ await page.goto(base);await page.getByRole('tab',{name:'Build',exact:true}).click();
+ await page.getByRole('heading',{name:'Build your project',exact:true}).waitFor();
+ const current=null; // Fresh project: one Start action saves, creates and submits.
+ const intent='Build pure-Python line_summary.py exporting summarize(lines). Input must be a list of strings, with at most 1000 lines and at most 4096 Unicode characters per line. Return exactly {count, total_characters, nonempty_count}; nonempty_count counts lines containing at least one non-whitespace character. Do not mutate the input. Non-list input or non-string entries raise TypeError; exceeding either limit raises ValueError. Preserve the existing audit collector, and do not add cloud, AI, network or third-party dependencies. Write meaningful unittest tests at the workspace root named test_line_summary.py and a concise README. Execute the tests, using the supplied composition skill and tools. Create real files and keep the final response concise.';
+ fs.writeFileSync(path.join(out,'intent.txt'),intent+'\n');if(!current?.run){await page.getByLabel('What should we build or repair?',{exact:true}).fill(intent);await page.getByRole('button',{name:'Start work',exact:true}).click();}
+ await page.getByRole('button',{name:'Capture package',exact:true}).waitFor({timeout:300000});
+ const captured=page.waitForResponse(response=>response.url().endsWith('/api/engineering/capture')&&response.status()===200);await page.getByRole('button',{name:'Capture package',exact:true}).click();const manifest=await(await captured).json();
+ const packageDownload=page.waitForEvent('download');await page.getByRole('button',{name:'Download package',exact:true}).click();await(await packageDownload).saveAs(path.join(out,'generated-package.zip'));assert.equal(createHash('sha256').update(fs.readFileSync(path.join(out,'generated-package.zip'))).digest('hex'),manifest.sha256);
+ await page.getByRole('button',{name:'Local Python tests',exact:true}).click();await page.locator('.artifact-checks strong').filter({hasText:'Local Python tests · passed'}).waitFor({timeout:120000});
+ await page.getByRole('tab',{name:'Design',exact:true}).click();await page.reload();await page.getByRole('tab',{name:'Build',exact:true}).click();await page.locator('.artifact-checks strong').filter({hasText:'Local Python tests · passed'}).waitFor({timeout:60000});
+ assert.equal(starts.length,1,'reload does not replay the check');assert.equal(starts[0].artifactId,manifest.id);assert.equal(starts[0].command,undefined);assert.equal(starts[0].image,undefined);
+ const reportDownload=page.waitForEvent('download');await page.getByRole('button',{name:'Save check report',exact:true}).click();await(await reportDownload).saveAs(path.join(out,'check-report.json'));const check=JSON.parse(fs.readFileSync(path.join(out,'check-report.json'),'utf8'));
+ assert.equal(check.artifactSha256,manifest.sha256);assert.equal(check.result.artifactSha256,manifest.sha256);assert.equal(check.result.status,'passed');assert.ok(check.result.testsReported>0);assert.equal(check.result.skipped,0);assert.equal(check.acceptance,'not_established_by_local_check');assert.deepEqual(errors,[]);
+ for(const [file,hash] of Object.entries(sourceHashes))assert.equal(createHash('sha256').update(fs.readFileSync(file)).digest('hex'),hash,'source changed during live workflow');
+ fs.writeFileSync(path.join(out,'manifest.json'),JSON.stringify(manifest,null,2)+'\n');await page.locator('.artifact-checks').scrollIntoViewIfNeeded();await page.screenshot({path:path.join(out,'desktop.png')});await page.setViewportSize({width:390,height:900});await page.locator('.artifact-checks').scrollIntoViewIfNeeded();assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.screenshot({path:path.join(out,'mobile.png')});
+ receipt={...receipt,passed:true,projectId:project.id,sessionId:check.sessionId,artifactId:manifest.id,artifactSha256:manifest.sha256,checkId:check.id,contractSha256:check.contractSha256,testsReported:check.result.testsReported,skipped:0,validationStarts:1,resumedExistingNativeRun:!!current?.run,reloadWithoutReplay:true,errors,boundary:'Actual browser, live native generation and immutable capture, real authenticated validation API/supervisor and cached isolated Linux check, digest-bound report/download and reload without replay on unchanged source. Native work starts once through the primary Build view and reload only observes it. Generated tests are not independent requirement or whole-system acceptance.'};
+ console.log('Passed live native/UI/artifact/isolated-validation/report/reload workflow.');
+}finally{fs.writeFileSync(path.join(out,'receipt.json'),JSON.stringify(receipt,null,2)+'\n');await browser.close();}

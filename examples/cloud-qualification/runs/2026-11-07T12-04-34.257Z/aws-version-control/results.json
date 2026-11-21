@@ -1,0 +1,59 @@
+{
+  "provider": "aws-version-control",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Repository and branch permissions enforced",
+    "Untrusted repository instructions cannot trigger execution",
+    "Findings link to lines in the reviewed commit",
+    "A changed head commit invalidates the review",
+    "Retry does not post duplicate comments and posting requires approval"
+  ],
+  "components": [
+    {
+      "id": "repo"
+    },
+    {
+      "id": "apigw",
+      "service": "Amazon API Gateway (HTTP API)"
+    },
+    {
+      "id": "queue",
+      "service": "Amazon SQS"
+    },
+    {
+      "id": "dlq",
+      "service": "Amazon SQS (dead-letter queue)"
+    },
+    {
+      "id": "worker",
+      "service": "AWS Lambda"
+    },
+    {
+      "id": "secrets",
+      "service": "AWS Secrets Manager"
+    },
+    {
+      "id": "model",
+      "service": "Amazon Bedrock",
+      "binding": "aws-bedrock-model"
+    },
+    {
+      "id": "drafts",
+      "service": "Amazon DynamoDB"
+    },
+    {
+      "id": "reviewer"
+    },
+    {
+      "id": "logs",
+      "service": "Amazon CloudWatch"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

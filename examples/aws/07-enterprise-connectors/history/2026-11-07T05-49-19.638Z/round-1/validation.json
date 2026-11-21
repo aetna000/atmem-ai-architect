@@ -1,0 +1,208 @@
+{
+  "id": "07-enterprise-connectors",
+  "round": 1,
+  "evidenceDirectory": "07-enterprise-connectors/round-1",
+  "provider": "claude-code",
+  "model": "default",
+  "evidenceKind": "real-model-browser-run",
+  "stages": {
+    "prompt": "passed",
+    "architecture": "failed",
+    "export": "passed",
+    "localValidation": "failed",
+    "cloudPlan": "not_run",
+    "deployment": "not_run",
+    "applicationTests": "passed",
+    "cleanup": "not_run"
+  },
+  "checks": [
+    "Approved source connection synchronizes documents",
+    "Source deletes and ACL changes propagate",
+    "Source outage retries and recovers",
+    "Authenticated channel preserves identity and citations"
+  ],
+  "blockers": [
+    "Architecture structural check failed: connected-graph",
+    "Architecture structural check failed: connected-components",
+    "3 generated infrastructure/integration gaps block a deployment plan",
+    "Product qualification loop: close implementation gaps and validate this artifact before any account plan or deployment"
+  ],
+  "components": [
+    {
+      "id": "user",
+      "label": "Staff user",
+      "origin": "existing"
+    },
+    {
+      "id": "rag-web",
+      "label": "Web app (CloudFront)",
+      "service": "Amazon CloudFront",
+      "origin": "proposed"
+    },
+    {
+      "id": "rag-cognito",
+      "label": "User sign-in (Cognito)",
+      "service": "Amazon Cognito",
+      "origin": "proposed"
+    },
+    {
+      "id": "rag-api",
+      "label": "RAG API (API Gateway)",
+      "service": "Amazon API Gateway",
+      "origin": "proposed"
+    },
+    {
+      "id": "rag-lambda",
+      "label": "Keyword RAG (Lambda)",
+      "service": "AWS Lambda",
+      "origin": "proposed"
+    },
+    {
+      "id": "rag-catalog",
+      "label": "Document catalog (DynamoDB)",
+      "service": "Amazon DynamoDB",
+      "origin": "proposed"
+    },
+    {
+      "id": "bedrock",
+      "label": "Amazon Bedrock model",
+      "service": "Amazon Bedrock",
+      "origin": "existing"
+    },
+    {
+      "id": "src-sharepoint",
+      "label": "SharePoint (local test server)",
+      "origin": "existing"
+    },
+    {
+      "id": "src-confluence",
+      "label": "Confluence (local test server)",
+      "origin": "existing"
+    },
+    {
+      "id": "teams-later",
+      "label": "Microsoft Teams (later)",
+      "origin": "existing"
+    }
+  ],
+  "architectureAssessment": {
+    "passed": false,
+    "checks": [
+      {
+        "id": "nonempty",
+        "passed": true
+      },
+      {
+        "id": "unique-component-ids",
+        "passed": true
+      },
+      {
+        "id": "valid-edge-endpoints",
+        "passed": true
+      },
+      {
+        "id": "connected-graph",
+        "passed": false
+      },
+      {
+        "id": "aws-proposed-components",
+        "passed": true
+      },
+      {
+        "id": "service-bedrock",
+        "passed": true
+      },
+      {
+        "id": "connected-components",
+        "passed": false
+      },
+      {
+        "id": "retrieval-component",
+        "passed": true
+      },
+      {
+        "id": "existing-sharepoint",
+        "passed": true
+      },
+      {
+        "id": "existing-confluence",
+        "passed": true
+      }
+    ],
+    "limitations": "Structural checks only. Application correctness, security, service availability and deployment require independent evidence."
+  },
+  "artifactSha256": "c4f2d43b61da161bcf859830133519fcfd693375a5ba2f0ca7c6135e627208ba",
+  "resourceTypes": [
+    "aws_iam_role",
+    "aws_cloudwatch_log_group",
+    "aws_iam_role_policy",
+    "aws_lambda_function",
+    "aws_lambda_alias",
+    "aws_dynamodb_table",
+    "aws_apigatewayv2_api",
+    "aws_apigatewayv2_integration",
+    "aws_apigatewayv2_route",
+    "aws_apigatewayv2_stage",
+    "aws_lambda_permission",
+    "aws_s3_bucket",
+    "aws_s3_bucket_public_access_block",
+    "aws_s3_bucket_server_side_encryption_configuration",
+    "aws_s3_bucket_versioning",
+    "aws_s3_bucket_ownership_controls",
+    "aws_cloudfront_origin_access_control",
+    "aws_cognito_user_pool",
+    "aws_cognito_user_pool_domain",
+    "aws_cognito_resource_server",
+    "aws_cognito_user_pool_client",
+    "aws_apigatewayv2_authorizer",
+    "aws_cloudfront_response_headers_policy",
+    "aws_cloudfront_distribution",
+    "aws_s3_bucket_policy",
+    "aws_s3_object"
+  ],
+  "unfinishedWork": [
+    "resource-block_75736572",
+    "resource-block_7465616d732d6c61746572",
+    "connection-652d757365722d776562"
+  ],
+  "deploymentAssessment": {
+    "status": "blocked",
+    "awsResourceCount": 32,
+    "blockers": [
+      {
+        "id": "architecture-connected-graph",
+        "owner": "architecture",
+        "message": "Architecture check failed: connected-graph"
+      },
+      {
+        "id": "architecture-connected-components",
+        "owner": "architecture",
+        "message": "Architecture check failed: connected-components"
+      },
+      {
+        "id": "unfinished-resource-block_75736572",
+        "owner": "implementation",
+        "message": "Unresolved generated work: resource-block_75736572"
+      },
+      {
+        "id": "unfinished-resource-block_7465616d732d6c61746572",
+        "owner": "implementation",
+        "message": "Unresolved generated work: resource-block_7465616d732d6c61746572"
+      },
+      {
+        "id": "unfinished-connection-652d757365722d776562",
+        "owner": "implementation",
+        "message": "Unresolved generated work: connection-652d757365722d776562"
+      },
+      {
+        "id": "requirements-review-unverified",
+        "owner": "review",
+        "message": "Review requirements against emitted configuration, including identity, limits, region, costs and cleanup."
+      }
+    ],
+    "cloudPlan": "not_run",
+    "deployment": "not_run",
+    "limitations": "No numerical success probability is justified. Schema validity does not prove complete coverage, runtime behavior or deployability. A ready-for-plan result is not permission to deploy."
+  },
+  "localValidationEvidence": "07-enterprise-connectors/round-1/artifact-validation.json"
+}

@@ -1,0 +1,540 @@
+{
+  "format": "atmem.ai-architect.project",
+  "formatVersion": "2.3.0",
+  "meta": {
+    "id": "30c37320-1046-4ece-8418-53bfb258acae",
+    "name": "IBM Cloud support assistant qualification",
+    "createdAt": "2026-11-07T12:30:57.818Z",
+    "updatedAt": "2026-11-07T12:30:57.818Z",
+    "revision": 2,
+    "generator": "atmem-ai-architect 0.2.0"
+  },
+  "design": {
+    "provider": "ibm",
+    "nodes": [
+      {
+        "id": "support-staff",
+        "type": "resource",
+        "position": {
+          "x": 50,
+          "y": 470
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Support staff",
+          "provider": "tools",
+          "kind": "resource",
+          "description": "Existing people using a browser outside provisioning scope. Review cited drafts, handle escalations and explicitly approve ticket updates.",
+          "config": {
+            "region": "Existing location; country unresolved",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "poc": true,
+          "binding": "web-browser",
+          "role": "human",
+          "category": "External actor"
+        }
+      },
+      {
+        "id": "staff-identity",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 50
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Staff authentication",
+          "provider": "ibm",
+          "kind": "resource",
+          "description": "Proposed IBM Cloud App ID for staff authentication. Company sign-in federation and current service availability require verification. Trusted server-side mappings supply staff, tenant and customer permissions; browser claims alone cannot grant access.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "guard",
+          "service": "IBM Cloud App ID",
+          "category": "Identity"
+        }
+      },
+      {
+        "id": "support-app",
+        "type": "resource",
+        "position": {
+          "x": 470,
+          "y": 890
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Support application and staff interface",
+          "provider": "ibm",
+          "kind": "resource",
+          "description": "One Code Engine application serves HTTPS UI/API and owns source adapters, deny-by-default authorization, customer/tenant checks, sensitive-field allowlisting, SQL retrieval, prompt isolation, citation checks and human escalation. Returns drafts to staff. Only explicit staff approval permits ticket updates; no refund or CRM-write capability. Uses durable approval/idempotency state and reconciliation after ambiguous source responses. Custom implementation required.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "app",
+          "service": "IBM Cloud Code Engine",
+          "category": "Application runtime"
+        }
+      },
+      {
+        "id": "ticket-queue",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 330
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Synthetic ticket queue",
+          "provider": "tools",
+          "kind": "resource",
+          "description": "External qualification fixture for ticket ingestion, escalation and approved ticket updates. Its actual API and idempotency/reconciliation contract must be implemented. It is not an IBM managed queue or proof of a production ticket-system integration.",
+          "config": {
+            "region": "Local synthetic fixture",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "poc": true,
+          "role": "data",
+          "category": "External test system"
+        }
+      },
+      {
+        "id": "existing-crm",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 610
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Existing CRM",
+          "provider": "tools",
+          "kind": "resource",
+          "description": "Client-owned CRM, vendor and API unspecified. Application receives read-only access to authorized customer records and allowlists permitted fields before model input. Local qualification uses synthetic CRM fixtures, not live customer records. No customer-record write integration.",
+          "config": {
+            "region": "Existing placement; country unresolved",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "poc": true,
+          "role": "data",
+          "category": "External system"
+        }
+      },
+      {
+        "id": "approved-knowledge",
+        "type": "resource",
+        "position": {
+          "x": 50,
+          "y": 750
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Approved knowledge source",
+          "provider": "tools",
+          "kind": "resource",
+          "description": "External source reference; location and API remain unknown. Supplies approved content, source identifiers, revisions and explicit access rules. Content is untrusted input even when approved. Local qualification uses synthetic documents and ACLs.",
+          "config": {
+            "region": "Existing placement; country unresolved",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "poc": true,
+          "role": "data",
+          "category": "External source"
+        }
+      },
+      {
+        "id": "knowledge-storage",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 890
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Approved knowledge snapshots",
+          "provider": "ibm",
+          "kind": "resource",
+          "description": "Private IBM Cloud Object Storage for versioned approved knowledge snapshots. Application-managed ingestion records source revision and ACL metadata; read-time approval and authorization checks are required. Retention, encryption and deletion policies remain to be agreed. Broader application integration is not covered by the narrow private-storage generator.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "data",
+          "service": "IBM Cloud Object Storage",
+          "category": "Knowledge storage"
+        }
+      },
+      {
+        "id": "support-state",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 1170
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Authorized catalog and workflow state",
+          "provider": "ibm",
+          "kind": "resource",
+          "description": "One PostgreSQL deployment stores tenant/customer-scoped knowledge metadata and searchable text, trusted staff mappings, approvals, update outbox, idempotency keys and application audit events. Proposed SQL keyword retrieval filters authorization before selecting content and rechecks revisions before drafting. Transactions and source reconciliation protect retries; database state alone cannot guarantee remote exactly-once updates. Schema, retention and recovery require engineering.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "index",
+          "service": "IBM Cloud Databases for PostgreSQL",
+          "category": "Retrieval and durable state"
+        }
+      },
+      {
+        "id": "draft-model",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 1450
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Grounded draft generation",
+          "provider": "ibm",
+          "kind": "resource",
+          "description": "IBM watsonx.ai inference candidate. Receives only authorized approved passages and allowlisted customer context; produces a draft with source references or abstention. The application checks references and escalates unsupported promises. Exact model, regional inference, entitlement, API and quality remain unverified. Local scripted responses do not validate a real model.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "model",
+          "service": "IBM watsonx.ai",
+          "category": "Model inference"
+        }
+      },
+      {
+        "id": "app-secrets",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 1730
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Application credentials",
+          "provider": "ibm",
+          "kind": "resource",
+          "description": "Stores source/API credentials for application retrieval using scoped service access. Keep values outside the diagram and code. Credential provisioning, rotation and Code Engine integration require implementation and verification.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "guard",
+          "service": "IBM Cloud Secrets Manager",
+          "category": "Secrets"
+        }
+      },
+      {
+        "id": "application-logs",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 2010
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Redacted operational logs",
+          "provider": "ibm",
+          "kind": "resource",
+          "description": "IBM Cloud Logs candidate for redacted application diagnostics, authorization denials, correlation IDs, integration failures and escalation events. Durable business approvals and update history live in PostgreSQL. Exclude raw customer fields, prompts and credentials. Routing, access, retention and alert ownership require engineering; ingestion and regional support are unverified.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "monitor",
+          "service": "IBM Cloud Logs",
+          "category": "Observability"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "staff-login",
+        "source": "support-staff",
+        "target": "staff-identity",
+        "type": "smoothstep",
+        "label": "Proposed OIDC sign-in; federation unresolved"
+      },
+      {
+        "id": "staff-app",
+        "source": "support-staff",
+        "target": "support-app",
+        "type": "smoothstep",
+        "label": "HTTPS: ticket review, questions and explicit approval"
+      },
+      {
+        "id": "app-identity",
+        "source": "support-app",
+        "target": "staff-identity",
+        "type": "smoothstep",
+        "label": "Validate issuer, audience and session; integration required"
+      },
+      {
+        "id": "tickets-app",
+        "source": "ticket-queue",
+        "target": "support-app",
+        "type": "smoothstep",
+        "label": "Synthetic ticket read/receive; source contract unresolved"
+      },
+      {
+        "id": "app-tickets",
+        "source": "support-app",
+        "target": "ticket-queue",
+        "type": "smoothstep",
+        "label": "Escalate or write approved update with idempotency key"
+      },
+      {
+        "id": "app-crm",
+        "source": "support-app",
+        "target": "existing-crm",
+        "type": "smoothstep",
+        "label": "Read authorized customer fields; API adapter required"
+      },
+      {
+        "id": "knowledge-app",
+        "source": "approved-knowledge",
+        "target": "support-app",
+        "type": "smoothstep",
+        "label": "Import approved revisions and ACLs; adapter required"
+      },
+      {
+        "id": "app-storage",
+        "source": "support-app",
+        "target": "knowledge-storage",
+        "type": "smoothstep",
+        "label": "Object API: write snapshots and read authorized revisions"
+      },
+      {
+        "id": "app-state",
+        "source": "support-app",
+        "target": "support-state",
+        "type": "smoothstep",
+        "label": "TLS SQL: filtered retrieval, approvals, outbox and audit"
+      },
+      {
+        "id": "app-model",
+        "source": "support-app",
+        "target": "draft-model",
+        "type": "smoothstep",
+        "label": "HTTPS inference: filtered context → cited draft or abstention"
+      },
+      {
+        "id": "app-staff",
+        "source": "support-app",
+        "target": "support-staff",
+        "type": "smoothstep",
+        "label": "Return cited draft, escalation and update status"
+      },
+      {
+        "id": "app-secrets-read",
+        "source": "support-app",
+        "target": "app-secrets",
+        "type": "smoothstep",
+        "label": "Scoped secret retrieval; integration requires verification"
+      },
+      {
+        "id": "app-logs",
+        "source": "support-app",
+        "target": "application-logs",
+        "type": "smoothstep",
+        "label": "Redacted diagnostics and failure events; routing required"
+      }
+    ]
+  },
+  "discovery": {
+    "problem": "Scope: support staff use synthetic tickets, approved knowledge and existing CRM customer records to retrieve authorized information and draft cited answers. Include a staff interface, human escalation and explicitly approved ticket updates. Exclude refunds and automatic customer-record changes. Preserve tenant and customer boundaries; exclude sensitive customer fields before model invocation; escalate unsupported promises; make approved ticket updates idempotent and auditable. Country, region, identity provider, model, source API contracts, retention and recovery targets remain open. Proposed retrieval starts with authorization-filtered SQL keyword matching over approved knowledge; relevance and retrieval mode require review. IBM application and infrastructure implementations remain engineering work; the graph proves no connectivity or deployment.",
+    "brief": {
+      "application": "Use IBM Cloud for this synthetic architecture qualification. Assist support staff using a synthetic ticket queue, approved knowledge and customer records from an existing CRM. Include authorized retrieval, grounded answer drafting, a staff interface and human escalation. Never issue refunds or modify customer records automatically. Acceptance criteria: Customer and tenant boundaries preserved; Answers cite approved knowledge; Unsupported promises escalate to staff; Sensitive customer fields excluded from model input; Approved ticket updates are idempotent and auditable. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+      "cloud": "IBM"
+    },
+    "facts": [
+      {
+        "id": "fact-defb6556",
+        "name": "cloud.preference",
+        "value": "ibm",
+        "unit": "provider",
+        "text": "Use IBM Cloud for this synthetic architecture qualification. Assist support staff using a synthetic ticket queue, approved knowledge and customer records from an existing CRM. Include authorized retrieval, grounded answer drafting, a staff interface and human escalation. Never issue refunds or modif",
+        "madeAt": "2026-11-07"
+      },
+      {
+        "id": "fact-77745d7a",
+        "name": "data.sensitive",
+        "value": true,
+        "unit": "flag",
+        "text": "Use IBM Cloud for this synthetic architecture qualification. Assist support staff using a synthetic ticket queue, approved knowledge and customer records from an existing CRM. Include authorized retrieval, grounded answer drafting, a staff interface and human escalation. Never issue refunds or modif",
+        "madeAt": "2026-11-07"
+      }
+    ],
+    "workflow": "knowledge-assistant",
+    "asked": [],
+    "lastAsked": {
+      "id": "knowledge-assistant:0",
+      "topic": "data",
+      "question": "Where do the files live, and roughly how many are there?",
+      "beginner": "For example “SharePoint and a shared drive, about 20,000 files”.",
+      "why": "It shapes the RAG design."
+    }
+  },
+  "requirements": [
+    {
+      "id": "req-92f5fb03",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Every answer shows its sources",
+      "priority": "should",
+      "status": "open",
+      "source": "user",
+      "links": []
+    },
+    {
+      "id": "ai-support-data-boundaries",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Enforce trusted staff, tenant and customer authorization before retrieving or returning content, fail closed on missing permissions, and exclude sensitive customer fields before model invocation.",
+      "rationale": "Prevents unauthorized disclosure through retrieval or model prompts; proposed requirement derived from explicit acceptance criteria.",
+      "basis": "Customer and tenant boundaries preserved; Sensitive customer fields excluded from model input",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "support-app",
+        "staff-identity",
+        "existing-crm",
+        "support-state",
+        "draft-model"
+      ]
+    },
+    {
+      "id": "ai-support-approved-actions",
+      "kind": "functional",
+      "category": "reliability",
+      "statement": "Require explicit staff approval for ticket updates, persist approval and audit records, and reconcile ambiguous failures before retrying with a stable idempotency key; provide no refund execution or automatic CRM modification capability.",
+      "rationale": "Prevents retries from duplicating approved actions and preserves accountability without granting autonomous financial or customer-record authority.",
+      "basis": "Never issue refunds or modify customer records automatically. Approved ticket updates are idempotent and auditable.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "support-staff",
+        "support-app",
+        "ticket-queue",
+        "support-state"
+      ]
+    },
+    {
+      "id": "ai-support-escalation",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Present grounded drafts for staff review and route unsupported promises, unavailable evidence or failed citation checks to human escalation without automatically sending the draft.",
+      "rationale": "Keeps unsupported commitments under human control rather than relying on model compliance alone.",
+      "basis": "Include authorized retrieval, grounded answer drafting, a staff interface and human escalation. Unsupported promises escalate to staff.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "support-app",
+        "draft-model",
+        "support-staff",
+        "ticket-queue"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use IBM Cloud for this synthetic architecture qualification.",
+      "options": "",
+      "decision": "ibm",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.ibm-cloud-support-assistant-qualification-architecture",
+      "title": "IBM Cloud support assistant qualification architecture",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Adds the complete support workflow using concrete IBM service candidates, preserving the CRM and source systems outside provisioning scope. A single Code Engine application owns the staff interface, source adapters, authorization checks, field filtering, retrieval, drafting, escalation and approved ticket-update processing. These are application modules, not separate provisioned services. Region, model, identity integration, service availability and account access remain unverified; no regional availability or recovery target is assumed. All IBM resources are design-only: this workload needs application code, native infrastructure generation and integration engineering beyond current typed export coverage. First proposed local test: run the application harness against synthetic tickets, CRM records, approved knowledge and identity claims spanning separate tenants and customers. Attempt cross-boundary retrieval, inject sensitive fields and malicious source instructions, request unsupported promises, then approve and replay a ticket update with the same idempotency key. Check denied access, filtered model requests, approved-source citations, escalation, one effective update and matching audit records. Simulate an interrupted update and verify reconciliation before retrying. Scripted model responses exercise control paths only; a separate evaluation with the selected real model must measure grounding, citation accuracy, abstention and unsafe promises. No tests have run, and no artifact-bound emulation evidence exists.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "extensions": {
+    "requirementNumbers": {
+      "req-92f5fb03": 1,
+      "drv-data-access": 2,
+      "drv-data-location": 3,
+      "ai-support-data-boundaries": 4,
+      "ai-support-approved-actions": 5,
+      "ai-support-escalation": 6
+    },
+    "requirementComments": [],
+    "choices": {},
+    "conceptSig": null
+  }
+}

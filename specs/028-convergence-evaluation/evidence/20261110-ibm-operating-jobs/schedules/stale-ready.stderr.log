@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/invoice-cloud-ibm-v8-operator-schedules-20261110/scripts/run-operator.py", line 131, in <module>
+    if __name__=='__main__':main()
+                            ~~~~^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/invoice-cloud-ibm-v8-operator-schedules-20261110/scripts/run-operator.py", line 127, in main
+    if scheduling:schedules(value,env,args.action=='install-schedules')
+                  ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/invoice-cloud-ibm-v8-operator-schedules-20261110/scripts/run-operator.py", line 115, in schedules
+    ownership(actual,job,namespace,prefix,name);verify_ready(actual,spec)
+                                                ~~~~~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/invoice-cloud-ibm-v8-operator-schedules-20261110/scripts/run-operator.py", line 84, in verify_ready
+    if type(generation)is not int or status.get('observedGeneration')!=generation or not any(c.get('type')=='Ready'and c.get('status')=='True'for c in status.get('conditions',[])):raise ValueError('Cron source has not reconciled this generation')
+                                                                                                                                                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: Cron source has not reconciled this generation

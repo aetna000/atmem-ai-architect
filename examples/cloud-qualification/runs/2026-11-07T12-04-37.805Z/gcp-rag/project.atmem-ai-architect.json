@@ -1,0 +1,470 @@
+{
+  "format": "atmem.ai-architect.project",
+  "formatVersion": "2.3.0",
+  "meta": {
+    "id": "8aa081d5-291d-46ee-8e03-5757812316b5",
+    "name": "GCP synthetic RAG qualification",
+    "createdAt": "2026-11-07T12:07:20.806Z",
+    "updatedAt": "2026-11-07T12:07:20.806Z",
+    "revision": 2,
+    "generator": "atmem-ai-architect 0.2.0"
+  },
+  "design": {
+    "provider": "gcp",
+    "nodes": [
+      {
+        "id": "user",
+        "type": "resource",
+        "position": {
+          "x": 50,
+          "y": 330
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Synthetic test user (browser)",
+          "provider": "tools",
+          "kind": "tool",
+          "description": "Person using a browser. A client reference, not a provisioned resource.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "poc": true,
+          "role": "human"
+        }
+      },
+      {
+        "id": "idp",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 340
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Identity Platform",
+          "provider": "gcp",
+          "kind": "guard",
+          "description": "Signs users in with synthetic accounts (MFA proposed) and issues ID tokens. These carry the subject used for permission checks.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "guard",
+          "service": "Identity Platform"
+        }
+      },
+      {
+        "id": "webapp",
+        "type": "resource",
+        "position": {
+          "x": 470,
+          "y": 330
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "RAG web app",
+          "provider": "gcp",
+          "kind": "output",
+          "description": "Authenticated chat UI. Gets a token from Identity Platform, calls the RAG API and shows the answer with its source citations.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "app",
+          "service": "Cloud Run"
+        }
+      },
+      {
+        "id": "ragapi",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 330
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "RAG API (keyword retrieval + permission filter)",
+          "provider": "gcp",
+          "kind": "agent",
+          "description": "Checks the ID token and resolves the user's groups from the catalog. Runs bounded keyword search only over chunks whose ACL allows the user and re-checks the document revision. Sends the allowed passages to Gemini and returns a cited answer, or declines when no sources match. If the identity is unknown, it denies access.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "app",
+          "service": "Cloud Run"
+        }
+      },
+      {
+        "id": "catalog",
+        "type": "resource",
+        "position": {
+          "x": 1730,
+          "y": 610
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Document & ACL catalog",
+          "provider": "gcp",
+          "kind": "source",
+          "description": "Stores chunks, keyword terms, document revisions, source ACLs and user-to-group mappings. Not vector search.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "index",
+          "service": "Firestore"
+        }
+      },
+      {
+        "id": "gemini",
+        "type": "resource",
+        "position": {
+          "x": 1730,
+          "y": 330
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Gemini model",
+          "provider": "gcp",
+          "kind": "predict",
+          "description": "Generates grounded answers from the passages it receives. The model version, regional availability and quota still need checking. Local tests use a scripted reply instead.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "llm",
+          "service": "Vertex AI (Gemini)"
+        }
+      },
+      {
+        "id": "operator",
+        "type": "resource",
+        "position": {
+          "x": 470,
+          "y": 620
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Synthetic document operator",
+          "provider": "tools",
+          "kind": "tool",
+          "description": "Uploads synthetic documents and their explicit permission lists. A caller outside the provisioning scope.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "poc": true
+        }
+      },
+      {
+        "id": "docs",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 620
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Synthetic source documents",
+          "provider": "gcp",
+          "kind": "history",
+          "description": "Private bucket for synthetic UTF-8 documents plus ACL metadata. Uniform bucket-level access; no public access.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "data",
+          "service": "Cloud Storage"
+        }
+      },
+      {
+        "id": "ingest",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 620
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Ingestion job",
+          "provider": "gcp",
+          "kind": "features",
+          "description": "Reads new documents, checks their size, splits them into chunks and extracts keywords. Writes chunks and the source's ACL to the catalog using conditional, revision-aware writes.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "ingest",
+          "service": "Cloud Run jobs"
+        }
+      },
+      {
+        "id": "audit",
+        "type": "resource",
+        "position": {
+          "x": 1730,
+          "y": 50
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Audit & monitoring",
+          "provider": "gcp",
+          "kind": "monitor",
+          "description": "Records who asked, which document IDs were allowed or denied, and model latency and errors. It does not store prompt text by default.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "monitor",
+          "service": "Cloud Logging / Cloud Monitoring"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e-user-web",
+        "source": "user",
+        "target": "webapp",
+        "type": "smoothstep",
+        "label": "HTTPS chat"
+      },
+      {
+        "id": "e-web-idp",
+        "source": "webapp",
+        "target": "idp",
+        "type": "smoothstep",
+        "label": "sign-in, ID token"
+      },
+      {
+        "id": "e-web-api",
+        "source": "webapp",
+        "target": "ragapi",
+        "type": "smoothstep",
+        "label": "question + bearer token / cited answer"
+      },
+      {
+        "id": "e-idp-api",
+        "source": "idp",
+        "target": "ragapi",
+        "type": "smoothstep",
+        "label": "token verification (JWKS)"
+      },
+      {
+        "id": "e-api-cat",
+        "source": "ragapi",
+        "target": "catalog",
+        "type": "smoothstep",
+        "label": "ACL-filtered keyword query"
+      },
+      {
+        "id": "e-api-llm",
+        "source": "ragapi",
+        "target": "gemini",
+        "type": "smoothstep",
+        "label": "generateContent with allowed passages"
+      },
+      {
+        "id": "e-api-audit",
+        "source": "ragapi",
+        "target": "audit",
+        "type": "smoothstep",
+        "label": "audit events"
+      },
+      {
+        "id": "e-op-docs",
+        "source": "operator",
+        "target": "docs",
+        "type": "smoothstep",
+        "label": "upload docs + ACLs"
+      },
+      {
+        "id": "e-docs-ingest",
+        "source": "docs",
+        "target": "ingest",
+        "type": "smoothstep",
+        "label": "object finalized (Eventarc)"
+      },
+      {
+        "id": "e-ingest-cat",
+        "source": "ingest",
+        "target": "catalog",
+        "type": "smoothstep",
+        "label": "conditional chunk + ACL writes"
+      }
+    ]
+  },
+  "discovery": {
+    "problem": "",
+    "brief": {
+      "application": "Use Google Cloud for this synthetic architecture qualification. Answer questions over a small synthetic document collection with citations. Include ingestion, retrieval, model runtime, identity enforcement and an authenticated application. Use bounded keyword retrieval for this first test and keep all source permissions. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+      "cloud": "Google Cloud"
+    },
+    "facts": [
+      {
+        "id": "fact-afbeed42",
+        "name": "cloud.preference",
+        "value": "gcp",
+        "unit": "provider",
+        "text": "Use Google Cloud for this synthetic architecture qualification. Answer questions over a small synthetic document collection with citations. Include ingestion, retrieval, model runtime, identity enforcement and an authenticated application. Use bounded keyword retrieval for this first test and keep a",
+        "madeAt": "2026-11-07"
+      }
+    ],
+    "workflow": "knowledge-assistant",
+    "asked": [],
+    "lastAsked": {
+      "id": "knowledge-assistant:0",
+      "topic": "data",
+      "question": "Where do the files live, and roughly how many are there?",
+      "beginner": "For example “SharePoint and a shared drive, about 20,000 files”.",
+      "why": "It shapes the RAG design."
+    }
+  },
+  "requirements": [
+    {
+      "id": "req-8b1a0d0d",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Every answer shows its sources",
+      "priority": "should",
+      "status": "open",
+      "source": "user",
+      "links": []
+    },
+    {
+      "id": "ai-acl-enforced",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Proposed: an answer may only use and cite documents the signed-in user is allowed to read under the source permissions. Unknown identities are denied.",
+      "rationale": "If permissions are not enforced, users could see restricted content in answers or citations.",
+      "basis": "User: \"keep all source permissions\" and \"identity enforcement\".",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "ragapi",
+        "catalog",
+        "idp",
+        "ingest"
+      ]
+    },
+    {
+      "id": "ai-cited-answers",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Proposed: every answer lists the source documents it used, and the system declines to answer when no permitted source matches.",
+      "rationale": "Citations let users check answers. Declining when no permitted source matches lowers the risk of made-up answers.",
+      "basis": "User: \"Answer questions over a small synthetic document collection with citations.\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "ragapi",
+        "webapp"
+      ]
+    },
+    {
+      "id": "ai-residency",
+      "kind": "nonfunctional",
+      "category": "compliance",
+      "statement": "Proposed: all data and model processing stay within a country the user names. The region is not yet selected.",
+      "rationale": "Which Gemini models are available depends on the region, so the country decides where we can deploy.",
+      "basis": "User: \"Do not invent successful deployment or approved region/account access.\"",
+      "priority": "should",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "docs",
+        "catalog",
+        "gemini"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use Google Cloud for this synthetic architecture qualification",
+      "options": "",
+      "decision": "gcp",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.google-cloud-bounded-keyword-rag-with-citations-first-sketch",
+      "title": "Google Cloud bounded-keyword RAG with citations (first sketch)",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: a synthetic document collection uploaded by an operator. A Cloud Run ingestion job splits documents into keyword chunks and stores them with each source's permission list (ACL) in Firestore. Users sign in through Identity Platform to a Cloud Run web app. The app calls a Cloud Run RAG API that checks the sign-in token, searches with keywords only in documents the user may read, calls Gemini on Vertex AI and returns a cited answer. Cloud Logging keeps the audit trail. Assumptions: the region is not chosen yet; the Gemini model, quotas and regional availability are not verified; no account access is approved. These GCP components have no typed generator, so engineering is required. Local tests use a scripted model and synthetic identities.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "extensions": {
+    "requirementNumbers": {
+      "req-8b1a0d0d": 1,
+      "drv-data-access": 2,
+      "drv-data-location": 3,
+      "ai-acl-enforced": 4,
+      "ai-cited-answers": 5,
+      "ai-residency": 6
+    },
+    "choices": {},
+    "conceptSig": null
+  }
+}

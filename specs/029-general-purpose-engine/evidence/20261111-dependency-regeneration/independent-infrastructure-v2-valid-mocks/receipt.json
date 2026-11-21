@@ -1,0 +1,49 @@
+{
+  "passed": true,
+  "runtimeFilesByteIdentical": true,
+  "artifactSha256": "1b3bdaac06abece237c58fe5742aff6ef58d38ca3f54c35edb075c1c2cda6996",
+  "oracleSha256": "742702b7a0b0baea15441c92514ee85a389ba4b5ac6d80b70caf4741dcb31c10",
+  "assertions": 12,
+  "sourceChanged": [],
+  "checks": [
+    {
+      "name": "public-offline-setup",
+      "exitCode": 0,
+      "stdout": "{\n  \"configured\": [\n    \"python\",\n    \"node\",\n    \"terraform\",\n    \"providerMirror\"\n  ],\n  \"missingOptional\": [],\n  \"cloudAccess\": false,\n  \"downloads\": false,\n  \"environmentFiles\": {\n    \"OPENSSL_CONF\": \".worker-tmp/openssl.cnf\",\n    \"TF_CLI_CONFIG_FILE\": \".worker-tmp/terraform.rc\"\n  }\n}\n",
+      "stderr": ""
+    },
+    {
+      "name": "rebuild-runtime-package",
+      "exitCode": 0,
+      "stdout": "Built function.zip with verified dependencies and runtime files only\n",
+      "stderr": ""
+    },
+    {
+      "name": "terraform-format",
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "name": "offline-init",
+      "exitCode": 0,
+      "stdout": "Initializing provider plugins...\n- Reusing version 6.72.0 of hashicorp/aws from the dependency lock file\n- Installing hashicorp/aws v6.72.0...\n- Installed hashicorp/aws v6.72.0 (unauthenticated)\n\nTerraform has been successfully initialized!\n",
+      "stderr": ""
+    },
+    {
+      "name": "provider-schema",
+      "exitCode": 0,
+      "stdout": "Success! The configuration is valid.\n\n",
+      "stderr": ""
+    },
+    {
+      "name": "independent-mocked-apply",
+      "exitCode": 0,
+      "stdout": "tests/independent.tftest.hcl... in progress\n  run \"independent_boundaries\"... pass\ntests/independent.tftest.hcl... tearing down\ntests/independent.tftest.hcl... pass\n\nSuccess! 1 passed, 0 failed.\n",
+      "stderr": ""
+    }
+  ],
+  "inferenceTurns": 0,
+  "cloudOperations": false,
+  "boundary": "Clean receiving copy/public offline setup/runtime-content reproducible rebuild/format/real provider schema plus independent evaluator overlay: independent assertions in an offline-provider mocked apply. Original captured source/dependencies and built runtime file contents match independently enumerated included source and wheel member bytes; ZIP timestamps may differ. No requirement for byte-identical archive metadata is invented. No account plan/apply, effective cloud IAM, service capacity or deployed-system claim."
+}

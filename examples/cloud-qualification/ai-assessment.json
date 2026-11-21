@@ -1,0 +1,3871 @@
+{
+  "kind": "retrospective-static-assessment-with-linked-runtime-evidence",
+  "assessorSha256": "bb07a375f32cf4b1d667bd1d1bbbd4fb21aa623d4c4081a896d38a8d843bba1c",
+  "results": [
+    {
+      "id": "aws-iot",
+      "sourceRun": "2026-11-07T12-26-00.936Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-26-00.936Z",
+        "record": {
+          "provider": "aws-iot",
+          "architectProvider": "codex",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "emulation": "blocked",
+          "mentorResponded": true,
+          "architecturePresent": true,
+          "acceptanceRequirements": [
+            "Reject unknown device and invalid units",
+            "Duplicate events produce one result",
+            "Late and out-of-order telemetry follows an explicit policy",
+            "Disconnected input recovers by replay",
+            "Anomaly output names evidence and model version"
+          ],
+          "staticAssessment": {
+            "kind": "static-graph-checks",
+            "checks": [
+              {
+                "name": "Application contains at least three required components",
+                "passed": true
+              },
+              {
+                "name": "Required components form one connected graph",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud resources retain the requested provider",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud components name concrete services",
+                "passed": true
+              },
+              {
+                "name": "AI application has not collapsed into only object storage",
+                "passed": true
+              }
+            ],
+            "passed": true,
+            "limitations": [
+              "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+            ],
+            "acceptanceRequirements": [
+              "Reject unknown device and invalid units",
+              "Duplicate events produce one result",
+              "Late and out-of-order telemetry follows an explicit policy",
+              "Disconnected input recovers by replay",
+              "Anomaly output names evidence and model version"
+            ]
+          },
+          "components": [
+            {
+              "id": "sensor-client"
+            },
+            {
+              "id": "iot-ingest",
+              "service": "AWS IoT Core"
+            },
+            {
+              "id": "event-buffer",
+              "service": "Amazon Kinesis Data Streams"
+            },
+            {
+              "id": "anomaly-worker",
+              "service": "AWS Lambda"
+            },
+            {
+              "id": "device-registry",
+              "service": "Amazon DynamoDB"
+            },
+            {
+              "id": "model-endpoint",
+              "service": "Amazon SageMaker AI"
+            },
+            {
+              "id": "results-state",
+              "service": "Amazon DynamoDB"
+            },
+            {
+              "id": "failure-store",
+              "service": "Amazon S3"
+            },
+            {
+              "id": "alert-dispatch",
+              "service": "AWS Lambda"
+            },
+            {
+              "id": "alert-topic",
+              "service": "Amazon SNS"
+            },
+            {
+              "id": "operator"
+            },
+            {
+              "id": "observability",
+              "service": "Amazon CloudWatch"
+            }
+          ],
+          "passed": false,
+          "mentorJourneyPassed": true
+        }
+      },
+      "workspaceSha256": "419cbce2a9a3513509276b6f5354f1207eff55f1e9df77c3ce6526269d86e423",
+      "project": "runs/2026-11-07T12-26-00.936Z/aws-iot/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-26-00.936Z/aws-iot/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "Reject unknown device and invalid units",
+          "Duplicate events produce one result",
+          "Late and out-of-order telemetry follows an explicit policy",
+          "Disconnected input recovers by replay",
+          "Anomaly output names evidence and model version"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "aws-observability",
+      "sourceRun": "2026-11-07T12-19-30.181Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-30.181Z",
+        "record": {
+          "provider": "aws-observability",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "emulation": "blocked",
+          "mentorResponded": true,
+          "architecturePresent": true,
+          "acceptanceRequirements": [
+            "Redact secrets before model input",
+            "Link conclusions to exact trace or log IDs",
+            "Prompt injection in a log cannot issue tool calls",
+            "Missing spans yield uncertainty rather than invented causes",
+            "Repeated ingestion preserves a consistent incident timeline"
+          ],
+          "staticAssessment": {
+            "kind": "static-graph-checks",
+            "checks": [
+              {
+                "name": "Application contains at least three required components",
+                "passed": true
+              },
+              {
+                "name": "Required components form one connected graph",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud resources retain the requested provider",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud components name concrete services",
+                "passed": true
+              },
+              {
+                "name": "AI application has not collapsed into only object storage",
+                "passed": true
+              }
+            ],
+            "passed": true,
+            "limitations": [
+              "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+            ],
+            "acceptanceRequirements": [
+              "Redact secrets before model input",
+              "Link conclusions to exact trace or log IDs",
+              "Prompt injection in a log cannot issue tool calls",
+              "Missing spans yield uncertainty rather than invented causes",
+              "Repeated ingestion preserves a consistent incident timeline"
+            ]
+          },
+          "components": [
+            {
+              "id": "n-svc"
+            },
+            {
+              "id": "n-cwl",
+              "service": "Amazon CloudWatch Logs"
+            },
+            {
+              "id": "n-xray",
+              "service": "AWS X-Ray"
+            },
+            {
+              "id": "n-firehose",
+              "service": "Amazon Data Firehose"
+            },
+            {
+              "id": "n-redact",
+              "service": "AWS Lambda"
+            },
+            {
+              "id": "n-s3",
+              "service": "Amazon S3"
+            },
+            {
+              "id": "n-search",
+              "service": "Amazon OpenSearch Service"
+            },
+            {
+              "id": "n-operator",
+              "binding": "aws-iam-principal"
+            },
+            {
+              "id": "n-api",
+              "service": "Amazon API Gateway"
+            },
+            {
+              "id": "n-analysis",
+              "service": "AWS Lambda"
+            },
+            {
+              "id": "n-guardrails",
+              "service": "Amazon Bedrock Guardrails"
+            },
+            {
+              "id": "n-bedrock",
+              "service": "Amazon Bedrock",
+              "binding": "aws-bedrock-model"
+            }
+          ],
+          "passed": false,
+          "mentorJourneyPassed": true
+        }
+      },
+      "workspaceSha256": "2259084ad6e476a65c645b42e166a4dc8e004bb68152944065ea587b4762bef9",
+      "project": "runs/2026-11-07T12-19-30.181Z/aws-observability/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-19-30.181Z/aws-observability/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "Redact secrets before model input",
+          "Link conclusions to exact trace or log IDs",
+          "Prompt injection in a log cannot issue tool calls",
+          "Missing spans yield uncertainty rather than invented causes",
+          "Repeated ingestion preserves a consistent incident timeline"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "aws-rag",
+      "sourceRun": "2026-11-07T12-19-30.181Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-30.181Z",
+        "record": {
+          "provider": "aws-rag",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "emulation": "passed",
+          "mentorResponded": true,
+          "architecturePresent": true,
+          "acceptanceRequirements": [
+            "Denied documents never reach the model",
+            "Known questions cite current source revisions",
+            "Unsupported questions abstain",
+            "Updates and deletions change retrieval",
+            "Revocation during generation suppresses the answer"
+          ],
+          "staticAssessment": {
+            "kind": "static-graph-checks",
+            "checks": [
+              {
+                "name": "Application contains at least three required components",
+                "passed": true
+              },
+              {
+                "name": "Required components form one connected graph",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud resources retain the requested provider",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud components name concrete services",
+                "passed": true
+              },
+              {
+                "name": "AI application has not collapsed into only object storage",
+                "passed": true
+              }
+            ],
+            "passed": true,
+            "limitations": [
+              "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+            ],
+            "acceptanceRequirements": [
+              "Denied documents never reach the model",
+              "Known questions cite current source revisions",
+              "Unsupported questions abstain",
+              "Updates and deletions change retrieval",
+              "Revocation during generation suppresses the answer"
+            ]
+          },
+          "components": [
+            {
+              "id": "user",
+              "binding": "web-browser"
+            },
+            {
+              "id": "web",
+              "service": "Amazon CloudFront",
+              "implementation": "rag-web-app"
+            },
+            {
+              "id": "cognito",
+              "service": "Amazon Cognito",
+              "implementation": "rag-user-pool"
+            },
+            {
+              "id": "api",
+              "service": "Amazon API Gateway",
+              "implementation": "iam-rag-api"
+            },
+            {
+              "id": "rag",
+              "service": "AWS Lambda",
+              "implementation": "bounded-keyword-rag"
+            },
+            {
+              "id": "catalog",
+              "service": "Amazon DynamoDB",
+              "implementation": "bounded-rag-catalog"
+            },
+            {
+              "id": "bedrock",
+              "service": "Amazon Bedrock",
+              "binding": "aws-bedrock-model"
+            }
+          ],
+          "passed": true,
+          "mentorJourneyPassed": true
+        }
+      },
+      "workspaceSha256": "c4c3738de3e15f1df2126338a576ade68309d5adb2f22f04fa0d7d2a8f12d6f0",
+      "project": "runs/2026-11-07T12-19-30.181Z/aws-rag/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-19-30.181Z/aws-rag/prompt-history.json",
+      "status": "bounded_runtime_pass",
+      "runtimeStatus": "passed",
+      "runtimeChecks": 2,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "Denied documents never reach the model",
+          "Known questions cite current source revisions",
+          "Unsupported questions abstain",
+          "Updates and deletions change retrieval",
+          "Revocation during generation suppresses the answer"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "aws-chatbot",
+      "sourceRun": "2026-11-07T12-19-30.181Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-30.181Z",
+        "record": {
+          "provider": "aws-chatbot",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "emulation": "blocked",
+          "mentorResponded": false,
+          "architecturePresent": true,
+          "acceptanceRequirements": [
+            "One user cannot read another conversation",
+            "Context and response sizes are bounded",
+            "Model outage produces a recoverable response",
+            "Deleting a conversation removes its stored context",
+            "Escalation retains the approved conversation context"
+          ],
+          "staticAssessment": {
+            "kind": "static-graph-checks",
+            "checks": [
+              {
+                "name": "Application contains at least three required components",
+                "passed": true
+              },
+              {
+                "name": "Required components form one connected graph",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud resources retain the requested provider",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud components name concrete services",
+                "passed": true
+              },
+              {
+                "name": "AI application has not collapsed into only object storage",
+                "passed": true
+              }
+            ],
+            "passed": true,
+            "limitations": [
+              "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+            ],
+            "acceptanceRequirements": [
+              "One user cannot read another conversation",
+              "Context and response sizes are bounded",
+              "Model outage produces a recoverable response",
+              "Deleting a conversation removes its stored context",
+              "Escalation retains the approved conversation context"
+            ]
+          },
+          "components": [
+            {
+              "id": "user",
+              "binding": "web-browser"
+            },
+            {
+              "id": "web",
+              "service": "Amazon CloudFront"
+            },
+            {
+              "id": "auth",
+              "service": "Amazon Cognito"
+            },
+            {
+              "id": "api",
+              "service": "Amazon API Gateway"
+            },
+            {
+              "id": "chat",
+              "service": "AWS Lambda"
+            },
+            {
+              "id": "convo",
+              "service": "Amazon DynamoDB"
+            },
+            {
+              "id": "model",
+              "service": "Amazon Bedrock",
+              "binding": "aws-bedrock-model"
+            },
+            {
+              "id": "escq",
+              "service": "Amazon SQS"
+            },
+            {
+              "id": "agent"
+            },
+            {
+              "id": "logs",
+              "service": "Amazon CloudWatch"
+            }
+          ],
+          "passed": false,
+          "mentorJourneyPassed": false
+        }
+      },
+      "workspaceSha256": "c3ac02971ddb93d8cce46ed1b9b13700dee5dcc81aed06eb109d953f7cdfd0bb",
+      "project": "runs/2026-11-07T12-19-30.181Z/aws-chatbot/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-19-30.181Z/aws-chatbot/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "One user cannot read another conversation",
+          "Context and response sizes are bounded",
+          "Model outage produces a recoverable response",
+          "Deleting a conversation removes its stored context",
+          "Escalation retains the approved conversation context"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "aws-version-control",
+      "sourceRun": "2026-11-07T12-04-34.257Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-30.181Z",
+        "record": {
+          "provider": "aws-version-control",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "passed": false,
+          "error": "Model request failed"
+        }
+      },
+      "workspaceSha256": "342cdb8627c3672711f3282b08aa6db1664d1ba918b2cb1c32140fd0c13156a3",
+      "project": "runs/2026-11-07T12-04-34.257Z/aws-version-control/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-04-34.257Z/aws-version-control/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "Repository and branch permissions enforced",
+          "Untrusted repository instructions cannot trigger execution",
+          "Findings link to lines in the reviewed commit",
+          "A changed head commit invalidates the review",
+          "Retry does not post duplicate comments and posting requires approval"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "aws-maintenance",
+      "sourceRun": "2026-11-07T12-04-34.257Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-30.181Z",
+        "record": {
+          "provider": "aws-maintenance",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "passed": false,
+          "error": "Model request failed"
+        }
+      },
+      "workspaceSha256": "fd4917b638551288f78b85072d35139f9abd49344e059fcb5db3fc2c52ad99ff",
+      "project": "runs/2026-11-07T12-04-34.257Z/aws-maintenance/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-04-34.257Z/aws-maintenance/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "Time-based split prevents future-label leakage",
+          "Missing sensors produce an explicit degraded result",
+          "Prediction records include feature and model versions",
+          "Evaluate false alarms and missed faults on held-out data",
+          "Work orders require approval and are idempotent"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "aws-customer-support",
+      "sourceRun": "2026-11-07T12-04-34.257Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-30.181Z",
+        "record": {
+          "provider": "aws-customer-support",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "passed": false,
+          "error": "Model request failed"
+        }
+      },
+      "workspaceSha256": "f037323c16d66ebe55447f28bebbd4ac79131c526d4be67b0efb2b32f63b4cd7",
+      "project": "runs/2026-11-07T12-04-34.257Z/aws-customer-support/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-04-34.257Z/aws-customer-support/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "Customer and tenant boundaries preserved",
+          "Answers cite approved knowledge",
+          "Unsupported promises escalate to staff",
+          "Sensitive customer fields excluded from model input",
+          "Approved ticket updates are idempotent and auditable"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "aws-call-center",
+      "sourceRun": "2026-11-07T12-04-34.257Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-30.181Z",
+        "record": {
+          "provider": "aws-call-center",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "passed": false,
+          "error": "Model request failed"
+        }
+      },
+      "workspaceSha256": "caf042cc074f26150eddebe27b772d2b0281cd7eab8be5d975502b06171b5bfd",
+      "project": "runs/2026-11-07T12-04-34.257Z/aws-call-center/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-04-34.257Z/aws-call-center/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "No audio processed before consent",
+          "Partial and final transcripts remain ordered",
+          "Sensitive audio-derived fields are redacted before generation",
+          "Unsupported suggestions are withheld or escalated",
+          "An approved CRM update uses the final transcript and cannot duplicate on retry"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "aws-cloud-operations",
+      "sourceRun": "2026-11-07T12-04-34.257Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-30.181Z",
+        "record": {
+          "provider": "aws-cloud-operations",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "passed": false,
+          "error": "Model request failed"
+        }
+      },
+      "workspaceSha256": "7aff928d6c1936d0e453ebe29e7c4512374d84b2bedf08d7b8c365acbaae7163",
+      "project": "runs/2026-11-07T12-04-34.257Z/aws-cloud-operations/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-04-34.257Z/aws-cloud-operations/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "Inventory credentials are read-only",
+          "Untrusted resource tags cannot trigger commands",
+          "Plans identify affected resources and costs as estimates",
+          "Drift after review invalidates approval",
+          "Apply requires separate authorization and a rollback or recovery plan"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "aws-cybersecurity",
+      "sourceRun": "2026-11-07T12-04-34.257Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-30.181Z",
+        "record": {
+          "provider": "aws-cybersecurity",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "passed": false,
+          "error": "Model request failed"
+        }
+      },
+      "workspaceSha256": "2bb54e21fe1520fc2c34d772dceb0cda78d8ad45079490f1840a252d2296134c",
+      "project": "runs/2026-11-07T12-04-34.257Z/aws-cybersecurity/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-04-34.257Z/aws-cybersecurity/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "Payloads and log instructions are treated as untrusted data",
+          "Restricted security evidence stays within analyst permissions",
+          "Severity claims cite observed evidence and uncertainty",
+          "Duplicate alerts preserve the investigation audit trail",
+          "Containment requires explicit approval and reversible action planning"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "azure-iot",
+      "sourceRun": "2026-11-07T12-19-31.301Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-31.301Z",
+        "record": {
+          "provider": "azure-iot",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "emulation": "blocked",
+          "mentorResponded": true,
+          "architecturePresent": true,
+          "acceptanceRequirements": [
+            "Reject unknown device and invalid units",
+            "Duplicate events produce one result",
+            "Late and out-of-order telemetry follows an explicit policy",
+            "Disconnected input recovers by replay",
+            "Anomaly output names evidence and model version"
+          ],
+          "staticAssessment": {
+            "kind": "static-graph-checks",
+            "checks": [
+              {
+                "name": "Application contains at least three required components",
+                "passed": true
+              },
+              {
+                "name": "Required components form one connected graph",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud resources retain the requested provider",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud components name concrete services",
+                "passed": true
+              },
+              {
+                "name": "AI application has not collapsed into only object storage",
+                "passed": true
+              }
+            ],
+            "passed": true,
+            "limitations": [
+              "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+            ],
+            "acceptanceRequirements": [
+              "Reject unknown device and invalid units",
+              "Duplicate events produce one result",
+              "Late and out-of-order telemetry follows an explicit policy",
+              "Disconnected input recovers by replay",
+              "Anomaly output names evidence and model version"
+            ]
+          },
+          "components": [
+            {
+              "id": "sim"
+            },
+            {
+              "id": "iothub",
+              "service": "Azure IoT Hub"
+            },
+            {
+              "id": "eventhubs",
+              "service": "Azure Event Hubs"
+            },
+            {
+              "id": "validator",
+              "service": "Azure Functions"
+            },
+            {
+              "id": "quarantine",
+              "service": "Azure Blob Storage"
+            },
+            {
+              "id": "registry",
+              "service": "Azure Machine Learning"
+            },
+            {
+              "id": "aml",
+              "service": "Azure Machine Learning managed online endpoint"
+            },
+            {
+              "id": "cosmos",
+              "service": "Azure Cosmos DB"
+            },
+            {
+              "id": "monitor",
+              "service": "Azure Monitor"
+            },
+            {
+              "id": "operator"
+            }
+          ],
+          "passed": false,
+          "mentorJourneyPassed": true
+        }
+      },
+      "workspaceSha256": "9a12e501069bf20f5bbb24b3de97ec50c308237f33d44481552f2911b88a7900",
+      "project": "runs/2026-11-07T12-19-31.301Z/azure-iot/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-19-31.301Z/azure-iot/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "Reject unknown device and invalid units",
+          "Duplicate events produce one result",
+          "Late and out-of-order telemetry follows an explicit policy",
+          "Disconnected input recovers by replay",
+          "Anomaly output names evidence and model version"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "azure-observability",
+      "sourceRun": "2026-11-07T12-19-31.301Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-31.301Z",
+        "record": {
+          "provider": "azure-observability",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "emulation": "blocked",
+          "mentorResponded": true,
+          "architecturePresent": true,
+          "acceptanceRequirements": [
+            "Redact secrets before model input",
+            "Link conclusions to exact trace or log IDs",
+            "Prompt injection in a log cannot issue tool calls",
+            "Missing spans yield uncertainty rather than invented causes",
+            "Repeated ingestion preserves a consistent incident timeline"
+          ],
+          "staticAssessment": {
+            "kind": "static-graph-checks",
+            "checks": [
+              {
+                "name": "Application contains at least three required components",
+                "passed": true
+              },
+              {
+                "name": "Required components form one connected graph",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud resources retain the requested provider",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud components name concrete services",
+                "passed": true
+              },
+              {
+                "name": "AI application has not collapsed into only object storage",
+                "passed": true
+              }
+            ],
+            "passed": true,
+            "limitations": [
+              "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+            ],
+            "acceptanceRequirements": [
+              "Redact secrets before model input",
+              "Link conclusions to exact trace or log IDs",
+              "Prompt injection in a log cannot issue tool calls",
+              "Missing spans yield uncertainty rather than invented causes",
+              "Repeated ingestion preserves a consistent incident timeline"
+            ]
+          },
+          "components": [
+            {
+              "id": "svc"
+            },
+            {
+              "id": "eh",
+              "service": "Azure Event Hubs"
+            },
+            {
+              "id": "redact",
+              "service": "Azure Functions"
+            },
+            {
+              "id": "adx",
+              "service": "Azure Data Explorer"
+            },
+            {
+              "id": "runtime",
+              "service": "Azure Container Apps"
+            },
+            {
+              "id": "aoai",
+              "service": "Azure OpenAI Service"
+            },
+            {
+              "id": "operator"
+            },
+            {
+              "id": "entra",
+              "service": "Microsoft Entra ID"
+            },
+            {
+              "id": "mon",
+              "service": "Azure Monitor Application Insights"
+            }
+          ],
+          "passed": false,
+          "mentorJourneyPassed": true
+        }
+      },
+      "workspaceSha256": "8363703b1385be8f79ff92463715306b048539eedef44ff17c6aa72f6a4f15a0",
+      "project": "runs/2026-11-07T12-19-31.301Z/azure-observability/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-19-31.301Z/azure-observability/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "Redact secrets before model input",
+          "Link conclusions to exact trace or log IDs",
+          "Prompt injection in a log cannot issue tool calls",
+          "Missing spans yield uncertainty rather than invented causes",
+          "Repeated ingestion preserves a consistent incident timeline"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "azure-rag",
+      "sourceRun": "2026-11-07T12-19-31.301Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-31.301Z",
+        "record": {
+          "provider": "azure-rag",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "emulation": "blocked",
+          "mentorResponded": false,
+          "architecturePresent": true,
+          "acceptanceRequirements": [
+            "Denied documents never reach the model",
+            "Known questions cite current source revisions",
+            "Unsupported questions abstain",
+            "Updates and deletions change retrieval",
+            "Revocation during generation suppresses the answer"
+          ],
+          "staticAssessment": {
+            "kind": "static-graph-checks",
+            "checks": [
+              {
+                "name": "Application contains at least three required components",
+                "passed": true
+              },
+              {
+                "name": "Required components form one connected graph",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud resources retain the requested provider",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud components name concrete services",
+                "passed": true
+              },
+              {
+                "name": "AI application has not collapsed into only object storage",
+                "passed": true
+              }
+            ],
+            "passed": true,
+            "limitations": [
+              "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+            ],
+            "acceptanceRequirements": [
+              "Denied documents never reach the model",
+              "Known questions cite current source revisions",
+              "Unsupported questions abstain",
+              "Updates and deletions change retrieval",
+              "Revocation during generation suppresses the answer"
+            ]
+          },
+          "components": [
+            {
+              "id": "user"
+            },
+            {
+              "id": "web",
+              "service": "Azure Static Web Apps"
+            },
+            {
+              "id": "entra",
+              "service": "Microsoft Entra ID"
+            },
+            {
+              "id": "rag-api",
+              "service": "Azure Functions"
+            },
+            {
+              "id": "catalog",
+              "service": "Azure Cosmos DB"
+            },
+            {
+              "id": "model",
+              "service": "Azure OpenAI Service"
+            },
+            {
+              "id": "operator"
+            },
+            {
+              "id": "docs-blob",
+              "service": "Azure Blob Storage"
+            },
+            {
+              "id": "ingest-fn",
+              "service": "Azure Functions"
+            },
+            {
+              "id": "monitor",
+              "service": "Application Insights"
+            }
+          ],
+          "passed": false,
+          "mentorJourneyPassed": false
+        }
+      },
+      "workspaceSha256": "61b39f22c90567310b0b2b289b666bb94657c0d8a583adb4c8c87cebe0dbc2d4",
+      "project": "runs/2026-11-07T12-19-31.301Z/azure-rag/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-19-31.301Z/azure-rag/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "Denied documents never reach the model",
+          "Known questions cite current source revisions",
+          "Unsupported questions abstain",
+          "Updates and deletions change retrieval",
+          "Revocation during generation suppresses the answer"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "azure-chatbot",
+      "sourceRun": "2026-11-07T12-04-36.888Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-31.301Z",
+        "record": {
+          "provider": "azure-chatbot",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "passed": false,
+          "error": "Model request failed"
+        }
+      },
+      "workspaceSha256": "fa18cc2a1b6e8b1389ee3cf2ac840cbb9bc4fd85ef2990bbd30f9da84808b348",
+      "project": "runs/2026-11-07T12-04-36.888Z/azure-chatbot/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-04-36.888Z/azure-chatbot/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "One user cannot read another conversation",
+          "Context and response sizes are bounded",
+          "Model outage produces a recoverable response",
+          "Deleting a conversation removes its stored context",
+          "Escalation retains the approved conversation context"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "azure-version-control",
+      "sourceRun": "2026-11-07T12-04-36.888Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-31.301Z",
+        "record": {
+          "provider": "azure-version-control",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "passed": false,
+          "error": "Model request failed"
+        }
+      },
+      "workspaceSha256": "4265df5d9aebee7f1f5a08972389b7f78d146317d6bb015963804e0e6e58c668",
+      "project": "runs/2026-11-07T12-04-36.888Z/azure-version-control/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-04-36.888Z/azure-version-control/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "Repository and branch permissions enforced",
+          "Untrusted repository instructions cannot trigger execution",
+          "Findings link to lines in the reviewed commit",
+          "A changed head commit invalidates the review",
+          "Retry does not post duplicate comments and posting requires approval"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "azure-maintenance",
+      "sourceRun": "2026-11-07T12-32-55.478Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-32-55.478Z",
+        "record": {
+          "provider": "azure-maintenance",
+          "architectProvider": "codex",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "emulation": "blocked",
+          "mentorResponded": true,
+          "architecturePresent": true,
+          "acceptanceRequirements": [
+            "Time-based split prevents future-label leakage",
+            "Missing sensors produce an explicit degraded result",
+            "Prediction records include feature and model versions",
+            "Evaluate false alarms and missed faults on held-out data",
+            "Work orders require approval and are idempotent"
+          ],
+          "staticAssessment": {
+            "kind": "static-graph-checks",
+            "checks": [
+              {
+                "name": "Application contains at least three required components",
+                "passed": true
+              },
+              {
+                "name": "Required components form one connected graph",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud resources retain the requested provider",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud components name concrete services",
+                "passed": true
+              },
+              {
+                "name": "AI application has not collapsed into only object storage",
+                "passed": true
+              }
+            ],
+            "passed": true,
+            "limitations": [
+              "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+            ],
+            "acceptanceRequirements": [
+              "Time-based split prevents future-label leakage",
+              "Missing sensors produce an explicit degraded result",
+              "Prediction records include feature and model versions",
+              "Evaluate false alarms and missed faults on held-out data",
+              "Work orders require approval and are idempotent"
+            ]
+          },
+          "components": [
+            {
+              "id": "sensor-history",
+              "service": "External synthetic fixture source"
+            },
+            {
+              "id": "maintenance-history",
+              "service": "External synthetic fixture source"
+            },
+            {
+              "id": "ingestion",
+              "service": "Azure Data Factory"
+            },
+            {
+              "id": "data-lake",
+              "service": "Azure Data Lake Storage Gen2"
+            },
+            {
+              "id": "maintenance-ml",
+              "service": "Azure Machine Learning"
+            },
+            {
+              "id": "maintenance-app",
+              "service": "Azure Functions"
+            },
+            {
+              "id": "prediction-orders",
+              "service": "Azure Cosmos DB"
+            },
+            {
+              "id": "operator",
+              "service": "External operator client"
+            },
+            {
+              "id": "operations-monitor",
+              "service": "Azure Monitor"
+            }
+          ],
+          "passed": false,
+          "mentorJourneyPassed": true
+        }
+      },
+      "workspaceSha256": "47c1fb4b23fd57ce7f8c93039ee1c1d3fcde2a177fb9f4be14e1de2dc1128fdd",
+      "project": "runs/2026-11-07T12-32-55.478Z/azure-maintenance/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-32-55.478Z/azure-maintenance/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "Time-based split prevents future-label leakage",
+          "Missing sensors produce an explicit degraded result",
+          "Prediction records include feature and model versions",
+          "Evaluate false alarms and missed faults on held-out data",
+          "Work orders require approval and are idempotent"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "azure-customer-support",
+      "sourceRun": "2026-11-07T12-04-36.888Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-31.301Z",
+        "record": {
+          "provider": "azure-customer-support",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "passed": false,
+          "error": "Model request failed"
+        }
+      },
+      "workspaceSha256": "6e3da5b8ccb94f5a3dc352e19eef30fa7e696dbe53a87acbf1ca4b14e3909acb",
+      "project": "runs/2026-11-07T12-04-36.888Z/azure-customer-support/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-04-36.888Z/azure-customer-support/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "Customer and tenant boundaries preserved",
+          "Answers cite approved knowledge",
+          "Unsupported promises escalate to staff",
+          "Sensitive customer fields excluded from model input",
+          "Approved ticket updates are idempotent and auditable"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "azure-call-center",
+      "sourceRun": "2026-11-07T12-04-36.888Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-31.301Z",
+        "record": {
+          "provider": "azure-call-center",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "passed": false,
+          "error": "Model request failed"
+        }
+      },
+      "workspaceSha256": "1ec8a55507efc93fe2f89df22a77c9cca3d2bf6281daff8219a87c81898e506a",
+      "project": "runs/2026-11-07T12-04-36.888Z/azure-call-center/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-04-36.888Z/azure-call-center/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "No audio processed before consent",
+          "Partial and final transcripts remain ordered",
+          "Sensitive audio-derived fields are redacted before generation",
+          "Unsupported suggestions are withheld or escalated",
+          "An approved CRM update uses the final transcript and cannot duplicate on retry"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "azure-cloud-operations",
+      "sourceRun": "2026-11-07T12-04-36.888Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-31.301Z",
+        "record": {
+          "provider": "azure-cloud-operations",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "passed": false,
+          "error": "Model request failed"
+        }
+      },
+      "workspaceSha256": "f11b852fa39114f5dfa98661300ec61b209f9e090ff9cd20264f1aa041fd03bc",
+      "project": "runs/2026-11-07T12-04-36.888Z/azure-cloud-operations/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-04-36.888Z/azure-cloud-operations/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "Inventory credentials are read-only",
+          "Untrusted resource tags cannot trigger commands",
+          "Plans identify affected resources and costs as estimates",
+          "Drift after review invalidates approval",
+          "Apply requires separate authorization and a rollback or recovery plan"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "azure-cybersecurity",
+      "sourceRun": "2026-11-07T12-04-36.888Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-31.301Z",
+        "record": {
+          "provider": "azure-cybersecurity",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "passed": false,
+          "error": "Model request failed"
+        }
+      },
+      "workspaceSha256": "163c14b1457f306bcddcc68937c819e1ad0433819ab7d556a63114a944b455e4",
+      "project": "runs/2026-11-07T12-04-36.888Z/azure-cybersecurity/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-04-36.888Z/azure-cybersecurity/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "Payloads and log instructions are treated as untrusted data",
+          "Restricted security evidence stays within analyst permissions",
+          "Severity claims cite observed evidence and uncertainty",
+          "Duplicate alerts preserve the investigation audit trail",
+          "Containment requires explicit approval and reversible action planning"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "gcp-iot",
+      "sourceRun": "2026-11-07T12-19-32.628Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-32.628Z",
+        "record": {
+          "provider": "gcp-iot",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "emulation": "blocked",
+          "mentorResponded": true,
+          "architecturePresent": true,
+          "acceptanceRequirements": [
+            "Reject unknown device and invalid units",
+            "Duplicate events produce one result",
+            "Late and out-of-order telemetry follows an explicit policy",
+            "Disconnected input recovers by replay",
+            "Anomaly output names evidence and model version"
+          ],
+          "staticAssessment": {
+            "kind": "static-graph-checks",
+            "checks": [
+              {
+                "name": "Application contains at least three required components",
+                "passed": true
+              },
+              {
+                "name": "Required components form one connected graph",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud resources retain the requested provider",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud components name concrete services",
+                "passed": true
+              },
+              {
+                "name": "AI application has not collapsed into only object storage",
+                "passed": true
+              }
+            ],
+            "passed": true,
+            "limitations": [
+              "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+            ],
+            "acceptanceRequirements": [
+              "Reject unknown device and invalid units",
+              "Duplicate events produce one result",
+              "Late and out-of-order telemetry follows an explicit policy",
+              "Disconnected input recovers by replay",
+              "Anomaly output names evidence and model version"
+            ]
+          },
+          "components": [
+            {
+              "id": "sim"
+            },
+            {
+              "id": "pubsub",
+              "service": "Pub/Sub"
+            },
+            {
+              "id": "archive",
+              "service": "Cloud Storage"
+            },
+            {
+              "id": "registry_db",
+              "service": "Firestore"
+            },
+            {
+              "id": "dataflow",
+              "service": "Dataflow"
+            },
+            {
+              "id": "dlq",
+              "service": "Pub/Sub"
+            },
+            {
+              "id": "vertex",
+              "service": "Vertex AI Endpoints"
+            },
+            {
+              "id": "modelreg",
+              "service": "Vertex AI Model Registry"
+            },
+            {
+              "id": "bq",
+              "service": "BigQuery"
+            },
+            {
+              "id": "monitoring",
+              "service": "Cloud Monitoring"
+            },
+            {
+              "id": "operator"
+            }
+          ],
+          "passed": false,
+          "mentorJourneyPassed": true
+        }
+      },
+      "workspaceSha256": "c85c5b100bee1c99bf559612a34b51d863fd4c466729fa8123ebb9331f44df4e",
+      "project": "runs/2026-11-07T12-19-32.628Z/gcp-iot/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-19-32.628Z/gcp-iot/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "Reject unknown device and invalid units",
+          "Duplicate events produce one result",
+          "Late and out-of-order telemetry follows an explicit policy",
+          "Disconnected input recovers by replay",
+          "Anomaly output names evidence and model version"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "gcp-observability",
+      "sourceRun": "2026-11-07T12-19-32.628Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-32.628Z",
+        "record": {
+          "provider": "gcp-observability",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "emulation": "blocked",
+          "mentorResponded": true,
+          "architecturePresent": true,
+          "acceptanceRequirements": [
+            "Redact secrets before model input",
+            "Link conclusions to exact trace or log IDs",
+            "Prompt injection in a log cannot issue tool calls",
+            "Missing spans yield uncertainty rather than invented causes",
+            "Repeated ingestion preserves a consistent incident timeline"
+          ],
+          "staticAssessment": {
+            "kind": "static-graph-checks",
+            "checks": [
+              {
+                "name": "Application contains at least three required components",
+                "passed": true
+              },
+              {
+                "name": "Required components form one connected graph",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud resources retain the requested provider",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud components name concrete services",
+                "passed": true
+              },
+              {
+                "name": "AI application has not collapsed into only object storage",
+                "passed": true
+              }
+            ],
+            "passed": true,
+            "limitations": [
+              "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+            ],
+            "acceptanceRequirements": [
+              "Redact secrets before model input",
+              "Link conclusions to exact trace or log IDs",
+              "Prompt injection in a log cannot issue tool calls",
+              "Missing spans yield uncertainty rather than invented causes",
+              "Repeated ingestion preserves a consistent incident timeline"
+            ]
+          },
+          "components": [
+            {
+              "id": "src-synthetic"
+            },
+            {
+              "id": "otel-collector",
+              "service": "Cloud Run"
+            },
+            {
+              "id": "pubsub-raw",
+              "service": "Pub/Sub"
+            },
+            {
+              "id": "ingest-worker",
+              "service": "Cloud Run"
+            },
+            {
+              "id": "dlp",
+              "service": "Sensitive Data Protection (Cloud DLP)"
+            },
+            {
+              "id": "bq-telemetry",
+              "service": "BigQuery"
+            },
+            {
+              "id": "analysis-runtime",
+              "service": "Cloud Run"
+            },
+            {
+              "id": "vertex-gemini",
+              "service": "Vertex AI (Gemini)"
+            },
+            {
+              "id": "iap",
+              "service": "Identity-Aware Proxy"
+            },
+            {
+              "id": "operator"
+            }
+          ],
+          "passed": false,
+          "mentorJourneyPassed": true
+        }
+      },
+      "workspaceSha256": "d77f0e675b0c14f12090ffef3073333d7d905a321b53eaa5fc86b9df149fe670",
+      "project": "runs/2026-11-07T12-19-32.628Z/gcp-observability/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-19-32.628Z/gcp-observability/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "Redact secrets before model input",
+          "Link conclusions to exact trace or log IDs",
+          "Prompt injection in a log cannot issue tool calls",
+          "Missing spans yield uncertainty rather than invented causes",
+          "Repeated ingestion preserves a consistent incident timeline"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "gcp-rag",
+      "sourceRun": "2026-11-07T12-19-32.628Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-32.628Z",
+        "record": {
+          "provider": "gcp-rag",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "emulation": "blocked",
+          "mentorResponded": true,
+          "architecturePresent": true,
+          "acceptanceRequirements": [
+            "Denied documents never reach the model",
+            "Known questions cite current source revisions",
+            "Unsupported questions abstain",
+            "Updates and deletions change retrieval",
+            "Revocation during generation suppresses the answer"
+          ],
+          "staticAssessment": {
+            "kind": "static-graph-checks",
+            "checks": [
+              {
+                "name": "Application contains at least three required components",
+                "passed": true
+              },
+              {
+                "name": "Required components form one connected graph",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud resources retain the requested provider",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud components name concrete services",
+                "passed": true
+              },
+              {
+                "name": "AI application has not collapsed into only object storage",
+                "passed": true
+              }
+            ],
+            "passed": true,
+            "limitations": [
+              "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+            ],
+            "acceptanceRequirements": [
+              "Denied documents never reach the model",
+              "Known questions cite current source revisions",
+              "Unsupported questions abstain",
+              "Updates and deletions change retrieval",
+              "Revocation during generation suppresses the answer"
+            ]
+          },
+          "components": [
+            {
+              "id": "user"
+            },
+            {
+              "id": "idp",
+              "service": "Identity Platform"
+            },
+            {
+              "id": "web",
+              "service": "Cloud Run"
+            },
+            {
+              "id": "rag-api",
+              "service": "Cloud Run"
+            },
+            {
+              "id": "catalog",
+              "service": "Firestore"
+            },
+            {
+              "id": "model",
+              "service": "Vertex AI (Gemini)"
+            },
+            {
+              "id": "operator"
+            },
+            {
+              "id": "docs",
+              "service": "Cloud Storage"
+            },
+            {
+              "id": "ingest",
+              "service": "Cloud Run"
+            },
+            {
+              "id": "logs",
+              "service": "Cloud Logging"
+            }
+          ],
+          "passed": false,
+          "mentorJourneyPassed": true
+        }
+      },
+      "workspaceSha256": "aa0afd5cfb36b1eacc64b31392b40809f1aa5c12c1f9260fc4d84381362bc22c",
+      "project": "runs/2026-11-07T12-19-32.628Z/gcp-rag/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-19-32.628Z/gcp-rag/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "Denied documents never reach the model",
+          "Known questions cite current source revisions",
+          "Unsupported questions abstain",
+          "Updates and deletions change retrieval",
+          "Revocation during generation suppresses the answer"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "gcp-chatbot",
+      "sourceRun": "2026-11-07T12-19-32.628Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-32.628Z",
+        "record": {
+          "provider": "gcp-chatbot",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "emulation": "blocked",
+          "mentorResponded": false,
+          "architecturePresent": true,
+          "acceptanceRequirements": [
+            "One user cannot read another conversation",
+            "Context and response sizes are bounded",
+            "Model outage produces a recoverable response",
+            "Deleting a conversation removes its stored context",
+            "Escalation retains the approved conversation context"
+          ],
+          "staticAssessment": {
+            "kind": "static-graph-checks",
+            "checks": [
+              {
+                "name": "Application contains at least three required components",
+                "passed": true
+              },
+              {
+                "name": "Required components form one connected graph",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud resources retain the requested provider",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud components name concrete services",
+                "passed": true
+              },
+              {
+                "name": "AI application has not collapsed into only object storage",
+                "passed": true
+              }
+            ],
+            "passed": true,
+            "limitations": [
+              "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+            ],
+            "acceptanceRequirements": [
+              "One user cannot read another conversation",
+              "Context and response sizes are bounded",
+              "Model outage produces a recoverable response",
+              "Deleting a conversation removes its stored context",
+              "Escalation retains the approved conversation context"
+            ]
+          },
+          "components": [
+            {
+              "id": "user"
+            },
+            {
+              "id": "idp",
+              "service": "Identity Platform"
+            },
+            {
+              "id": "app",
+              "service": "Cloud Run"
+            },
+            {
+              "id": "state",
+              "service": "Firestore"
+            },
+            {
+              "id": "model",
+              "service": "Vertex AI (Gemini API)"
+            },
+            {
+              "id": "escalation",
+              "service": "Pub/Sub"
+            },
+            {
+              "id": "reviewer"
+            },
+            {
+              "id": "ops",
+              "service": "Cloud Monitoring"
+            }
+          ],
+          "passed": false,
+          "mentorJourneyPassed": false
+        }
+      },
+      "workspaceSha256": "60240744a749e3b2551d5bc78a82b8076f51eea5d71dda99f56765afd747930c",
+      "project": "runs/2026-11-07T12-19-32.628Z/gcp-chatbot/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-19-32.628Z/gcp-chatbot/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "One user cannot read another conversation",
+          "Context and response sizes are bounded",
+          "Model outage produces a recoverable response",
+          "Deleting a conversation removes its stored context",
+          "Escalation retains the approved conversation context"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "gcp-version-control",
+      "sourceRun": "2026-11-07T12-04-37.805Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-32.628Z",
+        "record": {
+          "provider": "gcp-version-control",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "passed": false,
+          "error": "Model request failed"
+        }
+      },
+      "workspaceSha256": "f3a89328c025b7c9fbdbda3381f11a49887a6ae25862253ec886ea55374ec903",
+      "project": "runs/2026-11-07T12-04-37.805Z/gcp-version-control/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-04-37.805Z/gcp-version-control/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "Repository and branch permissions enforced",
+          "Untrusted repository instructions cannot trigger execution",
+          "Findings link to lines in the reviewed commit",
+          "A changed head commit invalidates the review",
+          "Retry does not post duplicate comments and posting requires approval"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "gcp-maintenance",
+      "sourceRun": "2026-11-07T12-04-37.805Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-32.628Z",
+        "record": {
+          "provider": "gcp-maintenance",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "passed": false,
+          "error": "Model request failed"
+        }
+      },
+      "workspaceSha256": "8b8eb188b11432c6915322878e4bd69acad127aa2faf6a705c328b52ef309a6b",
+      "project": "runs/2026-11-07T12-04-37.805Z/gcp-maintenance/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-04-37.805Z/gcp-maintenance/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "Time-based split prevents future-label leakage",
+          "Missing sensors produce an explicit degraded result",
+          "Prediction records include feature and model versions",
+          "Evaluate false alarms and missed faults on held-out data",
+          "Work orders require approval and are idempotent"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "gcp-customer-support",
+      "sourceRun": "2026-11-07T12-04-37.805Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-32.628Z",
+        "record": {
+          "provider": "gcp-customer-support",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "passed": false,
+          "error": "Model request failed"
+        }
+      },
+      "workspaceSha256": "7132e8b3680b7ab47fc0fe3ab657f1c3e13b049a51d6f4edac3e01888201a30b",
+      "project": "runs/2026-11-07T12-04-37.805Z/gcp-customer-support/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-04-37.805Z/gcp-customer-support/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "Customer and tenant boundaries preserved",
+          "Answers cite approved knowledge",
+          "Unsupported promises escalate to staff",
+          "Sensitive customer fields excluded from model input",
+          "Approved ticket updates are idempotent and auditable"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "gcp-call-center",
+      "sourceRun": "2026-11-07T12-04-37.805Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-32.628Z",
+        "record": {
+          "provider": "gcp-call-center",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "passed": false,
+          "error": "Model request failed"
+        }
+      },
+      "workspaceSha256": "07d9a9c05fe366b3a38f22c2e4af450bceb3417b8bde871152b71a575cc656db",
+      "project": "runs/2026-11-07T12-04-37.805Z/gcp-call-center/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-04-37.805Z/gcp-call-center/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "No audio processed before consent",
+          "Partial and final transcripts remain ordered",
+          "Sensitive audio-derived fields are redacted before generation",
+          "Unsupported suggestions are withheld or escalated",
+          "An approved CRM update uses the final transcript and cannot duplicate on retry"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "gcp-cloud-operations",
+      "sourceRun": "2026-11-07T12-28-57.148Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-28-57.148Z",
+        "record": {
+          "provider": "gcp-cloud-operations",
+          "architectProvider": "codex",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "emulation": "blocked",
+          "mentorResponded": true,
+          "architecturePresent": true,
+          "acceptanceRequirements": [
+            "Inventory credentials are read-only",
+            "Untrusted resource tags cannot trigger commands",
+            "Plans identify affected resources and costs as estimates",
+            "Drift after review invalidates approval",
+            "Apply requires separate authorization and a rollback or recovery plan"
+          ],
+          "staticAssessment": {
+            "kind": "static-graph-checks",
+            "checks": [
+              {
+                "name": "Application contains at least three required components",
+                "passed": true
+              },
+              {
+                "name": "Required components form one connected graph",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud resources retain the requested provider",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud components name concrete services",
+                "passed": true
+              },
+              {
+                "name": "AI application has not collapsed into only object storage",
+                "passed": true
+              }
+            ],
+            "passed": true,
+            "limitations": [
+              "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+            ],
+            "acceptanceRequirements": [
+              "Inventory credentials are read-only",
+              "Untrusted resource tags cannot trigger commands",
+              "Plans identify affected resources and costs as estimates",
+              "Drift after review invalidates approval",
+              "Apply requires separate authorization and a rollback or recovery plan"
+            ]
+          },
+          "components": [
+            {
+              "id": "reviewer"
+            },
+            {
+              "id": "synthetic-inventory"
+            },
+            {
+              "id": "asset-inventory",
+              "service": "Cloud Asset Inventory"
+            },
+            {
+              "id": "qualification-app",
+              "service": "Cloud Run"
+            },
+            {
+              "id": "proposal-model",
+              "service": "Vertex AI"
+            },
+            {
+              "id": "plan-worker",
+              "service": "Cloud Build"
+            },
+            {
+              "id": "review-artifacts",
+              "service": "Google Cloud Storage"
+            },
+            {
+              "id": "drift-schedule",
+              "service": "Cloud Scheduler"
+            },
+            {
+              "id": "audit-logs",
+              "service": "Cloud Logging"
+            }
+          ],
+          "passed": false,
+          "mentorJourneyPassed": true
+        }
+      },
+      "workspaceSha256": "1fb8e9980c3e368f8832dc63d10a026f10dd8f59444bf50d45714bbbd6110541",
+      "project": "runs/2026-11-07T12-28-57.148Z/gcp-cloud-operations/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-28-57.148Z/gcp-cloud-operations/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "Inventory credentials are read-only",
+          "Untrusted resource tags cannot trigger commands",
+          "Plans identify affected resources and costs as estimates",
+          "Drift after review invalidates approval",
+          "Apply requires separate authorization and a rollback or recovery plan"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "gcp-cybersecurity",
+      "sourceRun": "2026-11-07T12-04-37.805Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-32.628Z",
+        "record": {
+          "provider": "gcp-cybersecurity",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "passed": false,
+          "error": "Model request failed"
+        }
+      },
+      "workspaceSha256": "9881230dada2123216403726e259e9f67b7ebfb2bead02bfd857c339e4659264",
+      "project": "runs/2026-11-07T12-04-37.805Z/gcp-cybersecurity/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-04-37.805Z/gcp-cybersecurity/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "Payloads and log instructions are treated as untrusted data",
+          "Restricted security evidence stays within analyst permissions",
+          "Severity claims cite observed evidence and uncertainty",
+          "Duplicate alerts preserve the investigation audit trail",
+          "Containment requires explicit approval and reversible action planning"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "ibm-iot",
+      "sourceRun": "2026-11-07T12-19-33.797Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-33.797Z",
+        "record": {
+          "provider": "ibm-iot",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "emulation": "blocked",
+          "mentorResponded": true,
+          "architecturePresent": true,
+          "acceptanceRequirements": [
+            "Reject unknown device and invalid units",
+            "Duplicate events produce one result",
+            "Late and out-of-order telemetry follows an explicit policy",
+            "Disconnected input recovers by replay",
+            "Anomaly output names evidence and model version"
+          ],
+          "staticAssessment": {
+            "kind": "static-graph-checks",
+            "checks": [
+              {
+                "name": "Application contains at least three required components",
+                "passed": true
+              },
+              {
+                "name": "Required components form one connected graph",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud resources retain the requested provider",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud components name concrete services",
+                "passed": true
+              },
+              {
+                "name": "AI application has not collapsed into only object storage",
+                "passed": true
+              }
+            ],
+            "passed": true,
+            "limitations": [
+              "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+            ],
+            "acceptanceRequirements": [
+              "Reject unknown device and invalid units",
+              "Duplicate events produce one result",
+              "Late and out-of-order telemetry follows an explicit policy",
+              "Disconnected input recovers by replay",
+              "Anomaly output names evidence and model version"
+            ]
+          },
+          "components": [
+            {
+              "id": "sim"
+            },
+            {
+              "id": "es",
+              "service": "IBM Event Streams"
+            },
+            {
+              "id": "validator",
+              "service": "IBM Cloud Code Engine"
+            },
+            {
+              "id": "registry",
+              "service": "IBM Cloudant"
+            },
+            {
+              "id": "model",
+              "service": "IBM watsonx.ai Runtime"
+            },
+            {
+              "id": "results",
+              "service": "IBM Cloud Databases for PostgreSQL"
+            },
+            {
+              "id": "alerts",
+              "service": "IBM Cloud Event Notifications"
+            },
+            {
+              "id": "operator"
+            },
+            {
+              "id": "mon",
+              "service": "IBM Cloud Monitoring"
+            }
+          ],
+          "passed": false,
+          "mentorJourneyPassed": true
+        }
+      },
+      "workspaceSha256": "d26ad7959f6ff22a75a9d012513c2e688e8bf5433982dc69cfcd3848a975d8ed",
+      "project": "runs/2026-11-07T12-19-33.797Z/ibm-iot/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-19-33.797Z/ibm-iot/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "Reject unknown device and invalid units",
+          "Duplicate events produce one result",
+          "Late and out-of-order telemetry follows an explicit policy",
+          "Disconnected input recovers by replay",
+          "Anomaly output names evidence and model version"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "ibm-observability",
+      "sourceRun": "2026-11-07T12-19-33.797Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-33.797Z",
+        "record": {
+          "provider": "ibm-observability",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "emulation": "blocked",
+          "mentorResponded": true,
+          "architecturePresent": true,
+          "acceptanceRequirements": [
+            "Redact secrets before model input",
+            "Link conclusions to exact trace or log IDs",
+            "Prompt injection in a log cannot issue tool calls",
+            "Missing spans yield uncertainty rather than invented causes",
+            "Repeated ingestion preserves a consistent incident timeline"
+          ],
+          "staticAssessment": {
+            "kind": "static-graph-checks",
+            "checks": [
+              {
+                "name": "Application contains at least three required components",
+                "passed": true
+              },
+              {
+                "name": "Required components form one connected graph",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud resources retain the requested provider",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud components name concrete services",
+                "passed": true
+              },
+              {
+                "name": "AI application has not collapsed into only object storage",
+                "passed": true
+              }
+            ],
+            "passed": true,
+            "limitations": [
+              "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+            ],
+            "acceptanceRequirements": [
+              "Redact secrets before model input",
+              "Link conclusions to exact trace or log IDs",
+              "Prompt injection in a log cannot issue tool calls",
+              "Missing spans yield uncertainty rather than invented causes",
+              "Repeated ingestion preserves a consistent incident timeline"
+            ]
+          },
+          "components": [
+            {
+              "id": "src"
+            },
+            {
+              "id": "collector",
+              "service": "IBM Cloud Code Engine"
+            },
+            {
+              "id": "redact",
+              "service": "IBM Cloud Code Engine"
+            },
+            {
+              "id": "archive",
+              "service": "IBM Cloud Object Storage"
+            },
+            {
+              "id": "search",
+              "service": "IBM Cloud Databases for OpenSearch"
+            },
+            {
+              "id": "analysis",
+              "service": "IBM Cloud Code Engine"
+            },
+            {
+              "id": "model",
+              "service": "IBM watsonx.ai"
+            },
+            {
+              "id": "appid",
+              "service": "IBM Cloud App ID"
+            },
+            {
+              "id": "operator"
+            }
+          ],
+          "passed": false,
+          "mentorJourneyPassed": true
+        }
+      },
+      "workspaceSha256": "1d627c2b4aa8e0d3386064aee454ad7c057a3e7eba7271c7c036a647b7682e02",
+      "project": "runs/2026-11-07T12-19-33.797Z/ibm-observability/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-19-33.797Z/ibm-observability/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "Redact secrets before model input",
+          "Link conclusions to exact trace or log IDs",
+          "Prompt injection in a log cannot issue tool calls",
+          "Missing spans yield uncertainty rather than invented causes",
+          "Repeated ingestion preserves a consistent incident timeline"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "ibm-rag",
+      "sourceRun": "2026-11-07T12-19-33.797Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-33.797Z",
+        "record": {
+          "provider": "ibm-rag",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "emulation": "blocked",
+          "mentorResponded": true,
+          "architecturePresent": true,
+          "acceptanceRequirements": [
+            "Denied documents never reach the model",
+            "Known questions cite current source revisions",
+            "Unsupported questions abstain",
+            "Updates and deletions change retrieval",
+            "Revocation during generation suppresses the answer"
+          ],
+          "staticAssessment": {
+            "kind": "static-graph-checks",
+            "checks": [
+              {
+                "name": "Application contains at least three required components",
+                "passed": true
+              },
+              {
+                "name": "Required components form one connected graph",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud resources retain the requested provider",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud components name concrete services",
+                "passed": true
+              },
+              {
+                "name": "AI application has not collapsed into only object storage",
+                "passed": true
+              }
+            ],
+            "passed": true,
+            "limitations": [
+              "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+            ],
+            "acceptanceRequirements": [
+              "Denied documents never reach the model",
+              "Known questions cite current source revisions",
+              "Unsupported questions abstain",
+              "Updates and deletions change retrieval",
+              "Revocation during generation suppresses the answer"
+            ]
+          },
+          "components": [
+            {
+              "id": "operator"
+            },
+            {
+              "id": "cos",
+              "service": "IBM Cloud Object Storage"
+            },
+            {
+              "id": "ingest",
+              "service": "IBM Cloud Code Engine (job)"
+            },
+            {
+              "id": "catalog",
+              "service": "IBM Cloudant"
+            },
+            {
+              "id": "user"
+            },
+            {
+              "id": "webapp",
+              "service": "IBM Cloud Code Engine (app)"
+            },
+            {
+              "id": "appid",
+              "service": "IBM Cloud App ID"
+            },
+            {
+              "id": "ragapi",
+              "service": "IBM Cloud Code Engine (app)"
+            },
+            {
+              "id": "llm",
+              "service": "IBM watsonx.ai"
+            },
+            {
+              "id": "logs",
+              "service": "IBM Cloud Logs"
+            }
+          ],
+          "passed": false,
+          "mentorJourneyPassed": true
+        }
+      },
+      "workspaceSha256": "e24080a8195d7eff244b04732b1071939d7934467b141846bbbb40d032aa9130",
+      "project": "runs/2026-11-07T12-19-33.797Z/ibm-rag/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-19-33.797Z/ibm-rag/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "Denied documents never reach the model",
+          "Known questions cite current source revisions",
+          "Unsupported questions abstain",
+          "Updates and deletions change retrieval",
+          "Revocation during generation suppresses the answer"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "ibm-chatbot",
+      "sourceRun": "2026-11-07T12-19-33.797Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-33.797Z",
+        "record": {
+          "provider": "ibm-chatbot",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "emulation": "blocked",
+          "mentorResponded": false,
+          "architecturePresent": true,
+          "acceptanceRequirements": [
+            "One user cannot read another conversation",
+            "Context and response sizes are bounded",
+            "Model outage produces a recoverable response",
+            "Deleting a conversation removes its stored context",
+            "Escalation retains the approved conversation context"
+          ],
+          "staticAssessment": {
+            "kind": "static-graph-checks",
+            "checks": [
+              {
+                "name": "Application contains at least three required components",
+                "passed": true
+              },
+              {
+                "name": "Required components form one connected graph",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud resources retain the requested provider",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud components name concrete services",
+                "passed": true
+              },
+              {
+                "name": "AI application has not collapsed into only object storage",
+                "passed": true
+              }
+            ],
+            "passed": true,
+            "limitations": [
+              "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+            ],
+            "acceptanceRequirements": [
+              "One user cannot read another conversation",
+              "Context and response sizes are bounded",
+              "Model outage produces a recoverable response",
+              "Deleting a conversation removes its stored context",
+              "Escalation retains the approved conversation context"
+            ]
+          },
+          "components": [
+            {
+              "id": "user"
+            },
+            {
+              "id": "appid",
+              "service": "IBM Cloud App ID"
+            },
+            {
+              "id": "app",
+              "service": "IBM Cloud Code Engine"
+            },
+            {
+              "id": "store",
+              "service": "IBM Cloudant"
+            },
+            {
+              "id": "model",
+              "service": "IBM watsonx.ai"
+            },
+            {
+              "id": "escalation",
+              "service": "IBM Event Streams"
+            },
+            {
+              "id": "agent"
+            },
+            {
+              "id": "secrets",
+              "service": "IBM Cloud Secrets Manager"
+            },
+            {
+              "id": "logs",
+              "service": "IBM Cloud Logs"
+            }
+          ],
+          "passed": false,
+          "mentorJourneyPassed": false
+        }
+      },
+      "workspaceSha256": "2eabd2a1fd2ed9451e36fbda007980120341761009ac6c614a7945e21565b785",
+      "project": "runs/2026-11-07T12-19-33.797Z/ibm-chatbot/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-19-33.797Z/ibm-chatbot/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "One user cannot read another conversation",
+          "Context and response sizes are bounded",
+          "Model outage produces a recoverable response",
+          "Deleting a conversation removes its stored context",
+          "Escalation retains the approved conversation context"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "ibm-version-control",
+      "sourceRun": "2026-11-07T12-04-39.979Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-33.797Z",
+        "record": {
+          "provider": "ibm-version-control",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "passed": false,
+          "error": "Model request failed"
+        }
+      },
+      "workspaceSha256": "d4ef6b572c0790272a61ae3cd259fc130eec79192dcf3a7d400a89ada08b3963",
+      "project": "runs/2026-11-07T12-04-39.979Z/ibm-version-control/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-04-39.979Z/ibm-version-control/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "Repository and branch permissions enforced",
+          "Untrusted repository instructions cannot trigger execution",
+          "Findings link to lines in the reviewed commit",
+          "A changed head commit invalidates the review",
+          "Retry does not post duplicate comments and posting requires approval"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "ibm-maintenance",
+      "sourceRun": "2026-11-07T12-04-39.979Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-33.797Z",
+        "record": {
+          "provider": "ibm-maintenance",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "passed": false,
+          "error": "Model request failed"
+        }
+      },
+      "workspaceSha256": "a1d63254de5fb310e90651ac7022e824cef6745bd88de91b2c2b5974aac6d7a2",
+      "project": "runs/2026-11-07T12-04-39.979Z/ibm-maintenance/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-04-39.979Z/ibm-maintenance/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "Time-based split prevents future-label leakage",
+          "Missing sensors produce an explicit degraded result",
+          "Prediction records include feature and model versions",
+          "Evaluate false alarms and missed faults on held-out data",
+          "Work orders require approval and are idempotent"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "ibm-customer-support",
+      "sourceRun": "2026-11-07T12-28-58.374Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-28-58.374Z",
+        "record": {
+          "provider": "ibm-customer-support",
+          "architectProvider": "codex",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "emulation": "blocked",
+          "mentorResponded": true,
+          "architecturePresent": true,
+          "acceptanceRequirements": [
+            "Customer and tenant boundaries preserved",
+            "Answers cite approved knowledge",
+            "Unsupported promises escalate to staff",
+            "Sensitive customer fields excluded from model input",
+            "Approved ticket updates are idempotent and auditable"
+          ],
+          "staticAssessment": {
+            "kind": "static-graph-checks",
+            "checks": [
+              {
+                "name": "Application contains at least three required components",
+                "passed": true
+              },
+              {
+                "name": "Required components form one connected graph",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud resources retain the requested provider",
+                "passed": true
+              },
+              {
+                "name": "Proposed cloud components name concrete services",
+                "passed": true
+              },
+              {
+                "name": "AI application has not collapsed into only object storage",
+                "passed": true
+              }
+            ],
+            "passed": true,
+            "limitations": [
+              "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+            ],
+            "acceptanceRequirements": [
+              "Customer and tenant boundaries preserved",
+              "Answers cite approved knowledge",
+              "Unsupported promises escalate to staff",
+              "Sensitive customer fields excluded from model input",
+              "Approved ticket updates are idempotent and auditable"
+            ]
+          },
+          "components": [
+            {
+              "id": "support-staff",
+              "binding": "web-browser"
+            },
+            {
+              "id": "staff-identity",
+              "service": "IBM Cloud App ID"
+            },
+            {
+              "id": "support-app",
+              "service": "IBM Cloud Code Engine"
+            },
+            {
+              "id": "ticket-queue"
+            },
+            {
+              "id": "existing-crm"
+            },
+            {
+              "id": "approved-knowledge"
+            },
+            {
+              "id": "knowledge-storage",
+              "service": "IBM Cloud Object Storage"
+            },
+            {
+              "id": "support-state",
+              "service": "IBM Cloud Databases for PostgreSQL"
+            },
+            {
+              "id": "draft-model",
+              "service": "IBM watsonx.ai"
+            },
+            {
+              "id": "app-secrets",
+              "service": "IBM Cloud Secrets Manager"
+            },
+            {
+              "id": "application-logs",
+              "service": "IBM Cloud Logs"
+            }
+          ],
+          "passed": false,
+          "mentorJourneyPassed": true
+        }
+      },
+      "workspaceSha256": "f913a07d48efaaecae12a0061e343d8510c49f0239a060dd9e982dbf2f33df4c",
+      "project": "runs/2026-11-07T12-28-58.374Z/ibm-customer-support/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-28-58.374Z/ibm-customer-support/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "Customer and tenant boundaries preserved",
+          "Answers cite approved knowledge",
+          "Unsupported promises escalate to staff",
+          "Sensitive customer fields excluded from model input",
+          "Approved ticket updates are idempotent and auditable"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "ibm-call-center",
+      "sourceRun": "2026-11-07T12-04-39.979Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-33.797Z",
+        "record": {
+          "provider": "ibm-call-center",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "passed": false,
+          "error": "Model request failed"
+        }
+      },
+      "workspaceSha256": "4e42d5238ff3aca10e737d73ecd8542a02210181b76762a698da8632c5f03f04",
+      "project": "runs/2026-11-07T12-04-39.979Z/ibm-call-center/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-04-39.979Z/ibm-call-center/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "No audio processed before consent",
+          "Partial and final transcripts remain ordered",
+          "Sensitive audio-derived fields are redacted before generation",
+          "Unsupported suggestions are withheld or escalated",
+          "An approved CRM update uses the final transcript and cannot duplicate on retry"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "ibm-cloud-operations",
+      "sourceRun": "2026-11-07T12-04-39.979Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-33.797Z",
+        "record": {
+          "provider": "ibm-cloud-operations",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "passed": false,
+          "error": "Model request failed"
+        }
+      },
+      "workspaceSha256": "420e15b2946db8e41de5d7ded83ede55f8544563c0614acf82896d7bfc4566d3",
+      "project": "runs/2026-11-07T12-04-39.979Z/ibm-cloud-operations/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-04-39.979Z/ibm-cloud-operations/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "Inventory credentials are read-only",
+          "Untrusted resource tags cannot trigger commands",
+          "Plans identify affected resources and costs as estimates",
+          "Drift after review invalidates approval",
+          "Apply requires separate authorization and a rollback or recovery plan"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    },
+    {
+      "id": "ibm-cybersecurity",
+      "sourceRun": "2026-11-07T12-04-39.979Z",
+      "latestAttempt": {
+        "sourceRun": "2026-11-07T12-19-33.797Z",
+        "record": {
+          "provider": "ibm-cybersecurity",
+          "evidenceKind": "real-model-browser-run",
+          "cloudOperations": false,
+          "passed": false,
+          "error": "Model request failed"
+        }
+      },
+      "workspaceSha256": "ceaf692b7257855a8af10026022ac126310d2c1084d372cf7e36323b36fa1b4c",
+      "project": "runs/2026-11-07T12-04-39.979Z/ibm-cybersecurity/project.atmem-ai-architect.json",
+      "promptHistory": "runs/2026-11-07T12-04-39.979Z/ibm-cybersecurity/prompt-history.json",
+      "status": "implementation_incomplete",
+      "runtimeStatus": "blocked",
+      "runtimeChecks": 0,
+      "staticAssessment": {
+        "kind": "static-graph-checks",
+        "checks": [
+          {
+            "name": "Application contains at least three required components",
+            "passed": true
+          },
+          {
+            "name": "Required components form one connected graph",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud resources retain the requested provider",
+            "passed": true
+          },
+          {
+            "name": "Proposed cloud components name concrete services",
+            "passed": true
+          },
+          {
+            "name": "AI application has not collapsed into only object storage",
+            "passed": true
+          }
+        ],
+        "passed": true,
+        "limitations": [
+          "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+        ],
+        "acceptanceRequirements": [
+          "Payloads and log instructions are treated as untrusted data",
+          "Restricted security evidence stays within analyst permissions",
+          "Severity claims cite observed evidence and uncertainty",
+          "Duplicate alerts preserve the investigation audit trail",
+          "Containment requires explicit approval and reversible action planning"
+        ]
+      },
+      "cloudPlan": "not_run",
+      "deployment": "not_run"
+    }
+  ]
+}

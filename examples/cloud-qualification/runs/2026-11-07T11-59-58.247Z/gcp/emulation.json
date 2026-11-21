@@ -1,0 +1,53 @@
+{
+  "status": "passed",
+  "backend": "fake-gcs-server",
+  "backendVersion": "1.56.1",
+  "checks": [
+    {
+      "name": "bucket: generated upload/read preserves UTF-8 bytes",
+      "passed": true
+    },
+    {
+      "name": "bucket: stale write rejected without changing data",
+      "passed": true
+    },
+    {
+      "name": "bucket: overwritten generation remains recoverable",
+      "passed": true
+    },
+    {
+      "name": "bucket: deletion and missing-object error",
+      "passed": true
+    }
+  ],
+  "capabilities": [
+    {
+      "service": "gcp object storage",
+      "mode": "generated-client data-plane checks"
+    }
+  ],
+  "limitations": [
+    "Local API checks do not validate Terraform apply, real IAM, account policy, region availability, networking, billing or production operations.",
+    "Synthetic client credentials are not deployment identities.",
+    "Only the explicit private object storage contract is exercised; other provider services are not emulated.",
+    "GCP IAM, public-access prevention and signed URL authentication are not enforced by this test backend."
+  ],
+  "message": "Generated client functions exercised against local storage APIs. Review the unverified boundaries before planning deployment.",
+  "version": 1,
+  "workerDigest": "b39ff2d2d594aa734e298d2a79b252b709d1cc19c2eabbf8eac3509114e998b2",
+  "designRevision": 2,
+  "environment": "staging",
+  "artifactDigest": "1131c1760bb3f8db470bee664e7c3a3a554f190e797aa38b33c4ea9ed34c1a0e",
+  "fileDigests": {
+    "main.tf.json": "df57742065f5eda32c9041ea94e1685c3a8cb5bff0637789da9f1b3c226db6f8",
+    "resource-schedule.json": "901ca636b1833daa89a014cc8de1423cacbedfb85afdf99c5484da594d6be3cb",
+    "storage_client.py": "bc68bf9a0d6d99116a58592ea9808cf6f9a8c0d92d6d468fb5c07031d1b1554e",
+    "deployment.tfvars.json.example": "8333b77bb87bc6d2c3d874ea41300248db5d1ee5a0670db5de75fbdef1c8b5e1",
+    ".gitignore": "9a60f6bfb5f6e76ea84be64714359d1e607d46b6404e2b1ec97683148252af28",
+    "tests/storage.tftest.hcl": "e6a24077ea657801f9a797f2933afb72b081bfb635e39cf26faaab85138b9800",
+    "README.md": "7da41ecee4329cbab2ebf8dd1732e7ec3e0c70316c016ee39ad9a9f65212f487"
+  },
+  "cloudOperations": false,
+  "terraformApply": "not_run",
+  "workspaceCleanup": "passed"
+}

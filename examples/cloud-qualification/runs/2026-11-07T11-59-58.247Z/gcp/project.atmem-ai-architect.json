@@ -1,0 +1,195 @@
+{
+  "format": "atmem.ai-architect.project",
+  "formatVersion": "2.3.0",
+  "meta": {
+    "id": "c1394fe4-d3cc-4e57-b811-762fc18c8516",
+    "name": "Private object storage on Google Cloud…",
+    "createdAt": "2026-11-07T12:01:25.957Z",
+    "updatedAt": "2026-11-07T12:01:25.957Z",
+    "revision": 2,
+    "generator": "atmem-ai-architect 0.2.0"
+  },
+  "design": {
+    "provider": "gcp",
+    "nodes": [
+      {
+        "id": "caller",
+        "type": "resource",
+        "position": {
+          "x": 50,
+          "y": 50
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Existing service identity",
+          "provider": "tools",
+          "kind": "tool",
+          "description": "Existing Google Cloud service account that uploads, reads and deletes synthetic documents. Reference only: not provisioned or modified. Its identifier is a required input supplied separately.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "poc": true,
+          "binding": "cloud-storage-principal"
+        }
+      },
+      {
+        "id": "bucket",
+        "type": "resource",
+        "position": {
+          "x": 470,
+          "y": 50
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Private document bucket",
+          "provider": "gcp",
+          "kind": "resource",
+          "description": "Private bucket for synthetic documents in an existing GCP project (input supplied separately). Public access prevention is enforced, uniform bucket-level access is on, object versioning is enabled and Google-managed encryption is used. Object access is granted only to the existing service identity.",
+          "config": {
+            "region": "australia-southeast1 (candidate)",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "implementation": "private-object-storage",
+          "role": "data",
+          "service": "Google Cloud Storage"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "caller-bucket",
+        "source": "caller",
+        "target": "bucket",
+        "type": "smoothstep",
+        "label": "upload / read / delete objects",
+        "access": "storage-object-admin"
+      }
+    ]
+  },
+  "discovery": {
+    "problem": "",
+    "brief": {
+      "application": "Design private object storage on Google Cloud for synthetic documents. An existing service identity must upload, read and delete objects. Block anonymous access and enable versioning. Use provider-managed encryption. Use australia-southeast1 as a candidate region. No compute, AI or private network endpoint is needed for this first test. Existing account, resource group/project/COS instance and principal identifiers will be supplied separately. Draw a complete supported storage architecture with the explicit caller and access relationship. Do not deploy.",
+      "cloud": "Google Cloud"
+    },
+    "facts": [
+      {
+        "id": "fact-dc941782",
+        "name": "cloud.preference",
+        "value": "gcp",
+        "unit": "provider",
+        "text": "Design private object storage on Google Cloud for synthetic documents. An existing service identity must upload, read and delete objects. Block anonymous access and enable versioning. Use provider-managed encryption. Use australia-southeast1 as a candidate region. No compute, AI or private network e",
+        "madeAt": "2026-11-07"
+      }
+    ],
+    "workflow": "general",
+    "asked": [],
+    "lastAsked": {
+      "id": "general:0",
+      "topic": "data",
+      "question": "What information will it work with, and where does it live?",
+      "beginner": "For example a database, documents, or another system's data.",
+      "why": "It shapes the AI architecture design."
+    }
+  },
+  "requirements": [
+    {
+      "id": "ai-storage-private-access",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Proposed: the document bucket must block all anonymous and public access. Only the named existing service identity may upload, read and delete objects.",
+      "rationale": "If anonymous access or a broad grant is left open, documents could be exposed.",
+      "basis": "User: \"An existing service identity must upload, read and delete objects. Block anonymous access\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "bucket",
+        "caller"
+      ]
+    },
+    {
+      "id": "ai-storage-versioning",
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "statement": "Proposed: object versioning must be enabled so that an overwritten or deleted document can be recovered.",
+      "rationale": "Without versioning, a delete or overwrite by the caller loses the document for good.",
+      "basis": "User: \"enable versioning\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "bucket"
+      ]
+    },
+    {
+      "id": "ai-storage-encryption",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Proposed: stored objects must be encrypted with Google-managed encryption keys, with no customer-managed keys in this first test.",
+      "rationale": "This keeps the first test simple. Customer-managed keys would add KMS setup and key-access dependencies.",
+      "basis": "User: \"Use provider-managed encryption\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "bucket"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Design private object storage on Google Cloud for synthetic documents.",
+      "options": "",
+      "decision": "gcp",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.private-google-cloud-storage-bucket-with-existing-service-identity",
+      "title": "Private Google Cloud Storage bucket with existing service identity",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: one proposed Google Cloud Storage bucket (private-object-storage) with public access prevention enforced, uniform bucket-level access, object versioning and Google-managed encryption. An existing service account (outside provisioning scope) gets object upload, read and delete access scoped to this bucket. Assumptions: australia-southeast1 is a candidate region, not confirmed. The project ID and service account identifier will be supplied as required inputs and are not in the diagram. No compute, AI or private endpoint. Nothing is deployed, and IAM is not verified.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "extensions": {
+    "requirementNumbers": {
+      "drv-data-access": 1,
+      "drv-data-location": 2,
+      "ai-storage-private-access": 3,
+      "ai-storage-versioning": 4,
+      "ai-storage-encryption": 5
+    },
+    "choices": {},
+    "conceptSig": null
+  }
+}

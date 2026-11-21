@@ -1,0 +1,229 @@
+{
+  "terraform": {
+    "required_version": ">= 1.17.1, < 2.0.0",
+    "required_providers": {
+      "aws": {
+        "source": "hashicorp/aws",
+        "version": "6.72.0"
+      }
+    }
+  },
+  "provider": {
+    "aws": {
+      "region": "${var.region}",
+      "allowed_account_ids": [
+        "${var.account_id}"
+      ]
+    }
+  },
+  "variable": {
+    "review_approved": {
+      "type": "bool",
+      "default": false,
+      "nullable": false,
+      "description": "Review the exact SSM command, existing worker IAM and host ownership before apply."
+    },
+    "account_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing destination account, never inferred from a source node.",
+      "validation": {
+        "condition": "${can(regex(\"^[0-9]{12}$\",var.account_id))}",
+        "error_message": "Supply the reviewed account_id input."
+      }
+    },
+    "region": {
+      "type": "string",
+      "nullable": false,
+      "description": "Keep the selected architecture region; regenerate to change.",
+      "validation": {
+        "condition": "${can(regex(\"^ap-southeast-2$\",var.region))}",
+        "error_message": "Supply the reviewed region input."
+      },
+      "default": "ap-southeast-2"
+    },
+    "cluster_arn": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing owned parser ECS cluster. This module does not create/adopt a compute pool.",
+      "validation": {
+        "condition": "${can(regex(\"^arn:aws:ecs:[a-z]{2}-[a-z]+-[1-9]:[0-9]{12}:cluster/[A-Za-z0-9_-]{1,255}$\",var.cluster_arn))}",
+        "error_message": "Supply the reviewed cluster_arn input."
+      }
+    },
+    "worker_role_arn": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing question-worker IAM role; append one named policy without replacing its other policies.",
+      "validation": {
+        "condition": "${can(regex(\"^arn:aws:iam::[0-9]{12}:role/[A-Za-z0-9_+=,.@/-]{1,128}$\",var.worker_role_arn))}",
+        "error_message": "Supply the reviewed worker_role_arn input."
+      }
+    }
+  },
+  "locals": {
+    "name": "${format(\"doc-host-%s\",substr(sha256(\"https://atmem.ai/workspaces/private-knowledge-qualification/block_6b6e6f776c65646765/qualification\"),0,12))}",
+    "policy_sha256": "${sha256(jsonencode({format=\"enterprise-aws-host-policy-v1\",clusterArn=var.cluster_arn,probeSha256=sha256(\"\\\"\\\"\\\"Fixed SSM host inspection. Standard library only; no document or secret input.\\\"\\\"\\\"\\nimport base64\\nimport json\\nfrom pathlib import Path\\nimport re\\nimport subprocess\\nimport sys\\n\\n\\ndef run(argv):\\n    if argv and argv[0]=='/usr/bin/docker':\\n        # An operator's saved Docker context must never redirect this native\\n        # host inspection to another daemon, even with a scrubbed environment.\\n        argv=[argv[0],'--host','unix:///var/run/docker.sock',*argv[1:]]\\n    value=subprocess.run(argv,stdin=subprocess.DEVNULL,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL,\\n                         timeout=4,check=True,env={'PATH':'/usr/sbin:/usr/bin:/sbin:/bin','LANG':'C'})\\n    if len(value.stdout)>32768:raise ValueError('Invalid host observation')\\n    return value.stdout.decode().strip()\\n\\n\\ndef inspect_host(expected,*,read=lambda name:Path(name).read_text(),command=run):\\n    if (not isinstance(expected,dict)or set(expected)!={'format','clusterArn','policySha256'}or\\n        expected['format']!='enterprise-aws-host-policy-v1'or\\n        not isinstance(expected['policySha256'],str)or not re.fullmatch('[0-9a-f]{64}',expected['policySha256'])or\\n        not isinstance(expected['clusterArn'],str)or not re.fullmatch(r'arn:aws:ecs:[a-z]{2}-[a-z]+-[1-9]:[0-9]{12}:cluster/[A-Za-z0-9_-]{1,255}',expected['clusterArn'])):\\n        raise ValueError('Use the exact owned host policy')\\n    # Parse values as inert text. Never source a host config into a shell.\\n    values={}\\n    for line in read('/etc/ecs/ecs.config').splitlines():\\n        if not line.strip()or line.lstrip().startswith('#'):continue\\n        key,separator,value=line.partition('=')\\n        if not separator or key in values:raise ValueError('Ambiguous ECS configuration')\\n        values[key]=value\\n    if (values.get('ECS_CLUSTER')!=expected['clusterArn']or\\n        values.get('ECS_ENABLE_TASK_IAM_ROLE')!='true'or\\n        values.get('ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION')!='1s'or\\n        values.get('ECS_ENABLE_TASK_IAM_ROLE_NETWORK_HOST')!='false'):\\n        raise ValueError('ECS host policy changed')\\n    attributes=json.loads(values.get('ECS_INSTANCE_ATTRIBUTES','{}'))\\n    if attributes!={'atmem-document-policy':expected['policySha256']}:raise ValueError('Host policy selection changed')\\n    daemon=json.loads(read('/etc/docker/daemon.json'))\\n    if (daemon.get('log-driver')!='none'or daemon.get('live-restore',False)is not False or daemon.get('bridge','docker0')!='docker0'):\\n        raise ValueError('Unsafe daemon logging, network or task persistence')\\n    if json.loads(command(['/usr/bin/docker','info','--format','{{json .LoggingDriver}}']))!='none':raise ValueError('Actual daemon logging changed')\\n    if json.loads(command(['/usr/bin/docker','info','--format','{{json .LiveRestoreEnabled}}']))is not False:raise ValueError('Native live restore is active')\\n    options=json.loads(command(['/usr/bin/docker','info','--format','{{json .SecurityOptions}}']))\\n    if not isinstance(options,list)or 'name=seccomp,profile=builtin'not in options:\\n        raise ValueError('Native seccomp is not active')\\n    bridge=json.loads(command(['/usr/bin/docker','network','inspect','bridge','--format','{{json .Options}}']))\\n    if bridge.get('com.docker.network.bridge.name')!='docker0':raise ValueError('Actual default bridge changed')\\n    native_env=json.loads(command(['/usr/bin/docker','inspect','ecs-agent','--format','{{json .Config.Env}}']))\\n    if not isinstance(native_env,list)or any(not isinstance(v,str)for v in native_env):raise ValueError('Native ECS agent configuration unavailable')\\n    native={}\\n    for entry in native_env:\\n        key,separator,value=entry.partition('=')\\n        if not separator or key in native:raise ValueError('Ambiguous native ECS environment')\\n        native[key]=value\\n    for key in ['ECS_CLUSTER','ECS_ENABLE_TASK_IAM_ROLE','ECS_ENGINE_TASK_CLEANUP_WAIT_DURATION','ECS_ENABLE_TASK_IAM_ROLE_NETWORK_HOST','ECS_INSTANCE_ATTRIBUTES']:\\n        if native.get(key)!=values[key]:raise ValueError('Running ECS agent differs from host policy')\\n    # Both paths are fixed, read-only probes. A plain TCP bridge must not expose\\n    # instance-profile credentials to the transfer containers.\\n    for destination in ['169.254.169.254/32','fd00:ec2::254/128']:\\n        tool='/usr/sbin/iptables'if ':'not in destination else'/usr/sbin/ip6tables'\\n        rules=command([tool,'-w','2','-S','DOCKER-USER']).splitlines()\\n        active=[value for value in rules if value.startswith('-A ')]\\n        if not active or active[0]!='-A DOCKER-USER -i docker0 -d '+destination+' -j DROP':raise ValueError('IMDS rule is missing or shadowed')\\n        forward=command([tool,'-w','2','-S','FORWARD']).splitlines()\\n        active=[value for value in forward if value.startswith('-A ')]\\n        if not active or active[0]!='-A FORWARD -j DOCKER-USER':raise ValueError('IMDS chain is not the first forwarding hook')\\n    boot=read('/proc/sys/kernel/random/boot_id').strip()\\n    if not re.fullmatch('[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}',boot):raise ValueError('Invalid native boot identity')\\n    return {'format':'enterprise-aws-host-observation-v1','policySha256':expected['policySha256'],\\n            'clusterArn':expected['clusterArn'],'bootId':boot}\\n\\n\\ndef main():\\n    try:\\n        if len(sys.argv)!=2 or len(sys.argv[1])>4096:raise ValueError()\\n        expected=json.loads(base64.b64decode(sys.argv[1],validate=True))\\n        print(json.dumps(inspect_host(expected),separators=(',',':')))\\n    except Exception:raise SystemExit(2)from None\\n\\n\\nif __name__=='__main__':main()\\n\")}))}",
+    "expected": {
+      "format": "enterprise-aws-host-policy-v1",
+      "clusterArn": "${var.cluster_arn}",
+      "policySha256": "${local.policy_sha256}"
+    },
+    "document": {
+      "schemaVersion": "2.2",
+      "description": "Fixed read-only parser host inspection; no caller command or secret parameters.",
+      "parameters": {},
+      "mainSteps": [
+        {
+          "action": "aws:runShellScript",
+          "name": "verifyHost",
+          "precondition": {
+            "StringEquals": [
+              "platformType",
+              "Linux"
+            ]
+          },
+          "inputs": {
+            "timeoutSeconds": "30",
+            "runCommand": [
+              "${format(\"%s%s\",\"exec /usr/bin/python3 -I -c 'import base64;exec(compile(base64.b64decode('\\\"'\\\"'IiIiRml4ZWQgU1NNIGhvc3QgaW5zcGVjdGlvbi4gU3RhbmRhcmQgbGlicmFyeSBvbmx5OyBubyBkb2N1bWVudCBvciBzZWNyZXQgaW5wdXQuIiIiCmltcG9ydCBiYXNlNjQKaW1wb3J0IGpzb24KZnJvbSBwYXRobGliIGltcG9ydCBQYXRoCmltcG9ydCByZQppbXBvcnQgc3VicHJvY2VzcwppbXBvcnQgc3lzCgoKZGVmIHJ1bihhcmd2KToKICAgIGlmIGFyZ3YgYW5kIGFyZ3ZbMF09PScvdXNyL2Jpbi9kb2NrZXInOgogICAgICAgICMgQW4gb3BlcmF0b3IncyBzYXZlZCBEb2NrZXIgY29udGV4dCBtdXN0IG5ldmVyIHJlZGlyZWN0IHRoaXMgbmF0aXZlCiAgICAgICAgIyBob3N0IGluc3BlY3Rpb24gdG8gYW5vdGhlciBkYWVtb24sIGV2ZW4gd2l0aCBhIHNjcnViYmVkIGVudmlyb25tZW50LgogICAgICAgIGFyZ3Y9W2FyZ3ZbMF0sJy0taG9zdCcsJ3VuaXg6Ly8vdmFyL3J1bi9kb2NrZXIuc29jaycsKmFyZ3ZbMTpdXQogICAgdmFsdWU9c3VicHJvY2Vzcy5ydW4oYXJndixzdGRpbj1zdWJwcm9jZXNzLkRFVk5VTEwsc3Rkb3V0PXN1YnByb2Nlc3MuUElQRSxzdGRlcnI9c3VicHJvY2Vzcy5ERVZOVUxMLAogICAgICAgICAgICAgICAgICAgICAgICAgdGltZW91dD00LGNoZWNrPVRydWUsZW52PXsnUEFUSCc6Jy91c3Ivc2JpbjovdXNyL2Jpbjovc2JpbjovYmluJywnTEFORyc6J0MnfSkKICAgIGlmIGxlbih2YWx1ZS5zdGRvdXQpPjMyNzY4OnJhaXNlIFZhbHVlRXJyb3IoJ0ludmFsaWQgaG9zdCBvYnNlcnZhdGlvbicpCiAgICByZXR1cm4gdmFsdWUuc3Rkb3V0LmRlY29kZSgpLnN0cmlwKCkKCgpkZWYgaW5zcGVjdF9ob3N0KGV4cGVjdGVkLCoscmVhZD1sYW1iZGEgbmFtZTpQYXRoKG5hbWUpLnJlYWRfdGV4dCgpLGNvbW1hbmQ9cnVuKToKICAgIGlmIChub3QgaXNpbnN0YW5jZShleHBlY3RlZCxkaWN0KW9yIHNldChleHBlY3RlZCkhPXsnZm9ybWF0JywnY2x1c3RlckFybicsJ3BvbGljeVNoYTI1Nid9b3IKICAgICAgICBleHBlY3RlZFsnZm9ybWF0J10hPSdlbnRlcnByaXNlLWF3cy1ob3N0LXBvbGljeS12MSdvcgogICAgICAgIG5vdCBpc2luc3RhbmNlKGV4cGVjdGVkWydwb2xpY3lTaGEyNTYnXSxzdHIpb3Igbm90IHJlLmZ1bGxtYXRjaCgnWzAtOWEtZl17NjR9JyxleHBlY3RlZFsncG9saWN5U2hhMjU2J10pb3IKICAgICAgICBub3QgaXNpbnN0YW5jZShleHBlY3RlZFsnY2x1c3RlckFybiddLHN0cilvciBub3QgcmUuZnVsbG1hdGNoKHInYXJuOmF3czplY3M6W2Etel17Mn0tW2Etel0rLVsxLTldOlswLTldezEyfTpjbHVzdGVyL1tBLVphLXowLTlfLV17MSwyNTV9JyxleHBlY3RlZFsnY2x1c3RlckFybiddKSk6CiAgICAgICAgcmFpc2UgVmFsdWVFcnJvcignVXNlIHRoZSBleGFjdCBvd25lZCBob3N0IHBvbGljeScpCiAgICAjIFBhcnNlIHZhbHVlcyBhcyBpbmVydCB0ZXh0LiBOZXZlciBzb3VyY2UgYSBob3N0IGNvbmZpZyBpbnRvIGEgc2hlbGwuCiAgICB2YWx1ZXM9e30KICAgIGZvciBsaW5lIGluIHJlYWQoJy9ldGMvZWNzL2Vjcy5jb25maWcnKS5zcGxpdGxpbmVzKCk6CiAgICAgICAgaWYgbm90IGxpbmUuc3RyaXAoKW9yIGxpbmUubHN0cmlwKCkuc3RhcnRzd2l0aCgnIycpOmNvbnRpbnVlCiAgICAgICAga2V5LHNlcGFyYXRvcix2YWx1ZT1saW5lLnBhcnRpdGlvbignPScpCiAgICAgICAgaWYgbm90IHNlcGFyYXRvciBvciBrZXkgaW4gdmFsdWVzOnJhaXNlIFZhbHVlRXJyb3IoJ0FtYmlndW91cyBFQ1MgY29uZmlndXJhdGlvbicpCiAgICAgICAgdmFsdWVzW2tleV09dmFsdWUKICAgIGlmICh2YWx1ZXMuZ2V0KCdFQ1NfQ0xVU1RFUicpIT1leHBlY3RlZFsnY2x1c3RlckFybiddb3IKICAgICAgICB2YWx1ZXMuZ2V0KCdFQ1NfRU5BQkxFX1RBU0tfSUFNX1JPTEUnKSE9J3RydWUnb3IKICAgICAgICB2YWx1ZXMuZ2V0KCdFQ1NfRU5HSU5FX1RBU0tfQ0xFQU5VUF9XQUlUX0RVUkFUSU9OJykhPScxcydvcgogICAgICAgIHZhbHVlcy5nZXQoJ0VDU19FTkFCTEVfVEFTS19JQU1fUk9MRV9ORVRXT1JLX0hPU1QnKSE9J2ZhbHNlJyk6CiAgICAgICAgcmFpc2UgVmFsdWVFcnJvcignRUNTIGhvc3QgcG9saWN5IGNoYW5nZWQnKQogICAgYXR0cmlidXRlcz1qc29uLmxvYWRzKHZhbHVlcy5nZXQoJ0VDU19JTlNUQU5DRV9BVFRSSUJVVEVTJywne30nKSkKICAgIGlmIGF0dHJpYnV0ZXMhPXsnYXRtZW0tZG9jdW1lbnQtcG9saWN5JzpleHBlY3RlZFsncG9saWN5U2hhMjU2J119OnJhaXNlIFZhbHVlRXJyb3IoJ0hvc3QgcG9saWN5IHNlbGVjdGlvbiBjaGFuZ2VkJykKICAgIGRhZW1vbj1qc29uLmxvYWRzKHJlYWQoJy9ldGMvZG9ja2VyL2RhZW1vbi5qc29uJykpCiAgICBpZiAoZGFlbW9uLmdldCgnbG9nLWRyaXZlcicpIT0nbm9uZSdvciBkYWVtb24uZ2V0KCdsaXZlLXJlc3RvcmUnLEZhbHNlKWlzIG5vdCBGYWxzZSBvciBkYWVtb24uZ2V0KCdicmlkZ2UnLCdkb2NrZXIwJykhPSdkb2NrZXIwJyk6CiAgICAgICAgcmFpc2UgVmFsdWVFcnJvcignVW5zYWZlIGRhZW1vbiBsb2dnaW5nLCBuZXR3b3JrIG9yIHRhc2sgcGVyc2lzdGVuY2UnKQogICAgaWYganNvbi5sb2Fkcyhjb21tYW5kKFsnL3Vzci9iaW4vZG9ja2VyJywnaW5mbycsJy0tZm9ybWF0Jywne3tqc29uIC5Mb2dnaW5nRHJpdmVyfX0nXSkpIT0nbm9uZSc6cmFpc2UgVmFsdWVFcnJvcignQWN0dWFsIGRhZW1vbiBsb2dnaW5nIGNoYW5nZWQnKQogICAgaWYganNvbi5sb2Fkcyhjb21tYW5kKFsnL3Vzci9iaW4vZG9ja2VyJywnaW5mbycsJy0tZm9ybWF0Jywne3tqc29uIC5MaXZlUmVzdG9yZUVuYWJsZWR9fSddKSlpcyBub3QgRmFsc2U6cmFpc2UgVmFsdWVFcnJvcignTmF0aXZlIGxpdmUgcmVzdG9yZSBpcyBhY3RpdmUnKQogICAgb3B0aW9ucz1qc29uLmxvYWRzKGNvbW1hbmQoWycvdXNyL2Jpbi9kb2NrZXInLCdpbmZvJywnLS1mb3JtYXQnLCd7e2pzb24gLlNlY3VyaXR5T3B0aW9uc319J10pKQogICAgaWYgbm90IGlzaW5zdGFuY2Uob3B0aW9ucyxsaXN0KW9yICduYW1lPXNlY2NvbXAscHJvZmlsZT1idWlsdGluJ25vdCBpbiBvcHRpb25zOgogICAgICAgIHJhaXNlIFZhbHVlRXJyb3IoJ05hdGl2ZSBzZWNjb21wIGlzIG5vdCBhY3RpdmUnKQogICAgYnJpZGdlPWpzb24ubG9hZHMoY29tbWFuZChbJy91c3IvYmluL2RvY2tlcicsJ25ldHdvcmsnLCdpbnNwZWN0JywnYnJpZGdlJywnLS1mb3JtYXQnLCd7e2pzb24gLk9wdGlvbnN9fSddKSkKICAgIGlmIGJyaWRnZS5nZXQoJ2NvbS5kb2NrZXIubmV0d29yay5icmlkZ2UubmFtZScpIT0nZG9ja2VyMCc6cmFpc2UgVmFsdWVFcnJvcignQWN0dWFsIGRlZmF1bHQgYnJpZGdlIGNoYW5nZWQnKQogICAgbmF0aXZlX2Vudj1qc29uLmxvYWRzKGNvbW1hbmQoWycvdXNyL2Jpbi9kb2NrZXInLCdpbnNwZWN0JywnZWNzLWFnZW50JywnLS1mb3JtYXQnLCd7e2pzb24gLkNvbmZpZy5FbnZ9fSddKSkKICAgIGlmIG5vdCBpc2luc3RhbmNlKG5hdGl2ZV9lbnYsbGlzdClvciBhbnkobm90IGlzaW5zdGFuY2UodixzdHIpZm9yIHYgaW4gbmF0aXZlX2Vudik6cmFpc2UgVmFsdWVFcnJvcignTmF0aXZlIEVDUyBhZ2VudCBjb25maWd1cmF0aW9uIHVuYXZhaWxhYmxlJykKICAgIG5hdGl2ZT17fQogICAgZm9yIGVudHJ5IGluIG5hdGl2ZV9lbnY6CiAgICAgICAga2V5LHNlcGFyYXRvcix2YWx1ZT1lbnRyeS5wYXJ0aXRpb24oJz0nKQogICAgICAgIGlmIG5vdCBzZXBhcmF0b3Igb3Iga2V5IGluIG5hdGl2ZTpyYWlzZSBWYWx1ZUVycm9yKCdBbWJpZ3VvdXMgbmF0aXZlIEVDUyBlbnZpcm9ubWVudCcpCiAgICAgICAgbmF0aXZlW2tleV09dmFsdWUKICAgIGZvciBrZXkgaW4gWydFQ1NfQ0xVU1RFUicsJ0VDU19FTkFCTEVfVEFTS19JQU1fUk9MRScsJ0VDU19FTkdJTkVfVEFTS19DTEVBTlVQX1dBSVRfRFVSQVRJT04nLCdFQ1NfRU5BQkxFX1RBU0tfSUFNX1JPTEVfTkVUV09SS19IT1NUJywnRUNTX0lOU1RBTkNFX0FUVFJJQlVURVMnXToKICAgICAgICBpZiBuYXRpdmUuZ2V0KGtleSkhPXZhbHVlc1trZXldOnJhaXNlIFZhbHVlRXJyb3IoJ1J1bm5pbmcgRUNTIGFnZW50IGRpZmZlcnMgZnJvbSBob3N0IHBvbGljeScpCiAgICAjIEJvdGggcGF0aHMgYXJlIGZpeGVkLCByZWFkLW9ubHkgcHJvYmVzLiBBIHBsYWluIFRDUCBicmlkZ2UgbXVzdCBub3QgZXhwb3NlCiAgICAjIGluc3RhbmNlLXByb2ZpbGUgY3JlZGVudGlhbHMgdG8gdGhlIHRyYW5zZmVyIGNvbnRhaW5lcnMuCiAgICBmb3IgZGVzdGluYXRpb24gaW4gWycxNjkuMjU0LjE2OS4yNTQvMzInLCdmZDAwOmVjMjo6MjU0LzEyOCddOgogICAgICAgIHRvb2w9Jy91c3Ivc2Jpbi9pcHRhYmxlcydpZiAnOidub3QgaW4gZGVzdGluYXRpb24gZWxzZScvdXNyL3NiaW4vaXA2dGFibGVzJwogICAgICAgIHJ1bGVzPWNvbW1hbmQoW3Rvb2wsJy13JywnMicsJy1TJywnRE9DS0VSLVVTRVInXSkuc3BsaXRsaW5lcygpCiAgICAgICAgYWN0aXZlPVt2YWx1ZSBmb3IgdmFsdWUgaW4gcnVsZXMgaWYgdmFsdWUuc3RhcnRzd2l0aCgnLUEgJyldCiAgICAgICAgaWYgbm90IGFjdGl2ZSBvciBhY3RpdmVbMF0hPSctQSBET0NLRVItVVNFUiAtaSBkb2NrZXIwIC1kICcrZGVzdGluYXRpb24rJyAtaiBEUk9QJzpyYWlzZSBWYWx1ZUVycm9yKCdJTURTIHJ1bGUgaXMgbWlzc2luZyBvciBzaGFkb3dlZCcpCiAgICAgICAgZm9yd2FyZD1jb21tYW5kKFt0b29sLCctdycsJzInLCctUycsJ0ZPUldBUkQnXSkuc3BsaXRsaW5lcygpCiAgICAgICAgYWN0aXZlPVt2YWx1ZSBmb3IgdmFsdWUgaW4gZm9yd2FyZCBpZiB2YWx1ZS5zdGFydHN3aXRoKCctQSAnKV0KICAgICAgICBpZiBub3QgYWN0aXZlIG9yIGFjdGl2ZVswXSE9Jy1BIEZPUldBUkQgLWogRE9DS0VSLVVTRVInOnJhaXNlIFZhbHVlRXJyb3IoJ0lNRFMgY2hhaW4gaXMgbm90IHRoZSBmaXJzdCBmb3J3YXJkaW5nIGhvb2snKQogICAgYm9vdD1yZWFkKCcvcHJvYy9zeXMva2VybmVsL3JhbmRvbS9ib290X2lkJykuc3RyaXAoKQogICAgaWYgbm90IHJlLmZ1bGxtYXRjaCgnWzAtOWEtZl17OH0tWzAtOWEtZl17NH0tWzAtOWEtZl17NH0tWzAtOWEtZl17NH0tWzAtOWEtZl17MTJ9Jyxib290KTpyYWlzZSBWYWx1ZUVycm9yKCdJbnZhbGlkIG5hdGl2ZSBib290IGlkZW50aXR5JykKICAgIHJldHVybiB7J2Zvcm1hdCc6J2VudGVycHJpc2UtYXdzLWhvc3Qtb2JzZXJ2YXRpb24tdjEnLCdwb2xpY3lTaGEyNTYnOmV4cGVjdGVkWydwb2xpY3lTaGEyNTYnXSwKICAgICAgICAgICAgJ2NsdXN0ZXJBcm4nOmV4cGVjdGVkWydjbHVzdGVyQXJuJ10sJ2Jvb3RJZCc6Ym9vdH0KCgpkZWYgbWFpbigpOgogICAgdHJ5OgogICAgICAgIGlmIGxlbihzeXMuYXJndikhPTIgb3IgbGVuKHN5cy5hcmd2WzFdKT40MDk2OnJhaXNlIFZhbHVlRXJyb3IoKQogICAgICAgIGV4cGVjdGVkPWpzb24ubG9hZHMoYmFzZTY0LmI2NGRlY29kZShzeXMuYXJndlsxXSx2YWxpZGF0ZT1UcnVlKSkKICAgICAgICBwcmludChqc29uLmR1bXBzKGluc3BlY3RfaG9zdChleHBlY3RlZCksc2VwYXJhdG9ycz0oJywnLCc6JykpKQogICAgZXhjZXB0IEV4Y2VwdGlvbjpyYWlzZSBTeXN0ZW1FeGl0KDIpZnJvbSBOb25lCgoKaWYgX19uYW1lX189PSdfX21haW5fXyc6bWFpbigpCg=='\\\"'\\\"'),\\\"owned-host-probe\\\",\\\"exec\\\"))' \",base64encode(jsonencode(local.expected)))}"
+            ]
+          }
+        }
+      ]
+    },
+    "worker_policy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "InspectOwnedCluster",
+          "Effect": "Allow",
+          "Action": [
+            "ecs:ListContainerInstances"
+          ],
+          "Resource": "${var.cluster_arn}"
+        },
+        {
+          "Sid": "InspectOwnedInstances",
+          "Effect": "Allow",
+          "Action": [
+            "ecs:DescribeContainerInstances"
+          ],
+          "Resource": "${format(\"arn:aws:ecs:%s:%s:container-instance/%s/*\",var.region,var.account_id,basename(var.cluster_arn))}",
+          "Condition": {
+            "ArnEquals": {
+              "ecs:cluster": "${var.cluster_arn}"
+            }
+          }
+        },
+        {
+          "Sid": "FixedProbeDocumentOnly",
+          "Effect": "Allow",
+          "Action": [
+            "ssm:GetDocument",
+            "ssm:SendCommand"
+          ],
+          "Resource": "${aws_ssm_document.block_6b6e6f776c65646765.arn}"
+        },
+        {
+          "Sid": "TaggedParserHostsOnly",
+          "Effect": "Allow",
+          "Action": [
+            "ssm:SendCommand"
+          ],
+          "Resource": "${format(\"arn:aws:ec2:%s:%s:instance/*\",var.region,var.account_id)}",
+          "Condition": {
+            "StringEquals": {
+              "ssm:resourceTag/atmem-document-policy": "${local.policy_sha256}"
+            }
+          }
+        },
+        {
+          "Sid": "ReadProbeInvocation",
+          "Effect": "Allow",
+          "Action": [
+            "ssm:GetCommandInvocation"
+          ],
+          "Resource": "*"
+        }
+      ]
+    }
+  },
+  "resource": {
+    "terraform_data": {
+      "block_6b6e6f776c65646765_review": {
+        "input": {
+          "design_revision": 7,
+          "source_component": "knowledge",
+          "environment": "qualification"
+        },
+        "lifecycle": {
+          "precondition": [
+            {
+              "condition": "${var.review_approved}",
+              "error_message": "Review the selected host policy and existing worker before apply."
+            },
+            {
+              "condition": "${startswith(var.cluster_arn,format(\"arn:aws:ecs:%s:%s:cluster/\",var.region,var.account_id))}",
+              "error_message": "Keep the parser cluster in the selected account/region."
+            },
+            {
+              "condition": "${startswith(var.worker_role_arn,format(\"arn:aws:iam::%s:role/\",var.account_id))}",
+              "error_message": "Keep the referenced worker in the selected account."
+            }
+          ]
+        }
+      }
+    },
+    "aws_ssm_document": {
+      "block_6b6e6f776c65646765": {
+        "name": "${local.name}",
+        "document_type": "Command",
+        "document_format": "JSON",
+        "target_type": "/AWS::EC2::Instance",
+        "content": "${jsonencode(local.document)}",
+        "tags": {
+          "atmem-document-policy": "${local.policy_sha256}"
+        },
+        "lifecycle": {
+          "prevent_destroy": true,
+          "postcondition": [
+            {
+              "condition": "${self.hash_type == \"Sha256\" && can(regex(\"^[0-9a-f]{64}$\",self.hash))}",
+              "error_message": "Require the native SHA256 document hash before exposing verification configuration."
+            }
+          ]
+        },
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      }
+    },
+    "aws_iam_role_policy": {
+      "block_6b6e6f776c65646765": {
+        "name": "${local.name}",
+        "role": "${basename(var.worker_role_arn)}",
+        "policy": "${jsonencode(local.worker_policy)}",
+        "depends_on": [
+          "terraform_data.block_6b6e6f776c65646765_review"
+        ]
+      }
+    }
+  },
+  "output": {
+    "host_verification": {
+      "value": {
+        "clusterArn": "${var.cluster_arn}",
+        "hostPolicySha256": "${local.policy_sha256}",
+        "hostDocumentArn": "${aws_ssm_document.block_6b6e6f776c65646765.arn}",
+        "hostDocumentHash": "${aws_ssm_document.block_6b6e6f776c65646765.hash}",
+        "hostDocumentVersion": "${tostring(aws_ssm_document.block_6b6e6f776c65646765.latest_version)}"
+      },
+      "depends_on": [
+        "aws_ssm_document.block_6b6e6f776c65646765",
+        "aws_iam_role_policy.block_6b6e6f776c65646765"
+      ],
+      "description": "Fixed command/worker policy only. Compute pool and complete private application are not provided by this module."
+    }
+  }
+}

@@ -1,0 +1,9 @@
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/specs/029-general-purpose-engine/evidence/20261111-engineering-jobs/live-api-probe.py", line 73, in <module>
+    row = worker.store.get(scope,session)
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/server/engineering_sessions.py", line 118, in get
+    row=self.db.execute('SELECT * FROM engineering_sessions WHERE id=? AND tenant=? AND project=?',
+        ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                        (session,scope.tenant,scope.project)).fetchone()
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+sqlite3.ProgrammingError: SQLite objects created in a thread can only be used in that same thread. The object was created in thread id 6117355520 and this is thread id 8408735104.

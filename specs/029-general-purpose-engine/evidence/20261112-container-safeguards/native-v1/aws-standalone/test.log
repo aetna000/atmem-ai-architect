@@ -1,0 +1,37 @@
+tests/container.tftest.hcl... in progress
+  run "block_696e737472756d656e742dc2b5_reject_foreign_aws_subnet"... pass
+  run "block_696e737472756d656e742dc2b5_reject_foreign_aws_security_group"... pass
+  run "block_696e737472756d656e742dc2b5_security"... pass
+  run "block_696e737472756d656e742dc2b5_reject_mutable_image"... pass
+  run "block_696e737472756d656e742dc2b5_footprint"... pass
+  run "invalid_region_blocked"... pass
+  run "changed_accepted_region_blocked"... pass
+  run "unapproved_blocked"... pass
+tests/container.tftest.hcl... tearing down
+tests/container.tftest.hcl... pass
+tests/independent-placement.tftest.hcl... in progress
+  run "independent_accepted_placement"... fail
+
+Error: Resource precondition failed
+
+  on main.tf.json line 234, in resource.aws_ecs_service.block_696e737472756d656e742dc2b5.lifecycle.precondition[0]:
+ 234:               "condition": "${alltrue([for item in values(data.aws_subnet.block_696e737472756d656e742dc2b5) : item.vpc_id == var.block_696e737472756d656e742dc2b5_vpc_id])}",
+    ├────────────────
+    │ data.aws_subnet.block_696e737472756d656e742dc2b5 is object with 1 attribute "subnet-11111111111111111"
+    │ var.block_696e737472756d656e742dc2b5_vpc_id is "vpc-11111111111111111"
+
+Selected existing network resources must belong to the configured VPC.
+
+Error: Resource precondition failed
+
+  on main.tf.json line 238, in resource.aws_ecs_service.block_696e737472756d656e742dc2b5.lifecycle.precondition[1]:
+ 238:               "condition": "${alltrue([for item in values(data.aws_security_group.block_696e737472756d656e742dc2b5) : item.vpc_id == var.block_696e737472756d656e742dc2b5_vpc_id])}",
+    ├────────────────
+    │ data.aws_security_group.block_696e737472756d656e742dc2b5 is object with 1 attribute "sg-11111111111111111"
+    │ var.block_696e737472756d656e742dc2b5_vpc_id is "vpc-11111111111111111"
+
+Selected existing network resources must belong to the configured VPC.
+tests/independent-placement.tftest.hcl... tearing down
+tests/independent-placement.tftest.hcl... fail
+
+Failure! 8 passed, 1 failed.

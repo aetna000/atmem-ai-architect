@@ -1,0 +1,520 @@
+{
+  "format": "atmem.ai-architect.project",
+  "formatVersion": "2.3.0",
+  "meta": {
+    "id": "b1119e6f-11d5-4ff1-afcb-1ceb2fafe712",
+    "name": "Azure support-staff knowledge assistant",
+    "createdAt": "2026-11-07T12:10:24.359Z",
+    "updatedAt": "2026-11-07T12:10:24.359Z",
+    "revision": 2,
+    "generator": "atmem-ai-architect 0.2.0"
+  },
+  "design": {
+    "provider": "azure",
+    "nodes": [
+      {
+        "id": "staff",
+        "type": "resource",
+        "position": {
+          "x": 50,
+          "y": 340
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Support staff (browser)",
+          "provider": "tools",
+          "kind": "source",
+          "description": "Support agents using a browser. This is a caller, not a provisioned resource.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "role": "human"
+        }
+      },
+      {
+        "id": "entra",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 50
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Staff sign-in",
+          "provider": "azure",
+          "kind": "guard",
+          "description": "Handles staff authentication and supplies the group claims used to filter retrieval. Whether a tenant already exists is unconfirmed.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "service": "Microsoft Entra ID"
+        }
+      },
+      {
+        "id": "webapp",
+        "type": "resource",
+        "position": {
+          "x": 470,
+          "y": 340
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Staff assistant app",
+          "provider": "azure",
+          "kind": "output",
+          "description": "The staff interface. It shows the ticket, customer context, a draft answer with citations and an Escalate button. Staff must approve before anything is sent.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "app",
+          "service": "Azure App Service"
+        }
+      },
+      {
+        "id": "orchestrator",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 620
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Assistant orchestration API",
+          "provider": "azure",
+          "kind": "agent",
+          "description": "Uses a managed identity. Pulls the ticket, reads the CRM record (read-only), runs permission-filtered retrieval, calls the model and applies the grounding check. It has no refund or CRM-write tools. The draft response with citations is returned to the app.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "app",
+          "service": "Azure Functions"
+        }
+      },
+      {
+        "id": "tickets",
+        "type": "resource",
+        "position": {
+          "x": 470,
+          "y": 1320
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Synthetic ticket queue",
+          "provider": "tools",
+          "kind": "source",
+          "description": "Existing synthetic support tickets. The integration method is to be confirmed.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "poc": true,
+          "role": "data"
+        }
+      },
+      {
+        "id": "crm",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 60
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Existing CRM (customer records)",
+          "provider": "tools",
+          "kind": "tool",
+          "description": "Customer records, read-only from the assistant. Writes and refunds are excluded by design. The API and access scope are to be confirmed.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "poc": true,
+          "role": "data"
+        }
+      },
+      {
+        "id": "knowledge",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 330
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Approved knowledge store",
+          "provider": "azure",
+          "kind": "source",
+          "description": "Private container holding only approved knowledge articles, each with access-group metadata.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "data",
+          "service": "Azure Blob Storage"
+        }
+      },
+      {
+        "id": "search",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 340
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Authorized retrieval index",
+          "provider": "azure",
+          "kind": "tool",
+          "description": "Indexes the approved knowledge. Queries are filtered by the staff member's groups, so unknown groups return nothing. Keyword, vector or hybrid mode is still open.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "index",
+          "service": "Azure AI Search"
+        }
+      },
+      {
+        "id": "llm",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 620
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Answer drafting model",
+          "provider": "azure",
+          "kind": "predict",
+          "description": "Drafts answers only from retrieved passages and must cite sources or abstain. The model, deployment, quota and regional availability are unverified. Local tests use scripted responses.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "llm",
+          "service": "Azure OpenAI Service"
+        }
+      },
+      {
+        "id": "guard",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 900
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Grounding & safety check",
+          "provider": "azure",
+          "kind": "guard",
+          "description": "Checks the draft for groundedness, harmful content and prompt injection. Ungrounded drafts and any refund or record-change request are sent to escalation.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "guard",
+          "service": "Azure AI Content Safety"
+        }
+      },
+      {
+        "id": "escalation",
+        "type": "resource",
+        "position": {
+          "x": 1730,
+          "y": 1190
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Human escalation queue",
+          "provider": "azure",
+          "kind": "output",
+          "description": "Escalated tickets with reason and context, handled by a senior agent. Refunds and CRM changes are always done by a person.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "human",
+          "service": "Azure Service Bus"
+        }
+      },
+      {
+        "id": "monitor",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 1180
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Audit & monitoring",
+          "provider": "azure",
+          "kind": "monitor",
+          "description": "Traces, the audit trail of retrievals, drafts and escalations, and alerts. Log retention is to be agreed.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "role": "monitor",
+          "service": "Azure Monitor / Application Insights"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e-staff-web",
+        "source": "staff",
+        "target": "webapp",
+        "type": "smoothstep",
+        "label": "HTTPS use"
+      },
+      {
+        "id": "e-web-entra",
+        "source": "webapp",
+        "target": "entra",
+        "type": "smoothstep",
+        "label": "OIDC sign-in"
+      },
+      {
+        "id": "e-web-orch",
+        "source": "webapp",
+        "target": "orchestrator",
+        "type": "smoothstep",
+        "label": "draft request (user token)"
+      },
+      {
+        "id": "e-tickets-orch",
+        "source": "tickets",
+        "target": "orchestrator",
+        "type": "smoothstep",
+        "label": "read ticket"
+      },
+      {
+        "id": "e-orch-crm",
+        "source": "orchestrator",
+        "target": "crm",
+        "type": "smoothstep",
+        "label": "read-only customer lookup"
+      },
+      {
+        "id": "e-know-search",
+        "source": "knowledge",
+        "target": "search",
+        "type": "smoothstep",
+        "label": "indexer with ACL metadata"
+      },
+      {
+        "id": "e-orch-search",
+        "source": "orchestrator",
+        "target": "search",
+        "type": "smoothstep",
+        "label": "group-filtered query"
+      },
+      {
+        "id": "e-orch-llm",
+        "source": "orchestrator",
+        "target": "llm",
+        "type": "smoothstep",
+        "label": "grounded prompt"
+      },
+      {
+        "id": "e-orch-guard",
+        "source": "orchestrator",
+        "target": "guard",
+        "type": "smoothstep",
+        "label": "check draft"
+      },
+      {
+        "id": "e-guard-esc",
+        "source": "guard",
+        "target": "escalation",
+        "type": "smoothstep",
+        "label": "escalate uncertain/refund"
+      },
+      {
+        "id": "e-web-esc",
+        "source": "webapp",
+        "target": "escalation",
+        "type": "smoothstep",
+        "label": "staff escalates"
+      },
+      {
+        "id": "e-orch-mon",
+        "source": "orchestrator",
+        "target": "monitor",
+        "type": "smoothstep",
+        "label": "audit + traces"
+      }
+    ]
+  },
+  "discovery": {
+    "problem": "Assist support staff with grounded, authorized answer drafts. Never issue refunds or modify customer records automatically. Escalate to a person when needed.",
+    "brief": {
+      "application": "Use Azure for this synthetic architecture qualification. Assist support staff using a synthetic ticket queue, approved knowledge and customer records from an existing CRM. Include authorized retrieval, grounded answer drafting, a staff interface and human escalation. Never issue refunds or modify customer records automatically. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+      "cloud": "Azure"
+    },
+    "facts": [
+      {
+        "id": "fact-cecf1b45",
+        "name": "cloud.preference",
+        "value": "azure",
+        "unit": "provider",
+        "text": "Use Azure for this synthetic architecture qualification. Assist support staff using a synthetic ticket queue, approved knowledge and customer records from an existing CRM. Include authorized retrieval, grounded answer drafting, a staff interface and human escalation. Never issue refunds or modify cu",
+        "madeAt": "2026-11-07"
+      }
+    ],
+    "workflow": "knowledge-assistant",
+    "asked": [],
+    "lastAsked": {
+      "id": "knowledge-assistant:0",
+      "topic": "data",
+      "question": "Where do the files live, and roughly how many are there?",
+      "beginner": "For example “SharePoint and a shared drive, about 20,000 files”.",
+      "why": "It shapes the RAG design."
+    }
+  },
+  "requirements": [
+    {
+      "id": "ai-no-auto-actions",
+      "kind": "functional",
+      "category": "security",
+      "statement": "The assistant must never issue refunds or create, update or delete CRM records. It only drafts, and those actions go to a person.",
+      "rationale": "An automated refund or record change would cause direct financial or data-integrity harm.",
+      "basis": "User: \"Never issue refunds or modify customer records automatically.\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "orchestrator",
+        "crm",
+        "escalation"
+      ]
+    },
+    {
+      "id": "ai-authorized-retrieval",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Retrieval returns only approved knowledge the signed-in staff member is permitted to see. If the identity or groups are unknown, it returns nothing.",
+      "rationale": "Without per-user filtering, staff could see restricted content in drafts.",
+      "basis": "User: \"Include authorized retrieval\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "search",
+        "entra",
+        "knowledge"
+      ]
+    },
+    {
+      "id": "ai-grounded-drafts",
+      "kind": "functional",
+      "category": "reliability",
+      "statement": "Each draft cites its source passages. When the evidence is insufficient, the assistant abstains and offers escalation. (Proposal: the target is to be agreed.)",
+      "rationale": "Ungrounded answers could mislead customers. Abstaining plus human escalation limits that risk.",
+      "basis": "User: \"grounded answer drafting ... and human escalation\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "llm",
+        "guard",
+        "webapp",
+        "escalation"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use Azure for this synthetic architecture qualification.",
+      "options": "",
+      "decision": "azure",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.azure-support-staff-knowledge-assistant-first-sketch",
+      "title": "Azure support-staff knowledge assistant (first sketch)",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: the full support assistant flow on Azure, covering staff sign-in, a staff web app, an orchestration API, read-only CRM lookup, the synthetic ticket queue, an approved knowledge store and a permission-filtered search index, Azure OpenAI for drafting, a grounding/safety check, human escalation and monitoring. Assumptions: Entra ID sign-in, the region, model deployment and subscription access are all unverified and still open. The CRM connection is read-only, and the assistant has no refund or record-write path. Every component here is design-only; no native Azure generator covers this workload yet, so building it needs engineering work.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "extensions": {
+    "requirementNumbers": {
+      "drv-data-access": 1,
+      "drv-data-location": 2,
+      "ai-no-auto-actions": 3,
+      "ai-authorized-retrieval": 4,
+      "ai-grounded-drafts": 5
+    },
+    "choices": {},
+    "conceptSig": null
+  }
+}

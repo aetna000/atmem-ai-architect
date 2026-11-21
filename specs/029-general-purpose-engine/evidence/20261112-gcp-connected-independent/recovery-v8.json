@@ -1,0 +1,81 @@
+{
+  "format": "atmem.independent-same-version-recovery",
+  "version": 1,
+  "attempt": "v8",
+  "fixtureId": "a1235229babb4be58f4cf8acc741057e",
+  "imageId": "sha256:9bfe8fdcf3f9e885587df44ac14e0d2ff0df6356a0d3188a0e021e5193d1662f",
+  "postgresImage": "sha256:996e9dc583ba9f0265a2c75547a9c95fb22c251e394749cab205a0a00e1856a1",
+  "artifactSha256": "69bdacf7d6813bfdd977b007abe7c94d8c3308cb2e09f9fd09c6cb39cf61031d",
+  "checks": [
+    {
+      "name": "clean image, separate PostgreSQL17, delivered operator CLI and restricted identities",
+      "passed": true,
+      "observedAt": "2026-11-12T02:21:34.418139+00:00"
+    },
+    {
+      "name": "recovery preconditions through actual signed HTTP, SQL, queue, children and TLS: sent edited note, pending review, ambiguous unknown",
+      "passed": true,
+      "observedAt": "2026-11-12T02:21:58.752150+00:00"
+    },
+    {
+      "name": "same qualified image and identical configuration restore preserve durable source/history/sent/unknown; mismatched schema and reinitialization refused; pending approval still delivers",
+      "passed": true,
+      "observedAt": "2026-11-12T02:22:59.061963+00:00",
+      "scope": "same-version local restore; no older image/schema migration, snapshot restore or managed rollback claim"
+    }
+  ],
+  "evaluatorSources": {
+    "run-recovery-only.py": "ed9da325019020a3217e097ea9fbdf20f2850226b67d1ddeb64265c018ac3850",
+    "control.py": "300bdb03b4ed5444972dbf39120ca1c7e8b2b164fe0f933f4ed8ae4dfd160e61",
+    "destination.py": "b39d8ae5e3608a950911eb7e2f764e917864080cdedaf01fdaa9ca65b8cbc78d"
+  },
+  "cloudOperations": false,
+  "nativeGoogleIdentityOrAccountAcceptance": false,
+  "ownerProjectWrites": 0,
+  "fullAcceptance": false,
+  "resourcesCleaned": true,
+  "containerControls": [
+    {
+      "role": "api",
+      "imageId": "sha256:9bfe8fdcf3f9e885587df44ac14e0d2ff0df6356a0d3188a0e021e5193d1662f",
+      "user": "10001:10001",
+      "network": "atmem-recv-a1235229ba-net",
+      "hostPorts": false,
+      "readOnlyRoot": true,
+      "capDropAll": true,
+      "noHostBindMounts": true
+    },
+    {
+      "role": "worker",
+      "imageId": "sha256:9bfe8fdcf3f9e885587df44ac14e0d2ff0df6356a0d3188a0e021e5193d1662f",
+      "user": "10001:10001",
+      "network": "atmem-recv-a1235229ba-net",
+      "hostPorts": false,
+      "readOnlyRoot": true,
+      "capDropAll": true,
+      "noHostBindMounts": true
+    },
+    {
+      "role": "control",
+      "imageId": "sha256:9bfe8fdcf3f9e885587df44ac14e0d2ff0df6356a0d3188a0e021e5193d1662f",
+      "user": "10001:10001",
+      "network": "atmem-recv-a1235229ba-net",
+      "hostPorts": false,
+      "readOnlyRoot": true,
+      "capDropAll": true,
+      "noHostBindMounts": true
+    },
+    {
+      "role": "db",
+      "imageId": "sha256:996e9dc583ba9f0265a2c75547a9c95fb22c251e394749cab205a0a00e1856a1",
+      "user": "999:999",
+      "network": "atmem-recv-a1235229ba-net",
+      "hostPorts": false,
+      "readOnlyRoot": true,
+      "capDropAll": true,
+      "noHostBindMounts": true
+    }
+  ],
+  "recoveryGroupsPassed": 3,
+  "recoveryScopePassed": true
+}

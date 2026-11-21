@@ -1,0 +1,5 @@
+# Evidence-led design loop and cross-cloud storage qualification
+
+Users enter emulation from the main architecture journey, inspect findings, ask a focused question or request a minimal correction, and rerun after an applied change. Keep result ownership at the workspace level so navigating views does not lose evidence. Never reuse evidence after a project/environment/artifact changes. Respect Draw as we talk, manual proposals and undo; forbid scope removal or service substitutions disguised as a fix. Optionally rerun once after an applied correction; no unbounded model/test loops.
+
+Extend initial emulation coverage beyond AWS with one typed private-object-storage contract per Azure, Google Cloud and IBM. Use Azurite for Blob APIs, fake-gcs-server for GCS APIs, and explicit S3 protocol emulation for IBM COS. Validate generated Terraform against each installed real provider schema and mock plans. Cloud identity/control-plane behavior remains unverified. No live non-AWS cloud credentials or access are authorized or needed. Arbitrary mixed-cloud and unsupported workloads remain blocked.

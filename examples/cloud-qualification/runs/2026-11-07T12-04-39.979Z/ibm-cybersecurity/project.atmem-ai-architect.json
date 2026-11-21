@@ -1,0 +1,497 @@
+{
+  "format": "atmem.ai-architect.project",
+  "formatVersion": "2.3.0",
+  "meta": {
+    "id": "6ff00e8f-92bb-41fe-8446-cb76b70864d4",
+    "name": "IBM synthetic security alert triage",
+    "createdAt": "2026-11-07T12:14:16.744Z",
+    "updatedAt": "2026-11-07T12:14:16.744Z",
+    "revision": 2,
+    "generator": "atmem-ai-architect 0.2.0"
+  },
+  "design": {
+    "provider": "ibm",
+    "nodes": [
+      {
+        "id": "logs",
+        "type": "resource",
+        "position": {
+          "x": 50,
+          "y": 135
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Approved log sources (synthetic)",
+          "provider": "tools",
+          "kind": "stream",
+          "description": "Existing approved sources of synthetic security alerts and logs. Outside the provisioning scope.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "poc": true,
+          "role": "data"
+        }
+      },
+      {
+        "id": "assets",
+        "type": "resource",
+        "position": {
+          "x": 50,
+          "y": 415
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Asset context (CMDB export)",
+          "provider": "tools",
+          "kind": "history",
+          "description": "Existing asset inventory (owner, criticality, location). Read-only reference.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "poc": true,
+          "role": "data"
+        }
+      },
+      {
+        "id": "ingest",
+        "type": "resource",
+        "position": {
+          "x": 470,
+          "y": 275
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Alert ingestion",
+          "provider": "ibm",
+          "kind": "resource",
+          "description": "Kafka topics for raw alerts and asset updates, plus a dead-letter topic for alerts that fail processing.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "ingest",
+          "service": "IBM Event Streams"
+        }
+      },
+      {
+        "id": "redact",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 275
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Redaction & normalisation",
+          "provider": "ibm",
+          "kind": "guard",
+          "description": "Consumer job that normalises alerts, joins asset context and masks sensitive fields. Failures are quarantined. Treats all content as untrusted.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "guard",
+          "service": "IBM Code Engine"
+        }
+      },
+      {
+        "id": "evidence",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 50
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Redacted evidence store",
+          "provider": "ibm",
+          "kind": "resource",
+          "description": "Private bucket holding redacted evidence, with object versioning and retention to be confirmed.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "data",
+          "service": "IBM Cloud Object Storage"
+        }
+      },
+      {
+        "id": "index",
+        "type": "resource",
+        "position": {
+          "x": 1730,
+          "y": 60
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Evidence retrieval index",
+          "provider": "ibm",
+          "kind": "resource",
+          "description": "Keyword (and later optionally vector) search over redacted evidence by alert, host and user; returns citations.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "index",
+          "service": "IBM Cloud Databases for OpenSearch"
+        }
+      },
+      {
+        "id": "triage",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 415
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "AI triage service",
+          "provider": "ibm",
+          "kind": "agent",
+          "description": "Retrieves evidence, calls the model, validates the structured verdict (severity, rationale, citations, proposed response) and abstains when evidence is insufficient. Read-only; has no permission to isolate hosts, disable users or execute anything.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "app",
+          "service": "IBM Code Engine"
+        }
+      },
+      {
+        "id": "model",
+        "type": "resource",
+        "position": {
+          "x": 1730,
+          "y": 340
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Triage model",
+          "provider": "ibm",
+          "kind": "predict",
+          "description": "Foundation model inference. Model ID, regional availability and entitlement are unverified. A scripted model replaces it in local tests.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "llm",
+          "service": "IBM watsonx.ai"
+        }
+      },
+      {
+        "id": "queue",
+        "type": "resource",
+        "position": {
+          "x": 1730,
+          "y": 715
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Analyst queue & case records",
+          "provider": "ibm",
+          "kind": "output",
+          "description": "Stores triage cases with proposed responses and their status (pending, accepted, rejected). Proposals are never executed by the system.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "output",
+          "service": "IBM Cloud Databases for PostgreSQL"
+        }
+      },
+      {
+        "id": "analyst",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 715
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "SOC analyst",
+          "provider": "tools",
+          "kind": "tool",
+          "description": "Reviews each proposal and decides. Any containment is done manually in existing tools.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "role": "human"
+        }
+      },
+      {
+        "id": "audit",
+        "type": "resource",
+        "position": {
+          "x": 2150,
+          "y": 640
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Audit trail",
+          "provider": "ibm",
+          "kind": "monitor",
+          "description": "Records triage events, model calls, analyst decisions and control-plane activity. Retention is to be confirmed.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "monitor",
+          "service": "IBM Cloud Logs + Activity Tracker"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e-logs-ingest",
+        "source": "logs",
+        "target": "ingest",
+        "type": "smoothstep",
+        "label": "publish alerts"
+      },
+      {
+        "id": "e-assets-ingest",
+        "source": "assets",
+        "target": "ingest",
+        "type": "smoothstep",
+        "label": "asset context feed"
+      },
+      {
+        "id": "e-ingest-redact",
+        "source": "ingest",
+        "target": "redact",
+        "type": "smoothstep",
+        "label": "consume topic"
+      },
+      {
+        "id": "e-redact-evidence",
+        "source": "redact",
+        "target": "evidence",
+        "type": "smoothstep",
+        "label": "write redacted evidence"
+      },
+      {
+        "id": "e-evidence-index",
+        "source": "evidence",
+        "target": "index",
+        "type": "smoothstep",
+        "label": "index documents"
+      },
+      {
+        "id": "e-redact-triage",
+        "source": "redact",
+        "target": "triage",
+        "type": "smoothstep",
+        "label": "triage request"
+      },
+      {
+        "id": "e-triage-index",
+        "source": "triage",
+        "target": "index",
+        "type": "smoothstep",
+        "label": "search evidence"
+      },
+      {
+        "id": "e-triage-model",
+        "source": "triage",
+        "target": "model",
+        "type": "smoothstep",
+        "label": "inference (redacted prompt)"
+      },
+      {
+        "id": "e-triage-queue",
+        "source": "triage",
+        "target": "queue",
+        "type": "smoothstep",
+        "label": "verdict + proposed response"
+      },
+      {
+        "id": "e-analyst-queue",
+        "source": "analyst",
+        "target": "queue",
+        "type": "smoothstep",
+        "label": "review / decide"
+      },
+      {
+        "id": "e-triage-audit",
+        "source": "triage",
+        "target": "audit",
+        "type": "smoothstep",
+        "label": "triage audit events"
+      },
+      {
+        "id": "e-queue-audit",
+        "source": "queue",
+        "target": "audit",
+        "type": "smoothstep",
+        "label": "analyst decisions"
+      }
+    ]
+  },
+  "discovery": {
+    "problem": "",
+    "brief": {
+      "application": "Use IBM Cloud for this synthetic architecture qualification. Triage synthetic security alerts using approved logs and asset context. Include ingestion, redaction, evidence retrieval, AI triage, an analyst queue and an auditable response proposal. Do not isolate hosts, disable users or execute payloads automatically. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+      "cloud": "IBM"
+    },
+    "facts": [
+      {
+        "id": "fact-f95cf4a2",
+        "name": "cloud.preference",
+        "value": "ibm",
+        "unit": "provider",
+        "text": "Use IBM Cloud for this synthetic architecture qualification. Triage synthetic security alerts using approved logs and asset context. Include ingestion, redaction, evidence retrieval, AI triage, an analyst queue and an auditable response proposal. Do not isolate hosts, disable users or execute payloa",
+        "madeAt": "2026-11-07"
+      }
+    ],
+    "workflow": "knowledge-assistant",
+    "asked": [],
+    "lastAsked": {
+      "id": "knowledge-assistant:0",
+      "topic": "data",
+      "question": "Where do the files live, and roughly how many are there?",
+      "beginner": "For example “SharePoint and a shared drive, about 20,000 files”.",
+      "why": "It shapes the RAG design."
+    }
+  },
+  "requirements": [
+    {
+      "id": "ai-no-auto-action",
+      "kind": "functional",
+      "category": "security",
+      "statement": "The system must only propose responses; host isolation, user disabling and payload execution are never performed automatically and require analyst action outside the system.",
+      "rationale": "Prevents an AI error or a prompt injection hidden in alert data from causing a disruptive action.",
+      "basis": "User: \"Do not isolate hosts, disable users or execute payloads automatically.\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "triage",
+        "queue"
+      ]
+    },
+    {
+      "id": "ai-redact-before-model",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Proposed: all log and asset data is redacted before it is indexed or sent to the model, and redaction failures are quarantined rather than passed on.",
+      "rationale": "Limits exposure of sensitive fields to the model and the search index.",
+      "basis": "User requested redaction within ingestion; diagram components redact, index and model.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "redact",
+        "evidence",
+        "index",
+        "model"
+      ]
+    },
+    {
+      "id": "ai-audit-trail",
+      "kind": "nonfunctional",
+      "category": "compliance",
+      "statement": "Proposed: each triage records the alert ID, evidence citations, model ID, prompt version, the proposal and the analyst's decision in a tamper-evident audit trail.",
+      "rationale": "Makes every proposal reviewable and reproducible. Retention period is still to be confirmed.",
+      "basis": "User: \"an auditable response proposal\".",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "triage",
+        "queue",
+        "audit"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use IBM Cloud for this synthetic architecture qualification",
+      "options": "",
+      "decision": "ibm",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.ibm-cloud-synthetic-alert-triage-first-end-to-end-sketch",
+      "title": "IBM Cloud synthetic alert triage – first end-to-end sketch",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: synthetic alerts only; ingestion → redaction → evidence store/index → watsonx.ai triage → analyst queue with an auditable response proposal. No automated containment. Assumptions: region still to be selected; model ID, plans, quotas and account access are unverified; most components need engineering because there is no native IBM generator for them yet.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "extensions": {
+    "requirementNumbers": {
+      "drv-data-access": 1,
+      "drv-data-location": 2,
+      "ai-no-auto-action": 3,
+      "ai-redact-before-model": 4,
+      "ai-audit-trail": 5
+    },
+    "choices": {},
+    "conceptSig": null
+  }
+}

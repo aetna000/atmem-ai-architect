@@ -1,0 +1,50 @@
+{
+  "provider": "ibm-iot",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Reject unknown device and invalid units",
+    "Duplicate events produce one result",
+    "Late and out-of-order telemetry follows an explicit policy",
+    "Disconnected input recovers by replay",
+    "Anomaly output names evidence and model version"
+  ],
+  "components": [
+    {
+      "id": "sensors"
+    },
+    {
+      "id": "event-streams",
+      "service": "IBM Event Streams"
+    },
+    {
+      "id": "validator",
+      "service": "IBM Code Engine"
+    },
+    {
+      "id": "dlq",
+      "service": "IBM Event Streams"
+    },
+    {
+      "id": "inference",
+      "service": "IBM watsonx.ai Runtime deployment"
+    },
+    {
+      "id": "results",
+      "service": "IBM Cloudant"
+    },
+    {
+      "id": "alerts",
+      "service": "IBM Cloud Event Notifications"
+    },
+    {
+      "id": "operator"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

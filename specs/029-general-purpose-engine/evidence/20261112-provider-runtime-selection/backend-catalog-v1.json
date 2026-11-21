@@ -1,0 +1,186 @@
+{
+  "passed": true,
+  "catalog": [
+    {
+      "id": "python-sql-azure-tests",
+      "label": "Python3.13/azure dependencies and private PostgreSQL17 tests",
+      "evidenceLevel": "local_container_check",
+      "contractSha256": "ca786249887dedf779d97f8aa348946fce913e1ee115d1ec0cfb37eaca7f9d6e",
+      "available": true,
+      "applicability": {
+        "anyOf": [
+          "**/test_*.py"
+        ],
+        "allOf": [
+          "**/workflow_schema.sql"
+        ],
+        "noneOf": [],
+        "anyFileSha256": [
+          {
+            "pattern": "**/test-requirements.lock",
+            "sha256": "9629f83845628253c00dc054ad02a5de7a1c1b6db4cf5907cb03edc53ec3eca8"
+          }
+        ]
+      },
+      "runtimeEvidence": {
+        "receiptSha256": "03573382756873b8b75844abbd27623afe7fd3b8cad4e4cb6c5af469ea3d59c7",
+        "runtimeSha256": "ac4ffab604fad7570cac0d955d06f8e8dd921568882633c3e7e48e16afb3b519",
+        "observed": {
+          "kind": "python",
+          "executableVersion": "3.13.18",
+          "packages": {
+            "psycopg": "3.3.8",
+            "procrastinate": "3.10.0",
+            "fastapi": "0.162.0",
+            "PyJWT": "2.15.1",
+            "cryptography": "50.0.2",
+            "azure-core": "1.41.0",
+            "azure-identity": "1.27.0",
+            "msal": "1.39.0",
+            "msal-extensions": "1.3.1",
+            "postgresql-server": "17.11"
+          },
+          "serviceOperations": {}
+        },
+        "observedAt": "2026-11-11T20:57:06.566002+00:00",
+        "evidenceLevel": "operator_pinned_local_runtime_observation",
+        "scope": "Observed immutable image runtime only; artifact-vendored dependencies can differ. Null package versions mean unobserved distribution metadata, not proof an import is impossible. Null service operations are unknown; an actual operation list describes only the installed SDK model. Not application, account, cloud or requirement acceptance."
+      },
+      "runtime": {
+        "imageId": "sha256:63164e32f99523d8b2f108ee05095d51de7a951934cdc6bd3c99ee78993e8f5f",
+        "platform": "linux/amd64",
+        "isolationProfile": "postgresql-local-v1",
+        "environment": {},
+        "executable": "/usr/local/bin/python3",
+        "testRunner": "unittest"
+      }
+    },
+    {
+      "id": "python-sql-gcp-tests",
+      "label": "Python3.13/gcp dependencies and private PostgreSQL17 tests",
+      "evidenceLevel": "local_container_check",
+      "contractSha256": "99751658b427eac0010a6a8c3185a4cf3419d14e1564bd59cd0f2fbc9f9b4d2f",
+      "available": true,
+      "applicability": {
+        "anyOf": [
+          "**/test_*.py"
+        ],
+        "allOf": [
+          "**/workflow_schema.sql"
+        ],
+        "noneOf": [],
+        "anyFileSha256": [
+          {
+            "pattern": "**/test-requirements.lock",
+            "sha256": "872663ae3c96d4c74141eace1d05c076b257ae08751ae0bb11f4da3ed8ab6260"
+          }
+        ]
+      },
+      "runtimeEvidence": {
+        "receiptSha256": "6288d8a6ca4da0fb1f432b7c117553998a5a17f9cb31ec39e7e65aa93e7deca4",
+        "runtimeSha256": "bfb77e5fb87074a87e55dbe61576cc80cae0fa759020978e63955c2a1b4554cf",
+        "observed": {
+          "kind": "python",
+          "executableVersion": "3.13.18",
+          "packages": {
+            "psycopg": "3.3.8",
+            "procrastinate": "3.10.0",
+            "fastapi": "0.162.0",
+            "PyJWT": "2.15.1",
+            "cryptography": "50.0.2",
+            "postgresql-server": "17.11"
+          },
+          "serviceOperations": {}
+        },
+        "observedAt": "2026-11-11T20:57:25.040702+00:00",
+        "evidenceLevel": "operator_pinned_local_runtime_observation",
+        "scope": "Observed immutable image runtime only; artifact-vendored dependencies can differ. Null package versions mean unobserved distribution metadata, not proof an import is impossible. Null service operations are unknown; an actual operation list describes only the installed SDK model. Not application, account, cloud or requirement acceptance."
+      },
+      "runtime": {
+        "imageId": "sha256:bafc5723ac59b025d42337e4c965e6d7b89a07da3d18b49a9384cfa70274f8e2",
+        "platform": "linux/amd64",
+        "isolationProfile": "postgresql-local-v1",
+        "environment": {},
+        "executable": "/usr/local/bin/python3",
+        "testRunner": "unittest"
+      }
+    },
+    {
+      "id": "python-sql-ibm-tests",
+      "label": "Python3.13/ibm dependencies and private PostgreSQL17 tests",
+      "evidenceLevel": "local_container_check",
+      "contractSha256": "3ee77daa22c9d65c49c84585a18fba7289c15f2b6fa694ee4982609afee1cfb0",
+      "available": true,
+      "applicability": {
+        "anyOf": [
+          "**/test_*.py"
+        ],
+        "allOf": [
+          "**/workflow_schema.sql"
+        ],
+        "noneOf": [],
+        "anyFileSha256": [
+          {
+            "pattern": "**/test-requirements.lock",
+            "sha256": "5c57d047e38aeba4d0b73cf5acd99ab345d20e280457161801623cd074de1f58"
+          }
+        ]
+      },
+      "runtimeEvidence": {
+        "receiptSha256": "91005a432b145fbc1eca0b94ef837802c0f800b8d7fbd50a2ab475611af74210",
+        "runtimeSha256": "0c04179bc7d10659eb5efba0767b44c2c5471bdaa9fb8cb406f392fdaf47c195",
+        "observed": {
+          "kind": "python",
+          "executableVersion": "3.13.18",
+          "packages": {
+            "psycopg": "3.3.8",
+            "procrastinate": "3.10.0",
+            "fastapi": "0.162.0",
+            "PyJWT": "2.15.1",
+            "cryptography": "50.0.2",
+            "ibm-cloud-sdk-core": "3.28.2",
+            "python-dateutil": "3.0.0",
+            "tzdata": "2026.6",
+            "postgresql-server": "17.11"
+          },
+          "serviceOperations": {}
+        },
+        "observedAt": "2026-11-11T20:57:43.484711+00:00",
+        "evidenceLevel": "operator_pinned_local_runtime_observation",
+        "scope": "Observed immutable image runtime only; artifact-vendored dependencies can differ. Null package versions mean unobserved distribution metadata, not proof an import is impossible. Null service operations are unknown; an actual operation list describes only the installed SDK model. Not application, account, cloud or requirement acceptance."
+      },
+      "runtime": {
+        "imageId": "sha256:699a15842ef78354c5d5894d3fcdfc80da91552eb4a9445554712e861d3aa9b9",
+        "platform": "linux/amd64",
+        "isolationProfile": "postgresql-local-v1",
+        "environment": {},
+        "executable": "/usr/local/bin/python3",
+        "testRunner": "unittest"
+      }
+    }
+  ],
+  "plans": [
+    {
+      "providerDependencyLock": "azure",
+      "artifactSha256": "2a4ea9a4c70b3c3026db87bf38008a973f9023eb01c526afd2d0292f9fe4632f",
+      "selectedValidators": [
+        "python-sql-azure-tests"
+      ]
+    },
+    {
+      "providerDependencyLock": "gcp",
+      "artifactSha256": "6b00a6a0de864aabac4d8c2754831b548d1b173755e8092eb210548e37ea6345",
+      "selectedValidators": [
+        "python-sql-gcp-tests"
+      ]
+    },
+    {
+      "providerDependencyLock": "ibm",
+      "artifactSha256": "05a27d0d4e13aedf19dc3dca0ae0b9ea7d793422aa5946f53252c6ea06c75c4e",
+      "selectedValidators": [
+        "python-sql-ibm-tests"
+      ]
+    }
+  ],
+  "scope": "Real registry/observations/worker and immutable SDK fixture capture/selection. Synthetic control rows; no model inference or application execution in this catalogue test."
+}

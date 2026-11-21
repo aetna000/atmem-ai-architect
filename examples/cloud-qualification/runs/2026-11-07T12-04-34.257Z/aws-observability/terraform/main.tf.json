@@ -1,0 +1,175 @@
+{
+  "terraform": {
+    "required_version": ">= 1.5.0, < 2.0.0",
+    "required_providers": {
+      "aws": {
+        "source": "hashicorp/aws",
+        "version": "~> 6.0"
+      }
+    }
+  },
+  "variable": {
+    "aws_region": {
+      "type": "string",
+      "description": "Explicitly choose the reviewed deployment region; no region is assumed."
+    },
+    "aws_account_id": {
+      "type": "string",
+      "description": "Expected AWS account ID; provider refuses a different account.",
+      "validation": {
+        "condition": "${can(regex(\"^[0-9]{12}$\", var.aws_account_id))}",
+        "error_message": "Use a twelve digit AWS account ID."
+      }
+    },
+    "review_approved": {
+      "type": "bool",
+      "default": false,
+      "description": "Set only after reviewing the design, cost, security and generated Terraform."
+    }
+  },
+  "provider": {
+    "aws": {
+      "region": "${var.aws_region}",
+      "allowed_account_ids": [
+        "${var.aws_account_id}"
+      ]
+    }
+  },
+  "locals": {
+    "unfinished_work": [
+      "access-block_65766964656e6365",
+      "resource-block_7365727669636573",
+      "resource-block_636f6c6c6563746f72",
+      "resource-block_78726179",
+      "resource-block_66697265686f7365",
+      "resource-block_726564616374",
+      "resource-block_736561726368",
+      "resource-block_616e616c797a6572",
+      "resource-block_67756172647261696c73",
+      "resource-block_626564726f636b",
+      "resource-block_617069",
+      "resource-block_6f70657261746f72",
+      "connection-6531",
+      "connection-6532",
+      "connection-6533",
+      "connection-6534",
+      "connection-6535",
+      "connection-6536",
+      "connection-6537",
+      "connection-6538",
+      "connection-6539",
+      "connection-653130",
+      "connection-653131",
+      "connection-653132"
+    ]
+  },
+  "resource": {
+    "terraform_data": {
+      "review_gate": {
+        "input": {
+          "design_revision": 2,
+          "environment": "staging"
+        },
+        "lifecycle": {
+          "precondition": [
+            {
+              "condition": "${var.review_approved && length(local.unfinished_work) == 0}",
+              "error_message": "Review this sketch and finish the work listed in resource-schedule.json before a deployment plan can succeed."
+            }
+          ]
+        }
+      }
+    },
+    "aws_s3_bucket": {
+      "block_65766964656e6365": {
+        "bucket_prefix": "atforma-block-65766964656e6365-",
+        "force_destroy": false,
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "tags": {
+          "ManagedBy": "AtMem AI Architect",
+          "Environment": "staging"
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_s3_bucket_public_access_block": {
+      "block_65766964656e6365": {
+        "bucket": "${aws_s3_bucket.block_65766964656e6365.id}",
+        "block_public_acls": true,
+        "block_public_policy": true,
+        "ignore_public_acls": true,
+        "restrict_public_buckets": true,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_s3_bucket_server_side_encryption_configuration": {
+      "block_65766964656e6365": {
+        "bucket": "${aws_s3_bucket.block_65766964656e6365.id}",
+        "rule": {
+          "apply_server_side_encryption_by_default": {
+            "sse_algorithm": "AES256"
+          }
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_s3_bucket_versioning": {
+      "block_65766964656e6365": {
+        "bucket": "${aws_s3_bucket.block_65766964656e6365.id}",
+        "versioning_configuration": {
+          "status": "Enabled"
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_s3_bucket_ownership_controls": {
+      "block_65766964656e6365": {
+        "bucket": "${aws_s3_bucket.block_65766964656e6365.id}",
+        "rule": {
+          "object_ownership": "BucketOwnerEnforced"
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_s3_bucket_policy": {
+      "block_65766964656e6365": {
+        "bucket": "${aws_s3_bucket.block_65766964656e6365.id}",
+        "policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Sid\":\"DenyInsecureTransport\",\"Effect\":\"Deny\",\"Principal\":\"*\",\"Action\":\"s3:*\",\"Resource\":[\"${aws_s3_bucket.block_65766964656e6365.arn}\",\"${aws_s3_bucket.block_65766964656e6365.arn}/*\"],\"Condition\":{\"Bool\":{\"aws:SecureTransport\":\"false\",\"aws:PrincipalIsAWSService\":\"false\"}}}]}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    }
+  },
+  "output": {
+    "design_revision": {
+      "value": 2
+    },
+    "environment": {
+      "value": "staging"
+    },
+    "implemented_foundations": {
+      "value": 1
+    },
+    "buckets": {
+      "value": {
+        "block_65766964656e6365": {
+          "name": "${aws_s3_bucket.block_65766964656e6365.id}",
+          "arn": "${aws_s3_bucket.block_65766964656e6365.arn}"
+        }
+      }
+    }
+  }
+}

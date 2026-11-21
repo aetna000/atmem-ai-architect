@@ -1,0 +1,120 @@
+{
+  "recordedAt": "2026-11-10T17:43:07.883302+00:00",
+  "passed": true,
+  "checks": [
+    {
+      "check": "transfer-image",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "parser-image",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "policy.docx-input-volume",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "policy.docx-output-volume",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "policy.docx-download",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "policy.docx-parse",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "policy.docx-upload",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "policy.docx-collect",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "policy.docx-three-stage-byte-bound-answer",
+      "passed": true
+    },
+    {
+      "check": "policy.docx-input-cleanup",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "policy.docx-output-cleanup",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "invoice-scan.pdf-input-volume",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "invoice-scan.pdf-output-volume",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "invoice-scan.pdf-download",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "invoice-scan.pdf-parse",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "invoice-scan.pdf-upload",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "invoice-scan.pdf-collect",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "invoice-scan.pdf-three-stage-byte-bound-answer",
+      "passed": true
+    },
+    {
+      "check": "invoice-scan.pdf-input-cleanup",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "invoice-scan.pdf-output-cleanup",
+      "passed": true,
+      "exitCode": 0
+    }
+  ],
+  "sourceHashes": {
+    "scripts/qualify-enterprise-aws-jobs.py": "41b66c6fd96da13e537227655b89dac37fba3615a6e8cfc43385b7fc0be4132a",
+    "tests/runtime/enterprise_aws_jobs_contract.py": "59e628e47a8c09a090013be97d262d70db792b7f6b530cecdc82b3180c1c91db",
+    "src/runtime/enterprise_aws_jobs.py": "f6e1eb3119c58c59ba4e0cdc5314e6387868aca27a4e534b5207b0ccf3e56443",
+    "src/runtime/enterprise_aws_objects.py": "f94c0fb8e78450e3d92d0f45d9e7eeadd523a171c2a59358a2054adc90108682",
+    "src/runtime/enterprise_aws_transfer.py": "beac1f5410d1054d6e48bb48817e365d442a28fa095b9ce752b7a5f2eac88651",
+    "src/runtime/enterprise_document_job.py": "d56dfb04a9189623392f35b68987ec96288e2ba75120ce4488c71eef0ebd2d4a",
+    "src/runtime/enterprise_document_contract.py": "a751fd81979884b1d3023c2527248f2da99f823348dfe81236488f9ea31bfe42",
+    "tests/fixtures/providers/aws-ecs-2014-11-13-botocore-1.43.123.json.gz": "bfeebe050469cd26db24b1be3ed402807d131b25fc147a45733310583104215c",
+    "benchmarks/convergence/fixtures/enterprise-documents/policy.docx": "79fb19e7ad90a74a671728612d2415f5e0834f797cd5f7d9ba31ce9e6ebd9a49",
+    "benchmarks/convergence/fixtures/invoices/invoice-scan.pdf": "c579469b4d27b6a9167465933e2166a9afb11d3b907e2391453e8dd8977a185d"
+  },
+  "coreImageId": "sha256:db5fb1f6c704f3643b3fae5829a178c8d8b9a1cf969929ae621725cc81f616a3",
+  "parserImageId": "sha256:0e6089395cc36c96986ef500026af794dd07f2a8c97196e7c0df726fbe465c82",
+  "cloudOperations": false,
+  "scope": "Actual ECS-plan transfer CLI, root/CHOWN handoff, two separate task-like POSIX volumes, parser and Office/scanned-PDF consumer in restricted owned Linux. S3 is an explicit SDK fixture. Local network/logging/PID restrictions do not prove native host policy, ECS scheduling, identity, termination, recovery or whole-project acceptance."
+}

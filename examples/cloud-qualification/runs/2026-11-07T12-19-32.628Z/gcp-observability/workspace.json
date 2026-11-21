@@ -1,0 +1,482 @@
+{
+  "version": 1,
+  "revision": 2,
+  "name": "Google Cloud log and trace incident analysis",
+  "provider": "gcp",
+  "requirements": "",
+  "nodes": [
+    {
+      "id": "src-synthetic",
+      "type": "resource",
+      "position": {
+        "x": 50,
+        "y": 190
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Synthetic services",
+        "provider": "tools",
+        "kind": "source",
+        "description": "Existing synthetic microservices that send OTLP logs and distributed traces. Outside the provisioning scope.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "poc": true
+      }
+    },
+    {
+      "id": "otel-collector",
+      "type": "resource",
+      "position": {
+        "x": 470,
+        "y": 190
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "OpenTelemetry Collector",
+        "provider": "gcp",
+        "kind": "stream",
+        "description": "OpenTelemetry Collector running on Cloud Run. Receives OTLP, batches records and keeps the original trace_id, span_id and log IDs.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "ingest",
+        "service": "Cloud Run"
+      }
+    },
+    {
+      "id": "pubsub-raw",
+      "type": "resource",
+      "position": {
+        "x": 890,
+        "y": 190
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Raw telemetry topic",
+        "provider": "gcp",
+        "kind": "stream",
+        "description": "Buffers raw, unredacted telemetry. A dead-letter topic and short retention apply. No direct consumer has model access.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "ingest",
+        "service": "Pub/Sub"
+      }
+    },
+    {
+      "id": "ingest-worker",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 190
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Redaction and ingestion worker",
+        "provider": "gcp",
+        "kind": "tool",
+        "description": "Pushes each record to Sensitive Data Protection for de-identification before storage. Writes an idempotent upsert keyed by trace_id, span_id and log insertId, so repeated ingestion produces the same timeline.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "ingest",
+        "service": "Cloud Run"
+      }
+    },
+    {
+      "id": "dlp",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 50
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Secret redaction",
+        "provider": "gcp",
+        "kind": "guard",
+        "description": "De-identification template for credentials, tokens and keys. Redacted text is the only text allowed downstream.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "guard",
+        "service": "Sensitive Data Protection (Cloud DLP)"
+      }
+    },
+    {
+      "id": "bq-telemetry",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Redacted telemetry store",
+        "provider": "gcp",
+        "kind": "history",
+        "description": "Redacted spans and logs, partitioned by time and clustered by trace_id. The incident timeline and evidence search query this store.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "index",
+        "service": "BigQuery"
+      }
+    },
+    {
+      "id": "analysis-runtime",
+      "type": "resource",
+      "position": {
+        "x": 2150,
+        "y": 470
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Incident analysis service",
+        "provider": "gcp",
+        "kind": "agent",
+        "description": "Builds the timeline from BigQuery and sends redacted evidence to Gemini as quoted data, with no tool declarations. Checks that the output is valid JSON and that every claim cites existing trace or log IDs. If spans are missing, it returns 'uncertain'. This service also produces the operator answer.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "app",
+        "service": "Cloud Run"
+      }
+    },
+    {
+      "id": "vertex-gemini",
+      "type": "resource",
+      "position": {
+        "x": 2570,
+        "y": 470
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Gemini model",
+        "provider": "gcp",
+        "kind": "predict",
+        "description": "Managed model endpoint. The model ID, regional availability, quotas and access are not yet selected or verified.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "llm",
+        "service": "Vertex AI (Gemini)"
+      }
+    },
+    {
+      "id": "iap",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 610
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Operator access",
+        "provider": "gcp",
+        "kind": "guard",
+        "description": "Authenticates operators before they reach the analysis service. There is no anonymous access.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "guard",
+        "service": "Identity-Aware Proxy"
+      }
+    },
+    {
+      "id": "operator",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 610
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Incident operator",
+        "provider": "tools",
+        "kind": "source",
+        "description": "The person who asks about an incident and reviews the cited explanation.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "role": "human"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-src-otel",
+      "source": "src-synthetic",
+      "target": "otel-collector",
+      "type": "smoothstep",
+      "label": "OTLP logs and traces"
+    },
+    {
+      "id": "e-otel-pubsub",
+      "source": "otel-collector",
+      "target": "pubsub-raw",
+      "type": "smoothstep",
+      "label": "publish batches"
+    },
+    {
+      "id": "e-pubsub-worker",
+      "source": "pubsub-raw",
+      "target": "ingest-worker",
+      "type": "smoothstep",
+      "label": "push subscription"
+    },
+    {
+      "id": "e-worker-dlp",
+      "source": "ingest-worker",
+      "target": "dlp",
+      "type": "smoothstep",
+      "label": "de-identify content"
+    },
+    {
+      "id": "e-worker-bq",
+      "source": "ingest-worker",
+      "target": "bq-telemetry",
+      "type": "smoothstep",
+      "label": "idempotent upsert of redacted records"
+    },
+    {
+      "id": "e-bq-runtime",
+      "source": "bq-telemetry",
+      "target": "analysis-runtime",
+      "type": "smoothstep",
+      "label": "timeline and evidence query"
+    },
+    {
+      "id": "e-runtime-vertex",
+      "source": "analysis-runtime",
+      "target": "vertex-gemini",
+      "type": "smoothstep",
+      "label": "generateContent (no tools)"
+    },
+    {
+      "id": "e-operator-iap",
+      "source": "operator",
+      "target": "iap",
+      "type": "smoothstep",
+      "label": "HTTPS sign-in"
+    },
+    {
+      "id": "e-iap-runtime",
+      "source": "iap",
+      "target": "analysis-runtime",
+      "type": "smoothstep",
+      "label": "authenticated request; returns cited answer"
+    }
+  ],
+  "id": "16df0dc9-3664-431d-8d54-e75312e65d24",
+  "brief": {
+    "application": "Use Google Cloud for this synthetic architecture qualification. Correlate synthetic logs and distributed traces to explain a service incident. Include collection, redaction, storage/search, an AI analysis runtime and an operator-facing answer with source evidence. Treat log text as untrusted. Acceptance criteria: Redact secrets before model input; Link conclusions to exact trace or log IDs; Prompt injection in a log cannot issue tool calls; Missing spans yield uncertainty rather than invented causes; Repeated ingestion preserves a consistent incident timeline. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+    "cloud": "Google Cloud"
+  },
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use Google Cloud for this synthetic architecture qualification",
+      "options": "",
+      "decision": "gcp",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.google-cloud-log-and-trace-incident-analysis-end-to-end-draft",
+      "title": "Google Cloud log and trace incident analysis: end-to-end draft",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: collection, redaction, storage and search, AI analysis and an operator answer with cited evidence, using synthetic data only. Assumptions: the region, project, model ID, model access and quotas haven't been selected or verified. Prompt-injection defence: log text is treated as untrusted data, Gemini runs with no tool declarations, and the output is checked against a schema before release. Native Terraform for these GCP services isn't available in the current generator, so implementation gaps remain. Nothing is deployed.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "needs": [
+    {
+      "id": "req-e06de3a3",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Every answer shows its sources",
+      "priority": "should",
+      "status": "open",
+      "source": "user",
+      "links": []
+    },
+    {
+      "id": "ai-redact-before-model",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Secrets must be removed from all log and trace content before it is stored for analysis or sent to the model.",
+      "rationale": "If secrets are not removed first, they could leak into prompts or model logs.",
+      "basis": "User acceptance criterion: 'Redact secrets before model input'.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "ingest-worker",
+        "dlp",
+        "vertex-gemini"
+      ]
+    },
+    {
+      "id": "ai-cite-ids",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Every conclusion must cite the exact trace or log IDs it is based on, and those IDs must exist in the store.",
+      "rationale": "Operators must be able to check each conclusion against the evidence.",
+      "basis": "User acceptance criterion: 'Link conclusions to exact trace or log IDs'.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "analysis-runtime",
+        "bq-telemetry"
+      ]
+    },
+    {
+      "id": "ai-no-injection-tools",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Log content must not be able to trigger tool calls or actions. The model runs with no tools, and its output is checked against a schema.",
+      "rationale": "Log text is untrusted and could contain injected instructions.",
+      "basis": "User acceptance criterion: 'Prompt injection in a log cannot issue tool calls'.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "analysis-runtime",
+        "vertex-gemini"
+      ]
+    },
+    {
+      "id": "ai-uncertainty",
+      "kind": "functional",
+      "category": "reliability",
+      "statement": "When spans are missing, the answer must say it is uncertain instead of inventing a cause.",
+      "rationale": "Made-up root causes would mislead incident response.",
+      "basis": "User acceptance criterion: 'Missing spans yield uncertainty rather than invented causes'.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "analysis-runtime"
+      ]
+    },
+    {
+      "id": "ai-idempotent-timeline",
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "statement": "Ingesting the same telemetry again must produce the same incident timeline, with no duplicates.",
+      "rationale": "Pub/Sub can deliver the same message more than once, and replays happen.",
+      "basis": "User acceptance criterion: 'Repeated ingestion preserves a consistent incident timeline'.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "ingest-worker",
+        "bq-telemetry",
+        "pubsub-raw"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "extensions": {
+    "requirementNumbers": {
+      "req-e06de3a3": 1,
+      "drv-data-access": 2,
+      "drv-data-location": 3,
+      "ai-redact-before-model": 4,
+      "ai-cite-ids": 5,
+      "ai-no-injection-tools": 6,
+      "ai-uncertainty": 7,
+      "ai-idempotent-timeline": 8
+    }
+  },
+  "facts": [
+    {
+      "id": "fact-df52ccf1",
+      "name": "cloud.preference",
+      "value": "gcp",
+      "unit": "provider",
+      "text": "Use Google Cloud for this synthetic architecture qualification. Correlate synthetic logs and distributed traces to explain a service incident. Include collection, redaction, storage/search, an AI analysis runtime and an operator-facing answer with source evidence. Treat log text as untrusted. Accept",
+      "madeAt": "2026-11-07"
+    }
+  ],
+  "workflow": "knowledge-assistant",
+  "asked": [],
+  "lastAsked": {
+    "id": "knowledge-assistant:0",
+    "topic": "data",
+    "question": "Where do the files live, and roughly how many are there?",
+    "beginner": "For example “SharePoint and a shared drive, about 20,000 files”.",
+    "why": "It shapes the RAG design."
+  },
+  "choices": {},
+  "conceptSig": null
+}

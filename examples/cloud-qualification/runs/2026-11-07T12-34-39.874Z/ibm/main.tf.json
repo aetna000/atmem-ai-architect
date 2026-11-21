@@ -1,0 +1,108 @@
+{
+  "terraform": {
+    "required_version": ">= 1.7.0, < 2.0.0",
+    "required_providers": {
+      "ibm": {
+        "source": "IBM-Cloud/ibm",
+        "version": "1.89.0"
+      }
+    }
+  },
+  "provider": {
+    "ibm": {
+      "region": "${var.region}"
+    }
+  },
+  "variable": {
+    "review_approved": {
+      "type": "bool",
+      "default": false,
+      "description": "Explicitly review the real destination, permissions, cost and plan before apply."
+    },
+    "region": {
+      "type": "string",
+      "description": "Reviewed provider-native region; emulator region does not select a deployment location."
+    },
+    "cos_instance_crn": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing reviewed COS instance CRN."
+    },
+    "iam_service_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing IBM IAM service ID for bucket-scoped object access."
+    },
+    "block_646f63756d656e7473_name": {
+      "type": "string",
+      "nullable": false,
+      "description": "Globally unique reviewed storage name."
+    }
+  },
+  "locals": {
+    "unfinished_work": []
+  },
+  "resource": {
+    "terraform_data": {
+      "review_gate": {
+        "input": {
+          "design_revision": 1,
+          "environment": "staging"
+        },
+        "lifecycle": {
+          "precondition": [
+            {
+              "condition": "${var.review_approved && length(local.unfinished_work) == 0}",
+              "error_message": "Unfinished work or missing review blocks deployment."
+            }
+          ]
+        }
+      }
+    },
+    "ibm_cos_bucket": {
+      "block_646f63756d656e7473": {
+        "bucket_name": "${var.block_646f63756d656e7473_name}",
+        "resource_instance_id": "${var.cos_instance_crn}",
+        "region_location": "${var.region}",
+        "storage_class": "standard",
+        "object_versioning": {
+          "enable": true
+        },
+        "force_delete": false,
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_iam_service_policy": {
+      "block_646f63756d656e7473": {
+        "iam_service_id": "${var.iam_service_id}",
+        "roles": [
+          "Writer"
+        ],
+        "resources": [
+          {
+            "service": "cloud-object-storage",
+            "resource_instance_id": "${split(\":\", var.cos_instance_crn)[7]}",
+            "resource_type": "bucket",
+            "resource": "${ibm_cos_bucket.block_646f63756d656e7473.bucket_name}"
+          }
+        ],
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    }
+  },
+  "output": {
+    "design_revision": {
+      "value": 1
+    },
+    "environment": {
+      "value": "staging"
+    }
+  }
+}

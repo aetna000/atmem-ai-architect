@@ -1,0 +1,515 @@
+{
+  "version": 1,
+  "revision": 2,
+  "name": "Azure synthetic security-alert triage",
+  "provider": "azure",
+  "requirements": "",
+  "nodes": [
+    {
+      "id": "alert-source",
+      "type": "resource",
+      "position": {
+        "x": 50,
+        "y": 480
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Synthetic alerts & approved logs",
+        "provider": "tools",
+        "kind": "source",
+        "description": "Existing synthetic alert generator and approved log exports. Outside provisioning scope. Content is treated as untrusted.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "role": "data"
+      }
+    },
+    {
+      "id": "asset-context",
+      "type": "resource",
+      "position": {
+        "x": 470,
+        "y": 200
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Asset context (CMDB export)",
+        "provider": "tools",
+        "kind": "history",
+        "description": "Existing asset inventory: owner, criticality, exposure. Read-only reference.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "role": "data"
+      }
+    },
+    {
+      "id": "ingest",
+      "type": "resource",
+      "position": {
+        "x": 470,
+        "y": 480
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Alert ingestion",
+        "provider": "azure",
+        "kind": "stream",
+        "description": "Receives alert and log events with schema validation at the consumer. Capture is retained for replay.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "ingest",
+        "service": "Azure Event Hubs"
+      }
+    },
+    {
+      "id": "redact",
+      "type": "resource",
+      "position": {
+        "x": 890,
+        "y": 340
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Redaction",
+        "provider": "azure",
+        "kind": "guard",
+        "description": "Masks personal data and secrets in alerts and asset fields before anything is stored or sent to a model. Uses a managed identity. Failures go to quarantine and are not passed on.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "guard",
+        "service": "Azure Functions + Azure AI Language (PII detection)"
+      }
+    },
+    {
+      "id": "evidence-store",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 50
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Redacted evidence store",
+        "provider": "azure",
+        "kind": "resource",
+        "description": "Redacted alert and evidence objects. Private endpoint, no public access.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "role": "data",
+        "service": "Azure Blob Storage (private, versioned)"
+      }
+    },
+    {
+      "id": "evidence-search",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 60
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Evidence retrieval",
+        "provider": "azure",
+        "kind": "tool",
+        "description": "Indexes redacted evidence and asset context. Returns cited evidence for each alert. Retrieval mode (keyword, vector or hybrid) is still to be decided.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "index",
+        "service": "Azure AI Search"
+      }
+    },
+    {
+      "id": "triage",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 480
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "AI triage orchestrator",
+        "provider": "azure",
+        "kind": "agent",
+        "description": "For each alert: retrieves evidence, asks the model for severity, rationale with citations and a proposed response. Can abstain when evidence is insufficient. Has no permission or tool to isolate hosts, disable users or execute payloads; its output is a proposal only.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "app",
+        "service": "Azure Functions (Durable)"
+      }
+    },
+    {
+      "id": "model",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 350
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Triage model",
+        "provider": "azure",
+        "kind": "predict",
+        "description": "Model deployment to be selected. Access, quota and regional availability are unverified. Mocked with scripted responses in local tests.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "llm",
+        "service": "Azure OpenAI Service"
+      }
+    },
+    {
+      "id": "analyst-queue",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 630
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Analyst queue",
+        "provider": "azure",
+        "kind": "resource",
+        "description": "Holds triaged alerts and response proposals for analyst review. Uses idempotent message IDs per alert.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "app",
+        "service": "Azure Service Bus (queue + dead-letter)"
+      }
+    },
+    {
+      "id": "analyst-console",
+      "type": "resource",
+      "position": {
+        "x": 2150,
+        "y": 630
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Analyst console",
+        "provider": "azure",
+        "kind": "output",
+        "description": "Analysts review evidence and proposals, then accept, edit or reject them. Any real containment is done manually outside this system.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "role": "app",
+        "service": "Azure App Service + Microsoft Entra ID sign-in"
+      }
+    },
+    {
+      "id": "analyst",
+      "type": "resource",
+      "position": {
+        "x": 2570,
+        "y": 555
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "SOC analyst",
+        "provider": "tools",
+        "kind": "source",
+        "description": "Person who decides on every response proposal.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "role": "human"
+      }
+    },
+    {
+      "id": "audit",
+      "type": "resource",
+      "position": {
+        "x": 2570,
+        "y": 835
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Audit trail",
+        "provider": "azure",
+        "kind": "monitor",
+        "description": "Records inputs (by reference), retrieved evidence IDs, model version, proposal and analyst decision for every alert.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "monitor",
+        "service": "Azure Monitor Log Analytics + immutable Blob archive"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-src-ingest",
+      "source": "alert-source",
+      "target": "ingest",
+      "type": "smoothstep",
+      "label": "alert/log events"
+    },
+    {
+      "id": "e-asset-redact",
+      "source": "asset-context",
+      "target": "redact",
+      "type": "smoothstep",
+      "label": "asset records"
+    },
+    {
+      "id": "e-ingest-redact",
+      "source": "ingest",
+      "target": "redact",
+      "type": "smoothstep",
+      "label": "Event Hubs trigger"
+    },
+    {
+      "id": "e-redact-store",
+      "source": "redact",
+      "target": "evidence-store",
+      "type": "smoothstep",
+      "label": "write redacted evidence"
+    },
+    {
+      "id": "e-store-search",
+      "source": "evidence-store",
+      "target": "evidence-search",
+      "type": "smoothstep",
+      "label": "indexer pull"
+    },
+    {
+      "id": "e-redact-triage",
+      "source": "redact",
+      "target": "triage",
+      "type": "smoothstep",
+      "label": "redacted alert"
+    },
+    {
+      "id": "e-triage-search",
+      "source": "triage",
+      "target": "evidence-search",
+      "type": "smoothstep",
+      "label": "evidence query + citations"
+    },
+    {
+      "id": "e-triage-model",
+      "source": "triage",
+      "target": "model",
+      "type": "smoothstep",
+      "label": "grounded triage prompt"
+    },
+    {
+      "id": "e-triage-queue",
+      "source": "triage",
+      "target": "analyst-queue",
+      "type": "smoothstep",
+      "label": "triage + response proposal"
+    },
+    {
+      "id": "e-triage-audit",
+      "source": "triage",
+      "target": "audit",
+      "type": "smoothstep",
+      "label": "audit record"
+    },
+    {
+      "id": "e-queue-console",
+      "source": "analyst-queue",
+      "target": "analyst-console",
+      "type": "smoothstep",
+      "label": "review items"
+    },
+    {
+      "id": "e-console-analyst",
+      "source": "analyst-console",
+      "target": "analyst",
+      "type": "smoothstep",
+      "label": "evidence & proposal"
+    },
+    {
+      "id": "e-console-audit",
+      "source": "analyst-console",
+      "target": "audit",
+      "type": "smoothstep",
+      "label": "analyst decision"
+    }
+  ],
+  "id": "4a022b08-ce2c-43f4-be5d-f504dd4a571a",
+  "brief": {
+    "application": "Use Azure for this synthetic architecture qualification. Triage synthetic security alerts using approved logs and asset context. Include ingestion, redaction, evidence retrieval, AI triage, an analyst queue and an auditable response proposal. Do not isolate hosts, disable users or execute payloads automatically. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+    "cloud": "Azure"
+  },
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use Azure for this synthetic architecture qualification",
+      "options": "",
+      "decision": "azure",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.azure-synthetic-security-alert-triage-end-to-end-draft",
+      "title": "Azure synthetic security-alert triage (end-to-end draft)",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: ingest synthetic alerts and approved logs plus asset context, redact, index evidence, AI triage with Azure OpenAI, analyst queue and console, auditable response proposals. Assumptions: regions are not selected yet; the model deployment, quotas and account access are unverified; no automated containment actions exist (proposals only, a human decides). Typed Terraform generation does not cover these Azure services yet, so engineering is required. This is a design draft, not a deployment.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "needs": [
+    {
+      "id": "ai-no-auto-action",
+      "kind": "functional",
+      "category": "security",
+      "statement": "The system only proposes responses. It must have no permission or code path to isolate hosts, disable users or execute payloads; every response needs an analyst decision.",
+      "rationale": "Without this, a wrong or manipulated model output could cause damaging containment actions.",
+      "basis": "User: \"Do not isolate hosts, disable users or execute payloads automatically.\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "triage",
+        "analyst-queue",
+        "analyst-console"
+      ]
+    },
+    {
+      "id": "ai-redact-before-model",
+      "kind": "nonfunctional",
+      "category": "compliance",
+      "statement": "Personal data and secrets are redacted before evidence is stored, indexed or sent to the model. Records that fail redaction are quarantined.",
+      "rationale": "This stops sensitive log content from leaking into indexes or prompts.",
+      "basis": "User asked for redaction in the flow.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "redact",
+        "evidence-store",
+        "model"
+      ]
+    },
+    {
+      "id": "ai-audit-proposal",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Each proposal records the alert reference, evidence IDs cited, model version, proposal text and analyst decision in a tamper-resistant audit trail. Triage abstains when evidence is insufficient.",
+      "rationale": "This makes AI-assisted decisions reviewable and reproducible during qualification.",
+      "basis": "User: \"an auditable response proposal\".",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "triage",
+        "audit",
+        "analyst-console"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "extensions": {
+    "requirementNumbers": {
+      "drv-data-access": 1,
+      "drv-data-location": 2,
+      "ai-no-auto-action": 3,
+      "ai-redact-before-model": 4,
+      "ai-audit-proposal": 5
+    }
+  },
+  "facts": [
+    {
+      "id": "fact-7bf31390",
+      "name": "cloud.preference",
+      "value": "azure",
+      "unit": "provider",
+      "text": "Use Azure for this synthetic architecture qualification. Triage synthetic security alerts using approved logs and asset context. Include ingestion, redaction, evidence retrieval, AI triage, an analyst queue and an auditable response proposal. Do not isolate hosts, disable users or execute payloads a",
+      "madeAt": "2026-11-07"
+    }
+  ],
+  "workflow": "knowledge-assistant",
+  "asked": [],
+  "lastAsked": {
+    "id": "knowledge-assistant:0",
+    "topic": "data",
+    "question": "Where do the files live, and roughly how many are there?",
+    "beginner": "For example “SharePoint and a shared drive, about 20,000 files”.",
+    "why": "It shapes the RAG design."
+  },
+  "choices": {},
+  "conceptSig": null
+}

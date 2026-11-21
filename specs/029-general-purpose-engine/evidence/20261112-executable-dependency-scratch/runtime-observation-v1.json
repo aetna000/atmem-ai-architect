@@ -1,0 +1,63 @@
+{
+  "format": "atmem.runtime-observation",
+  "version": 1,
+  "passed": true,
+  "observedAt": "2026-11-11T21:48:21.970675+00:00",
+  "runtime": {
+    "imageId": "sha256:63164e32f99523d8b2f108ee05095d51de7a951934cdc6bd3c99ee78993e8f5f",
+    "platform": "linux/amd64",
+    "executable": "/usr/local/bin/python3",
+    "bootstrapPython": "/usr/local/bin/python3",
+    "isolationProfile": "postgresql-local-v1",
+    "environment": {},
+    "executableScratch": true
+  },
+  "runtimeSha256": "b76dea3d12308ccabee4f7bb94076a777a18e8511308a132fd9a334b625609a9",
+  "workerPolicySha256": "f0ef6725d4a7c36acbdd7d46c01f75a3163d7fce1cdfd73c69b24c54b1e069af",
+  "workerIdentitySha256": "f33bd067e3d0a43b542a132cc95e1db67f4df931e8da62ff56027e0fd04fe46b",
+  "observerSha256": "7afe8455de762acdebbb0972b1afdefad8867075b24bc969f1557e4fca6d424f",
+  "probe": {
+    "validator": "runtime-observation",
+    "artifactSha256": "8739c76e681f900923b900c9df0ef75cf421d39cabb54650c4b9ad19b6a76d85",
+    "imageId": "sha256:63164e32f99523d8b2f108ee05095d51de7a951934cdc6bd3c99ee78993e8f5f",
+    "runtimeConfigImageId": "sha256:63164e32f99523d8b2f108ee05095d51de7a951934cdc6bd3c99ee78993e8f5f",
+    "platform": "linux/amd64",
+    "isolationProfile": "postgresql-local-v1",
+    "runtimeEnvironment": {},
+    "command": [
+      "/usr/local/bin/python3",
+      "-I",
+      "/opt/atmem/sql_validation.py",
+      "-c",
+      "\nimport importlib.metadata,json,os,sys\npackages,services=json.loads(sys.argv[1]);versions={}\nfor name in packages:\n try:versions[name]=importlib.metadata.version(name)\n except importlib.metadata.PackageNotFoundError:versions[name]=None\noperations={}\nif services:\n try:\n  import botocore.session\n except ModuleNotFoundError:\n  operations={name:None for name in services}\n else:\n  session=botocore.session.get_session()\n  for name in services:operations[name]=sorted(session.get_service_model(name).operation_names)\nif 'ATMEM_TEST_POSTGRES_DSN' in os.environ:\n import psycopg\n with psycopg.connect(os.environ['ATMEM_TEST_POSTGRES_DSN']) as connection:\n  versions['postgresql-server']=connection.execute('SHOW server_version').fetchone()[0].split()[0]\nprint(json.dumps({'kind':'python','executableVersion':sys.version.split()[0],'packages':versions,'serviceOperations':operations}))\n",
+      "[[\"azure-identity\", \"psycopg\", \"procrastinate\", \"fastapi\", \"cryptography\"], []]"
+    ],
+    "status": "passed",
+    "exitCode": 0,
+    "executableScratch": true,
+    "skipped": 0,
+    "testsReported": null,
+    "reason": null,
+    "output": "{\"kind\": \"python\", \"executableVersion\": \"3.13.18\", \"packages\": {\"azure-identity\": \"1.27.0\", \"psycopg\": \"3.3.8\", \"procrastinate\": \"3.10.0\", \"fastapi\": \"0.162.0\", \"cryptography\": \"50.0.2\", \"postgresql-server\": \"17.11\"}, \"serviceOperations\": {}}\n",
+    "outputTruncated": false,
+    "durationSeconds": 6.088,
+    "evidenceLevel": "local_container_check",
+    "cloudOperations": false,
+    "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+  },
+  "cloudOperations": false,
+  "scope": "Empty source archive in the registered immutable local image/profile. No application code, cloud client, account or network dependency is used. Null package versions mean distribution metadata unavailable; not proof that importing a module is impossible. Service operations describe the installed botocore model only, not account/API availability.",
+  "observed": {
+    "kind": "python",
+    "executableVersion": "3.13.18",
+    "packages": {
+      "azure-identity": "1.27.0",
+      "psycopg": "3.3.8",
+      "procrastinate": "3.10.0",
+      "fastapi": "0.162.0",
+      "cryptography": "50.0.2",
+      "postgresql-server": "17.11"
+    },
+    "serviceOperations": {}
+  }
+}

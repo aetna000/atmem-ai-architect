@@ -1,0 +1,52 @@
+{
+  "provider": "aws-cloud-operations",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Inventory credentials are read-only",
+    "Untrusted resource tags cannot trigger commands",
+    "Plans identify affected resources and costs as estimates",
+    "Drift after review invalidates approval",
+    "Apply requires separate authorization and a rollback or recovery plan"
+  ],
+  "components": [
+    {
+      "id": "operator"
+    },
+    {
+      "id": "inventory",
+      "service": "Amazon S3"
+    },
+    {
+      "id": "orchestrator",
+      "service": "AWS Step Functions"
+    },
+    {
+      "id": "checks",
+      "service": "AWS Lambda"
+    },
+    {
+      "id": "planner",
+      "service": "AWS Lambda"
+    },
+    {
+      "id": "model",
+      "service": "Amazon Bedrock",
+      "binding": "aws-bedrock-model"
+    },
+    {
+      "id": "artifacts",
+      "service": "Amazon DynamoDB"
+    },
+    {
+      "id": "audit",
+      "service": "AWS CloudTrail"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

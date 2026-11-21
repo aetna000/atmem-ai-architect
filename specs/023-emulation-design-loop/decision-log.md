@@ -1,0 +1,10 @@
+# Decisions and observed corrections — 2026-11-07
+
+- Make emulation central to the design journey. With a ready model, explain each fresh report once per provider/model. Preserve manual proposals, Draw as we talk and Undo. Retest at most two automatic corrections, then explicitly ask the user to review and continue.
+- A correction may fill a missing contract but cannot remove components/connections, convert required resources to existing references or notes, change established bindings/services, or redirect an existing access edge. Requirement and decision updates embedded in emulation replies are not automatically accepted.
+- Real-model testing exposed false reassurance from an empty runtime check list. Strengthen evidence prompts, show an explicit execution summary and filter unsupported empty-run reassurance. Repeat with real models and preserve both histories.
+- Slow native account probes exceeded the previous three-second frontend discovery timeout. Allow the bounded probe window and disable emulation until its local session is ready.
+- Classify native provider usage/auth/model-access failures without exposing raw CLI output. Claude reached its session limit during the repeat matrix. Continue selected checks through the existing signed-in Codex account; keep all failed attempts.
+- Native Azure/GCP/IBM storage exports now include qualified exact provider versions/registry checksums and SDK requirement pins. Their local data-plane checks cannot prove IAM, control-plane deployment or broader AI workloads.
+- User direction explicitly expands qualification to ten AI workload families across four clouds. Specification 024 and forty real-prompt cases preserve complete application scope. Missing native application implementations remain open product work, not a reason to reduce scope or call a diagram production-ready.
+- The website architecture retains a server-owned generator and worker boundary. Local process and socket restrictions do not qualify public multi-tenant execution.

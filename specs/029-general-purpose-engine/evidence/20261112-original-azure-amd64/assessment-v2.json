@@ -1,0 +1,303 @@
+{
+  "format": "atmem.independent-original-local-assessment",
+  "version": 1,
+  "sourceCommit": "0b8fe07e8ceea1506e65e88e051e08baa1c31d1a",
+  "artifactSha256": "bea50c6b0677d3d20b74a6916780edf79a0fe7c4e8208901a42f561d985afdad",
+  "frozenRequirementMapSha256": "af37751399e34b36f68313cf690db4445c67823926ec950ee6c4370637736e7e",
+  "criteria": [
+    {
+      "id": "S01",
+      "dimension": "scope",
+      "requirement": "Microsoft Azure is retained as the target provider; the model backend is not confused with the target cloud.",
+      "critical": true,
+      "requiredEvidence": "provider-schema + independent-static",
+      "status": "met_in_authorized_local_scope",
+      "evidence": [
+        "terraform-independent-v1.json",
+        "../20261111-native-azure-primary/session-binding-audit.json"
+      ],
+      "observed": "Unchanged AzureRM/AzureAD resources and Azure-only REST/configuration; model backend remains exact gpt-6.1-sol/high."
+    },
+    {
+      "id": "S02",
+      "dimension": "scope",
+      "requirement": "Implement an internal staff-facing pasted-ticket review tool, including usable browser/API/application artifacts.",
+      "critical": true,
+      "requiredEvidence": "independent-review + local-runtime",
+      "status": "met_in_authorized_local_scope",
+      "evidence": [
+        "browser-journey-v1.json",
+        "receiving-build-v1.json"
+      ],
+      "observed": "Actual exported HTML/CSS/JS and Node26.13 AMD64 HTTP app execute through real Chromium."
+    },
+    {
+      "id": "S03",
+      "dimension": "scope",
+      "requirement": "Return summary, topic, suggested urgency and uncertainty through a documented validated JSON contract.",
+      "critical": true,
+      "requiredEvidence": "independent-static + local-runtime",
+      "status": "met_in_authorized_local_scope",
+      "evidence": [
+        "browser-journey-v1.json",
+        "image-component-v1.json"
+      ],
+      "observed": "Actual validated summary/topic/urgency/uncertainty contract, strict enums/length/keys and safe display; model response is an explicit synthetic provider fixture."
+    },
+    {
+      "id": "S04",
+      "dimension": "ownership",
+      "requirement": "Suggestions remain subject to human review, with a visible review-only notice and no automatic customer action.",
+      "critical": true,
+      "requiredEvidence": "independent-static + browser-runtime",
+      "status": "met_in_authorized_local_scope",
+      "evidence": [
+        "browser-journey-v1.json"
+      ],
+      "observed": "Visible human-review notice and uncertainty; clear controls and no external customer action code."
+    },
+    {
+      "id": "S05",
+      "dimension": "ownership",
+      "requirement": "Do not connect to or modify the existing help desk or customer records; preserve its ownership boundary.",
+      "critical": true,
+      "requiredEvidence": "independent-static + independent-review",
+      "status": "met_in_authorized_local_scope",
+      "evidence": [
+        "browser-journey-v1.json",
+        "terraform-independent-v1.json"
+      ],
+      "observed": "Static resource/HTTP destination review plus zero unexpected runtime native destinations: only identity/metadata/account/model; no helpdesk resources, scopes or writes."
+    },
+    {
+      "id": "S06",
+      "dimension": "access",
+      "requirement": "Only authorized signed-in staff may submit tickets; denied and malformed identities fail closed.",
+      "critical": true,
+      "requiredEvidence": "provider-schema + local-runtime",
+      "status": "met_in_authorized_local_scope",
+      "evidence": [
+        "browser-journey-v1.json"
+      ],
+      "observed": "Actual state/nonce/PKCE flow and RSA signature validation; malformed/signature/audience/issuer/nonce/role/expiry/unassigned/anonymous denials, secure identity-only session cookie and authorized submissions."
+    },
+    {
+      "id": "S07",
+      "dimension": "scope",
+      "requirement": "The design and operating/cost assumptions account for ten staff and about 200 tickets per working day without inventing a customer quota or SLA.",
+      "critical": true,
+      "requiredEvidence": "independent-review",
+      "status": "met_in_authorized_local_scope",
+      "evidence": [
+        "../../../../.local/external-artifacts/original-azure-amd64/v1/original/docs/COSTS.md"
+      ],
+      "observed": "Reviewed ten-staff/200-daily planning, not a licensing quota or promised rate. Single replica/five slots are explicit bounded runtime footprint, with unknown provider quota/latency."
+    },
+    {
+      "id": "S08",
+      "dimension": "connections",
+      "requirement": "Five simultaneous valid requests complete safely without cross-request data or identity leakage.",
+      "critical": true,
+      "requiredEvidence": "local-runtime",
+      "status": "met_in_authorized_local_scope",
+      "evidence": [
+        "browser-journey-v1.json"
+      ],
+      "observed": "Five distinct browser-created staff sessions each submit20480 UTF8 bytes simultaneously; barrier requires all five model requests overlap and exact per-request output stays separated."
+    },
+    {
+      "id": "S09",
+      "dimension": "scope",
+      "requirement": "Support synthetic/redacted pasted ticket text up to the stated 20 KB, with a declared Unicode byte/character/unit convention and an enforced bound.",
+      "critical": true,
+      "requiredEvidence": "independent-static + local-runtime",
+      "status": "met_in_authorized_local_scope",
+      "evidence": [
+        "browser-journey-v1.json",
+        "image-component-v1.json"
+      ],
+      "observed": "Declared20480-byte upper bound; actual20000-byte non-BMP browser input and5 concurrent20480-byte inputs, with oversize boundaries."
+    },
+    {
+      "id": "S10",
+      "dimension": "failure_recovery",
+      "requirement": "Reject missing, malformed, wrong-type and oversized input without returning a fabricated suggestion or unsafe diagnostic.",
+      "critical": true,
+      "requiredEvidence": "local-runtime",
+      "status": "met_in_authorized_local_scope",
+      "evidence": [
+        "browser-journey-v1.json",
+        "image-component-v1.json"
+      ],
+      "observed": "Missing/type/empty/extra/duplicate/oversize inputs rejected without fabricated output; source enforces wire bound and fatal UTF8 decoding."
+    },
+    {
+      "id": "S11",
+      "dimension": "secrets",
+      "requirement": "Raw ticket text is not written to persistent browser/server/object/database/log storage after processing; retention limits are explained precisely.",
+      "critical": true,
+      "requiredEvidence": "independent-static + browser-runtime + local-runtime",
+      "status": "met_in_authorized_local_scope",
+      "evidence": [
+        "browser-journey-v1.json",
+        "primary-review-v1.json"
+      ],
+      "observed": "No local/session storage, retained reload history or raw input in application stdout; input cleared on success and output on clear/logout. Source retains identity-only maps. Enabled/unknown logging metadata blocks inference. Actual provider retention/approval is not attested."
+    },
+    {
+      "id": "S12",
+      "dimension": "scope",
+      "requirement": "Processing uses an Australian region supported by selected services; any global/foreign/unknown paths are explicitly flagged and no silent regional fallback occurs.",
+      "critical": true,
+      "requiredEvidence": "independent-review + primary-provider-documents + local-runtime",
+      "status": "met_in_authorized_local_scope",
+      "evidence": [
+        "browser-journey-v1.json",
+        "primary-review-v1.json",
+        "terraform-independent-v1.json"
+      ],
+      "observed": "Australia East Standard model version is publicly listed; foreign region/global SKU deny inference without fallback. Entra/global control-plane paths and unknowns are documented. Candidate is deprecated with2027-04-14 retirement; this historical qualification is not a current model recommendation."
+    },
+    {
+      "id": "S13",
+      "dimension": "runbook",
+      "requirement": "Provide a modest justified starting footprint and sourced costs or explicit unknown rates; do not invent prices, currency, monthly workdays or model usage as facts.",
+      "critical": false,
+      "requiredEvidence": "independent-review",
+      "status": "met_in_authorized_local_scope",
+      "evidence": [
+        "../../../../.local/external-artifacts/original-azure-amd64/v1/original/docs/COSTS.md"
+      ],
+      "observed": "Reviewed explicit unknown rates/currency/provider quotas and variable workday/token/cost formulas; modest one-replica footprint, no invented monthly cost or SLA."
+    },
+    {
+      "id": "S14",
+      "dimension": "failure_recovery",
+      "requirement": "Model timeout, refusal, malformed/truncated output and provider denial produce safe failure and allow subsequent recovery without hidden retries or customer writes.",
+      "critical": true,
+      "requiredEvidence": "local-runtime",
+      "status": "met_in_authorized_local_scope",
+      "evidence": [
+        "browser-journey-v1.json"
+      ],
+      "observed": "Actual30000ms transport AbortSignal timeout, refusal, malformed/truncated output and provider403 yield safe failures; each permits explicit recovery with no automatic inference retry."
+    },
+    {
+      "id": "S15",
+      "dimension": "scope",
+      "requirement": "The reviewer can clear a displayed suggestion and sees uncertainty explicitly; stale concurrent/cancelled responses do not restore cleared content.",
+      "critical": true,
+      "requiredEvidence": "browser-runtime",
+      "status": "met_in_authorized_local_scope",
+      "evidence": [
+        "browser-journey-v1.json"
+      ],
+      "observed": "Actual clearing, cancellation/late responses, changed input and explicit uncertainty; stale results remain hidden and cannot restore cleared content."
+    },
+    {
+      "id": "S16",
+      "dimension": "terraform",
+      "requirement": "Emitted infrastructure initializes offline, formats and validates against its real pinned provider schema; connections and identities are concrete.",
+      "critical": true,
+      "requiredEvidence": "provider-schema + independent-static",
+      "status": "met_in_authorized_local_scope",
+      "evidence": [
+        "terraform-independent-v1.json",
+        "terraform-independent-v1.log"
+      ],
+      "observed": "Unchanged pinned Terraform1.17.1/AzureRM4.81.0/AzureAD3.10.0 configuration initializes offline, fmt-checks and validates; schemas loaded and4 independent/3 original mocked plans pass."
+    },
+    {
+      "id": "S17",
+      "dimension": "provider",
+      "requirement": "Application configuration, identity/scopes, resources/permissions, model endpoint and browser/API interfaces agree; mock tests do not substitute for independent connection checks.",
+      "critical": true,
+      "requiredEvidence": "independent-static + local-runtime",
+      "status": "met_in_authorized_local_scope",
+      "evidence": [
+        "browser-journey-v1.json",
+        "terraform-independent-v1.json"
+      ],
+      "observed": "Independent source/resource/secret/client/workload identity/image/endpoint/model/callback/allowlist mappings plus actual OAuth/RS256/managed identity request construction; explicit selected client_id and resource-scoped tokens validated by synthetic native transports. Managed behavior remains unexecuted."
+    },
+    {
+      "id": "S18",
+      "dimension": "build",
+      "requirement": "A clean unpack builds/tests the actual implementation using documented/pinned dependencies and target runtime; generated test success is independently checked.",
+      "critical": true,
+      "requiredEvidence": "local-runtime",
+      "status": "met_in_authorized_local_scope",
+      "evidence": [
+        "receiving-build-v1.json",
+        "image-component-v1.json",
+        "browser-journey-v1.json"
+      ],
+      "observed": "Clean unchanged52-file archive executes documented npm run build in declared Node26.13 Linux AMD64 image;12-file manifest exact. Offline actual image and independent runtime/browser checks pass, not merely generated tests."
+    },
+    {
+      "id": "S19",
+      "dimension": "runbook",
+      "requirement": "Simple build/run/maintenance/failure/recovery/rollback instructions identify required operator inputs and account/model unknowns.",
+      "critical": false,
+      "requiredEvidence": "independent-static + independent-review",
+      "status": "met_in_authorized_local_scope",
+      "evidence": [
+        "../../../../.local/external-artifacts/original-azure-amd64/v1/original/README.md",
+        "../../../../.local/external-artifacts/original-azure-amd64/v1/original/docs/OPERATIONS.md"
+      ],
+      "observed": "Reviewed build/run/operator inputs, no-retention prerequisites, diagnostics, failures/recovery, revision/image rollback and maintenance/lifecycle unknowns. No actual cloud rollback is required or claimed."
+    },
+    {
+      "id": "S20",
+      "dimension": "secrets",
+      "requirement": "No real credentials or private keys are embedded or requested by the local evaluation; only explicit synthetic fixtures are used.",
+      "critical": true,
+      "requiredEvidence": "independent-static",
+      "status": "met_in_authorized_local_scope",
+      "evidence": [
+        "browser-journey-v1.json",
+        "receiving-build-v1.json"
+      ],
+      "observed": "Reviewed all52 source files: no embedded real credentials/private keys. Runtime/provider IDs/keys/certificates/tokens are explicit synthetic fixtures; no cloud account login or credential was requested."
+    },
+    {
+      "id": "S21",
+      "dimension": "interaction",
+      "requirement": "Retain all ordered client follow-ups and exact model/effort; material questions are distinguished from routine technical choices.",
+      "critical": false,
+      "requiredEvidence": "observed-interaction",
+      "status": "met_in_authorized_local_scope",
+      "evidence": [
+        "../20261111-native-azure-primary/session-binding-audit.json",
+        "../20261111-native-azure-primary/requests.json",
+        "../20261111-native-azure-primary/natural-followups.json"
+      ],
+      "observed": "Original native binding audit confirms all3 ordered natural followups and exact model/effort, one original turn,17 callbacks,0 automatic repairs. No evaluation defect hints or architecture answers were injected."
+    },
+    {
+      "id": "S22",
+      "dimension": "journey",
+      "requirement": "Exercise an independent browser-to-application success/denial/input/model-failure/recovery/clear journey against local service/identity/model contracts, labeling emulated vendor behavior.",
+      "critical": true,
+      "requiredEvidence": "browser-runtime + local-runtime",
+      "status": "met_in_authorized_local_scope",
+      "evidence": [
+        "browser-journey-v1.json"
+      ],
+      "observed": "Independent full real Chromium/TLS/application success/denial/input/failure/recovery/clear journey over unchanged target image; native contracts are explicitly local synthetic emulations."
+    }
+  ],
+  "originalProjectLocallyQualified": true,
+  "criteriaLocallyMet": 22,
+  "accountOrDeploymentAccepted": false,
+  "ownerAccepted": false,
+  "modelQualityMeasured": false,
+  "cloudOperations": false,
+  "limits": [
+    "Local synthetic native service contracts are expressly allowed by frozen protocol; they do not prove actual Entra sign-in/revocation, Azure metadata/account/model/retention/RBAC or billing behavior.",
+    "Deprecated model requires lifecycle/retirement review before any separately authorized future rollout; no current recommendation or account eligibility/price guarantee.",
+    "App logging/storage checks do not guarantee OS clipboard, extensions, screenshots, heap zeroization or provider behavior.",
+    "Browser fixture explicitly trusts its synthetic TLS certificate; production TLS trust is not disabled or modified.",
+    "This qualifies one exact historical original Azure instance, not all Azure workloads, the current engine generally, a release or the95% target."
+  ]
+}

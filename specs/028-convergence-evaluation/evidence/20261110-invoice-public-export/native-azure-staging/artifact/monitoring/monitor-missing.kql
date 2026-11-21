@@ -1,0 +1,9 @@
+ContainerAppConsoleLogs
+| where TimeGenerated > ago(2h)
+| where EnvironmentName == '${local.name}'
+| where JobName == '${local.name}-monitor' or JobName startswith '${local.name}-monitor-' or ContainerGroupName startswith '${local.name}-monitor-'
+| where ContainerName == 'operator'
+| extend receipt = parse_json(Log)
+| where receipt.format == 'invoice-operator-v1' and receipt.action == 'monitor' and receipt.status == 'ok'
+| summarize SuccessfulRuns=count()
+| where SuccessfulRuns < 1

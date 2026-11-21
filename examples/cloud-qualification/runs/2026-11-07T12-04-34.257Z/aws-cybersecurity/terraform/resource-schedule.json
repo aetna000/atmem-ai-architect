@@ -1,0 +1,817 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "n-alerts",
+      "address": "block_6e2d616c65727473",
+      "label": "Synthetic alert source",
+      "provider": "tools",
+      "service": "Storage or existing data connector",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "n-raw",
+      "address": "block_6e2d726177",
+      "label": "Raw alert landing",
+      "provider": "aws",
+      "service": "Amazon S3",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_s3_bucket",
+        "aws_s3_bucket_public_access_block",
+        "aws_s3_bucket_server_side_encryption_configuration",
+        "aws_s3_bucket_versioning",
+        "aws_s3_bucket_ownership_controls",
+        "aws_s3_bucket_policy"
+      ],
+      "costDrivers": "Storage, requests, retrieval and transfer",
+      "dependencies": [
+        "n-alerts"
+      ],
+      "terraform": "S3 foundation generated",
+      "foundation": true,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": true
+    },
+    {
+      "id": "n-ingestq",
+      "address": "block_6e2d696e6765737471",
+      "label": "Ingest queue",
+      "provider": "aws",
+      "service": "Amazon SQS",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_sqs_queue"
+      ],
+      "costDrivers": "Requests, payload size and transfer",
+      "dependencies": [
+        "n-raw"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "n-dlq",
+      "address": "block_6e2d646c71",
+      "label": "Ingest dead-letter queue",
+      "provider": "aws",
+      "service": "Amazon SQS",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_sqs_queue"
+      ],
+      "costDrivers": "Requests, payload size and transfer",
+      "dependencies": [
+        "n-ingestq"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "n-redact",
+      "address": "block_6e2d726564616374",
+      "label": "Redaction function",
+      "provider": "aws",
+      "service": "AWS Lambda",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_lambda_function",
+        "aws_iam_role"
+      ],
+      "costDrivers": "Requests, duration, memory and logs",
+      "dependencies": [
+        "n-ingestq"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "n-redacted",
+      "address": "block_6e2d7265646163746564",
+      "label": "Redacted alert store",
+      "provider": "aws",
+      "service": "Amazon S3",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_s3_bucket",
+        "aws_s3_bucket_public_access_block",
+        "aws_s3_bucket_server_side_encryption_configuration",
+        "aws_s3_bucket_versioning",
+        "aws_s3_bucket_ownership_controls",
+        "aws_s3_bucket_policy"
+      ],
+      "costDrivers": "Storage, requests, retrieval and transfer",
+      "dependencies": [
+        "n-redact"
+      ],
+      "terraform": "S3 foundation generated",
+      "foundation": true,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": true
+    },
+    {
+      "id": "n-orch",
+      "address": "block_6e2d6f726368",
+      "label": "Triage workflow",
+      "provider": "aws",
+      "service": "AWS Step Functions",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "n-redact"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "n-assets",
+      "address": "block_6e2d617373657473",
+      "label": "Asset inventory",
+      "provider": "tools",
+      "service": "Storage or existing data connector",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "n-retrieve"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "n-logs",
+      "address": "block_6e2d6c6f6773",
+      "label": "Approved log evidence",
+      "provider": "aws",
+      "service": "Amazon OpenSearch",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Deployment mode, indexing/search capacity and storage",
+      "dependencies": [
+        "n-retrieve"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "n-retrieve",
+      "address": "block_6e2d7265747269657665",
+      "label": "Evidence retrieval",
+      "provider": "aws",
+      "service": "AWS Lambda",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_lambda_function",
+        "aws_iam_role"
+      ],
+      "costDrivers": "Requests, duration, memory and logs",
+      "dependencies": [
+        "n-orch"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "n-triage",
+      "address": "block_6e2d747269616765",
+      "label": "AI triage",
+      "provider": "aws",
+      "service": "AWS Lambda",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_lambda_function",
+        "aws_iam_role"
+      ],
+      "costDrivers": "Requests, duration, memory and logs",
+      "dependencies": [
+        "n-orch",
+        "n-redacted"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {
+        "maxOutputTokens": 1024
+      },
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "n-bedrock",
+      "address": "block_6e2d626564726f636b",
+      "label": "Foundation model",
+      "provider": "aws",
+      "service": "Amazon Bedrock",
+      "selection": "Explicit service field; deployment review required",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Model-specific input/output tokens; guardrails, embeddings and knowledge bases separately",
+      "dependencies": [
+        "n-triage"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "n-cases",
+      "address": "block_6e2d6361736573",
+      "label": "Analyst case queue",
+      "provider": "aws",
+      "service": "Amazon DynamoDB",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_dynamodb_table"
+      ],
+      "costDrivers": "Read/write requests, storage and backup",
+      "dependencies": [
+        "n-orch",
+        "n-analyst"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "n-audit",
+      "address": "block_6e2d6175646974",
+      "label": "Audit record store",
+      "provider": "aws",
+      "service": "Amazon S3",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_s3_bucket",
+        "aws_s3_bucket_public_access_block",
+        "aws_s3_bucket_server_side_encryption_configuration",
+        "aws_s3_bucket_versioning",
+        "aws_s3_bucket_ownership_controls",
+        "aws_s3_bucket_policy"
+      ],
+      "costDrivers": "Storage, requests, retrieval and transfer",
+      "dependencies": [
+        "n-orch"
+      ],
+      "terraform": "S3 foundation generated",
+      "foundation": true,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": true
+    },
+    {
+      "id": "n-analyst",
+      "address": "block_6e2d616e616c797374",
+      "label": "Security analyst",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "source": "n-alerts",
+      "target": "n-raw",
+      "data": "upload alert",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e2",
+      "source": "n-raw",
+      "target": "n-ingestq",
+      "data": "object-created event",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e3",
+      "source": "n-ingestq",
+      "target": "n-redact",
+      "data": "batch trigger",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e4",
+      "source": "n-ingestq",
+      "target": "n-dlq",
+      "data": "redrive after retries",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e5",
+      "source": "n-redact",
+      "target": "n-redacted",
+      "data": "write redacted alert",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e6",
+      "source": "n-redact",
+      "target": "n-orch",
+      "data": "start execution",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e7",
+      "source": "n-orch",
+      "target": "n-retrieve",
+      "data": "fetch evidence",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e8",
+      "source": "n-retrieve",
+      "target": "n-logs",
+      "data": "read-only search",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e9",
+      "source": "n-retrieve",
+      "target": "n-assets",
+      "data": "asset lookup",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e10",
+      "source": "n-orch",
+      "target": "n-triage",
+      "data": "alert + evidence",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e11",
+      "source": "n-triage",
+      "target": "n-bedrock",
+      "data": "Converse call",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e12",
+      "source": "n-orch",
+      "target": "n-cases",
+      "data": "create case + proposal",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e13",
+      "source": "n-orch",
+      "target": "n-audit",
+      "data": "write audit record",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e14",
+      "source": "n-analyst",
+      "target": "n-cases",
+      "data": "review + decide",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e15",
+      "source": "n-redacted",
+      "target": "n-triage",
+      "data": "read redacted alert",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Raw alert landing: explicit caller access contract is missing.",
+    "Redacted alert store: explicit caller access contract is missing.",
+    "Audit record store: explicit caller access contract is missing.",
+    "Synthetic alert source: Existing — reference/import plan needed.",
+    "Ingest queue: Implementation needed.",
+    "Ingest dead-letter queue: Implementation needed.",
+    "Redaction function: Implementation needed.",
+    "Triage workflow: Implementation needed.",
+    "Asset inventory: Existing — reference/import plan needed.",
+    "Approved log evidence: Implementation needed.",
+    "Evidence retrieval: Implementation needed.",
+    "AI triage: Implementation needed.",
+    "Foundation model: Existing — reference/import plan needed.",
+    "Analyst case queue: Implementation needed.",
+    "Security analyst: Existing — reference/import plan needed.",
+    "Wire n-alerts → n-raw: implement data flow, access policy and acceptance test.",
+    "Wire n-raw → n-ingestq: implement data flow, access policy and acceptance test.",
+    "Wire n-ingestq → n-redact: implement data flow, access policy and acceptance test.",
+    "Wire n-ingestq → n-dlq: implement data flow, access policy and acceptance test.",
+    "Wire n-redact → n-redacted: implement data flow, access policy and acceptance test.",
+    "Wire n-redact → n-orch: implement data flow, access policy and acceptance test.",
+    "Wire n-orch → n-retrieve: implement data flow, access policy and acceptance test.",
+    "Wire n-retrieve → n-logs: implement data flow, access policy and acceptance test.",
+    "Wire n-retrieve → n-assets: implement data flow, access policy and acceptance test.",
+    "Wire n-orch → n-triage: implement data flow, access policy and acceptance test.",
+    "Wire n-triage → n-bedrock: implement data flow, access policy and acceptance test.",
+    "Wire n-orch → n-cases: implement data flow, access policy and acceptance test.",
+    "Wire n-orch → n-audit: implement data flow, access policy and acceptance test.",
+    "Wire n-analyst → n-cases: implement data flow, access policy and acceptance test.",
+    "Wire n-redacted → n-triage: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "access-block_6e2d726177",
+      "componentIds": [
+        "n-raw"
+      ],
+      "taskId": "TASK-RESOURCE-6e2d726177",
+      "message": "Raw alert landing: explicit caller access contract is missing."
+    },
+    {
+      "id": "access-block_6e2d7265646163746564",
+      "componentIds": [
+        "n-redacted"
+      ],
+      "taskId": "TASK-RESOURCE-6e2d7265646163746564",
+      "message": "Redacted alert store: explicit caller access contract is missing."
+    },
+    {
+      "id": "access-block_6e2d6175646974",
+      "componentIds": [
+        "n-audit"
+      ],
+      "taskId": "TASK-RESOURCE-6e2d6175646974",
+      "message": "Audit record store: explicit caller access contract is missing."
+    },
+    {
+      "id": "resource-block_6e2d616c65727473",
+      "componentIds": [
+        "n-alerts"
+      ],
+      "taskId": "TASK-RESOURCE-6e2d616c65727473",
+      "message": "Synthetic alert source: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_6e2d696e6765737471",
+      "componentIds": [
+        "n-ingestq"
+      ],
+      "taskId": "TASK-RESOURCE-6e2d696e6765737471",
+      "message": "Ingest queue: Implementation needed."
+    },
+    {
+      "id": "resource-block_6e2d646c71",
+      "componentIds": [
+        "n-dlq"
+      ],
+      "taskId": "TASK-RESOURCE-6e2d646c71",
+      "message": "Ingest dead-letter queue: Implementation needed."
+    },
+    {
+      "id": "resource-block_6e2d726564616374",
+      "componentIds": [
+        "n-redact"
+      ],
+      "taskId": "TASK-RESOURCE-6e2d726564616374",
+      "message": "Redaction function: Implementation needed."
+    },
+    {
+      "id": "resource-block_6e2d6f726368",
+      "componentIds": [
+        "n-orch"
+      ],
+      "taskId": "TASK-RESOURCE-6e2d6f726368",
+      "message": "Triage workflow: Implementation needed."
+    },
+    {
+      "id": "resource-block_6e2d617373657473",
+      "componentIds": [
+        "n-assets"
+      ],
+      "taskId": "TASK-RESOURCE-6e2d617373657473",
+      "message": "Asset inventory: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_6e2d6c6f6773",
+      "componentIds": [
+        "n-logs"
+      ],
+      "taskId": "TASK-RESOURCE-6e2d6c6f6773",
+      "message": "Approved log evidence: Implementation needed."
+    },
+    {
+      "id": "resource-block_6e2d7265747269657665",
+      "componentIds": [
+        "n-retrieve"
+      ],
+      "taskId": "TASK-RESOURCE-6e2d7265747269657665",
+      "message": "Evidence retrieval: Implementation needed."
+    },
+    {
+      "id": "resource-block_6e2d747269616765",
+      "componentIds": [
+        "n-triage"
+      ],
+      "taskId": "TASK-RESOURCE-6e2d747269616765",
+      "message": "AI triage: Implementation needed."
+    },
+    {
+      "id": "resource-block_6e2d626564726f636b",
+      "componentIds": [
+        "n-bedrock"
+      ],
+      "taskId": "TASK-RESOURCE-6e2d626564726f636b",
+      "message": "Foundation model: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_6e2d6361736573",
+      "componentIds": [
+        "n-cases"
+      ],
+      "taskId": "TASK-RESOURCE-6e2d6361736573",
+      "message": "Analyst case queue: Implementation needed."
+    },
+    {
+      "id": "resource-block_6e2d616e616c797374",
+      "componentIds": [
+        "n-analyst"
+      ],
+      "taskId": "TASK-RESOURCE-6e2d616e616c797374",
+      "message": "Security analyst: Existing — reference/import plan needed."
+    },
+    {
+      "id": "connection-6531",
+      "edgeIds": [
+        "e1"
+      ],
+      "taskId": "TASK-INTEGRATION-6531",
+      "message": "Wire n-alerts → n-raw: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6532",
+      "edgeIds": [
+        "e2"
+      ],
+      "taskId": "TASK-INTEGRATION-6532",
+      "message": "Wire n-raw → n-ingestq: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6533",
+      "edgeIds": [
+        "e3"
+      ],
+      "taskId": "TASK-INTEGRATION-6533",
+      "message": "Wire n-ingestq → n-redact: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6534",
+      "edgeIds": [
+        "e4"
+      ],
+      "taskId": "TASK-INTEGRATION-6534",
+      "message": "Wire n-ingestq → n-dlq: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6535",
+      "edgeIds": [
+        "e5"
+      ],
+      "taskId": "TASK-INTEGRATION-6535",
+      "message": "Wire n-redact → n-redacted: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6536",
+      "edgeIds": [
+        "e6"
+      ],
+      "taskId": "TASK-INTEGRATION-6536",
+      "message": "Wire n-redact → n-orch: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6537",
+      "edgeIds": [
+        "e7"
+      ],
+      "taskId": "TASK-INTEGRATION-6537",
+      "message": "Wire n-orch → n-retrieve: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6538",
+      "edgeIds": [
+        "e8"
+      ],
+      "taskId": "TASK-INTEGRATION-6538",
+      "message": "Wire n-retrieve → n-logs: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6539",
+      "edgeIds": [
+        "e9"
+      ],
+      "taskId": "TASK-INTEGRATION-6539",
+      "message": "Wire n-retrieve → n-assets: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-653130",
+      "edgeIds": [
+        "e10"
+      ],
+      "taskId": "TASK-INTEGRATION-653130",
+      "message": "Wire n-orch → n-triage: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-653131",
+      "edgeIds": [
+        "e11"
+      ],
+      "taskId": "TASK-INTEGRATION-653131",
+      "message": "Wire n-triage → n-bedrock: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-653132",
+      "edgeIds": [
+        "e12"
+      ],
+      "taskId": "TASK-INTEGRATION-653132",
+      "message": "Wire n-orch → n-cases: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-653133",
+      "edgeIds": [
+        "e13"
+      ],
+      "taskId": "TASK-INTEGRATION-653133",
+      "message": "Wire n-orch → n-audit: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-653134",
+      "edgeIds": [
+        "e14"
+      ],
+      "taskId": "TASK-INTEGRATION-653134",
+      "message": "Wire n-analyst → n-cases: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-653135",
+      "edgeIds": [
+        "e15"
+      ],
+      "taskId": "TASK-INTEGRATION-653135",
+      "message": "Wire n-redacted → n-triage: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

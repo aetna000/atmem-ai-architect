@@ -1,0 +1,949 @@
+{
+  "snapshotId": "a08ef5ab-a5d2-4447-8db2-02503221caa8",
+  "revision": 4,
+  "environment": "staging",
+  "goal": "Users upload PDF invoices. Extract the supplier, invoice date, total and currency into a review queue. Delivery can repeat; retries must not create duplicate invoices. A reviewer approves a result before it is sent to our existing accounting API. Use IBM Cloud. Recommend a coherent system and the engineering choices. Ask only a small material business question when needed; do not make me configure the system.",
+  "conversationProvenance": "Users upload PDF invoices. Extract the supplier, invoice date, total and currency into a review queue. Delivery can repeat; retries must not create duplicate invoices. A reviewer approves a result before it is sent to our existing accounting API. Use IBM Cloud. Recommend a coherent system and the engineering choices. Ask only a small material business question when needed; do not make me configure the system.",
+  "acceptedDecisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-10",
+      "context": "User statement: Use IBM Cloud.",
+      "options": "",
+      "decision": "ibm",
+      "consequences": "",
+      "revision": 2,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "data.country",
+      "title": "data.country",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-10",
+      "context": "User statement: Keep documents and extracted data in Australia",
+      "options": "",
+      "decision": "Australia",
+      "consequences": "",
+      "revision": 3,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    }
+  ],
+  "readiness": {
+    "format": "atmem.handoff-assessment",
+    "version": 1,
+    "designRevision": 4,
+    "status": "engineering_required",
+    "stages": {
+      "design": "decisions_required",
+      "infrastructure": "generated_implementation_unverified",
+      "localValidation": "not_attached",
+      "cloudPlan": "not_run",
+      "staging": "not_verified",
+      "production": "approval_not_attached"
+    },
+    "counts": {
+      "components": 3,
+      "generatedFoundations": 0,
+      "connections": 2,
+      "priorityDecisions": 11
+    },
+    "nextAction": "Record included and excluded use cases before sizing or implementation.",
+    "findings": [
+      {
+        "id": "scope-boundary",
+        "priority": 1,
+        "area": "scope",
+        "message": "No explicit scope boundary is recorded.",
+        "action": "Record included and excluded use cases before sizing or implementation.",
+        "taskIds": [
+          "TASK-SCOPE"
+        ],
+        "componentIds": [],
+        "requirementIds": [],
+        "status": "open"
+      },
+      {
+        "id": "decision-cloud.region",
+        "priority": 1,
+        "area": "placement",
+        "message": "The deployment region is not independently confirmed.",
+        "action": "Record an explicit cloud.region decision. Proposed diagram placement is not approval.",
+        "taskIds": [
+          "TASK-SCOPE"
+        ],
+        "componentIds": [],
+        "requirementIds": [],
+        "status": "open"
+      },
+      {
+        "id": "requirement-proposed-61692d696e766f6963652d6163636f756e74696e672d626f756e64617279",
+        "priority": 1,
+        "area": "acceptance",
+        "message": "REQ-009 remains proposed.",
+        "action": "Confirm, revise or explicitly defer this requirement; do not promote it through generation.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-61692d696e766f6963652d6163636f756e74696e672d626f756e64617279"
+        ],
+        "componentIds": [],
+        "requirementIds": [
+          "ai-invoice-accounting-boundary"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "requirement-proposed-61692d696e766f6963652d617070726f76616c",
+        "priority": 1,
+        "area": "acceptance",
+        "message": "REQ-002 remains proposed.",
+        "action": "Confirm, revise or explicitly defer this requirement; do not promote it through generation.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-61692d696e766f6963652d617070726f76616c"
+        ],
+        "componentIds": [],
+        "requirementIds": [
+          "ai-invoice-approval"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "requirement-proposed-61692d696e766f6963652d65787472616374696f6e",
+        "priority": 1,
+        "area": "acceptance",
+        "message": "REQ-001 remains proposed.",
+        "action": "Confirm, revise or explicitly defer this requirement; do not promote it through generation.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-61692d696e766f6963652d65787472616374696f6e"
+        ],
+        "componentIds": [],
+        "requirementIds": [
+          "ai-invoice-extraction"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "requirement-proposed-61692d696e766f6963652d6964656d706f74656e6379",
+        "priority": 1,
+        "area": "acceptance",
+        "message": "REQ-003 remains proposed.",
+        "action": "Confirm, revise or explicitly defer this requirement; do not promote it through generation.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-61692d696e766f6963652d6964656d706f74656e6379"
+        ],
+        "componentIds": [],
+        "requirementIds": [
+          "ai-invoice-idempotency"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "requirement-proposed-61692d696e766f6963652d6a6f622d737461747573",
+        "priority": 1,
+        "area": "acceptance",
+        "message": "REQ-008 remains proposed.",
+        "action": "Confirm, revise or explicitly defer this requirement; do not promote it through generation.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-61692d696e766f6963652d6a6f622d737461747573"
+        ],
+        "componentIds": [],
+        "requirementIds": [
+          "ai-invoice-job-status"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "requirement-proposed-61692d696e766f6963652d7265636f76657279",
+        "priority": 1,
+        "area": "acceptance",
+        "message": "REQ-007 remains proposed.",
+        "action": "Confirm, revise or explicitly defer this requirement; do not promote it through generation.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-61692d696e766f6963652d7265636f76657279"
+        ],
+        "componentIds": [],
+        "requirementIds": [
+          "ai-invoice-recovery"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "requirement-proposed-61692d696e766f6963652d7265736964656e6379",
+        "priority": 1,
+        "area": "acceptance",
+        "message": "REQ-004 remains proposed.",
+        "action": "Confirm, revise or explicitly defer this requirement; do not promote it through generation.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-61692d696e766f6963652d7265736964656e6379"
+        ],
+        "componentIds": [],
+        "requirementIds": [
+          "ai-invoice-residency"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "requirement-proposed-61692d696e766f6963652d726574656e74696f6e",
+        "priority": 1,
+        "area": "acceptance",
+        "message": "REQ-005 remains proposed.",
+        "action": "Confirm, revise or explicitly defer this requirement; do not promote it through generation.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-61692d696e766f6963652d726574656e74696f6e"
+        ],
+        "componentIds": [],
+        "requirementIds": [
+          "ai-invoice-retention"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "requirement-proposed-61692d696e766f6963652d766f6c756d65",
+        "priority": 1,
+        "area": "acceptance",
+        "message": "REQ-006 remains proposed.",
+        "action": "Confirm, revise or explicitly defer this requirement; do not promote it through generation.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-61692d696e766f6963652d766f6c756d65"
+        ],
+        "componentIds": [],
+        "requirementIds": [
+          "ai-invoice-volume"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "review-5345432d3030323a6578697374696e672d6163636f756e74696e672c696e766f6963652d776f726b666c6f772c73746166662d62726f77736572",
+        "priority": 2,
+        "area": "security",
+        "message": "Sensitive data is involved but where it must be stored is not stated.",
+        "action": "Add a compliance requirement such as “data stays in the EU”, and set regions on data blocks.",
+        "taskIds": [
+          "TASK-SECURITY-DESIGN",
+          "TASK-SECURITY"
+        ],
+        "componentIds": [
+          "staff-browser",
+          "invoice-workflow",
+          "existing-accounting"
+        ],
+        "requirementIds": [],
+        "status": "open"
+      },
+      {
+        "id": "budget-target",
+        "priority": 2,
+        "area": "cost",
+        "message": "No budget constraint is recorded.",
+        "action": "Agree a budget or explicitly document that no budget limit was specified; do not invent a price target.",
+        "taskIds": [
+          "TASK-COST-BASELINE"
+        ],
+        "componentIds": [],
+        "requirementIds": [],
+        "status": "open"
+      },
+      {
+        "id": "cost-coverage",
+        "priority": 2,
+        "area": "cost",
+        "message": "3 cost worksheet gaps remain; unpriced resources are not free.",
+        "action": "Complete usage assumptions and dated regional price sources; reconcile all billable dimensions with the reviewed plan.",
+        "taskIds": [
+          "TASK-COST-BASELINE",
+          "TASK-COST"
+        ],
+        "componentIds": [],
+        "requirementIds": [],
+        "status": "open"
+      },
+      {
+        "id": "acceptance-61692d696e766f6963652d6163636f756e74696e672d626f756e64617279",
+        "priority": 2,
+        "area": "acceptance",
+        "message": "REQ-009: executable acceptance evidence is not supplied.",
+        "action": "Agree an observable pass/fail criterion, fixtures and evidence location.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-61692d696e766f6963652d6163636f756e74696e672d626f756e64617279"
+        ],
+        "componentIds": [
+          "invoice-workflow",
+          "existing-accounting"
+        ],
+        "requirementIds": [
+          "ai-invoice-accounting-boundary"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "acceptance-61692d696e766f6963652d617070726f76616c",
+        "priority": 2,
+        "area": "acceptance",
+        "message": "REQ-002: executable acceptance evidence is not supplied.",
+        "action": "Agree an observable pass/fail criterion, fixtures and evidence location.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-61692d696e766f6963652d617070726f76616c"
+        ],
+        "componentIds": [
+          "staff-browser",
+          "invoice-workflow",
+          "existing-accounting"
+        ],
+        "requirementIds": [
+          "ai-invoice-approval"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "acceptance-61692d696e766f6963652d65787472616374696f6e",
+        "priority": 2,
+        "area": "acceptance",
+        "message": "REQ-001: executable acceptance evidence is not supplied.",
+        "action": "Agree an observable pass/fail criterion, fixtures and evidence location.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-61692d696e766f6963652d65787472616374696f6e"
+        ],
+        "componentIds": [
+          "staff-browser",
+          "invoice-workflow"
+        ],
+        "requirementIds": [
+          "ai-invoice-extraction"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "acceptance-61692d696e766f6963652d6964656d706f74656e6379",
+        "priority": 2,
+        "area": "acceptance",
+        "message": "REQ-003: executable acceptance evidence is not supplied.",
+        "action": "Agree an observable pass/fail criterion, fixtures and evidence location.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-61692d696e766f6963652d6964656d706f74656e6379"
+        ],
+        "componentIds": [
+          "invoice-workflow",
+          "existing-accounting"
+        ],
+        "requirementIds": [
+          "ai-invoice-idempotency"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "acceptance-61692d696e766f6963652d6a6f622d737461747573",
+        "priority": 2,
+        "area": "acceptance",
+        "message": "REQ-008: executable acceptance evidence is not supplied.",
+        "action": "Agree an observable pass/fail criterion, fixtures and evidence location.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-61692d696e766f6963652d6a6f622d737461747573"
+        ],
+        "componentIds": [
+          "staff-browser",
+          "invoice-workflow"
+        ],
+        "requirementIds": [
+          "ai-invoice-job-status"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "acceptance-61692d696e766f6963652d7265636f76657279",
+        "priority": 2,
+        "area": "acceptance",
+        "message": "REQ-007: executable acceptance evidence is not supplied.",
+        "action": "Agree an observable pass/fail criterion, fixtures and evidence location.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-61692d696e766f6963652d7265636f76657279"
+        ],
+        "componentIds": [
+          "invoice-workflow",
+          "existing-accounting"
+        ],
+        "requirementIds": [
+          "ai-invoice-recovery"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "acceptance-61692d696e766f6963652d7265736964656e6379",
+        "priority": 2,
+        "area": "acceptance",
+        "message": "REQ-004: executable acceptance evidence is not supplied.",
+        "action": "Agree an observable pass/fail criterion, fixtures and evidence location.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-61692d696e766f6963652d7265736964656e6379"
+        ],
+        "componentIds": [
+          "invoice-workflow",
+          "existing-accounting"
+        ],
+        "requirementIds": [
+          "ai-invoice-residency"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "acceptance-61692d696e766f6963652d726574656e74696f6e",
+        "priority": 2,
+        "area": "acceptance",
+        "message": "REQ-005: executable acceptance evidence is not supplied.",
+        "action": "Define workload, measurement window, first-output versus completed-response boundary and repeatable positive/negative cases.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-61692d696e766f6963652d726574656e74696f6e"
+        ],
+        "componentIds": [
+          "invoice-workflow"
+        ],
+        "requirementIds": [
+          "ai-invoice-retention"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "acceptance-61692d696e766f6963652d766f6c756d65",
+        "priority": 2,
+        "area": "acceptance",
+        "message": "REQ-006: executable acceptance evidence is not supplied.",
+        "action": "Agree an observable pass/fail criterion, fixtures and evidence location.",
+        "taskIds": [
+          "TASK-ACCEPTANCE-61692d696e766f6963652d766f6c756d65"
+        ],
+        "componentIds": [
+          "invoice-workflow"
+        ],
+        "requirementIds": [
+          "ai-invoice-volume"
+        ],
+        "status": "open"
+      },
+      {
+        "id": "existing-6578697374696e672d6163636f756e74696e67",
+        "priority": 2,
+        "area": "integration",
+        "message": "Existing accounting API: existing-system contract and access are unverified.",
+        "action": "Preserve this externally managed service without creating or importing it.",
+        "taskIds": [
+          "TASK-RESOURCE-6578697374696e672d6163636f756e74696e67"
+        ],
+        "componentIds": [
+          "existing-accounting"
+        ],
+        "requirementIds": [],
+        "status": "open"
+      },
+      {
+        "id": "existing-73746166662d62726f77736572",
+        "priority": 2,
+        "area": "integration",
+        "message": "Staff upload and review: existing-system contract and access are unverified.",
+        "action": "Preserve the external browser; no resource or import is required.",
+        "taskIds": [
+          "TASK-RESOURCE-73746166662d62726f77736572"
+        ],
+        "componentIds": [
+          "staff-browser"
+        ],
+        "requirementIds": [],
+        "status": "open"
+      }
+    ],
+    "evidencePolicy": "Generated documents and asserted decisions are design evidence only. Schema validation, mock tests, account plans and deployed-system tests require separate receipts tied to the exact configuration. This export does not ingest implementation evidence."
+  },
+  "requirements": [
+    {
+      "id": "ai-invoice-extraction",
+      "kind": "functional",
+      "category": "other",
+      "statement": "The system shall accept PDF invoices and persist supplier, invoice date, total and currency in a review queue, linked to the original document; failed or uncertain extraction shall remain visible for staff resolution.",
+      "rationale": "Makes the requested outcome observable and prevents incomplete or uncertain extraction from bypassing review.",
+      "basis": "“Users upload PDF invoices. Extract the supplier, invoice date, total and currency into a review queue.” Source evidence and handling of uncertain extraction are engineering proposals.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "staff-browser",
+        "invoice-workflow"
+      ],
+      "number": "REQ-001",
+      "agreement": "Proposed; needs confirmation"
+    },
+    {
+      "id": "ai-invoice-approval",
+      "kind": "functional",
+      "category": "security",
+      "statement": "Accounting submission shall require an authorized reviewer’s recorded approval of the exact result revision and destination operation; changing the result shall require renewed approval, and extraction alone shall never authorize submission.",
+      "rationale": "Prevents model output or unauthorized users from triggering accounting actions, and prevents approval from being reused after the reviewed result changes.",
+      "basis": "“A reviewer approves a result before it is sent to our existing accounting API.” Server-side reviewer authorization and revision-bound approval are proposed controls.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "staff-browser",
+        "invoice-workflow",
+        "existing-accounting"
+      ],
+      "number": "REQ-002",
+      "agreement": "Proposed; needs confirmation"
+    },
+    {
+      "id": "ai-invoice-idempotency",
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "statement": "Repeated delivery and worker retries shall not create duplicate invoice records or accounting submissions. Persist workflow state and operation identity durably, retry only under a tested destination idempotency contract, and hold ambiguous outcomes for reconciliation before resubmission.",
+      "rationale": "Retries after a crash or lost response can create duplicate financial records; durable identities and destination acceptance are necessary to establish safe delivery.",
+      "basis": "“Delivery can repeat; retries must not create duplicate invoices.” Durable operation identity, uncertain-outcome fencing and reconciliation are proposed engineering mechanisms supported by the supplied durable-approval practice.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "invoice-workflow",
+        "existing-accounting"
+      ],
+      "number": "REQ-003",
+      "agreement": "Proposed; needs confirmation"
+    },
+    {
+      "id": "ai-invoice-residency",
+      "kind": "nonfunctional",
+      "category": "compliance",
+      "statement": "Documents and extracted data shall be stored and processed in Australia. Apply this boundary to inference, recovery copies, diagnostics containing those data and accounting delivery. Flag unverified service/model availability and processing geography; do not enable an overseas fallback.",
+      "rationale": "Personal data could leave Australia through inference, backups, diagnostics or accounting delivery even when primary storage is Australian. This proposed requirement makes those paths subject to acceptance.",
+      "basis": "“they may contain personal data” and “Keep documents and extracted data in Australia; flag unverified service availability.”",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "invoice-workflow",
+        "existing-accounting"
+      ],
+      "number": "REQ-004",
+      "agreement": "Proposed; needs confirmation"
+    },
+    {
+      "id": "ai-invoice-retention",
+      "kind": "nonfunctional",
+      "category": "compliance",
+      "statement": "The system shall retain invoice originals and extraction audit history for 90 days and implement scheduled retention cleanup. Document and test the retention clock, object-version handling and backup expiry before claiming a final deletion deadline.",
+      "rationale": "Retention must cover original objects and durable audit records consistently; backup and object-version expiry need acceptance to avoid retaining hidden copies indefinitely.",
+      "basis": "“Keep originals and extraction audit history for 90 days.”",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "invoice-workflow"
+      ],
+      "measure": {
+        "metric": "Original and extraction audit retention period",
+        "op": "==",
+        "target": 90,
+        "unit": "days"
+      },
+      "number": "REQ-005",
+      "agreement": "Proposed; needs confirmation"
+    },
+    {
+      "id": "ai-invoice-volume",
+      "kind": "nonfunctional",
+      "category": "scalability",
+      "statement": "Design and qualify asynchronous intake for approximately 500 invoices per day, using durable queueing and recoverable processing. Establish tested burst capacity and processing completion times without treating the daily average as a peak-rate guarantee.",
+      "rationale": "The stated daily volume informs queue capacity and worker sizing; durable intake must preserve invoices during processing delays. No peak rate or completion deadline was supplied.",
+      "basis": "“around 500 per day” and the existing asynchronous invoice review workflow.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "invoice-workflow"
+      ],
+      "number": "REQ-006",
+      "agreement": "Proposed; needs confirmation"
+    },
+    {
+      "id": "ai-invoice-recovery",
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "statement": "Persist job state and queue/outbox changes transactionally, preserve invoice/job identity across retries, and recover stalled workers with lease fencing. Bound retry attempts and deadlines; retain exhausted jobs in a durable dead-letter/recovery state with reason and audit history. Authorized recovery shall preserve identity and approval constraints. Demonstrate crash recovery, retry exhaustion and recovery without duplicate invoices or submissions.",
+      "rationale": "Durable failure records and controlled recovery prevent exhausted or interrupted jobs from disappearing or creating duplicate work. Lease fencing and recovery procedures are proposed engineering controls.",
+      "basis": "“Use a durable job queue, stable invoice/job identity, bounded retries, a dead-letter/recovery path, approval checks and an idempotent outbound operation.”",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "invoice-workflow",
+        "existing-accounting"
+      ],
+      "number": "REQ-007",
+      "agreement": "Proposed; needs confirmation"
+    },
+    {
+      "id": "ai-invoice-job-status",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Run extraction asynchronously after durable intake and return a stable job reference. Persist and expose processing, review and failure/recovery status to authorized staff independently of the upload request or browser session. Do not impose an unconfirmed completion-time target.",
+      "rationale": "Several-minute jobs must survive browser disconnection and HTTP timeouts. Persisted status lets staff distinguish queued, processing, review and recovery states.",
+      "basis": "“Jobs may take several minutes.”",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "staff-browser",
+        "invoice-workflow"
+      ],
+      "number": "REQ-008",
+      "agreement": "Proposed; needs confirmation"
+    },
+    {
+      "id": "ai-invoice-accounting-boundary",
+      "kind": "functional",
+      "category": "security",
+      "statement": "Integrate with the existing externally managed accounting API without provisioning or modifying that system. Accept administrator-supplied endpoint and credentials through protected destination configuration. Qualify authorization, Australian processing geography, normalized-action-v1 compatibility, durable idempotency and receipt reconciliation before enabling delivery.",
+      "rationale": "Preserving the existing accounting system avoids accidental provisioning or ownership changes; a protected configuration boundary prevents secrets entering project records.",
+      "basis": "“The accounting system already exists. An administrator will supply its endpoint and credentials; treat it as external, not a new system to provision.”",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "invoice-workflow",
+        "existing-accounting"
+      ],
+      "number": "REQ-009",
+      "agreement": "Proposed; needs confirmation"
+    }
+  ],
+  "assumptions": [],
+  "questions": [
+    {
+      "id": "ai-invoice-extraction",
+      "text": "Confirm REQ-001: The system shall accept PDF invoices and persist supplier, invoice date, total and currency in a review queue, linked to the original document; failed or uncertain extraction shall remain visible for staff resolution."
+    },
+    {
+      "id": "ai-invoice-approval",
+      "text": "Confirm REQ-002: Accounting submission shall require an authorized reviewer’s recorded approval of the exact result revision and destination operation; changing the result shall require renewed approval, and extraction alone shall never authorize submission."
+    },
+    {
+      "id": "ai-invoice-idempotency",
+      "text": "Confirm REQ-003: Repeated delivery and worker retries shall not create duplicate invoice records or accounting submissions. Persist workflow state and operation identity durably, retry only under a tested destination idempotency contract, and hold ambiguous outcomes for reconciliation before resubmission."
+    },
+    {
+      "id": "ai-invoice-residency",
+      "text": "Confirm REQ-004: Documents and extracted data shall be stored and processed in Australia. Apply this boundary to inference, recovery copies, diagnostics containing those data and accounting delivery. Flag unverified service/model availability and processing geography; do not enable an overseas fallback."
+    },
+    {
+      "id": "ai-invoice-retention",
+      "text": "Confirm REQ-005: The system shall retain invoice originals and extraction audit history for 90 days and implement scheduled retention cleanup. Document and test the retention clock, object-version handling and backup expiry before claiming a final deletion deadline."
+    },
+    {
+      "id": "ai-invoice-volume",
+      "text": "Confirm REQ-006: Design and qualify asynchronous intake for approximately 500 invoices per day, using durable queueing and recoverable processing. Establish tested burst capacity and processing completion times without treating the daily average as a peak-rate guarantee."
+    },
+    {
+      "id": "ai-invoice-recovery",
+      "text": "Confirm REQ-007: Persist job state and queue/outbox changes transactionally, preserve invoice/job identity across retries, and recover stalled workers with lease fencing. Bound retry attempts and deadlines; retain exhausted jobs in a durable dead-letter/recovery state with reason and audit history. Authorized recovery shall preserve identity and approval constraints. Demonstrate crash recovery, retry exhaustion and recovery without duplicate invoices or submissions."
+    },
+    {
+      "id": "ai-invoice-job-status",
+      "text": "Confirm REQ-008: Run extraction asynchronously after durable intake and return a stable job reference. Persist and expose processing, review and failure/recovery status to authorized staff independently of the upload request or browser session. Do not impose an unconfirmed completion-time target."
+    },
+    {
+      "id": "ai-invoice-accounting-boundary",
+      "text": "Confirm REQ-009: Integrate with the existing externally managed accounting API without provisioning or modifying that system. Accept administrator-supplied endpoint and credentials through protected destination configuration. Qualify authorization, Australian processing geography, normalized-action-v1 compatibility, durable idempotency and receipt reconciliation before enabling delivery."
+    },
+    {
+      "id": "acceptance-ai-invoice-extraction",
+      "text": "Agree a measurable acceptance check for REQ-001: The system shall accept PDF invoices and persist supplier, invoice date, total and currency in a review queue, linked to the original document; failed or uncertain extraction shall remain visible for staff resolution."
+    },
+    {
+      "id": "acceptance-ai-invoice-approval",
+      "text": "Agree a measurable acceptance check for REQ-002: Accounting submission shall require an authorized reviewer’s recorded approval of the exact result revision and destination operation; changing the result shall require renewed approval, and extraction alone shall never authorize submission."
+    },
+    {
+      "id": "acceptance-ai-invoice-idempotency",
+      "text": "Agree a measurable acceptance check for REQ-003: Repeated delivery and worker retries shall not create duplicate invoice records or accounting submissions. Persist workflow state and operation identity durably, retry only under a tested destination idempotency contract, and hold ambiguous outcomes for reconciliation before resubmission."
+    },
+    {
+      "id": "acceptance-ai-invoice-residency",
+      "text": "Agree a measurable acceptance check for REQ-004: Documents and extracted data shall be stored and processed in Australia. Apply this boundary to inference, recovery copies, diagnostics containing those data and accounting delivery. Flag unverified service/model availability and processing geography; do not enable an overseas fallback."
+    },
+    {
+      "id": "acceptance-ai-invoice-volume",
+      "text": "Agree a measurable acceptance check for REQ-006: Design and qualify asynchronous intake for approximately 500 invoices per day, using durable queueing and recoverable processing. Establish tested burst capacity and processing completion times without treating the daily average as a peak-rate guarantee."
+    },
+    {
+      "id": "acceptance-ai-invoice-recovery",
+      "text": "Agree a measurable acceptance check for REQ-007: Persist job state and queue/outbox changes transactionally, preserve invoice/job identity across retries, and recover stalled workers with lease fencing. Bound retry attempts and deadlines; retain exhausted jobs in a durable dead-letter/recovery state with reason and audit history. Authorized recovery shall preserve identity and approval constraints. Demonstrate crash recovery, retry exhaustion and recovery without duplicate invoices or submissions."
+    },
+    {
+      "id": "acceptance-ai-invoice-job-status",
+      "text": "Agree a measurable acceptance check for REQ-008: Run extraction asynchronously after durable intake and return a stable job reference. Persist and expose processing, review and failure/recovery status to authorized staff independently of the upload request or browser session. Do not impose an unconfirmed completion-time target."
+    },
+    {
+      "id": "acceptance-ai-invoice-accounting-boundary",
+      "text": "Agree a measurable acceptance check for REQ-009: Integrate with the existing externally managed accounting API without provisioning or modifying that system. Accept administrator-supplied endpoint and credentials through protected destination configuration. Qualify authorization, Australian processing geography, normalized-action-v1 compatibility, durable idempotency and receipt reconciliation before enabling delivery."
+    },
+    {
+      "id": "cloud.region",
+      "text": "Engineering verification: choose and document a suitable proposed region within the accepted country, then verify service/model support, residency, quota and account policy before deployment. Escalate only a material business trade-off."
+    },
+    {
+      "id": "scope-boundary",
+      "text": "No explicit scope boundary is recorded. Record included and excluded use cases before sizing or implementation."
+    },
+    {
+      "id": "requirement-proposed-61692d696e766f6963652d6163636f756e74696e672d626f756e64617279",
+      "text": "REQ-009 remains proposed. Confirm, revise or explicitly defer this requirement; do not promote it through generation."
+    },
+    {
+      "id": "requirement-proposed-61692d696e766f6963652d617070726f76616c",
+      "text": "REQ-002 remains proposed. Confirm, revise or explicitly defer this requirement; do not promote it through generation."
+    },
+    {
+      "id": "requirement-proposed-61692d696e766f6963652d65787472616374696f6e",
+      "text": "REQ-001 remains proposed. Confirm, revise or explicitly defer this requirement; do not promote it through generation."
+    },
+    {
+      "id": "requirement-proposed-61692d696e766f6963652d6964656d706f74656e6379",
+      "text": "REQ-003 remains proposed. Confirm, revise or explicitly defer this requirement; do not promote it through generation."
+    },
+    {
+      "id": "requirement-proposed-61692d696e766f6963652d6a6f622d737461747573",
+      "text": "REQ-008 remains proposed. Confirm, revise or explicitly defer this requirement; do not promote it through generation."
+    },
+    {
+      "id": "requirement-proposed-61692d696e766f6963652d7265636f76657279",
+      "text": "REQ-007 remains proposed. Confirm, revise or explicitly defer this requirement; do not promote it through generation."
+    },
+    {
+      "id": "requirement-proposed-61692d696e766f6963652d7265736964656e6379",
+      "text": "REQ-004 remains proposed. Confirm, revise or explicitly defer this requirement; do not promote it through generation."
+    },
+    {
+      "id": "requirement-proposed-61692d696e766f6963652d726574656e74696f6e",
+      "text": "REQ-005 remains proposed. Confirm, revise or explicitly defer this requirement; do not promote it through generation."
+    },
+    {
+      "id": "requirement-proposed-61692d696e766f6963652d766f6c756d65",
+      "text": "REQ-006 remains proposed. Confirm, revise or explicitly defer this requirement; do not promote it through generation."
+    }
+  ],
+  "resources": {
+    "revision": 4,
+    "rows": [
+      {
+        "id": "staff-browser",
+        "address": "block_73746166662d62726f77736572",
+        "label": "Staff upload and review",
+        "provider": "tools",
+        "service": "Web browser",
+        "sourceExisting": true,
+        "existing": true,
+        "foundation": false,
+        "compute": false,
+        "reference": false,
+        "externalReference": true,
+        "existingServiceReference": null,
+        "invoice": false,
+        "implemented": true,
+        "resources": [],
+        "region": "To be selected",
+        "settings": {},
+        "dependencies": [],
+        "selection": "Explicit invoice composition or preserved existing reference",
+        "costDrivers": "Existing system or actor; review its externally owned costs and access contract.",
+        "terraform": "External staff browser — authenticated workflow channel generated; no browser infrastructure to provision"
+      },
+      {
+        "id": "invoice-workflow",
+        "address": "block_696e766f6963652d776f726b666c6f77",
+        "label": "Invoice intake and approval",
+        "provider": "ibm",
+        "service": "IBM Code Engine",
+        "sourceExisting": false,
+        "existing": false,
+        "foundation": false,
+        "compute": false,
+        "reference": false,
+        "externalReference": false,
+        "existingServiceReference": null,
+        "invoice": true,
+        "implemented": true,
+        "resources": [
+          "ibm_code_engine_project",
+          "ibm_database",
+          "ibm_cos_bucket",
+          "ibm_appid_application"
+        ],
+        "region": "au-syd",
+        "settings": {},
+        "dependencies": [
+          "staff-browser"
+        ],
+        "selection": "Explicit invoice composition or preserved existing reference",
+        "costDrivers": "API/worker/parser/operator compute, private database/backup/storage, NAT/private endpoints, identity, registry, model tokens, retained object versions, logging and notification delivery. Verify current regional rates and quotas; capacity limits are not spending caps.",
+        "terraform": "Composed invoice API/worker/parser, durable SQL queue, private originals, review authorization, guarded accounting delivery and operating tasks generated; destination behavior remains unverified"
+      },
+      {
+        "id": "existing-accounting",
+        "address": "block_6578697374696e672d6163636f756e74696e67",
+        "label": "Existing accounting API",
+        "provider": "tools",
+        "service": "Existing accounting API",
+        "sourceExisting": true,
+        "existing": true,
+        "foundation": false,
+        "compute": false,
+        "reference": false,
+        "externalReference": false,
+        "existingServiceReference": {
+          "id": "existing-accounting",
+          "label": "Existing accounting API",
+          "provider": "tools",
+          "service": "Existing accounting API",
+          "ownership": "external",
+          "provision": false,
+          "import": false,
+          "behaviorValidated": false
+        },
+        "invoice": false,
+        "implemented": true,
+        "resources": [],
+        "region": "To be selected",
+        "settings": {},
+        "dependencies": [
+          "invoice-workflow"
+        ],
+        "selection": "Explicit invoice composition or preserved existing reference",
+        "costDrivers": "Existing system or actor; review its externally owned costs and access contract.",
+        "terraform": "Existing service reference — preserve without provisioning/import; actual connection acceptance required"
+      }
+    ],
+    "connections": [
+      {
+        "id": "staff-to-invoice-workflow",
+        "source": "staff-browser",
+        "target": "invoice-workflow",
+        "data": "HTTPS: sign in, upload, check durable job status; authorized reviewers approve",
+        "generated": true,
+        "status": "Typed invoice contract/source generated; account, authorization and runtime acceptance required"
+      },
+      {
+        "id": "workflow-to-accounting",
+        "source": "invoice-workflow",
+        "target": "existing-accounting",
+        "data": "HTTPS: approved fields, stable operation identity; idempotent delivery and recei",
+        "generated": true,
+        "status": "Typed invoice contract/source generated; account, authorization and runtime acceptance required"
+      }
+    ],
+    "invoicePlan": {
+      "entries": [
+        {
+          "row": {
+            "id": "invoice-workflow",
+            "address": "block_696e766f6963652d776f726b666c6f77",
+            "label": "Invoice intake and approval",
+            "provider": "ibm",
+            "service": "IBM Code Engine",
+            "sourceExisting": false,
+            "existing": false,
+            "foundation": false,
+            "compute": false,
+            "reference": false,
+            "externalReference": false,
+            "existingServiceReference": null,
+            "invoice": true,
+            "implemented": true,
+            "resources": [
+              "ibm_code_engine_project",
+              "ibm_database",
+              "ibm_cos_bucket",
+              "ibm_appid_application"
+            ],
+            "region": "au-syd",
+            "settings": {},
+            "dependencies": [
+              "staff-browser"
+            ],
+            "selection": "Explicit invoice composition or preserved existing reference",
+            "costDrivers": "API/worker/parser/operator compute, private database/backup/storage, NAT/private endpoints, identity, registry, model tokens, retained object versions, logging and notification delivery. Verify current regional rates and quotas; capacity limits are not spending caps.",
+            "terraform": "Composed invoice API/worker/parser, durable SQL queue, private originals, review authorization, guarded accounting delivery and operating tasks generated; destination behavior remains unverified"
+          },
+          "provider": "ibm",
+          "browserIds": [
+            "staff-browser"
+          ],
+          "accountingId": "existing-accounting"
+        }
+      ],
+      "componentIds": [
+        "invoice-workflow"
+      ],
+      "edgeIds": [
+        "staff-to-invoice-workflow",
+        "workflow-to-accounting"
+      ]
+    },
+    "gaps": [],
+    "gapDetails": [],
+    "accessPlan": {
+      "bindings": [],
+      "connections": []
+    },
+    "asyncPlan": {
+      "entries": [],
+      "pipelines": [],
+      "componentIds": [],
+      "edgeIds": []
+    },
+    "summaryPlan": {
+      "entries": [],
+      "modelIds": []
+    },
+    "ragPlan": {
+      "entries": [],
+      "componentIds": []
+    },
+    "sourceContractPlan": {
+      "sources": [],
+      "connections": []
+    },
+    "webPlan": {
+      "entries": [],
+      "componentIds": []
+    },
+    "structuredApiPlan": {
+      "entries": []
+    },
+    "publicFaqPlan": {
+      "entries": [],
+      "componentIds": [],
+      "editorIds": [],
+      "edgeIds": []
+    },
+    "azureStructuredPlan": {
+      "entries": [],
+      "componentIds": []
+    },
+    "gcpStructuredPlan": {
+      "entries": [],
+      "componentIds": []
+    },
+    "ibmStructuredPlan": {
+      "entries": [],
+      "componentIds": []
+    },
+    "scope": "Typed composed invoice implementation; extra required systems and flows remain visible. Source generation and local qualifications do not prove the destination deployment.",
+    "sources": []
+  },
+  "comments": [],
+  "requirementFeedback": [],
+  "implementationStatus": "Plan generated; implementation and validation have not been performed by this kit."
+}

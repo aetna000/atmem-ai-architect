@@ -1,0 +1,143 @@
+{
+  "passed": true,
+  "scope": "isolated-loopback-http-state-protocol",
+  "sourceSha256": "d14a8c0224d847ab535f844586e3297da38bc509791f1f6fb5f36de3982f45f5",
+  "terraformVersion": "1.17.1",
+  "terraformSha256": "8f6a015b7b0d76933fccb5be4487d3d0c69edb49035483510b2b90727d83412e",
+  "checks": [
+    {
+      "name": "native init writer-a",
+      "passed": true
+    },
+    {
+      "name": "native init writer-b",
+      "passed": true
+    },
+    {
+      "name": "native reads synthetic lineage and payload",
+      "passed": true
+    },
+    {
+      "name": "unknown credential denied",
+      "passed": true
+    },
+    {
+      "name": "real native plan holds lock while reading",
+      "passed": true
+    },
+    {
+      "name": "second native writer excluded",
+      "passed": true
+    },
+    {
+      "name": "foreign actor cannot unlock owner",
+      "passed": true
+    },
+    {
+      "name": "incorrect lock ID cannot unlock owner",
+      "passed": true
+    },
+    {
+      "name": "foreign writer cannot replace state",
+      "passed": true
+    },
+    {
+      "name": "recovery refuses an active writer",
+      "passed": true
+    },
+    {
+      "name": "native plan succeeds and releases owned lock",
+      "passed": true
+    },
+    {
+      "name": "plan-only clients never write state",
+      "passed": true
+    },
+    {
+      "name": "local fixture versions survive reopen",
+      "passed": true
+    },
+    {
+      "name": "verified fixture recovery restores exact bytes",
+      "passed": true
+    },
+    {
+      "name": "native observes restored lineage and payload",
+      "passed": true
+    },
+    {
+      "name": "corrupt fixture backup cannot replace good state",
+      "passed": true
+    },
+    {
+      "name": "uncertain abandoned lock persists across reopen",
+      "passed": true
+    },
+    {
+      "name": "abandoned lock still needs matching owner and ID",
+      "passed": true
+    }
+  ],
+  "commands": [
+    {
+      "actor": "writer-a",
+      "arguments": [
+        "init",
+        "-input=false",
+        "-no-color",
+        "-backend-config=backend.hcl"
+      ],
+      "exitCode": 0
+    },
+    {
+      "actor": "writer-b",
+      "arguments": [
+        "init",
+        "-input=false",
+        "-no-color",
+        "-backend-config=backend.hcl"
+      ],
+      "exitCode": 0
+    },
+    {
+      "actor": "writer-a",
+      "arguments": [
+        "state",
+        "pull"
+      ],
+      "exitCode": 0
+    },
+    {
+      "actor": "writer-b",
+      "arguments": [
+        "plan",
+        "-input=false",
+        "-no-color",
+        "-lock-timeout=0s"
+      ],
+      "exitCode": 1
+    },
+    {
+      "actor": "writer-a",
+      "arguments": [
+        "plan",
+        "-input=false",
+        "-no-color",
+        "-lock-timeout=0s"
+      ],
+      "exitCode": 0
+    },
+    {
+      "actor": "writer-b",
+      "arguments": [
+        "state",
+        "pull"
+      ],
+      "exitCode": 0
+    }
+  ],
+  "initialSyntheticStateSha256": "911801f67550852ad13da8c52e7391dfccc6068874f3c72eb7d49daf49331132",
+  "selectedBackendVerified": false,
+  "migrationAuthorized": false,
+  "boundary": "Actual Terraform init/plan/state pull against a synthetic loopback HTTP fixture and local SQLite version/lock store. No apply, project backend, TLS, cloud authentication, S3/Azure/GCS behavior, migration or application-system qualification."
+}

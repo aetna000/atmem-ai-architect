@@ -1,0 +1,116 @@
+{
+  "attempts": [
+    {
+      "attempt": "v1",
+      "receiptSha256": "d4e03bc75f7b736e2670ca56cca1835e23de6bda850350ecf70e4fa2520a4c78",
+      "groupsPassed": 1,
+      "connectedScopePassed": false,
+      "resourcesCleaned": true,
+      "fixtureOutcome": "Evaluator used Procrastinate kwargs; pinned schema uses args.",
+      "failureType": "KeyError",
+      "failure": "'rows'",
+      "evaluatorSources": null
+    },
+    {
+      "attempt": "v2",
+      "receiptSha256": "2d687d4a29e001f8d32ce9aca49b915abb57c30827c789412744051c4d1bfb94",
+      "groupsPassed": 2,
+      "connectedScopePassed": false,
+      "resourcesCleaned": true,
+      "fixtureOutcome": "Evaluator assumed worker health JSON; actual response is plain text running.",
+      "failureType": "AssertionError",
+      "failure": "Receiving observation deadline, no acceptance: None",
+      "evaluatorSources": null
+    },
+    {
+      "attempt": "v3",
+      "receiptSha256": "6f730ce5eeb69abbc821db9015176780d35806e0e480d43309894517c0d2bc3f",
+      "groupsPassed": 5,
+      "connectedScopePassed": false,
+      "resourcesCleaned": true,
+      "fixtureOutcome": "Evaluator used result_history; delivered table is results_history.",
+      "failureType": "AssertionError",
+      "failure": "{'sqlstate': '42P01', 'errorType': 'UndefinedTable'}",
+      "evaluatorSources": {
+        "run.py": "8b9d16daeb1a49bdadb920683d5f6b2036f8f92ccdf1b1b7659804e4630a43d9",
+        "control.py": "a42571b86539e560068d2c01b08c2753c955944dfbeb2d8b4d7bb246fae736de",
+        "destination.py": "b39d8ae5e3608a950911eb7e2f764e917864080cdedaf01fdaa9ca65b8cbc78d"
+      }
+    },
+    {
+      "attempt": "v4",
+      "receiptSha256": "6a2eb7c392fcf6d87183cdf525ef72764fbaf9e6c706f8ba4eb3389cdb3d9397",
+      "groupsPassed": 8,
+      "connectedScopePassed": false,
+      "resourcesCleaned": true,
+      "fixtureOutcome": "Evaluator imported LostLease from workflow_errors; actual module is durable_workflow.",
+      "failureType": "RuntimeError",
+      "failure": "Docker exec failed: Traceback (most recent call last):\n  File \"/runtime/control.py\", line 31, in <module>\n    from workflow_errors import LostLease\nImportError: cannot import name 'LostLease' from 'workflow_errors' (/app/workflow_errors.py)\n",
+      "evaluatorSources": {
+        "run.py": "460c7496c39d50e1312d3f40f4ac0662b50c267d2ba62ca2fdd65c2b4b7e1ff5",
+        "control.py": "2ac02576745021e5b99880d3cc873cabdda1a5fbc38c9fd5876ca75272b7ef37",
+        "destination.py": "b39d8ae5e3608a950911eb7e2f764e917864080cdedaf01fdaa9ca65b8cbc78d"
+      }
+    },
+    {
+      "attempt": "v5",
+      "receiptSha256": "8435877a8d817d9bdc67756cf4b56a6f4e7de99f88f0d5e7bf4d1d3cde027bbc",
+      "groupsPassed": 10,
+      "connectedScopePassed": true,
+      "resourcesCleaned": true,
+      "fixtureOutcome": "All ten connected groups pass. Identical worker volatile configuration restored after actual container restart.",
+      "failureType": null,
+      "failure": null,
+      "evaluatorSources": {
+        "run.py": "163ad76da8820498348164e8eabf61807754c3baef01e8d4576d678e58fc10bd",
+        "control.py": "300bdb03b4ed5444972dbf39120ca1c7e8b2b164fe0f933f4ed8ae4dfd160e61",
+        "destination.py": "b39d8ae5e3608a950911eb7e2f764e917864080cdedaf01fdaa9ca65b8cbc78d"
+      }
+    },
+    {
+      "attempt": "v6",
+      "receiptSha256": "777a315aa89ad82b76b779b85c0b9b2768c260a93f72dd2514dcc265b188819e",
+      "groupsPassed": 10,
+      "connectedScopePassed": false,
+      "resourcesCleaned": true,
+      "fixtureOutcome": "All ten connected groups passed again; added recovery SQL snapshot used API revision instead of actual SQL result_revision. Evaluator query corrected; application untouched. Recovery not yet exercised.",
+      "failureType": "KeyError",
+      "failure": "'rows'",
+      "evaluatorSources": {
+        "run-recovery.py": "753e169c6714daf5b3a09b33613c1b198f21ef751d89191817283348842f7306",
+        "control.py": "300bdb03b4ed5444972dbf39120ca1c7e8b2b164fe0f933f4ed8ae4dfd160e61",
+        "destination.py": "b39d8ae5e3608a950911eb7e2f764e917864080cdedaf01fdaa9ca65b8cbc78d"
+      }
+    },
+    {
+      "attempt": "v7",
+      "receiptSha256": "fde9dc5dc410a9984727d23983bdac87a261a88dc25e6f2ca76c16b0c79531cc",
+      "groupsPassed": 10,
+      "connectedScopePassed": false,
+      "resourcesCleaned": true,
+      "fixtureOutcome": "Ten connected groups passed again; recovery SQL still used API source instead of SQL source_ref. Both SQL column names now checked against original schema; focused independent recovery driver avoids re-running established connected scope. Application untouched.",
+      "failureType": "KeyError",
+      "failure": "'rows'",
+      "evaluatorSources": {
+        "run-recovery.py": "9eed102ee33eb5ffdeff1fe02a08be096471939ed07cf17b2da72789feded6df",
+        "control.py": "300bdb03b4ed5444972dbf39120ca1c7e8b2b164fe0f933f4ed8ae4dfd160e61",
+        "destination.py": "b39d8ae5e3608a950911eb7e2f764e917864080cdedaf01fdaa9ca65b8cbc78d"
+      }
+    },
+    {
+      "attempt": "v8",
+      "receiptSha256": "52477b26243239a009df1ff5ba753ee3f27315c258a5875f154c0d560393a6c7",
+      "groupsPassed": 3,
+      "recoveryScopePassed": true,
+      "resourcesCleaned": true,
+      "fixtureOutcome": "Focused three-group recovery rehearsal passes clean startup, actual HTTP/queue/child/TLS preconditions and same-version replacement. Actual delivered operator refuses existing schema; mismatched schema prevents startup; durable source/history/sent/unknown preserved; pending approval delivers. No older-image or snapshot restore claim.",
+      "evaluatorSources": {
+        "run-recovery-only.py": "ed9da325019020a3217e097ea9fbdf20f2850226b67d1ddeb64265c018ac3850",
+        "control.py": "300bdb03b4ed5444972dbf39120ca1c7e8b2b164fe0f933f4ed8ae4dfd160e61",
+        "destination.py": "b39d8ae5e3608a950911eb7e2f764e917864080cdedaf01fdaa9ca65b8cbc78d"
+      }
+    }
+  ],
+  "applicationSourceChanged": false,
+  "allAttemptsRetainedOnMem0": true
+}

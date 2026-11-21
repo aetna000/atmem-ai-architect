@@ -1,0 +1,61 @@
+{
+  "provider": "ibm-maintenance",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Time-based split prevents future-label leakage",
+    "Missing sensors produce an explicit degraded result",
+    "Prediction records include feature and model versions",
+    "Evaluate false alarms and missed faults on held-out data",
+    "Work orders require approval and are idempotent"
+  ],
+  "components": [
+    {
+      "id": "sensors"
+    },
+    {
+      "id": "records"
+    },
+    {
+      "id": "ingest",
+      "service": "IBM Event Streams"
+    },
+    {
+      "id": "lake",
+      "service": "IBM Cloud Object Storage"
+    },
+    {
+      "id": "features",
+      "service": "IBM Analytics Engine (Spark)"
+    },
+    {
+      "id": "train",
+      "service": "IBM watsonx.ai Studio"
+    },
+    {
+      "id": "registry",
+      "service": "IBM watsonx.ai Runtime deployment space"
+    },
+    {
+      "id": "predict",
+      "service": "IBM watsonx.ai Runtime batch deployment"
+    },
+    {
+      "id": "monitor",
+      "service": "IBM Watson OpenScale (watsonx.governance)"
+    },
+    {
+      "id": "workorder",
+      "service": "IBM Code Engine"
+    },
+    {
+      "id": "operator"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

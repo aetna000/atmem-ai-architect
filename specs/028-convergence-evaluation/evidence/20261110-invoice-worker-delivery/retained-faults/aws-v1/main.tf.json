@@ -1,0 +1,1304 @@
+{
+  "terraform": {
+    "required_version": ">= 1.17.1, < 2.0.0",
+    "required_providers": {
+      "aws": {
+        "source": "hashicorp/aws",
+        "version": "6.72.0"
+      }
+    }
+  },
+  "provider": {
+    "aws": {
+      "region": "${var.region}",
+      "allowed_account_ids": [
+        "${var.account_id}"
+      ]
+    }
+  },
+  "variable": {
+    "review_approved": {
+      "type": "bool",
+      "default": false
+    },
+    "applications_enabled": {
+      "type": "bool",
+      "default": false,
+      "description": "Enable only after native SQL identity/schema/membership bootstrap, secret population and immutable image publication are reviewed."
+    },
+    "region": {
+      "type": "string",
+      "nullable": false,
+      "description": "Reviewed single deployment/data region; verify current service/model availability and quotas.",
+      "validation": {
+        "condition": "${var.region == \"ap-southeast-2\"}",
+        "error_message": "Placement is bound to this design. Update and regenerate the design before changing region."
+      },
+      "default": "ap-southeast-2"
+    },
+    "account_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Expected commercial AWS account, using an approved operator identity.",
+      "validation": {
+        "condition": "${can(regex(\"^[0-9]{12}$\",var.account_id))}",
+        "error_message": "Supply the reviewed account_id input."
+      }
+    },
+    "public_zone_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing owned public Route53 zone. Referenced, never recreated or imported.",
+      "validation": {
+        "condition": "${can(regex(\"^[A-Z0-9]{5,40}$\",var.public_zone_id))}",
+        "error_message": "Supply the reviewed public_zone_id input."
+      }
+    },
+    "model_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Reviewed direct regional Bedrock foundation model ID. Verify regional availability, quotas, terms and retention-none policy.",
+      "validation": {
+        "condition": "${can(regex(\"^[a-z0-9][a-z0-9.-]*:[0-9]+$\",var.model_id))}",
+        "error_message": "Supply the reviewed model_id input."
+      }
+    },
+    "accounting_endpoint": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing accounting HTTPS adapter endpoint; no vendor or replacement system is provisioned.",
+      "validation": {
+        "condition": "${can(regex(\"^https://[A-Za-z0-9.-]+(:[0-9]{1,5})?(/[^?#@ ]*)?$\",var.accounting_endpoint))}",
+        "error_message": "Supply the reviewed accounting_endpoint input."
+      }
+    },
+    "accounting_scope": {
+      "type": "string",
+      "nullable": false,
+      "description": "Reviewed opaque destination account/scope, bound into every approval.",
+      "validation": {
+        "condition": "${can(regex(\"^[A-Za-z0-9_.:/-]{1,200}$\",var.accounting_scope))}",
+        "error_message": "Supply the reviewed accounting_scope input."
+      }
+    },
+    "runtime_image": {
+      "type": "string",
+      "nullable": false,
+      "description": "Published, reviewed immutable image in the emitted ECR repository. Empty during foundation setup.",
+      "validation": {
+        "condition": "${!var.applications_enabled || (can(regex(\"@sha256:[0-9a-f]{64}$\",var.runtime_image)) && !endswith(var.runtime_image,\"@sha256:0000000000000000000000000000000000000000000000000000000000000000\"))}",
+        "error_message": "Application release requires a reviewed immutable image digest."
+      },
+      "default": ""
+    },
+    "parser_image": {
+      "type": "string",
+      "nullable": false,
+      "description": "Published, reviewed immutable image in the emitted ECR repository. Empty during foundation setup.",
+      "validation": {
+        "condition": "${!var.applications_enabled || (can(regex(\"@sha256:[0-9a-f]{64}$\",var.parser_image)) && !endswith(var.parser_image,\"@sha256:0000000000000000000000000000000000000000000000000000000000000000\"))}",
+        "error_message": "Application release requires a reviewed immutable image digest."
+      },
+      "default": ""
+    },
+    "replay_review_base64": {
+      "type": "string",
+      "default": "",
+      "description": "Scoped expiring operator receipt for the real endpoint idempotency contract. Empty disables automatic replay of uncertain deliveries."
+    }
+  },
+  "locals": {
+    "name": "${format(\"invoice-%s\",substr(sha256(\"https://atmem.ai/workspaces/11111111-1111-4111-8111-111111111111/block_696e766f696365\"),0,12))}",
+    "account_uuid": "11111111-1111-4111-8111-111111111111",
+    "api_db_user": "${format(\"invoice_api_%s\",substr(sha256(\"https://atmem.ai/workspaces/11111111-1111-4111-8111-111111111111/block_696e766f696365\"),0,12))}",
+    "worker_db_user": "${format(\"invoice_worker_%s\",substr(sha256(\"https://atmem.ai/workspaces/11111111-1111-4111-8111-111111111111/block_696e766f696365\"),0,12))}",
+    "api_hostname": "${format(\"%s.%s\",local.name,trimsuffix(data.aws_route53_zone.destination.name,\".\"))}",
+    "parser_zone": "${format(\"%s.internal.%s\",local.name,trimsuffix(data.aws_route53_zone.destination.name,\".\"))}",
+    "parser_hostname": "${format(\"parse.%s\",local.parser_zone)}",
+    "public_origin": "${format(\"https://%s\",local.api_hostname)}",
+    "parser_endpoint": "${format(\"https://%s/extract\",local.parser_hostname)}",
+    "destination_contract": {
+      "id": "normalized-action-v1",
+      "endpointSha256": "${sha256(var.accounting_endpoint)}",
+      "scope": "${var.accounting_scope}",
+      "mappingVersion": 1
+    },
+    "destination_contract_base64": "${base64encode(jsonencode(local.destination_contract))}"
+  },
+  "data": {
+    "aws_caller_identity": {
+      "destination": {}
+    },
+    "aws_availability_zones": {
+      "destination": {
+        "state": "available",
+        "filter": {
+          "name": "zone-type",
+          "values": [
+            "availability-zone"
+          ]
+        }
+      }
+    },
+    "aws_route53_zone": {
+      "destination": {
+        "zone_id": "${var.public_zone_id}"
+      }
+    }
+  },
+  "resource": {
+    "terraform_data": {
+      "review_gate": {
+        "input": {
+          "design_revision": 1,
+          "environment": "staging",
+          "provider": "aws"
+        },
+        "lifecycle": {
+          "precondition": [
+            {
+              "condition": "${var.review_approved}",
+              "error_message": "Review the actual source, placement, identities, existing accounting contract, costs, operations and destination account before any apply."
+            },
+            {
+              "condition": "${data.aws_caller_identity.destination.account_id == var.account_id && !data.aws_route53_zone.destination.private_zone && length(data.aws_availability_zones.destination.names) >= 2}",
+              "error_message": "Use the reviewed account, owned public DNS zone and at least two regional availability zones."
+            }
+          ]
+        }
+      }
+    },
+    "aws_vpc": {
+      "block_696e766f696365": {
+        "cidr_block": "10.82.0.0/16",
+        "enable_dns_support": true,
+        "enable_dns_hostnames": true,
+        "tags": {
+          "Name": "${local.name}"
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_internet_gateway": {
+      "block_696e766f696365": {
+        "vpc_id": "${aws_vpc.block_696e766f696365.id}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_subnet": {
+      "block_696e766f696365_public_0": {
+        "vpc_id": "${aws_vpc.block_696e766f696365.id}",
+        "availability_zone": "${data.aws_availability_zones.destination.names[0]}",
+        "cidr_block": "10.82.0.0/24",
+        "map_public_ip_on_launch": false,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_private_0": {
+        "vpc_id": "${aws_vpc.block_696e766f696365.id}",
+        "availability_zone": "${data.aws_availability_zones.destination.names[0]}",
+        "cidr_block": "10.82.16.0/24",
+        "map_public_ip_on_launch": false,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_public_1": {
+        "vpc_id": "${aws_vpc.block_696e766f696365.id}",
+        "availability_zone": "${data.aws_availability_zones.destination.names[1]}",
+        "cidr_block": "10.82.1.0/24",
+        "map_public_ip_on_launch": false,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_private_1": {
+        "vpc_id": "${aws_vpc.block_696e766f696365.id}",
+        "availability_zone": "${data.aws_availability_zones.destination.names[1]}",
+        "cidr_block": "10.82.17.0/24",
+        "map_public_ip_on_launch": false,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_eip": {
+      "block_696e766f696365": {
+        "domain": "vpc",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_nat_gateway": {
+      "block_696e766f696365": {
+        "allocation_id": "${aws_eip.block_696e766f696365.id}",
+        "subnet_id": "${aws_subnet.block_696e766f696365_public_0.id}",
+        "depends_on": [
+          "terraform_data.review_gate",
+          "aws_internet_gateway.block_696e766f696365"
+        ]
+      }
+    },
+    "aws_route_table": {
+      "block_696e766f696365_public": {
+        "vpc_id": "${aws_vpc.block_696e766f696365.id}",
+        "route": [
+          {
+            "cidr_block": "0.0.0.0/0",
+            "gateway_id": "${aws_internet_gateway.block_696e766f696365.id}"
+          }
+        ],
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_private": {
+        "vpc_id": "${aws_vpc.block_696e766f696365.id}",
+        "route": [
+          {
+            "cidr_block": "0.0.0.0/0",
+            "nat_gateway_id": "${aws_nat_gateway.block_696e766f696365.id}"
+          }
+        ],
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_route_table_association": {
+      "block_696e766f696365_public_0": {
+        "subnet_id": "${aws_subnet.block_696e766f696365_public_0.id}",
+        "route_table_id": "${aws_route_table.block_696e766f696365_public.id}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_private_0": {
+        "subnet_id": "${aws_subnet.block_696e766f696365_private_0.id}",
+        "route_table_id": "${aws_route_table.block_696e766f696365_private.id}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_public_1": {
+        "subnet_id": "${aws_subnet.block_696e766f696365_public_1.id}",
+        "route_table_id": "${aws_route_table.block_696e766f696365_public.id}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_private_1": {
+        "subnet_id": "${aws_subnet.block_696e766f696365_private_1.id}",
+        "route_table_id": "${aws_route_table.block_696e766f696365_private.id}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_security_group": {
+      "block_696e766f696365_api_lb": {
+        "name_prefix": "${local.name}-api_lb-",
+        "description": "Owned invoice api_lb boundary",
+        "vpc_id": "${aws_vpc.block_696e766f696365.id}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_api": {
+        "name_prefix": "${local.name}-api-",
+        "description": "Owned invoice api boundary",
+        "vpc_id": "${aws_vpc.block_696e766f696365.id}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_worker": {
+        "name_prefix": "${local.name}-worker-",
+        "description": "Owned invoice worker boundary",
+        "vpc_id": "${aws_vpc.block_696e766f696365.id}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_parser_lb": {
+        "name_prefix": "${local.name}-parser_lb-",
+        "description": "Owned invoice parser_lb boundary",
+        "vpc_id": "${aws_vpc.block_696e766f696365.id}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_parser": {
+        "name_prefix": "${local.name}-parser-",
+        "description": "Owned invoice parser boundary",
+        "vpc_id": "${aws_vpc.block_696e766f696365.id}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_database": {
+        "name_prefix": "${local.name}-database-",
+        "description": "Owned invoice database boundary",
+        "vpc_id": "${aws_vpc.block_696e766f696365.id}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_vpc_security_group_ingress_rule": {
+      "block_696e766f696365_public_https": {
+        "security_group_id": "${aws_security_group.block_696e766f696365_api_lb.id}",
+        "ip_protocol": "tcp",
+        "from_port": 443,
+        "to_port": 443,
+        "cidr_ipv4": "0.0.0.0/0",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_api_from_lb": {
+        "security_group_id": "${aws_security_group.block_696e766f696365_api.id}",
+        "ip_protocol": "tcp",
+        "from_port": 8080,
+        "to_port": 8080,
+        "referenced_security_group_id": "${aws_security_group.block_696e766f696365_api_lb.id}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_parser_from_worker": {
+        "security_group_id": "${aws_security_group.block_696e766f696365_parser_lb.id}",
+        "ip_protocol": "tcp",
+        "from_port": 443,
+        "to_port": 443,
+        "referenced_security_group_id": "${aws_security_group.block_696e766f696365_worker.id}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_parser_from_lb": {
+        "security_group_id": "${aws_security_group.block_696e766f696365_parser.id}",
+        "ip_protocol": "tcp",
+        "from_port": 8080,
+        "to_port": 8080,
+        "referenced_security_group_id": "${aws_security_group.block_696e766f696365_parser_lb.id}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_database_from_api": {
+        "security_group_id": "${aws_security_group.block_696e766f696365_database.id}",
+        "ip_protocol": "tcp",
+        "from_port": 5432,
+        "to_port": 5432,
+        "referenced_security_group_id": "${aws_security_group.block_696e766f696365_api.id}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_database_from_worker": {
+        "security_group_id": "${aws_security_group.block_696e766f696365_database.id}",
+        "ip_protocol": "tcp",
+        "from_port": 5432,
+        "to_port": 5432,
+        "referenced_security_group_id": "${aws_security_group.block_696e766f696365_worker.id}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_vpc_security_group_egress_rule": {
+      "block_696e766f696365_lb_to_api": {
+        "security_group_id": "${aws_security_group.block_696e766f696365_api_lb.id}",
+        "ip_protocol": "tcp",
+        "from_port": 8080,
+        "to_port": 8080,
+        "referenced_security_group_id": "${aws_security_group.block_696e766f696365_api.id}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_lb_to_parser": {
+        "security_group_id": "${aws_security_group.block_696e766f696365_parser_lb.id}",
+        "ip_protocol": "tcp",
+        "from_port": 8080,
+        "to_port": 8080,
+        "referenced_security_group_id": "${aws_security_group.block_696e766f696365_parser.id}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_api_database": {
+        "security_group_id": "${aws_security_group.block_696e766f696365_api.id}",
+        "ip_protocol": "tcp",
+        "from_port": 5432,
+        "to_port": 5432,
+        "referenced_security_group_id": "${aws_security_group.block_696e766f696365_database.id}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_api_https": {
+        "security_group_id": "${aws_security_group.block_696e766f696365_api.id}",
+        "ip_protocol": "tcp",
+        "from_port": 443,
+        "to_port": 443,
+        "cidr_ipv4": "0.0.0.0/0",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_worker_database": {
+        "security_group_id": "${aws_security_group.block_696e766f696365_worker.id}",
+        "ip_protocol": "tcp",
+        "from_port": 5432,
+        "to_port": 5432,
+        "referenced_security_group_id": "${aws_security_group.block_696e766f696365_database.id}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_worker_https": {
+        "security_group_id": "${aws_security_group.block_696e766f696365_worker.id}",
+        "ip_protocol": "tcp",
+        "from_port": 443,
+        "to_port": 443,
+        "cidr_ipv4": "0.0.0.0/0",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_db_subnet_group": {
+      "block_696e766f696365": {
+        "name": "${local.name}",
+        "subnet_ids": [
+          "${aws_subnet.block_696e766f696365_private_0.id}",
+          "${aws_subnet.block_696e766f696365_private_1.id}"
+        ],
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_db_parameter_group": {
+      "block_696e766f696365": {
+        "name": "${local.name}",
+        "family": "postgres17",
+        "parameter": [
+          {
+            "name": "rds.force_ssl",
+            "value": "1"
+          },
+          {
+            "name": "log_statement",
+            "value": "none"
+          },
+          {
+            "name": "log_min_error_statement",
+            "value": "panic"
+          },
+          {
+            "name": "log_parameter_max_length_on_error",
+            "value": "0"
+          }
+        ],
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_db_instance": {
+      "block_696e766f696365": {
+        "identifier": "${local.name}",
+        "engine": "postgres",
+        "engine_version": "17.11",
+        "instance_class": "db.t4g.small",
+        "allocated_storage": 20,
+        "max_allocated_storage": 100,
+        "storage_type": "gp3",
+        "storage_encrypted": true,
+        "db_name": "invoice",
+        "username": "invoice_operator",
+        "manage_master_user_password": true,
+        "iam_database_authentication_enabled": true,
+        "port": 5432,
+        "publicly_accessible": false,
+        "multi_az": true,
+        "db_subnet_group_name": "${aws_db_subnet_group.block_696e766f696365.name}",
+        "vpc_security_group_ids": [
+          "${aws_security_group.block_696e766f696365_database.id}"
+        ],
+        "parameter_group_name": "${aws_db_parameter_group.block_696e766f696365.name}",
+        "backup_retention_period": 7,
+        "copy_tags_to_snapshot": true,
+        "deletion_protection": true,
+        "skip_final_snapshot": false,
+        "final_snapshot_identifier": "${local.name}-final",
+        "delete_automated_backups": false,
+        "auto_minor_version_upgrade": true,
+        "allow_major_version_upgrade": false,
+        "ca_cert_identifier": "rds-ca-rsa2048-g1",
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_s3_bucket": {
+      "block_696e766f696365": {
+        "bucket": "${var.account_id}-${local.name}-invoices",
+        "force_destroy": false,
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_s3_bucket_public_access_block": {
+      "block_696e766f696365": {
+        "bucket": "${aws_s3_bucket.block_696e766f696365.id}",
+        "block_public_acls": true,
+        "block_public_policy": true,
+        "ignore_public_acls": true,
+        "restrict_public_buckets": true,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_s3_bucket_ownership_controls": {
+      "block_696e766f696365": {
+        "bucket": "${aws_s3_bucket.block_696e766f696365.id}",
+        "rule": {
+          "object_ownership": "BucketOwnerEnforced"
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_s3_bucket_server_side_encryption_configuration": {
+      "block_696e766f696365": {
+        "bucket": "${aws_s3_bucket.block_696e766f696365.id}",
+        "rule": {
+          "apply_server_side_encryption_by_default": {
+            "sse_algorithm": "AES256"
+          }
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_s3_bucket_versioning": {
+      "block_696e766f696365": {
+        "bucket": "${aws_s3_bucket.block_696e766f696365.id}",
+        "versioning_configuration": {
+          "status": "Enabled"
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_s3_bucket_lifecycle_configuration": {
+      "block_696e766f696365": {
+        "bucket": "${aws_s3_bucket.block_696e766f696365.id}",
+        "rule": [
+          {
+            "id": "invoice-retention",
+            "status": "Enabled",
+            "filter": {
+              "prefix": "accounts/"
+            },
+            "expiration": {
+              "days": 90
+            },
+            "noncurrent_version_expiration": {
+              "noncurrent_days": 1
+            },
+            "abort_incomplete_multipart_upload": {
+              "days_after_initiation": 1
+            }
+          }
+        ],
+        "depends_on": [
+          "terraform_data.review_gate",
+          "aws_s3_bucket_versioning.block_696e766f696365"
+        ]
+      }
+    },
+    "aws_s3_bucket_policy": {
+      "block_696e766f696365": {
+        "bucket": "${aws_s3_bucket.block_696e766f696365.id}",
+        "policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Sid\":\"TLSOnly\",\"Effect\":\"Deny\",\"Principal\":\"*\",\"Action\":\"s3:*\",\"Resource\":[\"${aws_s3_bucket.block_696e766f696365.arn}\",\"${aws_s3_bucket.block_696e766f696365.arn}/*\"],\"Condition\":{\"Bool\":{\"aws:SecureTransport\":\"false\",\"aws:PrincipalIsAWSService\":\"false\"}}}]}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_secretsmanager_secret": {
+      "block_696e766f696365_destination": {
+        "name": "${local.name}/accounting-token",
+        "recovery_window_in_days": 30,
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_cognito_user_pool": {
+      "block_696e766f696365": {
+        "name": "${local.name}",
+        "username_attributes": [
+          "email"
+        ],
+        "auto_verified_attributes": [
+          "email"
+        ],
+        "admin_create_user_config": {
+          "allow_admin_create_user_only": true
+        },
+        "mfa_configuration": "ON",
+        "software_token_mfa_configuration": {
+          "enabled": true
+        },
+        "password_policy": {
+          "minimum_length": 14,
+          "require_lowercase": true,
+          "require_uppercase": true,
+          "require_numbers": true,
+          "require_symbols": true,
+          "temporary_password_validity_days": 3
+        },
+        "account_recovery_setting": {
+          "recovery_mechanism": {
+            "name": "admin_only",
+            "priority": 1
+          }
+        },
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_cognito_resource_server": {
+      "block_696e766f696365": {
+        "identifier": "${local.name}",
+        "name": "Invoice processing",
+        "user_pool_id": "${aws_cognito_user_pool.block_696e766f696365.id}",
+        "scope": {
+          "scope_name": "process",
+          "scope_description": "Signed-in invoice workspace access; approval roles are checked independently in SQL."
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_cognito_user_pool_client": {
+      "block_696e766f696365": {
+        "name": "${local.name}-browser",
+        "user_pool_id": "${aws_cognito_user_pool.block_696e766f696365.id}",
+        "generate_secret": false,
+        "allowed_oauth_flows_user_pool_client": true,
+        "allowed_oauth_flows": [
+          "code"
+        ],
+        "allowed_oauth_scopes": [
+          "openid",
+          "${local.name}/process"
+        ],
+        "callback_urls": [
+          "${local.public_origin}/"
+        ],
+        "logout_urls": [
+          "${local.public_origin}/"
+        ],
+        "supported_identity_providers": [
+          "COGNITO"
+        ],
+        "prevent_user_existence_errors": "ENABLED",
+        "enable_token_revocation": true,
+        "access_token_validity": 30,
+        "id_token_validity": 30,
+        "refresh_token_validity": 1,
+        "token_validity_units": {
+          "access_token": "minutes",
+          "id_token": "minutes",
+          "refresh_token": "days"
+        },
+        "depends_on": [
+          "terraform_data.review_gate",
+          "aws_cognito_resource_server.block_696e766f696365"
+        ]
+      }
+    },
+    "aws_cognito_user_pool_domain": {
+      "block_696e766f696365": {
+        "domain": "${var.account_id}-${local.name}",
+        "user_pool_id": "${aws_cognito_user_pool.block_696e766f696365.id}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_ecr_repository": {
+      "block_696e766f696365_runtime": {
+        "name": "${local.name}-runtime",
+        "image_tag_mutability": "IMMUTABLE",
+        "image_scanning_configuration": {
+          "scan_on_push": true
+        },
+        "encryption_configuration": {
+          "encryption_type": "AES256"
+        },
+        "force_delete": false,
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_parser": {
+        "name": "${local.name}-parser",
+        "image_tag_mutability": "IMMUTABLE",
+        "image_scanning_configuration": {
+          "scan_on_push": true
+        },
+        "encryption_configuration": {
+          "encryption_type": "AES256"
+        },
+        "force_delete": false,
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_cloudwatch_log_group": {
+      "block_696e766f696365_api": {
+        "name": "/ecs/${local.name}/api",
+        "retention_in_days": 7,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_worker": {
+        "name": "/ecs/${local.name}/worker",
+        "retention_in_days": 7,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_parser": {
+        "name": "/ecs/${local.name}/parser",
+        "retention_in_days": 7,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_iam_role": {
+      "block_696e766f696365_api_execution": {
+        "name": "${local.name}-api-execution",
+        "assume_role_policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"ecs-tasks.amazonaws.com\"},\"Action\":\"sts:AssumeRole\",\"Condition\":{\"StringEquals\":{\"aws:SourceAccount\":\"${var.account_id}\"},\"ArnLike\":{\"aws:SourceArn\":\"arn:aws:ecs:${var.region}:${var.account_id}:*\"}}}]}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_api": {
+        "name": "${local.name}-api",
+        "assume_role_policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"ecs-tasks.amazonaws.com\"},\"Action\":\"sts:AssumeRole\",\"Condition\":{\"StringEquals\":{\"aws:SourceAccount\":\"${var.account_id}\"},\"ArnLike\":{\"aws:SourceArn\":\"arn:aws:ecs:${var.region}:${var.account_id}:*\"}}}]}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_worker_execution": {
+        "name": "${local.name}-worker-execution",
+        "assume_role_policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"ecs-tasks.amazonaws.com\"},\"Action\":\"sts:AssumeRole\",\"Condition\":{\"StringEquals\":{\"aws:SourceAccount\":\"${var.account_id}\"},\"ArnLike\":{\"aws:SourceArn\":\"arn:aws:ecs:${var.region}:${var.account_id}:*\"}}}]}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_worker": {
+        "name": "${local.name}-worker",
+        "assume_role_policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"ecs-tasks.amazonaws.com\"},\"Action\":\"sts:AssumeRole\",\"Condition\":{\"StringEquals\":{\"aws:SourceAccount\":\"${var.account_id}\"},\"ArnLike\":{\"aws:SourceArn\":\"arn:aws:ecs:${var.region}:${var.account_id}:*\"}}}]}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_parser_execution": {
+        "name": "${local.name}-parser-execution",
+        "assume_role_policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"ecs-tasks.amazonaws.com\"},\"Action\":\"sts:AssumeRole\",\"Condition\":{\"StringEquals\":{\"aws:SourceAccount\":\"${var.account_id}\"},\"ArnLike\":{\"aws:SourceArn\":\"arn:aws:ecs:${var.region}:${var.account_id}:*\"}}}]}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_iam_role_policy": {
+      "block_696e766f696365_api_execution": {
+        "role": "${aws_iam_role.block_696e766f696365_api_execution.id}",
+        "policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"ecr:GetAuthorizationToken\"],\"Resource\":\"*\"},{\"Effect\":\"Allow\",\"Action\":[\"ecr:BatchGetImage\",\"ecr:GetDownloadUrlForLayer\",\"ecr:BatchCheckLayerAvailability\"],\"Resource\":\"${aws_ecr_repository.block_696e766f696365_runtime.arn}\"},{\"Effect\":\"Allow\",\"Action\":[\"logs:CreateLogStream\",\"logs:PutLogEvents\"],\"Resource\":\"${aws_cloudwatch_log_group.block_696e766f696365_api.arn}:*\"}]}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_api": {
+        "role": "${aws_iam_role.block_696e766f696365_api.id}",
+        "policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"s3:PutObject\",\"s3:GetObject\",\"s3:GetObjectVersion\"],\"Resource\":\"${aws_s3_bucket.block_696e766f696365.arn}/accounts/${local.account_uuid}/invoices/*\"},{\"Effect\":\"Allow\",\"Action\":[\"rds-db:connect\"],\"Resource\":\"arn:aws:rds-db:${var.region}:${var.account_id}:dbuser:${aws_db_instance.block_696e766f696365.resource_id}/${local.api_db_user}\"}]}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_worker_execution": {
+        "role": "${aws_iam_role.block_696e766f696365_worker_execution.id}",
+        "policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"ecr:GetAuthorizationToken\"],\"Resource\":\"*\"},{\"Effect\":\"Allow\",\"Action\":[\"ecr:BatchGetImage\",\"ecr:GetDownloadUrlForLayer\",\"ecr:BatchCheckLayerAvailability\"],\"Resource\":\"${aws_ecr_repository.block_696e766f696365_runtime.arn}\"},{\"Effect\":\"Allow\",\"Action\":[\"logs:CreateLogStream\",\"logs:PutLogEvents\"],\"Resource\":\"${aws_cloudwatch_log_group.block_696e766f696365_worker.arn}:*\"},{\"Effect\":\"Allow\",\"Action\":[\"secretsmanager:GetSecretValue\"],\"Resource\":\"${aws_secretsmanager_secret.block_696e766f696365_destination.arn}\"}]}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_worker": {
+        "role": "${aws_iam_role.block_696e766f696365_worker.id}",
+        "policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"s3:GetObject\",\"s3:GetObjectVersion\"],\"Resource\":\"${aws_s3_bucket.block_696e766f696365.arn}/accounts/${local.account_uuid}/invoices/*\"},{\"Effect\":\"Allow\",\"Action\":[\"rds-db:connect\"],\"Resource\":\"arn:aws:rds-db:${var.region}:${var.account_id}:dbuser:${aws_db_instance.block_696e766f696365.resource_id}/${local.worker_db_user}\"},{\"Effect\":\"Allow\",\"Action\":[\"bedrock:InvokeModel\"],\"Resource\":\"arn:aws:bedrock:${var.region}::foundation-model/${var.model_id}\"},{\"Effect\":\"Allow\",\"Action\":[\"bedrock:GetAccountDataRetention\",\"bedrock:GetModelInvocationLoggingConfiguration\"],\"Resource\":\"*\",\"Condition\":{\"StringEquals\":{\"aws:RequestedRegion\":\"${var.region}\"}}}]}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_parser_execution": {
+        "role": "${aws_iam_role.block_696e766f696365_parser_execution.id}",
+        "policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"ecr:GetAuthorizationToken\"],\"Resource\":\"*\"},{\"Effect\":\"Allow\",\"Action\":[\"ecr:BatchGetImage\",\"ecr:GetDownloadUrlForLayer\",\"ecr:BatchCheckLayerAvailability\"],\"Resource\":\"${aws_ecr_repository.block_696e766f696365_parser.arn}\"},{\"Effect\":\"Allow\",\"Action\":[\"logs:CreateLogStream\",\"logs:PutLogEvents\"],\"Resource\":\"${aws_cloudwatch_log_group.block_696e766f696365_parser.arn}:*\"}]}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_acm_certificate": {
+      "block_696e766f696365": {
+        "domain_name": "${local.api_hostname}",
+        "subject_alternative_names": [
+          "${local.parser_hostname}"
+        ],
+        "validation_method": "DNS",
+        "lifecycle": {
+          "create_before_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_route53_record": {
+      "block_696e766f696365_certificate": {
+        "for_each": "${{ for dvo in aws_acm_certificate.block_696e766f696365.domain_validation_options : dvo.domain_name => {name=dvo.resource_record_name,type=dvo.resource_record_type,value=dvo.resource_record_value} }}",
+        "zone_id": "${var.public_zone_id}",
+        "name": "${each.value.name}",
+        "type": "${each.value.type}",
+        "records": [
+          "${each.value.value}"
+        ],
+        "ttl": 60,
+        "allow_overwrite": false,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_api": {
+        "zone_id": "${var.public_zone_id}",
+        "name": "${local.api_hostname}",
+        "type": "A",
+        "alias": {
+          "name": "${aws_lb.block_696e766f696365_api.dns_name}",
+          "zone_id": "${aws_lb.block_696e766f696365_api.zone_id}",
+          "evaluate_target_health": true
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_parser": {
+        "zone_id": "${aws_route53_zone.block_696e766f696365_parser.zone_id}",
+        "name": "${local.parser_hostname}",
+        "type": "A",
+        "alias": {
+          "name": "${aws_lb.block_696e766f696365_parser.dns_name}",
+          "zone_id": "${aws_lb.block_696e766f696365_parser.zone_id}",
+          "evaluate_target_health": true
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_acm_certificate_validation": {
+      "block_696e766f696365": {
+        "certificate_arn": "${aws_acm_certificate.block_696e766f696365.arn}",
+        "validation_record_fqdns": "${[for record in aws_route53_record.block_696e766f696365_certificate : record.fqdn]}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_route53_zone": {
+      "block_696e766f696365_parser": {
+        "name": "${local.parser_zone}",
+        "vpc": {
+          "vpc_id": "${aws_vpc.block_696e766f696365.id}"
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_lb": {
+      "block_696e766f696365_api": {
+        "name": "${local.name}-api",
+        "internal": false,
+        "load_balancer_type": "application",
+        "security_groups": [
+          "${aws_security_group.block_696e766f696365_api_lb.id}"
+        ],
+        "subnets": [
+          "${aws_subnet.block_696e766f696365_public_0.id}",
+          "${aws_subnet.block_696e766f696365_public_1.id}"
+        ],
+        "idle_timeout": 150,
+        "drop_invalid_header_fields": true,
+        "enable_deletion_protection": true,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_parser": {
+        "name": "${local.name}-parser",
+        "internal": true,
+        "load_balancer_type": "application",
+        "security_groups": [
+          "${aws_security_group.block_696e766f696365_parser_lb.id}"
+        ],
+        "subnets": [
+          "${aws_subnet.block_696e766f696365_private_0.id}",
+          "${aws_subnet.block_696e766f696365_private_1.id}"
+        ],
+        "idle_timeout": 150,
+        "drop_invalid_header_fields": true,
+        "enable_deletion_protection": true,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_lb_target_group": {
+      "block_696e766f696365_api": {
+        "name": "${local.name}-api",
+        "port": 8080,
+        "protocol": "HTTP",
+        "target_type": "ip",
+        "vpc_id": "${aws_vpc.block_696e766f696365.id}",
+        "deregistration_delay": 120,
+        "health_check": {
+          "enabled": true,
+          "path": "/healthz",
+          "protocol": "HTTP",
+          "port": "traffic-port",
+          "matcher": "200",
+          "interval": 30,
+          "timeout": 5,
+          "healthy_threshold": 2,
+          "unhealthy_threshold": 3
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_parser": {
+        "name": "${local.name}-parser",
+        "port": 8080,
+        "protocol": "HTTP",
+        "target_type": "ip",
+        "vpc_id": "${aws_vpc.block_696e766f696365.id}",
+        "deregistration_delay": 120,
+        "health_check": {
+          "enabled": true,
+          "path": "/healthz",
+          "protocol": "HTTP",
+          "port": "traffic-port",
+          "matcher": "200",
+          "interval": 30,
+          "timeout": 5,
+          "healthy_threshold": 2,
+          "unhealthy_threshold": 3
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_lb_listener": {
+      "block_696e766f696365_api": {
+        "load_balancer_arn": "${aws_lb.block_696e766f696365_api.arn}",
+        "port": 443,
+        "protocol": "HTTPS",
+        "ssl_policy": "ELBSecurityPolicy-TLS13-1-2-2021-06",
+        "certificate_arn": "${aws_acm_certificate_validation.block_696e766f696365.certificate_arn}",
+        "default_action": {
+          "type": "forward",
+          "target_group_arn": "${aws_lb_target_group.block_696e766f696365_api.arn}"
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_parser": {
+        "load_balancer_arn": "${aws_lb.block_696e766f696365_parser.arn}",
+        "port": 443,
+        "protocol": "HTTPS",
+        "ssl_policy": "ELBSecurityPolicy-TLS13-1-2-2021-06",
+        "certificate_arn": "${aws_acm_certificate_validation.block_696e766f696365.certificate_arn}",
+        "default_action": {
+          "type": "forward",
+          "target_group_arn": "${aws_lb_target_group.block_696e766f696365_parser.arn}"
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_ecs_cluster": {
+      "block_696e766f696365": {
+        "name": "${local.name}",
+        "setting": {
+          "name": "containerInsights",
+          "value": "enabled"
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_ecs_task_definition": {
+      "block_696e766f696365_api": {
+        "count": "${var.applications_enabled ? 1 : 0}",
+        "family": "${local.name}-api",
+        "network_mode": "awsvpc",
+        "requires_compatibilities": [
+          "FARGATE"
+        ],
+        "cpu": "512",
+        "memory": "1024",
+        "execution_role_arn": "${aws_iam_role.block_696e766f696365_api_execution.arn}",
+        "task_role_arn": "${aws_iam_role.block_696e766f696365_api.arn}",
+        "volume": {
+          "name": "runtime-tmp"
+        },
+        "runtime_platform": {
+          "operating_system_family": "LINUX",
+          "cpu_architecture": "X86_64"
+        },
+        "container_definitions": "[{\"name\":\"prepare-tmp\",\"image\":\"${var.runtime_image}\",\"essential\":false,\"user\":\"0:0\",\"readonlyRootFilesystem\":true,\"command\":[\"python\",\"-I\",\"-c\",\"import os;os.chmod(\\\"/runtime-tmp\\\",0o1777)\"],\"mountPoints\":[{\"sourceVolume\":\"runtime-tmp\",\"containerPath\":\"/runtime-tmp\",\"readOnly\":false}]},{\"name\":\"api\",\"image\":\"${var.runtime_image}\",\"essential\":true,\"readonlyRootFilesystem\":true,\"portMappings\":[{\"containerPort\":8080,\"protocol\":\"tcp\"}],\"environment\":[{\"name\":\"REGION\",\"value\":\"${var.region}\"},{\"name\":\"ACCOUNT_ID\",\"value\":\"${local.account_uuid}\"},{\"name\":\"WORKFLOW_NAMESPACE\",\"value\":\"invoice\"},{\"name\":\"DATABASE_NAME\",\"value\":\"invoice\"},{\"name\":\"DATABASE_HOST\",\"value\":\"${aws_db_instance.block_696e766f696365.address}\"},{\"name\":\"DATABASE_CA_FILE\",\"value\":\"/app/rds-regional-ca.pem\"},{\"name\":\"DOCUMENT_BUCKET\",\"value\":\"${aws_s3_bucket.block_696e766f696365.id}\"},{\"name\":\"AWS_ACCOUNT_ID\",\"value\":\"${var.account_id}\"},{\"name\":\"DESTINATION_CONTRACT_BASE64\",\"value\":\"${local.destination_contract_base64}\"},{\"name\":\"DATABASE_USER\",\"value\":\"${local.api_db_user}\"},{\"name\":\"PUBLIC_ORIGIN\",\"value\":\"${local.public_origin}\"},{\"name\":\"POOL_ID\",\"value\":\"${aws_cognito_user_pool.block_696e766f696365.id}\"},{\"name\":\"CLIENT_ID\",\"value\":\"${aws_cognito_user_pool_client.block_696e766f696365.id}\"},{\"name\":\"AUTH_ORIGIN\",\"value\":\"https://${aws_cognito_user_pool_domain.block_696e766f696365.domain}.auth.${var.region}.amazoncognito.com\"},{\"name\":\"AUTH_SCOPE\",\"value\":\"${local.name}/process\"}],\"mountPoints\":[{\"sourceVolume\":\"runtime-tmp\",\"containerPath\":\"/tmp\",\"readOnly\":false}],\"dependsOn\":[{\"containerName\":\"prepare-tmp\",\"condition\":\"SUCCESS\"}],\"logConfiguration\":{\"logDriver\":\"awslogs\",\"options\":{\"awslogs-group\":\"${aws_cloudwatch_log_group.block_696e766f696365_api.name}\",\"awslogs-region\":\"${var.region}\",\"awslogs-stream-prefix\":\"api\"}}}]",
+        "depends_on": [
+          "terraform_data.review_gate",
+          "aws_iam_role_policy.block_696e766f696365_api_execution",
+          "aws_iam_role_policy.block_696e766f696365_api"
+        ]
+      },
+      "block_696e766f696365_worker": {
+        "count": "${var.applications_enabled ? 1 : 0}",
+        "family": "${local.name}-worker",
+        "network_mode": "awsvpc",
+        "requires_compatibilities": [
+          "FARGATE"
+        ],
+        "cpu": "512",
+        "memory": "1024",
+        "execution_role_arn": "${aws_iam_role.block_696e766f696365_worker_execution.arn}",
+        "task_role_arn": "${aws_iam_role.block_696e766f696365_worker.arn}",
+        "volume": {
+          "name": "runtime-tmp"
+        },
+        "runtime_platform": {
+          "operating_system_family": "LINUX",
+          "cpu_architecture": "X86_64"
+        },
+        "container_definitions": "[{\"name\":\"prepare-tmp\",\"image\":\"${var.runtime_image}\",\"essential\":false,\"user\":\"0:0\",\"readonlyRootFilesystem\":true,\"command\":[\"python\",\"-I\",\"-c\",\"import os;os.chmod(\\\"/runtime-tmp\\\",0o1777)\"],\"mountPoints\":[{\"sourceVolume\":\"runtime-tmp\",\"containerPath\":\"/runtime-tmp\",\"readOnly\":false}]},{\"name\":\"worker\",\"image\":\"${var.runtime_image}\",\"essential\":true,\"readonlyRootFilesystem\":true,\"portMappings\":[{\"containerPort\":8080,\"protocol\":\"tcp\"}],\"environment\":[{\"name\":\"REGION\",\"value\":\"${var.region}\"},{\"name\":\"ACCOUNT_ID\",\"value\":\"${local.account_uuid}\"},{\"name\":\"WORKFLOW_NAMESPACE\",\"value\":\"invoice\"},{\"name\":\"DATABASE_NAME\",\"value\":\"invoice\"},{\"name\":\"DATABASE_HOST\",\"value\":\"${aws_db_instance.block_696e766f696365.address}\"},{\"name\":\"DATABASE_CA_FILE\",\"value\":\"/app/rds-regional-ca.pem\"},{\"name\":\"DOCUMENT_BUCKET\",\"value\":\"${aws_s3_bucket.block_696e766f696365.id}\"},{\"name\":\"AWS_ACCOUNT_ID\",\"value\":\"${var.account_id}\"},{\"name\":\"DESTINATION_CONTRACT_BASE64\",\"value\":\"${local.destination_contract_base64}\"},{\"name\":\"DATABASE_USER\",\"value\":\"${local.worker_db_user}\"},{\"name\":\"PARSER_ENDPOINT\",\"value\":\"${local.parser_endpoint}\"},{\"name\":\"MODEL_ID\",\"value\":\"${var.model_id}\"},{\"name\":\"MAX_OUTPUT_TOKENS\",\"value\":\"2048\"},{\"name\":\"DESTINATION_ENDPOINT\",\"value\":\"${var.accounting_endpoint}\"},{\"name\":\"DESTINATION_SCOPE\",\"value\":\"${var.accounting_scope}\"},{\"name\":\"DESTINATION_REPLAY_REVIEW_BASE64\",\"value\":\"${var.replay_review_base64}\"}],\"mountPoints\":[{\"sourceVolume\":\"runtime-tmp\",\"containerPath\":\"/tmp\",\"readOnly\":false}],\"dependsOn\":[{\"containerName\":\"prepare-tmp\",\"condition\":\"SUCCESS\"}],\"logConfiguration\":{\"logDriver\":\"awslogs\",\"options\":{\"awslogs-group\":\"${aws_cloudwatch_log_group.block_696e766f696365_worker.name}\",\"awslogs-region\":\"${var.region}\",\"awslogs-stream-prefix\":\"worker\"}},\"command\":[\"python\",\"-I\",\"/app/invoice_worker.py\"],\"secrets\":[{\"name\":\"DESTINATION_TOKEN\",\"valueFrom\":\"${aws_secretsmanager_secret.block_696e766f696365_destination.arn}\"}]}]",
+        "depends_on": [
+          "terraform_data.review_gate",
+          "aws_iam_role_policy.block_696e766f696365_worker_execution",
+          "aws_iam_role_policy.block_696e766f696365_worker"
+        ]
+      },
+      "block_696e766f696365_parser": {
+        "count": "${var.applications_enabled ? 1 : 0}",
+        "family": "${local.name}-parser",
+        "network_mode": "awsvpc",
+        "requires_compatibilities": [
+          "FARGATE"
+        ],
+        "cpu": "1024",
+        "memory": "2048",
+        "execution_role_arn": "${aws_iam_role.block_696e766f696365_parser_execution.arn}",
+        "volume": {
+          "name": "runtime-tmp"
+        },
+        "runtime_platform": {
+          "operating_system_family": "LINUX",
+          "cpu_architecture": "X86_64"
+        },
+        "container_definitions": "[{\"name\":\"prepare-tmp\",\"image\":\"${var.parser_image}\",\"essential\":false,\"user\":\"0:0\",\"readonlyRootFilesystem\":true,\"command\":[\"python\",\"-I\",\"-c\",\"import os;os.chmod(\\\"/runtime-tmp\\\",0o1777)\"],\"mountPoints\":[{\"sourceVolume\":\"runtime-tmp\",\"containerPath\":\"/runtime-tmp\",\"readOnly\":false}]},{\"name\":\"parser\",\"image\":\"${var.parser_image}\",\"essential\":true,\"readonlyRootFilesystem\":true,\"portMappings\":[{\"containerPort\":8080,\"protocol\":\"tcp\"}],\"environment\":[{\"name\":\"PORT\",\"value\":\"8080\"}],\"mountPoints\":[{\"sourceVolume\":\"runtime-tmp\",\"containerPath\":\"/tmp\",\"readOnly\":false}],\"dependsOn\":[{\"containerName\":\"prepare-tmp\",\"condition\":\"SUCCESS\"}],\"logConfiguration\":{\"logDriver\":\"awslogs\",\"options\":{\"awslogs-group\":\"${aws_cloudwatch_log_group.block_696e766f696365_parser.name}\",\"awslogs-region\":\"${var.region}\",\"awslogs-stream-prefix\":\"parser\"}},\"command\":[\"python\",\"-I\",\"/app/invoice_parser_service.py\"]}]",
+        "depends_on": [
+          "terraform_data.review_gate",
+          "aws_iam_role_policy.block_696e766f696365_parser_execution"
+        ]
+      }
+    },
+    "aws_ecs_service": {
+      "block_696e766f696365_api": {
+        "count": "${var.applications_enabled ? 1 : 0}",
+        "name": "${local.name}-api",
+        "cluster": "${aws_ecs_cluster.block_696e766f696365.id}",
+        "task_definition": "${aws_ecs_task_definition.block_696e766f696365_api[0].arn}",
+        "desired_count": 1,
+        "launch_type": "FARGATE",
+        "platform_version": "1.4.0",
+        "deployment_circuit_breaker": {
+          "enable": true,
+          "rollback": true
+        },
+        "network_configuration": {
+          "subnets": [
+            "${aws_subnet.block_696e766f696365_private_0.id}",
+            "${aws_subnet.block_696e766f696365_private_1.id}"
+          ],
+          "security_groups": [
+            "${aws_security_group.block_696e766f696365_api.id}"
+          ],
+          "assign_public_ip": false
+        },
+        "load_balancer": {
+          "target_group_arn": "${aws_lb_target_group.block_696e766f696365_api.arn}",
+          "container_name": "api",
+          "container_port": 8080
+        },
+        "health_check_grace_period_seconds": 90,
+        "depends_on": [
+          "terraform_data.review_gate",
+          "aws_lb_listener.block_696e766f696365_api",
+          "aws_lb_listener.block_696e766f696365_parser",
+          "aws_route_table_association.block_696e766f696365_private_0",
+          "aws_route_table_association.block_696e766f696365_private_1"
+        ]
+      },
+      "block_696e766f696365_worker": {
+        "count": "${var.applications_enabled ? 1 : 0}",
+        "name": "${local.name}-worker",
+        "cluster": "${aws_ecs_cluster.block_696e766f696365.id}",
+        "task_definition": "${aws_ecs_task_definition.block_696e766f696365_worker[0].arn}",
+        "desired_count": 1,
+        "launch_type": "FARGATE",
+        "platform_version": "1.4.0",
+        "deployment_circuit_breaker": {
+          "enable": true,
+          "rollback": true
+        },
+        "network_configuration": {
+          "subnets": [
+            "${aws_subnet.block_696e766f696365_private_0.id}",
+            "${aws_subnet.block_696e766f696365_private_1.id}"
+          ],
+          "security_groups": [
+            "${aws_security_group.block_696e766f696365_worker.id}"
+          ],
+          "assign_public_ip": false
+        },
+        "depends_on": [
+          "terraform_data.review_gate",
+          "aws_lb_listener.block_696e766f696365_api",
+          "aws_lb_listener.block_696e766f696365_parser",
+          "aws_route_table_association.block_696e766f696365_private_0",
+          "aws_route_table_association.block_696e766f696365_private_1"
+        ]
+      },
+      "block_696e766f696365_parser": {
+        "count": "${var.applications_enabled ? 1 : 0}",
+        "name": "${local.name}-parser",
+        "cluster": "${aws_ecs_cluster.block_696e766f696365.id}",
+        "task_definition": "${aws_ecs_task_definition.block_696e766f696365_parser[0].arn}",
+        "desired_count": 1,
+        "launch_type": "FARGATE",
+        "platform_version": "1.4.0",
+        "deployment_circuit_breaker": {
+          "enable": true,
+          "rollback": true
+        },
+        "network_configuration": {
+          "subnets": [
+            "${aws_subnet.block_696e766f696365_private_0.id}",
+            "${aws_subnet.block_696e766f696365_private_1.id}"
+          ],
+          "security_groups": [
+            "${aws_security_group.block_696e766f696365_parser.id}"
+          ],
+          "assign_public_ip": false
+        },
+        "load_balancer": {
+          "target_group_arn": "${aws_lb_target_group.block_696e766f696365_parser.arn}",
+          "container_name": "parser",
+          "container_port": 8080
+        },
+        "health_check_grace_period_seconds": 90,
+        "depends_on": [
+          "terraform_data.review_gate",
+          "aws_lb_listener.block_696e766f696365_api",
+          "aws_lb_listener.block_696e766f696365_parser",
+          "aws_route_table_association.block_696e766f696365_private_0",
+          "aws_route_table_association.block_696e766f696365_private_1"
+        ]
+      }
+    }
+  },
+  "output": {
+    "application_url": {
+      "value": "${local.public_origin}"
+    },
+    "runtime_repository": {
+      "value": "${aws_ecr_repository.block_696e766f696365_runtime.repository_url}"
+    },
+    "parser_repository": {
+      "value": "${aws_ecr_repository.block_696e766f696365_parser.repository_url}"
+    },
+    "account_identity": {
+      "value": "${local.account_uuid}"
+    },
+    "database_bootstrap": {
+      "value": {
+        "host": "${aws_db_instance.block_696e766f696365.address}",
+        "database": "invoice",
+        "adminSecretArn": "${aws_db_instance.block_696e766f696365.master_user_secret[0].secret_arn}",
+        "apiRole": "${local.api_db_user}",
+        "workerRole": "${local.worker_db_user}",
+        "apiPrincipal": "${aws_iam_role.block_696e766f696365_api.arn}",
+        "workerPrincipal": "${aws_iam_role.block_696e766f696365_worker.arn}",
+        "destinationSecretArn": "${aws_secretsmanager_secret.block_696e766f696365_destination.arn}"
+      }
+    }
+  }
+}

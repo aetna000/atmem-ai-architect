@@ -1,0 +1,584 @@
+{
+  "version": 1,
+  "revision": 2,
+  "name": "AWS synthetic sensor anomaly qualification",
+  "provider": "aws",
+  "requirements": "Include synthetic ingestion, durable buffering, validation, inference, results and operator alerts. Preserve device identity, event timestamps and units. Reject unknown devices and invalid units. Duplicate events yield one committed result. Define an explicit late/out-of-order policy before acceptance. Recover disconnected input through replay. Anomaly results identify evidence and immutable model version. Proposed boundary: synthetic qualification only; production onboarding, model training and deployment are excluded pending review. Country, region, retention, throughput, alert destination and model-quality targets remain open. Native generator/application coverage is incomplete and must not be represented as deployment readiness.",
+  "nodes": [
+    {
+      "id": "sensor-client",
+      "type": "resource",
+      "position": {
+        "x": 50,
+        "y": 830
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Synthetic sensor client",
+        "provider": "tools",
+        "kind": "source",
+        "description": "External qualification client, outside cloud provisioning. Proposed client behavior: stable event IDs, device identity, event time, sequence and units; local durable spool resends unacknowledged events after disconnect. This behavior requires implementation and testing.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "poc": true,
+        "role": "data"
+      }
+    },
+    {
+      "id": "iot-ingest",
+      "type": "resource",
+      "position": {
+        "x": 470,
+        "y": 830
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Device ingestion",
+        "provider": "aws",
+        "kind": "resource",
+        "description": "AWS IoT Core authenticates synthetic device connections and applies scoped topic policies. An IoT rule forwards the original event envelope to Kinesis with device ID as partition key. Credentials, rule permissions and durable-handoff failure handling require engineering; MQTT acknowledgement alone does not prove downstream persistence.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "ingest",
+        "service": "AWS IoT Core"
+      }
+    },
+    {
+      "id": "event-buffer",
+      "type": "resource",
+      "position": {
+        "x": 890,
+        "y": 415
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Durable telemetry buffer",
+        "provider": "aws",
+        "kind": "resource",
+        "description": "Amazon Kinesis Data Streams retains telemetry for checkpoint recovery and controlled replay. Partition by device; arrival ordering does not establish event-time ordering. Retention must cover the agreed outage/replay window. Event-source mapping, retry limits, partial batch handling and failure destination require engineering.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "ingest",
+        "service": "Amazon Kinesis Data Streams"
+      }
+    },
+    {
+      "id": "anomaly-worker",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 425
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Validate and analyze telemetry",
+        "provider": "aws",
+        "kind": "resource",
+        "description": "One AWS Lambda deployment validates schema, known device, timestamps and allowed units; preserves original values; applies the agreed event-time policy and prepares features. Invokes a pinned model version. Uses transactional idempotent result/outbox commit keyed by device/event ID, rejecting conflicting duplicate payloads. Owns execution role and logs. Custom runtime and generator support are required.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "app",
+        "service": "AWS Lambda"
+      }
+    },
+    {
+      "id": "device-registry",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 50
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Approved devices and units",
+        "provider": "aws",
+        "kind": "resource",
+        "description": "Separate Amazon DynamoDB table containing approved synthetic device IDs, allowed measurements/units and schema versions. Worker uses authoritative reads and fails closed for unknown devices or unavailable validation data. Seed management and scoped permissions require implementation.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "data",
+        "service": "Amazon DynamoDB"
+      }
+    },
+    {
+      "id": "model-endpoint",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 350
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Versioned anomaly inference",
+        "provider": "aws",
+        "kind": "resource",
+        "description": "Amazon SageMaker AI real-time endpoint for an anomaly model, algorithm still undecided. Pin an immutable model artifact/container and record that version with every result. Response contract includes score and contributing readings/features. Local scripted responses substitute only for plumbing tests; training, model packaging, regional support and detection-quality evaluation remain engineering work.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "model",
+        "service": "Amazon SageMaker AI"
+      }
+    },
+    {
+      "id": "results-state",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 735
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Results, event state and alert outbox",
+        "provider": "aws",
+        "kind": "resource",
+        "description": "One Amazon DynamoDB table holds event-time state, immutable per-event results and outbox items using explicit item types. Transactions conditionally commit one result per device/event ID and alert intent together. Results retain identity, original timestamps/units, anomaly evidence, score and model version. DynamoDB Streams triggers outbox delivery; retention and late-event revision semantics remain open.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "data",
+        "service": "Amazon DynamoDB"
+      }
+    },
+    {
+      "id": "failure-store",
+      "type": "resource",
+      "position": {
+        "x": 3830,
+        "y": 1000
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Rejected events and recovery records",
+        "provider": "aws",
+        "kind": "resource",
+        "description": "Private Amazon S3 bucket retains invalid event envelopes with rejection reasons and exhausted-processing failure payloads. IoT rule error action preserves failed forwarding attempts; worker records semantic rejections. Recovery tool re-enqueues only eligible transient failures after review, preserving event identity. Permissions, retention, failure destinations and replay implementation remain unresolved.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "data",
+        "service": "Amazon S3"
+      }
+    },
+    {
+      "id": "alert-dispatch",
+      "type": "resource",
+      "position": {
+        "x": 2150,
+        "y": 735
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Deliver pending alerts",
+        "provider": "aws",
+        "kind": "resource",
+        "description": "Separate AWS Lambda deployment consumes DynamoDB Streams outbox items and publishes anomaly notifications with stable alert IDs and evidence/model-version references. Delivery is retryable and at least once; downstream duplicate handling must be tested. Owns execution role/logs; exhausted stream batches go to the failure bucket. Application and generator implementation required.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "app",
+        "service": "AWS Lambda"
+      }
+    },
+    {
+      "id": "alert-topic",
+      "type": "resource",
+      "position": {
+        "x": 2990,
+        "y": 735
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Operator notifications",
+        "provider": "aws",
+        "kind": "resource",
+        "description": "Amazon SNS topic carries anomaly alerts and operational alarms to a reviewed operator destination. Subscription channel, confirmation, access policy and delivery-failure handling remain undecided; no recipient identity or successful delivery is assumed.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "monitor",
+        "service": "Amazon SNS"
+      }
+    },
+    {
+      "id": "operator",
+      "type": "resource",
+      "position": {
+        "x": 3410,
+        "y": 585
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Qualification operator",
+        "provider": "tools",
+        "kind": "resource",
+        "description": "External person receives anomaly evidence and operational alerts, reviews failed events and initiates controlled recovery using a qualification tool. Outside provisioning scope; identity, notification destination and scoped recovery permissions remain unconfirmed.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "poc": true,
+        "role": "human"
+      }
+    },
+    {
+      "id": "observability",
+      "type": "resource",
+      "position": {
+        "x": 2570,
+        "y": 545
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Pipeline health and alarms",
+        "provider": "aws",
+        "kind": "resource",
+        "description": "Amazon CloudWatch metrics and alarms cover ingest failures, stream age, validation rejections, worker/model failures, retry exhaustion and alert backlog. Lambda-owned log groups remain within their components. Alarm thresholds, retention, ownership and dashboard implementation require review; no operational availability claim is made.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "monitor",
+        "service": "Amazon CloudWatch"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-client-ingest",
+      "source": "sensor-client",
+      "target": "iot-ingest",
+      "type": "smoothstep",
+      "label": "Authenticated MQTT telemetry; stable IDs; reconnect replay"
+    },
+    {
+      "id": "e-ingest-buffer",
+      "source": "iot-ingest",
+      "target": "event-buffer",
+      "type": "smoothstep",
+      "label": "IoT rule → Kinesis PutRecord; device partition key"
+    },
+    {
+      "id": "e-ingest-failure",
+      "source": "iot-ingest",
+      "target": "failure-store",
+      "type": "smoothstep",
+      "label": "Rule error action → S3 failed-forwarding envelope"
+    },
+    {
+      "id": "e-buffer-worker",
+      "source": "event-buffer",
+      "target": "anomaly-worker",
+      "type": "smoothstep",
+      "label": "Kinesis event-source mapping; checkpoint/retry/replay"
+    },
+    {
+      "id": "e-worker-registry",
+      "source": "anomaly-worker",
+      "target": "device-registry",
+      "type": "smoothstep",
+      "label": "DynamoDB consistent read: device and allowed units"
+    },
+    {
+      "id": "e-worker-model",
+      "source": "anomaly-worker",
+      "target": "model-endpoint",
+      "type": "smoothstep",
+      "label": "SageMaker Runtime InvokeEndpoint; version-pinned features"
+    },
+    {
+      "id": "e-model-worker",
+      "source": "model-endpoint",
+      "target": "anomaly-worker",
+      "type": "smoothstep",
+      "label": "Score, contributing evidence and model version"
+    },
+    {
+      "id": "e-worker-results",
+      "source": "anomaly-worker",
+      "target": "results-state",
+      "type": "smoothstep",
+      "label": "Read event state; TransactWriteItems result + outbox"
+    },
+    {
+      "id": "e-worker-failure",
+      "source": "anomaly-worker",
+      "target": "failure-store",
+      "type": "smoothstep",
+      "label": "S3 rejection records / exhausted batch payloads"
+    },
+    {
+      "id": "e-results-dispatch",
+      "source": "results-state",
+      "target": "alert-dispatch",
+      "type": "smoothstep",
+      "label": "DynamoDB Streams event-source mapping: outbox items"
+    },
+    {
+      "id": "e-dispatch-topic",
+      "source": "alert-dispatch",
+      "target": "alert-topic",
+      "type": "smoothstep",
+      "label": "SNS Publish: stable alert ID, evidence, model version"
+    },
+    {
+      "id": "e-dispatch-failure",
+      "source": "alert-dispatch",
+      "target": "failure-store",
+      "type": "smoothstep",
+      "label": "Exhausted stream delivery → S3 recovery payload"
+    },
+    {
+      "id": "e-topic-operator",
+      "source": "alert-topic",
+      "target": "operator",
+      "type": "smoothstep",
+      "label": "Confirmed subscription; destination/channel undecided"
+    },
+    {
+      "id": "e-operator-failure",
+      "source": "operator",
+      "target": "failure-store",
+      "type": "smoothstep",
+      "label": "Review recovery records using scoped tool; access unresolved"
+    },
+    {
+      "id": "e-operator-replay",
+      "source": "operator",
+      "target": "event-buffer",
+      "type": "smoothstep",
+      "label": "Recovery tool replays eligible original events; implementation needed"
+    },
+    {
+      "id": "e-ingest-monitor",
+      "source": "iot-ingest",
+      "target": "observability",
+      "type": "smoothstep",
+      "label": "Ingest and rule-action failure metrics"
+    },
+    {
+      "id": "e-buffer-monitor",
+      "source": "event-buffer",
+      "target": "observability",
+      "type": "smoothstep",
+      "label": "Stream throughput and consumer lag metrics"
+    },
+    {
+      "id": "e-worker-monitor",
+      "source": "anomaly-worker",
+      "target": "observability",
+      "type": "smoothstep",
+      "label": "Errors, rejections, replay and idempotency metrics"
+    },
+    {
+      "id": "e-model-monitor",
+      "source": "model-endpoint",
+      "target": "observability",
+      "type": "smoothstep",
+      "label": "Inference latency and endpoint errors"
+    },
+    {
+      "id": "e-dispatch-monitor",
+      "source": "alert-dispatch",
+      "target": "observability",
+      "type": "smoothstep",
+      "label": "Delivery errors, stream age and pending-alert metrics"
+    },
+    {
+      "id": "e-monitor-topic",
+      "source": "observability",
+      "target": "alert-topic",
+      "type": "smoothstep",
+      "label": "CloudWatch alarm actions → SNS notifications"
+    }
+  ],
+  "id": "c3a186e7-35d3-4111-bade-a7d7945d6f4c",
+  "brief": {
+    "application": "Use AWS for this synthetic architecture qualification. Analyze synthetic sensor events for anomalous device behavior. Preserve device identity, timestamps and units. Include ingestion, durable buffering, validation, inference, results and an operator alert. Acceptance criteria: Reject unknown device and invalid units; Duplicate events produce one result; Late and out-of-order telemetry follows an explicit policy; Disconnected input recovers by replay; Anomaly output names evidence and model version. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+    "cloud": "AWS"
+  },
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use AWS for this synthetic architecture qualification.",
+      "options": "",
+      "decision": "aws",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.sketch-the-complete-aws-sensor-anomaly-qualification-flow",
+      "title": "Sketch the complete AWS sensor-anomaly qualification flow",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Adds ingestion, durable buffering, validation, inference, durable results, alerts and connected recovery paths. AWS is selected; country and region remain undecided, and service availability, account access and connectivity are unverified. Proposed scope is synthetic qualification, excluding production device onboarding and deployment. All resources are design intent, with unsupported integrations left untyped rather than implying native generation. Engineering must implement device authentication, event schema, replay, event-time handling, model invocation, atomic result/outbox writes, alert delivery and tests. First local test: seed known devices and allowed units; submit valid, unknown-device, invalid-unit, duplicate and reordered events, interrupt consumption, then replay retained events. Assert preserved identity/timestamps/units, explicit rejection reasons, one committed result per event, policy-defined late-event behavior and evidence/model-version fields. Inject failures before and after result commit to test retry safety. Model responses are scripted fixtures; these checks do not validate anomaly quality, AWS IAM or cloud connectivity. No checks have run. A later time-separated evaluation against labeled synthetic scenarios must assess detection and false alarms; thresholds remain undecided. Region and availability assumptions require review before implementation.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "needs": [
+    {
+      "id": "ai-telemetry-validation",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Accept only known devices with valid measurement units; preserve device identity, original timestamps and units throughout processing, and retain explicit rejection reasons for invalid events.",
+      "rationale": "Prevents invalid telemetry from contaminating inference and makes anomalies traceable to the original measurements.",
+      "basis": "“Preserve device identity, timestamps and units.” and “Reject unknown device and invalid units”.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "sensor-client",
+        "anomaly-worker",
+        "device-registry",
+        "failure-store",
+        "results-state"
+      ]
+    },
+    {
+      "id": "ai-replay-idempotency",
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "statement": "Commit one result per stable device/event identity despite duplicates or replay; recover disconnected input without loss within an agreed retention window, and apply a documented late/out-of-order policy before qualification acceptance.",
+      "rationale": "Retries and disconnects must not silently lose telemetry or create conflicting results; event-time policy determines whether late data changes prior conclusions.",
+      "basis": "“Duplicate events produce one result”; “Late and out-of-order telemetry follows an explicit policy”; “Disconnected input recovers by replay”.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "sensor-client",
+        "event-buffer",
+        "anomaly-worker",
+        "results-state",
+        "failure-store"
+      ]
+    },
+    {
+      "id": "ai-anomaly-evidence",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Persist anomaly evidence and immutable model version with each result and deliver an operator alert referencing that result; report application fixture tests separately from actual model-quality evaluation.",
+      "rationale": "Operators need actionable, reproducible evidence; scripted inference cannot establish detection accuracy or acceptable false alarms.",
+      "basis": "“Include ... inference, results and an operator alert” and “Anomaly output names evidence and model version”; request to distinguish mocked behavior from actual model validation.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "model-endpoint",
+        "anomaly-worker",
+        "results-state",
+        "alert-dispatch",
+        "alert-topic",
+        "operator"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "extensions": {
+    "requirementNumbers": {
+      "drv-data-access": 1,
+      "drv-data-location": 2,
+      "ai-telemetry-validation": 3,
+      "ai-replay-idempotency": 4,
+      "ai-anomaly-evidence": 5
+    }
+  },
+  "facts": [
+    {
+      "id": "fact-d2bfca01",
+      "name": "cloud.preference",
+      "value": "aws",
+      "unit": "provider",
+      "text": "Use AWS for this synthetic architecture qualification. Analyze synthetic sensor events for anomalous device behavior. Preserve device identity, timestamps and units. Include ingestion, durable buffering, validation, inference, results and an operator alert. Acceptance criteria: Reject unknown device",
+      "madeAt": "2026-11-07"
+    }
+  ],
+  "workflow": "predictive",
+  "asked": [],
+  "lastAsked": {
+    "id": "predictive:0",
+    "topic": "data",
+    "question": "How much history do you have for what you want to predict?",
+    "beginner": "For example “three years of sales by store” or “failure records since 2020”.",
+    "why": "It shapes the Predictive ML design."
+  },
+  "choices": {},
+  "conceptSig": null
+}

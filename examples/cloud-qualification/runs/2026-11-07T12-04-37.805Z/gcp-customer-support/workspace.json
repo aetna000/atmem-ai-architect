@@ -1,0 +1,508 @@
+{
+  "version": 1,
+  "revision": 2,
+  "name": "GCP support staff assistant (synthetic qualification)",
+  "provider": "gcp",
+  "requirements": "",
+  "nodes": [
+    {
+      "id": "staff",
+      "type": "resource",
+      "position": {
+        "x": 50,
+        "y": 470
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Support staff",
+        "provider": "tools",
+        "kind": "tool",
+        "description": "Support agents using a browser. A client reference, not provisioned.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "role": "human"
+      }
+    },
+    {
+      "id": "iap",
+      "type": "resource",
+      "position": {
+        "x": 470,
+        "y": 470
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Staff sign-in",
+        "provider": "gcp",
+        "kind": "guard",
+        "description": "Authenticates staff before the console and passes a verified identity downstream. The identity provider is still to be decided.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "guard",
+        "service": "Identity-Aware Proxy"
+      }
+    },
+    {
+      "id": "console",
+      "type": "resource",
+      "position": {
+        "x": 890,
+        "y": 470
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Staff console",
+        "provider": "gcp",
+        "kind": "output",
+        "description": "Web UI. Shows the ticket, the draft answer with citations, and Send/Edit/Escalate actions. A human sends every reply.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "app",
+        "service": "Cloud Run"
+      }
+    },
+    {
+      "id": "orchestrator",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 610
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Assistant orchestrator",
+        "provider": "gcp",
+        "kind": "agent",
+        "description": "Gets ticket context, runs retrieval scoped to the staff member's permissions, calls the read-only CRM adapter and drafts a grounded answer. It abstains when no source supports an answer. A policy check blocks refunds and record changes and routes them to escalation.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "app",
+        "service": "Cloud Run"
+      }
+    },
+    {
+      "id": "tickets",
+      "type": "resource",
+      "position": {
+        "x": 890,
+        "y": 750
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Synthetic ticket queue",
+        "provider": "tools",
+        "kind": "source",
+        "description": "Existing synthetic ticketing system that supplies open tickets.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "role": "data"
+      }
+    },
+    {
+      "id": "kbstore",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 1180
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Approved knowledge",
+        "provider": "gcp",
+        "kind": "source",
+        "description": "Private bucket holding approved articles and their ACL metadata.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "data",
+        "service": "Cloud Storage"
+      }
+    },
+    {
+      "id": "search",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 1170
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Authorised retrieval",
+        "provider": "gcp",
+        "kind": "tool",
+        "description": "Indexes the approved knowledge and filters results by user/group ACL. Returns passages with their source IDs for citation.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "index",
+        "service": "Vertex AI Search"
+      }
+    },
+    {
+      "id": "crmadapter",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 890
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "CRM read-only adapter",
+        "provider": "gcp",
+        "kind": "tool",
+        "description": "Uses a read-only service account to fetch only the customer fields this ticket needs. It has no write or refund operations.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "ingest",
+        "service": "Cloud Run"
+      }
+    },
+    {
+      "id": "crm",
+      "type": "resource",
+      "position": {
+        "x": 2150,
+        "y": 890
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Existing CRM",
+        "provider": "tools",
+        "kind": "source",
+        "description": "The customer system of record. Stays outside the provisioning scope.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "role": "data"
+      }
+    },
+    {
+      "id": "model",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 610
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Answer model",
+        "provider": "gcp",
+        "kind": "predict",
+        "description": "Drafts answers using only the passages it is given. Mocked in the local test. The model version, region and quota are not verified.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "llm",
+        "service": "Vertex AI Gemini"
+      }
+    },
+    {
+      "id": "escalation",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Human escalation",
+        "provider": "gcp",
+        "kind": "output",
+        "description": "Routes refunds, record-change requests and low-confidence cases to a supervisor queue/ticket note. A person decides.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "human",
+        "service": "Pub/Sub"
+      }
+    },
+    {
+      "id": "audit",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 50
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Audit & monitoring",
+        "provider": "gcp",
+        "kind": "monitor",
+        "description": "Records who asked, which sources were used, the draft and blocked actions, plus latency and error alerts.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "role": "monitor",
+        "service": "Cloud Logging + Cloud Monitoring"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "staff",
+      "target": "iap",
+      "type": "smoothstep",
+      "label": "HTTPS sign-in"
+    },
+    {
+      "id": "e2",
+      "source": "iap",
+      "target": "console",
+      "type": "smoothstep",
+      "label": "verified identity"
+    },
+    {
+      "id": "e3",
+      "source": "console",
+      "target": "orchestrator",
+      "type": "smoothstep",
+      "label": "ticket + draft request"
+    },
+    {
+      "id": "e4",
+      "source": "tickets",
+      "target": "orchestrator",
+      "type": "smoothstep",
+      "label": "ticket context (read)"
+    },
+    {
+      "id": "e5",
+      "source": "kbstore",
+      "target": "search",
+      "type": "smoothstep",
+      "label": "index approved docs + ACLs"
+    },
+    {
+      "id": "e6",
+      "source": "orchestrator",
+      "target": "search",
+      "type": "smoothstep",
+      "label": "ACL-filtered query"
+    },
+    {
+      "id": "e7",
+      "source": "orchestrator",
+      "target": "crmadapter",
+      "type": "smoothstep",
+      "label": "read customer fields"
+    },
+    {
+      "id": "e8",
+      "source": "crmadapter",
+      "target": "crm",
+      "type": "smoothstep",
+      "label": "read-only API"
+    },
+    {
+      "id": "e9",
+      "source": "orchestrator",
+      "target": "model",
+      "type": "smoothstep",
+      "label": "grounded prompt → draft"
+    },
+    {
+      "id": "e10",
+      "source": "orchestrator",
+      "target": "escalation",
+      "type": "smoothstep",
+      "label": "blocked/unsure → human"
+    },
+    {
+      "id": "e11",
+      "source": "orchestrator",
+      "target": "audit",
+      "type": "smoothstep",
+      "label": "audit events"
+    },
+    {
+      "id": "e12",
+      "source": "orchestrator",
+      "target": "console",
+      "type": "smoothstep",
+      "label": "cited draft answer"
+    }
+  ],
+  "id": "e87f0b0f-f604-44e7-aaee-5e555af6bdcc",
+  "brief": {
+    "application": "Use Google Cloud for this synthetic architecture qualification. Assist support staff using a synthetic ticket queue, approved knowledge and customer records from an existing CRM. Include authorized retrieval, grounded answer drafting, a staff interface and human escalation. Never issue refunds or modify customer records automatically. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+    "cloud": "Google Cloud"
+  },
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use Google Cloud for this synthetic architecture qualification",
+      "options": "",
+      "decision": "gcp",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.google-cloud-support-assistant-end-to-end-draft",
+      "title": "Google Cloud support assistant – end-to-end draft",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: staff assistant over a synthetic ticket queue, approved knowledge and existing CRM (read-only). It includes authorised retrieval, grounded drafting, a staff interface, human escalation and audit. Assumptions: the region is not selected; model access, quotas and region availability are not verified; GCP components are design-only (no native generator yet); the CRM and ticket queue are existing systems. Refunds and record changes are excluded by design: there is no write path to the CRM.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "needs": [
+    {
+      "id": "ai-no-autonomous-actions",
+      "kind": "functional",
+      "category": "security",
+      "statement": "The assistant must not issue refunds or create, update or delete CRM records. Such requests must be routed to human escalation.",
+      "rationale": "An automated financial or record change could harm customers. Enforcing read-only access plus a policy check limits the blast radius.",
+      "basis": "User: \"Never issue refunds or modify customer records automatically.\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "orchestrator",
+        "crmadapter",
+        "escalation"
+      ]
+    },
+    {
+      "id": "ai-authorised-retrieval",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Retrieval must return only knowledge the signed-in staff member is permitted to see, and must fail closed when the identity is unknown.",
+      "rationale": "Without permission filtering, drafts could leak restricted content.",
+      "basis": "User: \"Include authorized retrieval\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "iap",
+        "search",
+        "orchestrator"
+      ]
+    },
+    {
+      "id": "ai-grounded-drafts",
+      "kind": "functional",
+      "category": "reliability",
+      "statement": "Every draft must cite its approved knowledge or CRM sources, abstain when unsupported, and be sent only after a person reviews it.",
+      "rationale": "Grounding and human review reduce wrong answers reaching customers. Mocked tests cannot prove this, so a real model evaluation is needed.",
+      "basis": "User: \"grounded answer drafting, a staff interface and human escalation\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "model",
+        "console"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "extensions": {
+    "requirementNumbers": {
+      "drv-data-access": 1,
+      "drv-data-location": 2,
+      "ai-no-autonomous-actions": 3,
+      "ai-authorised-retrieval": 4,
+      "ai-grounded-drafts": 5
+    }
+  },
+  "facts": [
+    {
+      "id": "fact-a7a80fbc",
+      "name": "cloud.preference",
+      "value": "gcp",
+      "unit": "provider",
+      "text": "Use Google Cloud for this synthetic architecture qualification. Assist support staff using a synthetic ticket queue, approved knowledge and customer records from an existing CRM. Include authorized retrieval, grounded answer drafting, a staff interface and human escalation. Never issue refunds or mo",
+      "madeAt": "2026-11-07"
+    }
+  ],
+  "workflow": "knowledge-assistant",
+  "asked": [],
+  "lastAsked": {
+    "id": "knowledge-assistant:0",
+    "topic": "data",
+    "question": "Where do the files live, and roughly how many are there?",
+    "beginner": "For example “SharePoint and a shared drive, about 20,000 files”.",
+    "why": "It shapes the RAG design."
+  },
+  "choices": {},
+  "conceptSig": null
+}

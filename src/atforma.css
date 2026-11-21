@@ -1,0 +1,748 @@
+/* AtForma uses the AtMem token snapshot; private source is untouched. */
+:root {
+  color-scheme: light;
+  --green: var(--color-brand);
+  --border: var(--color-line);
+  --muted: var(--color-muted);
+  font-family: var(--type-family-sans);
+  color: var(--color-ink);
+  background: var(--color-bg);
+  font-size: 14px;
+}
+h1,
+h2,
+h3 {
+  font-family: var(--type-family-sans);
+}
+.workspace {
+  grid-template-columns: 255px minmax(300px, 1fr) 360px;
+}
+.workspace.library-hidden {
+  grid-template-columns: minmax(300px, 1fr) 360px;
+}
+.brand {
+  color: var(--color-brand);
+  letter-spacing: 0;
+  padding: 0;
+}
+.rail {
+  background: var(--color-card);
+}
+.resource-node {
+  width: 270px;
+  border-radius: var(--radius-md);
+  box-shadow: none;
+}
+.node-main {
+  min-height: 94px;
+}
+.node-main strong {
+  font-size: 13px;
+}
+.node-main p {
+  font-size: 11px;
+  max-width: 210px;
+  color: var(--color-muted);
+}
+.node-top {
+  font-size: 11px;
+  color: var(--color-muted);
+}
+.node-foot {
+  font-size: 10px;
+  color: var(--color-muted);
+}
+.node-menu {
+  color: var(--color-muted);
+}
+.library-item {
+  padding: 11px 7px;
+  align-items: flex-start;
+}
+.library-item strong {
+  font-size: 12px;
+  white-space: normal;
+  line-height: 1.4;
+}
+.library-item small {
+  font-size: 10px;
+  color: var(--color-muted);
+}
+.library-item-icon {
+  margin-top: 1px;
+}
+.library-item > svg {
+  margin-top: 7px;
+}
+.component-list {
+  scrollbar-width: thin;
+}
+.panel-title h2,
+.agent-header h2 {
+  font-size: 14px;
+}
+.agent-header span {
+  font-size: 10px;
+  color: var(--color-muted);
+}
+.library-caption,
+.eyebrow,
+.canvas-breadcrumb,
+.conversation-date,
+.section-label,
+.library-footer p,
+.projectbar p,
+.composer-footnote,
+.save-state,
+.app-footer,
+.app-footer button,
+.message p,
+.message-label,
+.searchbox,
+.suggestions button,
+.model-select,
+.canvas-heading h2,
+.canvas-status,
+.canvas-status button,
+.inspector label,
+.inspector-info,
+.deploy-footnote,
+.deploy-card > p,
+.deploy-check small,
+.review-summary p,
+.review-todo,
+.review-issue,
+.test-label p,
+.execution-hint,
+.connection-row small,
+.modal > p,
+.modal-fine,
+.license-item p,
+.license-item span,
+.trace-badge {
+  color: var(--color-muted);
+}
+.message p {
+  font-size: 13px;
+  line-height: 1.8;
+}
+.message-label {
+  font-size: 11px;
+}
+.message.model-derived {
+  border-left: 2px solid var(--color-signal);
+  padding-left: 12px;
+}
+.message.model-derived .message-label {
+  color: var(--color-signal);
+}
+.button {
+  font-size: 12px;
+  min-height: 35px;
+}
+.button.run-button {
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+  color: var(--color-brand-ink);
+}
+.button.run-button:hover {
+  filter: brightness(0.92);
+}
+.phase {
+  font-size: 12px;
+}
+.panel-tabs button {
+  font-size: 12px;
+  color: var(--color-muted);
+}
+.panel-tabs button.active {
+  color: var(--color-brand);
+}
+.phase.active,
+.provider-filters button.chosen {
+  color: var(--color-brand);
+  background: var(--color-brand-soft);
+}
+.rail-icon.active {
+  background: var(--color-brand-soft);
+  color: var(--color-brand);
+}
+.status-dot.passed {
+  background: var(--color-good);
+}
+.status-dot.failed {
+  background: var(--color-bad);
+}
+.status-dot.running {
+  background: var(--color-warn);
+}
+.status-dot.cancelled {
+  background: var(--color-unknown);
+}
+.resource-node.state-passed {
+  border-color: var(--color-good);
+}
+.resource-node.state-failed {
+  border-color: var(--color-bad);
+}
+.resource-node.state-running {
+  border-color: var(--color-warn);
+}
+.library-mode {
+  padding: 0 14px 12px;
+}
+.library-mode select {
+  width: 100%;
+  padding: 8px;
+  background: var(--color-card-raised);
+  border: 1px solid var(--color-line);
+  border-radius: 5px;
+  font-size: 11px;
+  color: var(--color-ink);
+}
+.searchbox input {
+  font-size: 12px;
+}
+.searchbox input::placeholder,
+.chat-composer textarea::placeholder {
+  color: var(--color-muted);
+}
+.provider-filters button {
+  font-size: 10px;
+  color: var(--color-muted);
+}
+.architect-stepper {
+  display: flex;
+  gap: 3px;
+  padding: 10px 12px;
+  background: var(--color-card-raised);
+  border-bottom: 1px solid var(--color-line);
+  flex-wrap: wrap;
+}
+.architect-stepper button {
+  font-size: 10px;
+  padding: 6px 5px;
+  color: var(--color-muted);
+  border-radius: 4px;
+}
+.architect-stepper button.active {
+  background: var(--color-brand-soft);
+  color: var(--color-brand);
+}
+.canvas-view-switch {
+  display: flex;
+  background: var(--color-card);
+  border: 1px solid var(--color-line);
+  border-radius: 5px;
+  padding: 3px;
+}
+.canvas-view-switch button {
+  font-size: 10px;
+  padding: 6px 9px;
+  color: var(--color-muted);
+}
+.canvas-view-switch button.active {
+  background: var(--color-brand-soft);
+  color: var(--color-brand);
+  border-radius: 3px;
+}
+.canvas-heading {
+  flex-wrap: wrap;
+}
+.canvas-heading > div:first-of-type {
+  min-width: 100px;
+}
+.chat-composer textarea {
+  font-size: 12px;
+}
+.suggestions button {
+  font-size: 10px;
+}
+.composer-footnote {
+  font-size: 10px;
+  line-height: 1.5;
+}
+.model-select {
+  font-size: 10px;
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.send-button {
+  background: var(--color-brand);
+}
+.workflow-chips span {
+  font-size: 9px;
+  color: var(--color-muted);
+}
+.agent-working {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 12px;
+  font-size: 11px;
+  color: var(--color-signal);
+  background: var(--color-signal-soft);
+  border-radius: 5px;
+}
+.agent-working span {
+  flex: 1;
+}
+.agent-working button {
+  font-size: 10px;
+  text-decoration: underline;
+}
+.inspector input,
+.inspector select {
+  font-size: 12px;
+  color: var(--color-ink);
+  min-height: 35px;
+}
+.inspector label {
+  font-size: 10px;
+}
+.inspector pre {
+  font-family: var(--type-family-mono);
+  font-size: 11px;
+  color: var(--color-ink);
+}
+.inspector-title h3 {
+  font-size: 14px;
+}
+.inspector details summary {
+  font-size: 12px;
+}
+.inspector-info {
+  font-size: 11px;
+}
+.execution-header strong {
+  font-size: 12px;
+}
+.execution-step strong {
+  font-size: 11px;
+  color: var(--color-ink);
+}
+.execution-step small {
+  font-size: 10px;
+  color: var(--color-muted);
+}
+.trace-result {
+  font-size: 12px;
+}
+.trace-badge {
+  font-size: 9px;
+}
+.run-summary {
+  font-size: 11px;
+}
+.error-box {
+  font-size: 12px;
+  color: var(--color-bad);
+}
+.dialog-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  margin: 20px 0;
+  color: var(--color-ink);
+}
+.dialog-field input,
+.dialog-field select {
+  padding: 11px;
+  background: var(--color-card);
+  border: 1px solid var(--color-line);
+  border-radius: 5px;
+  color: var(--color-ink);
+  font-size: 13px;
+}
+.sidecar-state {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 11px;
+  padding: 12px;
+  background: var(--color-card-raised);
+  border: 1px solid var(--color-line);
+  border-radius: 5px;
+}
+.sidecar-state button {
+  margin-left: auto;
+}
+.code-input {
+  width: 100%;
+  min-height: 210px;
+  padding: 13px;
+  font: 12px/1.7 var(--type-family-mono);
+  border: 1px solid var(--color-line);
+  border-radius: 6px;
+  resize: vertical;
+  background: var(--color-card-raised);
+  color: var(--color-ink);
+}
+.template-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.template-list button {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  text-align: left;
+  padding: 14px;
+  border: 1px solid var(--color-line);
+  border-radius: 6px;
+  justify-content: flex-start;
+}
+.template-list button > svg {
+  color: var(--color-brand);
+  flex-shrink: 0;
+}
+.template-list button span {
+  flex: 1;
+}
+.template-list button strong {
+  font-size: 12px;
+  display: block;
+}
+.template-list button small {
+  font-size: 11px;
+  line-height: 1.6;
+  display: block;
+  color: var(--color-muted);
+  margin-top: 5px;
+}
+.template-list button:hover {
+  background: var(--color-card-raised);
+}
+.pulumi-path {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 0;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--color-brand);
+}
+.snapshot-upload {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  padding: 22px 15px;
+  border: 1px dashed var(--color-line-strong);
+  margin-top: 20px;
+  color: var(--color-brand);
+  border-radius: 6px;
+}
+.snapshot-upload input {
+  max-width: 100%;
+  font-size: 11px;
+}
+.snapshot-upload small {
+  font-size: 10px;
+  color: var(--color-muted);
+}
+.snapshot-upload strong {
+  font-size: 12px;
+}
+.snapshot-result {
+  margin-top: 20px;
+  font-size: 12px;
+}
+.snapshot-result > p {
+  font-size: 11px;
+  line-height: 1.6;
+  color: var(--color-muted);
+  margin: 8px 0;
+}
+.snapshot-resources {
+  max-height: 200px;
+  overflow: auto;
+}
+.snapshot-resources > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 11px;
+  border-bottom: 1px solid var(--color-line);
+}
+.snapshot-resources span,
+.snapshot-resources small {
+  font-size: 10px;
+  color: var(--color-muted);
+}
+.front-panel {
+  position: absolute;
+  inset: 90px 0 32px;
+  z-index: 4;
+  background: var(--color-card-raised);
+  padding: 25px;
+  overflow: auto;
+}
+.front-panel h2 {
+  font-size: 21px;
+  line-height: 1.3;
+  margin: 10px 0;
+}
+.front-panel > p {
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--color-muted);
+}
+.front-indicators {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 23px 0;
+}
+.indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  border: 1px solid var(--color-line);
+  background: var(--color-card);
+  border-radius: 6px;
+  padding: 18px;
+  gap: 10px;
+  overflow: hidden;
+  min-height: 165px;
+}
+.indicator strong {
+  font-size: 13px;
+}
+.indicator > span:not(.indicator-number) {
+  font-size: 11px;
+  color: var(--color-muted);
+  text-transform: capitalize;
+}
+.indicator small {
+  font: 11px/1.6 var(--type-family-mono);
+  overflow-wrap: anywhere;
+  max-width: 100%;
+  color: var(--color-muted);
+}
+.indicator-number {
+  width: 25px;
+  height: 25px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-brand-soft);
+  color: var(--color-brand);
+  border-radius: 4px;
+  font-size: 11px;
+}
+.indicator.passed {
+  border-color: var(--color-good);
+}
+.indicator.failed {
+  border-color: var(--color-bad);
+}
+.indicator.failed > span:not(.indicator-number) {
+  color: var(--color-bad);
+}
+.workspace-skip {
+  position: fixed;
+  left: -9999px;
+  top: 10px;
+  z-index: 100;
+  background: var(--color-card);
+  color: var(--color-ink);
+  padding: 15px;
+}
+.workspace-skip:focus {
+  left: 15px;
+}
+.footer-brand {
+  font-family: var(--type-family-sans);
+  color: var(--color-brand);
+  display: flex;
+  align-items: center;
+}
+.footer-brand svg {
+  width: 18px;
+  height: 18px;
+}
+.toast {
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+}
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+  .react-flow__edge.animated path {
+    animation: none !important;
+  }
+}
+@media (max-width: 1250px) {
+  .workspace {
+    grid-template-columns: 220px minmax(250px, 1fr) 320px;
+  }
+  .workspace.library-hidden {
+    grid-template-columns: minmax(250px, 1fr) 320px;
+  }
+  .compact {
+    font-size: 10px;
+    padding: 7px;
+  }
+  .canvas-heading h2 {
+    font-size: 11px;
+  }
+  .projectbar p {
+    max-width: 540px;
+    line-height: 1.6;
+  }
+  .phase {
+    font-size: 11px;
+    padding: 7px;
+  }
+}
+@media (max-width: 900px) {
+  .workspace,
+  .workspace.library-hidden {
+    grid-template-columns: 190px minmax(0, 1fr);
+  }
+  .workspace.library-hidden .canvas-area {
+    grid-column: 1/-1;
+  }
+  .compact {
+    display: none;
+  }
+  .front-panel {
+    padding: 15px;
+  }
+  .front-indicators {
+    grid-template-columns: 1fr;
+  }
+  .canvas-heading {
+    gap: 5px;
+  }
+  .canvas-view-switch button {
+    font-size: 9px;
+    padding: 5px;
+  }
+  .canvas-heading > div:first-of-type {
+    flex-basis: 100%;
+  }
+}
+@media (max-width: 560px) {
+  .workspace,
+  .workspace.library-hidden {
+    grid-template-columns: 130px minmax(0, 1fr);
+  }
+  .library-mode {
+    padding: 0 7px 9px;
+  }
+  .library-mode select {
+    font-size: 9px;
+    padding: 6px;
+  }
+  .library-item strong {
+    font-size: 10px;
+  }
+  .library-item small {
+    font-size: 8px;
+  }
+  .canvas-view-switch button {
+    font-size: 8px;
+    padding: 5px;
+  }
+  .canvas-heading .icon-button {
+    width: 24px;
+  }
+  .front-panel {
+    inset: 105px 0 32px;
+    padding: 12px;
+  }
+  .front-panel h2 {
+    font-size: 16px;
+  }
+  .front-panel > p {
+    font-size: 11px;
+  }
+  .phase {
+    font-size: 9px;
+  }
+  .toolbar-actions .button {
+    font-size: 9px;
+  }
+  .projectbar h1 {
+    font-size: 19px;
+  }
+  .library .panel-title h2 {
+    font-size: 10px;
+  }
+  .agent-panel {
+    height: 520px;
+  }
+  .workspace {
+    min-height: 1120px;
+  }
+  .template-list button small {
+    font-size: 10px;
+  }
+  .pulumi-path {
+    font-size: 9px;
+  }
+}
+.login-instructions {
+  border: 1px solid var(--color-line);
+  border-radius: 5px;
+  padding: 15px;
+  font-size: 12px;
+}
+.login-instructions p {
+  font-size: 11px;
+  line-height: 1.7;
+  color: var(--color-muted);
+  margin: 9px 0;
+}
+.login-instructions code {
+  display: block;
+  padding: 10px;
+  background: var(--color-card-raised);
+  font: 12px var(--type-family-mono);
+  margin-bottom: 10px;
+}
+.login-instructions small,
+.dialog-field > small {
+  display: block;
+  font-size: 10px;
+  line-height: 1.7;
+  color: var(--color-muted);
+  font-weight: 400;
+  margin-top: 7px;
+}
+.avatar,
+.tag,
+.breadcrumbs > span:first-child,
+.library-footer strong,
+.canvas-note p,
+.phase:not(.active) {
+  color: var(--color-muted);
+}
+.panel-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0;
+  flex-wrap: wrap;
+}
+.panel-controls select {
+  font-size: 12px;
+  max-width: 100%;
+  padding: 9px;
+  border: 1px solid var(--color-line);
+  border-radius: 5px;
+  background: var(--color-card);
+  color: var(--color-ink);
+}

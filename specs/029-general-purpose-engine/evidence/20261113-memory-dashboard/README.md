@@ -1,0 +1,21 @@
+# Memory dashboard and concise workflow
+
+The owner requested a usable memory table, stable local default profile, actor/user provenance, external context extensions, and reliable cost/check/navigation controls.
+
+Implemented:
+
+- Memory opens in a wider table. Database cursor pagination returns 50 rows (maximum 100), with indexed search/status filters, totals, previous/next, loading/error feedback, record details and indexed audit history. The new overview endpoint does not load memory records. Existing inspect remains compatible with bounded pages.
+- The existing persisted local owner ID becomes Default profile; renaming never remaps memory subjects. New memories retain creator/actor/user provenance in the actual SDK episode/audit. Legacy creator identity stays unknown. Browser-provided user/subject/database overrides are rejected. Forget previews and keyed deletion use bounded queries; histories over 10,000 records fail before deletion and need separate bulk maintenance.
+- AtMem 2.3.10 remains pinned. The paging adapter uses the SDK's policy-aware store connection and conversion function; it never opens the memory database directly. It relies on this pinned schema, existing subject/status/recent/FTS indexes, and explicit subject predicates.
+- Context providers accept scoped external RAG/memory results; retrieval never silently persists them. See context-providers.md. No external provider is configured or contacted in the owner's installation.
+- Terraform receipts survive navigation/reload only when exact file hashes still match. Their execution timestamp is retained. Cost estimates start automatically with Small when unspecified, refresh on relevant design/usage changes, and expose Recalculate. Google Cloud Run and Cloud SQL use live official public prices; unknown placement uses an explicitly labelled Iowa planning reference. These are partial estimates: external APIs, payment fees, storage/backups/networking and other unsupported charges remain excluded. Service sizing is an explicit planning assumption, never an accepted deployment choice.
+- Country, cloud and cloud region are separate checklist rows. All rows navigate/focus their corrective section. Region has an actual editable control. Existing services and distinct explicit placements are retained.
+- Generation transcript and architecture-work panels leave Review/block cards. Full work records remain in architecture-work.json; full generation events are exported as evidence/generation-activity.json with a 50 MB receiving bound. Backend automatic local checks/one bounded repair remain; current artifacts automatically import only verified file bindings. Missing bindings remain explicit.
+- Clear chat view has an undo action and a per-project display preference. It preserves the conversation, model context, memory and exported history. The application header also uses only its logo.
+- Orca button materializes the verified combined ZIP in a fresh private folder and uses documented CLI folder commands. No project code is executed. Orca is absent on this host; tests cover fixtures/command binding, not a real desktop launch.
+
+## Validation and limits
+
+The million-record benchmark uses isolated synthetic rows in a real pinned SDK database, including FTS data and the normalised fields used by SDK writes. First/deep pages, indexed search, no overlapping pages, subject isolation and unknown legacy creator passed. Median query for 50 rows was 2727 ms, deep page 2850 ms, selective search 6008 ms, SDK reopen plus page 6220 ms. Python allocations during reads peaked at 158028 bytes; this is not total process RSS. The benchmark qualifies dashboard reads, not a million semantic SDK writes, million-record recall/forget, concurrent users or hosted tenancy. The initial synthetic fixture omitted normalised content and triggered a costly SDK migration; it is retained as a separate diagnostic, not the qualified fixture.
+
+Build, existing JS tests, focused server tests and live-address browser fixtures are recorded alongside this file. Browser fixtures never call the owner's model or mutate owner projects. Installed memory tests use isolated homes. No cloud plan/deployment, original 28-project programme resumption, npm patch publication or full Windows/Orca launch qualification is established.

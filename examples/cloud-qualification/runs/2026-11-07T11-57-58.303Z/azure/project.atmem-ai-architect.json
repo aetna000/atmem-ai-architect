@@ -1,0 +1,70 @@
+{
+  "format": "atmem.ai-architect.project",
+  "formatVersion": "2.3.0",
+  "meta": {
+    "id": "qualification-azure-storage",
+    "name": "Azure Blob Storage qualification",
+    "createdAt": "2026-11-07T11:57:58.304Z",
+    "updatedAt": "2026-11-07T11:57:58.304Z",
+    "revision": 1,
+    "generator": "atmem-ai-architect 0.2.0"
+  },
+  "design": {
+    "provider": "azure",
+    "nodes": [
+      {
+        "id": "documents",
+        "type": "resource",
+        "position": {
+          "x": 400,
+          "y": 100
+        },
+        "data": {
+          "label": "Azure Blob Storage",
+          "service": "Azure Blob Storage",
+          "provider": "azure",
+          "kind": "source",
+          "origin": "proposed",
+          "implementation": "private-object-storage",
+          "config": {
+            "region": "australiaeast",
+            "classification": "Internal"
+          }
+        }
+      },
+      {
+        "id": "operator",
+        "type": "resource",
+        "position": {
+          "x": 50,
+          "y": 100
+        },
+        "data": {
+          "label": "Existing storage operator",
+          "provider": "tools",
+          "kind": "tool",
+          "origin": "existing",
+          "binding": "cloud-storage-principal",
+          "config": {}
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "object-access",
+        "source": "operator",
+        "target": "documents",
+        "label": "Upload, read and delete objects",
+        "access": "storage-object-admin"
+      }
+    ]
+  },
+  "discovery": {
+    "problem": "Private versioned object storage. An existing service identity uploads, reads and deletes synthetic documents. Provider-managed encryption; authenticated public endpoint."
+  },
+  "requirements": [],
+  "assumptions": [],
+  "openQuestions": [],
+  "decisions": [],
+  "extensions": {}
+}

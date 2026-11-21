@@ -1,0 +1,55 @@
+{
+  "provider": "azure-rag",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Denied documents never reach the model",
+    "Known questions cite current source revisions",
+    "Unsupported questions abstain",
+    "Updates and deletions change retrieval",
+    "Revocation during generation suppresses the answer"
+  ],
+  "components": [
+    {
+      "id": "user"
+    },
+    {
+      "id": "webapp",
+      "service": "Azure Static Web Apps"
+    },
+    {
+      "id": "entra",
+      "service": "Microsoft Entra ID"
+    },
+    {
+      "id": "api",
+      "service": "Azure Functions"
+    },
+    {
+      "id": "catalog",
+      "service": "Azure Cosmos DB for NoSQL"
+    },
+    {
+      "id": "docs",
+      "service": "Azure Blob Storage"
+    },
+    {
+      "id": "ingest",
+      "service": "Azure Functions (blob trigger)"
+    },
+    {
+      "id": "model",
+      "service": "Azure OpenAI Service"
+    },
+    {
+      "id": "monitor",
+      "service": "Azure Monitor / Application Insights"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

@@ -1,0 +1,466 @@
+{
+  "format": "atmem.ai-architect.project",
+  "formatVersion": "2.3.0",
+  "meta": {
+    "id": "b16711b9-d8ea-4f39-bb60-ec0ba0ba73a2",
+    "name": "Google Cloud synthetic infrastructure correction qualification",
+    "createdAt": "2026-11-07T12:30:41.430Z",
+    "updatedAt": "2026-11-07T12:30:41.430Z",
+    "revision": 2,
+    "generator": "atmem-ai-architect 0.2.0"
+  },
+  "design": {
+    "provider": "gcp",
+    "nodes": [
+      {
+        "id": "reviewer",
+        "type": "resource",
+        "position": {
+          "x": 50,
+          "y": 565
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Reviewer",
+          "provider": "tools",
+          "kind": "resource",
+          "description": "Existing human reviewer outside provisioning scope. Reviews affected resources, policy findings, estimated costs and recovery requirements. Approval records review only and cannot execute changes; identity provider and reviewer authorization remain to be chosen.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "poc": true,
+          "role": "human"
+        }
+      },
+      {
+        "id": "synthetic-inventory",
+        "type": "resource",
+        "position": {
+          "x": 50,
+          "y": 285
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Synthetic inventory fixtures",
+          "provider": "tools",
+          "kind": "source",
+          "description": "Qualification input contract for supplied synthetic inventory; no real account assumed. Include resource identifiers, configuration, malicious tags, baseline revisions and changed revisions for drift tests. Fixture harness still needs implementation.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "data"
+        }
+      },
+      {
+        "id": "asset-inventory",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 50
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Cloud inventory API reference",
+          "provider": "gcp",
+          "kind": "resource",
+          "description": "External Google Cloud API reference, outside provisioning scope; no approved project or account access is asserted. Future collector uses only explicitly scoped asset read permissions. Initial qualification substitutes synthetic snapshots and never requests broader credentials automatically.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "role": "data",
+          "service": "Cloud Asset Inventory"
+        }
+      },
+      {
+        "id": "qualification-app",
+        "type": "resource",
+        "position": {
+          "x": 470,
+          "y": 415
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Analysis and review application",
+          "provider": "gcp",
+          "kind": "resource",
+          "description": "One Cloud Run deployment owns collector, schema normalization, deterministic policy checks, proposal validation, authenticated review UI and drift checks. Tags remain inert data. Model output cannot select commands or grant privileges. Review binds to snapshot/policy/configuration/plan digests; fresh reads invalidate approval on drift, with freshness failure blocking approval. Returns findings and diffs. Separate scoped inventory identity; no mutation privileges or apply route. Authentication an",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "app",
+          "service": "Cloud Run"
+        }
+      },
+      {
+        "id": "proposal-model",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 330
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Correction proposal inference",
+          "provider": "gcp",
+          "kind": "resource",
+          "description": "Vertex AI generates structured correction candidates from bounded normalized inventory and policy findings. No tools, shell, deployment credentials or authority to approve. Application validates output against allowed resource types and correction templates. Model and regional availability require verification; local scripted responses do not establish model quality.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "model",
+          "service": "Vertex AI"
+        }
+      },
+      {
+        "id": "plan-worker",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 630
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Isolated plan generation",
+          "provider": "gcp",
+          "kind": "resource",
+          "description": "Cloud Build executes a fixed reviewed planning pipeline with pinned tools and providers, approved templates and no model-generated executable code. Synthetic mode uses fixture state and no cloud credentials. Future live planning requires separately scoped read-only credentials; no apply/delete permissions. Reject provisioners, external commands and unsafe templates. Produces machine-readable plan, affected-resource diff and cost estimates with sources, assumptions and unknowns. Tool and estimati",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "app",
+          "service": "Cloud Build"
+        }
+      },
+      {
+        "id": "review-artifacts",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 780
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Versioned review evidence",
+          "provider": "gcp",
+          "kind": "resource",
+          "description": "Private versioned Cloud Storage bucket holds synthetic snapshots, original requests, policy versions, model outputs, plan JSON, diffs, cost assumptions and approval/invalidation records. Conditional writes and digest references prevent approval races. Retention, deletion policy and access scope require review; no public access. This bucket supports the application and does not replace its implementation.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "data",
+          "service": "Google Cloud Storage"
+        }
+      },
+      {
+        "id": "drift-schedule",
+        "type": "resource",
+        "position": {
+          "x": 50,
+          "y": 930
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Recurring drift checks",
+          "provider": "gcp",
+          "kind": "resource",
+          "description": "Cloud Scheduler invokes the authenticated application drift-check route using a dedicated invocation identity. Frequency remains undecided. The application also rechecks before accepting review; scheduled checks alone do not guarantee freshness.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "monitor",
+          "service": "Cloud Scheduler"
+        }
+      },
+      {
+        "id": "audit-logs",
+        "type": "resource",
+        "position": {
+          "x": 1730,
+          "y": 780
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Audit and failure evidence",
+          "provider": "gcp",
+          "kind": "resource",
+          "description": "Cloud Logging receives structured actor, artifact digest, policy result, review, denial, drift and failure events. Configure applicable Cloud Audit Logs, including required Data Access logs, rather than assuming all reads are recorded by default. Restrict log administration separately from reviewers; retention and alert routing remain open. Audit-write failure blocks successful review acknowledgement.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "monitor",
+          "service": "Cloud Logging"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "review-request",
+        "source": "reviewer",
+        "target": "qualification-app",
+        "type": "smoothstep",
+        "label": "Authenticated HTTPS: request, review decision; identity integration unresolved"
+      },
+      {
+        "id": "review-response",
+        "source": "qualification-app",
+        "target": "reviewer",
+        "type": "smoothstep",
+        "label": "Return findings, affected-resource diff, estimated costs and approval status"
+      },
+      {
+        "id": "fixture-input",
+        "source": "synthetic-inventory",
+        "target": "qualification-app",
+        "type": "smoothstep",
+        "label": "Validated synthetic baseline and drift snapshots"
+      },
+      {
+        "id": "inventory-read",
+        "source": "qualification-app",
+        "target": "asset-inventory",
+        "type": "smoothstep",
+        "label": "Future scoped read-only asset list/search; fresh inventory for drift"
+      },
+      {
+        "id": "model-request",
+        "source": "qualification-app",
+        "target": "proposal-model",
+        "type": "smoothstep",
+        "label": "Vertex AI inference API: bounded data and policy findings"
+      },
+      {
+        "id": "model-response",
+        "source": "proposal-model",
+        "target": "qualification-app",
+        "type": "smoothstep",
+        "label": "Untrusted structured proposal; validate before planning"
+      },
+      {
+        "id": "planning-request",
+        "source": "qualification-app",
+        "target": "plan-worker",
+        "type": "smoothstep",
+        "label": "Cloud Build API: fixed pipeline and validated template parameters"
+      },
+      {
+        "id": "planning-artifacts",
+        "source": "plan-worker",
+        "target": "review-artifacts",
+        "type": "smoothstep",
+        "label": "Write versioned plan, diff, estimate assumptions and artifact digests"
+      },
+      {
+        "id": "review-state",
+        "source": "qualification-app",
+        "target": "review-artifacts",
+        "type": "smoothstep",
+        "label": "Read evidence; conditionally record digest-bound approval or invalidation"
+      },
+      {
+        "id": "drift-trigger",
+        "source": "drift-schedule",
+        "target": "qualification-app",
+        "type": "smoothstep",
+        "label": "OIDC-authenticated HTTPS: trigger fresh inventory comparison"
+      },
+      {
+        "id": "application-audit",
+        "source": "qualification-app",
+        "target": "audit-logs",
+        "type": "smoothstep",
+        "label": "Structured review, denial, drift and policy audit events"
+      },
+      {
+        "id": "build-audit",
+        "source": "plan-worker",
+        "target": "audit-logs",
+        "type": "smoothstep",
+        "label": "Build execution logs and planning failures"
+      },
+      {
+        "id": "storage-audit",
+        "source": "review-artifacts",
+        "target": "audit-logs",
+        "type": "smoothstep",
+        "label": "Configure object access and administration audit logs"
+      },
+      {
+        "id": "schedule-audit",
+        "source": "drift-schedule",
+        "target": "audit-logs",
+        "type": "smoothstep",
+        "label": "Invocation success and failure logs"
+      }
+    ]
+  },
+  "discovery": {
+    "problem": "Scope: synthetic cloud inventory analysis, read-only inventory integration design, deterministic policy checks, model-assisted correction proposals, isolated plan generation, reviewable diffs, drift invalidation and approval/audit records. Excludes apply, deletion and automatic credential expansion. Inventory identities must be read-only. Treat resource tags as untrusted data, never commands. Plans identify affected resources and label costs as estimates with sources and assumptions. Approval binds to inventory, policy, configuration and plan digests; subsequent drift invalidates approval. Any future apply requires separate authorization and a rollback or recovery plan. First local test uses malicious-tag and changed-inventory fixtures with scripted model responses; it does not validate actual model quality, cloud IAM or deployment. All application and service integrations require engineering; country, region, identities, model and availability remain unconfirmed.",
+    "brief": {
+      "application": "Use Google Cloud for this synthetic architecture qualification. Analyze a synthetic cloud inventory and propose an infrastructure correction. Include read-only inventory, policy checks, plan generation, a reviewable diff and approval/audit controls. Detect drift. Never apply, delete resources or request broader credentials automatically. Acceptance criteria: Inventory credentials are read-only; Untrusted resource tags cannot trigger commands; Plans identify affected resources and costs as estimates; Drift after review invalidates approval; Apply requires separate authorization and a rollback or recovery plan. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+      "cloud": "Google Cloud"
+    },
+    "facts": [
+      {
+        "id": "fact-f5a0ac82",
+        "name": "cloud.preference",
+        "value": "gcp",
+        "unit": "provider",
+        "text": "Use Google Cloud for this synthetic architecture qualification. Analyze a synthetic cloud inventory and propose an infrastructure correction. Include read-only inventory, policy checks, plan generation, a reviewable diff and approval/audit controls. Detect drift. Never apply, delete resources or req",
+        "madeAt": "2026-11-07"
+      }
+    ],
+    "workflow": "general",
+    "asked": [],
+    "lastAsked": {
+      "id": "general:0",
+      "topic": "data",
+      "question": "What information will it work with, and where does it live?",
+      "beginner": "For example a database, documents, or another system's data.",
+      "why": "It shapes the AI architecture design."
+    }
+  },
+  "requirements": [
+    {
+      "id": "ai-inventory-safety",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Inventory access must use read-only permissions; tags and model outputs must remain untrusted data processed through schemas and approved templates, with no executable interpolation, automatic credential expansion, apply or delete capability.",
+      "rationale": "Prevents inventory analysis or malicious metadata from becoming an infrastructure mutation or command-execution path.",
+      "basis": "“Inventory credentials are read-only” and “Untrusted resource tags cannot trigger commands”.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "qualification-app",
+        "asset-inventory",
+        "proposal-model",
+        "plan-worker"
+      ]
+    },
+    {
+      "id": "ai-review-drift",
+      "kind": "functional",
+      "category": "reliability",
+      "statement": "Each review must expose affected resources, policy findings, a versioned diff and costs labelled as estimates with assumptions; approval must bind to evidence digests, and detected drift must invalidate it with an auditable event.",
+      "rationale": "Makes corrections assessable and prevents a reviewer from approving changes against stale infrastructure.",
+      "basis": "“Plans identify affected resources and costs as estimates” and “Drift after review invalidates approval”.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "qualification-app",
+        "plan-worker",
+        "review-artifacts",
+        "drift-schedule",
+        "audit-logs"
+      ]
+    },
+    {
+      "id": "ai-execution-boundary",
+      "kind": "functional",
+      "category": "security",
+      "statement": "This qualification must stop at reviewable plans and recorded decisions; any future apply workflow must require separate explicit authorization, a fresh drift check and a reviewed rollback or recovery plan before execution.",
+      "rationale": "Keeps review separate from execution and preserves accountability if execution is introduced later.",
+      "basis": "“Never apply, delete resources or request broader credentials automatically” and “Apply requires separate authorization and a rollback or recovery plan”.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "reviewer",
+        "qualification-app",
+        "plan-worker",
+        "audit-logs"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use Google Cloud for this synthetic architecture qualification.",
+      "options": "",
+      "decision": "gcp",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.google-cloud-inventory-correction-and-review-qualification",
+      "title": "Google Cloud inventory correction and review qualification",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Adds connected inventory, deterministic policy checks, model-assisted proposals, isolated planning, review, drift detection and audit responsibilities. No apply or deletion capability is included. Initial qualification uses synthetic inventory and mocked external services; the Cloud Asset Inventory connection is a future read-only integration, not approved account access. Country, region, model, identity setup and availability requirements remain unresolved; regional support has not been verified. Every connection requires application/integration implementation: current native generation does not implement this workload. A future apply workflow requires separate authorization and a reviewed rollback or recovery plan.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "extensions": {
+    "requirementNumbers": {
+      "drv-data-access": 1,
+      "drv-data-location": 2,
+      "ai-inventory-safety": 3,
+      "ai-review-drift": 4,
+      "ai-execution-boundary": 5
+    },
+    "choices": {},
+    "conceptSig": null
+  }
+}

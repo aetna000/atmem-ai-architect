@@ -1,0 +1,54 @@
+{
+  "provider": "azure-chatbot",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "One user cannot read another conversation",
+    "Context and response sizes are bounded",
+    "Model outage produces a recoverable response",
+    "Deleting a conversation removes its stored context",
+    "Escalation retains the approved conversation context"
+  ],
+  "components": [
+    {
+      "id": "chat-user"
+    },
+    {
+      "id": "entra-auth",
+      "service": "Microsoft Entra External ID"
+    },
+    {
+      "id": "chat-app",
+      "service": "Azure App Service"
+    },
+    {
+      "id": "conversation-store",
+      "service": "Azure Cosmos DB for NoSQL"
+    },
+    {
+      "id": "model-runtime",
+      "service": "Azure OpenAI (Azure AI Foundry)"
+    },
+    {
+      "id": "content-safety",
+      "service": "Azure AI Content Safety"
+    },
+    {
+      "id": "escalation-queue",
+      "service": "Azure Service Bus"
+    },
+    {
+      "id": "human-reviewer"
+    },
+    {
+      "id": "monitoring",
+      "service": "Azure Monitor / Application Insights"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

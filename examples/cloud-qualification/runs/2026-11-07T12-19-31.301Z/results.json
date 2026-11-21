@@ -1,0 +1,326 @@
+[
+  {
+    "provider": "azure-iot",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "emulation": "blocked",
+    "mentorResponded": true,
+    "architecturePresent": true,
+    "acceptanceRequirements": [
+      "Reject unknown device and invalid units",
+      "Duplicate events produce one result",
+      "Late and out-of-order telemetry follows an explicit policy",
+      "Disconnected input recovers by replay",
+      "Anomaly output names evidence and model version"
+    ],
+    "staticAssessment": {
+      "kind": "static-graph-checks",
+      "checks": [
+        {
+          "name": "Application contains at least three required components",
+          "passed": true
+        },
+        {
+          "name": "Required components form one connected graph",
+          "passed": true
+        },
+        {
+          "name": "Proposed cloud resources retain the requested provider",
+          "passed": true
+        },
+        {
+          "name": "Proposed cloud components name concrete services",
+          "passed": true
+        },
+        {
+          "name": "AI application has not collapsed into only object storage",
+          "passed": true
+        }
+      ],
+      "passed": true,
+      "limitations": [
+        "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+      ],
+      "acceptanceRequirements": [
+        "Reject unknown device and invalid units",
+        "Duplicate events produce one result",
+        "Late and out-of-order telemetry follows an explicit policy",
+        "Disconnected input recovers by replay",
+        "Anomaly output names evidence and model version"
+      ]
+    },
+    "components": [
+      {
+        "id": "sim"
+      },
+      {
+        "id": "iothub",
+        "service": "Azure IoT Hub"
+      },
+      {
+        "id": "eventhubs",
+        "service": "Azure Event Hubs"
+      },
+      {
+        "id": "validator",
+        "service": "Azure Functions"
+      },
+      {
+        "id": "quarantine",
+        "service": "Azure Blob Storage"
+      },
+      {
+        "id": "registry",
+        "service": "Azure Machine Learning"
+      },
+      {
+        "id": "aml",
+        "service": "Azure Machine Learning managed online endpoint"
+      },
+      {
+        "id": "cosmos",
+        "service": "Azure Cosmos DB"
+      },
+      {
+        "id": "monitor",
+        "service": "Azure Monitor"
+      },
+      {
+        "id": "operator"
+      }
+    ],
+    "passed": false,
+    "mentorJourneyPassed": true
+  },
+  {
+    "provider": "azure-observability",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "emulation": "blocked",
+    "mentorResponded": true,
+    "architecturePresent": true,
+    "acceptanceRequirements": [
+      "Redact secrets before model input",
+      "Link conclusions to exact trace or log IDs",
+      "Prompt injection in a log cannot issue tool calls",
+      "Missing spans yield uncertainty rather than invented causes",
+      "Repeated ingestion preserves a consistent incident timeline"
+    ],
+    "staticAssessment": {
+      "kind": "static-graph-checks",
+      "checks": [
+        {
+          "name": "Application contains at least three required components",
+          "passed": true
+        },
+        {
+          "name": "Required components form one connected graph",
+          "passed": true
+        },
+        {
+          "name": "Proposed cloud resources retain the requested provider",
+          "passed": true
+        },
+        {
+          "name": "Proposed cloud components name concrete services",
+          "passed": true
+        },
+        {
+          "name": "AI application has not collapsed into only object storage",
+          "passed": true
+        }
+      ],
+      "passed": true,
+      "limitations": [
+        "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+      ],
+      "acceptanceRequirements": [
+        "Redact secrets before model input",
+        "Link conclusions to exact trace or log IDs",
+        "Prompt injection in a log cannot issue tool calls",
+        "Missing spans yield uncertainty rather than invented causes",
+        "Repeated ingestion preserves a consistent incident timeline"
+      ]
+    },
+    "components": [
+      {
+        "id": "svc"
+      },
+      {
+        "id": "eh",
+        "service": "Azure Event Hubs"
+      },
+      {
+        "id": "redact",
+        "service": "Azure Functions"
+      },
+      {
+        "id": "adx",
+        "service": "Azure Data Explorer"
+      },
+      {
+        "id": "runtime",
+        "service": "Azure Container Apps"
+      },
+      {
+        "id": "aoai",
+        "service": "Azure OpenAI Service"
+      },
+      {
+        "id": "operator"
+      },
+      {
+        "id": "entra",
+        "service": "Microsoft Entra ID"
+      },
+      {
+        "id": "mon",
+        "service": "Azure Monitor Application Insights"
+      }
+    ],
+    "passed": false,
+    "mentorJourneyPassed": true
+  },
+  {
+    "provider": "azure-rag",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "emulation": "blocked",
+    "mentorResponded": false,
+    "architecturePresent": true,
+    "acceptanceRequirements": [
+      "Denied documents never reach the model",
+      "Known questions cite current source revisions",
+      "Unsupported questions abstain",
+      "Updates and deletions change retrieval",
+      "Revocation during generation suppresses the answer"
+    ],
+    "staticAssessment": {
+      "kind": "static-graph-checks",
+      "checks": [
+        {
+          "name": "Application contains at least three required components",
+          "passed": true
+        },
+        {
+          "name": "Required components form one connected graph",
+          "passed": true
+        },
+        {
+          "name": "Proposed cloud resources retain the requested provider",
+          "passed": true
+        },
+        {
+          "name": "Proposed cloud components name concrete services",
+          "passed": true
+        },
+        {
+          "name": "AI application has not collapsed into only object storage",
+          "passed": true
+        }
+      ],
+      "passed": true,
+      "limitations": [
+        "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+      ],
+      "acceptanceRequirements": [
+        "Denied documents never reach the model",
+        "Known questions cite current source revisions",
+        "Unsupported questions abstain",
+        "Updates and deletions change retrieval",
+        "Revocation during generation suppresses the answer"
+      ]
+    },
+    "components": [
+      {
+        "id": "user"
+      },
+      {
+        "id": "web",
+        "service": "Azure Static Web Apps"
+      },
+      {
+        "id": "entra",
+        "service": "Microsoft Entra ID"
+      },
+      {
+        "id": "rag-api",
+        "service": "Azure Functions"
+      },
+      {
+        "id": "catalog",
+        "service": "Azure Cosmos DB"
+      },
+      {
+        "id": "model",
+        "service": "Azure OpenAI Service"
+      },
+      {
+        "id": "operator"
+      },
+      {
+        "id": "docs-blob",
+        "service": "Azure Blob Storage"
+      },
+      {
+        "id": "ingest-fn",
+        "service": "Azure Functions"
+      },
+      {
+        "id": "monitor",
+        "service": "Application Insights"
+      }
+    ],
+    "passed": false,
+    "mentorJourneyPassed": false
+  },
+  {
+    "provider": "azure-chatbot",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "passed": false,
+    "error": "Model request failed"
+  },
+  {
+    "provider": "azure-version-control",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "passed": false,
+    "error": "Model request failed"
+  },
+  {
+    "provider": "azure-maintenance",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "passed": false,
+    "error": "Model request failed"
+  },
+  {
+    "provider": "azure-customer-support",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "passed": false,
+    "error": "Model request failed"
+  },
+  {
+    "provider": "azure-call-center",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "passed": false,
+    "error": "Model request failed"
+  },
+  {
+    "provider": "azure-cloud-operations",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "passed": false,
+    "error": "Model request failed"
+  },
+  {
+    "provider": "azure-cybersecurity",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "passed": false,
+    "error": "Model request failed"
+  }
+]

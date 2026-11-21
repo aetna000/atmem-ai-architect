@@ -1,0 +1,25 @@
+{
+  "validator": "independent-rainfall",
+  "artifactSha256": "e52f74a68572f02fe5657e752ad1dbbf95da9784536e6533167f4cb96d41ad80",
+  "imageId": "sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20",
+  "runtimeConfigImageId": "sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20",
+  "platform": "linux/amd64",
+  "isolationProfile": "standard-v1",
+  "runtimeEnvironment": {},
+  "command": [
+    "/usr/local/bin/python3",
+    "-c",
+    "\nimport random\nfrom rainfall import total_mm\nchecks=0\ndef equal(values,expected):\n global checks\n before=list(values);assert total_mm(values)==expected,(values,expected);assert values==before;checks+=1\nequal([],0);equal([9],9);equal([3,7,11],21);equal([0]*366,0);equal([1]*366,366);equal([10**400,0],10**400)\nrng=random.Random(7159)\nfor size in range(1,80):\n values=[rng.randrange(10000)/8 for _ in range(size)];equal(values,sum(values))\nfor value in [True,False,None,'1','',{},[],1j,-1,-.1,float('inf'),float('-inf'),float('nan')]:\n try:total_mm([1,2,value])\n except TypeError:checks+=1\n else:raise AssertionError(('invalid reading accepted',repr(value)))\nfor value in [None,{},(),(1,2),'1',True,1,1.0,range(3)]:\n try:total_mm(value)\n except TypeError:checks+=1\n else:raise AssertionError(('non-list accepted',repr(value)))\ntry:total_mm([0]*367)\nexcept ValueError:checks+=1\nelse:raise AssertionError('limit ignored')\nprint('INDEPENDENT_RAINFALL_PASSED',checks)\n"
+  ],
+  "status": "passed",
+  "exitCode": 0,
+  "skipped": 0,
+  "testsReported": null,
+  "reason": null,
+  "output": "INDEPENDENT_RAINFALL_PASSED 108\n",
+  "outputTruncated": false,
+  "durationSeconds": 0.52,
+  "evidenceLevel": "local_container_check",
+  "cloudOperations": false,
+  "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+}

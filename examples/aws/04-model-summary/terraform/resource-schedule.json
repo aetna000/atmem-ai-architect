@@ -1,0 +1,217 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "caller",
+      "address": "block_63616c6c6572",
+      "label": "Existing IAM caller",
+      "provider": "tools",
+      "service": "Existing AWS IAM principal",
+      "selection": "Explicit principal binding",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing IAM principal — required ARN input generated",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": true,
+      "implemented": true
+    },
+    {
+      "id": "summary-fn",
+      "address": "block_73756d6d6172792d666e",
+      "label": "Summary function",
+      "provider": "aws",
+      "service": "AWS Lambda",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "ap-southeast-2 (candidate, unapproved)",
+      "resources": [
+        "aws_lambda_function",
+        "aws_iam_role"
+      ],
+      "costDrivers": "Requests, duration, memory and logs",
+      "dependencies": [
+        "caller"
+      ],
+      "terraform": "Bedrock summary handler, scoped model permission and caller binding generated",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": true,
+      "settings": {
+        "concurrency": 1,
+        "maxInputBytes": 16000,
+        "maxOutputTokens": 512,
+        "logRetentionDays": 30
+      },
+      "reference": false,
+      "implemented": true
+    },
+    {
+      "id": "bedrock",
+      "address": "block_626564726f636b",
+      "label": "Amazon Bedrock model",
+      "provider": "aws",
+      "service": "Amazon Bedrock",
+      "selection": "Explicit service field; deployment review required",
+      "existing": true,
+      "region": "ap-southeast-2 (candidate, unapproved)",
+      "resources": [],
+      "costDrivers": "Model-specific input/output tokens; guardrails, embeddings and knowledge bases separately",
+      "dependencies": [
+        "summary-fn"
+      ],
+      "terraform": "Existing regional foundation model — required model ID input generated",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": true
+    }
+  ],
+  "connections": [
+    {
+      "id": "e-caller-fn",
+      "source": "caller",
+      "target": "summary-fn",
+      "data": "IAM invoke {text} → summary",
+      "generated": true,
+      "status": "Scoped access policy generated; account and runtime verification required"
+    },
+    {
+      "id": "e-fn-bedrock",
+      "source": "summary-fn",
+      "target": "bedrock",
+      "data": "Converse (≤512 tokens, 2 attempts)",
+      "generated": true,
+      "status": "Scoped access policy generated; account and runtime verification required"
+    }
+  ],
+  "accessPlan": {
+    "connections": [
+      {
+        "id": "e-caller-fn",
+        "source": "caller",
+        "target": "summary-fn",
+        "access": "lambda-invoke",
+        "principalVariable": "principal_block_63616c6c6572_arn"
+      }
+    ],
+    "bindings": [
+      {
+        "id": "caller",
+        "variable": "principal_block_63616c6c6572_arn"
+      }
+    ]
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [
+      {
+        "worker": {
+          "id": "summary-fn",
+          "address": "block_73756d6d6172792d666e",
+          "label": "Summary function",
+          "provider": "aws",
+          "service": "AWS Lambda",
+          "selection": "Explicit service field; deployment review required",
+          "existing": false,
+          "region": "ap-southeast-2 (candidate, unapproved)",
+          "resources": [
+            "aws_lambda_function",
+            "aws_iam_role"
+          ],
+          "costDrivers": "Requests, duration, memory and logs",
+          "dependencies": [
+            "caller"
+          ],
+          "terraform": "Bedrock summary handler, scoped model permission and caller binding generated",
+          "foundation": false,
+          "compute": false,
+          "api": false,
+          "summary": true,
+          "settings": {
+            "concurrency": 1,
+            "maxInputBytes": 16000,
+            "maxOutputTokens": 512,
+            "logRetentionDays": 30
+          },
+          "reference": false,
+          "implemented": true
+        },
+        "model": {
+          "id": "bedrock",
+          "address": "block_626564726f636b",
+          "label": "Amazon Bedrock model",
+          "provider": "aws",
+          "service": "Amazon Bedrock",
+          "selection": "Explicit service field; deployment review required",
+          "existing": true,
+          "region": "ap-southeast-2 (candidate, unapproved)",
+          "resources": [],
+          "costDrivers": "Model-specific input/output tokens; guardrails, embeddings and knowledge bases separately",
+          "dependencies": [
+            "summary-fn"
+          ],
+          "terraform": "Existing regional foundation model — required model ID input generated",
+          "foundation": false,
+          "compute": false,
+          "api": false,
+          "summary": false,
+          "settings": {},
+          "reference": false,
+          "implemented": true
+        },
+        "edge": {
+          "id": "e-fn-bedrock",
+          "source": "summary-fn",
+          "target": "bedrock",
+          "type": "smoothstep",
+          "label": "Converse (≤512 tokens, 2 attempts)",
+          "integration": "bedrock-converse"
+        }
+      }
+    ],
+    "modelIds": [
+      "bedrock"
+    ],
+    "edgeIds": [
+      "e-fn-bedrock"
+    ]
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [],
+  "gapDetails": [],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

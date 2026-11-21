@@ -1,0 +1,789 @@
+{
+  "format": "atmem.ai-architect.project",
+  "formatVersion": "2.3.0",
+  "meta": {
+    "id": "f835eaeb-f36a-45ec-87d3-f46da8392e76",
+    "name": "Deploy atmem architect to atmem.ai",
+    "createdAt": "2026-11-09T13:42:40.879Z",
+    "updatedAt": "2026-11-09T13:42:40.879Z",
+    "revision": 13,
+    "generator": "atmem-ai-architect 0.2.0"
+  },
+  "design": {
+    "provider": "gcp",
+    "nodes": [
+      {
+        "id": "internet-visitor",
+        "type": "resource",
+        "position": {
+          "x": 50,
+          "y": 200
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Visitor’s browser",
+          "provider": "tools",
+          "kind": "resource",
+          "description": "Existing external browser, outside provisioning scope. Visitors can chat after reCAPTCHA without signing in. Google or emailed-code sign-in is required before Terraform generation and downloads. Anonymous credit identity and recovery remain unresolved.",
+          "config": {
+            "region": "External client",
+            "classification": "Public",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "binding": "web-browser",
+          "category": "External client"
+        }
+      },
+      {
+        "id": "atmem-website",
+        "type": "resource",
+        "position": {
+          "x": 470,
+          "y": 200
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "atmem.ai — Firebase Hosting",
+          "provider": "gcp",
+          "kind": "resource",
+          "description": "Existing Firebase website; exact hosting product still needs confirmation. Proposed interface supports chat, drawing, reCAPTCHA, sign-in, credit display and top-up prompts, plus instrumented analytics events. Firebase Hosting rewrite to Cloud Run requires engineering verification. Browser controls do not enforce credit or export authorization.",
+          "config": {
+            "region": "Existing placement unknown",
+            "classification": "Public",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "binding": "existing-service",
+          "role": "app",
+          "service": "Firebase Hosting",
+          "category": "Existing website"
+        }
+      },
+      {
+        "id": "atmem-architect",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 610
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "AtMem Architect — Cloud Run",
+          "provider": "gcp",
+          "kind": "resource",
+          "description": "Existing Architect application proposed for Cloud Run, including its existing AtMem 2.3.10 core SDK as an application module. Owns chat, drawings, supported Terraform generation and downloads. Must validate reCAPTCHA, verify sign-in for exports, reserve credit atomically, settle usage and stop paid work when exhausted. Owns top-up initiation and idempotent crediting after verified payment. Proposed memory persistence uses separate Firestore collections via a server-side adapter; SDK compatibilit",
+          "config": {
+            "region": "To be selected after residency clarification",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "role": "app",
+          "service": "Google Cloud Run",
+          "category": "Proposed runtime for existing application"
+        }
+      },
+      {
+        "id": "visitor-recaptcha",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 50
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Visitor protection — reCAPTCHA",
+          "provider": "gcp",
+          "kind": "resource",
+          "description": "Proposed reCAPTCHA integration. Browser obtains a token; Cloud Run validates it and applies an acceptance policy before allowing chat. Product configuration, thresholds and compatibility need verification. CAPTCHA alone does not establish a unique person or prevent repeated free-credit claims.",
+          "config": {
+            "region": "Processing boundary to be reviewed",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "role": "guard",
+          "service": "Google Cloud reCAPTCHA",
+          "category": "Visitor protection"
+        }
+      },
+      {
+        "id": "visitor-auth",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 350
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Sign-in — Firebase Authentication",
+          "provider": "gcp",
+          "kind": "resource",
+          "description": "Proposed Google sign-in and application identity service. Exact emailed verification-code sign-in requires a custom server-side flow, expiry and retry controls, and an email delivery integration still to be selected; native email-link sign-in does not satisfy the code requirement. Cloud Run verifies identity before Terraform generation and downloads. Anonymous-to-account credit linking remains unresolved.",
+          "config": {
+            "region": "Processing boundary to be reviewed",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "role": "guard",
+          "service": "Firebase Authentication",
+          "category": "Visitor identity"
+        }
+      },
+      {
+        "id": "usage-credit-ledger",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 630
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Credit and memory — Cloud Firestore",
+          "provider": "gcp",
+          "kind": "resource",
+          "description": "Proposed single Firestore deployment with separate collections for the server-managed credit ledger and proposed AtMem durable memory. Credit uses atomic reservations, settlement and idempotent verified payment references; browsers cannot modify balances. Proposed memory records are scoped by visitor/account and project, accessed only through backend authorization. SDK adapter compatibility and storage migration are unverified. Cross-visit persistence, anonymous linking, retention, deletion and ",
+          "config": {
+            "region": "To be selected after residency clarification",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "role": "data",
+          "service": "Cloud Firestore",
+          "category": "Usage accounting and proposed memory persistence"
+        }
+      },
+      {
+        "id": "visitor-analytics",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 190
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Visitor analytics — Google Analytics 4",
+          "provider": "gcp",
+          "kind": "resource",
+          "description": "Proposed analytics property for instrumented clicks, engagement time, Terraform-generation events and downloads. Browser collection can be incomplete due to consent, blockers and disconnections; it cannot guarantee every click or exact time on site. Consent, retention and processing boundaries remain open. Proposed event design excludes chat text, verification codes and payment details. Analytics is not the authoritative credit ledger.",
+          "config": {
+            "region": "Processing boundary to be reviewed",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "role": "monitor",
+          "service": "Google Analytics 4",
+          "category": "Visitor analytics"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "visitor-to-website",
+        "source": "internet-visitor",
+        "target": "atmem-website",
+        "type": "smoothstep",
+        "label": "HTTPS: load Architect web interface"
+      },
+      {
+        "id": "website-to-architect",
+        "source": "atmem-website",
+        "target": "atmem-architect",
+        "type": "smoothstep",
+        "label": "Proposed Firebase rewrite: chat, credit, exports and responses"
+      },
+      {
+        "id": "website-to-recaptcha",
+        "source": "atmem-website",
+        "target": "visitor-recaptcha",
+        "type": "smoothstep",
+        "label": "Obtain reCAPTCHA token; integration requires engineering"
+      },
+      {
+        "id": "architect-to-recaptcha",
+        "source": "atmem-architect",
+        "target": "visitor-recaptcha",
+        "type": "smoothstep",
+        "label": "Validate token server-side before chat; integration unresolved"
+      },
+      {
+        "id": "website-to-auth",
+        "source": "atmem-website",
+        "target": "visitor-auth",
+        "type": "smoothstep",
+        "label": "Google sign-in; custom emailed-code flow requires engineering"
+      },
+      {
+        "id": "architect-to-auth",
+        "source": "atmem-architect",
+        "target": "visitor-auth",
+        "type": "smoothstep",
+        "label": "Verify identity before generation/download; integration unresolved"
+      },
+      {
+        "id": "architect-to-credit-ledger",
+        "source": "atmem-architect",
+        "target": "usage-credit-ledger",
+        "type": "smoothstep",
+        "label": "Credit transactions; proposed private memory reads/writes via unverified SDK ada"
+      },
+      {
+        "id": "website-to-analytics",
+        "source": "atmem-website",
+        "target": "visitor-analytics",
+        "type": "smoothstep",
+        "label": "Instrumented clicks, engagement and export events; consent unresolved"
+      }
+    ]
+  },
+  "discovery": {
+    "problem": "Enable internet visitors to access AtMem Architect through atmem.ai. Sign-in policy, hosting, model integration and persistence remain open. This is a concept sketch requiring engineering before deployment.",
+    "brief": {
+      "application": "I want to deploy atmem architect to atmem.ai\nwhat do we have here\nwhat do we have\nwhat do we have\nwhat are we doing\nyes\naustralia\nwhere atmem memory that is with atmem ai architect will go\naustralia",
+      "data": "I want to deploy atmem architect to atmem\nthey can chat but after ecaptch let's add limit of $1 to the user usage and ask them to top up if they want to use more",
+      "users": "I want to add atmem architect to atmem.ai so people in intenet can access it\nthey can chat but after ecaptch let's add limit of $1 to the user usage and ask them to top up if they want to use more",
+      "systems": "Please draft a first sketch of the architecture from what I've told you, as a proposal I can review.\nthey can chat but after ecaptch let's add limit of $1 to the user usage and ask them to top up if they want to use more",
+      "quality": "currently atmem.ai is in firebase google so i rather have architect also there\nthey can chat but after ecaptch let's add limit of $1 to the user usage and ask them to top up if they want to use more",
+      "cloud": "google\nchat to draw basically everything also we need to have analytics for the vistiors knowing exactly what they clicked howlong they stay for download and generating terraform we ask them to login using google or their email we need to verify the email by code we send",
+      "budget": "ok google cloud"
+    },
+    "facts": [
+      {
+        "id": "fact-40e290c5",
+        "name": "cloud.preference",
+        "value": "gcp",
+        "unit": "provider",
+        "text": "ok google cloud",
+        "madeAt": "2026-11-08"
+      },
+      {
+        "id": "fact-e5075a4a",
+        "name": "budget.per_month",
+        "value": 1,
+        "unit": "USD/month",
+        "text": "they can chat but after ecaptch let's add limit of $1 to the user usage and ask them to top up if they want to use more",
+        "madeAt": "2026-11-08",
+        "period": "assumed monthly"
+      },
+      {
+        "id": "fact-3f83a89f",
+        "name": "budget.per_month",
+        "value": 1,
+        "unit": "USD/month",
+        "text": "they can chat but after ecaptch let's add limit of $1 to the user usage and ask them to top up if they want to use more",
+        "madeAt": "2026-11-08",
+        "period": "assumed monthly"
+      },
+      {
+        "id": "fact-14a46045",
+        "name": "budget.per_month",
+        "value": 1,
+        "unit": "USD/month",
+        "text": "they can chat but after ecaptch let's add limit of $1 to the user usage and ask them to top up if they want to use more",
+        "madeAt": "2026-11-08",
+        "period": "assumed monthly"
+      },
+      {
+        "id": "fact-cb4ad225",
+        "name": "budget.per_month",
+        "value": 1,
+        "unit": "USD/month",
+        "text": "they can chat but after ecaptch let's add limit of $1 to the user usage and ask them to top up if they want to use more",
+        "madeAt": "2026-11-08",
+        "period": "assumed monthly"
+      }
+    ],
+    "workflow": "document-processing",
+    "asked": [
+      "general:0",
+      "general:1",
+      "users",
+      "quality",
+      "cloud",
+      "budget",
+      "document-processing:0",
+      "document-processing:1",
+      "document-processing:2"
+    ],
+    "sketchOffered": true
+  },
+  "requirements": [
+    {
+      "id": "ai-internet-access",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Internet visitors shall be able to open AtMem Architect through atmem.ai, submit an interaction and receive its result.",
+      "rationale": "Visitors need a usable entry point to complete an Architect interaction through the named website.",
+      "basis": "User: “I want to add atmem architect to atmem.ai so people in intenet can access it”.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "internet-visitor",
+        "atmem-website",
+        "atmem-architect"
+      ]
+    },
+    {
+      "id": "ai-public-access-policy",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Visitors may chat without signing in after server-validated reCAPTCHA, subject to enforced usage credit. Terraform generation and downloads shall require Google sign-in or email sign-in verified by an emailed code, enforced server-side.",
+      "rationale": "The answer permits chat before sign-in after CAPTCHA; exports retain the previously stated authentication requirement. Anonymous allowance ownership still needs a decision.",
+      "basis": "User statement: they can chat but after ecaptch let's add limit of $1 to the user usage and ask them to top up if they want to use more",
+      "priority": "should",
+      "status": "open",
+      "source": "user",
+      "links": [
+        "atmem-website",
+        "atmem-architect"
+      ]
+    },
+    {
+      "id": "ai-chat-draw-export",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Proposed: Visitors shall describe architectures through chat, view and refine their diagrams, and generate and download supported Terraform artifacts after authentication. Supported generation coverage shall be documented; whether Architect also applies Terraform to visitors’ cloud accounts remains an open scope decision.",
+      "rationale": "Clarifies the intended visitor outcome while keeping cloud deployment an unresolved scope decision rather than an assumed capability.",
+      "basis": "Existing requirement ai-chat-draw-export and the recorded request for chat, drawings, Terraform generation and authenticated downloads.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "internet-visitor",
+        "atmem-website",
+        "atmem-architect",
+        "visitor-auth"
+      ]
+    },
+    {
+      "id": "ai-visitor-analytics",
+      "kind": "functional",
+      "category": "other",
+      "statement": "The system shall report instrumented visitor clicks, session engagement time, Terraform-generation events and downloads, with collection limits documented; consent, retention and event contents remain proposed decisions.",
+      "rationale": "Supports understanding visitor behaviour; explicit event definitions and measurement limits are needed to avoid interpreting incomplete browser telemetry as a complete record.",
+      "basis": "“analytics for the vistiors knowing exactly what they clicked howlong they stay”",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "atmem-website"
+      ]
+    },
+    {
+      "id": "ai-user-usage-credit",
+      "kind": "functional",
+      "category": "cost",
+      "statement": "The application shall enforce a $1 per-user usage allowance server-side, stop additional chargeable work when available credit is exhausted, and offer paid top-ups. Balance reservations and settlement shall be atomic, and credit shall be added only after verified, idempotent payment confirmation. Currency, renewal period, usage valuation and anonymous identity rules remain open.",
+      "rationale": "Concurrent requests and repeated payment notifications could otherwise overspend balances or credit the same payment twice. The allowance is distinct from the project's monthly cloud budget.",
+      "basis": "Current request: \"let's add limit of $1 to the user usage and ask them to top up if they want to use more\".",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "atmem-architect",
+        "usage-credit-ledger"
+      ]
+    },
+    {
+      "id": "ai-memory-isolation",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Proposed: AtMem memory reads and writes shall enforce visitor/account and project ownership on the server; unknown ownership shall deny access. Anonymous-to-account linking shall require an explicit authorization policy before enabling cross-visit recall.",
+      "rationale": "Proposed isolation prevents one internet visitor's remembered information from appearing in another visitor's answers; identity linking needs an explicit design.",
+      "basis": "The user asks where the AtMem memory accompanying Architect will go; the diagram includes public visitors and proposed Firebase Authentication.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "atmem-architect",
+        "visitor-auth",
+        "usage-credit-ledger"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "design.first-sketch-internet-access-to-atmem-architect",
+      "title": "First sketch: internet access to AtMem Architect",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-08",
+      "context": "Sketch the visitor journey through atmem.ai to the existing Architect application. Website integration, application hosting, model connections and access controls require clarification; no cloud or deployment region is selected. These are conceptual boundaries, not verified infrastructure or executable integrations.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    },
+    {
+      "id": "adr-002",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-08",
+      "context": "User statement: google",
+      "options": "",
+      "decision": "gcp",
+      "consequences": "",
+      "revision": 2,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-003",
+      "subject": "design.google-cloud-sketch-for-atmem-architect",
+      "title": "Google Cloud sketch for AtMem Architect",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-08",
+      "context": "Preserve the existing browser, website and application boundaries and positions. Propose Firebase Hosting for the existing Firebase website and Cloud Run for the Architect runtime; the exact existing Firebase product and application compatibility are unverified. Country and region remain undecided. Model integration, persistence, visitor access policy and deployment implementation remain open; this graph does not establish working connectivity.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 3.",
+      "consequences": "",
+      "revision": 2,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    },
+    {
+      "id": "adr-004",
+      "subject": "design.add-visitor-protection-authentication-analytics-and-usage-credit",
+      "title": "Add visitor protection, authentication, analytics and usage credit",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-08",
+      "context": "Preserve the existing website and application flow while adding proposed reCAPTCHA validation, authentication, analytics and a transactional usage ledger. Cloud Run owns allowance enforcement and top-up orchestration; payment provider, currency, renewal policy and anonymous visitor identification remain open. Google sign-in and custom emailed-code verification are required before Terraform generation and downloads. Service mappings are design proposals, not verified integrations or generated implementations. Preserve the blank comment’s ID, position and contents, using a visible placeholder label to avoid the previous validation failure. Country and regional placement remain undecided.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 6.",
+      "consequences": "",
+      "revision": 5,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    },
+    {
+      "id": "adr-005",
+      "subject": "data.country",
+      "title": "data.country",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-08",
+      "context": "User statement: australia",
+      "options": "",
+      "decision": "Australia",
+      "consequences": "",
+      "revision": 10,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-006",
+      "subject": "design.show-atmem-memory-within-architect-and-propose-durable-storage",
+      "title": "Show AtMem memory within Architect and propose durable storage",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-10",
+      "context": "Propose the existing AtMem SDK as a module within the Architect Cloud Run deployment, rather than inventing a separate service. Extend the proposed Firestore service to hold separate memory collections with server-enforced ownership boundaries, independent of credit records. Durable storage integration is a proposal: the SDK's backend compatibility, migration needs, identity mapping, retention and deletion behavior require engineering verification. Australia remains the accepted data country; no deployment region or Australia-only processing boundary is selected. Preserve all existing components, positions and links; existing implementation blockers remain.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 11.",
+      "consequences": "",
+      "revision": 10,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    },
+    {
+      "id": "adr-007",
+      "subject": "design.identify-the-existing-visitor-as-an-external-browser",
+      "title": "Identify the existing visitor as an external browser",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-10",
+      "context": "Change only internet-visitor.data.binding to web-browser, preserving every component, connection, position and service choice. The established browser role and report externalClients entry justify this correction; this is a missing diagram binding, not evidence of a generator defect. Revision 11 staging artifact 590101e22818195e2a4d7e25ddb0f882deac1b0b501ebc2a3442578e80162f23 executed zero runtime checks. After applying the correction, regenerate and rerun Outputs → Emulate locally against the new artifact. This correction does not implement Firebase Hosting, Cloud Run application behavior, reCAPTCHA, authentication, Firestore, analytics or their connections. Those gaps remain unresolved. Product engineering must implement the required GCP resource/reference handling and application integrations with acceptance tests; the available typed contracts do not cover this complete workload. If the new report still requests an import plan for the correctly bound external browser, use that new artifact and report to reproduce the external-client handling issue.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 12.",
+      "consequences": "",
+      "revision": 11,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    },
+    {
+      "id": "adr-008",
+      "subject": "design.reference-the-existing-firebase-website-without-recreating-it",
+      "title": "Reference the existing Firebase website without recreating it",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-10",
+      "context": "Add binding=\"existing-service\" only to atmem-website, preserving its provider, service, position and connections. This supported reference contract does not require importing or recreating the existing website and does not implement its connections. The browser already has the correct web-browser binding. Do not apply existing-service to atmem-architect: the existing application is proposed for Cloud Run, and the supplied evidence does not establish an existing Cloud Run deployment. Its first reported blocker therefore needs engineering to distinguish existing application code from the proposed runtime and implement Cloud Run provisioning and application deployment. reCAPTCHA, authentication, Firestore, analytics and connection implementations remain unresolved. After applying this proposal, regenerate and rerun emulation against the new artifact; revision 12 staging artifact e6d4cb17c26f51bf303e125103cca08c6f6b4bdeeebe561da70f93aeee9847a2 remains the pre-correction reproducer with zero runtime checks.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 13.",
+      "consequences": "",
+      "revision": 12,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "options": {
+    "weights": {
+      "cost": 1,
+      "risk": 1,
+      "scalability": 1,
+      "security": 1
+    },
+    "scores": {
+      "current": {
+        "cost": 3,
+        "risk": 3,
+        "scalability": 4,
+        "security": 3
+      },
+      "aws": {
+        "cost": 3,
+        "risk": 2,
+        "scalability": 4,
+        "security": 3
+      },
+      "azure": {
+        "cost": 3,
+        "risk": 2,
+        "scalability": 4,
+        "security": 3
+      },
+      "gcp": {
+        "cost": 3,
+        "risk": 3,
+        "scalability": 4,
+        "security": 3
+      },
+      "ibm": {
+        "cost": 3,
+        "risk": 2,
+        "scalability": 4,
+        "security": 3
+      }
+    },
+    "notes": {
+      "current": "AtMem AI Architect proposal — confirm: Baseline is revision 13: existing Firebase Hosting with proposed Cloud Run, Firebase Authentication, reCAPTCHA, Firestore and GA4 integrations. It preserves the current website and accepted GCP decision, reducing migration effort. Cloud Run generation and application integrations remain unfinished; no runtime checks ran. Model integration, payment provider, emailed-code delivery and anonymous credit identity remain unresolved. Scores assess architectural potential, not demonstrated behavior; no running-cost estimate exists.",
+      "aws": "AtMem AI Architect proposal — confirm: Candidate: retain Firebase Hosting and run Architect on Amazon ECS with AWS Fargate, using Amazon DynamoDB for credit and memory and Amazon Cognito for identity; Amazon Bedrock is a possible model integration, not a selected replacement. This adds cross-cloud routing and identity work, or website migration if hosting also moves. Emailed codes, CAPTCHA, payments, analytics and SDK persistence need explicit implementations. Existing AWS generator coverage does not implement this application. Australian placement, model availability and residency remain unverified; cost is unpriced.",
+      "azure": "AtMem AI Architect proposal — confirm: Candidate: Azure Container Apps for Architect, Azure Cosmos DB for credit and memory, and Microsoft Entra External ID for visitor identity, retaining Firebase Hosting initially. Credit transactions require a deliberate partition design; the memory adapter and exact emailed-code flow need qualification. No Microsoft integration requirement currently offsets the added cross-cloud work. CAPTCHA, analytics, payments and model integration remain application work. Regional availability, residency and recovery are unverified, and this stack lacks native application generation here; cost is unpriced.",
+      "gcp": "AtMem AI Architect proposal — confirm: This is the current approach, not an independent alternative: Firebase Hosting, Cloud Run, Firebase Authentication, reCAPTCHA, Firestore and GA4 match the existing website and accepted preference. Shared platform ownership reduces migration work, but Firebase rewrites, SDK persistence and server-enforced credit/export authorization still need implementation. Exact emailed-code sign-in needs a custom flow and delivery service. Vertex AI is only a candidate if compatible with the application's model needs. Australia does not establish residency for every service; availability and processing boundaries are unverified. Cost is unpriced.",
+      "ibm": "AtMem AI Architect proposal — confirm: Candidate: IBM Cloud Code Engine for Architect, IBM Cloudant for persistence and watsonx.ai for a compatible model, retaining Firebase Hosting and qualifying external visitor authentication. Cloudant needs a proven reservation and settlement design; Firestore transaction behavior cannot simply be assumed. This adds cross-cloud operations and memory-adapter work without a stated IBM dependency. Identity, CAPTCHA, payments and analytics remain integration work. Australian service/model availability, residency, quotas and plans require verification. Native generation does not implement this stack; cost is unpriced."
+    },
+    "current": ""
+  },
+  "extensions": {
+    "requirementNumbers": {
+      "ai-internet-access": 1,
+      "ai-public-access-policy": 2,
+      "ai-chat-draw-export": 3,
+      "ai-visitor-analytics": 4,
+      "ai-user-usage-credit": 5,
+      "ai-memory-isolation": 6
+    },
+    "conversation": {
+      "version": 1,
+      "messages": [
+        {
+          "role": "assistant",
+          "text": "Good to see you again — let's keep going.\n\nTell me what you'd like to change or add."
+        },
+        {
+          "role": "user",
+          "text": "what do we have"
+        },
+        {
+          "role": "user",
+          "text": "what do we have"
+        },
+        {
+          "role": "assistant",
+          "text": "Hmm, that didn't work: We're still working on your last message — give it a moment."
+        },
+        {
+          "role": "user",
+          "text": "what are we doing"
+        },
+        {
+          "role": "assistant",
+          "text": "We’re designing how to make AtMem Architect available to internet visitors through atmem.ai on your chosen Google Cloud. The current sketch connects visitors → your Firebase website → a proposed Cloud Run application; it still needs engineering and hasn’t been deployed.\n\n**What should visitors be able to do in the first release—for example, chat and draw architectures, or also save and reopen projects?** This sets what we need to build; “not sure” is fine."
+        },
+        {
+          "role": "user",
+          "text": "chat to draw basically everything also we need to have analytics for the vistiors knowing exactly what they clicked howlong they stay for download and generating terraform we ask them to login using google or their email we need to verify the email by code we send"
+        },
+        {
+          "role": "assistant",
+          "text": "We’re adding chat-to-draw, visitor click and session analytics, and Google or email-code sign-in before Terraform generation and downloads. Let’s add authentication and analytics to the sketch; email-code delivery still needs custom engineering.\n\n**Should visitors be able to chat and draw before signing in?** This determines where we enforce access—for example, “free chat, sign in for Terraform and downloads” or “sign in before chatting”; “not sure” is fine."
+        },
+        {
+          "role": "user",
+          "text": "they can chat but after ecaptch let's add limit of $1 to the user usage and ask them to top up if they want to use more"
+        },
+        {
+          "role": "assistant",
+          "text": "Hmm, that didn't work: Part of our request didn't fit (project → nodes → 3 → data → label: String should have at least 1 character). Reload the page; if it keeps happening, tell us what you were doing."
+        },
+        {
+          "role": "user",
+          "text": "they can chat but after ecaptch let's add limit of $1 to the user usage and ask them to top up if they want to use more"
+        },
+        {
+          "role": "user",
+          "text": "they can chat but after ecaptch let's add limit of $1 to the user usage and ask them to top up if they want to use more"
+        },
+        {
+          "role": "assistant",
+          "text": "Hmm, that didn't work: We're still working on your last message — give it a moment."
+        },
+        {
+          "role": "user",
+          "text": "they can chat but after ecaptch let's add limit of $1 to the user usage and ask them to top up if they want to use more"
+        },
+        {
+          "role": "assistant",
+          "text": "We’ll let visitors chat after reCAPTCHA, give each a $1 usage allowance, and ask them to top up when it runs out. I’ve sketched server-side usage controls; this is a per-user allowance, correcting the recalled interpretation as our monthly cloud budget.\n\n**Should the $1 allowance be granted once or renewed monthly?** This determines when free credit resets—for example, “USD 1 once per visitor”; “not sure” is fine."
+        },
+        {
+          "role": "assistant",
+          "text": "Drew it: Add visitor protection, authentication, analytics and usage credit\n+ Visitor protection — reCAPTCHA\n+ Sign-in — Firebase Authentication\n+ Usage and credit — Cloud Firestore\n+2 more"
+        },
+        {
+          "role": "assistant",
+          "text": "We’ll keep “Comment” removed and preserve the rest of your diagram. Let’s clarify the free-credit rule so we can design when balances reset.\n\n**Should the $1 allowance be granted once or renewed monthly—for example, “once per user”; “not sure” is fine?**"
+        },
+        {
+          "role": "user",
+          "text": "Use the current emulation findings to propose a correction or the next test."
+        },
+        {
+          "role": "assistant",
+          "text": "No runtime checks ran. This report does not validate the architecture or its behavior.\n\nRevision 8 is blocked before testing: zero runtime checks ran, so our design remains unvalidated despite the empty failures list. The first blocker requests an import plan for the visitor’s browser, which is already correctly marked external; reproducing revision 8’s staging emulation should guide a product fix for external references, while the hosting, application, authentication, credit and analytics implementation gaps remain. **Is atmem.ai using Firebase Hosting or Firebase App Hosting—for example, “Firebase Hosting,” or “not sure”?** This determines how we connect the existing website to Cloud Run."
+        },
+        {
+          "role": "user",
+          "text": "Use the current emulation findings to propose a correction or the next test."
+        },
+        {
+          "role": "assistant",
+          "text": "No runtime checks ran. This report does not validate the architecture or its behavior.\n\nNo runtime checks ran; revision 8 remains unvalidated, and the empty failures list does not establish correctness. We should keep our design intact: the first blocker asks to import the visitor’s browser even though it is correctly external, so product engineering needs to reproduce staging revision 8 using the reported artifact digest and correct external-reference handling; the application, authentication, credit and analytics implementations still remain unresolved. **Is atmem.ai using Firebase Hosting or Firebase App Hosting—for example, “Firebase Hosting” or “not sure”?** This determines the website integration and the next meaningful test once the blocker is fixed."
+        },
+        {
+          "role": "user",
+          "text": "Use the current emulation findings to propose a correction or the next test."
+        },
+        {
+          "role": "assistant",
+          "text": "No runtime checks ran. This report does not validate the architecture or its behavior.\n\nRuntime tests have not run, so our design is not yet validated. Let’s preserve our diagram: the first finding concerns a browser already marked external, so product engineering should reproduce staging revision 8 with artifact `b51c676b9577b2932f3196b13529b50433cc9f4c4de06032715f6db5024a7018` and test external-reference handling; Firebase, Cloud Run, authentication, credit and analytics implementation gaps remain, and no available supported contract covers this scope. **Can AtMem Architect currently run locally—for example, “chat and drawing work locally” or “not sure”—so we can identify the next application test while that product blocker is investigated?**"
+        },
+        {
+          "role": "user",
+          "text": "yes"
+        },
+        {
+          "role": "assistant",
+          "text": "Understood—we can run AtMem Architect locally, though our emulation blockers remain unresolved. Let’s next test whether the backend enforces sign-in for Terraform generation and downloads.\n\n**When a signed-out visitor requests either action directly from the backend, what happens—for example, “both rejected,” “download allowed,” or “not tested yet”?**"
+        },
+        {
+          "role": "user",
+          "text": "Use the current emulation findings to propose a correction or the next test."
+        },
+        {
+          "role": "assistant",
+          "text": "No runtime checks ran. This report does not validate the architecture or its behavior.\n\nRuntime tests have not run, so our design is not yet validated. The first blocker treats our external browser as needing an import plan; let’s preserve the diagram and use staging revision 8, artifact `b51c676b9577b2932f3196b13529b50433cc9f4c4de06032715f6db5024a7018`, to reproduce this for a product engineering fix and regression test—hosting, application and integration gaps remain unresolved. **In the locally running Architect, are direct backend requests for Terraform generation and downloads rejected when signed out—for example, “both rejected” or “not tested yet”?** This identifies our next access-control test while emulation remains blocked."
+        },
+        {
+          "role": "user",
+          "text": "Use the current emulation findings to propose a correction or the next test."
+        },
+        {
+          "role": "user",
+          "text": "Use the current emulation findings to propose a correction or the next test."
+        },
+        {
+          "role": "assistant",
+          "text": "No runtime checks ran. This report does not validate the architecture or its behavior.\n\nRuntime tests have not run, and revision 9’s design is not yet validated. We’ll preserve our architecture: the first blocker requests an import plan for an external browser, so product engineering should reproduce staging artifact `6856eea661e71f0255675458cfbf196a7f3cc8ec6364e86d189e6e0a3271b578` and test external-reference handling; the hosting, application and integration implementation gaps remain, with no supported contract covering this scope. **In our locally running Architect, does a signed-out request directly to the Terraform-generation backend get rejected—for example, “rejected,” “generation allowed,” or “not tested yet”?** This checks the required access boundary while emulation is blocked."
+        },
+        {
+          "role": "assistant",
+          "text": "We’ve chosen Google Cloud; let’s clarify location before we compare regions, because this affects storage and processing choices.\n\n**Which country or countries will AtMem’s users be in, and where should their data be stored and processed—must it stay within that country?** For example, “users worldwide, data must stay in Australia,” or “not sure.”"
+        },
+        {
+          "role": "user",
+          "text": "australia"
+        },
+        {
+          "role": "assistant",
+          "text": "We’ll record Australia as our data country and update the sketch, leaving the deployment region undecided. Let’s clarify the boundary because sign-in, analytics and AI processing may need separate location checks.\n\n**Must AtMem’s data stay entirely within Australia, including AI processing—for example, “Australia only,” “overseas processing is okay,” or “not sure”?**"
+        },
+        {
+          "role": "user",
+          "text": "where atmem memory that is with atmem ai architect will go"
+        },
+        {
+          "role": "assistant",
+          "text": "We need to include AtMem memory explicitly: let’s propose running its SDK inside Architect on Cloud Run, with durable memories in separate private Firestore collections. This updates our sketch; SDK storage compatibility and Australian placement still need verification.\n\n**Should AtMem remember each signed-in visitor across visits, or only during their current chat—for example, “across visits,” “current chat,” or “not sure”?** This determines how we save and retrieve their memory."
+        },
+        {
+          "role": "assistant",
+          "text": "Drew it: Show AtMem memory within Architect and propose durable storage\n~ Credit and memory — Cloud Firestore"
+        },
+        {
+          "role": "user",
+          "text": "Use the current emulation findings to propose a correction or the next test."
+        },
+        {
+          "role": "assistant",
+          "text": "No runtime checks ran. This report does not validate the architecture or its behavior.\n\nNo runtime checks ran, so our design is not yet validated. Let’s add the missing `web-browser` binding to our existing visitor component, then regenerate and rerun emulation on the new artifact; the hosting, application and integration implementations remain engineering work."
+        },
+        {
+          "role": "assistant",
+          "text": "Drew it: Identify the existing visitor as an external browser"
+        },
+        {
+          "role": "user",
+          "text": "Use the current emulation findings to propose a correction or the next test."
+        },
+        {
+          "role": "assistant",
+          "text": "No runtime checks ran. This report does not validate the architecture or its behavior.\n\nRuntime tests have not run, so our design is not yet validated; the browser’s `web-browser` binding is now correct, and the first remaining blocker is the missing reference/import plan for our existing Firebase website. Let’s use staging revision 12, artifact `c75f004646602ead52acbcb1e78e2c99002f7d5f855375fcedf006e43ad786f6`, as the reproducer: product engineering needs to implement how the generator references the existing Firebase hosting site without recreating it, then regenerate and rerun emulation; Cloud Run, authentication, reCAPTCHA, Firestore, analytics and connection implementations remain unresolved, and no supported diagram-only correction covers this workload."
+        },
+        {
+          "role": "user",
+          "text": "Use the current emulation findings to propose a correction or the next test."
+        },
+        {
+          "role": "assistant",
+          "text": "No runtime checks ran. This report does not validate the architecture or its behavior.\n\nRuntime tests have not run, so our design is not yet validated; the browser binding is correct, but the first blocker is the generator’s missing support for referencing our existing Firebase website. Let’s use staging revision 12, artifact `c75f004646602ead52acbcb1e78e2c99002f7d5f855375fcedf006e43ad786f6`, to implement and test an explicit existing-site reference that preserves the website without recreating it, then regenerate and rerun emulation; no supported diagram edit implements this scope, and Cloud Run referencing, authentication, reCAPTCHA, Firestore, analytics and connection implementations remain unresolved."
+        }
+      ]
+    },
+    "requirementComments": [],
+    "journey": {
+      "scope": "402-961762ea-2580c354"
+    },
+    "conceptSig": null,
+    "choices": {}
+  }
+}

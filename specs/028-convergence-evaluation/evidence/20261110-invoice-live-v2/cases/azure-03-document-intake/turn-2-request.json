@@ -1,0 +1,238 @@
+{
+  "attachments": [],
+  "origin": "chat",
+  "projectId": "evaluation-azure-03-document-intake",
+  "message": "PDF invoices up to 10 MB, around 500 per day; they may contain personal data. Keep originals and extraction audit history for 90 days. Keep documents and extracted data in Australia; flag unverified service availability.",
+  "provider": "codex",
+  "model": "default",
+  "effort": "medium",
+  "project": {
+    "version": 1,
+    "revision": 2,
+    "name": "Asynchronous document intake",
+    "provider": "azure",
+    "requirements": "Users upload PDF invoices. Extract the supplier, invoice date, total and currency into a review queue. Delivery can repeat; retries must not create duplicate invoices. A reviewer approves a result before it is sent to our existing accounting API. Use Azure. Recommend a coherent system and the engineering choices. Ask only a small material business question when needed; do not make me configure the system.",
+    "nodes": [
+      {
+        "id": "invoice-browser",
+        "type": "resource",
+        "position": {
+          "x": 0.0,
+          "y": 0.0
+        },
+        "data": {
+          "label": "Upload and review in browser",
+          "kind": "tool",
+          "provider": "tools",
+          "description": "Existing browser used by uploaders and reviewers; outside provisioning scope. The application authenticates staff and enforces separate upload and reviewer permissions.",
+          "config": {
+            "region": "Existing client location",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "origin": "existing",
+          "deploymentMode": "reference",
+          "poc": true,
+          "role": "app",
+          "topologyGroup": "Staff access",
+          "service": "Web browser",
+          "binding": "web-browser"
+        }
+      },
+      {
+        "id": "invoice-workflow",
+        "type": "resource",
+        "position": {
+          "x": 440.0,
+          "y": 0.0
+        },
+        "data": {
+          "label": "Invoice intake and approval",
+          "kind": "resource",
+          "provider": "azure",
+          "description": "Composed invoice-workflow deployment unit on Azure Container Apps, owning browser/API, background worker and isolated PDF/OCR parser. Internal generated resources include Azure Database for PostgreSQL durable queue/outbox and review state, private versioned Azure Blob Storage originals, staff sign-in and separate workload identities, regional model integration, and operating tasks/monitoring. Extract supplier, invoice date, total and currency with source evidence; incomplete or failed extraction stays visible for review. Commit workflow state and queued work transactionally; use bounded retries and recover stalled work. Bind reviewer approval to the exact result revision and delivery payload. Send with a stable operation identity; uncertain accounting outcomes are fenced for reconciliation rather than blindly resent. Accounting must independently pass the normalized-action-v1 and durable idempotency contract. Parser isolation, destination model policy, retention, backup/restore, operating ownership and native regional availability require qualification; this diagram proves no deployment.",
+          "config": {
+            "region": "To be selected after country decision",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "origin": "proposed",
+          "deploymentMode": "create",
+          "poc": true,
+          "role": "app",
+          "topologyGroup": "Invoice processing",
+          "service": "Azure Container Apps",
+          "implementation": "invoice-workflow"
+        }
+      },
+      {
+        "id": "accounting-api",
+        "type": "resource",
+        "position": {
+          "x": 880.0,
+          "y": 0.0
+        },
+        "data": {
+          "label": "Existing accounting API",
+          "kind": "tool",
+          "provider": "tools",
+          "description": "Client-owned existing accounting service, referenced without recreation or modification. Receives only approved invoice payloads through an authenticated adapter. Native API mapping, durable idempotency, result lookup/reconciliation and permission scope remain unverified; the normalized contract alone does not establish compatibility.",
+          "config": {
+            "region": "Existing location; residency to confirm",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "origin": "existing",
+          "deploymentMode": "reference",
+          "poc": true,
+          "role": "app",
+          "topologyGroup": "Accounting boundary",
+          "service": "Existing accounting API",
+          "binding": "existing-service"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "browser-invoice-workflow",
+        "source": "invoice-browser",
+        "target": "invoice-workflow",
+        "type": "smoothstep",
+        "label": "HTTPS: upload PDF, review evidence, approve; receive status",
+        "integration": "browser-https"
+      },
+      {
+        "id": "workflow-accounting-api",
+        "source": "invoice-workflow",
+        "target": "accounting-api",
+        "type": "smoothstep",
+        "label": "Authenticated approved submission; stable operation ID and reconciliation",
+        "integration": "approved-accounting-api"
+      }
+    ]
+  },
+  "stage": "design",
+  "context": [
+    {
+      "type": "discovery",
+      "id": "guided-journey",
+      "text": "Current journey step: scope \u2014 Sketch and document. We have a first design. Let\u2019s check that the document captures what you want before choosing cloud services. Next action: Work through this design. Add or refine the needed components and their connections from known answers. Keep topology reasoning internal and explain components in plain language. Ask only a material question that unlocks the next design decision; defer packaging details. Later stages remain hidden until the working draft progresses; never direct the user to a hidden tab. Named service mapping is not verified cloud compatibility."
+    },
+    {
+      "type": "discovery",
+      "id": "estimate-summary",
+      "text": "Current estimate stage: Not estimated. Monthly cloud subtotal unknown currency unresolved; range ?\u2013?; 3 worksheet gaps. One-off consulting/build subtotal unknown USD; incomplete. Values are user inputs, not provider quotes. Later journey stages provide costs and a downloadable delivery draft with a Terraform sketch. Follow guided-journey before directing the user to those stages."
+    },
+    {
+      "type": "discovery",
+      "id": "cost-gap-0",
+      "text": "Upload and review in browser: no cost lines; add charges or an explicit zero-cost line with a reason."
+    },
+    {
+      "type": "discovery",
+      "id": "cost-gap-1",
+      "text": "Invoice intake and approval: no cost lines; add charges or an explicit zero-cost line with a reason."
+    },
+    {
+      "type": "discovery",
+      "id": "cost-gap-2",
+      "text": "Existing accounting API: no cost lines; add charges or an explicit zero-cost line with a reason."
+    },
+    {
+      "type": "discovery",
+      "id": "infrastructure-coverage",
+      "text": "3 diagram components; 1 infrastructure/integration gaps. Use the server-supplied current compiler capability catalogue and actual selected contracts. Named services and supplied-image footprints do not establish application implementation. Preserve unsupported scope and treat missing implementation as engineering work; never replace a required system with a smaller demo or ask users to repair compiler gaps."
+    },
+    {
+      "type": "discovery",
+      "id": "handoff-readiness",
+      "text": "Handoff: engineering_required; 6 priority decisions. Next: Record included and excluded use cases before sizing or implementation. Preserve accepted design decisions, distinguish country from deployment region, and advance connected workstreams together; ask only a consequential business decision while owning routine engineering choices. Do not equate schema validation with deployed behavior."
+    },
+    {
+      "type": "question",
+      "id": "handoff-scope-boundary",
+      "text": "No explicit scope boundary is recorded. Record included and excluded use cases before sizing or implementation."
+    },
+    {
+      "type": "question",
+      "id": "handoff-decision-cloud.region",
+      "text": "The deployment region is not independently confirmed. Record an explicit cloud.region decision. Proposed diagram placement is not approval."
+    },
+    {
+      "type": "question",
+      "id": "handoff-decision-data.country",
+      "text": "The data country and processing boundary is not independently confirmed. Record an explicit data.country decision. Proposed diagram placement is not approval."
+    },
+    {
+      "type": "question",
+      "id": "handoff-requirement-proposed-61692d696e766f6963652d617070726",
+      "text": "REQ-002 remains proposed. Confirm, revise or explicitly defer this requirement; do not promote it through generation."
+    },
+    {
+      "type": "question",
+      "id": "handoff-requirement-proposed-61692d696e766f6963652d657874726",
+      "text": "REQ-001 remains proposed. Confirm, revise or explicitly defer this requirement; do not promote it through generation."
+    },
+    {
+      "type": "requirement",
+      "id": "ai-invoice-extraction",
+      "text": "REQ-001 \u2014 must functional other: Accept uploaded PDF invoices, asynchronously extract supplier, invoice date, total and currency, and persist results in a review queue. Proposed acceptance: show supporting evidence and expose incomplete extraction or processing failures for correction. (open)"
+    },
+    {
+      "type": "requirement",
+      "id": "ai-invoice-approval",
+      "text": "REQ-002 \u2014 must functional security: Permit accounting submission only after an authorized reviewer approves the exact result revision and delivery payload; changes invalidate that approval. Enforce reviewer permissions on the server and retain the approval and delivery history. (open)"
+    },
+    {
+      "type": "requirement",
+      "id": "ai-invoice-idempotency",
+      "text": "REQ-003 \u2014 must nonfunctional reliability: Repeated delivery and worker recovery must not create duplicate accounting invoices. Persist stable operation and payload identities, require a qualified destination idempotency contract, and reconcile uncertain external outcomes before allowing another submission. (open)"
+    },
+    {
+      "type": "decision",
+      "id": "adr-001",
+      "text": "platform.cloud \u2014 platform.cloud: azure (Accepted)"
+    },
+    {
+      "type": "discovery",
+      "id": "next-question",
+      "text": "Optional planner candidate (data; defer if a larger decision matters more): What kinds of documents arrive, and how many a month? Beginner wording: For example \u201cinvoices, about 3,000 a month, mostly PDF\u201d."
+    },
+    {
+      "type": "discovery",
+      "id": "brief-application",
+      "text": "application: Users upload PDF invoices. Extract the supplier, invoice date, total and currency into a review queue. Delivery can repeat; retries must not create duplicate invoices. A reviewer approves a result before it is sent to our existing accounting API. Use Azure. Recommend a coherent system and the engineering choices. Ask only a small material business question when needed; do not make me configure the system."
+    },
+    {
+      "type": "discovery",
+      "id": "brief-data",
+      "text": "data: PDF invoices up to 10 MB, around 500 per day; they may contain personal data. Keep originals and extraction audit history for 90 days. Keep documents and extracted data in Australia; flag unverified service availability."
+    },
+    {
+      "type": "discovery",
+      "id": "brief-cloud",
+      "text": "cloud: Azure"
+    },
+    {
+      "type": "discovery",
+      "id": "workflow",
+      "text": "Detected workflow: document-processing"
+    }
+  ],
+  "history": [
+    {
+      "role": "user",
+      "text": "Users upload PDF invoices. Extract the supplier, invoice date, total and currency into a review queue. Delivery can repeat; retries must not create duplicate invoices. A reviewer approves a result before it is sent to our existing accounting API. Use Azure. Recommend a coherent system and the engineering choices. Ask only a small material business question when needed; do not make me configure the system."
+    },
+    {
+      "role": "assistant",
+      "text": "We\u2019ll build an Azure invoice workflow that extracts the four fields, requires reviewer approval and protects against duplicate delivery. I\u2019ve sketched the application and existing accounting connection; we need the data location before choosing an Azure region.\n\n**Which country should invoices and their extracted data stay in\u2014for example, Australia, or \u201cnot sure\u201d?**"
+    }
+  ]
+}

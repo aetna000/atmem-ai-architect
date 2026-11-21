@@ -1,0 +1,487 @@
+{
+  "format": "atmem.ai-architect.project",
+  "formatVersion": "2.3.0",
+  "meta": {
+    "id": "0b491561-0d0b-44cc-9e11-5d200c2edd44",
+    "name": "Azure predictive maintenance (synthetic)",
+    "createdAt": "2026-11-07T12:09:26.586Z",
+    "updatedAt": "2026-11-07T12:09:26.586Z",
+    "revision": 2,
+    "generator": "atmem-ai-architect 0.2.0",
+    "domain": "maintenance"
+  },
+  "design": {
+    "provider": "azure",
+    "nodes": [
+      {
+        "id": "sensors",
+        "type": "resource",
+        "position": {
+          "x": 50,
+          "y": 50
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Synthetic sensor histories",
+          "provider": "tools",
+          "kind": "stream",
+          "description": "Existing synthetic sensor telemetry source.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "poc": true,
+          "role": "data"
+        }
+      },
+      {
+        "id": "records",
+        "type": "resource",
+        "position": {
+          "x": 470,
+          "y": 330
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Maintenance records",
+          "provider": "tools",
+          "kind": "history",
+          "description": "Existing synthetic maintenance and failure history. These records are the label source.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "poc": true,
+          "role": "data"
+        }
+      },
+      {
+        "id": "ingest",
+        "type": "resource",
+        "position": {
+          "x": 470,
+          "y": 50
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Event Hubs ingestion",
+          "provider": "azure",
+          "kind": "resource",
+          "description": "Receives sensor events and captures them to the data lake.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "ingest",
+          "service": "Azure Event Hubs"
+        }
+      },
+      {
+        "id": "lake",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 190
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Data lake",
+          "provider": "azure",
+          "kind": "resource",
+          "description": "Private storage for raw telemetry, maintenance records and features. Records are loaded in batch.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "data",
+          "service": "Azure Data Lake Storage Gen2"
+        }
+      },
+      {
+        "id": "features",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 190
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Feature preparation",
+          "provider": "azure",
+          "kind": "features",
+          "description": "Builds windowed sensor features and joins them with time-aligned failure labels.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "service": "Azure Machine Learning pipeline"
+        }
+      },
+      {
+        "id": "train",
+        "type": "resource",
+        "position": {
+          "x": 1730,
+          "y": 265
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Training + held-out eval",
+          "provider": "azure",
+          "kind": "train",
+          "description": "Trains on earlier periods and evaluates on a later held-out period. Reports precision, recall and false alarms.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "model",
+          "service": "Azure Machine Learning training job"
+        }
+      },
+      {
+        "id": "registry",
+        "type": "resource",
+        "position": {
+          "x": 2150,
+          "y": 265
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Model registry",
+          "provider": "azure",
+          "kind": "registry",
+          "description": "Holds versioned models together with their evaluation evidence. Only approved versions are promoted.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "model",
+          "service": "Azure Machine Learning model registry"
+        }
+      },
+      {
+        "id": "predict",
+        "type": "resource",
+        "position": {
+          "x": 2570,
+          "y": 190
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Batch scoring",
+          "provider": "azure",
+          "kind": "predict",
+          "description": "Scores recent features with the promoted model version and outputs a risk for each asset.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "model",
+          "service": "Azure Machine Learning batch endpoint"
+        }
+      },
+      {
+        "id": "monitor",
+        "type": "resource",
+        "position": {
+          "x": 2990,
+          "y": 50
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Drift monitoring",
+          "provider": "azure",
+          "kind": "monitor",
+          "description": "Compares input and prediction drift with the training baseline and alerts the model owner.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "monitor",
+          "service": "Azure Machine Learning model monitoring + Azure Monitor"
+        }
+      },
+      {
+        "id": "workorder",
+        "type": "resource",
+        "position": {
+          "x": 2990,
+          "y": 330
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Work-order draft",
+          "provider": "azure",
+          "kind": "output",
+          "description": "Turns high-risk scores into draft work orders. These are drafts only; it has no equipment-control path.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "app",
+          "service": "Azure Functions"
+        }
+      },
+      {
+        "id": "operator",
+        "type": "resource",
+        "position": {
+          "x": 3410,
+          "y": 330
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Maintenance operator",
+          "provider": "tools",
+          "kind": "tool",
+          "description": "Reviews, approves or rejects the drafts.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "poc": true,
+          "role": "human"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "source": "sensors",
+        "target": "ingest",
+        "type": "smoothstep",
+        "label": "sensor events"
+      },
+      {
+        "id": "e2",
+        "source": "ingest",
+        "target": "lake",
+        "type": "smoothstep",
+        "label": "Event Hubs Capture"
+      },
+      {
+        "id": "e3",
+        "source": "records",
+        "target": "lake",
+        "type": "smoothstep",
+        "label": "batch load"
+      },
+      {
+        "id": "e4",
+        "source": "lake",
+        "target": "features",
+        "type": "smoothstep",
+        "label": "raw data"
+      },
+      {
+        "id": "e5",
+        "source": "features",
+        "target": "train",
+        "type": "smoothstep",
+        "label": "time-split dataset"
+      },
+      {
+        "id": "e6",
+        "source": "train",
+        "target": "registry",
+        "type": "smoothstep",
+        "label": "versioned model + metrics"
+      },
+      {
+        "id": "e7",
+        "source": "features",
+        "target": "predict",
+        "type": "smoothstep",
+        "label": "recent features"
+      },
+      {
+        "id": "e8",
+        "source": "registry",
+        "target": "predict",
+        "type": "smoothstep",
+        "label": "promoted version"
+      },
+      {
+        "id": "e9",
+        "source": "predict",
+        "target": "monitor",
+        "type": "smoothstep",
+        "label": "predictions + inputs"
+      },
+      {
+        "id": "e10",
+        "source": "predict",
+        "target": "workorder",
+        "type": "smoothstep",
+        "label": "risk scores"
+      },
+      {
+        "id": "e11",
+        "source": "workorder",
+        "target": "operator",
+        "type": "smoothstep",
+        "label": "draft for approval"
+      }
+    ]
+  },
+  "discovery": {
+    "problem": "",
+    "brief": {
+      "application": "Use Azure for this synthetic architecture qualification. Predict equipment maintenance needs from synthetic sensor histories and maintenance records. Include ingestion, feature preparation, a versioned prediction model, held-out evaluation, drift monitoring and an operator work-order draft. No automatic equipment control. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+      "cloud": "Azure"
+    },
+    "facts": [
+      {
+        "id": "fact-e177e1b1",
+        "name": "cloud.preference",
+        "value": "azure",
+        "unit": "provider",
+        "text": "Use Azure for this synthetic architecture qualification. Predict equipment maintenance needs from synthetic sensor histories and maintenance records. Include ingestion, feature preparation, a versioned prediction model, held-out evaluation, drift monitoring and an operator work-order draft. No autom",
+        "madeAt": "2026-11-07"
+      }
+    ],
+    "workflow": "predictive",
+    "asked": [],
+    "lastAsked": {
+      "id": "predictive:0",
+      "topic": "data",
+      "question": "How much history do you have for what you want to predict?",
+      "beginner": "For example “three years of sales by store” or “failure records since 2020”.",
+      "why": "It shapes the Predictive ML design."
+    }
+  },
+  "requirements": [
+    {
+      "id": "ai-human-workorder",
+      "kind": "functional",
+      "category": "security",
+      "statement": "Proposed: predictions only create draft work orders that an operator approves. The system never sends commands to equipment.",
+      "rationale": "If equipment were triggered automatically, a wrong prediction could cause physical harm or downtime.",
+      "basis": "User: \"No automatic equipment control\" and \"an operator work-order draft\".",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "workorder",
+        "operator"
+      ]
+    },
+    {
+      "id": "ai-time-holdout",
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "statement": "Proposed: before a model version is registered for use, it is evaluated on held-out data from a later time period than the training data. The acceptance thresholds are still to be agreed.",
+      "rationale": "A random split leaks future information and overstates accuracy. The false-alarm rate drives operator trust.",
+      "basis": "User: \"held-out evaluation\", \"versioned prediction model\".",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "train",
+        "registry"
+      ]
+    },
+    {
+      "id": "ai-drift-monitor",
+      "kind": "nonfunctional",
+      "category": "maintainability",
+      "statement": "Proposed: monitor input and prediction drift against the registered model's baseline and alert the model owner when drift is detected. The thresholds are still to be agreed.",
+      "rationale": "Sensor behaviour changes over time, and silent drift degrades the warnings.",
+      "basis": "User: \"drift monitoring\".",
+      "priority": "should",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "monitor"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use Azure for this synthetic architecture qualification",
+      "options": "",
+      "decision": "azure",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.azure-predictive-maintenance-end-to-end-sketch",
+      "title": "Azure predictive-maintenance end-to-end sketch",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: ingesting synthetic sensor and maintenance-record data, feature preparation, a time-split training run with held-out evaluation, a versioned registry, batch scoring, drift monitoring and an operator-approved work-order draft. Equipment control is excluded. Assumptions: Azure services are named for intent only. Region, account access, quotas and interoperability are not verified, and nothing is deployed. Native Terraform for these Azure ML services is not generated yet and needs engineering. Local test: fixtures run the flow with a scripted model. This proves the wiring, not model quality.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "extensions": {
+    "requirementNumbers": {
+      "drv-data-access": 1,
+      "drv-data-location": 2,
+      "ai-human-workorder": 3,
+      "ai-time-holdout": 4,
+      "ai-drift-monitor": 5
+    },
+    "choices": {},
+    "conceptSig": null
+  }
+}

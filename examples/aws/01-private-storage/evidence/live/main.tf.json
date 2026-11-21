@@ -1,0 +1,163 @@
+{
+  "terraform": {
+    "required_version": ">= 1.5.0, < 2.0.0",
+    "required_providers": {
+      "aws": {
+        "source": "hashicorp/aws",
+        "version": "~> 6.0"
+      }
+    }
+  },
+  "variable": {
+    "principal_block_746573742d6f70657261746f72_arn": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing IAM role or user ARN for input principal_block_746573742d6f70657261746f72_arn. The referenced identity is not modified; API access contracts create a separate scoped caller role.",
+      "validation": {
+        "condition": "${can(regex(\"^arn:aws:iam::[0-9]{12}:(role|user)/[A-Za-z0-9_+=,.@/-]+$\", var.principal_block_746573742d6f70657261746f72_arn))}",
+        "error_message": "Supply an IAM role/user ARN, not a root, session, wildcard or service principal."
+      }
+    },
+    "aws_region": {
+      "type": "string",
+      "description": "Explicitly choose the reviewed deployment region; no region is assumed."
+    },
+    "aws_account_id": {
+      "type": "string",
+      "description": "Expected AWS account ID; provider refuses a different account.",
+      "validation": {
+        "condition": "${can(regex(\"^[0-9]{12}$\", var.aws_account_id))}",
+        "error_message": "Use a twelve digit AWS account ID."
+      }
+    },
+    "review_approved": {
+      "type": "bool",
+      "default": false,
+      "description": "Set only after reviewing the design, cost, security and generated Terraform."
+    }
+  },
+  "provider": {
+    "aws": {
+      "region": "${var.aws_region}",
+      "allowed_account_ids": [
+        "${var.aws_account_id}"
+      ]
+    }
+  },
+  "locals": {
+    "unfinished_work": []
+  },
+  "resource": {
+    "terraform_data": {
+      "review_gate": {
+        "input": {
+          "design_revision": 2,
+          "environment": "qualification"
+        },
+        "lifecycle": {
+          "precondition": [
+            {
+              "condition": "${var.review_approved && length(local.unfinished_work) == 0}",
+              "error_message": "Review this sketch and finish the work listed in resource-schedule.json before a deployment plan can succeed."
+            },
+            {
+              "condition": "${can(regex(format(\"^arn:aws:iam::%s:(role|user)/\", var.aws_account_id), var.principal_block_746573742d6f70657261746f72_arn))}",
+              "error_message": "The bound IAM principal must belong to the selected AWS account."
+            }
+          ]
+        }
+      }
+    },
+    "aws_s3_bucket": {
+      "block_646f632d6275636b6574": {
+        "bucket_prefix": "atforma-block-646f632d6275636b65-",
+        "force_destroy": false,
+        "lifecycle": {
+          "prevent_destroy": false
+        },
+        "tags": {
+          "ManagedBy": "AtMem AI Architect",
+          "Environment": "qualification"
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_s3_bucket_public_access_block": {
+      "block_646f632d6275636b6574": {
+        "bucket": "${aws_s3_bucket.block_646f632d6275636b6574.id}",
+        "block_public_acls": true,
+        "block_public_policy": true,
+        "ignore_public_acls": true,
+        "restrict_public_buckets": true,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_s3_bucket_server_side_encryption_configuration": {
+      "block_646f632d6275636b6574": {
+        "bucket": "${aws_s3_bucket.block_646f632d6275636b6574.id}",
+        "rule": {
+          "apply_server_side_encryption_by_default": {
+            "sse_algorithm": "AES256"
+          }
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_s3_bucket_versioning": {
+      "block_646f632d6275636b6574": {
+        "bucket": "${aws_s3_bucket.block_646f632d6275636b6574.id}",
+        "versioning_configuration": {
+          "status": "Enabled"
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_s3_bucket_ownership_controls": {
+      "block_646f632d6275636b6574": {
+        "bucket": "${aws_s3_bucket.block_646f632d6275636b6574.id}",
+        "rule": {
+          "object_ownership": "BucketOwnerEnforced"
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_s3_bucket_policy": {
+      "block_646f632d6275636b6574": {
+        "bucket": "${aws_s3_bucket.block_646f632d6275636b6574.id}",
+        "policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Sid\":\"DenyInsecureTransport\",\"Effect\":\"Deny\",\"Principal\":\"*\",\"Action\":\"s3:*\",\"Resource\":[\"${aws_s3_bucket.block_646f632d6275636b6574.arn}\",\"${aws_s3_bucket.block_646f632d6275636b6574.arn}/*\"],\"Condition\":{\"Bool\":{\"aws:SecureTransport\":\"false\",\"aws:PrincipalIsAWSService\":\"false\"}}},{\"Sid\":\"OperatorBucket0\",\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"${var.principal_block_746573742d6f70657261746f72_arn}\"},\"Action\":[\"s3:ListBucket\",\"s3:GetBucketLocation\"],\"Resource\":\"${aws_s3_bucket.block_646f632d6275636b6574.arn}\"},{\"Sid\":\"OperatorObjects0\",\"Effect\":\"Allow\",\"Principal\":{\"AWS\":\"${var.principal_block_746573742d6f70657261746f72_arn}\"},\"Action\":[\"s3:GetObject\",\"s3:GetObjectVersion\",\"s3:PutObject\"],\"Resource\":\"${aws_s3_bucket.block_646f632d6275636b6574.arn}/*\"}]}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    }
+  },
+  "output": {
+    "design_revision": {
+      "value": 2
+    },
+    "environment": {
+      "value": "qualification"
+    },
+    "implemented_foundations": {
+      "value": 1
+    },
+    "buckets": {
+      "value": {
+        "block_646f632d6275636b6574": {
+          "name": "${aws_s3_bucket.block_646f632d6275636b6574.id}",
+          "arn": "${aws_s3_bucket.block_646f632d6275636b6574.arn}"
+        }
+      }
+    }
+  }
+}

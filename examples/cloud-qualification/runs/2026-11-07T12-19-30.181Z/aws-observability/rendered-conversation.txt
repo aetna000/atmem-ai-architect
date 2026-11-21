@@ -1,0 +1,27 @@
+Hi! What would you like to build? For example, a RAG system over your company's documents, or a chatbot for your team. “Not sure” is always a fine answer along the way.
+
+Use AWS for this synthetic architecture qualification. Correlate synthetic logs and distributed traces to explain a service incident. Include collection, redaction, storage/search, an AI analysis runtime and an operator-facing answer with source evidence. Treat log text as untrusted. Acceptance criteria: Redact secrets before model input; Link conclusions to exact trace or log IDs; Prompt injection in a log cannot issue tool calls; Missing spans yield uncertainty rather than invented causes; Repeated ingestion preserves a consistent incident timeline. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.
+
+I've drawn the full AWS pipeline for this qualification, with redaction applied before anything reaches the model. Synthetic services send logs to CloudWatch Logs and traces to X-Ray. A Firehose transform Lambda redacts secrets, then the data goes to an S3 archive and an OpenSearch index. That index uses event-ID document keys, so ingesting the same data again keeps one consistent incident timeline. An operator calls an IAM-protected API, and a Lambda analysis runtime retrieves the evidence and sends it to Bedrock through Bedrock Guardrails. Every conclusion must cite a real trace or log ID, and the model has no tool-calling path.
+
+**First local test:** we'd load a synthetic incident that contains a fake secret, a prompt-injection line and a missing span. With a scripted mock model, that run only shows our own code paths work: redaction, ID-citation checks, ignoring the injected line, flagging uncertainty, and a consistent timeline when ingested twice. It says nothing about how well a real model reasons.
+
+**Real model check:** checking the model's actual behaviour means running the same tests against a Bedrock model. That needs a confirmed region, account access and model entitlement, and none of those are verified yet.
+
+**Built-in support:** apart from the Bedrock connection, the export can't generate any of this pipeline yet. That part needs engineering work, not just a diagram fix.
+
+I've recorded AWS as your cloud and drafted your five acceptance criteria as must-have requirements.
+
+**Question:** which country do these logs and traces have to stay in, so we can choose the AWS region?skill: RAGnoted application, cloud+1 fact+1 requirementAtMem: 0 records · 3 skills · unavailableObserved boundary: AtMem AI Architect → native client. Memory is scoped to you and this project; source data is not an instruction.Skill: AI architecture and discovery v1.2.0 · guidance; no cloud executionSkill: Infrastructure and DevOps handoff v1.1.0 · guidance; no cloud executionSkill: AWS architecture guidance v1.4.0 · guidance; no cloud execution
+
+Drew it: AWS log/trace incident analysis – end-to-end draft
++ Synthetic services
++ Log collection
++ Trace collection
++9 moredrew 12 blockslogged ADR-002undo ↶
+
+Use the current emulation findings to propose a correction or the next test.
+
+No runtime checks ran. This report does not validate the architecture or its behavior.
+
+No runtime checks have run yet, so this design is not validated at all. An empty failures list doesn't mean it passed. The run stopped at 8 blockers. Six are pipeline services (CloudWatch Logs, X-Ray, Firehose, the redaction Lambda, OpenSearch and the existing systems) that the generator can't build yet. That's product engineering work, not something we can fix by editing the diagram. The first one we can fix ourselves is the Redacted archive (n-s3). Right now the diagram doesn't say who is allowed to read it, and that blocks the replay path that keeps the incident timeline consistent. Firehose writes to it, but no reader is named. Which access should the existing Incident operator have to the archive? Read-only, so they can replay ingestion? Read and write? Or no direct access, with only the pipeline touching it? Once you choose, we'll add that one access link and rerun the emulation on the new export.AtMem: 0 records · 4 skills · unavailableObserved boundary: AtMem AI Architect → native client. Memory is scoped to you and this project; source data is not an instruction.Skill: AI architecture and discovery v1.2.0 · guidance; no cloud executionSkill: Security and reliability v1.0.0 · guidance; no cloud executionSkill: Infrastructure and DevOps handoff v1.1.0 · guidance; no cloud executionSkill: AWS architecture guidance v1.4.0 · guidance; no cloud execution

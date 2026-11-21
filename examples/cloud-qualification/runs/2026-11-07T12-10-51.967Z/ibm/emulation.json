@@ -1,0 +1,53 @@
+{
+  "status": "passed",
+  "backend": "moto-s3-compatibility",
+  "backendVersion": "5.2.5",
+  "sdk": {
+    "name": "boto3",
+    "version": "1.43.123"
+  },
+  "checks": [
+    {
+      "name": "documents: generated S3-compatible upload/read preserves bytes",
+      "passed": true
+    },
+    {
+      "name": "documents: prior object version recovery",
+      "passed": true
+    },
+    {
+      "name": "documents: exact-version cleanup",
+      "passed": true
+    }
+  ],
+  "capabilities": [
+    {
+      "service": "ibm object storage",
+      "mode": "generated-client data-plane checks"
+    }
+  ],
+  "limitations": [
+    "Local API checks do not validate Terraform apply, real IAM, account policy, region availability, networking, billing or production operations.",
+    "Synthetic client credentials are not deployment identities.",
+    "Only the explicit private object storage contract is exercised; other provider services are not emulated.",
+    "This is S3 protocol compatibility coverage, not IBM COS service emulation: IBM IAM, OAuth/HMAC behavior, endpoints and COS-specific errors require IBM validation."
+  ],
+  "message": "Generated client functions exercised against local storage APIs. Review the unverified boundaries before planning deployment.",
+  "version": 1,
+  "workerDigest": "6a475b70fe9f134e635d8bb1e0b3012ba0a88d11d26f84f64eb2849e8c63b920",
+  "designRevision": 1,
+  "environment": "staging",
+  "artifactDigest": "706dd7ca25addd82f574bdc25160330193c3295b30e52d4fa6c09724c8962f16",
+  "fileDigests": {
+    "main.tf.json": "bbb634f95f9fa0d98a32d8dc131fe66302c75a6bd2c0188b2df786d0f901d517",
+    "resource-schedule.json": "9370ebf995e5602f55836ce31c813f07b027b0901f1ce7938aa89f2ecdb30ee6",
+    "storage_client.py": "41e50e7d1f8f22554d40bac949a11ae06e292df3af295945eb7b977a88d7036f",
+    "deployment.tfvars.json.example": "d97fe57cabe3f186f833ce76ad18306e77e2c838435c53556c77456e5a679aed",
+    ".gitignore": "9a60f6bfb5f6e76ea84be64714359d1e607d46b6404e2b1ec97683148252af28",
+    "tests/storage.tftest.hcl": "1fd05933a4d1e01d6140e0b107de85f6795396255fc591cd9de2e72803b5bd37",
+    "README.md": "33b5ba50102bd1d3b3e8aca7c6db90c9074319651bd85b343f450fd98c0c910a"
+  },
+  "cloudOperations": false,
+  "terraformApply": "not_run",
+  "workspaceCleanup": "passed"
+}

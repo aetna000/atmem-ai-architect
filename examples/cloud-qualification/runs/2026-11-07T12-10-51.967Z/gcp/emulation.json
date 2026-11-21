@@ -1,0 +1,57 @@
+{
+  "status": "passed",
+  "backend": "fake-gcs-server",
+  "backendVersion": "1.56.1",
+  "sdk": {
+    "name": "google-cloud-storage",
+    "version": "3.17.1"
+  },
+  "checks": [
+    {
+      "name": "documents: generated upload/read preserves UTF-8 bytes",
+      "passed": true
+    },
+    {
+      "name": "documents: stale write rejected without changing data",
+      "passed": true
+    },
+    {
+      "name": "documents: overwritten generation remains recoverable",
+      "passed": true
+    },
+    {
+      "name": "documents: deletion and missing-object error",
+      "passed": true
+    }
+  ],
+  "capabilities": [
+    {
+      "service": "gcp object storage",
+      "mode": "generated-client data-plane checks"
+    }
+  ],
+  "limitations": [
+    "Local API checks do not validate Terraform apply, real IAM, account policy, region availability, networking, billing or production operations.",
+    "Synthetic client credentials are not deployment identities.",
+    "Only the explicit private object storage contract is exercised; other provider services are not emulated.",
+    "GCP IAM, public-access prevention and signed URL authentication are not enforced by this test backend."
+  ],
+  "message": "Generated client functions exercised against local storage APIs. Review the unverified boundaries before planning deployment.",
+  "version": 1,
+  "workerDigest": "6a475b70fe9f134e635d8bb1e0b3012ba0a88d11d26f84f64eb2849e8c63b920",
+  "designRevision": 1,
+  "environment": "staging",
+  "artifactDigest": "02483114c8b0eab6252ca751c35e1c6b04e60e28aa6b70966c1aef51e30e85c7",
+  "fileDigests": {
+    "main.tf.json": "47c9b371d71bfcbee8d4bd809442a26114b60f2ee990e828431586eb7ec25b06",
+    "resource-schedule.json": "e23b8a87b4ea3b9612f1b8ae12bfaa1f7ac134a77e6726d889486d719a9e95f1",
+    "storage_client.py": "41e50e7d1f8f22554d40bac949a11ae06e292df3af295945eb7b977a88d7036f",
+    "deployment.tfvars.json.example": "9be73bb3685e5ca89e2a59ccba8e0e18c222301db9ae8dd8b68ca4db35c39084",
+    ".gitignore": "9a60f6bfb5f6e76ea84be64714359d1e607d46b6404e2b1ec97683148252af28",
+    "tests/storage.tftest.hcl": "38d06a57cf91abcddcb9e4b44f987cdb81eead2a2174d68324db474586deb6a2",
+    "README.md": "7da41ecee4329cbab2ebf8dd1732e7ec3e0c70316c016ee39ad9a9f65212f487"
+  },
+  "cloudOperations": false,
+  "terraformApply": "not_run",
+  "workspaceCleanup": "passed"
+}

@@ -1,0 +1,388 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "svc-apps",
+      "address": "block_7376632d61707073",
+      "label": "Synthetic services (log/trace emitters)",
+      "provider": "tools",
+      "service": "Storage or existing data connector",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "collect",
+      "address": "block_636f6c6c656374",
+      "label": "Telemetry collection",
+      "provider": "gcp",
+      "service": "Cloud Logging + Cloud Trace (log sink to Pub/Sub)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "svc-apps"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "redact",
+      "address": "block_726564616374",
+      "label": "Redaction worker",
+      "provider": "gcp",
+      "service": "Cloud Run job + Sensitive Data Protection",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "collect"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "store",
+      "address": "block_73746f7265",
+      "label": "Telemetry store & search",
+      "provider": "gcp",
+      "service": "BigQuery (redacted logs + spans, partitioned by time)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "redact",
+        "analyst"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "analyst",
+      "address": "block_616e616c797374",
+      "label": "Incident analysis runtime",
+      "provider": "gcp",
+      "service": "Cloud Run service (service account, read-only BigQuery)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "operator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "model",
+      "address": "block_6d6f64656c",
+      "label": "LLM",
+      "provider": "gcp",
+      "service": "Vertex AI Gemini (model ID to be selected)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "analyst"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "operator",
+      "address": "block_6f70657261746f72",
+      "label": "On-call operator",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "analyst"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "source": "svc-apps",
+      "target": "collect",
+      "data": "logs + OTel traces",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e2",
+      "source": "collect",
+      "target": "redact",
+      "data": "Pub/Sub push (log sink)",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e3",
+      "source": "redact",
+      "target": "store",
+      "data": "redacted rows insert",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e4",
+      "source": "operator",
+      "target": "analyst",
+      "data": "incident question (IAP-authenticated HTTPS)",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e5",
+      "source": "analyst",
+      "target": "store",
+      "data": "read-only correlation query",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e6",
+      "source": "analyst",
+      "target": "model",
+      "data": "Vertex AI generateContent",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e7",
+      "source": "analyst",
+      "target": "operator",
+      "data": "cited explanation / abstain",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Synthetic services (log/trace emitters): Existing — reference/import plan needed.",
+    "Telemetry collection: Implementation needed.",
+    "Redaction worker: Implementation needed.",
+    "Telemetry store & search: Implementation needed.",
+    "Incident analysis runtime: Implementation needed.",
+    "LLM: Implementation needed.",
+    "On-call operator: Existing — reference/import plan needed.",
+    "Wire svc-apps → collect: implement data flow, access policy and acceptance test.",
+    "Wire collect → redact: implement data flow, access policy and acceptance test.",
+    "Wire redact → store: implement data flow, access policy and acceptance test.",
+    "Wire operator → analyst: implement data flow, access policy and acceptance test.",
+    "Wire analyst → store: implement data flow, access policy and acceptance test.",
+    "Wire analyst → model: implement data flow, access policy and acceptance test.",
+    "Wire analyst → operator: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "resource-block_7376632d61707073",
+      "componentIds": [
+        "svc-apps"
+      ],
+      "taskId": "TASK-RESOURCE-7376632d61707073",
+      "message": "Synthetic services (log/trace emitters): Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_636f6c6c656374",
+      "componentIds": [
+        "collect"
+      ],
+      "taskId": "TASK-RESOURCE-636f6c6c656374",
+      "message": "Telemetry collection: Implementation needed."
+    },
+    {
+      "id": "resource-block_726564616374",
+      "componentIds": [
+        "redact"
+      ],
+      "taskId": "TASK-RESOURCE-726564616374",
+      "message": "Redaction worker: Implementation needed."
+    },
+    {
+      "id": "resource-block_73746f7265",
+      "componentIds": [
+        "store"
+      ],
+      "taskId": "TASK-RESOURCE-73746f7265",
+      "message": "Telemetry store & search: Implementation needed."
+    },
+    {
+      "id": "resource-block_616e616c797374",
+      "componentIds": [
+        "analyst"
+      ],
+      "taskId": "TASK-RESOURCE-616e616c797374",
+      "message": "Incident analysis runtime: Implementation needed."
+    },
+    {
+      "id": "resource-block_6d6f64656c",
+      "componentIds": [
+        "model"
+      ],
+      "taskId": "TASK-RESOURCE-6d6f64656c",
+      "message": "LLM: Implementation needed."
+    },
+    {
+      "id": "resource-block_6f70657261746f72",
+      "componentIds": [
+        "operator"
+      ],
+      "taskId": "TASK-RESOURCE-6f70657261746f72",
+      "message": "On-call operator: Existing — reference/import plan needed."
+    },
+    {
+      "id": "connection-6531",
+      "edgeIds": [
+        "e1"
+      ],
+      "taskId": "TASK-INTEGRATION-6531",
+      "message": "Wire svc-apps → collect: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6532",
+      "edgeIds": [
+        "e2"
+      ],
+      "taskId": "TASK-INTEGRATION-6532",
+      "message": "Wire collect → redact: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6533",
+      "edgeIds": [
+        "e3"
+      ],
+      "taskId": "TASK-INTEGRATION-6533",
+      "message": "Wire redact → store: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6534",
+      "edgeIds": [
+        "e4"
+      ],
+      "taskId": "TASK-INTEGRATION-6534",
+      "message": "Wire operator → analyst: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6535",
+      "edgeIds": [
+        "e5"
+      ],
+      "taskId": "TASK-INTEGRATION-6535",
+      "message": "Wire analyst → store: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6536",
+      "edgeIds": [
+        "e6"
+      ],
+      "taskId": "TASK-INTEGRATION-6536",
+      "message": "Wire analyst → model: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6537",
+      "edgeIds": [
+        "e7"
+      ],
+      "taskId": "TASK-INTEGRATION-6537",
+      "message": "Wire analyst → operator: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

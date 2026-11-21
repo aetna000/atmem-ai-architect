@@ -1,0 +1,283 @@
+{
+  "message": "We\u2019ll build an Azure invoice workflow that extracts the four fields, requires reviewer approval and protects against duplicate delivery. I\u2019ve sketched the application and existing accounting connection; we need the data location before choosing an Azure region.\n\n**Which country should invoices and their extracted data stay in\u2014for example, Australia, or \u201cnot sure\u201d?**",
+  "followUp": {
+    "question": "Which country should invoices and their extracted data stay in\u2014for example, Australia, or \u201cnot sure\u201d?",
+    "why": "This determines regional placement and the residency review for storage, processing, backups and the existing accounting connection.",
+    "example": "Australia; flag any processing outside Australia for review.",
+    "topic": "data"
+  },
+  "phase": "Architecture",
+  "proposal": {
+    "baseRevision": 1,
+    "title": "Azure invoice intake, review and controlled delivery",
+    "body": "Propose one composed invoice application with an existing browser client and existing accounting API. Includes PDF upload, asynchronous extraction, durable review state, approval and duplicate-safe delivery. Regional placement awaits the country decision. Proposed first-version boundary: invoice extraction and approved accounting submission; additional accounting actions are not assumed. Native accounting compatibility, identity, model policy, recovery and destination deployment require independent qualification.",
+    "next": {
+      "version": 1,
+      "revision": 1,
+      "name": "Asynchronous document intake",
+      "provider": "azure",
+      "requirements": "Users upload PDF invoices. Extract the supplier, invoice date, total and currency into a review queue. Delivery can repeat; retries must not create duplicate invoices. A reviewer approves a result before it is sent to our existing accounting API. Use Azure. Recommend a coherent system and the engineering choices. Ask only a small material business question when needed; do not make me configure the system.",
+      "nodes": [
+        {
+          "id": "invoice-browser",
+          "type": "resource",
+          "position": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "data": {
+            "label": "Upload and review in browser",
+            "kind": "tool",
+            "provider": "tools",
+            "description": "Existing browser used by uploaders and reviewers; outside provisioning scope. The application authenticates staff and enforces separate upload and reviewer permissions.",
+            "config": {
+              "region": "Existing client location",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "deploymentMode": "reference",
+            "poc": true,
+            "role": "app",
+            "topologyGroup": "Staff access",
+            "service": "Web browser",
+            "binding": "web-browser"
+          }
+        },
+        {
+          "id": "invoice-workflow",
+          "type": "resource",
+          "position": {
+            "x": 440.0,
+            "y": 0.0
+          },
+          "data": {
+            "label": "Invoice intake and approval",
+            "kind": "resource",
+            "provider": "azure",
+            "description": "Composed invoice-workflow deployment unit on Azure Container Apps, owning browser/API, background worker and isolated PDF/OCR parser. Internal generated resources include Azure Database for PostgreSQL durable queue/outbox and review state, private versioned Azure Blob Storage originals, staff sign-in and separate workload identities, regional model integration, and operating tasks/monitoring. Extract supplier, invoice date, total and currency with source evidence; incomplete or failed extraction stays visible for review. Commit workflow state and queued work transactionally; use bounded retries and recover stalled work. Bind reviewer approval to the exact result revision and delivery payload. Send with a stable operation identity; uncertain accounting outcomes are fenced for reconciliation rather than blindly resent. Accounting must independently pass the normalized-action-v1 and durable idempotency contract. Parser isolation, destination model policy, retention, backup/restore, operating ownership and native regional availability require qualification; this diagram proves no deployment.",
+            "config": {
+              "region": "To be selected after country decision",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "deploymentMode": "create",
+            "poc": true,
+            "role": "app",
+            "topologyGroup": "Invoice processing",
+            "service": "Azure Container Apps",
+            "implementation": "invoice-workflow"
+          }
+        },
+        {
+          "id": "accounting-api",
+          "type": "resource",
+          "position": {
+            "x": 880.0,
+            "y": 0.0
+          },
+          "data": {
+            "label": "Existing accounting API",
+            "kind": "tool",
+            "provider": "tools",
+            "description": "Client-owned existing accounting service, referenced without recreation or modification. Receives only approved invoice payloads through an authenticated adapter. Native API mapping, durable idempotency, result lookup/reconciliation and permission scope remain unverified; the normalized contract alone does not establish compatibility.",
+            "config": {
+              "region": "Existing location; residency to confirm",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "deploymentMode": "reference",
+            "poc": true,
+            "role": "app",
+            "topologyGroup": "Accounting boundary",
+            "service": "Existing accounting API",
+            "binding": "existing-service"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "browser-invoice-workflow",
+          "source": "invoice-browser",
+          "target": "invoice-workflow",
+          "type": "smoothstep",
+          "label": "HTTPS: upload PDF, review evidence, approve; receive status",
+          "integration": "browser-https"
+        },
+        {
+          "id": "workflow-accounting-api",
+          "source": "invoice-workflow",
+          "target": "accounting-api",
+          "type": "smoothstep",
+          "label": "Authenticated approved submission; stable operation ID and reconciliation",
+          "integration": "approved-accounting-api"
+        }
+      ]
+    }
+  },
+  "requirementDrafts": [
+    {
+      "rationale": "Makes the requested extraction observable and prevents incomplete or unsupported values from silently becoming accounting records.",
+      "basis": "\u201cUsers upload PDF invoices. Extract the supplier, invoice date, total and currency into a review queue.\u201d Source evidence and explicit failure states are engineering proposals.",
+      "id": "ai-invoice-extraction",
+      "statement": "Accept uploaded PDF invoices, asynchronously extract supplier, invoice date, total and currency, and persist results in a review queue. Proposed acceptance: show supporting evidence and expose incomplete extraction or processing failures for correction.",
+      "kind": "functional",
+      "category": "other",
+      "priority": "must",
+      "links": [
+        "invoice-browser",
+        "invoice-workflow"
+      ]
+    },
+    {
+      "rationale": "Prevents model output or a later edit from bypassing the user's required human approval.",
+      "basis": "\u201cA reviewer approves a result before it is sent to our existing accounting API.\u201d Revision-bound approval and server authorization are proposed controls.",
+      "id": "ai-invoice-approval",
+      "statement": "Permit accounting submission only after an authorized reviewer approves the exact result revision and delivery payload; changes invalidate that approval. Enforce reviewer permissions on the server and retain the approval and delivery history.",
+      "kind": "functional",
+      "category": "security",
+      "priority": "must",
+      "links": [
+        "invoice-workflow",
+        "accounting-api"
+      ]
+    },
+    {
+      "rationale": "A timeout can occur after accounting accepts an invoice; blind retries can create duplicates even when the local queue deduplicates jobs.",
+      "basis": "\u201cDelivery can repeat; retries must not create duplicate invoices.\u201d Durable operation identity and uncertain-outcome reconciliation are proposed engineering controls, supported by the supplied durable-approval-and-uncertain-outcome practice.",
+      "id": "ai-invoice-idempotency",
+      "statement": "Repeated delivery and worker recovery must not create duplicate accounting invoices. Persist stable operation and payload identities, require a qualified destination idempotency contract, and reconcile uncertain external outcomes before allowing another submission.",
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "priority": "must",
+      "links": [
+        "invoice-workflow",
+        "accounting-api"
+      ]
+    }
+  ],
+  "decisionUpdates": [
+    {
+      "subject": "platform.cloud",
+      "value": "azure",
+      "sourceText": "Use Azure."
+    }
+  ],
+  "contextUsed": {
+    "status": "ready",
+    "enabled": true,
+    "engine": "AtMem 2.3.10 core SDK",
+    "recordsUsed": [],
+    "knowledgeRecordIds": [
+      "rec_646317615895417a8b59e704b491681f",
+      "rec_51aa09e9ebcc4800b3de50e27efcc96c",
+      "rec_4c4e93ec5a774c08aea18b85382115ad",
+      "rec_5508ead9c99141f399bf9379eeb6a03a",
+      "rec_aa826b5fbd514988af8aaf13e5030b6f",
+      "rec_b306754092534d9b9a862021c34b9ed5",
+      "rec_a12b36987dd14c52af0acfd9f2fb22e8"
+    ],
+    "skills": [
+      {
+        "id": "composition",
+        "name": "Architecture composition and engineering judgment",
+        "provider": "all",
+        "stages": [
+          "discover",
+          "design",
+          "review",
+          "deploy"
+        ],
+        "version": "1.0.0",
+        "digest": "df2291a4e0d48a979d4f7c6e99da046bdedfc0e54d41e0b5379b2bc8086b5be6",
+        "summary": "Choose and compose blocks through responsibility, contracts, state, identity, failure modes and trade-offs; verify the complete system.",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "architecture",
+        "name": "AI architecture and discovery",
+        "provider": "all",
+        "stages": [
+          "discover",
+          "design",
+          "review"
+        ],
+        "version": "1.3.0",
+        "digest": "c5cc1056e3ed9a00799882f3a7f4ff2e957e4941fe10e4fd865f5c02ceb01058",
+        "summary": "Clarify outcome, users, existing systems, data ownership and constraints. Evolve the diagram incrementally. Derive functional requirements and propose measurable quality targets as assumptions needing confirmation. Compare clouds against the actual requirements; do not assume an enterprise identity provider or a vendor. Keep proposed and accepted decisions distinct.",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "azure",
+        "name": "Azure architecture guidance",
+        "provider": "azure",
+        "stages": [
+          "design",
+          "review",
+          "estimate",
+          "deploy"
+        ],
+        "version": "1.0.0",
+        "digest": "74e6109d663b16e00202c05700dd4bcb9f7ea379f6561806610392af67762145",
+        "summary": "Check Microsoft 365/Entra integration only when relevant to the user. Match model, retrieval, data and runtime services to requirements. Evaluate redundancy, regional availability, identity and recovery separately. The pinned Azure reliability reference specifically covers Functions and App Service; do not extend its validation claims to other services.",
+        "source": "https://raw.githubusercontent.com/microsoft/azure-skills/3c89228484f4a9241d255ec7c703976d13277c2d/skills/azure-reliability/SKILL.md",
+        "reference": {
+          "id": "azure",
+          "repository": "microsoft/azure-skills",
+          "commit": "3c89228484f4a9241d255ec7c703976d13277c2d",
+          "sourcePath": "skills/azure-reliability/SKILL.md",
+          "url": "https://raw.githubusercontent.com/microsoft/azure-skills/3c89228484f4a9241d255ec7c703976d13277c2d/skills/azure-reliability/SKILL.md",
+          "sha256": "a70f0a799c8f3cf805ada741e82af31a149b57cb1e2388d7805036492cdceb71",
+          "file": "agent-skills/upstream/azure/SKILL.md",
+          "status": "reference-only",
+          "note": "Imported source reference, not an enabled script/tool package. AtMem AI Architect specialist guidance is reviewed separately; referenced upstream companion files are not bundled.",
+          "integrity": true
+        },
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      }
+    ],
+    "tools": [],
+    "boundary": "AtMem AI Architect \u2192 native client",
+    "contextDigest": "a6d9a4575375adbef32f468bd5a0819c102b653dd060603e48f6d9cfb772012e",
+    "projectId": "evaluation-azure-03-document-intake",
+    "responseRepairAttempts": 0,
+    "modelResponseEncodings": [
+      "compact_patch"
+    ],
+    "modelResponseJsonBytes": 8477
+  },
+  "priceQuotes": []
+}

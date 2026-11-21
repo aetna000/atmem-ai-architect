@@ -1,0 +1,19 @@
+test_completion_requires_verified_exact_snapshot_and_records_operator_without_sending (__main__.InvoiceOperatorTests.test_completion_requires_verified_exact_snapshot_and_records_operator_without_sending) ... ok
+test_expiry_removes_exact_scope_data_and_queue_history_and_preserves_young_and_other_account (__main__.InvoiceOperatorTests.test_expiry_removes_exact_scope_data_and_queue_history_and_preserves_young_and_other_account) ... ok
+test_live_lease_blocks_purge_and_rolls_back_without_erasing_evidence (__main__.InvoiceOperatorTests.test_live_lease_blocks_purge_and_rolls_back_without_erasing_evidence) ... ok
+test_membership_changes_are_explicit_and_runtime_roles_cannot_operate_or_purge (__main__.InvoiceOperatorTests.test_membership_changes_are_explicit_and_runtime_roles_cannot_operate_or_purge) ... ok
+test_restore_quarantines_stale_delivery_in_bounded_progressing_batches_without_replaying (__main__.InvoiceOperatorTests.test_restore_quarantines_stale_delivery_in_bounded_progressing_batches_without_replaying) ... ERROR
+
+======================================================================
+ERROR: test_restore_quarantines_stale_delivery_in_bounded_progressing_batches_without_replaying (__main__.InvoiceOperatorTests.test_restore_quarantines_stale_delivery_in_bounded_progressing_batches_without_replaying)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/invoice_operations_acceptance.py", line 55, in test_restore_quarantines_stale_delivery_in_bounded_progressing_batches_without_replaying
+    self.assertEqual(receipt['resetExtractions'],1);self.assertEqual(self.store.get(self.user,processing)['state'],'pending')
+                     ~~~~~~~^^^^^^^^^^^^^^^^^^^^
+KeyError: 'resetExtractions'
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.784s
+
+FAILED (errors=1)

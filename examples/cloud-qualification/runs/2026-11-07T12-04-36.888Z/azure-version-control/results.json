@@ -1,0 +1,55 @@
+{
+  "provider": "azure-version-control",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Repository and branch permissions enforced",
+    "Untrusted repository instructions cannot trigger execution",
+    "Findings link to lines in the reviewed commit",
+    "A changed head commit invalidates the review",
+    "Retry does not post duplicate comments and posting requires approval"
+  ],
+  "components": [
+    {
+      "id": "repo",
+      "service": "Existing Git host (to be confirmed)"
+    },
+    {
+      "id": "queue",
+      "service": "Azure Service Bus (queue)"
+    },
+    {
+      "id": "orchestrator",
+      "service": "Azure Functions"
+    },
+    {
+      "id": "vault",
+      "service": "Azure Key Vault"
+    },
+    {
+      "id": "guard",
+      "service": "Azure AI Content Safety (Prompt Shields)"
+    },
+    {
+      "id": "model",
+      "service": "Azure OpenAI Service (Azure AI Foundry deployment)"
+    },
+    {
+      "id": "drafts",
+      "service": "Azure Cosmos DB"
+    },
+    {
+      "id": "reviewer"
+    },
+    {
+      "id": "insights",
+      "service": "Azure Monitor + Application Insights"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

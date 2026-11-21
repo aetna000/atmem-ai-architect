@@ -1,0 +1,34 @@
+test_concurrent_repeated_approval_enqueues_one_dispatch_and_one_audit_event (__main__.DurablePostgresTests.test_concurrent_repeated_approval_enqueues_one_dispatch_and_one_audit_event) ... ok
+test_crashed_dispatch_lease_also_requires_a_verified_replay_contract (__main__.DurablePostgresTests.test_crashed_dispatch_lease_also_requires_a_verified_replay_contract) ... ok
+test_cross_account_reads_audit_and_approvals_cannot_observe_an_operation (__main__.DurablePostgresTests.test_cross_account_reads_audit_and_approvals_cannot_observe_an_operation) ... ok
+test_edit_requires_current_revision_and_approval_binds_that_exact_snapshot (__main__.DurablePostgresTests.test_edit_requires_current_revision_and_approval_binds_that_exact_snapshot) ... ok
+test_live_application_role_revocation_invalidates_queued_approval (__main__.DurablePostgresTests.test_live_application_role_revocation_invalidates_queued_approval) ... ok
+test_lost_external_acknowledgement_never_becomes_an_automatic_unverified_retry (__main__.DurablePostgresTests.test_lost_external_acknowledgement_never_becomes_an_automatic_unverified_retry) ... ok
+test_model_role_or_approval_text_does_not_create_dispatch_authority (__main__.DurablePostgresTests.test_model_role_or_approval_text_does_not_create_dispatch_authority) ... ok
+test_nonfinite_output_and_raw_provider_error_text_are_rejected_without_audit_leaks (__main__.DurablePostgresTests.test_nonfinite_output_and_raw_provider_error_text_are_rejected_without_audit_leaks) ... ok
+test_only_one_of_twenty_workers_can_claim_and_stale_completion_is_fenced (__main__.DurablePostgresTests.test_only_one_of_twenty_workers_can_claim_and_stale_completion_is_fenced) ... ok
+test_poison_extraction_is_bounded_audited_and_only_explicitly_recoverable (__main__.DurablePostgresTests.test_poison_extraction_is_bounded_audited_and_only_explicitly_recoverable) ... ok
+test_post_queue_fault_rolls_back_both_operation_and_real_deferred_job (__main__.DurablePostgresTests.test_post_queue_fault_rolls_back_both_operation_and_real_deferred_job) ... ok
+test_queue_configuration_rejects_native_notification_overflow_and_inherited_queueing_lock (__main__.DurablePostgresTests.test_queue_configuration_rejects_native_notification_overflow_and_inherited_queueing_lock) ... ok
+test_revoking_an_uncertain_dispatch_approver_cannot_reset_it_into_another_send (__main__.DurablePostgresTests.test_revoking_an_uncertain_dispatch_approver_cannot_reset_it_into_another_send) ... FAIL
+test_same_stable_identity_cannot_silently_point_to_a_changed_original (__main__.DurablePostgresTests.test_same_stable_identity_cannot_silently_point_to_a_changed_original) ... ok
+test_supervisor_required_for_account_changes (__main__.DurablePostgresTests.test_supervisor_required_for_account_changes) ... ok
+test_twenty_concurrent_duplicate_deliveries_create_one_operation_and_one_real_queue_row (__main__.DurablePostgresTests.test_twenty_concurrent_duplicate_deliveries_create_one_operation_and_one_real_queue_row) ... ok
+test_unknown_or_inactive_membership_denies_even_with_a_well_formed_identity (__main__.DurablePostgresTests.test_unknown_or_inactive_membership_denies_even_with_a_well_formed_identity) ... ok
+
+======================================================================
+FAIL: test_revoking_an_uncertain_dispatch_approver_cannot_reset_it_into_another_send (__main__.DurablePostgresTests.test_revoking_an_uncertain_dispatch_approver_cannot_reset_it_into_another_send)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/durable_postgres_acceptance.py", line 127, in test_revoking_an_uncertain_dispatch_approver_cannot_reset_it_into_another_send
+    self.assertEqual(self.store.get(self.user,operation)['state'],'unknown')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'review' != 'unknown'
+- review
++ unknown
+
+
+----------------------------------------------------------------------
+Ran 17 tests in 1.340s
+
+FAILED (failures=1)

@@ -1,0 +1,21 @@
+Hi! What would you like to build? For example, a RAG system over your company's documents, or a chatbot for your team. “Not sure” is always a fine answer along the way.
+
+Use IBM Cloud for this synthetic architecture qualification. Build an authenticated conversational assistant for synthetic users. Include an application, per-user conversation state, model runtime, bounded context and an escalation path. No external actions in this first test. Acceptance criteria: One user cannot read another conversation; Context and response sizes are bounded; Model outage produces a recoverable response; Deleting a conversation removes its stored context; Escalation retains the approved conversation context. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.
+
+I've drawn your authenticated assistant on IBM Cloud with real services. Users sign in through App ID, and the app runs on Code Engine. Each user's conversations are stored in Cloudant, answers come from watsonx.ai, and escalations go to a human through an Event Streams topic. Context limits and the model-outage fallback live inside the app, not in separate services. The board doesn't yet prove that these services work together, that a region is available or that your account has access. Nothing is deployed.
+
+For the first local test, we'd swap watsonx.ai for a scripted fake model. That lets us check your five acceptance criteria: one user can't open another user's chats, context and replies stay within size limits, a simulated model outage gives a response the user can recover from, deleting a chat removes its stored context, and escalation keeps only the approved context. A fake model can't show answer quality, real model access, quotas or speed, so those need a separate test against a real watsonx.ai model in your IBM account.
+
+The design is AI-generated, not checked for compatibility. The current export only generates infrastructure code (Terraform) for IBM object storage, so every other part of this design will need engineering work.
+
+Which country must the synthetic conversations stay in?skill: AI architecturenoted application, cloud+1 factAtMem: 0 records · 3 skills · unavailableObserved boundary: AtMem AI Architect → native client. Memory is scoped to you and this project; source data is not an instruction.Skill: AI architecture and discovery v1.2.0 · guidance; no cloud executionSkill: Infrastructure and DevOps handoff v1.1.0 · guidance; no cloud executionSkill: IBM Cloud architecture guidance v1.0.0 · guidance; no cloud execution
+
+Drew it: IBM Cloud authenticated conversational assistant (first sketch)
++ Synthetic user (browser)
++ Sign-in
++ Assistant application
++6 moredrew 9 blockslogged ADR-002undo ↶
+
+Use the current emulation findings to propose a correction or the next test.
+
+Hmm, that didn't work: Provider request failed. Check its official CLI sign-in, model access and usage limits. No changes were applied.Fix connection

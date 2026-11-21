@@ -1,0 +1,575 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "reviewer",
+      "address": "block_7265766965776572",
+      "label": "Reviewer",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "qualification-app"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "synthetic-inventory",
+      "address": "block_73796e7468657469632d696e76656e746f7279",
+      "label": "Synthetic inventory fixtures",
+      "provider": "tools",
+      "service": "Storage or existing data connector",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "asset-inventory",
+      "address": "block_61737365742d696e76656e746f7279",
+      "label": "Cloud inventory API reference",
+      "provider": "gcp",
+      "service": "Cloud Asset Inventory",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "qualification-app"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "qualification-app",
+      "address": "block_7175616c696669636174696f6e2d617070",
+      "label": "Analysis and review application",
+      "provider": "gcp",
+      "service": "Cloud Run",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "reviewer",
+        "synthetic-inventory",
+        "proposal-model",
+        "drift-schedule"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "proposal-model",
+      "address": "block_70726f706f73616c2d6d6f64656c",
+      "label": "Correction proposal inference",
+      "provider": "gcp",
+      "service": "Vertex AI",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "qualification-app"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "plan-worker",
+      "address": "block_706c616e2d776f726b6572",
+      "label": "Isolated plan generation",
+      "provider": "gcp",
+      "service": "Cloud Build",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "qualification-app"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "review-artifacts",
+      "address": "block_7265766965772d617274696661637473",
+      "label": "Versioned review evidence",
+      "provider": "gcp",
+      "service": "Google Cloud Storage",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "plan-worker",
+        "qualification-app"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "drift-schedule",
+      "address": "block_64726966742d7363686564756c65",
+      "label": "Recurring drift checks",
+      "provider": "gcp",
+      "service": "Cloud Scheduler",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "audit-logs",
+      "address": "block_61756469742d6c6f6773",
+      "label": "Audit and failure evidence",
+      "provider": "gcp",
+      "service": "Cloud Logging",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "qualification-app",
+        "plan-worker",
+        "review-artifacts",
+        "drift-schedule"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "review-request",
+      "source": "reviewer",
+      "target": "qualification-app",
+      "data": "Authenticated HTTPS: request, review decision; identity integration unresolved",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "review-response",
+      "source": "qualification-app",
+      "target": "reviewer",
+      "data": "Return findings, affected-resource diff, estimated costs and approval status",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "fixture-input",
+      "source": "synthetic-inventory",
+      "target": "qualification-app",
+      "data": "Validated synthetic baseline and drift snapshots",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "inventory-read",
+      "source": "qualification-app",
+      "target": "asset-inventory",
+      "data": "Future scoped read-only asset list/search; fresh inventory for drift",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "model-request",
+      "source": "qualification-app",
+      "target": "proposal-model",
+      "data": "Vertex AI inference API: bounded data and policy findings",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "model-response",
+      "source": "proposal-model",
+      "target": "qualification-app",
+      "data": "Untrusted structured proposal; validate before planning",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "planning-request",
+      "source": "qualification-app",
+      "target": "plan-worker",
+      "data": "Cloud Build API: fixed pipeline and validated template parameters",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "planning-artifacts",
+      "source": "plan-worker",
+      "target": "review-artifacts",
+      "data": "Write versioned plan, diff, estimate assumptions and artifact digests",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "review-state",
+      "source": "qualification-app",
+      "target": "review-artifacts",
+      "data": "Read evidence; conditionally record digest-bound approval or invalidation",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "drift-trigger",
+      "source": "drift-schedule",
+      "target": "qualification-app",
+      "data": "OIDC-authenticated HTTPS: trigger fresh inventory comparison",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "application-audit",
+      "source": "qualification-app",
+      "target": "audit-logs",
+      "data": "Structured review, denial, drift and policy audit events",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "build-audit",
+      "source": "plan-worker",
+      "target": "audit-logs",
+      "data": "Build execution logs and planning failures",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "storage-audit",
+      "source": "review-artifacts",
+      "target": "audit-logs",
+      "data": "Configure object access and administration audit logs",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "schedule-audit",
+      "source": "drift-schedule",
+      "target": "audit-logs",
+      "data": "Invocation success and failure logs",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Reviewer: Existing — reference/import plan needed.",
+    "Synthetic inventory fixtures: Implementation needed.",
+    "Cloud inventory API reference: Existing — reference/import plan needed.",
+    "Analysis and review application: Implementation needed.",
+    "Correction proposal inference: Implementation needed.",
+    "Isolated plan generation: Implementation needed.",
+    "Versioned review evidence: Implementation needed.",
+    "Recurring drift checks: Implementation needed.",
+    "Audit and failure evidence: Implementation needed.",
+    "Wire reviewer → qualification-app: implement data flow, access policy and acceptance test.",
+    "Wire qualification-app → reviewer: implement data flow, access policy and acceptance test.",
+    "Wire synthetic-inventory → qualification-app: implement data flow, access policy and acceptance test.",
+    "Wire qualification-app → asset-inventory: implement data flow, access policy and acceptance test.",
+    "Wire qualification-app → proposal-model: implement data flow, access policy and acceptance test.",
+    "Wire proposal-model → qualification-app: implement data flow, access policy and acceptance test.",
+    "Wire qualification-app → plan-worker: implement data flow, access policy and acceptance test.",
+    "Wire plan-worker → review-artifacts: implement data flow, access policy and acceptance test.",
+    "Wire qualification-app → review-artifacts: implement data flow, access policy and acceptance test.",
+    "Wire drift-schedule → qualification-app: implement data flow, access policy and acceptance test.",
+    "Wire qualification-app → audit-logs: implement data flow, access policy and acceptance test.",
+    "Wire plan-worker → audit-logs: implement data flow, access policy and acceptance test.",
+    "Wire review-artifacts → audit-logs: implement data flow, access policy and acceptance test.",
+    "Wire drift-schedule → audit-logs: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "resource-block_7265766965776572",
+      "componentIds": [
+        "reviewer"
+      ],
+      "taskId": "TASK-RESOURCE-7265766965776572",
+      "message": "Reviewer: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_73796e7468657469632d696e76656e746f7279",
+      "componentIds": [
+        "synthetic-inventory"
+      ],
+      "taskId": "TASK-RESOURCE-73796e7468657469632d696e76656e746f7279",
+      "message": "Synthetic inventory fixtures: Implementation needed."
+    },
+    {
+      "id": "resource-block_61737365742d696e76656e746f7279",
+      "componentIds": [
+        "asset-inventory"
+      ],
+      "taskId": "TASK-RESOURCE-61737365742d696e76656e746f7279",
+      "message": "Cloud inventory API reference: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_7175616c696669636174696f6e2d617070",
+      "componentIds": [
+        "qualification-app"
+      ],
+      "taskId": "TASK-RESOURCE-7175616c696669636174696f6e2d617070",
+      "message": "Analysis and review application: Implementation needed."
+    },
+    {
+      "id": "resource-block_70726f706f73616c2d6d6f64656c",
+      "componentIds": [
+        "proposal-model"
+      ],
+      "taskId": "TASK-RESOURCE-70726f706f73616c2d6d6f64656c",
+      "message": "Correction proposal inference: Implementation needed."
+    },
+    {
+      "id": "resource-block_706c616e2d776f726b6572",
+      "componentIds": [
+        "plan-worker"
+      ],
+      "taskId": "TASK-RESOURCE-706c616e2d776f726b6572",
+      "message": "Isolated plan generation: Implementation needed."
+    },
+    {
+      "id": "resource-block_7265766965772d617274696661637473",
+      "componentIds": [
+        "review-artifacts"
+      ],
+      "taskId": "TASK-RESOURCE-7265766965772d617274696661637473",
+      "message": "Versioned review evidence: Implementation needed."
+    },
+    {
+      "id": "resource-block_64726966742d7363686564756c65",
+      "componentIds": [
+        "drift-schedule"
+      ],
+      "taskId": "TASK-RESOURCE-64726966742d7363686564756c65",
+      "message": "Recurring drift checks: Implementation needed."
+    },
+    {
+      "id": "resource-block_61756469742d6c6f6773",
+      "componentIds": [
+        "audit-logs"
+      ],
+      "taskId": "TASK-RESOURCE-61756469742d6c6f6773",
+      "message": "Audit and failure evidence: Implementation needed."
+    },
+    {
+      "id": "connection-7265766965772d72657175657374",
+      "edgeIds": [
+        "review-request"
+      ],
+      "taskId": "TASK-INTEGRATION-7265766965772d72657175657374",
+      "message": "Wire reviewer → qualification-app: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-7265766965772d726573706f6e7365",
+      "edgeIds": [
+        "review-response"
+      ],
+      "taskId": "TASK-INTEGRATION-7265766965772d726573706f6e7365",
+      "message": "Wire qualification-app → reviewer: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-666978747572652d696e707574",
+      "edgeIds": [
+        "fixture-input"
+      ],
+      "taskId": "TASK-INTEGRATION-666978747572652d696e707574",
+      "message": "Wire synthetic-inventory → qualification-app: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-696e76656e746f72792d72656164",
+      "edgeIds": [
+        "inventory-read"
+      ],
+      "taskId": "TASK-INTEGRATION-696e76656e746f72792d72656164",
+      "message": "Wire qualification-app → asset-inventory: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6d6f64656c2d72657175657374",
+      "edgeIds": [
+        "model-request"
+      ],
+      "taskId": "TASK-INTEGRATION-6d6f64656c2d72657175657374",
+      "message": "Wire qualification-app → proposal-model: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6d6f64656c2d726573706f6e7365",
+      "edgeIds": [
+        "model-response"
+      ],
+      "taskId": "TASK-INTEGRATION-6d6f64656c2d726573706f6e7365",
+      "message": "Wire proposal-model → qualification-app: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-706c616e6e696e672d72657175657374",
+      "edgeIds": [
+        "planning-request"
+      ],
+      "taskId": "TASK-INTEGRATION-706c616e6e696e672d72657175657374",
+      "message": "Wire qualification-app → plan-worker: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-706c616e6e696e672d617274696661637473",
+      "edgeIds": [
+        "planning-artifacts"
+      ],
+      "taskId": "TASK-INTEGRATION-706c616e6e696e672d617274696661637473",
+      "message": "Wire plan-worker → review-artifacts: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-7265766965772d7374617465",
+      "edgeIds": [
+        "review-state"
+      ],
+      "taskId": "TASK-INTEGRATION-7265766965772d7374617465",
+      "message": "Wire qualification-app → review-artifacts: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-64726966742d74726967676572",
+      "edgeIds": [
+        "drift-trigger"
+      ],
+      "taskId": "TASK-INTEGRATION-64726966742d74726967676572",
+      "message": "Wire drift-schedule → qualification-app: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6170706c69636174696f6e2d6175646974",
+      "edgeIds": [
+        "application-audit"
+      ],
+      "taskId": "TASK-INTEGRATION-6170706c69636174696f6e2d6175646974",
+      "message": "Wire qualification-app → audit-logs: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6275696c642d6175646974",
+      "edgeIds": [
+        "build-audit"
+      ],
+      "taskId": "TASK-INTEGRATION-6275696c642d6175646974",
+      "message": "Wire plan-worker → audit-logs: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-73746f726167652d6175646974",
+      "edgeIds": [
+        "storage-audit"
+      ],
+      "taskId": "TASK-INTEGRATION-73746f726167652d6175646974",
+      "message": "Wire review-artifacts → audit-logs: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-7363686564756c652d6175646974",
+      "edgeIds": [
+        "schedule-audit"
+      ],
+      "taskId": "TASK-INTEGRATION-7363686564756c652d6175646974",
+      "message": "Wire drift-schedule → audit-logs: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

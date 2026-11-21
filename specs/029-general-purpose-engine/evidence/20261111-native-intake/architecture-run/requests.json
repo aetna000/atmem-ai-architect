@@ -1,0 +1,42 @@
+[
+  {
+    "action": "create",
+    "payload": {
+      "projectId": "9222d5c5-8a90-45fe-8c89-97201cc86ae2",
+      "model": "gpt-6.1-sol",
+      "effort": "high"
+    }
+  },
+  {
+    "action": "start",
+    "payload": {
+      "projectId": "9222d5c5-8a90-45fe-8c89-97201cc86ae2",
+      "sessionId": "3081bdec-d573-4577-998f-f7976d5fb084",
+      "text": "Build a small internal tool where our team pastes a support ticket and gets a short summary, topic and suggested urgency. A person reviews the suggestion; it must not send replies or change customer records.\nUse AWS.\nTen staff members use it after signing in.\nWe paste synthetic or redacted text, up to 20 KB per ticket. Do not retain ticket text after processing.\nAbout 200 tickets per working day; bursts of five simultaneous requests.\nOur users are in Australia; use an Australian region where the chosen services support it. Flag anything that would leave Australia.\nPropose a modest starting footprint and show sourced costs or explicit unknowns. Do not invent a price.\nReturn summary, topic, urgency and uncertainty as a validated JSON response. Malformed input, denied users and model failures must be handled safely.\n"
+    }
+  },
+  {
+    "action": "steer",
+    "payload": {
+      "projectId": "9222d5c5-8a90-45fe-8c89-97201cc86ae2",
+      "sessionId": "3081bdec-d573-4577-998f-f7976d5fb084",
+      "text": "Also let reviewers clear the suggestion, and make it clear when the suggestion is uncertain."
+    }
+  },
+  {
+    "action": "steer",
+    "payload": {
+      "projectId": "9222d5c5-8a90-45fe-8c89-97201cc86ae2",
+      "sessionId": "3081bdec-d573-4577-998f-f7976d5fb084",
+      "text": "We will not connect this tool to our help desk. Keep our existing help desk unchanged."
+    }
+  },
+  {
+    "action": "steer",
+    "payload": {
+      "projectId": "9222d5c5-8a90-45fe-8c89-97201cc86ae2",
+      "sessionId": "3081bdec-d573-4577-998f-f7976d5fb084",
+      "text": "Please include simple instructions for the person who will run and maintain this tool."
+    }
+  }
+]

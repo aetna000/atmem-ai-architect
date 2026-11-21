@@ -1,0 +1,20 @@
+flowchart TD
+    Client[Client describes the outcome] --> Consult[Listen and clarify\nGoals, constraints and existing systems]
+    Constitution[Product constitution\nTrust through evidence] --> Consult
+    Consult --> Project[Private project memory\nRequirements, decisions and history]
+    Consult --> Plan[Architect plans the actual system]
+    Sources[Maintained public projects\nand primary documentation] --> Review[Review practices and provenance\nVersions, applicability and limits]
+    Review --> Knowledge[AtMem engineering knowledge\nCurated patterns and evidence]
+    Knowledge --> Retrieve[Retrieve relevant proven practices]
+    Retrieve --> Plan
+    Project --> Plan
+    Skills[Architecture, cloud, security,\nDevOps and FinOps skills] --> Plan
+    Plan --> Build[Compose a tailored implementation\nResources, code and connections]
+    Build --> Verify[Independent verification\nSchemas, lint, policies, mocks and runtime tests]
+    Verify -->|Findings| Repair[Repair generator or implementation\nPreserve requirements and controls]
+    Repair --> Build
+    Verify -->|Checks pass for the declared scope| Package[Consistent delivery package\nTerraform, application artifacts, Spec Kit and evidence]
+    Package --> ClientReview[Client and engineer review\nSupply destination inputs and approve next steps]
+    ClientReview --> Operations[Separately authorized account plan,\nstaging deployment and operational validation]
+    Verify --> Lessons[Reviewed lessons\nRetain evidence and applicability limits]
+    Lessons --> Review

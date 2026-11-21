@@ -1,0 +1,538 @@
+{
+  "format": "atmem.ai-architect.project",
+  "formatVersion": "2.3.0",
+  "meta": {
+    "id": "bde821d9-887a-4a66-8969-0f1df301d91a",
+    "name": "AWS incident explainer (logs + traces)",
+    "createdAt": "2026-11-07T12:06:15.238Z",
+    "updatedAt": "2026-11-07T12:06:15.238Z",
+    "revision": 2,
+    "generator": "atmem-ai-architect 0.2.0"
+  },
+  "design": {
+    "provider": "aws",
+    "nodes": [
+      {
+        "id": "services",
+        "type": "resource",
+        "position": {
+          "x": 50,
+          "y": 330
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Synthetic services",
+          "provider": "tools",
+          "kind": "source",
+          "description": "Existing synthetic workload emitting logs and OpenTelemetry traces. Outside provisioning scope.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "poc": true
+        }
+      },
+      {
+        "id": "collector",
+        "type": "resource",
+        "position": {
+          "x": 470,
+          "y": 330
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "ADOT Collector",
+          "provider": "aws",
+          "kind": "stream",
+          "description": "Receives OTLP logs and traces. Sends traces to X-Ray and logs to Firehose.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "ingest",
+          "service": "AWS Distro for OpenTelemetry"
+        }
+      },
+      {
+        "id": "xray",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 50
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Trace store",
+          "provider": "aws",
+          "kind": "resource",
+          "description": "Stores distributed traces. Attributes are redacted at the collector before export.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "data",
+          "service": "AWS X-Ray"
+        }
+      },
+      {
+        "id": "firehose",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 610
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Log delivery stream",
+          "provider": "aws",
+          "kind": "stream",
+          "description": "Buffers log records and calls the redaction transform before delivery.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "ingest",
+          "service": "Amazon Data Firehose"
+        }
+      },
+      {
+        "id": "redact",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 340
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Redaction transform",
+          "provider": "aws",
+          "kind": "guard",
+          "description": "Applies the rule-based redaction rules (still to be confirmed) and tags records as untrusted text. Owns its role and logs.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "guard",
+          "service": "AWS Lambda"
+        }
+      },
+      {
+        "id": "evidence",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 620
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Redacted evidence archive",
+          "provider": "aws",
+          "kind": "history",
+          "description": "Private, encrypted, versioned store for redacted log batches. This is the evidence of record.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "data",
+          "service": "Amazon S3"
+        }
+      },
+      {
+        "id": "search",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 900
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Log search index",
+          "provider": "aws",
+          "kind": "resource",
+          "description": "Searchable index of redacted logs, keyed by trace ID and record ID.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "index",
+          "service": "Amazon OpenSearch Service"
+        }
+      },
+      {
+        "id": "analyzer",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 1160
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Incident analysis runtime",
+          "provider": "aws",
+          "kind": "agent",
+          "description": "Correlates X-Ray traces with OpenSearch hits for an incident window. Sends the evidence to the model as quoted data and returns an explanation that cites trace and record IDs, or abstains. This application code is not yet generated.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "app",
+          "service": "AWS Lambda"
+        }
+      },
+      {
+        "id": "guardrails",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 1180
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Prompt/answer guardrail",
+          "provider": "aws",
+          "kind": "guard",
+          "description": "Filters prompt attacks and sensitive information in model input and output. The configuration still needs to be defined.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "guard",
+          "service": "Amazon Bedrock Guardrails"
+        }
+      },
+      {
+        "id": "bedrock",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 1460
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Foundation model",
+          "provider": "aws",
+          "kind": "predict",
+          "description": "Direct foundation model through Converse. The model ID, access, region and quotas are unverified.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "poc": true,
+          "binding": "aws-bedrock-model",
+          "role": "llm",
+          "service": "Amazon Bedrock"
+        }
+      },
+      {
+        "id": "api",
+        "type": "resource",
+        "position": {
+          "x": 470,
+          "y": 1160
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Operator API",
+          "provider": "aws",
+          "kind": "tool",
+          "description": "IAM-authenticated HTTP API for incident questions. No anonymous access.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "app",
+          "service": "Amazon API Gateway"
+        }
+      },
+      {
+        "id": "operator",
+        "type": "resource",
+        "position": {
+          "x": 50,
+          "y": 1160
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "On-call operator",
+          "provider": "tools",
+          "kind": "source",
+          "description": "Existing operator identity. Outside provisioning scope.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "poc": true,
+          "binding": "aws-iam-principal",
+          "role": "human"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "source": "services",
+        "target": "collector",
+        "type": "smoothstep",
+        "label": "OTLP logs + traces"
+      },
+      {
+        "id": "e2",
+        "source": "collector",
+        "target": "xray",
+        "type": "smoothstep",
+        "label": "redacted spans"
+      },
+      {
+        "id": "e3",
+        "source": "collector",
+        "target": "firehose",
+        "type": "smoothstep",
+        "label": "log records"
+      },
+      {
+        "id": "e4",
+        "source": "firehose",
+        "target": "redact",
+        "type": "smoothstep",
+        "label": "transform invoke"
+      },
+      {
+        "id": "e5",
+        "source": "firehose",
+        "target": "evidence",
+        "type": "smoothstep",
+        "label": "redacted batches"
+      },
+      {
+        "id": "e6",
+        "source": "firehose",
+        "target": "search",
+        "type": "smoothstep",
+        "label": "redacted index docs"
+      },
+      {
+        "id": "e7",
+        "source": "operator",
+        "target": "api",
+        "type": "smoothstep",
+        "label": "ask about incident (SigV4)",
+        "access": "api-invoke"
+      },
+      {
+        "id": "e8",
+        "source": "api",
+        "target": "analyzer",
+        "type": "smoothstep",
+        "label": "invoke; returns cited explanation"
+      },
+      {
+        "id": "e9",
+        "source": "analyzer",
+        "target": "xray",
+        "type": "smoothstep",
+        "label": "get traces by window"
+      },
+      {
+        "id": "e10",
+        "source": "analyzer",
+        "target": "search",
+        "type": "smoothstep",
+        "label": "query by trace ID"
+      },
+      {
+        "id": "e11",
+        "source": "analyzer",
+        "target": "guardrails",
+        "type": "smoothstep",
+        "label": "apply guardrail"
+      },
+      {
+        "id": "e12",
+        "source": "analyzer",
+        "target": "bedrock",
+        "type": "smoothstep",
+        "label": "Converse (evidence as data)",
+        "integration": "bedrock-converse"
+      }
+    ]
+  },
+  "discovery": {
+    "problem": "",
+    "brief": {
+      "application": "Use AWS for this synthetic architecture qualification. Correlate synthetic logs and distributed traces to explain a service incident. Include collection, redaction, storage/search, an AI analysis runtime and an operator-facing answer with source evidence. Treat log text as untrusted. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+      "cloud": "AWS"
+    },
+    "facts": [
+      {
+        "id": "fact-020f6713",
+        "name": "cloud.preference",
+        "value": "aws",
+        "unit": "provider",
+        "text": "Use AWS for this synthetic architecture qualification. Correlate synthetic logs and distributed traces to explain a service incident. Include collection, redaction, storage/search, an AI analysis runtime and an operator-facing answer with source evidence. Treat log text as untrusted. Draw the comple",
+        "madeAt": "2026-11-07"
+      }
+    ],
+    "workflow": "knowledge-assistant",
+    "asked": [],
+    "lastAsked": {
+      "id": "knowledge-assistant:0",
+      "topic": "data",
+      "question": "Where do the files live, and roughly how many are there?",
+      "beginner": "For example “SharePoint and a shared drive, about 20,000 files”.",
+      "why": "It shapes the RAG design."
+    }
+  },
+  "requirements": [
+    {
+      "id": "req-1db3fa00",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Every answer shows its sources",
+      "priority": "should",
+      "status": "open",
+      "source": "user",
+      "links": []
+    },
+    {
+      "id": "ai-redact-before-store",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Proposed: sensitive fields are redacted from logs and trace attributes before they reach storage, search or the model.",
+      "rationale": "If unredacted data reaches the index or prompts, secrets or personal data can leak into answers and long-lived storage.",
+      "basis": "User asked to 'Include collection, redaction, storage/search'.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "redact",
+        "firehose",
+        "evidence",
+        "search"
+      ]
+    },
+    {
+      "id": "ai-untrusted-log-text",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Proposed: log and trace content is passed to the model only as quoted evidence. Instructions found inside log text must never change the runtime's tools, scope or output policy.",
+      "rationale": "Logs can contain attacker-controlled strings. Without this rule, they could inject prompts that mislead operators.",
+      "basis": "User: 'Treat log text as untrusted.'",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "analyzer",
+        "guardrails",
+        "bedrock"
+      ]
+    },
+    {
+      "id": "ai-cited-evidence",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Every incident explanation cites the trace IDs and log record IDs it relies on. It abstains when the evidence is insufficient.",
+      "rationale": "Operators must be able to check the conclusion. An answer without evidence could send an incident response in the wrong direction.",
+      "basis": "User: 'an operator-facing answer with source evidence'; REQ-001.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "analyzer",
+        "api"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use AWS for this synthetic architecture qualification",
+      "options": "",
+      "decision": "aws",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.aws-log-trace-incident-explainer-first-end-to-end-sketch",
+      "title": "AWS log/trace incident explainer – first end-to-end sketch",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: synthetic services → ADOT collection → Lambda redaction → S3 evidence and OpenSearch search, plus X-Ray traces → Lambda analysis runtime using Bedrock and Bedrock Guardrails → IAM-authenticated API for the operator. Assumptions: the account, region, model ID and access are not yet selected or verified. Only the Bedrock binding is typed. All other wires need engineering. Nothing has been deployed.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "extensions": {
+    "requirementNumbers": {
+      "req-1db3fa00": 1,
+      "drv-data-access": 2,
+      "drv-data-location": 3,
+      "ai-redact-before-store": 4,
+      "ai-untrusted-log-text": 5,
+      "ai-cited-evidence": 6
+    },
+    "choices": {},
+    "conceptSig": null
+  }
+}

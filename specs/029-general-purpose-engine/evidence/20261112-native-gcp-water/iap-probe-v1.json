@@ -1,0 +1,27 @@
+{
+  "validator": "iap-crypto-probe",
+  "artifactSha256": "737b6fb3118d804e87aa12cbb7de9f004e826a575fc4ad1dff462a9bd37f852e",
+  "imageId": "sha256:bafc5723ac59b025d42337e4c965e6d7b89a07da3d18b49a9384cfa70274f8e2",
+  "runtimeConfigImageId": "sha256:bafc5723ac59b025d42337e4c965e6d7b89a07da3d18b49a9384cfa70274f8e2",
+  "platform": "linux/amd64",
+  "isolationProfile": "standard-v1",
+  "runtimeEnvironment": {},
+  "command": [
+    "/usr/local/bin/python3",
+    "-I",
+    "-c",
+    "\nimport json,sys,time\nfrom types import SimpleNamespace\nsys.path.insert(0,'/work/source')\nimport jwt\nfrom cryptography.hazmat.primitives.asymmetric import ec\nfrom gcp_structured import IapVerifier,AccessDenied\nkey=ec.generate_private_key(ec.SECP256R1());foreign=ec.generate_private_key(ec.SECP256R1())\nclass Keys:\n def get_signing_key_from_jwt(self,token):\n  assert jwt.get_unverified_header(token)['kid']=='synthetic-iap'\n  return SimpleNamespace(key=key.public_key())\nconfig={'PROJECT_NUMBER':'123456789001','REGION':'australia-southeast1','SERVICE_NAME':'sample-routing'}\nverify=IapVerifier(config,jwks=Keys());now=int(time.time())\nclaims={'iss':'https://cloud.google.com/iap','aud':'/projects/123456789001/locations/australia-southeast1/services/sample-routing',\n 'iat':now-1,'exp':now+599,'sub':'accounts.google.com:independent-staff','email':'staff@synthetic.invalid'}\ndef token(changes=None,remove=None,signing=key,kid='synthetic-iap'):\n value={**claims,**(changes or {})}\n if remove:value.pop(remove)\n return jwt.encode(value,signing,algorithm='ES256',headers={'kid':kid})\nassert verify(token())==claims['sub']\ncases=[('issuer',token({'iss':'https://foreign.invalid'})),\n ('audience',token({'aud':'/projects/123456789002/locations/australia-southeast1/services/sample-routing'})),\n ('multiple-audiences',token({'aud':[claims['aud'],'foreign']})),\n ('expired',token({'iat':now-630,'exp':now-31})),('future-issued',token({'iat':now+120,'exp':now+600})),\n ('oversize-lifetime',token({'exp':now+1000})),('missing-email',token(remove='email')),\n ('empty-subject',token({'sub':''})),('machine-identity',token({'email':'robot@synthetic.iam.gserviceaccount.com'})),\n ('wrong-signature',token(signing=foreign)),('unknown-key',token(kid='unknown')),\n ('forged','not.a.signed.token'),('oversize','x'*16385)]\nfor name,value in cases:\n try:verify(value)\n except AccessDenied:pass\n else:raise AssertionError('Accepted invalid IAP assertion: '+name)\nprint(json.dumps({'passed':True,'validSignedES256':1,'denied':[name for name,_ in cases],\n 'audience':claims['aud'],'cloudOperations':False,'googleNetworkRequests':0,\n 'boundary':'Frozen shared verifier and real ES256 signatures in pinned GCP dependency image, injected synthetic JWKS only; no native IAP login, application role, group enforcement, account or whole-project acceptance.'}))\n"
+  ],
+  "status": "passed",
+  "exitCode": 0,
+  "executableScratch": false,
+  "skipped": 0,
+  "testsReported": null,
+  "reason": null,
+  "output": "{\"passed\": true, \"validSignedES256\": 1, \"denied\": [\"issuer\", \"audience\", \"multiple-audiences\", \"expired\", \"future-issued\", \"oversize-lifetime\", \"missing-email\", \"empty-subject\", \"machine-identity\", \"wrong-signature\", \"unknown-key\", \"forged\", \"oversize\"], \"audience\": \"/projects/123456789001/locations/australia-southeast1/services/sample-routing\", \"cloudOperations\": false, \"googleNetworkRequests\": 0, \"boundary\": \"Frozen shared verifier and real ES256 signatures in pinned GCP dependency image, injected synthetic JWKS only; no native IAP login, application role, group enforcement, account or whole-project acceptance.\"}\n",
+  "outputTruncated": false,
+  "durationSeconds": 2.067,
+  "evidenceLevel": "local_container_check",
+  "cloudOperations": false,
+  "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+}

@@ -1,0 +1,122 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "caller",
+      "address": "block_63616c6c6572",
+      "label": "Existing IAM caller",
+      "provider": "tools",
+      "service": "Existing AWS IAM principal",
+      "selection": "Explicit principal binding",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing IAM principal — required ARN input generated",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": true,
+      "implemented": true
+    },
+    {
+      "id": "text-stats",
+      "address": "block_746578742d7374617473",
+      "label": "Text statistics function",
+      "provider": "aws",
+      "service": "AWS Lambda",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "ap-southeast-2 (candidate, not approved)",
+      "resources": [
+        "aws_lambda_function",
+        "aws_iam_role",
+        "aws_iam_role_policy",
+        "aws_cloudwatch_log_group",
+        "aws_lambda_alias",
+        "aws_lambda_permission"
+      ],
+      "costDrivers": "Requests, duration, memory and logs",
+      "dependencies": [
+        "caller"
+      ],
+      "terraform": "Text-statistics function, execution role, logs, version and alias generated",
+      "foundation": false,
+      "compute": true,
+      "api": false,
+      "summary": false,
+      "settings": {
+        "memoryMb": 128,
+        "functionTimeoutSeconds": 10,
+        "concurrency": 1,
+        "maxInputBytes": 65536,
+        "logRetentionDays": 30
+      },
+      "reference": false,
+      "implemented": true
+    }
+  ],
+  "connections": [
+    {
+      "id": "caller-text-stats",
+      "source": "caller",
+      "target": "text-stats",
+      "data": "IAM-signed Invoke → counts returned",
+      "generated": true,
+      "status": "Scoped access policy generated; account and runtime verification required"
+    }
+  ],
+  "accessPlan": {
+    "connections": [
+      {
+        "id": "caller-text-stats",
+        "source": "caller",
+        "target": "text-stats",
+        "access": "lambda-invoke",
+        "principalVariable": "principal_block_63616c6c6572_arn"
+      }
+    ],
+    "bindings": [
+      {
+        "id": "caller",
+        "variable": "principal_block_63616c6c6572_arn"
+      }
+    ]
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [],
+  "gapDetails": [],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

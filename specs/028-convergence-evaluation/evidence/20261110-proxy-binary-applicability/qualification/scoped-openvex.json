@@ -1,0 +1,80 @@
+{
+  "@context": "https://openvex.dev/ns/v0.2.0",
+  "@id": "atmem-local-review:sha256:7b04024b125e0b3908fc3f0a18bc6e7fa54a27078228ef5f30885e63a4f1f5d3",
+  "author": "AtMem AI Architect local dependency qualification",
+  "timestamp": "2026-11-10T04:24:09.385891Z",
+  "version": 1,
+  "tooling": "https://pkg.go.dev/golang.org/x/vuln/cmd/govulncheck",
+  "statements": [
+    {
+      "vulnerability": {
+        "@id": "https://pkg.go.dev/vuln/GO-2026-5932",
+        "name": "GO-2026-5932",
+        "description": "The golang.org/x/crypto/openpgp package is unmaintained, unsafe by design, and has known security issues"
+      },
+      "products": [
+        {
+          "@id": "pkg:oci/cloud-sql-proxy@sha256:adcbb6a16e70236f26902b7d986008df118923558839062f6d26832c5f200078?arch=amd64&os=linux",
+          "subcomponents": [
+            {
+              "@id": "pkg:golang/golang.org%2Fx%2Fcrypto@v0.58.0"
+            }
+          ]
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_present",
+      "impact_statement": "Govulncheck determined that the vulnerable code isn't called"
+    },
+    {
+      "vulnerability": {
+        "@id": "https://pkg.go.dev/vuln/GO-2026-6860",
+        "name": "GO-2026-6860",
+        "description": "Avoid quadratic complexity when coalescing text nodes in html in golang.org/x/net",
+        "aliases": [
+          "CVE-2026-78661"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:oci/cloud-sql-proxy@sha256:adcbb6a16e70236f26902b7d986008df118923558839062f6d26832c5f200078?arch=amd64&os=linux",
+          "subcomponents": [
+            {
+              "@id": "pkg:golang/golang.org%2Fx%2Fnet@v0.61.0"
+            }
+          ]
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_present",
+      "impact_statement": "Govulncheck determined that the vulnerable code isn't called"
+    },
+    {
+      "vulnerability": {
+        "@id": "https://pkg.go.dev/vuln/GO-2026-6866",
+        "name": "GO-2026-6866",
+        "description": "Check all ancestor namespace transitions when rendering raw text in html in golang.org/x/net",
+        "aliases": [
+          "CVE-2026-97045"
+        ]
+      },
+      "products": [
+        {
+          "@id": "pkg:oci/cloud-sql-proxy@sha256:adcbb6a16e70236f26902b7d986008df118923558839062f6d26832c5f200078?arch=amd64&os=linux",
+          "subcomponents": [
+            {
+              "@id": "pkg:golang/golang.org%2Fx%2Fnet@v0.61.0"
+            }
+          ]
+        }
+      ],
+      "status": "not_affected",
+      "justification": "vulnerable_code_not_present",
+      "impact_statement": "Govulncheck determined that the vulnerable code isn't called"
+    }
+  ],
+  "sourceGovulncheckVexSha256": "13d41c44ccd3656b13560072160d5eab1261a39d5384a3e82c52b4cc16d52192",
+  "imageIndex": "gcr.io/cloud-sql-connectors/cloud-sql-proxy@sha256:7d156a5c466e31596afd6c8ed134f19c207a297418392fdad2686524ca4e7a3c",
+  "platformManifest": "sha256:adcbb6a16e70236f26902b7d986008df118923558839062f6d26832c5f200078",
+  "binarySha256": "7b04024b125e0b3908fc3f0a18bc6e7fa54a27078228ef5f30885e63a4f1f5d3"
+}

@@ -1,0 +1,55 @@
+{
+  "kind": "invoice-operating-job-qualification",
+  "recordedAt": "2026-11-10T05:19:35.773463+00:00",
+  "passed": true,
+  "checks": {
+    "apiOperator": 82,
+    "maintenancePG18": 9,
+    "nativeAwsMockPlans": 9,
+    "exactOperatorImageChecksEachPG17AndPG18": 9,
+    "restrictedDeliveryImageQueueChecks": 5,
+    "javascript": 307,
+    "server": 208,
+    "build": true
+  },
+  "image": "sha256:b365e676bd8276ba1135aa456930232bc366fcf87874f964ff8e631840354aaa",
+  "security": {
+    "kind": "exact-local-image-vulnerability-inventory",
+    "image": "sha256:b365e676bd8276ba1135aa456930232bc366fcf87874f964ff8e631840354aaa",
+    "allScansCompleted": true,
+    "severityCounts": {
+      "LOW": 65,
+      "HIGH": 47,
+      "MEDIUM": 74
+    },
+    "withReportedFix": {},
+    "boundary": "Cached vulnerability metadata, offline image scan; open findings remain. No clean security or production acceptance."
+  },
+  "sources": {
+    "src/invoice-aws.mjs": "e3f8c52ddb45c61a9c5f9515a540d6b18f0bcf9d1b1f4ca5bb38f9d9f05f09f2",
+    "src/invoice-aws-operations.mjs": "900cde489d722ba300a8669415f368f10a6a5af320e8735692a45213f772bf53",
+    "src/invoice-operations.mjs": "c2b25b483deef9028b4f472cc3419a5e1553412bd5c14d45aef85ea0ddccfd0e",
+    "src/runtime/invoice_native.py": "f4207d6061561e965ddeed87bd43e1f18c81f138cea3a6fa3065612ae1f5b8fb",
+    "src/runtime/invoice_configuration.py": "bae1df6f9fa2284a59b55ed4dd1161dce92ef2f36637081599c628198a985cbe",
+    "src/runtime/invoice_operations.py": "b183f0544c2fc4bfa7c8578153199d9f2df5f08560962f631d0c5bd5f7904388",
+    "src/runtime/invoice_maintenance.py": "8a0b970aa0d4b245f03f68ce1a943107b777f82016d5bb08f8737191612e1edb",
+    "src/runtime/invoice_operator_job.py": "aa90b07708bb945c85a903a3a587965a4c8dc51be1db56117583cf9ebec2c845",
+    "src/runtime/invoice-sources.json": "c8a7f83e19e8198956e230b31df677fd3a92d564e77a4b18e9231cfcff80f4a3",
+    "scripts/embed-runtimes.mjs": "79e03534b92d6da64fe6cf922b66e1a230b834d10bd28acd0d6a6f6043669b76",
+    "scripts/qualify-invoice-api.py": "316e4fc9307f872a86aea50744137cd99830ae857940c854c985af0ce836ff3c",
+    "scripts/qualify-invoice-cloud.mjs": "dd7f9f021b992d90bb08f5e309173c186fde252641efc7096ee6b967e9de8f3d",
+    "scripts/qualify-invoice-operator-image.py": "f64ca14efa91bab1f31a2349e978ac1538c0dc9d668da6b2a0d9766a8cffb592",
+    "tests/invoice-application.test.mjs": "da8b533e9880c7b42fed1bb81646cd7949354fd12077b1bc69a3206044dff12b",
+    "tests/runtime/invoice_operator_job_acceptance.py": "8fa5d201a4117590314a6f8f35d70b6ecf819feb95454589963ae860dc9b1df0",
+    "tests/runtime/invoice_operations_acceptance.py": "0bda0dba32d4c0acb730ead36d7f0289b039d89b975f8c78213a322d9354f0dc"
+  },
+  "cloudOperations": false,
+  "completeMediumCasesCounted": 0,
+  "full28CaseAcceptanceComplete": false,
+  "remaining": [
+    "Azure/GCP/IBM native fixed job/scheduler/monitoring wrappers. Shared runtime entrypoint is not proof of their hosting.",
+    "Whole invoice state/Spec Kit/capability integration and complete four-provider business conversations/exports.",
+    "Remaining medium/hard families, full 28-case repair pass and held-out variants."
+  ],
+  "boundary": "Native schemas/mocks, exact Linux image source/dependencies/startup, internal-fixture real SQL on owned PG17/18 only. No cloud identity, private route, scheduler/task-stop/alert delivery, account plan or deployed-system evidence. Open image findings remain."
+}

@@ -1,0 +1,631 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "staff",
+      "address": "block_7374616666",
+      "label": "Support staff",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "iap",
+      "address": "block_696170",
+      "label": "Staff sign-in",
+      "provider": "gcp",
+      "service": "Identity-Aware Proxy",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "staff"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "console",
+      "address": "block_636f6e736f6c65",
+      "label": "Staff console",
+      "provider": "gcp",
+      "service": "Cloud Run",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "iap",
+        "orchestrator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "orchestrator",
+      "address": "block_6f7263686573747261746f72",
+      "label": "Assistant orchestrator",
+      "provider": "gcp",
+      "service": "Cloud Run",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "console",
+        "tickets"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "tickets",
+      "address": "block_7469636b657473",
+      "label": "Synthetic ticket queue",
+      "provider": "tools",
+      "service": "Storage or existing data connector",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "kbstore",
+      "address": "block_6b6273746f7265",
+      "label": "Approved knowledge",
+      "provider": "gcp",
+      "service": "Cloud Storage",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "search",
+      "address": "block_736561726368",
+      "label": "Authorised retrieval",
+      "provider": "gcp",
+      "service": "Vertex AI Search",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "kbstore",
+        "orchestrator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "crmadapter",
+      "address": "block_63726d61646170746572",
+      "label": "CRM read-only adapter",
+      "provider": "gcp",
+      "service": "Cloud Run",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "orchestrator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "crm",
+      "address": "block_63726d",
+      "label": "Existing CRM",
+      "provider": "tools",
+      "service": "Storage or existing data connector",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "crmadapter"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "model",
+      "address": "block_6d6f64656c",
+      "label": "Answer model",
+      "provider": "gcp",
+      "service": "Vertex AI Gemini",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "orchestrator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "escalation",
+      "address": "block_657363616c6174696f6e",
+      "label": "Human escalation",
+      "provider": "gcp",
+      "service": "Pub/Sub",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "orchestrator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "audit",
+      "address": "block_6175646974",
+      "label": "Audit & monitoring",
+      "provider": "gcp",
+      "service": "Cloud Logging + Cloud Monitoring",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "orchestrator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "source": "staff",
+      "target": "iap",
+      "data": "HTTPS sign-in",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e2",
+      "source": "iap",
+      "target": "console",
+      "data": "verified identity",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e3",
+      "source": "console",
+      "target": "orchestrator",
+      "data": "ticket + draft request",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e4",
+      "source": "tickets",
+      "target": "orchestrator",
+      "data": "ticket context (read)",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e5",
+      "source": "kbstore",
+      "target": "search",
+      "data": "index approved docs + ACLs",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e6",
+      "source": "orchestrator",
+      "target": "search",
+      "data": "ACL-filtered query",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e7",
+      "source": "orchestrator",
+      "target": "crmadapter",
+      "data": "read customer fields",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e8",
+      "source": "crmadapter",
+      "target": "crm",
+      "data": "read-only API",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e9",
+      "source": "orchestrator",
+      "target": "model",
+      "data": "grounded prompt → draft",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e10",
+      "source": "orchestrator",
+      "target": "escalation",
+      "data": "blocked/unsure → human",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e11",
+      "source": "orchestrator",
+      "target": "audit",
+      "data": "audit events",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e12",
+      "source": "orchestrator",
+      "target": "console",
+      "data": "cited draft answer",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Support staff: Existing — reference/import plan needed.",
+    "Staff sign-in: Implementation needed.",
+    "Staff console: Implementation needed.",
+    "Assistant orchestrator: Implementation needed.",
+    "Synthetic ticket queue: Existing — reference/import plan needed.",
+    "Approved knowledge: Implementation needed.",
+    "Authorised retrieval: Implementation needed.",
+    "CRM read-only adapter: Implementation needed.",
+    "Existing CRM: Existing — reference/import plan needed.",
+    "Answer model: Implementation needed.",
+    "Human escalation: Implementation needed.",
+    "Audit & monitoring: Implementation needed.",
+    "Wire staff → iap: implement data flow, access policy and acceptance test.",
+    "Wire iap → console: implement data flow, access policy and acceptance test.",
+    "Wire console → orchestrator: implement data flow, access policy and acceptance test.",
+    "Wire tickets → orchestrator: implement data flow, access policy and acceptance test.",
+    "Wire kbstore → search: implement data flow, access policy and acceptance test.",
+    "Wire orchestrator → search: implement data flow, access policy and acceptance test.",
+    "Wire orchestrator → crmadapter: implement data flow, access policy and acceptance test.",
+    "Wire crmadapter → crm: implement data flow, access policy and acceptance test.",
+    "Wire orchestrator → model: implement data flow, access policy and acceptance test.",
+    "Wire orchestrator → escalation: implement data flow, access policy and acceptance test.",
+    "Wire orchestrator → audit: implement data flow, access policy and acceptance test.",
+    "Wire orchestrator → console: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "resource-block_7374616666",
+      "componentIds": [
+        "staff"
+      ],
+      "taskId": "TASK-RESOURCE-7374616666",
+      "message": "Support staff: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_696170",
+      "componentIds": [
+        "iap"
+      ],
+      "taskId": "TASK-RESOURCE-696170",
+      "message": "Staff sign-in: Implementation needed."
+    },
+    {
+      "id": "resource-block_636f6e736f6c65",
+      "componentIds": [
+        "console"
+      ],
+      "taskId": "TASK-RESOURCE-636f6e736f6c65",
+      "message": "Staff console: Implementation needed."
+    },
+    {
+      "id": "resource-block_6f7263686573747261746f72",
+      "componentIds": [
+        "orchestrator"
+      ],
+      "taskId": "TASK-RESOURCE-6f7263686573747261746f72",
+      "message": "Assistant orchestrator: Implementation needed."
+    },
+    {
+      "id": "resource-block_7469636b657473",
+      "componentIds": [
+        "tickets"
+      ],
+      "taskId": "TASK-RESOURCE-7469636b657473",
+      "message": "Synthetic ticket queue: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_6b6273746f7265",
+      "componentIds": [
+        "kbstore"
+      ],
+      "taskId": "TASK-RESOURCE-6b6273746f7265",
+      "message": "Approved knowledge: Implementation needed."
+    },
+    {
+      "id": "resource-block_736561726368",
+      "componentIds": [
+        "search"
+      ],
+      "taskId": "TASK-RESOURCE-736561726368",
+      "message": "Authorised retrieval: Implementation needed."
+    },
+    {
+      "id": "resource-block_63726d61646170746572",
+      "componentIds": [
+        "crmadapter"
+      ],
+      "taskId": "TASK-RESOURCE-63726d61646170746572",
+      "message": "CRM read-only adapter: Implementation needed."
+    },
+    {
+      "id": "resource-block_63726d",
+      "componentIds": [
+        "crm"
+      ],
+      "taskId": "TASK-RESOURCE-63726d",
+      "message": "Existing CRM: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_6d6f64656c",
+      "componentIds": [
+        "model"
+      ],
+      "taskId": "TASK-RESOURCE-6d6f64656c",
+      "message": "Answer model: Implementation needed."
+    },
+    {
+      "id": "resource-block_657363616c6174696f6e",
+      "componentIds": [
+        "escalation"
+      ],
+      "taskId": "TASK-RESOURCE-657363616c6174696f6e",
+      "message": "Human escalation: Implementation needed."
+    },
+    {
+      "id": "resource-block_6175646974",
+      "componentIds": [
+        "audit"
+      ],
+      "taskId": "TASK-RESOURCE-6175646974",
+      "message": "Audit & monitoring: Implementation needed."
+    },
+    {
+      "id": "connection-6531",
+      "edgeIds": [
+        "e1"
+      ],
+      "taskId": "TASK-INTEGRATION-6531",
+      "message": "Wire staff → iap: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6532",
+      "edgeIds": [
+        "e2"
+      ],
+      "taskId": "TASK-INTEGRATION-6532",
+      "message": "Wire iap → console: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6533",
+      "edgeIds": [
+        "e3"
+      ],
+      "taskId": "TASK-INTEGRATION-6533",
+      "message": "Wire console → orchestrator: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6534",
+      "edgeIds": [
+        "e4"
+      ],
+      "taskId": "TASK-INTEGRATION-6534",
+      "message": "Wire tickets → orchestrator: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6535",
+      "edgeIds": [
+        "e5"
+      ],
+      "taskId": "TASK-INTEGRATION-6535",
+      "message": "Wire kbstore → search: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6536",
+      "edgeIds": [
+        "e6"
+      ],
+      "taskId": "TASK-INTEGRATION-6536",
+      "message": "Wire orchestrator → search: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6537",
+      "edgeIds": [
+        "e7"
+      ],
+      "taskId": "TASK-INTEGRATION-6537",
+      "message": "Wire orchestrator → crmadapter: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6538",
+      "edgeIds": [
+        "e8"
+      ],
+      "taskId": "TASK-INTEGRATION-6538",
+      "message": "Wire crmadapter → crm: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6539",
+      "edgeIds": [
+        "e9"
+      ],
+      "taskId": "TASK-INTEGRATION-6539",
+      "message": "Wire orchestrator → model: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-653130",
+      "edgeIds": [
+        "e10"
+      ],
+      "taskId": "TASK-INTEGRATION-653130",
+      "message": "Wire orchestrator → escalation: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-653131",
+      "edgeIds": [
+        "e11"
+      ],
+      "taskId": "TASK-INTEGRATION-653131",
+      "message": "Wire orchestrator → audit: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-653132",
+      "edgeIds": [
+        "e12"
+      ],
+      "taskId": "TASK-INTEGRATION-653132",
+      "message": "Wire orchestrator → console: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

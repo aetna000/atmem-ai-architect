@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "kind": "local-aws-emulation",
+  "backend": "moto",
+  "status": "passed",
+  "cloudOperations": false,
+  "terraformApply": "not_run",
+  "modelMode": "scripted-fixture",
+  "checks": [
+    {
+      "name": "Stateful emulator resource setup",
+      "passed": true,
+      "evidence": "stateful-emulation"
+    },
+    {
+      "name": "Generated statistics handler and input bounds: block_746578742d7374617473",
+      "passed": true,
+      "evidence": "stateful-emulation"
+    }
+  ],
+  "capabilities": [],
+  "limitations": [
+    "Terraform apply and real AWS account prerequisites are not emulated; run provider checks separately.",
+    "IAM enforcement, API Gateway routing/signatures, Cognito sign-in/MFA and CloudFront delivery remain unverified.",
+    "Generated Python handlers execute on this host, not the AWS Lambda ARM64 runtime; event polling is driven by the harness.",
+    "Bedrock responses and authenticated request envelopes are deterministic fixtures, not model-quality or authentication evidence.",
+    "Quotas, billing, latency, service outages and native SharePoint/Confluence APIs require separate qualification."
+  ],
+  "cleanup": "passed",
+  "emulatorPatches": [
+    {
+      "id": "moto-s3-notification-version-id-v1",
+      "motoVersion": "5.2.5",
+      "reason": "Moto drops versionId from S3 notifications although its exact event key retains version_id.",
+      "reference": "https://docs.aws.amazon.com/AmazonS3/latest/userguide/notification-content-structure.html",
+      "scope": "Add only the exact triggering key version; do not look up current/latest objects or alter generated handlers."
+    }
+  ],
+  "backendVersion": "5.2.5",
+  "message": "Supported local emulation checks passed. Review the unverified boundaries before deployment.",
+  "designRevision": 2,
+  "environment": "staging",
+  "artifactDigest": "42e23bdfb67196efe0133ff79fb690001a102516aa909dd3e83f59e911b87b50",
+  "fileDigests": {
+    "preflight-requirements.lock": "17322a01f8cf7f5d85ddb1203853fb1bdc87e716971f4efb2559c0c49fb2ef17",
+    "preflight-aws.py": "4eb9d90ffdc2c8cf2262bf6a87e0231ffd7e71ae0ae86dca202c87ec9ca35231",
+    "PREFLIGHT.md": "00c7b9a27e4d768aa44570a6b5c80685bcfcb7f57fda2c6ee7b6dcd648cf1209",
+    ".gitignore": "bcaa9b020d6c4a5721412085a5024d510f1bd8c9fce03dd8c918881b31e26980",
+    "tests/storage-access.tftest.hcl": "6952015e88085c325114394223fe4db2a2e526ebf68da2ece906a24a50e84948",
+    "deployment.tfvars.json.example": "caadf1fb7e8ecf8af010703e706906742d70f02d1f5cbbe6928bcee1a4723952",
+    "VALIDATION.md": "556baa226715d9d2633bf9aa637681a1b36a09ab5b1523fbb8e9f3beecb6aeb7",
+    "handlers/block_746578742d7374617473.py": "3cc5f5577230329488c8962b7ad67a2ec86fcedf06f6d1e5f68334882e53f558",
+    "app-tests/block_746578742d7374617473_test.py": "814dc38c2cb605623c6cfb1bbaf797c8df3d0e8d91d24be2cd80bbccbaed4537",
+    "build-runtime.py": "fc398be40474e74944b3fdd1471bdb3b0eab5b5c49d391c968d0af38dde9ab39",
+    "BUILD.md": "cb6615260d4289346c16544761daf8f79155af6f77750af07fade17e41d61ed1",
+    "main.tf.json": "9ac054624e1de2327f500cc5e0e842bc1f2eca74d7c3b465cb1270f53b76315d",
+    "resource-schedule.json": "e1d7d64aee1bf5715469e4eeb10e2257008d94d7684a6fa2e68dff7f13b7ad7c",
+    "README.md": "39a286452dc5fb3df05b133639c28e814680b8ae177eabf0fb0054d247f7cb88"
+  },
+  "workspaceCleanup": "passed"
+}

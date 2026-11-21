@@ -1,0 +1,77 @@
+{
+  "version": 1,
+  "kind": "local-aws-emulation",
+  "backend": "moto",
+  "status": "passed",
+  "cloudOperations": false,
+  "terraformApply": "not_run",
+  "modelMode": "scripted-fixture",
+  "checks": [
+    {
+      "name": "Stateful emulator resource setup",
+      "passed": true,
+      "evidence": "stateful-emulation"
+    },
+    {
+      "name": "Generated retrieval, conditional writes, ACLs, updates, deletion and revocation",
+      "passed": true,
+      "evidence": "stateful-emulation"
+    }
+  ],
+  "capabilities": [
+    {
+      "service": "S3",
+      "mode": "stateful-service-API"
+    },
+    {
+      "service": "DynamoDB",
+      "mode": "stateful-service-API"
+    },
+    {
+      "service": "Browser authorization adapter",
+      "mode": "synthetic claims only; no JWT signature, OAuth or MFA emulation"
+    }
+  ],
+  "limitations": [
+    "Terraform apply and real AWS account prerequisites are not emulated; run provider checks separately.",
+    "IAM enforcement, API Gateway routing/signatures, Cognito sign-in/MFA and CloudFront delivery remain unverified.",
+    "Generated Python handlers execute on this host, not the AWS Lambda ARM64 runtime; event polling is driven by the harness.",
+    "Bedrock responses and authenticated request envelopes are deterministic fixtures, not model-quality or authentication evidence.",
+    "Quotas, billing, latency, service outages and native SharePoint/Confluence APIs require separate qualification."
+  ],
+  "cleanup": "passed",
+  "backendVersion": "5.2.5",
+  "message": "Supported local emulation checks passed. Review the unverified boundaries before deployment.",
+  "designRevision": 2,
+  "environment": "staging",
+  "artifactDigest": "5aeac0cf69fe1d32e24f839a0566f2cd0bd6d530a0bc4b22eae83fdc55734b5e",
+  "fileDigests": {
+    "preflight-requirements.lock": "17322a01f8cf7f5d85ddb1203853fb1bdc87e716971f4efb2559c0c49fb2ef17",
+    "preflight-aws.py": "4eb9d90ffdc2c8cf2262bf6a87e0231ffd7e71ae0ae86dca202c87ec9ca35231",
+    "PREFLIGHT.md": "00c7b9a27e4d768aa44570a6b5c80685bcfcb7f57fda2c6ee7b6dcd648cf1209",
+    ".gitignore": "bcaa9b020d6c4a5721412085a5024d510f1bd8c9fce03dd8c918881b31e26980",
+    "tests/storage-access.tftest.hcl": "a589a585971d1b6e7dabc88b1ee4f99c4a55e6503fab7e4a6693383076611726",
+    "deployment.tfvars.json.example": "c8225f4e218b2e1f98d15a5bcb034010e5cc3322e11778af46d09e05eebf9ab2",
+    "VALIDATION.md": "556baa226715d9d2633bf9aa637681a1b36a09ab5b1523fbb8e9f3beecb6aeb7",
+    "handlers/block_7261672d666e.py": "fff290d1774bd2b0a873613541805109d5bb2b98075e45a1d7b7f2eb2798f2a2",
+    "app-tests/block_7261672d666e_test.py": "06410de7a94e205702e5a5e9043e44626dec58a967a21ca8d8189c00ab9125d3",
+    "manage-catalog.py": "7e073e4c197e938d195b4a908878a53eb5f21e74a2e90a1357ed3d495ad100ab",
+    "CATALOG.md": "2ecf6d9feef486fbdf3a0df4fe7533250f5281fb246c9f499106121089d037c8",
+    "handlers/block_7261672d666e/bounded_rag.py": "20c59d2d1c11f1d74101db93500812b2aa10499bceaa66b1a9a532fe3017c2e7",
+    "handlers/block_7261672d666e/rag_aws_adapter.py": "b0d3ffe5ffb7619e2c77fce3858f789663833ffda145f8d60c73db338a0ad4bd",
+    "manage-web-users.py": "8ad1bca2627f502063527bb7511014fc81e0e2fe7f31a32edd23731289cd70d6",
+    "WEB.md": "aa79fa5b50638300bb007908862af9918dbc2a21fc166df5dfb4ef4b0554c031",
+    "web/block_776562/index.html": "f1550a7eae258da841456a2d2f85df96fa149bb1d5c183400ac2c2f3fcaa6e98",
+    "web/block_776562/app.css": "40397aca59ab34cb92a1e232edeb6a90b7a820040fd37bed2d957d60180f3dbf",
+    "web/block_776562/app.js": "3044e1f54705aee7b49e88e814f6034a299907380f055006dc9db56ae817da07",
+    "web/block_776562/config.json": "0d294995b6950ad38834231b25b8a8f25600166ae0f09400dff6eb99ee765eca",
+    "runtime-requirements.lock": "17322a01f8cf7f5d85ddb1203853fb1bdc87e716971f4efb2559c0c49fb2ef17",
+    "runtime-dependency-sources.json": "b15242b2a094cd53df1a374f0a8aad5b255edf2092cf0494c467725fdf852bc3",
+    "build-runtime.py": "41d7b4ccf637c0b52df1f8d9a1f507d89ddd459555ed3183df163083e4fc3643",
+    "BUILD.md": "cb6615260d4289346c16544761daf8f79155af6f77750af07fade17e41d61ed1",
+    "main.tf.json": "b530d86cc34854d677c3374c6e867a85f730219ed3fffbb9bf99b0a379a0c294",
+    "resource-schedule.json": "182a3905b75218c538a184b72a1526409af458eb90bdb8d3f46bd39d7ad73c03",
+    "README.md": "39a286452dc5fb3df05b133639c28e814680b8ae177eabf0fb0054d247f7cb88"
+  },
+  "workspaceCleanup": "passed"
+}

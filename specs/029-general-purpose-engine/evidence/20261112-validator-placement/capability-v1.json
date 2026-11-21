@@ -1,0 +1,42 @@
+{
+  "format": "atmem.explicit-validator-placement-checkpoint",
+  "version": 1,
+  "status": "implemented_and_locally_verified_not_release",
+  "interfaces": [
+    "RegisteredValidator.worker_id / operator workerId",
+    "ENGINEERING_VALIDATOR_WORKERS",
+    "WorkerRegistration.create",
+    "ValidationJobs workers map",
+    "RuntimeEvidence.matches_worker",
+    "saved-identity recovery"
+  ],
+  "reusableInvariant": "Explicit validator placement, source/runtime/provenance-bound admission, captured executor and original-worker cleanup; no project/provider dispatch or fallback",
+  "positiveEvidence": "receipt-v2.json",
+  "failureCounterexamples": [
+    "Wrong selected worker observation rejected before jobs",
+    "Missing explicit worker rejected despite available default",
+    "Legacy process-context facts cannot follow default change",
+    "Same check UUID on peer survives original-worker cleanup"
+  ],
+  "serverTests": 471,
+  "focusedTests": 67,
+  "javascriptTests": 555,
+  "build": "passed_with_existing_chunk_warning",
+  "legacyValidHashesPreserved": true,
+  "namedObservationIdentityAndPolicyRequired": true,
+  "legacyContextObservationIdentityAndPolicyRequired": true,
+  "snapshotsAreNotCurrentBootAttestation": true,
+  "newNativeModelTurns": 0,
+  "ownerProjectWrites": false,
+  "ownerPreviewsRestarted": false,
+  "cloudOperations": false,
+  "newReleaseIncrement": false,
+  "original28Count": 2,
+  "incrementsOffered": 4,
+  "remaining": [
+    "IBM native transfer and remaining full application/receiving qualification before alpha.5",
+    "26 remaining original systems plus unfamiliar combinations",
+    "All ten runnable increments and full release acceptance",
+    "Freshness/hosted transactional worker/store qualification remain separate"
+  ]
+}

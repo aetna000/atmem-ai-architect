@@ -1,0 +1,649 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "alert-source",
+      "address": "block_616c6572742d736f75726365",
+      "label": "Synthetic alert generator",
+      "provider": "tools",
+      "service": "Storage or existing data connector",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "log-source",
+      "address": "block_6c6f672d736f75726365",
+      "label": "Approved logs",
+      "provider": "gcp",
+      "service": "Cloud Logging (log sink)",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "asset-source",
+      "address": "block_61737365742d736f75726365",
+      "label": "Asset context",
+      "provider": "gcp",
+      "service": "Cloud Asset Inventory",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "ingest",
+      "address": "block_696e67657374",
+      "label": "Alert ingestion topic",
+      "provider": "gcp",
+      "service": "Pub/Sub",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "alert-source"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "dlq",
+      "address": "block_646c71",
+      "label": "Dead-letter topic",
+      "provider": "gcp",
+      "service": "Pub/Sub (dead-letter)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "ingest"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "redact",
+      "address": "block_726564616374",
+      "label": "Redaction service",
+      "provider": "gcp",
+      "service": "Cloud Run + Sensitive Data Protection (DLP)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "ingest",
+        "log-source"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "evidence",
+      "address": "block_65766964656e6365",
+      "label": "Evidence store",
+      "provider": "gcp",
+      "service": "BigQuery",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "redact",
+        "asset-source"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "triage",
+      "address": "block_747269616765",
+      "label": "Triage orchestrator",
+      "provider": "gcp",
+      "service": "Cloud Run",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "redact",
+        "evidence"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "model",
+      "address": "block_6d6f64656c",
+      "label": "Triage model",
+      "provider": "gcp",
+      "service": "Vertex AI (Gemini)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "triage"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "queue",
+      "address": "block_7175657565",
+      "label": "Analyst case queue",
+      "provider": "gcp",
+      "service": "Firestore + Cloud Run console behind IAP",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "triage"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "analyst",
+      "address": "block_616e616c797374",
+      "label": "Security analyst",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "queue"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "audit",
+      "address": "block_6175646974",
+      "label": "Audit trail",
+      "provider": "gcp",
+      "service": "BigQuery audit dataset + Cloud Audit Logs + Cloud Monitoring",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "triage",
+        "queue"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "source": "alert-source",
+      "target": "ingest",
+      "data": "publish alert",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e2",
+      "source": "ingest",
+      "target": "redact",
+      "data": "push subscription",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e3",
+      "source": "ingest",
+      "target": "dlq",
+      "data": "dead-letter after retries",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e4",
+      "source": "log-source",
+      "target": "redact",
+      "data": "approved log excerpts",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e5",
+      "source": "redact",
+      "target": "evidence",
+      "data": "write redacted records",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e6",
+      "source": "asset-source",
+      "target": "evidence",
+      "data": "asset export",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e7",
+      "source": "redact",
+      "target": "triage",
+      "data": "redacted alert",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e8",
+      "source": "evidence",
+      "target": "triage",
+      "data": "bounded evidence query",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e9",
+      "source": "triage",
+      "target": "model",
+      "data": "generateContent (structured)",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e10",
+      "source": "triage",
+      "target": "queue",
+      "data": "create case + response proposal",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e11",
+      "source": "queue",
+      "target": "analyst",
+      "data": "review via IAP",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e12",
+      "source": "triage",
+      "target": "audit",
+      "data": "log proposal + evidence IDs",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e13",
+      "source": "queue",
+      "target": "audit",
+      "data": "log analyst decision",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Synthetic alert generator: Existing — reference/import plan needed.",
+    "Approved logs: Existing — reference/import plan needed.",
+    "Asset context: Existing — reference/import plan needed.",
+    "Alert ingestion topic: Implementation needed.",
+    "Dead-letter topic: Implementation needed.",
+    "Redaction service: Implementation needed.",
+    "Evidence store: Implementation needed.",
+    "Triage orchestrator: Implementation needed.",
+    "Triage model: Implementation needed.",
+    "Analyst case queue: Implementation needed.",
+    "Security analyst: Existing — reference/import plan needed.",
+    "Audit trail: Implementation needed.",
+    "Wire alert-source → ingest: implement data flow, access policy and acceptance test.",
+    "Wire ingest → redact: implement data flow, access policy and acceptance test.",
+    "Wire ingest → dlq: implement data flow, access policy and acceptance test.",
+    "Wire log-source → redact: implement data flow, access policy and acceptance test.",
+    "Wire redact → evidence: implement data flow, access policy and acceptance test.",
+    "Wire asset-source → evidence: implement data flow, access policy and acceptance test.",
+    "Wire redact → triage: implement data flow, access policy and acceptance test.",
+    "Wire evidence → triage: implement data flow, access policy and acceptance test.",
+    "Wire triage → model: implement data flow, access policy and acceptance test.",
+    "Wire triage → queue: implement data flow, access policy and acceptance test.",
+    "Wire queue → analyst: implement data flow, access policy and acceptance test.",
+    "Wire triage → audit: implement data flow, access policy and acceptance test.",
+    "Wire queue → audit: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "resource-block_616c6572742d736f75726365",
+      "componentIds": [
+        "alert-source"
+      ],
+      "taskId": "TASK-RESOURCE-616c6572742d736f75726365",
+      "message": "Synthetic alert generator: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_6c6f672d736f75726365",
+      "componentIds": [
+        "log-source"
+      ],
+      "taskId": "TASK-RESOURCE-6c6f672d736f75726365",
+      "message": "Approved logs: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_61737365742d736f75726365",
+      "componentIds": [
+        "asset-source"
+      ],
+      "taskId": "TASK-RESOURCE-61737365742d736f75726365",
+      "message": "Asset context: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_696e67657374",
+      "componentIds": [
+        "ingest"
+      ],
+      "taskId": "TASK-RESOURCE-696e67657374",
+      "message": "Alert ingestion topic: Implementation needed."
+    },
+    {
+      "id": "resource-block_646c71",
+      "componentIds": [
+        "dlq"
+      ],
+      "taskId": "TASK-RESOURCE-646c71",
+      "message": "Dead-letter topic: Implementation needed."
+    },
+    {
+      "id": "resource-block_726564616374",
+      "componentIds": [
+        "redact"
+      ],
+      "taskId": "TASK-RESOURCE-726564616374",
+      "message": "Redaction service: Implementation needed."
+    },
+    {
+      "id": "resource-block_65766964656e6365",
+      "componentIds": [
+        "evidence"
+      ],
+      "taskId": "TASK-RESOURCE-65766964656e6365",
+      "message": "Evidence store: Implementation needed."
+    },
+    {
+      "id": "resource-block_747269616765",
+      "componentIds": [
+        "triage"
+      ],
+      "taskId": "TASK-RESOURCE-747269616765",
+      "message": "Triage orchestrator: Implementation needed."
+    },
+    {
+      "id": "resource-block_6d6f64656c",
+      "componentIds": [
+        "model"
+      ],
+      "taskId": "TASK-RESOURCE-6d6f64656c",
+      "message": "Triage model: Implementation needed."
+    },
+    {
+      "id": "resource-block_7175657565",
+      "componentIds": [
+        "queue"
+      ],
+      "taskId": "TASK-RESOURCE-7175657565",
+      "message": "Analyst case queue: Implementation needed."
+    },
+    {
+      "id": "resource-block_616e616c797374",
+      "componentIds": [
+        "analyst"
+      ],
+      "taskId": "TASK-RESOURCE-616e616c797374",
+      "message": "Security analyst: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_6175646974",
+      "componentIds": [
+        "audit"
+      ],
+      "taskId": "TASK-RESOURCE-6175646974",
+      "message": "Audit trail: Implementation needed."
+    },
+    {
+      "id": "connection-6531",
+      "edgeIds": [
+        "e1"
+      ],
+      "taskId": "TASK-INTEGRATION-6531",
+      "message": "Wire alert-source → ingest: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6532",
+      "edgeIds": [
+        "e2"
+      ],
+      "taskId": "TASK-INTEGRATION-6532",
+      "message": "Wire ingest → redact: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6533",
+      "edgeIds": [
+        "e3"
+      ],
+      "taskId": "TASK-INTEGRATION-6533",
+      "message": "Wire ingest → dlq: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6534",
+      "edgeIds": [
+        "e4"
+      ],
+      "taskId": "TASK-INTEGRATION-6534",
+      "message": "Wire log-source → redact: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6535",
+      "edgeIds": [
+        "e5"
+      ],
+      "taskId": "TASK-INTEGRATION-6535",
+      "message": "Wire redact → evidence: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6536",
+      "edgeIds": [
+        "e6"
+      ],
+      "taskId": "TASK-INTEGRATION-6536",
+      "message": "Wire asset-source → evidence: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6537",
+      "edgeIds": [
+        "e7"
+      ],
+      "taskId": "TASK-INTEGRATION-6537",
+      "message": "Wire redact → triage: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6538",
+      "edgeIds": [
+        "e8"
+      ],
+      "taskId": "TASK-INTEGRATION-6538",
+      "message": "Wire evidence → triage: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6539",
+      "edgeIds": [
+        "e9"
+      ],
+      "taskId": "TASK-INTEGRATION-6539",
+      "message": "Wire triage → model: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-653130",
+      "edgeIds": [
+        "e10"
+      ],
+      "taskId": "TASK-INTEGRATION-653130",
+      "message": "Wire triage → queue: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-653131",
+      "edgeIds": [
+        "e11"
+      ],
+      "taskId": "TASK-INTEGRATION-653131",
+      "message": "Wire queue → analyst: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-653132",
+      "edgeIds": [
+        "e12"
+      ],
+      "taskId": "TASK-INTEGRATION-653132",
+      "message": "Wire triage → audit: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-653133",
+      "edgeIds": [
+        "e13"
+      ],
+      "taskId": "TASK-INTEGRATION-653133",
+      "message": "Wire queue → audit: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

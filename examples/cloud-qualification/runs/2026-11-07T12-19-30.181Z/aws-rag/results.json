@@ -1,0 +1,90 @@
+{
+  "provider": "aws-rag",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "passed",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Denied documents never reach the model",
+    "Known questions cite current source revisions",
+    "Unsupported questions abstain",
+    "Updates and deletions change retrieval",
+    "Revocation during generation suppresses the answer"
+  ],
+  "staticAssessment": {
+    "kind": "static-graph-checks",
+    "checks": [
+      {
+        "name": "Application contains at least three required components",
+        "passed": true
+      },
+      {
+        "name": "Required components form one connected graph",
+        "passed": true
+      },
+      {
+        "name": "Proposed cloud resources retain the requested provider",
+        "passed": true
+      },
+      {
+        "name": "Proposed cloud components name concrete services",
+        "passed": true
+      },
+      {
+        "name": "AI application has not collapsed into only object storage",
+        "passed": true
+      }
+    ],
+    "passed": true,
+    "limitations": [
+      "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+    ],
+    "acceptanceRequirements": [
+      "Denied documents never reach the model",
+      "Known questions cite current source revisions",
+      "Unsupported questions abstain",
+      "Updates and deletions change retrieval",
+      "Revocation during generation suppresses the answer"
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "binding": "web-browser"
+    },
+    {
+      "id": "web",
+      "service": "Amazon CloudFront",
+      "implementation": "rag-web-app"
+    },
+    {
+      "id": "cognito",
+      "service": "Amazon Cognito",
+      "implementation": "rag-user-pool"
+    },
+    {
+      "id": "api",
+      "service": "Amazon API Gateway",
+      "implementation": "iam-rag-api"
+    },
+    {
+      "id": "rag",
+      "service": "AWS Lambda",
+      "implementation": "bounded-keyword-rag"
+    },
+    {
+      "id": "catalog",
+      "service": "Amazon DynamoDB",
+      "implementation": "bounded-rag-catalog"
+    },
+    {
+      "id": "bedrock",
+      "service": "Amazon Bedrock",
+      "binding": "aws-bedrock-model"
+    }
+  ],
+  "passed": true,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

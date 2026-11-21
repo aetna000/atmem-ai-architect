@@ -1,0 +1,515 @@
+{
+  "message": "Good news first: the local check found no failures, and every component and flow is still in place. The remaining blockers are missing build code, not design mistakes. The only one we can fix in the design is \"Approved knowledge\": it's a private Cloud Storage bucket, which matches a supported contract, so I've proposed marking it as one. Staff sign-in, the console, the orchestrator, retrieval and the CRM adapter all need new product code before they can be built. Who should be allowed to upload, update and delete the approved articles in that bucket, for example a named knowledge-team service account?",
+  "phase": "Architecture Review",
+  "proposal": {
+    "baseRevision": 2,
+    "title": "Bind Approved knowledge to the GCP private-object-storage contract",
+    "body": "This change only sets implementation=private-object-storage on the existing Cloud Storage bucket (kbstore). No components, IDs, flows or requirements are removed. The Vertex AI Search indexing link (e5) and the other Cloud Run, IAP and Pub/Sub components remain open implementation gaps that need product engineering. No uploader access is added until the user names a principal. Region, project and identities are not verified. Rerun emulation on the new artifact.",
+    "next": {
+      "version": 1,
+      "revision": 2,
+      "name": "GCP support staff assistant (synthetic qualification)",
+      "provider": "gcp",
+      "requirements": "",
+      "nodes": [
+        {
+          "id": "staff",
+          "type": "resource",
+          "position": {
+            "x": 50,
+            "y": 470
+          },
+          "data": {
+            "label": "Support staff",
+            "kind": "tool",
+            "provider": "tools",
+            "description": "Support agents using a browser. A client reference, not provisioned.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Internal",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "poc": false,
+            "role": "human"
+          }
+        },
+        {
+          "id": "iap",
+          "type": "resource",
+          "position": {
+            "x": 470,
+            "y": 470
+          },
+          "data": {
+            "label": "Staff sign-in",
+            "kind": "guard",
+            "provider": "gcp",
+            "description": "Authenticates staff before the console and passes a verified identity downstream. The identity provider is still to be decided.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Internal",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "poc": true,
+            "role": "guard",
+            "service": "Identity-Aware Proxy"
+          }
+        },
+        {
+          "id": "console",
+          "type": "resource",
+          "position": {
+            "x": 890,
+            "y": 470
+          },
+          "data": {
+            "label": "Staff console",
+            "kind": "output",
+            "provider": "gcp",
+            "description": "Web UI. Shows the ticket, the draft answer with citations, and Send/Edit/Escalate actions. A human sends every reply.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "poc": true,
+            "role": "app",
+            "service": "Cloud Run"
+          }
+        },
+        {
+          "id": "orchestrator",
+          "type": "resource",
+          "position": {
+            "x": 1310,
+            "y": 610
+          },
+          "data": {
+            "label": "Assistant orchestrator",
+            "kind": "agent",
+            "provider": "gcp",
+            "description": "Gets ticket context, runs retrieval scoped to the staff member's permissions, calls the read-only CRM adapter and drafts a grounded answer. It abstains when no source supports an answer. A policy check blocks refunds and record changes and routes them to escalation.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "poc": true,
+            "role": "app",
+            "service": "Cloud Run"
+          }
+        },
+        {
+          "id": "tickets",
+          "type": "resource",
+          "position": {
+            "x": 890,
+            "y": 750
+          },
+          "data": {
+            "label": "Synthetic ticket queue",
+            "kind": "source",
+            "provider": "tools",
+            "description": "Existing synthetic ticketing system that supplies open tickets.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Internal",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "poc": false,
+            "role": "data"
+          }
+        },
+        {
+          "id": "kbstore",
+          "type": "resource",
+          "position": {
+            "x": 1310,
+            "y": 1180
+          },
+          "data": {
+            "label": "Approved knowledge",
+            "kind": "source",
+            "provider": "gcp",
+            "description": "Private Cloud Storage bucket holding approved articles and their ACL metadata. Uses the private-object-storage contract and needs an existing project as input. Uploader access is still to be decided. Indexing into Vertex AI Search is not yet implemented.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Internal",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "poc": true,
+            "role": "data",
+            "service": "Google Cloud Storage",
+            "implementation": "private-object-storage"
+          }
+        },
+        {
+          "id": "search",
+          "type": "resource",
+          "position": {
+            "x": 1730,
+            "y": 1170
+          },
+          "data": {
+            "label": "Authorised retrieval",
+            "kind": "tool",
+            "provider": "gcp",
+            "description": "Indexes the approved knowledge and filters results by user/group ACL. Returns passages with their source IDs for citation.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Internal",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "poc": true,
+            "role": "index",
+            "service": "Vertex AI Search"
+          }
+        },
+        {
+          "id": "crmadapter",
+          "type": "resource",
+          "position": {
+            "x": 1730,
+            "y": 890
+          },
+          "data": {
+            "label": "CRM read-only adapter",
+            "kind": "tool",
+            "provider": "gcp",
+            "description": "Uses a read-only service account to fetch only the customer fields this ticket needs. It has no write or refund operations.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "poc": true,
+            "role": "ingest",
+            "service": "Cloud Run"
+          }
+        },
+        {
+          "id": "crm",
+          "type": "resource",
+          "position": {
+            "x": 2150,
+            "y": 890
+          },
+          "data": {
+            "label": "Existing CRM",
+            "kind": "source",
+            "provider": "tools",
+            "description": "The customer system of record. Stays outside the provisioning scope.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "poc": false,
+            "role": "data"
+          }
+        },
+        {
+          "id": "model",
+          "type": "resource",
+          "position": {
+            "x": 1730,
+            "y": 610
+          },
+          "data": {
+            "label": "Answer model",
+            "kind": "predict",
+            "provider": "gcp",
+            "description": "Drafts answers using only the passages it is given. Mocked in the local test. The model version, region and quota are not verified.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "poc": true,
+            "role": "llm",
+            "service": "Vertex AI Gemini"
+          }
+        },
+        {
+          "id": "escalation",
+          "type": "resource",
+          "position": {
+            "x": 1730,
+            "y": 330
+          },
+          "data": {
+            "label": "Human escalation",
+            "kind": "output",
+            "provider": "gcp",
+            "description": "Routes refunds, record-change requests and low-confidence cases to a supervisor queue/ticket note. A person decides.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "poc": true,
+            "role": "human",
+            "service": "Pub/Sub"
+          }
+        },
+        {
+          "id": "audit",
+          "type": "resource",
+          "position": {
+            "x": 1730,
+            "y": 50
+          },
+          "data": {
+            "label": "Audit & monitoring",
+            "kind": "monitor",
+            "provider": "gcp",
+            "description": "Records who asked, which sources were used, the draft and blocked actions, plus latency and error alerts.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "poc": false,
+            "role": "monitor",
+            "service": "Cloud Logging + Cloud Monitoring"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "e1",
+          "source": "staff",
+          "target": "iap",
+          "type": "smoothstep",
+          "label": "HTTPS sign-in"
+        },
+        {
+          "id": "e2",
+          "source": "iap",
+          "target": "console",
+          "type": "smoothstep",
+          "label": "verified identity"
+        },
+        {
+          "id": "e3",
+          "source": "console",
+          "target": "orchestrator",
+          "type": "smoothstep",
+          "label": "ticket + draft request"
+        },
+        {
+          "id": "e4",
+          "source": "tickets",
+          "target": "orchestrator",
+          "type": "smoothstep",
+          "label": "ticket context (read)"
+        },
+        {
+          "id": "e5",
+          "source": "kbstore",
+          "target": "search",
+          "type": "smoothstep",
+          "label": "index approved docs + ACLs"
+        },
+        {
+          "id": "e6",
+          "source": "orchestrator",
+          "target": "search",
+          "type": "smoothstep",
+          "label": "ACL-filtered query"
+        },
+        {
+          "id": "e7",
+          "source": "orchestrator",
+          "target": "crmadapter",
+          "type": "smoothstep",
+          "label": "read customer fields"
+        },
+        {
+          "id": "e8",
+          "source": "crmadapter",
+          "target": "crm",
+          "type": "smoothstep",
+          "label": "read-only API"
+        },
+        {
+          "id": "e9",
+          "source": "orchestrator",
+          "target": "model",
+          "type": "smoothstep",
+          "label": "grounded prompt → draft"
+        },
+        {
+          "id": "e10",
+          "source": "orchestrator",
+          "target": "escalation",
+          "type": "smoothstep",
+          "label": "blocked/unsure → human"
+        },
+        {
+          "id": "e11",
+          "source": "orchestrator",
+          "target": "audit",
+          "type": "smoothstep",
+          "label": "audit events"
+        },
+        {
+          "id": "e12",
+          "source": "orchestrator",
+          "target": "console",
+          "type": "smoothstep",
+          "label": "cited draft answer"
+        }
+      ]
+    }
+  },
+  "contextUsed": {
+    "status": "unavailable",
+    "enabled": true,
+    "engine": "AtMem 2.3.10 core SDK",
+    "recordsUsed": [],
+    "knowledgeRecordIds": [],
+    "skills": [
+      {
+        "id": "architecture",
+        "name": "AI architecture and discovery",
+        "provider": "all",
+        "stages": [
+          "discover",
+          "design",
+          "review"
+        ],
+        "version": "1.1.0",
+        "digest": "448a3d2854feb60d82c926656c4a04905141989fdbdffeb3add6082df7889f5d",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "security",
+        "name": "Security and reliability",
+        "provider": "all",
+        "stages": [
+          "design",
+          "review",
+          "deploy"
+        ],
+        "version": "1.0.0",
+        "digest": "c75cf46b29eb786b27d88d36604f521d6d287182d47df7d5c03845585d64f914",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "devops",
+        "name": "Infrastructure and DevOps handoff",
+        "provider": "all",
+        "stages": [
+          "deploy",
+          "review"
+        ],
+        "version": "1.1.0",
+        "digest": "cd5a428597fbf388a12a863721d93e551c200f4ed30be3469fd8eae78262884c",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "gcp",
+        "name": "Google Cloud AI architecture guidance",
+        "provider": "gcp",
+        "stages": [
+          "design",
+          "review",
+          "estimate",
+          "deploy"
+        ],
+        "version": "1.0.0",
+        "digest": "55ff77e0dd1d1ac7e3b826aa8bd0b2dfc4ee93f0439f457c581abfcafb766705",
+        "source": "https://raw.githubusercontent.com/google/skills/a1a942f058366f70e11e36fda390ac4019272c9c/skills/cloud/agent-platform-architecture/SKILL.md",
+        "reference": {
+          "id": "gcp",
+          "repository": "google/skills",
+          "commit": "a1a942f058366f70e11e36fda390ac4019272c9c",
+          "sourcePath": "skills/cloud/agent-platform-architecture/SKILL.md",
+          "url": "https://raw.githubusercontent.com/google/skills/a1a942f058366f70e11e36fda390ac4019272c9c/skills/cloud/agent-platform-architecture/SKILL.md",
+          "sha256": "db60e7b5d1128403132720c1445cfc2e26049f0651db14e71e94de074d175d48",
+          "file": "agent-skills/upstream/gcp/SKILL.md",
+          "status": "reference-only",
+          "note": "Imported source reference, not an enabled script/tool package. AtMem AI Architect specialist guidance is reviewed separately; referenced upstream companion files are not bundled.",
+          "integrity": true
+        },
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      }
+    ],
+    "tools": [],
+    "boundary": "AtMem AI Architect → native client",
+    "contextDigest": "19c514aacc42e10088fd2b645fe2be41bbd12dfa4cb49d3a3d76c72dc3e383ea",
+    "projectId": "e87f0b0f-f604-44e7-aaee-5e555af6bdcc"
+  },
+  "priceQuotes": []
+}

@@ -1,0 +1,68 @@
+{
+  "provider": "aws-observability",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Redact secrets before model input",
+    "Link conclusions to exact trace or log IDs",
+    "Prompt injection in a log cannot issue tool calls",
+    "Missing spans yield uncertainty rather than invented causes",
+    "Repeated ingestion preserves a consistent incident timeline"
+  ],
+  "components": [
+    {
+      "id": "services"
+    },
+    {
+      "id": "collector",
+      "service": "AWS Distro for OpenTelemetry"
+    },
+    {
+      "id": "xray",
+      "service": "AWS X-Ray"
+    },
+    {
+      "id": "firehose",
+      "service": "Amazon Data Firehose"
+    },
+    {
+      "id": "redact",
+      "service": "AWS Lambda"
+    },
+    {
+      "id": "evidence",
+      "service": "Amazon S3"
+    },
+    {
+      "id": "search",
+      "service": "Amazon OpenSearch Service"
+    },
+    {
+      "id": "analyzer",
+      "service": "AWS Lambda"
+    },
+    {
+      "id": "guardrails",
+      "service": "Amazon Bedrock Guardrails"
+    },
+    {
+      "id": "bedrock",
+      "service": "Amazon Bedrock",
+      "binding": "aws-bedrock-model"
+    },
+    {
+      "id": "api",
+      "service": "Amazon API Gateway"
+    },
+    {
+      "id": "operator",
+      "binding": "aws-iam-principal"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

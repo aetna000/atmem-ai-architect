@@ -1,0 +1,98 @@
+{
+  "provider": "gcp-iot",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Reject unknown device and invalid units",
+    "Duplicate events produce one result",
+    "Late and out-of-order telemetry follows an explicit policy",
+    "Disconnected input recovers by replay",
+    "Anomaly output names evidence and model version"
+  ],
+  "staticAssessment": {
+    "kind": "static-graph-checks",
+    "checks": [
+      {
+        "name": "Application contains at least three required components",
+        "passed": true
+      },
+      {
+        "name": "Required components form one connected graph",
+        "passed": true
+      },
+      {
+        "name": "Proposed cloud resources retain the requested provider",
+        "passed": true
+      },
+      {
+        "name": "Proposed cloud components name concrete services",
+        "passed": true
+      },
+      {
+        "name": "AI application has not collapsed into only object storage",
+        "passed": true
+      }
+    ],
+    "passed": true,
+    "limitations": [
+      "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+    ],
+    "acceptanceRequirements": [
+      "Reject unknown device and invalid units",
+      "Duplicate events produce one result",
+      "Late and out-of-order telemetry follows an explicit policy",
+      "Disconnected input recovers by replay",
+      "Anomaly output names evidence and model version"
+    ]
+  },
+  "components": [
+    {
+      "id": "sim"
+    },
+    {
+      "id": "pubsub",
+      "service": "Pub/Sub"
+    },
+    {
+      "id": "archive",
+      "service": "Cloud Storage"
+    },
+    {
+      "id": "registry_db",
+      "service": "Firestore"
+    },
+    {
+      "id": "dataflow",
+      "service": "Dataflow"
+    },
+    {
+      "id": "dlq",
+      "service": "Pub/Sub"
+    },
+    {
+      "id": "vertex",
+      "service": "Vertex AI Endpoints"
+    },
+    {
+      "id": "modelreg",
+      "service": "Vertex AI Model Registry"
+    },
+    {
+      "id": "bq",
+      "service": "BigQuery"
+    },
+    {
+      "id": "monitoring",
+      "service": "Cloud Monitoring"
+    },
+    {
+      "id": "operator"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

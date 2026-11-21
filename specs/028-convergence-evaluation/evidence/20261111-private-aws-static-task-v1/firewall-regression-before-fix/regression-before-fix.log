@@ -1,0 +1,21 @@
+test_actual_native_iptables_option_order_preserves_the_same_policy (__main__.ProbeObservations.test_actual_native_iptables_option_order_preserves_the_same_policy) ... ERROR
+
+======================================================================
+ERROR: test_actual_native_iptables_option_order_preserves_the_same_policy (__main__.ProbeObservations.test_actual_native_iptables_option_order_preserves_the_same_policy)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_aws_hosts_contract.py", line 174, in test_actual_native_iptables_option_order_preserves_the_same_policy
+    self.mode='native-order';self.assertEqual(self.inspect()['policySha256'],self.expected['policySha256'])
+                                              ~~~~~~~~~~~~^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_aws_hosts_contract.py", line 154, in inspect
+    def inspect(self):return inspect_host(self.expected,read=lambda name:self.files[name],command=self.command)
+                             ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/enterprise_aws_host_probe.py", line 66, in inspect_host
+    if not active or active[0]!='-A DOCKER-USER -i docker0 -d '+destination+' -j DROP':raise ValueError('IMDS rule is missing or shadowed')
+                                                                                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: IMDS rule is missing or shadowed
+
+----------------------------------------------------------------------
+Ran 1 test in 0.001s
+
+FAILED (errors=1)

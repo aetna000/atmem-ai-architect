@@ -1,0 +1,47 @@
+{
+  "status": "passed",
+  "environment": "Stripe sandbox + local Firestore emulator",
+  "realFundsMoved": false,
+  "cloudDeployment": false,
+  "purchaseCents": 137,
+  "refundCents": 37,
+  "welcomeMicros": 5000000,
+  "afterPurchaseMicros": 6370000,
+  "afterRefundMicros": 6000000,
+  "verified": [
+    "Real Checkout with AtMem name, brain icon and rose branding",
+    "Real signed payment webhook",
+    "Repeated fulfillment did not grant again",
+    "Real signed refund webhook",
+    "Repeated cumulative refund did not remove credits again"
+  ],
+  "limits": [
+    "Loopback receiver and synthetic emulator account",
+    "Public return page not deployed and returned404",
+    "Account-wide branding/policy update not completed: live account credential rejected",
+    "No real Google signup, hosted model or worker acceptance"
+  ],
+  "sources": {
+    "hosted/auth.py": "0d2b444e59a9f1365bee84952daf7b08515bf945b8b35136bfdeb0a5b5c0e8da",
+    "hosted/configuration.py": "526d5ca60fab047e950c0e246c42ac5d5c801080aa19dc7cad1c5bc1023c9155",
+    "hosted/payments.py": "e44f9d301cca832084f3958e6041b11c471bade4d083203a305324ca574f1d3c",
+    "hosted/credentials.py": "536d20724b15ff3ef4a948cda334399ced6a1526410a078f65962aaab9618a9c",
+    "hosted/firestore_store.py": "d3ff6d774a9a1c2cf8b383a136d9be48af5fd7e31ce0e2b14ea912b2f323e3e1",
+    "hosted/__init__.py": "66afc9f26759164c6d10bf6e8a7c919c74c6806a65daa62706fbe987ece3ae10",
+    "hosted/api.py": "48dfe093e7902e9a89222348a0388935d1a603d243d92770d2af3974e3359fbd",
+    "hosted/credits.py": "a59765565e6ae836404de01274baac224b55b6f375ad0fdaaed4878e8dc5fec9"
+  },
+  "followupLocalVerification": {
+    "result": "40 passed including real Firestore emulator; signed own checkout and unrelated-event filtering verified with official SDK signature verification and provider fixtures",
+    "files": {
+      "hosted/auth.py": "0d2b444e59a9f1365bee84952daf7b08515bf945b8b35136bfdeb0a5b5c0e8da",
+      "hosted/configuration.py": "526d5ca60fab047e950c0e246c42ac5d5c801080aa19dc7cad1c5bc1023c9155",
+      "hosted/payments.py": "2827714f31cd99b4dd54d06bfa08a856e51b89ab00eba11a8c8173fd18a4172d",
+      "hosted/credentials.py": "536d20724b15ff3ef4a948cda334399ced6a1526410a078f65962aaab9618a9c",
+      "hosted/firestore_store.py": "d3ff6d774a9a1c2cf8b383a136d9be48af5fd7e31ce0e2b14ea912b2f323e3e1",
+      "hosted/__init__.py": "66afc9f26759164c6d10bf6e8a7c919c74c6806a65daa62706fbe987ece3ae10",
+      "hosted/api.py": "48dfe093e7902e9a89222348a0388935d1a603d243d92770d2af3974e3359fbd",
+      "hosted/credits.py": "1d17585cbb46f376c344975caeaba6d7143e8bbd8fa1444897294564c73ddc48"
+    }
+  }
+}

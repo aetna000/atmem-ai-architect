@@ -1,0 +1,462 @@
+{
+  "version": 1,
+  "revision": 2,
+  "name": "IBM log/trace incident analysis",
+  "provider": "ibm",
+  "requirements": "",
+  "nodes": [
+    {
+      "id": "src",
+      "type": "resource",
+      "position": {
+        "x": 50,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Synthetic services",
+        "provider": "tools",
+        "kind": "source",
+        "description": "Existing synthetic workloads that emit logs and OpenTelemetry traces. Log text is treated as untrusted.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "poc": true,
+        "role": "data"
+      }
+    },
+    {
+      "id": "collector",
+      "type": "resource",
+      "position": {
+        "x": 470,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "OTel collector",
+        "provider": "ibm",
+        "kind": "stream",
+        "description": "OpenTelemetry Collector app on Code Engine. Receives logs and spans, adds batch IDs and a deterministic event key (trace_id/span_id/log_id plus hash) so repeated ingestion stays idempotent.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "ingest",
+        "service": "IBM Cloud Code Engine"
+      }
+    },
+    {
+      "id": "redact",
+      "type": "resource",
+      "position": {
+        "x": 890,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Redaction worker",
+        "provider": "ibm",
+        "kind": "guard",
+        "description": "Separate Code Engine job that masks secrets and tokens before anything is stored or sent to the model. Records redaction counts but never the original values.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "guard",
+        "service": "IBM Cloud Code Engine"
+      }
+    },
+    {
+      "id": "archive",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 405
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Redacted event archive",
+        "provider": "ibm",
+        "kind": "history",
+        "description": "Versioned bucket holding redacted batches keyed by event key, so the incident timeline can be rebuilt consistently.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "data",
+        "service": "IBM Cloud Object Storage"
+      }
+    },
+    {
+      "id": "search",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 125
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Log/trace search index",
+        "provider": "ibm",
+        "kind": "resource",
+        "description": "Indexes redacted logs and spans by trace_id, span_id, log_id and timestamp. Upserts use the event key to prevent duplicates.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "index",
+        "service": "IBM Cloud Databases for OpenSearch"
+      }
+    },
+    {
+      "id": "analysis",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Incident analysis runtime",
+        "provider": "ibm",
+        "kind": "agent",
+        "description": "Builds the timeline, detects missing spans, and sends log text to the model as quoted data only, never as instructions. It has no write tools, and model output cannot trigger tool calls. A validator rejects any conclusion that does not cite an existing trace or log ID and returns 'uncertain' when there are gaps. It also serves the cited answer to operators.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "app",
+        "service": "IBM Cloud Code Engine"
+      }
+    },
+    {
+      "id": "model",
+      "type": "resource",
+      "position": {
+        "x": 2150,
+        "y": 50
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "LLM",
+        "provider": "ibm",
+        "kind": "predict",
+        "description": "Foundation model inference on redacted evidence only. The model choice, region availability and entitlement have not been checked yet.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "llm",
+        "service": "IBM watsonx.ai"
+      }
+    },
+    {
+      "id": "appid",
+      "type": "resource",
+      "position": {
+        "x": 2570,
+        "y": 405
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Operator sign-in",
+        "provider": "ibm",
+        "kind": "resource",
+        "description": "Authenticates operators before they can use the analysis app.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "role": "guard",
+        "service": "IBM Cloud App ID"
+      }
+    },
+    {
+      "id": "operator",
+      "type": "resource",
+      "position": {
+        "x": 2150,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "On-call operator",
+        "provider": "tools",
+        "kind": "tool",
+        "description": "Person asking about an incident and reviewing the cited answer.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "role": "human"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "src",
+      "target": "collector",
+      "type": "smoothstep",
+      "label": "OTLP logs + spans"
+    },
+    {
+      "id": "e2",
+      "source": "collector",
+      "target": "redact",
+      "type": "smoothstep",
+      "label": "raw batches"
+    },
+    {
+      "id": "e3",
+      "source": "redact",
+      "target": "archive",
+      "type": "smoothstep",
+      "label": "redacted batch (versioned)"
+    },
+    {
+      "id": "e4",
+      "source": "redact",
+      "target": "search",
+      "type": "smoothstep",
+      "label": "idempotent upsert"
+    },
+    {
+      "id": "e5",
+      "source": "search",
+      "target": "analysis",
+      "type": "smoothstep",
+      "label": "read-only evidence query"
+    },
+    {
+      "id": "e6",
+      "source": "archive",
+      "target": "analysis",
+      "type": "smoothstep",
+      "label": "timeline rebuild"
+    },
+    {
+      "id": "e7",
+      "source": "analysis",
+      "target": "model",
+      "type": "smoothstep",
+      "label": "redacted evidence prompt"
+    },
+    {
+      "id": "e8",
+      "source": "operator",
+      "target": "appid",
+      "type": "smoothstep",
+      "label": "sign in"
+    },
+    {
+      "id": "e9",
+      "source": "appid",
+      "target": "analysis",
+      "type": "smoothstep",
+      "label": "token"
+    },
+    {
+      "id": "e10",
+      "source": "analysis",
+      "target": "operator",
+      "type": "smoothstep",
+      "label": "answer citing trace/log IDs"
+    }
+  ],
+  "id": "ef9b7dfd-944d-40e1-afc6-52fb73648ef1",
+  "brief": {
+    "application": "Use IBM Cloud for this synthetic architecture qualification. Correlate synthetic logs and distributed traces to explain a service incident. Include collection, redaction, storage/search, an AI analysis runtime and an operator-facing answer with source evidence. Treat log text as untrusted. Acceptance criteria: Redact secrets before model input; Link conclusions to exact trace or log IDs; Prompt injection in a log cannot issue tool calls; Missing spans yield uncertainty rather than invented causes; Repeated ingestion preserves a consistent incident timeline. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+    "cloud": "IBM"
+  },
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use IBM Cloud for this synthetic architecture qualification",
+      "options": "",
+      "decision": "ibm",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.ibm-cloud-log-trace-incident-analysis-first-end-to-end-sketch",
+      "title": "IBM Cloud log/trace incident analysis – first end-to-end sketch",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: synthetic log and trace collection, redaction before storage and model input, a versioned archive, search, an analysis runtime with a model call, and a cited answer for operators. Assumptions: region not selected yet; no account access, model entitlement or service interoperability has been verified. None of these IBM components has native Terraform coverage yet, so they are design-level and still need engineering work.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "needs": [
+    {
+      "id": "req-aa079c8a",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Every answer shows its sources",
+      "priority": "should",
+      "status": "open",
+      "source": "user",
+      "links": []
+    },
+    {
+      "id": "ai-redact-before-model",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Secrets must be redacted before storage, indexing and any model input.",
+      "rationale": "If a secret leaks into a prompt or index, it is exposed beyond its original system.",
+      "basis": "User acceptance criterion: 'Redact secrets before model input'.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "redact",
+        "model"
+      ]
+    },
+    {
+      "id": "ai-cite-ids",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Every conclusion must cite at least one existing trace or log ID. Answers without valid citations are rejected.",
+      "rationale": "Lets operators check the evidence and catches invented causes.",
+      "basis": "User criterion: 'Link conclusions to exact trace or log IDs'.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "analysis"
+      ]
+    },
+    {
+      "id": "ai-injection-no-tools",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Log content is treated as untrusted data. Model output cannot trigger tool calls or any write actions.",
+      "rationale": "Stops a log line containing a prompt injection from taking actions.",
+      "basis": "User criterion: 'Prompt injection in a log cannot issue tool calls'.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "analysis",
+        "model"
+      ]
+    },
+    {
+      "id": "ai-missing-span-uncertainty",
+      "kind": "functional",
+      "category": "reliability",
+      "statement": "When spans are missing, the answer reports uncertainty and the gap instead of a cause.",
+      "rationale": "Prevents confident but wrong incident explanations.",
+      "basis": "User criterion: 'Missing spans yield uncertainty rather than invented causes'.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "analysis"
+      ]
+    },
+    {
+      "id": "ai-idempotent-timeline",
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "statement": "Re-ingesting the same events produces the same incident timeline, with no duplicates.",
+      "rationale": "Retries and replays must not distort what happened during the incident.",
+      "basis": "User criterion: 'Repeated ingestion preserves a consistent incident timeline'.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "collector",
+        "search",
+        "archive"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "extensions": {
+    "requirementNumbers": {
+      "req-aa079c8a": 1,
+      "drv-data-access": 2,
+      "drv-data-location": 3,
+      "ai-redact-before-model": 4,
+      "ai-cite-ids": 5,
+      "ai-injection-no-tools": 6,
+      "ai-missing-span-uncertainty": 7,
+      "ai-idempotent-timeline": 8
+    }
+  },
+  "facts": [
+    {
+      "id": "fact-16f7465c",
+      "name": "cloud.preference",
+      "value": "ibm",
+      "unit": "provider",
+      "text": "Use IBM Cloud for this synthetic architecture qualification. Correlate synthetic logs and distributed traces to explain a service incident. Include collection, redaction, storage/search, an AI analysis runtime and an operator-facing answer with source evidence. Treat log text as untrusted. Acceptanc",
+      "madeAt": "2026-11-07"
+    }
+  ],
+  "workflow": "knowledge-assistant",
+  "asked": [],
+  "lastAsked": {
+    "id": "knowledge-assistant:0",
+    "topic": "data",
+    "question": "Where do the files live, and roughly how many are there?",
+    "beginner": "For example “SharePoint and a shared drive, about 20,000 files”.",
+    "why": "It shapes the RAG design."
+  },
+  "choices": {},
+  "conceptSig": null
+}

@@ -1,0 +1,96 @@
+{
+  "provider": "aws-chatbot",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": false,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "One user cannot read another conversation",
+    "Context and response sizes are bounded",
+    "Model outage produces a recoverable response",
+    "Deleting a conversation removes its stored context",
+    "Escalation retains the approved conversation context"
+  ],
+  "staticAssessment": {
+    "kind": "static-graph-checks",
+    "checks": [
+      {
+        "name": "Application contains at least three required components",
+        "passed": true
+      },
+      {
+        "name": "Required components form one connected graph",
+        "passed": true
+      },
+      {
+        "name": "Proposed cloud resources retain the requested provider",
+        "passed": true
+      },
+      {
+        "name": "Proposed cloud components name concrete services",
+        "passed": true
+      },
+      {
+        "name": "AI application has not collapsed into only object storage",
+        "passed": true
+      }
+    ],
+    "passed": true,
+    "limitations": [
+      "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+    ],
+    "acceptanceRequirements": [
+      "One user cannot read another conversation",
+      "Context and response sizes are bounded",
+      "Model outage produces a recoverable response",
+      "Deleting a conversation removes its stored context",
+      "Escalation retains the approved conversation context"
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "binding": "web-browser"
+    },
+    {
+      "id": "web",
+      "service": "Amazon CloudFront"
+    },
+    {
+      "id": "auth",
+      "service": "Amazon Cognito"
+    },
+    {
+      "id": "api",
+      "service": "Amazon API Gateway"
+    },
+    {
+      "id": "chat",
+      "service": "AWS Lambda"
+    },
+    {
+      "id": "convo",
+      "service": "Amazon DynamoDB"
+    },
+    {
+      "id": "model",
+      "service": "Amazon Bedrock",
+      "binding": "aws-bedrock-model"
+    },
+    {
+      "id": "escq",
+      "service": "Amazon SQS"
+    },
+    {
+      "id": "agent"
+    },
+    {
+      "id": "logs",
+      "service": "Amazon CloudWatch"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": false,
+  "errors": []
+}

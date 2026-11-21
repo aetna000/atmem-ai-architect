@@ -1,0 +1,478 @@
+{
+  "format": "atmem.ai-architect.project",
+  "formatVersion": "2.3.0",
+  "meta": {
+    "id": "b1acaf3a-0994-413a-b599-30e8075af89b",
+    "name": "Support staff knowledge assistant (AWS)",
+    "createdAt": "2026-11-07T12:10:42.350Z",
+    "updatedAt": "2026-11-07T12:10:42.350Z",
+    "revision": 2,
+    "generator": "atmem-ai-architect 0.2.0"
+  },
+  "design": {
+    "provider": "aws",
+    "nodes": [
+      {
+        "id": "staff",
+        "type": "resource",
+        "position": {
+          "x": 50,
+          "y": 750
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Support staff browser",
+          "provider": "tools",
+          "kind": "tool",
+          "description": "Support agents using a browser. Client reference only; not provisioned.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "binding": "web-browser",
+          "role": "human"
+        }
+      },
+      {
+        "id": "web",
+        "type": "resource",
+        "position": {
+          "x": 470,
+          "y": 750
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Staff web app",
+          "provider": "aws",
+          "kind": "output",
+          "description": "Staff interface: shows the ticket, the drafted reply with citations and an Escalate button. The app owns its private static assets.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "app",
+          "service": "Amazon CloudFront"
+        }
+      },
+      {
+        "id": "auth",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 675
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Staff sign-in",
+          "provider": "aws",
+          "kind": "guard",
+          "description": "Staff sign-in with MFA. Its tokens authorize API calls and carry the staff role used for retrieval filtering.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "service": "Amazon Cognito"
+        }
+      },
+      {
+        "id": "api",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 750
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Assistant API",
+          "provider": "aws",
+          "kind": "resource",
+          "description": "Authenticated HTTP API. No anonymous access.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "service": "Amazon API Gateway"
+        }
+      },
+      {
+        "id": "assistant",
+        "type": "resource",
+        "position": {
+          "x": 1730,
+          "y": 750
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Draft orchestrator",
+          "provider": "aws",
+          "kind": "agent",
+          "description": "Loads the ticket and runs authorized retrieval from approved knowledge plus a read-only CRM lookup. It then drafts a cited reply, abstains or escalates when the evidence is weak, and returns the draft to the staff app. It has no refund or write tools.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "service": "AWS Lambda"
+        }
+      },
+      {
+        "id": "knowledge",
+        "type": "resource",
+        "position": {
+          "x": 2150,
+          "y": 50
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Approved knowledge catalog",
+          "provider": "aws",
+          "kind": "source",
+          "description": "Approved articles with ACLs and revisions. The retrieval mode (keyword or semantic) is still to be decided.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "service": "Amazon DynamoDB"
+        }
+      },
+      {
+        "id": "tickets",
+        "type": "resource",
+        "position": {
+          "x": 2150,
+          "y": 330
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Synthetic ticket queue",
+          "provider": "tools",
+          "kind": "source",
+          "description": "Existing synthetic ticket system. Read integration still needs engineering.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing"
+        }
+      },
+      {
+        "id": "crm",
+        "type": "resource",
+        "position": {
+          "x": 2150,
+          "y": 610
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Existing CRM",
+          "provider": "tools",
+          "kind": "source",
+          "description": "Customer records. Read-only access only; the assistant never modifies records or issues refunds.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "existing"
+        }
+      },
+      {
+        "id": "model",
+        "type": "resource",
+        "position": {
+          "x": 2150,
+          "y": 890
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Foundation model",
+          "provider": "aws",
+          "kind": "predict",
+          "description": "Drafts the grounded reply. Model ID, access, quotas and region are still to be verified.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "binding": "aws-bedrock-model",
+          "service": "Amazon Bedrock"
+        }
+      },
+      {
+        "id": "escalation",
+        "type": "resource",
+        "position": {
+          "x": 2150,
+          "y": 1170
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Human escalation queue",
+          "provider": "aws",
+          "kind": "resource",
+          "description": "Holds low-confidence or out-of-scope cases for a human agent to review.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "service": "Amazon SQS"
+        }
+      },
+      {
+        "id": "audit",
+        "type": "resource",
+        "position": {
+          "x": 2150,
+          "y": 1450
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Audit logs",
+          "provider": "aws",
+          "kind": "monitor",
+          "description": "Logs requests, cited sources, abstentions and escalations. Retention is still to be agreed.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "service": "Amazon CloudWatch Logs"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e-staff-web",
+        "source": "staff",
+        "target": "web",
+        "type": "smoothstep",
+        "label": "HTTPS"
+      },
+      {
+        "id": "e-web-auth",
+        "source": "web",
+        "target": "auth",
+        "type": "smoothstep",
+        "label": "sign-in (PKCE)"
+      },
+      {
+        "id": "e-auth-api",
+        "source": "auth",
+        "target": "api",
+        "type": "smoothstep",
+        "label": "JWT authorizer"
+      },
+      {
+        "id": "e-web-api",
+        "source": "web",
+        "target": "api",
+        "type": "smoothstep",
+        "label": "draft request / cited draft"
+      },
+      {
+        "id": "e-api-assistant",
+        "source": "api",
+        "target": "assistant",
+        "type": "smoothstep",
+        "label": "invoke"
+      },
+      {
+        "id": "e-assistant-knowledge",
+        "source": "assistant",
+        "target": "knowledge",
+        "type": "smoothstep",
+        "label": "authorized retrieval"
+      },
+      {
+        "id": "e-assistant-tickets",
+        "source": "assistant",
+        "target": "tickets",
+        "type": "smoothstep",
+        "label": "read ticket"
+      },
+      {
+        "id": "e-assistant-crm",
+        "source": "assistant",
+        "target": "crm",
+        "type": "smoothstep",
+        "label": "read-only customer lookup"
+      },
+      {
+        "id": "e-assistant-model",
+        "source": "assistant",
+        "target": "model",
+        "type": "smoothstep",
+        "label": "grounded drafting (Converse)"
+      },
+      {
+        "id": "e-assistant-escalation",
+        "source": "assistant",
+        "target": "escalation",
+        "type": "smoothstep",
+        "label": "escalate to human"
+      },
+      {
+        "id": "e-assistant-audit",
+        "source": "assistant",
+        "target": "audit",
+        "type": "smoothstep",
+        "label": "audit events"
+      }
+    ]
+  },
+  "discovery": {
+    "problem": "",
+    "brief": {
+      "application": "Use AWS for this synthetic architecture qualification. Assist support staff using a synthetic ticket queue, approved knowledge and customer records from an existing CRM. Include authorized retrieval, grounded answer drafting, a staff interface and human escalation. Never issue refunds or modify customer records automatically. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+      "cloud": "AWS"
+    },
+    "facts": [
+      {
+        "id": "fact-7a6a0546",
+        "name": "cloud.preference",
+        "value": "aws",
+        "unit": "provider",
+        "text": "Use AWS for this synthetic architecture qualification. Assist support staff using a synthetic ticket queue, approved knowledge and customer records from an existing CRM. Include authorized retrieval, grounded answer drafting, a staff interface and human escalation. Never issue refunds or modify cust",
+        "madeAt": "2026-11-07"
+      }
+    ],
+    "workflow": "knowledge-assistant",
+    "asked": [],
+    "lastAsked": {
+      "id": "knowledge-assistant:0",
+      "topic": "data",
+      "question": "Where do the files live, and roughly how many are there?",
+      "beginner": "For example “SharePoint and a shared drive, about 20,000 files”.",
+      "why": "It shapes the RAG design."
+    }
+  },
+  "requirements": [
+    {
+      "id": "ai-no-autonomous-actions",
+      "kind": "functional",
+      "category": "security",
+      "statement": "The assistant must never issue refunds or modify customer records. CRM access is read-only, and any customer-affecting action is taken by a person.",
+      "rationale": "Prevents harmful financial or data changes caused by model error or prompt injection.",
+      "basis": "User: \"Never issue refunds or modify customer records automatically.\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "assistant",
+        "crm"
+      ]
+    },
+    {
+      "id": "ai-authorized-retrieval",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Retrieval returns only approved knowledge and customer records that the signed-in staff member is allowed to see. Unknown identities fail closed.",
+      "rationale": "Avoids leaking restricted knowledge or customer data in drafts.",
+      "basis": "User: \"Include authorized retrieval\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "auth",
+        "knowledge",
+        "crm",
+        "assistant"
+      ]
+    },
+    {
+      "id": "ai-grounded-escalation",
+      "kind": "functional",
+      "category": "reliability",
+      "statement": "Every draft cites its sources. When the evidence is insufficient, the assistant abstains and routes the case to human escalation.",
+      "rationale": "Keeps unsupported answers away from customers.",
+      "basis": "User: \"grounded answer drafting ... and human escalation\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "assistant",
+        "model",
+        "escalation"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use AWS for this synthetic architecture qualification",
+      "options": "",
+      "decision": "aws",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.aws-support-staff-knowledge-assistant-first-sketch",
+      "title": "AWS support-staff knowledge assistant (first sketch)",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: support staff draft grounded replies from synthetic tickets, approved knowledge and read-only CRM records, and escalate uncertain cases to a person. Assumptions: the region is not selected yet. The retrieval mode is still open, so typed implementations are not bound yet. Integrations with the existing ticket queue and CRM need engineering. No automatic refunds or record changes. The diagram shows design intent only and is not deployment evidence.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "extensions": {
+    "requirementNumbers": {
+      "drv-data-access": 1,
+      "drv-data-location": 2,
+      "ai-no-autonomous-actions": 3,
+      "ai-authorized-retrieval": 4,
+      "ai-grounded-escalation": 5
+    },
+    "choices": {},
+    "conceptSig": null
+  }
+}

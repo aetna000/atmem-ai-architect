@@ -1,0 +1,53 @@
+{
+  "status": "passed",
+  "backend": "azurite",
+  "backendVersion": "3.37.0",
+  "sdk": {
+    "name": "azure-storage-blob",
+    "version": "12.31.1"
+  },
+  "checks": [
+    {
+      "name": "documents: generated upload/read preserves UTF-8 bytes",
+      "passed": true
+    },
+    {
+      "name": "documents: overwrite and listing",
+      "passed": true
+    },
+    {
+      "name": "documents: deletion and missing-object error",
+      "passed": true
+    }
+  ],
+  "capabilities": [
+    {
+      "service": "azure object storage",
+      "mode": "generated-client data-plane checks"
+    }
+  ],
+  "limitations": [
+    "Local API checks do not validate Terraform apply, real IAM, account policy, region availability, networking, billing or production operations.",
+    "Synthetic client credentials are not deployment identities.",
+    "Only the explicit private object storage contract is exercised; other provider services are not emulated.",
+    "Azure Entra authorization, custom role enforcement, storage-account versioning and soft-delete retention remain unverified; Azurite CRUD does not establish these behaviors."
+  ],
+  "message": "Generated client functions exercised against local storage APIs. Review the unverified boundaries before planning deployment.",
+  "version": 1,
+  "workerDigest": "6a475b70fe9f134e635d8bb1e0b3012ba0a88d11d26f84f64eb2849e8c63b920",
+  "designRevision": 1,
+  "environment": "staging",
+  "artifactDigest": "7d8bb98f6c69695688e98c68c19b9a8d8ec523958e8938cd8ebfa496e98fc0be",
+  "fileDigests": {
+    "main.tf.json": "65405e61fa301dd33d55f5025fd4e687e6b899b0cad15bf90b3d36fa78520b70",
+    "resource-schedule.json": "1133494b0e6ac2748fffff9aed496cab8cafadeca4cfbd1717a3551b541aeab7",
+    "storage_client.py": "41e50e7d1f8f22554d40bac949a11ae06e292df3af295945eb7b977a88d7036f",
+    "deployment.tfvars.json.example": "8aa7cf3c76ae1acb1a97c0dfd88c7d787d02d5a3940d35681262a035a62ba256",
+    ".gitignore": "9a60f6bfb5f6e76ea84be64714359d1e607d46b6404e2b1ec97683148252af28",
+    "tests/storage.tftest.hcl": "1d933f8c00e311db1dbefe5e7b2c8e966a3761d1ef49d0b86b33cb28726afcec",
+    "README.md": "387f3ab5118f60cc198fb0173b3d15390ab9214630bfb3a7d41b003822d9fa78"
+  },
+  "cloudOperations": false,
+  "terraformApply": "not_run",
+  "workspaceCleanup": "passed"
+}

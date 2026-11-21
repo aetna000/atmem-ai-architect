@@ -1,0 +1,651 @@
+{
+  "terraform": {
+    "required_version": ">= 1.17.1, < 2.0.0",
+    "required_providers": {
+      "google": {
+        "source": "hashicorp/google",
+        "version": "7.46.2"
+      },
+      "google-beta": {
+        "source": "hashicorp/google-beta",
+        "version": "7.46.2"
+      }
+    }
+  },
+  "provider": {
+    "google": {
+      "project": "${var.project_id}",
+      "region": "${var.region}"
+    },
+    "google-beta": {
+      "project": "${var.project_id}",
+      "region": "${var.region}"
+    }
+  },
+  "variable": {
+    "review_approved": {
+      "type": "bool",
+      "default": false,
+      "nullable": false,
+      "description": "Review the exact destination, IAM scope, raw-data retention, costs and operating responsibilities before any apply."
+    },
+    "images_ready": {
+      "type": "bool",
+      "default": false,
+      "nullable": false,
+      "description": "Enable configuration output only after actual immutable parser/transfer artifacts are built and reviewed."
+    },
+    "project_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing owned project in which this package administers Batch jobs. Review project-scoped control permissions; unrelated workloads are not adopted.",
+      "validation": {
+        "condition": "${can(regex(\"^[a-z][a-z0-9-]{4,28}[a-z0-9]$\",var.project_id))}",
+        "error_message": "Supply the reviewed project_id destination input."
+      }
+    },
+    "region": {
+      "type": "string",
+      "nullable": false,
+      "description": "Placement is bound to the selected architecture; regenerate to change it.",
+      "validation": {
+        "condition": "${can(regex(\"^australia-southeast1$\",var.region))}",
+        "error_message": "Supply the reviewed region destination input."
+      },
+      "default": "australia-southeast1"
+    },
+    "worker_service_account": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing question-worker service account in this project, referenced without changing its other roles or SQL identity.",
+      "validation": {
+        "condition": "${can(regex(\"^[a-z][a-z0-9-]{4,28}[a-z0-9]@[a-z][a-z0-9-]{4,28}[a-z0-9][.]iam[.]gserviceaccount[.]com$\",var.worker_service_account))}",
+        "error_message": "Supply the reviewed worker_service_account destination input."
+      }
+    },
+    "parser_image": {
+      "type": "string",
+      "default": "",
+      "nullable": false,
+      "description": "Immutable package-owned regional parser artifact; empty only during foundation.",
+      "validation": {
+        "condition": "${!var.images_ready || can(regex(\"^[a-z0-9./_-]+@sha256:[0-9a-f]{64}$\",var.parser_image))}",
+        "error_message": "Use the actual reviewed immutable parser artifact."
+      }
+    },
+    "transfer_image": {
+      "type": "string",
+      "default": "",
+      "nullable": false,
+      "description": "Immutable package-owned regional transfer artifact; empty only during foundation.",
+      "validation": {
+        "condition": "${!var.images_ready || can(regex(\"^[a-z0-9./_-]+@sha256:[0-9a-f]{64}$\",var.transfer_image))}",
+        "error_message": "Use the actual reviewed immutable transfer artifact."
+      }
+    },
+    "parser_revision": {
+      "type": "string",
+      "default": "",
+      "nullable": false,
+      "description": "Full independently qualified parser artifact revision, supplied by the image build receipt, not guessed from a source revision.",
+      "validation": {
+        "condition": "${!var.images_ready || can(regex(\"^[0-9a-f]{64}$\",var.parser_revision))}",
+        "error_message": "Supply the actual qualified parser artifact revision."
+      }
+    }
+  },
+  "locals": {
+    "name": "${format(\"doc-%s\",substr(sha256(\"https://atmem.ai/workspaces/private-knowledge-qualification/block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d/qualification\"),0,12))}",
+    "document_job_configuration": {
+      "format": "enterprise-google-document-job-v1",
+      "projectId": "${var.project_id}",
+      "region": "${var.region}",
+      "bucket": "${google_storage_bucket.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d.name}",
+      "parserImage": "${var.parser_image}",
+      "transferImage": "${var.transfer_image}",
+      "workerServiceAccount": "${var.worker_service_account}",
+      "vmServiceAccount": "${google_service_account.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_vm.email}",
+      "network": "${format(\"projects/%s/global/networks/%s\",var.project_id,google_compute_network.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d.name)}",
+      "subnetwork": "${format(\"projects/%s/regions/%s/subnetworks/%s\",var.project_id,var.region,google_compute_subnetwork.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d.name)}"
+    },
+    "document_executor_configuration": {
+      "format": "enterprise-document-executor-v1",
+      "provider": "gcp",
+      "parserRevision": "${var.parser_revision}",
+      "configuration": "${local.document_job_configuration}"
+    }
+  },
+  "resource": {
+    "terraform_data": {
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review": {
+        "input": {
+          "design_revision": 7,
+          "environment": "qualification",
+          "source_component": "$${file(\"literal-evaluation-probe.txt\")} %%{if true} marker %%{endif}"
+        },
+        "lifecycle": {
+          "precondition": [
+            {
+              "condition": "${var.review_approved}",
+              "error_message": "Review the destination and complete this component plan before any apply."
+            },
+            {
+              "condition": "${endswith(var.worker_service_account,format(\"@%s.iam.gserviceaccount.com\",var.project_id))}",
+              "error_message": "The existing worker identity must belong to this destination project."
+            },
+            {
+              "condition": "${var.worker_service_account != format(\"%s-vm@%s.iam.gserviceaccount.com\",local.name,var.project_id)}",
+              "error_message": "Keep question-worker and parser-transfer VM identities separate."
+            },
+            {
+              "condition": "${!var.images_ready || startswith(var.parser_image,format(\"%s-docker.pkg.dev/%s/%s/parser@sha256:\",var.region,var.project_id,local.name))}",
+              "error_message": "Keep parser in the owned regional registry with a reviewed digest."
+            },
+            {
+              "condition": "${!var.images_ready || startswith(var.transfer_image,format(\"%s-docker.pkg.dev/%s/%s/transfer@sha256:\",var.region,var.project_id,local.name))}",
+              "error_message": "Keep transfer in the owned regional registry with a reviewed digest."
+            }
+          ]
+        }
+      }
+    },
+    "google_project_service": {
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_compute": {
+        "project": "${var.project_id}",
+        "service": "compute.googleapis.com",
+        "disable_on_destroy": false,
+        "depends_on": [
+          "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review"
+        ]
+      },
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_batch": {
+        "project": "${var.project_id}",
+        "service": "batch.googleapis.com",
+        "disable_on_destroy": false,
+        "depends_on": [
+          "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review"
+        ]
+      },
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_identity": {
+        "project": "${var.project_id}",
+        "service": "iam.googleapis.com",
+        "disable_on_destroy": false,
+        "depends_on": [
+          "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review"
+        ]
+      },
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_storage": {
+        "project": "${var.project_id}",
+        "service": "storage.googleapis.com",
+        "disable_on_destroy": false,
+        "depends_on": [
+          "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review"
+        ]
+      },
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_registry": {
+        "project": "${var.project_id}",
+        "service": "artifactregistry.googleapis.com",
+        "disable_on_destroy": false,
+        "depends_on": [
+          "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review"
+        ]
+      },
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_dns": {
+        "project": "${var.project_id}",
+        "service": "dns.googleapis.com",
+        "disable_on_destroy": false,
+        "depends_on": [
+          "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review"
+        ]
+      }
+    },
+    "google_project_service_identity": {
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_batch_agent": {
+        "provider": "google-beta",
+        "project": "${var.project_id}",
+        "service": "batch.googleapis.com",
+        "depends_on": [
+          "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review",
+          "google_project_service.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_batch"
+        ]
+      }
+    },
+    "google_project_iam_member": {
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_batch_agent": {
+        "project": "${var.project_id}",
+        "role": "roles/batch.serviceAgent",
+        "member": "${google_project_service_identity.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_batch_agent.member}",
+        "depends_on": [
+          "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review"
+        ]
+      },
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_reporter": {
+        "project": "${var.project_id}",
+        "role": "roles/batch.agentReporter",
+        "member": "${format(\"serviceAccount:%s\",google_service_account.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_vm.email)}",
+        "depends_on": [
+          "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review",
+          "google_project_service.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_batch"
+        ]
+      },
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_worker_control": {
+        "project": "${var.project_id}",
+        "role": "${google_project_iam_custom_role.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_control.name}",
+        "member": "${format(\"serviceAccount:%s\",var.worker_service_account)}",
+        "depends_on": [
+          "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review"
+        ]
+      }
+    },
+    "google_service_account": {
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_vm": {
+        "project": "${var.project_id}",
+        "account_id": "${local.name}-vm",
+        "display_name": "Trusted one-file transfer and Batch reporting; no source/model/SQL role",
+        "depends_on": [
+          "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review",
+          "google_project_service.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_identity"
+        ]
+      }
+    },
+    "google_service_account_iam_member": {
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_worker_act_as": {
+        "service_account_id": "${google_service_account.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_vm.name}",
+        "role": "roles/iam.serviceAccountUser",
+        "member": "${format(\"serviceAccount:%s\",var.worker_service_account)}",
+        "depends_on": [
+          "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review"
+        ]
+      }
+    },
+    "google_project_iam_custom_role": {
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_control": {
+        "project": "${var.project_id}",
+        "role_id": "${replace(local.name,\"-\",\"_\")}_control",
+        "title": "Owned private document job controller",
+        "stage": "GA",
+        "permissions": [
+          "batch.jobs.create",
+          "batch.jobs.get",
+          "batch.jobs.delete",
+          "batch.operations.get"
+        ],
+        "depends_on": [
+          "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review",
+          "google_project_service.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_batch"
+        ]
+      },
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_transfer_objects": {
+        "project": "${var.project_id}",
+        "role_id": "${replace(local.name,\"-\",\"_\")}_transfer_objects",
+        "title": "Private parser transfer temporary bytes",
+        "stage": "GA",
+        "permissions": [
+          "storage.objects.get",
+          "storage.objects.create"
+        ],
+        "depends_on": [
+          "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review",
+          "google_project_service.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_storage"
+        ]
+      },
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_worker_objects": {
+        "project": "${var.project_id}",
+        "role_id": "${replace(local.name,\"-\",\"_\")}_worker_objects",
+        "title": "Private parser worker temporary bytes",
+        "stage": "GA",
+        "permissions": [
+          "storage.objects.get",
+          "storage.objects.create",
+          "storage.objects.delete"
+        ],
+        "depends_on": [
+          "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review",
+          "google_project_service.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_storage"
+        ]
+      }
+    },
+    "google_artifact_registry_repository": {
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d": {
+        "project": "${var.project_id}",
+        "location": "${var.region}",
+        "repository_id": "${local.name}",
+        "format": "DOCKER",
+        "description": "Reviewed immutable parser and trusted transfer artifacts",
+        "depends_on": [
+          "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review",
+          "google_project_service.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_registry"
+        ],
+        "lifecycle": {
+          "prevent_destroy": true
+        }
+      }
+    },
+    "google_artifact_registry_repository_iam_member": {
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_image_read": {
+        "project": "${var.project_id}",
+        "location": "${var.region}",
+        "repository": "${google_artifact_registry_repository.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d.repository_id}",
+        "role": "roles/artifactregistry.reader",
+        "member": "${format(\"serviceAccount:%s\",google_service_account.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_vm.email)}",
+        "depends_on": [
+          "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review"
+        ]
+      }
+    },
+    "google_storage_bucket": {
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d": {
+        "project": "${var.project_id}",
+        "name": "${format(\"atmem-doc-%s\",substr(sha256(format(\"%s:%s\",var.project_id,local.name)),0,20))}",
+        "location": "${var.region}",
+        "storage_class": "STANDARD",
+        "uniform_bucket_level_access": true,
+        "public_access_prevention": "enforced",
+        "force_destroy": false,
+        "versioning": {
+          "enabled": false
+        },
+        "soft_delete_policy": {
+          "retention_duration_seconds": 0
+        },
+        "lifecycle_rule": [
+          {
+            "action": {
+              "type": "Delete"
+            },
+            "condition": {
+              "age": 1,
+              "matches_prefix": [
+                "document-jobs/"
+              ]
+            }
+          }
+        ],
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review",
+          "google_project_service.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_storage"
+        ]
+      }
+    },
+    "google_storage_bucket_iam_member": {
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_transfer": {
+        "bucket": "${google_storage_bucket.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d.name}",
+        "role": "${google_project_iam_custom_role.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_transfer_objects.name}",
+        "member": "${format(\"serviceAccount:%s\",google_service_account.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_vm.email)}",
+        "depends_on": [
+          "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review"
+        ]
+      },
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_worker": {
+        "bucket": "${google_storage_bucket.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d.name}",
+        "role": "${google_project_iam_custom_role.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_worker_objects.name}",
+        "member": "${format(\"serviceAccount:%s\",var.worker_service_account)}",
+        "depends_on": [
+          "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review"
+        ]
+      }
+    },
+    "google_compute_network": {
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d": {
+        "project": "${var.project_id}",
+        "name": "${local.name}",
+        "auto_create_subnetworks": false,
+        "delete_default_routes_on_create": true,
+        "depends_on": [
+          "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review",
+          "google_project_service.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_compute"
+        ],
+        "lifecycle": {
+          "prevent_destroy": true
+        }
+      }
+    },
+    "google_compute_subnetwork": {
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d": {
+        "project": "${var.project_id}",
+        "name": "${local.name}",
+        "region": "${var.region}",
+        "network": "${google_compute_network.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d.id}",
+        "ip_cidr_range": "10.87.0.0/24",
+        "private_ip_google_access": true,
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review"
+        ]
+      }
+    },
+    "google_compute_route": {
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_api": {
+        "project": "${var.project_id}",
+        "name": "${local.name}-api",
+        "network": "${google_compute_network.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d.id}",
+        "dest_range": "199.36.153.8/30",
+        "next_hop_gateway": "default-internet-gateway",
+        "priority": 1000,
+        "depends_on": [
+          "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review"
+        ]
+      },
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_direct": {
+        "project": "${var.project_id}",
+        "name": "${local.name}-direct",
+        "network": "${google_compute_network.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d.id}",
+        "dest_range": "34.126.0.0/18",
+        "next_hop_gateway": "default-internet-gateway",
+        "priority": 1000,
+        "depends_on": [
+          "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review"
+        ]
+      }
+    },
+    "google_compute_firewall": {
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_allow_api": {
+        "project": "${var.project_id}",
+        "name": "${local.name}-api",
+        "network": "${google_compute_network.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d.id}",
+        "direction": "EGRESS",
+        "priority": 1000,
+        "destination_ranges": [
+          "199.36.153.8/30",
+          "34.126.0.0/18"
+        ],
+        "target_service_accounts": [
+          "${google_service_account.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_vm.email}"
+        ],
+        "allow": [
+          {
+            "protocol": "tcp",
+            "ports": [
+              "443"
+            ]
+          }
+        ],
+        "depends_on": [
+          "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review"
+        ]
+      },
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_deny_egress": {
+        "project": "${var.project_id}",
+        "name": "${local.name}-deny-egress",
+        "network": "${google_compute_network.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d.id}",
+        "direction": "EGRESS",
+        "priority": 2000,
+        "destination_ranges": [
+          "0.0.0.0/0"
+        ],
+        "deny": [
+          {
+            "protocol": "all"
+          }
+        ],
+        "depends_on": [
+          "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review"
+        ]
+      },
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_deny_ingress": {
+        "project": "${var.project_id}",
+        "name": "${local.name}-deny-ingress",
+        "network": "${google_compute_network.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d.id}",
+        "direction": "INGRESS",
+        "priority": 1000,
+        "source_ranges": [
+          "0.0.0.0/0"
+        ],
+        "deny": [
+          {
+            "protocol": "all"
+          }
+        ],
+        "depends_on": [
+          "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review"
+        ]
+      }
+    },
+    "google_dns_managed_zone": {
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_apis": {
+        "project": "${var.project_id}",
+        "name": "${local.name}-apis",
+        "dns_name": "googleapis.com.",
+        "visibility": "private",
+        "description": "Owned private parser API resolution",
+        "private_visibility_config": {
+          "networks": [
+            {
+              "network_url": "${google_compute_network.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d.id}"
+            }
+          ]
+        },
+        "depends_on": [
+          "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review",
+          "google_project_service.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_dns"
+        ],
+        "lifecycle": {
+          "prevent_destroy": true
+        }
+      },
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_registry": {
+        "project": "${var.project_id}",
+        "name": "${local.name}-registry",
+        "dns_name": "pkg.dev.",
+        "visibility": "private",
+        "description": "Owned private parser API resolution",
+        "private_visibility_config": {
+          "networks": [
+            {
+              "network_url": "${google_compute_network.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d.id}"
+            }
+          ]
+        },
+        "depends_on": [
+          "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review",
+          "google_project_service.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_dns"
+        ],
+        "lifecycle": {
+          "prevent_destroy": true
+        }
+      }
+    },
+    "google_dns_record_set": {
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_apis_wildcard": {
+        "project": "${var.project_id}",
+        "managed_zone": "${google_dns_managed_zone.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_apis.name}",
+        "name": "*.googleapis.com.",
+        "type": "CNAME",
+        "ttl": 300,
+        "rrdatas": [
+          "private.googleapis.com."
+        ],
+        "depends_on": [
+          "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review"
+        ]
+      },
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_registry_wildcard": {
+        "project": "${var.project_id}",
+        "managed_zone": "${google_dns_managed_zone.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_registry.name}",
+        "name": "*.pkg.dev.",
+        "type": "CNAME",
+        "ttl": 300,
+        "rrdatas": [
+          "private.googleapis.com."
+        ],
+        "depends_on": [
+          "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review"
+        ]
+      },
+      "block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_private_vip": {
+        "project": "${var.project_id}",
+        "managed_zone": "${google_dns_managed_zone.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_apis.name}",
+        "name": "private.googleapis.com.",
+        "type": "A",
+        "ttl": 300,
+        "rrdatas": [
+          "199.36.153.8",
+          "199.36.153.9",
+          "199.36.153.10",
+          "199.36.153.11"
+        ],
+        "depends_on": [
+          "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review"
+        ]
+      }
+    }
+  },
+  "output": {
+    "document_job_configuration": {
+      "value": "${var.images_ready ? local.document_job_configuration : null}",
+      "description": "Exact runtime adapter shape; not evidence of worker wiring, crash recovery or account acceptance.",
+      "depends_on": [
+        "terraform_data.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_review",
+        "google_project_service.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_compute",
+        "google_project_service.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_batch",
+        "google_project_service.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_identity",
+        "google_project_service.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_storage",
+        "google_project_service.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_registry",
+        "google_project_service.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_dns",
+        "google_project_service_identity.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_batch_agent",
+        "google_project_iam_member.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_batch_agent",
+        "google_project_iam_member.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_reporter",
+        "google_project_iam_member.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_worker_control",
+        "google_service_account.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_vm",
+        "google_service_account_iam_member.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_worker_act_as",
+        "google_project_iam_custom_role.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_control",
+        "google_project_iam_custom_role.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_transfer_objects",
+        "google_project_iam_custom_role.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_worker_objects",
+        "google_artifact_registry_repository.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d",
+        "google_artifact_registry_repository_iam_member.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_image_read",
+        "google_storage_bucket.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d",
+        "google_storage_bucket_iam_member.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_transfer",
+        "google_storage_bucket_iam_member.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_worker",
+        "google_compute_network.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d",
+        "google_compute_subnetwork.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d",
+        "google_compute_route.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_api",
+        "google_compute_route.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_direct",
+        "google_compute_firewall.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_allow_api",
+        "google_compute_firewall.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_deny_egress",
+        "google_compute_firewall.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_deny_ingress",
+        "google_dns_managed_zone.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_apis",
+        "google_dns_managed_zone.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_registry",
+        "google_dns_record_set.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_apis_wildcard",
+        "google_dns_record_set.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_registry_wildcard",
+        "google_dns_record_set.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d_private_vip"
+      ]
+    },
+    "document_executor_configuration": {
+      "value": "${var.images_ready ? local.document_executor_configuration : null}",
+      "description": "Owned worker envelope matching the approved parser revision; complete application hosting/export acceptance remains separate."
+    },
+    "document_job_artifacts": {
+      "value": {
+        "repository": "${google_artifact_registry_repository.block_247b66696c6528226c69746572616c2d6576616c756174696f6e2d70726f62652e74787422297d20257b696620747275657d206d61726b657220257b656e6469667d.repository_id}",
+        "parserRevision": "${var.parser_revision}",
+        "parserImage": "${var.parser_image}",
+        "transferImage": "${var.transfer_image}"
+      }
+    }
+  }
+}

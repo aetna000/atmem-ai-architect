@@ -1,0 +1,86 @@
+{
+  "version": 1,
+  "designRevision": 4,
+  "interfaces": [
+    {
+      "id": "staff-invoice-browser",
+      "source": "invoice-staff",
+      "target": "invoice-workflow",
+      "integration": "browser-https",
+      "access": null,
+      "generated": true,
+      "runtimeEvidence": "not_attached",
+      "contractStatus": "generated_unverified",
+      "transport": "Same-origin HTTPS assets, /api/session and /api/invoices; native staff sign-in, never a provisioned browser",
+      "request": {
+        "upload": "POST /api/invoices with application/pdf bytes, maximum 10000000 bytes; no caller account, storage path/version, destination or action supplied",
+        "review": "POST /api/invoices/{id}/review: exact revision, fields and bounded notes",
+        "approve": "POST /api/invoices/{id}/approve: exact revision only",
+        "read": "GET list/detail/original/history; paginated list/history; recover extraction through supervisor-authorized POST /api/invoices/{id}/recover"
+      },
+      "response": "202 accepted invoice snapshot on upload; subsequent reads show durable review/delivery state. Acceptance is not extraction or external-action completion.",
+      "identity": "Provider-native verified staff identity plus current SQL membership on every operation. Reviewer/supervisor roles come from live membership, never JWT role names or request/document content. JWT revocation is bounded by native token lifetime.",
+      "authorization": "Same-origin checks on mutations, strict scope/account ownership and SQL role-specific function grants. Ordinary uploaders cannot approve. Edits invalidate prior approval; approved payload digest/revision is bound to dispatch.",
+      "idempotency": "Content digest and account/workflow operation identity deduplicate upload/queue work; immutable original version/digest are server-owned. Delivery effects require the separate accounting contract.",
+      "timeouts": "Upload streaming is bounded to 15 seconds and 10 MB; review bodies to 5 seconds and 10000 bytes. Worker/parser execution limits are separate and do not imply an end-to-end SLA.",
+      "retention": "90-day application access/cleanup eligibility; original versions, native backups and scheduled cleanup have separate lifecycle/restore windows. No exact global erasure promise.",
+      "tests": [
+        "invoice_http_acceptance.py",
+        "invoice_identity_acceptance.py",
+        "invoice_web_acceptance.py",
+        "invoice_operations_acceptance.py"
+      ]
+    },
+    {
+      "id": "approved-invoice-accounting",
+      "source": "invoice-workflow",
+      "target": "accounting-api",
+      "integration": "approved-accounting-api",
+      "access": null,
+      "generated": true,
+      "runtimeEvidence": "not_attached",
+      "contractStatus": "generated_unverified",
+      "transport": "Fixed operator-reviewed HTTPS POST, no redirect or proxy-derived destination; existing accounting system remains external",
+      "contract": "normalized-action-v1",
+      "request": {
+        "headers": [
+          "Content-Type: application/json",
+          "Authorization: Bearer <separately stored worker credential>",
+          "Idempotency-Key: <stable operation UUID>"
+        ],
+        "body": [
+          "operation_id",
+          "payload_sha256",
+          "kind=document",
+          "result"
+        ]
+      },
+      "response": {
+        "http": [
+          200,
+          201
+        ],
+        "contentType": "application/json",
+        "maximumBytes": 8192,
+        "exactFields": [
+          "operation_id",
+          "payload_sha256",
+          "external_id",
+          "status=completed"
+        ]
+      },
+      "identity": "Worker-only destination credential; API/parser/operator jobs receive none. Endpoint digest, scope and mapping version are part of the approved snapshot.",
+      "approval": "Only a current allowed approved dispatch with matching operation ID, payload digest, destination contract and result revision can call the adapter.",
+      "timeouts": "8-second HTTPS connection/read operations with a separate bounded worker/process deadline; no redirect, 202-as-completed or arbitrary error-body logging.",
+      "idempotency": "Canonical approved payload and stable key survive retries. An ambiguous/expired dispatch becomes unknown; automatic replay requires separately reviewed scoped/expiring native accounting idempotency acceptance. A no-request retry cannot erase prior uncertainty.",
+      "recovery": "Supervisor/operator inspect the existing accounting service independently by operation ID/digest before recording a verified completion receipt. Never resend an uncertain action simply to clear a failure.",
+      "tests": [
+        "durable_postgres_acceptance.py",
+        "workflow_tls_destination_fixture.py",
+        "invoice_worker_acceptance.py"
+      ],
+      "boundary": "Generated normalized adapter and local TLS fixtures do not prove compatibility with this actual accounting API. Actual provider credentials, endpoint behavior, idempotency and reconciliation must be accepted separately."
+    }
+  ],
+  "evidenceBoundary": "Compiler-defined contracts; actual service behavior, model quality and account access require independent tests."
+}

@@ -1,0 +1,40 @@
+[
+  {
+    "id": "d8079e90-3cfb-4064-bb63-89a932577758",
+    "sessionId": "66240ba1-e880-4597-a1ba-1e21f6addec1",
+    "artifactId": "2635c79d-e565-4e5e-af2a-75559fc8e332",
+    "artifactSha256": "c57ce4fd733b6496c3e7a93b7d5d182897e65732df740a25a820fc2826d2a065",
+    "validatorId": "python-tests",
+    "label": "Local Python tests",
+    "contractSha256": "62e30a4a3ff63a1ea05b4f5a23840aae62c328578a56bf8cc107c29bad0db59b",
+    "state": "finished",
+    "result": {
+      "validator": "python-tests",
+      "artifactSha256": "c57ce4fd733b6496c3e7a93b7d5d182897e65732df740a25a820fc2826d2a065",
+      "imageId": "sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20",
+      "runtimeConfigImageId": "sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20",
+      "platform": "linux/amd64",
+      "isolationProfile": "standard-v1",
+      "runtimeEnvironment": {},
+      "command": [
+        "/usr/local/bin/python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-v"
+      ],
+      "status": "failed",
+      "exitCode": 1,
+      "skipped": 0,
+      "testsReported": 1,
+      "reason": null,
+      "output": "test_failure (test_counterexample.Counterexample.test_failure) ... FAIL\n\n======================================================================\nFAIL: test_failure (test_counterexample.Counterexample.test_failure)\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"/work/source/test_counterexample.py\", line 3, in test_failure\n    def test_failure(self):self.fail(\"Deliberate failure must remain visible\")\n                           ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: Deliberate failure must remain visible\n\n----------------------------------------------------------------------\nRan 1 test in 0.005s\n\nFAILED (failures=1)\n",
+      "outputTruncated": false,
+      "durationSeconds": 0.78,
+      "evidenceLevel": "local_container_check",
+      "cloudOperations": false,
+      "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+    },
+    "acceptance": "not_established_by_local_check"
+  }
+]

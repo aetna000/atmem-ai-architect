@@ -1,0 +1,192 @@
+{
+  "terraform": {
+    "required_version": ">= 1.7.0, < 2.0.0",
+    "required_providers": {
+      "aws": {
+        "source": "hashicorp/aws",
+        "version": "~> 6.0"
+      }
+    }
+  },
+  "provider": {
+    "aws": {
+      "region": "${var.region}",
+      "allowed_account_ids": [
+        "${var.account_id}"
+      ]
+    }
+  },
+  "variable": {
+    "review_approved": {
+      "type": "bool",
+      "default": false
+    },
+    "region": {
+      "type": "string",
+      "nullable": false,
+      "description": "Explicitly reviewed provider region; no default destination."
+    },
+    "account_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Expected AWS account; provider refuses another account.",
+      "validation": {
+        "condition": "${length(trimspace(var.account_id)) > 0}",
+        "error_message": "Supply a reviewed nonempty value."
+      }
+    },
+    "block_736572766963652f6e65772d7632_name": {
+      "type": "string",
+      "nullable": false,
+      "description": "Reviewed unique deployment name; application source is supplied separately.",
+      "validation": {
+        "condition": "${can(regex(\"^[a-z][a-z0-9-]{4,28}[a-z0-9]$\", var.block_736572766963652f6e65772d7632_name))}",
+        "error_message": "Use a unique lowercase name of 6–30 letters, digits or hyphens, starting with a letter."
+      }
+    },
+    "block_736572766963652f6e65772d7632_image": {
+      "type": "string",
+      "nullable": false,
+      "description": "Reviewed immutable Linux container image digest. No model-generated application code is implied.",
+      "validation": {
+        "condition": "${can(regex(\"@sha256:[0-9a-f]{64}$\", var.block_736572766963652f6e65772d7632_image))}",
+        "error_message": "Pin the reviewed application image with its SHA-256 digest."
+      }
+    },
+    "block_736572766963652f6e65772d7632_log_group": {
+      "type": "string",
+      "nullable": false,
+      "description": "Explicit log group name.",
+      "validation": {
+        "condition": "${length(trimspace(var.block_736572766963652f6e65772d7632_log_group)) > 0}",
+        "error_message": "Supply a reviewed nonempty value."
+      }
+    },
+    "block_736572766963652f6e65772d7632_repository_arn": {
+      "type": "string",
+      "nullable": false,
+      "description": "Exact ECR repository ARN for the supplied private image.",
+      "validation": {
+        "condition": "${length(trimspace(var.block_736572766963652f6e65772d7632_repository_arn)) > 0}",
+        "error_message": "Supply a reviewed nonempty value."
+      }
+    },
+    "block_736572766963652f6e65772d7632_subnets": {
+      "type": "list(string)",
+      "nullable": false,
+      "validation": {
+        "condition": "${length(var.block_736572766963652f6e65772d7632_subnets) > 0}",
+        "error_message": "Select existing private subnets with required registry/log egress."
+      }
+    },
+    "block_736572766963652f6e65772d7632_security_groups": {
+      "type": "list(string)",
+      "nullable": false,
+      "validation": {
+        "condition": "${length(var.block_736572766963652f6e65772d7632_security_groups) > 0}",
+        "error_message": "Select reviewed security groups."
+      }
+    }
+  },
+  "locals": {
+    "unfinished_work": []
+  },
+  "resource": {
+    "terraform_data": {
+      "review_gate": {
+        "input": {
+          "design_revision": 2,
+          "environment": "staging"
+        },
+        "lifecycle": {
+          "precondition": [
+            {
+              "condition": "${var.review_approved && length(local.unfinished_work) == 0}",
+              "error_message": "Review inputs and resolve all required implementations before applying."
+            }
+          ]
+        }
+      }
+    },
+    "aws_ecs_cluster": {
+      "block_736572766963652f6e65772d7632": {
+        "name": "${var.block_736572766963652f6e65772d7632_name}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_cloudwatch_log_group": {
+      "block_736572766963652f6e65772d7632": {
+        "name": "${var.block_736572766963652f6e65772d7632_log_group}",
+        "retention_in_days": 30,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_iam_role": {
+      "block_736572766963652f6e65772d7632": {
+        "assume_role_policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"ecs-tasks.amazonaws.com\"},\"Action\":\"sts:AssumeRole\"}]}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_736572766963652f6e65772d7632_task": {
+        "assume_role_policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"ecs-tasks.amazonaws.com\"},\"Action\":\"sts:AssumeRole\"}]}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_iam_role_policy": {
+      "block_736572766963652f6e65772d7632": {
+        "role": "${aws_iam_role.block_736572766963652f6e65772d7632.id}",
+        "policy": "{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Action\":[\"ecr:GetAuthorizationToken\"],\"Resource\":\"*\"},{\"Effect\":\"Allow\",\"Action\":[\"ecr:BatchCheckLayerAvailability\",\"ecr:GetDownloadUrlForLayer\",\"ecr:BatchGetImage\"],\"Resource\":\"${var.block_736572766963652f6e65772d7632_repository_arn}\"},{\"Effect\":\"Allow\",\"Action\":[\"logs:CreateLogStream\",\"logs:PutLogEvents\"],\"Resource\":\"${aws_cloudwatch_log_group.block_736572766963652f6e65772d7632.arn}:*\"}]}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_ecs_task_definition": {
+      "block_736572766963652f6e65772d7632": {
+        "family": "${var.block_736572766963652f6e65772d7632_name}",
+        "network_mode": "awsvpc",
+        "requires_compatibilities": [
+          "FARGATE"
+        ],
+        "cpu": "256",
+        "memory": "512",
+        "execution_role_arn": "${aws_iam_role.block_736572766963652f6e65772d7632.arn}",
+        "task_role_arn": "${aws_iam_role.block_736572766963652f6e65772d7632_task.arn}",
+        "container_definitions": "[{\"name\":\"application\",\"image\":\"${var.block_736572766963652f6e65772d7632_image}\",\"essential\":true,\"portMappings\":[{\"containerPort\":8080,\"protocol\":\"tcp\"}],\"logConfiguration\":{\"logDriver\":\"awslogs\",\"options\":{\"awslogs-group\":\"${aws_cloudwatch_log_group.block_736572766963652f6e65772d7632.name}\",\"awslogs-region\":\"${var.region}\",\"awslogs-stream-prefix\":\"application\"}}}]",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "aws_ecs_service": {
+      "block_736572766963652f6e65772d7632": {
+        "name": "${var.block_736572766963652f6e65772d7632_name}",
+        "cluster": "${aws_ecs_cluster.block_736572766963652f6e65772d7632.id}",
+        "task_definition": "${aws_ecs_task_definition.block_736572766963652f6e65772d7632.arn}",
+        "desired_count": 1,
+        "launch_type": "FARGATE",
+        "network_configuration": {
+          "subnets": "${var.block_736572766963652f6e65772d7632_subnets}",
+          "security_groups": "${var.block_736572766963652f6e65772d7632_security_groups}",
+          "assign_public_ip": false
+        },
+        "depends_on": [
+          "terraform_data.review_gate",
+          "aws_iam_role_policy.block_736572766963652f6e65772d7632"
+        ]
+      }
+    }
+  },
+  "output": {
+    "block_736572766963652f6e65772d7632_id": {
+      "value": "${aws_ecs_service.block_736572766963652f6e65772d7632.id}"
+    }
+  }
+}

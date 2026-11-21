@@ -1,0 +1,87 @@
+{
+  "revision": 1,
+  "provider": "ibm",
+  "rows": [
+    {
+      "id": "documents",
+      "address": "block_646f63756d656e7473",
+      "label": "IBM Cloud Object Storage",
+      "provider": "ibm",
+      "service": "IBM Cloud Object Storage",
+      "existing": false,
+      "foundation": true,
+      "compute": false,
+      "reference": false,
+      "implemented": true,
+      "resources": [
+        "ibm_cos_bucket",
+        "ibm_iam_service_policy"
+      ],
+      "settings": {},
+      "region": "au-syd",
+      "dependencies": [],
+      "terraform": "Typed native storage and scoped object permissions generated; cloud verification required"
+    },
+    {
+      "id": "operator",
+      "address": "block_6f70657261746f72",
+      "label": "Existing storage operator",
+      "provider": "tools",
+      "service": "Existing storage operator",
+      "existing": true,
+      "foundation": false,
+      "compute": false,
+      "reference": true,
+      "implemented": true,
+      "resources": [],
+      "settings": {},
+      "region": "To be selected",
+      "dependencies": [],
+      "terraform": "Existing principal reference; permissions require review"
+    }
+  ],
+  "connections": [
+    {
+      "id": "object-access",
+      "source": "operator",
+      "target": "documents",
+      "label": "Upload, read and delete objects",
+      "access": "storage-object-admin",
+      "generated": true
+    }
+  ],
+  "storageContracts": [
+    {
+      "id": "documents",
+      "address": "block_646f63756d656e7473",
+      "callerId": "operator"
+    }
+  ],
+  "gapDetails": [],
+  "gaps": [],
+  "accessPlan": {
+    "bindings": [],
+    "connections": []
+  },
+  "asyncPlan": {
+    "pipelines": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": []
+  },
+  "scope": "Native storage foundation only; emulator does not validate IAM or control-plane deployment.",
+  "sources": []
+}

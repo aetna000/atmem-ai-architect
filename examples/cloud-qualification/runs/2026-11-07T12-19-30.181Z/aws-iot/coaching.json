@@ -1,0 +1,118 @@
+{
+  "message": "No runtime tests have run yet, so this design is not validated. The emulation stopped before running any checks: 0 checks ran and 0 passed. An empty failures list here only means nothing was tested, not that the design is correct.\n\nThe first blocker is the IoT Core → Kinesis → validator → scorer path. It's the core of your pipeline, and none of our supported contracts implements it. The supported asynchronous pipeline (S3 → SQS → Lambda → DynamoDB) only counts words in documents. Swapping it in would shrink the scope to fit the generator, so we won't do that. Instead, the eight \"implementation needed\" gaps go to product engineering as native generators for IoT Core, Kinesis, the validator, the registry, the reject queue and the scorer. The fixed synthetic event set from the first local test can serve as the reproducer.\n\nThe simulator gap is a decision only you can make. It's an external system outside what we provision, so the plan needs to know whether it gets a device identity created in AWS or brings certificates you already manage.\n\nSo my question: should the device certificates for the synthetic simulator be created as part of this project, or do you already manage them somewhere else?",
+  "phase": "Architecture Review",
+  "contextUsed": {
+    "status": "unavailable",
+    "enabled": true,
+    "engine": "AtMem 2.3.10 core SDK",
+    "recordsUsed": [],
+    "knowledgeRecordIds": [],
+    "skills": [
+      {
+        "id": "architecture",
+        "name": "AI architecture and discovery",
+        "provider": "all",
+        "stages": [
+          "discover",
+          "design",
+          "review"
+        ],
+        "version": "1.2.0",
+        "digest": "91b2f386ad4b94a02191901c9ba0b3c8d82f6189a50bf8b9a23a5c02f2f4a841",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "security",
+        "name": "Security and reliability",
+        "provider": "all",
+        "stages": [
+          "design",
+          "review",
+          "deploy"
+        ],
+        "version": "1.0.0",
+        "digest": "c75cf46b29eb786b27d88d36604f521d6d287182d47df7d5c03845585d64f914",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "devops",
+        "name": "Infrastructure and DevOps handoff",
+        "provider": "all",
+        "stages": [
+          "deploy",
+          "review"
+        ],
+        "version": "1.1.0",
+        "digest": "cd5a428597fbf388a12a863721d93e551c200f4ed30be3469fd8eae78262884c",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "aws",
+        "name": "AWS architecture guidance",
+        "provider": "aws",
+        "stages": [
+          "design",
+          "review",
+          "estimate",
+          "deploy"
+        ],
+        "version": "1.4.0",
+        "digest": "82147cbfe99396d8e659bc7c8d62ce57b0868983bc88c1ace0aaa860ecb9ba29",
+        "source": "https://raw.githubusercontent.com/aws/agent-toolkit-for-aws/fb298e0b6bf2b308a3d2c212b2a09b9bace8e090/plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+        "reference": {
+          "id": "aws",
+          "repository": "aws/agent-toolkit-for-aws",
+          "commit": "fb298e0b6bf2b308a3d2c212b2a09b9bace8e090",
+          "sourcePath": "plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+          "url": "https://raw.githubusercontent.com/aws/agent-toolkit-for-aws/fb298e0b6bf2b308a3d2c212b2a09b9bace8e090/plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+          "sha256": "aa8fef39ef6d64365e48827d9acc90b2b8755023f5c177341cf1c954c1057811",
+          "file": "agent-skills/upstream/aws/SKILL.md",
+          "status": "reference-only",
+          "note": "Imported source reference, not an enabled script/tool package. AtMem AI Architect specialist guidance is reviewed separately; referenced upstream companion files are not bundled.",
+          "integrity": true
+        },
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup",
+          "pricing.lookup"
+        ],
+        "enabled": true
+      }
+    ],
+    "tools": [],
+    "boundary": "AtMem AI Architect → native client",
+    "contextDigest": "4c05702c514a8d6f70e3696eb01a2df34e1955e520432d3b6612a781b7338643",
+    "projectId": "67e36e82-55e4-4aa4-841e-2f1423b5f988"
+  },
+  "priceQuotes": []
+}

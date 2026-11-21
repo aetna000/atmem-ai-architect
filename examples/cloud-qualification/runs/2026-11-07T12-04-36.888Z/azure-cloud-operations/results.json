@@ -1,0 +1,61 @@
+{
+  "provider": "azure-cloud-operations",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Inventory credentials are read-only",
+    "Untrusted resource tags cannot trigger commands",
+    "Plans identify affected resources and costs as estimates",
+    "Drift after review invalidates approval",
+    "Apply requires separate authorization and a rollback or recovery plan"
+  ],
+  "components": [
+    {
+      "id": "inventory"
+    },
+    {
+      "id": "resgraph",
+      "service": "Azure Resource Graph"
+    },
+    {
+      "id": "desired"
+    },
+    {
+      "id": "orchestrator",
+      "service": "Azure Functions (Durable Functions)"
+    },
+    {
+      "id": "policy",
+      "service": "Azure Policy (compliance state, read-only)"
+    },
+    {
+      "id": "drift",
+      "service": "Azure Functions (timer trigger)"
+    },
+    {
+      "id": "llm",
+      "service": "Azure OpenAI Service"
+    },
+    {
+      "id": "artifacts",
+      "service": "Azure Blob Storage (versioned, immutable)"
+    },
+    {
+      "id": "approval",
+      "service": "Azure DevOps Environments approval check"
+    },
+    {
+      "id": "reviewer"
+    },
+    {
+      "id": "audit",
+      "service": "Azure Monitor Log Analytics"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

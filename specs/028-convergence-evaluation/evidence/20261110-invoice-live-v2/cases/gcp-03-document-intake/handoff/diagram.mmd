@@ -1,0 +1,6 @@
+flowchart LR
+  n0["Staff uploaders and reviewers<br/>Tools & data"]
+  n1["Invoice intake, review and approved delivery<br/>Google Cloud"]
+  n2["Existing accounting API<br/>Tools & data"]
+  n0 -->|HTTPS: upload → durable job ID; status/review; authorized revision approval| n1
+  n1 -->|HTTPS: approved payload + stable operation ID; idempotent replay, receipt/reconc| n2

@@ -1,0 +1,93 @@
+{
+  "provider": "azure-maintenance",
+  "architectProvider": "codex",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Time-based split prevents future-label leakage",
+    "Missing sensors produce an explicit degraded result",
+    "Prediction records include feature and model versions",
+    "Evaluate false alarms and missed faults on held-out data",
+    "Work orders require approval and are idempotent"
+  ],
+  "staticAssessment": {
+    "kind": "static-graph-checks",
+    "checks": [
+      {
+        "name": "Application contains at least three required components",
+        "passed": true
+      },
+      {
+        "name": "Required components form one connected graph",
+        "passed": true
+      },
+      {
+        "name": "Proposed cloud resources retain the requested provider",
+        "passed": true
+      },
+      {
+        "name": "Proposed cloud components name concrete services",
+        "passed": true
+      },
+      {
+        "name": "AI application has not collapsed into only object storage",
+        "passed": true
+      }
+    ],
+    "passed": true,
+    "limitations": [
+      "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+    ],
+    "acceptanceRequirements": [
+      "Time-based split prevents future-label leakage",
+      "Missing sensors produce an explicit degraded result",
+      "Prediction records include feature and model versions",
+      "Evaluate false alarms and missed faults on held-out data",
+      "Work orders require approval and are idempotent"
+    ]
+  },
+  "components": [
+    {
+      "id": "sensor-history",
+      "service": "External synthetic fixture source"
+    },
+    {
+      "id": "maintenance-history",
+      "service": "External synthetic fixture source"
+    },
+    {
+      "id": "ingestion",
+      "service": "Azure Data Factory"
+    },
+    {
+      "id": "data-lake",
+      "service": "Azure Data Lake Storage Gen2"
+    },
+    {
+      "id": "maintenance-ml",
+      "service": "Azure Machine Learning"
+    },
+    {
+      "id": "maintenance-app",
+      "service": "Azure Functions"
+    },
+    {
+      "id": "prediction-orders",
+      "service": "Azure Cosmos DB"
+    },
+    {
+      "id": "operator",
+      "service": "External operator client"
+    },
+    {
+      "id": "operations-monitor",
+      "service": "Azure Monitor"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

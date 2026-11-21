@@ -1,0 +1,146 @@
+{
+  "version": 1,
+  "designRevision": 4,
+  "components": [
+    {
+      "id": "faq-visitors",
+      "ownership": "existing",
+      "terraformAddresses": [],
+      "generatedFiles": [],
+      "requiredInputs": [],
+      "requirements": [
+        "ai-public-access-editor-boundary"
+      ],
+      "applicationImplementation": "external_behavior_unverified"
+    },
+    {
+      "id": "faq-app",
+      "ownership": "proposed",
+      "terraformAddresses": [
+        "azurerm_user_assigned_identity.block_6661712d617070",
+        "azurerm_service_plan.block_6661712d617070",
+        "azurerm_cognitive_account.block_6661712d617070",
+        "azurerm_cognitive_deployment.block_6661712d617070",
+        "azurerm_storage_account.block_6661712d617070",
+        "azurerm_storage_container.block_6661712d617070",
+        "azurerm_role_assignment.block_6661712d617070",
+        "azurerm_role_assignment.block_6661712d617070_policy",
+        "azurerm_role_assignment.block_6661712d617070_pull",
+        "azurerm_role_assignment.block_6661712d617070_catalog",
+        "azurerm_role_assignment.block_6661712d617070_editor",
+        "azurerm_linux_web_app.block_6661712d617070"
+      ],
+      "generatedFiles": [
+        "terraform/applications/block_6661712d617070/public_faq.py",
+        "terraform/applications/block_6661712d617070/public_catalog_store.py",
+        "terraform/applications/block_6661712d617070/public_faq_app.py",
+        "terraform/applications/block_6661712d617070/structured_http.py",
+        "terraform/applications/block_6661712d617070/structured_output.py",
+        "terraform/applications/block_6661712d617070/azure_structured.py",
+        "terraform/applications/block_6661712d617070/public_catalog_admin.py",
+        "terraform/applications/block_6661712d617070/web/index.html",
+        "terraform/applications/block_6661712d617070/web/app.css",
+        "terraform/applications/block_6661712d617070/web/app.js",
+        "terraform/applications/block_6661712d617070/faq_core_acceptance.py",
+        "terraform/applications/block_6661712d617070/faq_http_acceptance.py",
+        "terraform/applications/block_6661712d617070/faq_catalog_admin_acceptance.py",
+        "terraform/applications/block_6661712d617070/faq_catalog_store_acceptance.py",
+        "terraform/applications/block_6661712d617070/faq_acceptance.py",
+        "terraform/applications/block_6661712d617070/requirements.lock",
+        "terraform/applications/block_6661712d617070/dependency-sources.json",
+        "terraform/applications/block_6661712d617070/test-requirements.lock",
+        "terraform/applications/block_6661712d617070/test-dependency-sources.json",
+        "terraform/applications/block_6661712d617070/container-base.json",
+        "terraform/applications/block_6661712d617070/output-contract.json",
+        "terraform/applications/block_6661712d617070/faq-deployment.json",
+        "terraform/applications/block_6661712d617070/Dockerfile",
+        "terraform/applications/block_6661712d617070/.dockerignore",
+        "terraform/applications/block_6661712d617070/BUILD.md",
+        "terraform/main.tf.json",
+        "terraform/deployment.tfvars.json.example",
+        "terraform/tests/public-faq.tftest.hcl"
+      ],
+      "requiredInputs": [
+        "block_6661712d617070_name",
+        "block_6661712d617070_region",
+        "block_6661712d617070_repository",
+        "block_6661712d617070_image_digest",
+        "block_6661712d617070_model_name",
+        "block_6661712d617070_model_version",
+        "block_6661712d617070_editor_group_object_id"
+      ],
+      "requirements": [
+        "ai-public-source-boundary",
+        "ai-supported-answer-or-abstain",
+        "ai-article-lifecycle",
+        "ai-location-transparency",
+        "ai-public-access-editor-boundary",
+        "ai-faq-capacity",
+        "ai-faq-file-ingestion"
+      ],
+      "applicationImplementation": "generated_application_unverified"
+    },
+    {
+      "id": "faq-editor",
+      "ownership": "existing",
+      "terraformAddresses": [],
+      "generatedFiles": [],
+      "requiredInputs": [],
+      "requirements": [
+        "ai-public-source-boundary",
+        "ai-article-lifecycle",
+        "ai-public-access-editor-boundary",
+        "ai-faq-file-ingestion"
+      ],
+      "applicationImplementation": "external_behavior_unverified"
+    }
+  ],
+  "interfaces": [
+    {
+      "id": "faq-visitors-to-app",
+      "source": "faq-visitors",
+      "target": "faq-app",
+      "purpose": "HTTPS questions → cited answers or “I don’t know”",
+      "integration": "browser-https",
+      "access": null,
+      "generated": true,
+      "requiredContractFields": [
+        "request/event schema",
+        "response/result schema",
+        "identity and authorization",
+        "timeout",
+        "retry and idempotency",
+        "error and recovery",
+        "observability",
+        "acceptance fixtures"
+      ],
+      "status": "runtime_contract_evidence_required"
+    },
+    {
+      "id": "faq-editor-to-app",
+      "source": "faq-editor",
+      "target": "faq-app",
+      "purpose": "Authorized CLI: publish, update and remove public articles",
+      "integration": "public-catalog-edit",
+      "access": null,
+      "generated": true,
+      "requiredContractFields": [
+        "request/event schema",
+        "response/result schema",
+        "identity and authorization",
+        "timeout",
+        "retry and idempotency",
+        "error and recovery",
+        "observability",
+        "acceptance fixtures"
+      ],
+      "status": "runtime_contract_evidence_required"
+    }
+  ],
+  "commands": [
+    "terraform init -backend=false",
+    "terraform validate",
+    "terraform test"
+  ],
+  "evidenceBoundary": "File and resource links are generated artifact facts; runtime behavior and destination account validation require separate evidence."
+}

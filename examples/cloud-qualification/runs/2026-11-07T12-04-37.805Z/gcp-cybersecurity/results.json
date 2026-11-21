@@ -1,0 +1,66 @@
+{
+  "provider": "gcp-cybersecurity",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Payloads and log instructions are treated as untrusted data",
+    "Restricted security evidence stays within analyst permissions",
+    "Severity claims cite observed evidence and uncertainty",
+    "Duplicate alerts preserve the investigation audit trail",
+    "Containment requires explicit approval and reversible action planning"
+  ],
+  "components": [
+    {
+      "id": "alert-source"
+    },
+    {
+      "id": "log-source",
+      "service": "Cloud Logging (log sink)"
+    },
+    {
+      "id": "asset-source",
+      "service": "Cloud Asset Inventory"
+    },
+    {
+      "id": "ingest",
+      "service": "Pub/Sub"
+    },
+    {
+      "id": "dlq",
+      "service": "Pub/Sub (dead-letter)"
+    },
+    {
+      "id": "redact",
+      "service": "Cloud Run + Sensitive Data Protection (DLP)"
+    },
+    {
+      "id": "evidence",
+      "service": "BigQuery"
+    },
+    {
+      "id": "triage",
+      "service": "Cloud Run"
+    },
+    {
+      "id": "model",
+      "service": "Vertex AI (Gemini)"
+    },
+    {
+      "id": "queue",
+      "service": "Firestore + Cloud Run console behind IAP"
+    },
+    {
+      "id": "analyst"
+    },
+    {
+      "id": "audit",
+      "service": "BigQuery audit dataset + Cloud Audit Logs + Cloud Monitoring"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

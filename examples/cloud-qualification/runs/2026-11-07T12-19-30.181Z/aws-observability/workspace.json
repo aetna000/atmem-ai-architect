@@ -1,0 +1,558 @@
+{
+  "version": 1,
+  "revision": 2,
+  "name": "AWS log & trace incident analysis",
+  "provider": "aws",
+  "requirements": "Redact secrets before model input; cite exact trace/log IDs; log-borne prompt injection cannot trigger tool calls; missing spans produce uncertainty; repeated ingestion keeps a consistent timeline.",
+  "nodes": [
+    {
+      "id": "n-svc",
+      "type": "resource",
+      "position": {
+        "x": 50,
+        "y": 480
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Synthetic services",
+        "provider": "tools",
+        "kind": "source",
+        "description": "Synthetic workload emitting logs and OpenTelemetry traces (with seeded secrets, injection text and missing spans for testing).",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "poc": true
+      }
+    },
+    {
+      "id": "n-cwl",
+      "type": "resource",
+      "position": {
+        "x": 470,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Log collection",
+        "provider": "aws",
+        "kind": "stream",
+        "description": "Receives service logs; a subscription filter forwards them to Firehose.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "ingest",
+        "service": "Amazon CloudWatch Logs"
+      }
+    },
+    {
+      "id": "n-xray",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 890
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Trace collection",
+        "provider": "aws",
+        "kind": "stream",
+        "description": "Stores distributed traces; the analysis runtime reads them by trace ID and redacts span metadata before model input.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "ingest",
+        "service": "AWS X-Ray"
+      }
+    },
+    {
+      "id": "n-firehose",
+      "type": "resource",
+      "position": {
+        "x": 890,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Log delivery",
+        "provider": "aws",
+        "kind": "stream",
+        "description": "Buffers logs, invokes the redaction transform, delivers to S3 and OpenSearch.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "ingest",
+        "service": "Amazon Data Firehose"
+      }
+    },
+    {
+      "id": "n-redact",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 50
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Secret redaction",
+        "provider": "aws",
+        "kind": "guard",
+        "description": "Firehose transform: pattern and entropy redaction of secrets; assigns a deterministic event ID per log line.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "guard",
+        "service": "AWS Lambda"
+      }
+    },
+    {
+      "id": "n-s3",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Redacted archive",
+        "provider": "aws",
+        "kind": "history",
+        "description": "Versioned archive of redacted logs, used to replay ingestion.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "data",
+        "service": "Amazon S3"
+      }
+    },
+    {
+      "id": "n-search",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 610
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Log & timeline search",
+        "provider": "aws",
+        "kind": "resource",
+        "description": "Indexes redacted logs using the event ID as the document ID, so re-ingestion updates records instead of duplicating them; searchable by trace ID and time.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "index",
+        "service": "Amazon OpenSearch Service"
+      }
+    },
+    {
+      "id": "n-operator",
+      "type": "resource",
+      "position": {
+        "x": 50,
+        "y": 1160
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Incident operator",
+        "provider": "tools",
+        "kind": "tool",
+        "description": "Existing IAM-authenticated operator; outside the provisioning scope.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "poc": true,
+        "binding": "aws-iam-principal",
+        "role": "human"
+      }
+    },
+    {
+      "id": "n-api",
+      "type": "resource",
+      "position": {
+        "x": 470,
+        "y": 1160
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Incident query API",
+        "provider": "aws",
+        "kind": "resource",
+        "description": "HTTP API with IAM authorization; no anonymous access.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "app",
+        "service": "Amazon API Gateway"
+      }
+    },
+    {
+      "id": "n-analysis",
+      "type": "resource",
+      "position": {
+        "x": 890,
+        "y": 1160
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Incident analysis runtime",
+        "provider": "aws",
+        "kind": "agent",
+        "description": "Uses fixed read-only code paths to retrieve evidence (no model-issued tool calls), redacts again, builds a timeline and sends the evidence to the model, labelled as untrusted data. Checks that every cited trace/log ID exists, flags missing spans as uncertainty, and returns an answer with evidence IDs.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "app",
+        "service": "AWS Lambda"
+      }
+    },
+    {
+      "id": "n-guardrails",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 1170
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Prompt safety filter",
+        "provider": "aws",
+        "kind": "guard",
+        "description": "Applied to the model call: detects prompt attacks and sensitive information (a second layer behind the Lambda redaction).",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "guard",
+        "service": "Amazon Bedrock Guardrails"
+      }
+    },
+    {
+      "id": "n-bedrock",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 1450
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Foundation model",
+        "provider": "aws",
+        "kind": "predict",
+        "description": "Direct foundation model through the Converse API, with tool configuration disabled. Model ID, access and region are still unverified.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "poc": true,
+        "binding": "aws-bedrock-model",
+        "role": "llm",
+        "service": "Amazon Bedrock"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-svc-cwl",
+      "source": "n-svc",
+      "target": "n-cwl",
+      "type": "smoothstep",
+      "label": "application logs"
+    },
+    {
+      "id": "e-svc-xray",
+      "source": "n-svc",
+      "target": "n-xray",
+      "type": "smoothstep",
+      "label": "OTel trace segments"
+    },
+    {
+      "id": "e-cwl-fh",
+      "source": "n-cwl",
+      "target": "n-firehose",
+      "type": "smoothstep",
+      "label": "subscription filter"
+    },
+    {
+      "id": "e-fh-redact",
+      "source": "n-firehose",
+      "target": "n-redact",
+      "type": "smoothstep",
+      "label": "transform: redact + event ID"
+    },
+    {
+      "id": "e-fh-s3",
+      "source": "n-firehose",
+      "target": "n-s3",
+      "type": "smoothstep",
+      "label": "redacted archive"
+    },
+    {
+      "id": "e-fh-search",
+      "source": "n-firehose",
+      "target": "n-search",
+      "type": "smoothstep",
+      "label": "upsert by event ID"
+    },
+    {
+      "id": "e-op-api",
+      "source": "n-operator",
+      "target": "n-api",
+      "type": "smoothstep",
+      "label": "SigV4 incident question / evidence-cited answer"
+    },
+    {
+      "id": "e-api-an",
+      "source": "n-api",
+      "target": "n-analysis",
+      "type": "smoothstep",
+      "label": "Lambda proxy invoke"
+    },
+    {
+      "id": "e-an-search",
+      "source": "n-analysis",
+      "target": "n-search",
+      "type": "smoothstep",
+      "label": "read logs by trace ID/time"
+    },
+    {
+      "id": "e-an-xray",
+      "source": "n-analysis",
+      "target": "n-xray",
+      "type": "smoothstep",
+      "label": "BatchGetTraces (read-only)"
+    },
+    {
+      "id": "e-an-guard",
+      "source": "n-analysis",
+      "target": "n-guardrails",
+      "type": "smoothstep",
+      "label": "guardrail applied to call"
+    },
+    {
+      "id": "e-an-bedrock",
+      "source": "n-analysis",
+      "target": "n-bedrock",
+      "type": "smoothstep",
+      "label": "Converse, no tools",
+      "integration": "bedrock-converse"
+    }
+  ],
+  "id": "1a45ebe5-036c-47fc-bbe9-68a3eb7e0236",
+  "brief": {
+    "application": "Use AWS for this synthetic architecture qualification. Correlate synthetic logs and distributed traces to explain a service incident. Include collection, redaction, storage/search, an AI analysis runtime and an operator-facing answer with source evidence. Treat log text as untrusted. Acceptance criteria: Redact secrets before model input; Link conclusions to exact trace or log IDs; Prompt injection in a log cannot issue tool calls; Missing spans yield uncertainty rather than invented causes; Repeated ingestion preserves a consistent incident timeline. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+    "cloud": "AWS"
+  },
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use AWS for this synthetic architecture qualification",
+      "options": "",
+      "decision": "aws",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.aws-log-trace-incident-analysis-end-to-end-draft",
+      "title": "AWS log/trace incident analysis – end-to-end draft",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: synthetic logs and traces → redaction → archive/search → Lambda analysis with Bedrock behind Guardrails → evidence-cited answer to an IAM-authenticated operator. Assumptions: region not selected; Bedrock model, access and quotas unverified; only the Bedrock binding is typed, so the rest of the pipeline still needs engineering. Nothing has been deployed.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "needs": [
+    {
+      "id": "req-c10bf136",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Every answer shows its sources",
+      "priority": "should",
+      "status": "open",
+      "source": "user",
+      "links": []
+    },
+    {
+      "id": "ai-redact-before-model",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Secrets and credentials in logs/traces are redacted before any content is sent to the model.",
+      "rationale": "Prevents secret leakage into model prompts and logs.",
+      "basis": "User acceptance criterion: Redact secrets before model input",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "n-redact",
+        "n-analysis",
+        "n-guardrails"
+      ]
+    },
+    {
+      "id": "ai-evidence-ids",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Every conclusion cites exact trace or log IDs that exist in the retrieved evidence; uncited claims are rejected.",
+      "rationale": "Makes answers verifiable by operators.",
+      "basis": "User acceptance criterion: Link conclusions to exact trace or log IDs",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "n-analysis",
+        "n-search",
+        "n-xray"
+      ]
+    },
+    {
+      "id": "ai-no-injected-tools",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Log text is treated as untrusted data; the model has no tool-calling path and cannot trigger actions.",
+      "rationale": "Blocks prompt injection from causing actions.",
+      "basis": "User acceptance criterion: Prompt injection in a log cannot issue tool calls",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "n-analysis",
+        "n-bedrock"
+      ]
+    },
+    {
+      "id": "ai-abstain-missing-spans",
+      "kind": "functional",
+      "category": "reliability",
+      "statement": "When spans are missing, the answer states uncertainty and names the gap rather than inventing causes.",
+      "rationale": "Avoids confident wrong root causes.",
+      "basis": "User acceptance criterion: Missing spans yield uncertainty rather than invented causes",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "n-analysis"
+      ]
+    },
+    {
+      "id": "ai-idempotent-timeline",
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "statement": "Re-ingesting the same events produces an identical incident timeline (deterministic event-ID keys, no duplicates).",
+      "rationale": "Retries and replays must not distort the incident timeline.",
+      "basis": "User acceptance criterion: Repeated ingestion preserves a consistent incident timeline",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "n-firehose",
+        "n-search",
+        "n-s3"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "extensions": {
+    "requirementNumbers": {
+      "req-c10bf136": 1,
+      "drv-data-access": 2,
+      "drv-data-location": 3,
+      "ai-redact-before-model": 4,
+      "ai-evidence-ids": 5,
+      "ai-no-injected-tools": 6,
+      "ai-abstain-missing-spans": 7,
+      "ai-idempotent-timeline": 8
+    }
+  },
+  "facts": [
+    {
+      "id": "fact-6b4cb736",
+      "name": "cloud.preference",
+      "value": "aws",
+      "unit": "provider",
+      "text": "Use AWS for this synthetic architecture qualification. Correlate synthetic logs and distributed traces to explain a service incident. Include collection, redaction, storage/search, an AI analysis runtime and an operator-facing answer with source evidence. Treat log text as untrusted. Acceptance crit",
+      "madeAt": "2026-11-07"
+    }
+  ],
+  "workflow": "knowledge-assistant",
+  "asked": [],
+  "lastAsked": {
+    "id": "knowledge-assistant:0",
+    "topic": "data",
+    "question": "Where do the files live, and roughly how many are there?",
+    "beginner": "For example “SharePoint and a shared drive, about 20,000 files”.",
+    "why": "It shapes the RAG design."
+  },
+  "choices": {},
+  "conceptSig": null
+}

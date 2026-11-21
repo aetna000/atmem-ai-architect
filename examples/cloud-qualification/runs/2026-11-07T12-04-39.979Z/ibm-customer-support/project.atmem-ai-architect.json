@@ -1,0 +1,511 @@
+{
+  "format": "atmem.ai-architect.project",
+  "formatVersion": "2.3.0",
+  "meta": {
+    "id": "875145f9-1b40-4c25-9e07-2af75c905f4e",
+    "name": "IBM support assistant (synthetic qualification)",
+    "createdAt": "2026-11-07T12:10:46.913Z",
+    "updatedAt": "2026-11-07T12:10:46.913Z",
+    "revision": 2,
+    "generator": "atmem-ai-architect 0.2.0"
+  },
+  "design": {
+    "provider": "ibm",
+    "nodes": [
+      {
+        "id": "staff",
+        "type": "resource",
+        "position": {
+          "x": 50,
+          "y": 610
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Support staff",
+          "provider": "tools",
+          "kind": "tool",
+          "description": "Support agents using a browser. This is an external client reference, not a provisioned service.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "role": "human"
+        }
+      },
+      {
+        "id": "appid",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 470
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Staff sign-in",
+          "provider": "ibm",
+          "kind": "guard",
+          "description": "OIDC sign-in for staff. It issues tokens with the staff identity and group claims used for retrieval authorization. Federation with a company IdP is undecided.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "guard",
+          "service": "IBM Cloud App ID"
+        }
+      },
+      {
+        "id": "staffapp",
+        "type": "resource",
+        "position": {
+          "x": 470,
+          "y": 610
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Staff interface",
+          "provider": "ibm",
+          "kind": "output",
+          "description": "Web UI that shows the ticket, the cited draft answer and customer context. Staff edit and approve or reject the draft, or escalate the ticket. Nothing is sent without a person.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "app",
+          "service": "IBM Code Engine (application)"
+        }
+      },
+      {
+        "id": "assistant",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 750
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Assistant orchestration service",
+          "provider": "ibm",
+          "kind": "agent",
+          "description": "Validates the user token, reads the ticket and the CRM record (read-only), and retrieves only knowledge the user is allowed to see. It calls watsonx.ai with the retrieved passages, checks that the draft has citations and declines to answer when evidence is weak. A hard-coded policy blocks refund and record-change actions. It writes escalations to the ticket queue only after staff approve.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "app",
+          "service": "IBM Code Engine (application)"
+        }
+      },
+      {
+        "id": "tickets",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 1450
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Synthetic ticket queue",
+          "provider": "tools",
+          "kind": "source",
+          "description": "Existing synthetic ticket system. The assistant reads tickets and adds an escalation note or reassigns the ticket only after staff approval.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "role": "data"
+        }
+      },
+      {
+        "id": "crm",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 890
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Existing CRM",
+          "provider": "tools",
+          "kind": "source",
+          "description": "Existing CRM with customer records. Read-only access with a scoped service credential stored in Secrets Manager. No write, refund or update permission.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "role": "data"
+        }
+      },
+      {
+        "id": "search",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 1170
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Knowledge index",
+          "provider": "ibm",
+          "kind": "resource",
+          "description": "Holds chunks of approved knowledge with ACL and approval metadata. Queries are filtered by the caller's groups (keyword or hybrid retrieval to be decided).",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "index",
+          "service": "IBM Cloud Databases for Elasticsearch"
+        }
+      },
+      {
+        "id": "llm",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 610
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Answer drafting model",
+          "provider": "ibm",
+          "kind": "predict",
+          "description": "Foundation model that writes grounded drafts from the supplied passages only. The model choice, its availability in the region, quotas and plan are unverified.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "llm",
+          "service": "IBM watsonx.ai"
+        }
+      },
+      {
+        "id": "kb",
+        "type": "resource",
+        "position": {
+          "x": 470,
+          "y": 1440
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Approved knowledge store",
+          "provider": "ibm",
+          "kind": "source",
+          "description": "Private bucket of approved knowledge articles with owner, approval and ACL metadata.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "data",
+          "service": "IBM Cloud Object Storage"
+        }
+      },
+      {
+        "id": "indexer",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 1440
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Knowledge indexing job",
+          "provider": "ibm",
+          "kind": "tool",
+          "description": "Scheduled job that reads approved articles from Object Storage, chunks them and upserts them with their ACLs into the index. It removes articles that are no longer approved.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "ingest",
+          "service": "IBM Code Engine (job)"
+        }
+      },
+      {
+        "id": "secrets",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 330
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Secrets",
+          "provider": "ibm",
+          "kind": "resource",
+          "description": "Stores the CRM and ticket-queue credentials and the service API keys. The diagram never holds secret values.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "service": "IBM Cloud Secrets Manager"
+        }
+      },
+      {
+        "id": "obs",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 50
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Logs and audit",
+          "provider": "ibm",
+          "kind": "monitor",
+          "description": "Application logs and an audit trail of who saw which draft, which sources were cited, and every escalation or approval.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "role": "monitor",
+          "service": "IBM Cloud Logs + Activity Tracker"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e-staff-app",
+        "source": "staff",
+        "target": "staffapp",
+        "type": "smoothstep",
+        "label": "HTTPS UI"
+      },
+      {
+        "id": "e-app-appid",
+        "source": "staffapp",
+        "target": "appid",
+        "type": "smoothstep",
+        "label": "OIDC sign-in"
+      },
+      {
+        "id": "e-app-assist",
+        "source": "staffapp",
+        "target": "assistant",
+        "type": "smoothstep",
+        "label": "Draft request / approved escalation (bearer token)"
+      },
+      {
+        "id": "e-assist-tickets",
+        "source": "assistant",
+        "target": "tickets",
+        "type": "smoothstep",
+        "label": "Read ticket; escalate after approval"
+      },
+      {
+        "id": "e-assist-crm",
+        "source": "assistant",
+        "target": "crm",
+        "type": "smoothstep",
+        "label": "Read-only customer lookup"
+      },
+      {
+        "id": "e-assist-search",
+        "source": "assistant",
+        "target": "search",
+        "type": "smoothstep",
+        "label": "ACL-filtered retrieval"
+      },
+      {
+        "id": "e-assist-llm",
+        "source": "assistant",
+        "target": "llm",
+        "type": "smoothstep",
+        "label": "Grounded generation"
+      },
+      {
+        "id": "e-assist-secrets",
+        "source": "assistant",
+        "target": "secrets",
+        "type": "smoothstep",
+        "label": "Fetch credentials"
+      },
+      {
+        "id": "e-assist-obs",
+        "source": "assistant",
+        "target": "obs",
+        "type": "smoothstep",
+        "label": "Logs and audit events"
+      },
+      {
+        "id": "e-kb-indexer",
+        "source": "kb",
+        "target": "indexer",
+        "type": "smoothstep",
+        "label": "Read approved articles"
+      },
+      {
+        "id": "e-indexer-search",
+        "source": "indexer",
+        "target": "search",
+        "type": "smoothstep",
+        "label": "Upsert chunks + ACLs"
+      }
+    ]
+  },
+  "discovery": {
+    "problem": "",
+    "brief": {
+      "application": "Use IBM Cloud for this synthetic architecture qualification. Assist support staff using a synthetic ticket queue, approved knowledge and customer records from an existing CRM. Include authorized retrieval, grounded answer drafting, a staff interface and human escalation. Never issue refunds or modify customer records automatically. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+      "cloud": "IBM"
+    },
+    "facts": [
+      {
+        "id": "fact-8aaaa942",
+        "name": "cloud.preference",
+        "value": "ibm",
+        "unit": "provider",
+        "text": "Use IBM Cloud for this synthetic architecture qualification. Assist support staff using a synthetic ticket queue, approved knowledge and customer records from an existing CRM. Include authorized retrieval, grounded answer drafting, a staff interface and human escalation. Never issue refunds or modif",
+        "madeAt": "2026-11-07"
+      }
+    ],
+    "workflow": "knowledge-assistant",
+    "asked": [],
+    "lastAsked": {
+      "id": "knowledge-assistant:0",
+      "topic": "data",
+      "question": "Where do the files live, and roughly how many are there?",
+      "beginner": "For example “SharePoint and a shared drive, about 20,000 files”.",
+      "why": "It shapes the RAG design."
+    }
+  },
+  "requirements": [
+    {
+      "id": "ai-no-autonomous-actions",
+      "kind": "functional",
+      "category": "security",
+      "statement": "The assistant must not issue refunds or create, update or delete CRM customer records. Its CRM access is read-only, and ticket escalation happens only after explicit staff approval.",
+      "rationale": "Prevents financial loss and data corruption from model errors or prompt injection in ticket text.",
+      "basis": "User: \"Never issue refunds or modify customer records automatically.\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "assistant",
+        "crm",
+        "tickets"
+      ]
+    },
+    {
+      "id": "ai-authorized-retrieval",
+      "kind": "functional",
+      "category": "security",
+      "statement": "Retrieval returns only approved knowledge the signed-in staff member is allowed to see, and fails closed when the identity or ACL is unknown.",
+      "rationale": "Without this, restricted content could leak into drafts shown to the wrong staff.",
+      "basis": "User: \"Include authorized retrieval\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "appid",
+        "assistant",
+        "search",
+        "indexer"
+      ]
+    },
+    {
+      "id": "ai-grounded-drafts",
+      "kind": "functional",
+      "category": "reliability",
+      "statement": "Each draft cites the knowledge sources it used. The assistant abstains or escalates when evidence is insufficient, and a person approves drafts before use (proposed).",
+      "rationale": "Ungrounded answers can mislead customers, and citations let staff verify the draft.",
+      "basis": "User: \"grounded answer drafting ... and human escalation\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "assistant",
+        "llm",
+        "staffapp"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use IBM Cloud for this synthetic architecture qualification",
+      "options": "",
+      "decision": "ibm",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.ibm-cloud-support-assistant-first-sketch",
+      "title": "IBM Cloud support-assistant first sketch",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: a staff-facing support assistant with authorized retrieval, grounded drafts written by watsonx.ai, a staff interface and human escalation. Assumptions: the ticket queue and CRM are existing synthetic systems that the assistant may only read. It never issues refunds or edits customer records. The region is not selected, and IBM account access, model availability and plans are unverified. This IBM workload has no native generator coverage yet, so it needs engineering.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "extensions": {
+    "requirementNumbers": {
+      "drv-data-access": 1,
+      "drv-data-location": 2,
+      "ai-no-autonomous-actions": 3,
+      "ai-authorized-retrieval": 4,
+      "ai-grounded-drafts": 5
+    },
+    "choices": {},
+    "conceptSig": null
+  }
+}

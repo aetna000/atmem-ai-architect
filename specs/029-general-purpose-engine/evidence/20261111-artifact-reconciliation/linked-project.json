@@ -1,0 +1,839 @@
+{
+  "format": "atmem.ai-architect.project",
+  "formatVersion": "2.3.0",
+  "meta": {
+    "id": "library-work-ui",
+    "name": "Library readings",
+    "createdAt": "2026-11-11T08:31:49.861Z",
+    "updatedAt": "2026-11-11T08:31:49.861Z",
+    "revision": 1,
+    "generator": "atmem-ai-architect 0.2.0"
+  },
+  "design": {
+    "provider": "tools",
+    "nodes": [
+      {
+        "id": "catalog",
+        "type": "resource",
+        "position": {
+          "x": 0,
+          "y": 100
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Public catalogue",
+          "provider": "tools",
+          "kind": "resource",
+          "description": "Client-owned Public catalogue. Preserve it.",
+          "config": {
+            "region": "Local",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing"
+        }
+      },
+      {
+        "id": "viewer",
+        "type": "resource",
+        "position": {
+          "x": 350,
+          "y": 100
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Reading viewer",
+          "provider": "tools",
+          "kind": "resource",
+          "description": "Client-owned Reading viewer. Preserve it.",
+          "config": {
+            "region": "Local",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "lookup",
+        "source": "viewer",
+        "target": "catalog",
+        "type": "smoothstep",
+        "label": "Read-only lookup"
+      }
+    ]
+  },
+  "discovery": {
+    "problem": "Keep the public catalogue unchanged and display read-only readings."
+  },
+  "requirements": [
+    {
+      "id": "readings",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Show readings in micrograms.",
+      "basis": "Edited by the user in block review; implementation must be re-evaluated.",
+      "priority": "must",
+      "status": "open",
+      "source": "user",
+      "links": [
+        "viewer"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "decisions": [],
+  "extensions": {
+    "architectureWork": {
+      "version": 2,
+      "records": [
+        {
+          "id": "Reading files",
+          "kind": "implementation",
+          "title": "Reading files",
+          "description": "A proposed mapping, not execution proof.",
+          "dependsOn": [
+            "block:viewer"
+          ],
+          "data": {
+            "files": [
+              "viewer/read.mjs"
+            ]
+          },
+          "source": "agent",
+          "agreement": "proposed"
+        },
+        {
+          "id": "Catalogue reference",
+          "kind": "implementation",
+          "title": "Catalogue reference",
+          "description": "A proposed mapping, not execution proof.",
+          "dependsOn": [
+            "block:catalog"
+          ],
+          "data": {
+            "files": [
+              "reference/catalog.json"
+            ]
+          },
+          "source": "agent",
+          "agreement": "proposed"
+        },
+        {
+          "id": "Reported check",
+          "kind": "evidence",
+          "title": "Reported check",
+          "description": "A proposed mapping, not execution proof.",
+          "dependsOn": [
+            "work:Reading files"
+          ],
+          "data": {
+            "reportedStatus": "passed",
+            "level": "local-runtime"
+          },
+          "source": "agent",
+          "agreement": "proposed"
+        },
+        {
+          "id": "Generated reader",
+          "kind": "implementation",
+          "title": "Generated reader",
+          "description": "A proposed mapping, not execution proof.",
+          "dependsOn": [
+            "block:viewer"
+          ],
+          "data": {
+            "files": [
+              "viewer/read.mjs"
+            ]
+          },
+          "source": "agent",
+          "agreement": "proposed"
+        },
+        {
+          "id": "Generated test reference",
+          "kind": "evidence",
+          "title": "Generated test reference",
+          "description": "A proposed mapping, not execution proof.",
+          "dependsOn": [
+            "work:Generated reader"
+          ],
+          "data": {
+            "files": [
+              "tests/read.test.mjs"
+            ],
+            "reportedStatus": "passed"
+          },
+          "source": "agent",
+          "agreement": "proposed"
+        }
+      ],
+      "intents": [
+        {
+          "id": "00000000-0000-0000-0000-000000000001:1",
+          "sessionId": "00000000-0000-0000-0000-000000000001",
+          "sequence": 1,
+          "text": "Retain the existing catalogue; add a local screen.",
+          "status": "accepted"
+        },
+        {
+          "id": "00000000-0000-0000-0000-000000000001:3",
+          "sessionId": "00000000-0000-0000-0000-000000000001",
+          "sequence": 3,
+          "text": "Keep Unicode labels intact.",
+          "status": "accepted"
+        }
+      ],
+      "snapshots": [
+        {
+          "id": "basis-1",
+          "ref": "block:viewer",
+          "value": {
+            "id": "block:viewer",
+            "kind": "responsibility",
+            "title": "Reading viewer",
+            "value": {
+              "label": "Reading viewer",
+              "provider": "tools",
+              "kind": "resource",
+              "description": "Client-owned Reading viewer. Preserve it.",
+              "config": {
+                "region": "Local",
+                "classification": "Internal",
+                "timeout": 5000
+              },
+              "origin": "existing"
+            },
+            "dependsOn": [
+              "intent:project",
+              "project:identity",
+              "requirement:readings",
+              "selection:provider"
+            ]
+          }
+        },
+        {
+          "id": "basis-2",
+          "ref": "intent:project",
+          "value": {
+            "id": "intent:project",
+            "kind": "intent",
+            "title": "Project intent",
+            "value": {
+              "text": "Keep the public catalogue unchanged and display read-only readings."
+            },
+            "dependsOn": [
+              "project:identity"
+            ]
+          }
+        },
+        {
+          "id": "basis-3",
+          "ref": "project:identity",
+          "value": {
+            "id": "project:identity",
+            "kind": "identity",
+            "title": "Project identity",
+            "value": {
+              "id": "library-work-ui"
+            },
+            "dependsOn": []
+          }
+        },
+        {
+          "id": "basis-4",
+          "ref": "requirement:readings",
+          "value": {
+            "id": "requirement:readings",
+            "kind": "requirement",
+            "title": "Show readings in grams.",
+            "value": {
+              "id": "readings",
+              "kind": "functional",
+              "category": "other",
+              "statement": "Show readings in grams.",
+              "priority": "must",
+              "status": "open",
+              "source": "user",
+              "links": [
+                "viewer"
+              ]
+            },
+            "dependsOn": [
+              "project:identity"
+            ]
+          }
+        },
+        {
+          "id": "basis-5",
+          "ref": "selection:provider",
+          "value": {
+            "id": "selection:provider",
+            "kind": "selection",
+            "title": "Selected target provider",
+            "value": {
+              "provider": "tools"
+            },
+            "dependsOn": [
+              "project:identity"
+            ]
+          }
+        },
+        {
+          "id": "basis-6",
+          "ref": "work:Reading files",
+          "value": {
+            "id": "work:Reading files",
+            "kind": "implementation",
+            "title": "Reading files",
+            "value": {
+              "id": "Reading files",
+              "kind": "implementation",
+              "title": "Reading files",
+              "description": "A proposed mapping, not execution proof.",
+              "dependsOn": [
+                "block:viewer"
+              ],
+              "data": {
+                "files": [
+                  "viewer/read.mjs"
+                ]
+              },
+              "source": "agent",
+              "agreement": "proposed"
+            },
+            "dependsOn": [
+              "block:viewer",
+              "intent:project",
+              "project:identity",
+              "selection:provider"
+            ]
+          }
+        },
+        {
+          "id": "basis-7",
+          "ref": "block:catalog",
+          "value": {
+            "id": "block:catalog",
+            "kind": "responsibility",
+            "title": "Public catalogue",
+            "value": {
+              "label": "Public catalogue",
+              "provider": "tools",
+              "kind": "resource",
+              "description": "Client-owned Public catalogue. Preserve it.",
+              "config": {
+                "region": "Local",
+                "classification": "Internal",
+                "timeout": 5000
+              },
+              "origin": "existing"
+            },
+            "dependsOn": [
+              "intent:project",
+              "project:identity",
+              "selection:provider"
+            ]
+          }
+        },
+        {
+          "id": "basis-8",
+          "ref": "work:Catalogue reference",
+          "value": {
+            "id": "work:Catalogue reference",
+            "kind": "implementation",
+            "title": "Catalogue reference",
+            "value": {
+              "id": "Catalogue reference",
+              "kind": "implementation",
+              "title": "Catalogue reference",
+              "description": "A proposed mapping, not execution proof.",
+              "dependsOn": [
+                "block:catalog"
+              ],
+              "data": {
+                "files": [
+                  "reference/catalog.json"
+                ]
+              },
+              "source": "agent",
+              "agreement": "proposed"
+            },
+            "dependsOn": [
+              "block:catalog",
+              "intent:project",
+              "project:identity",
+              "selection:provider"
+            ]
+          }
+        },
+        {
+          "id": "basis-9",
+          "ref": "work:Reported check",
+          "value": {
+            "id": "work:Reported check",
+            "kind": "evidence",
+            "title": "Reported check",
+            "value": {
+              "id": "Reported check",
+              "kind": "evidence",
+              "title": "Reported check",
+              "description": "A proposed mapping, not execution proof.",
+              "dependsOn": [
+                "work:Reading files"
+              ],
+              "data": {
+                "reportedStatus": "passed",
+                "level": "local-runtime"
+              },
+              "source": "agent",
+              "agreement": "proposed"
+            },
+            "dependsOn": [
+              "intent:project",
+              "project:identity",
+              "selection:provider",
+              "work:Reading files"
+            ]
+          }
+        },
+        {
+          "id": "basis-10",
+          "ref": "requirement:readings",
+          "value": {
+            "id": "requirement:readings",
+            "kind": "requirement",
+            "title": "Show readings in milligrams.",
+            "value": {
+              "id": "readings",
+              "kind": "functional",
+              "category": "other",
+              "statement": "Show readings in milligrams.",
+              "basis": "Edited by the user in block review; implementation must be re-evaluated.",
+              "priority": "must",
+              "status": "open",
+              "source": "user",
+              "links": [
+                "viewer"
+              ]
+            },
+            "dependsOn": [
+              "project:identity"
+            ]
+          }
+        },
+        {
+          "id": "basis-11",
+          "ref": "block:catalog",
+          "value": {
+            "id": "block:catalog",
+            "kind": "responsibility",
+            "title": "Public catalogue",
+            "value": {
+              "label": "Public catalogue",
+              "provider": "tools",
+              "kind": "resource",
+              "description": "Client-owned Public catalogue. Preserve it.",
+              "config": {
+                "region": "Local",
+                "classification": "Internal",
+                "timeout": 5000
+              },
+              "origin": "existing"
+            },
+            "dependsOn": [
+              "intent:00000000-0000-0000-0000-000000000001:1",
+              "intent:00000000-0000-0000-0000-000000000001:3",
+              "intent:project",
+              "project:identity",
+              "selection:provider"
+            ]
+          }
+        },
+        {
+          "id": "basis-12",
+          "ref": "block:viewer",
+          "value": {
+            "id": "block:viewer",
+            "kind": "responsibility",
+            "title": "Reading viewer",
+            "value": {
+              "label": "Reading viewer",
+              "provider": "tools",
+              "kind": "resource",
+              "description": "Client-owned Reading viewer. Preserve it.",
+              "config": {
+                "region": "Local",
+                "classification": "Internal",
+                "timeout": 5000
+              },
+              "origin": "existing"
+            },
+            "dependsOn": [
+              "intent:00000000-0000-0000-0000-000000000001:1",
+              "intent:00000000-0000-0000-0000-000000000001:3",
+              "intent:project",
+              "project:identity",
+              "requirement:readings",
+              "selection:provider"
+            ]
+          }
+        },
+        {
+          "id": "basis-13",
+          "ref": "intent:00000000-0000-0000-0000-000000000001:1",
+          "value": {
+            "id": "intent:00000000-0000-0000-0000-000000000001:1",
+            "kind": "intent",
+            "title": "Engineering request 1",
+            "value": {
+              "id": "00000000-0000-0000-0000-000000000001:1",
+              "sessionId": "00000000-0000-0000-0000-000000000001",
+              "sequence": 1,
+              "text": "Retain the existing catalogue; add a local screen.",
+              "status": "accepted"
+            },
+            "dependsOn": [
+              "project:identity"
+            ]
+          }
+        },
+        {
+          "id": "basis-14",
+          "ref": "intent:00000000-0000-0000-0000-000000000001:3",
+          "value": {
+            "id": "intent:00000000-0000-0000-0000-000000000001:3",
+            "kind": "intent",
+            "title": "Engineering request 3",
+            "value": {
+              "id": "00000000-0000-0000-0000-000000000001:3",
+              "sessionId": "00000000-0000-0000-0000-000000000001",
+              "sequence": 3,
+              "text": "Keep Unicode labels intact.",
+              "status": "accepted"
+            },
+            "dependsOn": [
+              "project:identity"
+            ]
+          }
+        },
+        {
+          "id": "basis-15",
+          "ref": "interface:lookup",
+          "value": {
+            "id": "interface:lookup",
+            "kind": "interface",
+            "title": "Read-only lookup",
+            "value": {
+              "source": "viewer",
+              "target": "catalog",
+              "label": "Read-only lookup"
+            },
+            "dependsOn": [
+              "block:catalog",
+              "block:viewer",
+              "project:identity"
+            ]
+          }
+        },
+        {
+          "id": "basis-16",
+          "ref": "work:Catalogue reference",
+          "value": {
+            "id": "work:Catalogue reference",
+            "kind": "implementation",
+            "title": "Catalogue reference",
+            "value": {
+              "id": "Catalogue reference",
+              "kind": "implementation",
+              "title": "Catalogue reference",
+              "description": "A proposed mapping, not execution proof.",
+              "dependsOn": [
+                "block:catalog"
+              ],
+              "data": {
+                "files": [
+                  "reference/catalog.json"
+                ]
+              },
+              "source": "agent",
+              "agreement": "proposed"
+            },
+            "dependsOn": [
+              "block:catalog",
+              "intent:00000000-0000-0000-0000-000000000001:1",
+              "intent:00000000-0000-0000-0000-000000000001:3",
+              "intent:project",
+              "project:identity",
+              "selection:provider"
+            ]
+          }
+        },
+        {
+          "id": "basis-17",
+          "ref": "work:Reading files",
+          "value": {
+            "id": "work:Reading files",
+            "kind": "implementation",
+            "title": "Reading files",
+            "value": {
+              "id": "Reading files",
+              "kind": "implementation",
+              "title": "Reading files",
+              "description": "A proposed mapping, not execution proof.",
+              "dependsOn": [
+                "block:viewer"
+              ],
+              "data": {
+                "files": [
+                  "viewer/read.mjs"
+                ]
+              },
+              "source": "agent",
+              "agreement": "proposed"
+            },
+            "dependsOn": [
+              "block:viewer",
+              "intent:00000000-0000-0000-0000-000000000001:1",
+              "intent:00000000-0000-0000-0000-000000000001:3",
+              "intent:project",
+              "project:identity",
+              "selection:provider"
+            ]
+          }
+        },
+        {
+          "id": "basis-18",
+          "ref": "work:Reported check",
+          "value": {
+            "id": "work:Reported check",
+            "kind": "evidence",
+            "title": "Reported check",
+            "value": {
+              "id": "Reported check",
+              "kind": "evidence",
+              "title": "Reported check",
+              "description": "A proposed mapping, not execution proof.",
+              "dependsOn": [
+                "work:Reading files"
+              ],
+              "data": {
+                "reportedStatus": "passed",
+                "level": "local-runtime"
+              },
+              "source": "agent",
+              "agreement": "proposed"
+            },
+            "dependsOn": [
+              "intent:00000000-0000-0000-0000-000000000001:1",
+              "intent:00000000-0000-0000-0000-000000000001:3",
+              "intent:project",
+              "project:identity",
+              "selection:provider",
+              "work:Reading files"
+            ]
+          }
+        }
+      ],
+      "bindings": [
+        {
+          "ref": "work:Reading files",
+          "snapshotIds": [
+            "basis-1",
+            "basis-2",
+            "basis-3",
+            "basis-4",
+            "basis-5",
+            "basis-6"
+          ],
+          "recordedAt": "2026-11-11T08:31:43.293Z",
+          "recordedBy": "user",
+          "scope": "context_review_only"
+        },
+        {
+          "ref": "work:Catalogue reference",
+          "snapshotIds": [
+            "basis-7",
+            "basis-2",
+            "basis-3",
+            "basis-5",
+            "basis-8"
+          ],
+          "recordedAt": "2026-11-11T08:31:43.295Z",
+          "recordedBy": "user",
+          "scope": "context_review_only"
+        },
+        {
+          "ref": "work:Reported check",
+          "snapshotIds": [
+            "basis-1",
+            "basis-2",
+            "basis-3",
+            "basis-10",
+            "basis-5",
+            "basis-6",
+            "basis-9"
+          ],
+          "recordedAt": "2026-11-11T08:31:46.875Z",
+          "recordedBy": "user",
+          "scope": "context_review_only"
+        }
+      ],
+      "history": [
+        {
+          "ref": "work:Reported check",
+          "snapshotIds": [
+            "basis-1",
+            "basis-2",
+            "basis-3",
+            "basis-4",
+            "basis-5",
+            "basis-6",
+            "basis-9"
+          ],
+          "recordedAt": "2026-11-11T08:31:45.773Z",
+          "recordedBy": "user",
+          "scope": "context_review_only"
+        }
+      ],
+      "artifactMappings": [
+        {
+          "id": "fixture-mapping-receipt",
+          "receiptSha256": "1d423b86daf1cdfee358841a03c6dd2becb1a62a3c852b7ca066e70c8e87b2d5",
+          "sessionId": "00000000-0000-0000-0000-000000000001",
+          "runId": "00000000-0000-0000-0000-000000000002",
+          "artifactId": "fixture-artifact",
+          "artifactSha256": "f8b1f712f078009f786ea23ebe0a2b14498c80f454453ed6e8384ad54041acfc",
+          "proposalSha256": "a29764841368f84f0085019907376c8f94476998d60d6cfc4e0db99144d93e09",
+          "contextId": "fixture-context",
+          "contextRevision": 1,
+          "contextSha256": "c2457c551a8cc7db0c7a54aa45ee1a4742945417180e1d0986d9cf7aa5df6969",
+          "definitionSha256": "3165592cf74f77620c928fb3b58735a97a681f1c0dc8f5155eb9d612637464c5",
+          "records": [
+            {
+              "id": "Generated reader",
+              "kind": "implementation",
+              "title": "Generated reader",
+              "description": "A proposed mapping, not execution proof.",
+              "dependsOn": [
+                "block:viewer"
+              ],
+              "data": {
+                "files": [
+                  "viewer/read.mjs"
+                ]
+              },
+              "source": "agent",
+              "agreement": "proposed"
+            },
+            {
+              "id": "Generated test reference",
+              "kind": "evidence",
+              "title": "Generated test reference",
+              "description": "A proposed mapping, not execution proof.",
+              "dependsOn": [
+                "work:Generated reader"
+              ],
+              "data": {
+                "files": [
+                  "tests/read.test.mjs"
+                ],
+                "reportedStatus": "passed"
+              },
+              "source": "agent",
+              "agreement": "proposed"
+            }
+          ],
+          "files": [
+            {
+              "path": "viewer/read.mjs",
+              "bytes": 100,
+              "sha256": "69b1116d9ac96a978fa093b2dfbd30753a32fa7b70af71eea99d90f59830260e"
+            },
+            {
+              "path": "tests/read.test.mjs",
+              "bytes": 100,
+              "sha256": "b3e87db675e63bced4df3aa78bde395bf157ae8e3b09f36846f80f4701cf75aa"
+            }
+          ],
+          "sourceSnapshotIds": [
+            "basis-11",
+            "basis-12",
+            "basis-13",
+            "basis-14",
+            "basis-2",
+            "basis-15",
+            "basis-3",
+            "basis-10",
+            "basis-5",
+            "basis-16",
+            "basis-17",
+            "basis-18"
+          ],
+          "recordedAt": "2026-11-11T08:31:49.391Z",
+          "scope": "artifact_file_binding_only"
+        }
+      ]
+    },
+    "requirementNumbers": {
+      "readings": 1
+    },
+    "requirementEditHistory": [
+      {
+        "requirementId": "readings",
+        "nodeId": "viewer",
+        "previousStatement": "Show readings in grams.",
+        "statement": "Show readings in milligrams.",
+        "at": "2026-11-11T08:31:46.008Z"
+      },
+      {
+        "requirementId": "readings",
+        "nodeId": "viewer",
+        "previousStatement": "Show readings in milligrams.",
+        "statement": "Show readings in micrograms.",
+        "at": "2026-11-11T08:31:49.657Z"
+      }
+    ],
+    "activeConsultation": {
+      "hasQuestion": false
+    },
+    "componentReviewNotes": {
+      "viewer": {
+        "summary": "Check dependent implementation against the updated requirement.",
+        "fingerprint": "872ab1faeb315bc0",
+        "reviewedAt": "2026-11-11T08:31:49.701Z",
+        "scope": "model_design_advice_not_runtime_validation"
+      }
+    },
+    "conversation": {
+      "version": 1,
+      "messages": [
+        {
+          "role": "assistant",
+          "text": "Good to see you again — let's keep going.\n\nWhat should this system help someone do?\nFor example: help support staff find answers in company documents, or warn engineers before equipment fails."
+        },
+        {
+          "role": "user",
+          "text": "Review Reading viewer with me."
+        },
+        {
+          "role": "assistant",
+          "text": "Requirement recorded. Existing graph retained."
+        },
+        {
+          "role": "user",
+          "text": "Review Reading viewer with me."
+        },
+        {
+          "role": "assistant",
+          "text": "Requirement recorded. Existing graph retained."
+        }
+      ]
+    }
+  }
+}

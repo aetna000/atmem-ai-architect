@@ -1,0 +1,61 @@
+{
+  "provider": "aws-maintenance",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Time-based split prevents future-label leakage",
+    "Missing sensors produce an explicit degraded result",
+    "Prediction records include feature and model versions",
+    "Evaluate false alarms and missed faults on held-out data",
+    "Work orders require approval and are idempotent"
+  ],
+  "components": [
+    {
+      "id": "sensors"
+    },
+    {
+      "id": "ingest",
+      "service": "AWS IoT Core"
+    },
+    {
+      "id": "records"
+    },
+    {
+      "id": "lake",
+      "service": "Amazon S3"
+    },
+    {
+      "id": "features",
+      "service": "AWS Glue"
+    },
+    {
+      "id": "train",
+      "service": "Amazon SageMaker Pipelines"
+    },
+    {
+      "id": "registry",
+      "service": "Amazon SageMaker Model Registry"
+    },
+    {
+      "id": "predict",
+      "service": "Amazon SageMaker Batch Transform"
+    },
+    {
+      "id": "monitor",
+      "service": "Amazon SageMaker Model Monitor"
+    },
+    {
+      "id": "workorder",
+      "service": "AWS Lambda"
+    },
+    {
+      "id": "operator"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

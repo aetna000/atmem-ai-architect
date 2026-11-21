@@ -1,0 +1,678 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "sim",
+      "address": "block_73696d",
+      "label": "Synthetic device simulator",
+      "provider": "tools",
+      "service": "Storage or existing data connector",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "iot",
+      "address": "block_696f74",
+      "label": "Device ingestion",
+      "provider": "aws",
+      "service": "AWS ingestion service",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Messages, connections, processing and retention",
+      "dependencies": [
+        "sim"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "kds-raw",
+      "address": "block_6b64732d726177",
+      "label": "Raw telemetry buffer",
+      "provider": "aws",
+      "service": "AWS ingestion service",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Messages, connections, processing and retention",
+      "dependencies": [
+        "iot"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "validator",
+      "address": "block_76616c696461746f72",
+      "label": "Event validator",
+      "provider": "aws",
+      "service": "AWS Lambda",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_lambda_function",
+        "aws_iam_role"
+      ],
+      "costDrivers": "Requests, duration, memory and logs",
+      "dependencies": [
+        "kds-raw"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "registry",
+      "address": "block_7265676973747279",
+      "label": "Device registry",
+      "provider": "aws",
+      "service": "Amazon DynamoDB",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_dynamodb_table"
+      ],
+      "costDrivers": "Read/write requests, storage and backup",
+      "dependencies": [
+        "validator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "rejects",
+      "address": "block_72656a65637473",
+      "label": "Rejected events",
+      "provider": "aws",
+      "service": "Amazon SQS",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_sqs_queue"
+      ],
+      "costDrivers": "Requests, payload size and transfer",
+      "dependencies": [
+        "validator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "kds-valid",
+      "address": "block_6b64732d76616c6964",
+      "label": "Validated telemetry",
+      "provider": "aws",
+      "service": "AWS ingestion service",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Messages, connections, processing and retention",
+      "dependencies": [
+        "validator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "scorer",
+      "address": "block_73636f726572",
+      "label": "Anomaly scorer",
+      "provider": "aws",
+      "service": "AWS Lambda",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_lambda_function",
+        "aws_iam_role"
+      ],
+      "costDrivers": "Requests, duration, memory and logs",
+      "dependencies": [
+        "kds-valid"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "model",
+      "address": "block_6d6f64656c",
+      "label": "Anomaly model endpoint",
+      "provider": "aws",
+      "service": "Amazon SageMaker AI",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Training, serving instances, processing and storage",
+      "dependencies": [
+        "scorer"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "results",
+      "address": "block_726573756c7473",
+      "label": "Anomaly results",
+      "provider": "aws",
+      "service": "Amazon DynamoDB",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_dynamodb_table"
+      ],
+      "costDrivers": "Read/write requests, storage and backup",
+      "dependencies": [
+        "scorer"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "alerts",
+      "address": "block_616c65727473",
+      "label": "Operator alert",
+      "provider": "aws",
+      "service": "Amazon SNS",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "scorer"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "operator",
+      "address": "block_6f70657261746f72",
+      "label": "Operator",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "alerts"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "monitor",
+      "address": "block_6d6f6e69746f72",
+      "label": "Pipeline monitoring",
+      "provider": "aws",
+      "service": "Amazon CloudWatch",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_cloudwatch_log_group"
+      ],
+      "costDrivers": "Logs, metrics, alarms and retention",
+      "dependencies": [
+        "scorer"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e-sim-iot",
+      "source": "sim",
+      "target": "iot",
+      "data": "MQTT/TLS telemetry",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-iot-kds",
+      "source": "iot",
+      "target": "kds-raw",
+      "data": "IoT rule → PutRecord",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-kds-val",
+      "source": "kds-raw",
+      "target": "validator",
+      "data": "event source mapping",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-val-reg",
+      "source": "validator",
+      "target": "registry",
+      "data": "lookup device/units",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-val-rej",
+      "source": "validator",
+      "target": "rejects",
+      "data": "rejected + reason",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-val-kds2",
+      "source": "validator",
+      "target": "kds-valid",
+      "data": "valid events",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-kds2-score",
+      "source": "kds-valid",
+      "target": "scorer",
+      "data": "event source mapping",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-score-model",
+      "source": "scorer",
+      "target": "model",
+      "data": "InvokeEndpoint",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-score-res",
+      "source": "scorer",
+      "target": "results",
+      "data": "conditional write",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-score-sns",
+      "source": "scorer",
+      "target": "alerts",
+      "data": "publish anomaly",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-sns-op",
+      "source": "alerts",
+      "target": "operator",
+      "data": "alert notification",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-score-mon",
+      "source": "scorer",
+      "target": "monitor",
+      "data": "metrics/logs",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Synthetic device simulator: Existing — reference/import plan needed.",
+    "Device ingestion: Implementation needed.",
+    "Raw telemetry buffer: Implementation needed.",
+    "Event validator: Implementation needed.",
+    "Device registry: Implementation needed.",
+    "Rejected events: Implementation needed.",
+    "Validated telemetry: Implementation needed.",
+    "Anomaly scorer: Implementation needed.",
+    "Anomaly model endpoint: Implementation needed.",
+    "Anomaly results: Implementation needed.",
+    "Operator alert: Implementation needed.",
+    "Operator: Existing — reference/import plan needed.",
+    "Pipeline monitoring: Implementation needed.",
+    "Wire sim → iot: implement data flow, access policy and acceptance test.",
+    "Wire iot → kds-raw: implement data flow, access policy and acceptance test.",
+    "Wire kds-raw → validator: implement data flow, access policy and acceptance test.",
+    "Wire validator → registry: implement data flow, access policy and acceptance test.",
+    "Wire validator → rejects: implement data flow, access policy and acceptance test.",
+    "Wire validator → kds-valid: implement data flow, access policy and acceptance test.",
+    "Wire kds-valid → scorer: implement data flow, access policy and acceptance test.",
+    "Wire scorer → model: implement data flow, access policy and acceptance test.",
+    "Wire scorer → results: implement data flow, access policy and acceptance test.",
+    "Wire scorer → alerts: implement data flow, access policy and acceptance test.",
+    "Wire alerts → operator: implement data flow, access policy and acceptance test.",
+    "Wire scorer → monitor: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "resource-block_73696d",
+      "componentIds": [
+        "sim"
+      ],
+      "taskId": "TASK-RESOURCE-73696d",
+      "message": "Synthetic device simulator: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_696f74",
+      "componentIds": [
+        "iot"
+      ],
+      "taskId": "TASK-RESOURCE-696f74",
+      "message": "Device ingestion: Implementation needed."
+    },
+    {
+      "id": "resource-block_6b64732d726177",
+      "componentIds": [
+        "kds-raw"
+      ],
+      "taskId": "TASK-RESOURCE-6b64732d726177",
+      "message": "Raw telemetry buffer: Implementation needed."
+    },
+    {
+      "id": "resource-block_76616c696461746f72",
+      "componentIds": [
+        "validator"
+      ],
+      "taskId": "TASK-RESOURCE-76616c696461746f72",
+      "message": "Event validator: Implementation needed."
+    },
+    {
+      "id": "resource-block_7265676973747279",
+      "componentIds": [
+        "registry"
+      ],
+      "taskId": "TASK-RESOURCE-7265676973747279",
+      "message": "Device registry: Implementation needed."
+    },
+    {
+      "id": "resource-block_72656a65637473",
+      "componentIds": [
+        "rejects"
+      ],
+      "taskId": "TASK-RESOURCE-72656a65637473",
+      "message": "Rejected events: Implementation needed."
+    },
+    {
+      "id": "resource-block_6b64732d76616c6964",
+      "componentIds": [
+        "kds-valid"
+      ],
+      "taskId": "TASK-RESOURCE-6b64732d76616c6964",
+      "message": "Validated telemetry: Implementation needed."
+    },
+    {
+      "id": "resource-block_73636f726572",
+      "componentIds": [
+        "scorer"
+      ],
+      "taskId": "TASK-RESOURCE-73636f726572",
+      "message": "Anomaly scorer: Implementation needed."
+    },
+    {
+      "id": "resource-block_6d6f64656c",
+      "componentIds": [
+        "model"
+      ],
+      "taskId": "TASK-RESOURCE-6d6f64656c",
+      "message": "Anomaly model endpoint: Implementation needed."
+    },
+    {
+      "id": "resource-block_726573756c7473",
+      "componentIds": [
+        "results"
+      ],
+      "taskId": "TASK-RESOURCE-726573756c7473",
+      "message": "Anomaly results: Implementation needed."
+    },
+    {
+      "id": "resource-block_616c65727473",
+      "componentIds": [
+        "alerts"
+      ],
+      "taskId": "TASK-RESOURCE-616c65727473",
+      "message": "Operator alert: Implementation needed."
+    },
+    {
+      "id": "resource-block_6f70657261746f72",
+      "componentIds": [
+        "operator"
+      ],
+      "taskId": "TASK-RESOURCE-6f70657261746f72",
+      "message": "Operator: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_6d6f6e69746f72",
+      "componentIds": [
+        "monitor"
+      ],
+      "taskId": "TASK-RESOURCE-6d6f6e69746f72",
+      "message": "Pipeline monitoring: Implementation needed."
+    },
+    {
+      "id": "connection-652d73696d2d696f74",
+      "edgeIds": [
+        "e-sim-iot"
+      ],
+      "taskId": "TASK-INTEGRATION-652d73696d2d696f74",
+      "message": "Wire sim → iot: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d696f742d6b6473",
+      "edgeIds": [
+        "e-iot-kds"
+      ],
+      "taskId": "TASK-INTEGRATION-652d696f742d6b6473",
+      "message": "Wire iot → kds-raw: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6b64732d76616c",
+      "edgeIds": [
+        "e-kds-val"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6b64732d76616c",
+      "message": "Wire kds-raw → validator: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d76616c2d726567",
+      "edgeIds": [
+        "e-val-reg"
+      ],
+      "taskId": "TASK-INTEGRATION-652d76616c2d726567",
+      "message": "Wire validator → registry: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d76616c2d72656a",
+      "edgeIds": [
+        "e-val-rej"
+      ],
+      "taskId": "TASK-INTEGRATION-652d76616c2d72656a",
+      "message": "Wire validator → rejects: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d76616c2d6b647332",
+      "edgeIds": [
+        "e-val-kds2"
+      ],
+      "taskId": "TASK-INTEGRATION-652d76616c2d6b647332",
+      "message": "Wire validator → kds-valid: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6b6473322d73636f7265",
+      "edgeIds": [
+        "e-kds2-score"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6b6473322d73636f7265",
+      "message": "Wire kds-valid → scorer: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d73636f72652d6d6f64656c",
+      "edgeIds": [
+        "e-score-model"
+      ],
+      "taskId": "TASK-INTEGRATION-652d73636f72652d6d6f64656c",
+      "message": "Wire scorer → model: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d73636f72652d726573",
+      "edgeIds": [
+        "e-score-res"
+      ],
+      "taskId": "TASK-INTEGRATION-652d73636f72652d726573",
+      "message": "Wire scorer → results: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d73636f72652d736e73",
+      "edgeIds": [
+        "e-score-sns"
+      ],
+      "taskId": "TASK-INTEGRATION-652d73636f72652d736e73",
+      "message": "Wire scorer → alerts: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d736e732d6f70",
+      "edgeIds": [
+        "e-sns-op"
+      ],
+      "taskId": "TASK-INTEGRATION-652d736e732d6f70",
+      "message": "Wire alerts → operator: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d73636f72652d6d6f6e",
+      "edgeIds": [
+        "e-score-mon"
+      ],
+      "taskId": "TASK-INTEGRATION-652d73636f72652d6d6f6e",
+      "message": "Wire scorer → monitor: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

@@ -1,0 +1,518 @@
+{
+  "version": 1,
+  "revision": 2,
+  "name": "GCP synthetic security alert triage",
+  "provider": "gcp",
+  "requirements": "Proposal-only triage: no host isolation, user disablement or payload execution. Synthetic alerts, approved logs and asset context only.",
+  "nodes": [
+    {
+      "id": "alert-source",
+      "type": "resource",
+      "position": {
+        "x": 50,
+        "y": 610
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Synthetic alert generator",
+        "provider": "tools",
+        "kind": "source",
+        "description": "Existing synthetic alert feed (outside provisioning scope). Publishes alert JSON.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "poc": true
+      }
+    },
+    {
+      "id": "log-source",
+      "type": "resource",
+      "position": {
+        "x": 470,
+        "y": 320
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Approved logs",
+        "provider": "gcp",
+        "kind": "history",
+        "description": "Approved log sources exported via a log sink to the evidence store; only allow-listed logs are included.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "poc": true,
+        "service": "Cloud Logging (log sink)"
+      }
+    },
+    {
+      "id": "asset-source",
+      "type": "resource",
+      "position": {
+        "x": 890,
+        "y": 50
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Asset context",
+        "provider": "gcp",
+        "kind": "history",
+        "description": "Asset metadata (owner, criticality, exposure) exported to BigQuery for enrichment.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "poc": true,
+        "service": "Cloud Asset Inventory"
+      }
+    },
+    {
+      "id": "ingest",
+      "type": "resource",
+      "position": {
+        "x": 470,
+        "y": 610
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Alert ingestion topic",
+        "provider": "gcp",
+        "kind": "stream",
+        "description": "Receives alerts; push subscription to redaction with retry and dead-letter policy.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "Pub/Sub"
+      }
+    },
+    {
+      "id": "dlq",
+      "type": "resource",
+      "position": {
+        "x": 890,
+        "y": 620
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Dead-letter topic",
+        "provider": "gcp",
+        "kind": "resource",
+        "description": "Holds alerts that repeatedly fail processing for review; alerted via Cloud Monitoring.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "Pub/Sub (dead-letter)"
+      }
+    },
+    {
+      "id": "redact",
+      "type": "resource",
+      "position": {
+        "x": 890,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Redaction service",
+        "provider": "gcp",
+        "kind": "guard",
+        "description": "Masks personal data and secrets in alerts and log excerpts before storage or model use; treats alert content as untrusted.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "Cloud Run + Sensitive Data Protection (DLP)"
+      }
+    },
+    {
+      "id": "evidence",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 70
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Evidence store",
+        "provider": "gcp",
+        "kind": "features",
+        "description": "Redacted alerts, approved log excerpts and asset context, partitioned by time with retention to be agreed.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "BigQuery"
+      }
+    },
+    {
+      "id": "triage",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Triage orchestrator",
+        "provider": "gcp",
+        "kind": "agent",
+        "description": "Retrieves bounded evidence for the alert, calls the model, validates structured output (severity, rationale, cited evidence IDs, proposed response). Read-only: has no permission to act on hosts or identities. Idempotent per alert ID.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "Cloud Run"
+      }
+    },
+    {
+      "id": "model",
+      "type": "resource",
+      "position": {
+        "x": 2150,
+        "y": 50
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Triage model",
+        "provider": "gcp",
+        "kind": "predict",
+        "description": "Model and regional availability to be verified; mocked with scripted responses in local tests.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "Vertex AI (Gemini)"
+      }
+    },
+    {
+      "id": "queue",
+      "type": "resource",
+      "position": {
+        "x": 2150,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Analyst case queue",
+        "provider": "gcp",
+        "kind": "output",
+        "description": "Cases with triage proposal and evidence; analysts accept, edit or reject. No action is executed by the system.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "measures": [
+          {
+            "label": "Automated containment actions",
+            "path": "actions.executed",
+            "op": "==",
+            "target": 0
+          }
+        ],
+        "service": "Firestore + Cloud Run console behind IAP"
+      }
+    },
+    {
+      "id": "analyst",
+      "type": "resource",
+      "position": {
+        "x": 2570,
+        "y": 320
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Security analyst",
+        "provider": "tools",
+        "kind": "tool",
+        "description": "Reviews proposals and decides any response outside this system.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "poc": true,
+        "role": "human"
+      }
+    },
+    {
+      "id": "audit",
+      "type": "resource",
+      "position": {
+        "x": 2570,
+        "y": 600
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Audit trail",
+        "provider": "gcp",
+        "kind": "monitor",
+        "description": "Append-only record of inputs, evidence IDs, model version, proposal and analyst decision; monitoring of failures and DLQ depth.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "BigQuery audit dataset + Cloud Audit Logs + Cloud Monitoring"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "alert-source",
+      "target": "ingest",
+      "type": "smoothstep",
+      "label": "publish alert"
+    },
+    {
+      "id": "e2",
+      "source": "ingest",
+      "target": "redact",
+      "type": "smoothstep",
+      "label": "push subscription"
+    },
+    {
+      "id": "e3",
+      "source": "ingest",
+      "target": "dlq",
+      "type": "smoothstep",
+      "label": "dead-letter after retries"
+    },
+    {
+      "id": "e4",
+      "source": "log-source",
+      "target": "redact",
+      "type": "smoothstep",
+      "label": "approved log excerpts"
+    },
+    {
+      "id": "e5",
+      "source": "redact",
+      "target": "evidence",
+      "type": "smoothstep",
+      "label": "write redacted records"
+    },
+    {
+      "id": "e6",
+      "source": "asset-source",
+      "target": "evidence",
+      "type": "smoothstep",
+      "label": "asset export"
+    },
+    {
+      "id": "e7",
+      "source": "redact",
+      "target": "triage",
+      "type": "smoothstep",
+      "label": "redacted alert"
+    },
+    {
+      "id": "e8",
+      "source": "evidence",
+      "target": "triage",
+      "type": "smoothstep",
+      "label": "bounded evidence query"
+    },
+    {
+      "id": "e9",
+      "source": "triage",
+      "target": "model",
+      "type": "smoothstep",
+      "label": "generateContent (structured)"
+    },
+    {
+      "id": "e10",
+      "source": "triage",
+      "target": "queue",
+      "type": "smoothstep",
+      "label": "create case + response proposal"
+    },
+    {
+      "id": "e11",
+      "source": "queue",
+      "target": "analyst",
+      "type": "smoothstep",
+      "label": "review via IAP"
+    },
+    {
+      "id": "e12",
+      "source": "triage",
+      "target": "audit",
+      "type": "smoothstep",
+      "label": "log proposal + evidence IDs"
+    },
+    {
+      "id": "e13",
+      "source": "queue",
+      "target": "audit",
+      "type": "smoothstep",
+      "label": "log analyst decision"
+    }
+  ],
+  "id": "22580d3b-0211-4a46-86be-09d88387e9fa",
+  "brief": {
+    "application": "Use Google Cloud for this synthetic architecture qualification. Triage synthetic security alerts using approved logs and asset context. Include ingestion, redaction, evidence retrieval, AI triage, an analyst queue and an auditable response proposal. Do not isolate hosts, disable users or execute payloads automatically. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+    "cloud": "Google Cloud"
+  },
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use Google Cloud for this synthetic architecture qualification",
+      "options": "",
+      "decision": "gcp",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.gcp-synthetic-security-alert-triage-proposal-only",
+      "title": "GCP synthetic security-alert triage (proposal-only)",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "End-to-end design: ingestion, redaction, evidence retrieval, AI triage, analyst queue and auditable response proposals. Assumptions: synthetic data only; region, project and model access not yet selected or verified; no automated containment actions exist anywhere in the flow. Model behaviour in local tests is mocked.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "needs": [
+    {
+      "id": "ai-no-auto-action",
+      "kind": "functional",
+      "category": "security",
+      "statement": "The system only proposes responses; it must have no permission to isolate hosts, disable users or execute payloads, and a person decides every action.",
+      "rationale": "Stops a model error or a prompt injection in alert content from causing a real containment action.",
+      "basis": "User: \"Do not isolate hosts, disable users or execute payloads automatically.\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "triage",
+        "queue",
+        "analyst"
+      ]
+    },
+    {
+      "id": "ai-redact-before-model",
+      "kind": "nonfunctional",
+      "category": "compliance",
+      "statement": "Personal data and secrets in alerts and logs are redacted before they are stored as evidence or sent to the model.",
+      "rationale": "Limits exposure of sensitive data to the model and to analysts.",
+      "basis": "User asked for redaction; diagram components redact and evidence.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "redact",
+        "evidence",
+        "model"
+      ]
+    },
+    {
+      "id": "ai-audit-trail",
+      "kind": "nonfunctional",
+      "category": "compliance",
+      "statement": "Each proposal records its input alert, cited evidence IDs, model version and the analyst's decision in an append-only audit store.",
+      "rationale": "Lets reviewers reconstruct why a response was proposed and who approved it.",
+      "basis": "User: \"an auditable response proposal\".",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "audit",
+        "triage",
+        "queue"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "extensions": {
+    "requirementNumbers": {
+      "drv-data-access": 1,
+      "drv-data-location": 2,
+      "ai-no-auto-action": 3,
+      "ai-redact-before-model": 4,
+      "ai-audit-trail": 5
+    }
+  },
+  "facts": [
+    {
+      "id": "fact-85d4d185",
+      "name": "cloud.preference",
+      "value": "gcp",
+      "unit": "provider",
+      "text": "Use Google Cloud for this synthetic architecture qualification. Triage synthetic security alerts using approved logs and asset context. Include ingestion, redaction, evidence retrieval, AI triage, an analyst queue and an auditable response proposal. Do not isolate hosts, disable users or execute pay",
+      "madeAt": "2026-11-07"
+    }
+  ],
+  "workflow": "knowledge-assistant",
+  "asked": [],
+  "lastAsked": {
+    "id": "knowledge-assistant:0",
+    "topic": "data",
+    "question": "Where do the files live, and roughly how many are there?",
+    "beginner": "For example “SharePoint and a shared drive, about 20,000 files”.",
+    "why": "It shapes the RAG design."
+  },
+  "choices": {},
+  "conceptSig": null
+}

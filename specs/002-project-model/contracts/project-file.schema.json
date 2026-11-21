@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://atmem.ai/schemas/atforma.project-2.0.0.json",
+  "title": "AtMem AI Architect project file 2.0.0",
+  "type": "object",
+  "required": ["format", "formatVersion", "meta", "design"],
+  "properties": {
+    "format": { "enum": ["atmem.ai-architect.project", "atforma.project"] },
+    "formatVersion": { "type": "string", "pattern": "^2\\.\\d+\\.\\d+$" },
+    "meta": {
+      "type": "object",
+      "required": ["id", "name", "revision"],
+      "properties": {
+        "id": { "type": "string", "maxLength": 100 },
+        "name": { "type": "string", "maxLength": 200 },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "revision": { "type": "integer", "minimum": 1 },
+        "generator": { "type": "string", "maxLength": 100 },
+        "domain": { "enum": ["maintenance", "churn"] }
+      }
+    },
+    "design": {
+      "type": "object",
+      "required": ["nodes", "edges"],
+      "properties": {
+        "provider": { "enum": ["aws", "azure", "gcp", "ibm", "tools"] },
+        "nodes": { "type": "array", "maxItems": 200 },
+        "edges": { "type": "array", "maxItems": 600 }
+      }
+    },
+    "discovery": { "type": "object" },
+    "requirements": {
+      "type": "array",
+      "maxItems": 300,
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "category", "statement"],
+        "properties": {
+          "kind": { "enum": ["functional", "nonfunctional"] },
+          "category": { "enum": ["security", "reliability", "availability", "scalability", "performance", "maintainability", "cost", "compliance", "other"] },
+          "priority": { "enum": ["must", "should", "could"] },
+          "status": { "enum": ["open", "met", "at-risk", "not-met"] },
+          "source": { "enum": ["user", "agent", "import"] },
+          "rationale": { "type": "string", "maxLength": 1000 },
+          "basis": { "type": "string", "maxLength": 1000 },
+          "links": { "type": "array", "items": { "type": "string" } },
+          "measure": {
+            "type": "object",
+            "required": ["metric", "op", "target"],
+            "properties": { "op": { "enum": [">=", "<=", "=="] }, "unit": { "type": "string" } }
+          }
+        }
+      }
+    },
+    "assumptions": { "type": "array", "maxItems": 300 },
+    "openQuestions": { "type": "array", "maxItems": 300 },
+    "decisions": {
+      "type": "array",
+      "maxItems": 200,
+      "items": {
+        "type": "object",
+        "required": ["id", "subject", "status"],
+        "properties": {
+          "status": { "enum": ["Proposed", "Accepted", "Superseded"] },
+          "supersedes": { "type": ["string", "null"] },
+          "supersededBy": { "type": ["string", "null"] },
+          "reason": { "type": "string" }
+        }
+      }
+    },
+    "options": { "type": "object" },
+    "extensions": { "type": "object" }
+  }
+}

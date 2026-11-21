@@ -1,0 +1,247 @@
+{
+  "status": "in_progress",
+  "completed": [
+    "HG-1 evidence/contracts",
+    "HG-2 transactional ledger domain"
+  ],
+  "implemented": [
+    "Server-verified Google identity and exact owner billing guard",
+    "Firestore transaction adapter",
+    "Signed Stripe Checkout fulfillment and cumulative refunds",
+    "Tenant-bound AES-GCM credential storage",
+    "Control-plane API and sandbox/production separation",
+    "Private disabled account preview, AtMem policies and checkout icon",
+    "X-only Firebase identity and durable server whitelist",
+    "USD20 grant once per immutable X identity",
+    "Private profiles and chunked versioned project snapshots",
+    "Firebase Storage adapter with Firestore metadata",
+    "Admin live OpenRouter catalog selection and encrypted OpenRouter BYOK",
+    "Separate API and AtBots 0.3.1 worker dependency locks",
+    "Pilot sandbox/production metadata and blob namespaces",
+    "Real Firebase X administrator identity qualification",
+    "Deployed dedicated account/profile/project Cloud Run service",
+    "Scoped named Firestore database, Firebase Storage and browser-deny rules",
+    "Real X login and cloud 700117-byte save/download/delete acceptance"
+  ],
+  "remaining": [
+    "Owner-reviewed private main publication and actual public invited-user acceptance",
+    "Second invited identity live isolation qualification",
+    "Optional voice runtime qualification",
+    "Stripe purchases TODO"
+  ],
+  "tests": [
+    {
+      "command": "FIRESTORE_EMULATOR_HOST=127.0.0.1:8897 .hosted-venv/bin/python -m unittest discover -s hosted/tests -v",
+      "result": "40 passed, no skips",
+      "evidence": "evidence/validation.txt"
+    },
+    {
+      "result": "Real Stripe sandbox Checkout + signed payment/refund webhooks passed",
+      "evidence": "evidence/stripe-testmode.json"
+    },
+    {
+      "command": "FIRESTORE_EMULATOR_HOST=127.0.0.1:8897 .hosted-venv/bin/python -m unittest discover -s hosted/tests -v",
+      "result": "60 passed, no skips; local Firestore plus explicitly named object-storage fixture",
+      "evidence": "evidence/firebase-pilot-validation.txt"
+    },
+    {
+      "command": "real Firebase X OAuth + actual frontend + cloud control API",
+      "result": "login/profile/admin catalog/one-time grant, chunked private project roundtrip and deletion passed; unauthenticated access rejected",
+      "evidence": "evidence/x-account-live.json"
+    }
+  ],
+  "cloudChanges": [
+    "Created separate AtMem AI Architect X app and saved read-only web authentication settings",
+    "Configured/enabled Firebase Twitter provider; verified expected app key without exposing credentials",
+    "Preserved authorized domains and added atmem.ai/localhost",
+    "Preserved generated OAuth2 credentials privately in Secret Manager; no new IAM grants",
+    "Cloud Run architect-accounts: 0\u20131 instances, 1 vCPU/1 GiB, concurrency 1",
+    "Dedicated architect Firestore database and project/build buckets in us-central1",
+    "Dedicated runtime and build identities; exact-database conditional IAM, bucket/repository scoped IAM",
+    "Private provider-key encryption secret in Secret Manager",
+    "Deny-all browser rules for only named database and dedicated project bucket; old default rules preserved",
+    "Project staging/retired-object and build-source lifecycles",
+    "Imported owner-authorized OpenRouter key into dedicated Secret Manager secret; no model request or spending enabled by import"
+  ],
+  "realFundsMoved": false,
+  "liveDeployment": true,
+  "changedFiles": [
+    "hosted/",
+    ".github/workflows/hosted-control-plane.yml",
+    ".gitignore",
+    "specs/031-hosted-google-platform/"
+  ],
+  "historicalScope": "Google/Stripe implementation and sandbox checks are retained evidence; pilot uses X and defers payments.",
+  "managedSpendingEnabled": true,
+  "vmCreated": true,
+  "accountBackendDeployed": true,
+  "fullHostedGenerationDeployed": true,
+  "ownerAcceptance": "Exact local Architect experience online for invited users; account portal is not acceptance",
+  "workspaceChecklist": "workspace-checklist.md",
+  "fullHostedExperienceComplete": false,
+  "workspaceIncrement": {
+    "status": "in_progress",
+    "implementedButNotAccepted": [
+      "Existing React application compiled at the hosted subpath with a same-origin identity bridge; website imports digest-verified static data only",
+      "Canonical new-project API, serialized revisioned autosave, trash/restore and private large transfer endpoints",
+      "Durable owner-bound worker jobs, exclusive claims, heartbeat/uncertain recovery and chunked large result downloads",
+      "Native AtBots architecture and engineering adapters reuse original prompts, response contracts, file lifecycle, engineering tools and finalization",
+      "Private tenant subprocess transport executes the original 46 registered native routes; actual installed AtMem 2.3.14 storage qualified",
+      "Private model broker retains provider keys and Google access outside tenant subprocesses; medium policy, current whitelist, daily/wallet reservations and usage receipts are enforced",
+      "Actual bounded OpenRouter/native AtBots response previously passed; actual provider cost 4039 micro-USD, production wallets unchanged",
+      "587 existing local application regressions passed; 15 native worker tests passed; cloud control tests have explicit emulator/worker-environment skips",
+      "Owner-requested labeled, side-by-side compact message/history layout; viewport browser qualification in progress",
+      "Actual Google VM native generation, complete handoff and independent downloaded-package oracle passed",
+      "Actual Firebase X browser sign-in, native chat, autosave/reopen, diagram generation and native engineering completed against cloud services",
+      "593 existing application regressions; 86 original engineering regressions; 10 handoff tests passed"
+    ],
+    "remaining": [
+      "Owner-reviewed private main publication and live hosted browser acceptance",
+      "Second invited identity live isolation qualification",
+      "Optional voice runtime qualification"
+    ],
+    "evidence": [
+      "evidence/workspace-local-regressions.txt",
+      "evidence/workspace-native-worker-tests.txt",
+      "evidence/workspace-control-tests.txt",
+      "evidence/workspace-real-native-model.json",
+      "evidence/workspace-firestore-tests.txt",
+      "evidence/workspace-worker-build.json",
+      "evidence/workspace-worker-package-tests.txt",
+      "evidence/workspace-native-browser-tests.txt",
+      "evidence/workspace-vm-validation.json",
+      "evidence/workspace-cloud-atmem.json",
+      "evidence/workspace-cloud-native-model.json",
+      "evidence/workspace-firestore-read-recovery.txt",
+      "evidence/workspace-native-recovery.txt",
+      "evidence/workspace-cloud-generation.json",
+      "evidence/workspace-downloaded-independent-oracle.json",
+      "evidence/workspace-vm-validation-current.json",
+      "evidence/workspace-original-engineering-regressions.txt",
+      "evidence/workspace-handoff-regressions.txt",
+      "evidence/workspace-real-browser-cloud.json"
+    ],
+    "changedFiles": [
+      "hosted/__init__.py",
+      "hosted/api.py",
+      "hosted/atbots_architect.py",
+      "hosted/auth.py",
+      "hosted/configuration.py",
+      "hosted/credentials.py",
+      "hosted/credits.py",
+      "hosted/firestore_store.py",
+      "hosted/model_broker.py",
+      "hosted/native_runtime.py",
+      "hosted/native_worker_process.py",
+      "hosted/openrouter_metering.py",
+      "hosted/payments.py",
+      "hosted/pilot_api.py",
+      "hosted/pilot_settings.py",
+      "hosted/projects.py",
+      "hosted/sqlite_store.py",
+      "hosted/storage_projects.py",
+      "hosted/worker_host.py",
+      "hosted/worker_main.py",
+      "hosted/workspace_jobs.py",
+      "hosted/workspace_projects.py",
+      "hosted/x_access.py",
+      "src/main.jsx",
+      "src/hosted-workspace.mjs",
+      "server/atbots_engineering_backend.py",
+      "scripts/build-hosted-workspace.mjs"
+    ],
+    "workerImageBuild": {
+      "buildId": "30c39a9c-ce2a-4cfa-a99a-0bd58417a648",
+      "status": "SUCCESS",
+      "sourceSha256": "a5fb8f1f68816863a567f1cb5fa48dc823ce1d78dda35046dec1df75ede57e7b",
+      "vmCreated": true,
+      "imageDigest": "sha256:7284a25caa4992d0e804988b6827026b8071ca89512de85e56294d9cce6db114"
+    },
+    "responsiveComposerQualification": {
+      "result": "4 local browser tests passed: ordinary Send, save/reopen, desktop and side-by-side composer visibility at 390x844, 820x620 and 390x480",
+      "evidence": "evidence/workspace-native-browser-tests.txt",
+      "boundary": "Actual native app/AtMem/AtBots with fixture identity, storage and model; not deployed acceptance."
+    },
+    "runtimeProvisioning": {
+      "instance": "architect-native-worker",
+      "zone": "us-central1-a",
+      "status": "deployed; real native model, AtMem, generation, download and five validator canaries passed",
+      "stateDiskRetained": true,
+      "snapshots": "daily, seven days",
+      "publicApplicationPorts": false,
+      "image": "sha256:7284a25caa4992d0e804988b6827026b8071ca89512de85e56294d9cce6db114",
+      "managedDailyCeilingMicros": 20000000,
+      "accountRevision": "architect-accounts-00003-22d"
+    },
+    "testsCurrent": {
+      "existingLocalApp": {
+        "passed": 593
+      },
+      "control": {
+        "run": 88,
+        "passed": 86,
+        "skipped": 2,
+        "reason": "Native runtime has its separate dependency environment"
+      },
+      "nativeWorker": {
+        "passed": 29
+      },
+      "privateSiteBrowser": {
+        "passed": 72
+      },
+      "nativeWorkspaceBrowser": {
+        "passed": 4
+      },
+      "cloudValidatorCanaries": {
+        "passed": 5
+      },
+      "originalEngineering": {
+        "passed": 86,
+        "additionalReopenHandoffCases": 1
+      }
+    },
+    "privateWebsitePr": "https://github.com/javadtaghia/atmemai-platform/pull/46",
+    "validatorImageConfigId": "sha256:87a71c3301a14b4cc41fea2b473e8dbb9c623b25942a23ce171c2e28a2254255",
+    "privateWebsiteValidation": {
+      "commit": "70a12d395887729b96544e878af0dd46f5754923",
+      "runId": "43709379916",
+      "status": "SUCCESS",
+      "published": false
+    }
+  },
+  "accountWebsiteDeployed": true,
+  "adminExperience": {
+    "status": "in_progress",
+    "implemented": [
+      "Centered dashboard and aligned project actions",
+      "Top login, video retained without duration sentence",
+      "Hash-verified complete example for accounts with no saved projects",
+      "Manual converter, handle/ID/nickname fields, revision-aware access edits",
+      "Administrator user activity and existing Google Analytics usage events",
+      "Slim single-row header/stages and next action"
+    ],
+    "evidence": "evidence/admin-experience.json",
+    "backendRevision": "architect-accounts-00005-gj2",
+    "remaining": [
+      "Owner-reviewed private main merge and validated-artifact publication",
+      "Published administrator and new-invitee acceptance"
+    ],
+    "published": false
+  },
+  "minimumXLogin": {
+    "status": "backend_qualified_frontend_review",
+    "implemented": [
+      "OAuth2 S256 PKCE with bounded single-use durable state",
+      "Strict minimum scope allowlist and immediate X token revocation",
+      "Preserved immutable X identity, existing Firebase UID and server whitelist",
+      "Scoped runtime custom-token signing deployment option"
+    ],
+    "evidence": "evidence/minimum-x-login.json",
+    "remaining": [
+      "Reviewed backend merge and candidate promotion",
+      "Private owner merge and validated-main publication"
+    ],
+    "candidateRevision": "architect-accounts-00011-lec",
+    "liveBrowserSignInPassed": true
+  }
+}

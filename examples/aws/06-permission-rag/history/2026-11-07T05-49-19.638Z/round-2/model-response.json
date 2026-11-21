@@ -1,0 +1,172 @@
+{
+  "message": "I checked the design, and it already uses the right typed contracts. Alice and Bob are existing IAM callers who reach the API with api-invoke. The rest of the chain is http-api-lambda to the Lambda, lambda-catalog-read to the catalog and bedrock-converse to the existing model, so I haven't proposed a diagram change. I also haven't added any extra guard, S3 or vector components.\n\nNone of the three findings can be fixed by editing the diagram. Each one needs evidence produced against this exact export:\n\n1. **Application acceptance:** we need executable test runs. They must show that Alice and Bob each get only their permitted cited answers, that restricted titles, snippets and citations never leak, and that a revoked permission or an unknown identity is refused safely.\n2. **Provider schema:** someone needs to run Terraform init and validate against the pinned AWS provider.\n3. **Requirements review:** someone needs to check the generated configuration against the requirements. That includes the per-caller API roles, Bedrock access limited to the one model, input and output limits, logs, cleanup and the inputs that are still open.\n\nThese things also remain unverified: the model ID, model access, Converse support and quotas in ap-southeast-2. Sydney is still only a candidate, and REQ-003 and REQ-005 are still proposals rather than confirmed requirements.\n\nWhich country must this synthetic test data stay in, for example Australia?",
+  "phase": "Architecture Review",
+  "contextUsed": {
+    "status": "unavailable",
+    "enabled": true,
+    "engine": "AtMem 2.3.10 core SDK",
+    "recordsUsed": [],
+    "knowledgeRecordIds": [],
+    "skills": [
+      {
+        "id": "architecture",
+        "name": "AI architecture and discovery",
+        "provider": "all",
+        "stages": [
+          "discover",
+          "design",
+          "review"
+        ],
+        "version": "1.0.0",
+        "digest": "9ad2d605f02a4b5ecbc5310b2472f347a8c4301ece89714a0857d8405e075c90",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "security",
+        "name": "Security and reliability",
+        "provider": "all",
+        "stages": [
+          "design",
+          "review",
+          "deploy"
+        ],
+        "version": "1.0.0",
+        "digest": "c75cf46b29eb786b27d88d36604f521d6d287182d47df7d5c03845585d64f914",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "finops",
+        "name": "FinOps and progressive estimation",
+        "provider": "all",
+        "stages": [
+          "estimate",
+          "design"
+        ],
+        "version": "1.0.0",
+        "digest": "8154254b2d49bb536ac6663a74cd245ebbca391fbc11713ce2c282998e57a930",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup",
+          "pricing.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "devops",
+        "name": "Infrastructure and DevOps handoff",
+        "provider": "all",
+        "stages": [
+          "deploy",
+          "review"
+        ],
+        "version": "1.1.0",
+        "digest": "cd5a428597fbf388a12a863721d93e551c200f4ed30be3469fd8eae78262884c",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "aws",
+        "name": "AWS architecture guidance",
+        "provider": "aws",
+        "stages": [
+          "design",
+          "review",
+          "estimate",
+          "deploy"
+        ],
+        "version": "1.4.0",
+        "digest": "82147cbfe99396d8e659bc7c8d62ce57b0868983bc88c1ace0aaa860ecb9ba29",
+        "source": "https://raw.githubusercontent.com/aws/agent-toolkit-for-aws/fb298e0b6bf2b308a3d2c212b2a09b9bace8e090/plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+        "reference": {
+          "id": "aws",
+          "repository": "aws/agent-toolkit-for-aws",
+          "commit": "fb298e0b6bf2b308a3d2c212b2a09b9bace8e090",
+          "sourcePath": "plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+          "url": "https://raw.githubusercontent.com/aws/agent-toolkit-for-aws/fb298e0b6bf2b308a3d2c212b2a09b9bace8e090/plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+          "sha256": "aa8fef39ef6d64365e48827d9acc90b2b8755023f5c177341cf1c954c1057811",
+          "file": "agent-skills/upstream/aws/SKILL.md",
+          "status": "reference-only",
+          "note": "Imported source reference, not an enabled script/tool package. AtMem AI Architect specialist guidance is reviewed separately; referenced upstream companion files are not bundled.",
+          "integrity": true
+        },
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup",
+          "pricing.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "terraform",
+        "name": "Terraform delivery guidance",
+        "provider": "all",
+        "stages": [
+          "deploy",
+          "design"
+        ],
+        "version": "1.3.0",
+        "digest": "a8597b8aada4a9cf698dc3432d8c60c99d43c665f92ef104f3095c8b1a873cd4",
+        "source": "https://raw.githubusercontent.com/hashicorp/agent-skills/5e30fa5c867ba6777c37e4206babfd08049c396f/plugins/terraform/skills/terraform-style-guide/SKILL.md",
+        "reference": {
+          "id": "terraform",
+          "repository": "hashicorp/agent-skills",
+          "commit": "5e30fa5c867ba6777c37e4206babfd08049c396f",
+          "sourcePath": "plugins/terraform/skills/terraform-style-guide/SKILL.md",
+          "url": "https://raw.githubusercontent.com/hashicorp/agent-skills/5e30fa5c867ba6777c37e4206babfd08049c396f/plugins/terraform/skills/terraform-style-guide/SKILL.md",
+          "sha256": "3a5c2e06a1daa07600d03f48328d1479284e7a9d59d66b2663693ca972080e22",
+          "file": "agent-skills/upstream/terraform/SKILL.md",
+          "status": "reference-only",
+          "note": "Imported source reference, not an enabled script/tool package. AtMem AI Architect specialist guidance is reviewed separately; referenced upstream companion files are not bundled.",
+          "integrity": true
+        },
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      }
+    ],
+    "tools": [],
+    "boundary": "AtMem AI Architect → native client",
+    "contextDigest": "8e993de1879df80e4876acd0c5c0f3c6773936e717fa889ed059657b1d44b6ff",
+    "projectId": "41ac6245-0c28-4be0-b906-4d6c78aae52b"
+  },
+  "priceQuotes": []
+}

@@ -1,0 +1,633 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "call-source",
+      "address": "block_63616c6c2d736f75726365",
+      "label": "Synthetic call / telephony source",
+      "provider": "tools",
+      "service": "Synthetic audio stream (test fixture)",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "consent-gate",
+      "address": "block_636f6e73656e742d67617465",
+      "label": "Consent gate",
+      "provider": "gcp",
+      "service": "Cloud Run (consent service) + Firestore consent record",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "call-source"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "audio-ingest",
+      "address": "block_617564696f2d696e67657374",
+      "label": "Audio ingestion",
+      "provider": "gcp",
+      "service": "Cloud Run streaming gateway",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "consent-gate"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "stt",
+      "address": "block_737474",
+      "label": "Transcription",
+      "provider": "gcp",
+      "service": "Cloud Speech-to-Text V2 (streaming)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "audio-ingest"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "pii-redact",
+      "address": "block_7069692d726564616374",
+      "label": "PII redaction",
+      "provider": "gcp",
+      "service": "Sensitive Data Protection (DLP API) de-identify",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "stt"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "knowledge",
+      "address": "block_6b6e6f776c65646765",
+      "label": "Support knowledge base",
+      "provider": "gcp",
+      "service": "Vertex AI Search data store",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "assist-orchestrator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "assist-orchestrator",
+      "address": "block_6173736973742d6f7263686573747261746f72",
+      "label": "Agent-assist orchestrator",
+      "provider": "gcp",
+      "service": "Cloud Run (orchestrator)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "pii-redact"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "gemini",
+      "address": "block_67656d696e69",
+      "label": "Gemini model",
+      "provider": "gcp",
+      "service": "Gemini on Vertex AI",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "assist-orchestrator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "agent-desktop",
+      "address": "block_6167656e742d6465736b746f70",
+      "label": "Support agent desktop",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "assist-orchestrator"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "summary-store",
+      "address": "block_73756d6d6172792d73746f7265",
+      "label": "Approved summaries & CRM drafts",
+      "provider": "gcp",
+      "service": "Firestore",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "agent-desktop"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "crm",
+      "address": "block_63726d",
+      "label": "Existing CRM",
+      "provider": "tools",
+      "service": "Application runtime and API",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "agent-desktop"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "audit",
+      "address": "block_6175646974",
+      "label": "Audit & monitoring",
+      "provider": "gcp",
+      "service": "Cloud Logging + Cloud Monitoring",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "consent-gate",
+        "pii-redact"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e-call-consent",
+      "source": "call-source",
+      "target": "consent-gate",
+      "data": "caller consent prompt",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-consent-ingest",
+      "source": "consent-gate",
+      "target": "audio-ingest",
+      "data": "consented audio only",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-ingest-stt",
+      "source": "audio-ingest",
+      "target": "stt",
+      "data": "streaming recognize",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-stt-pii",
+      "source": "stt",
+      "target": "pii-redact",
+      "data": "transcript segments",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-pii-orch",
+      "source": "pii-redact",
+      "target": "assist-orchestrator",
+      "data": "redacted transcript",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-orch-kb",
+      "source": "assist-orchestrator",
+      "target": "knowledge",
+      "data": "search grounding passages",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-orch-gemini",
+      "source": "assist-orchestrator",
+      "target": "gemini",
+      "data": "generateContent (redacted)",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-orch-desk",
+      "source": "assist-orchestrator",
+      "target": "agent-desktop",
+      "data": "cited suggestions, draft summary & CRM draft",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-desk-store",
+      "source": "agent-desktop",
+      "target": "summary-store",
+      "data": "approved summary / draft",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-desk-crm",
+      "source": "agent-desktop",
+      "target": "crm",
+      "data": "agent applies draft manually",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-consent-audit",
+      "source": "consent-gate",
+      "target": "audit",
+      "data": "consent events",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-pii-audit",
+      "source": "pii-redact",
+      "target": "audit",
+      "data": "redaction findings",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Synthetic call / telephony source: Existing — reference/import plan needed.",
+    "Consent gate: Implementation needed.",
+    "Audio ingestion: Implementation needed.",
+    "Transcription: Implementation needed.",
+    "PII redaction: Implementation needed.",
+    "Support knowledge base: Implementation needed.",
+    "Agent-assist orchestrator: Implementation needed.",
+    "Gemini model: Implementation needed.",
+    "Support agent desktop: Existing — reference/import plan needed.",
+    "Approved summaries & CRM drafts: Implementation needed.",
+    "Existing CRM: Existing — reference/import plan needed.",
+    "Audit & monitoring: Implementation needed.",
+    "Wire call-source → consent-gate: implement data flow, access policy and acceptance test.",
+    "Wire consent-gate → audio-ingest: implement data flow, access policy and acceptance test.",
+    "Wire audio-ingest → stt: implement data flow, access policy and acceptance test.",
+    "Wire stt → pii-redact: implement data flow, access policy and acceptance test.",
+    "Wire pii-redact → assist-orchestrator: implement data flow, access policy and acceptance test.",
+    "Wire assist-orchestrator → knowledge: implement data flow, access policy and acceptance test.",
+    "Wire assist-orchestrator → gemini: implement data flow, access policy and acceptance test.",
+    "Wire assist-orchestrator → agent-desktop: implement data flow, access policy and acceptance test.",
+    "Wire agent-desktop → summary-store: implement data flow, access policy and acceptance test.",
+    "Wire agent-desktop → crm: implement data flow, access policy and acceptance test.",
+    "Wire consent-gate → audit: implement data flow, access policy and acceptance test.",
+    "Wire pii-redact → audit: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "resource-block_63616c6c2d736f75726365",
+      "componentIds": [
+        "call-source"
+      ],
+      "taskId": "TASK-RESOURCE-63616c6c2d736f75726365",
+      "message": "Synthetic call / telephony source: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_636f6e73656e742d67617465",
+      "componentIds": [
+        "consent-gate"
+      ],
+      "taskId": "TASK-RESOURCE-636f6e73656e742d67617465",
+      "message": "Consent gate: Implementation needed."
+    },
+    {
+      "id": "resource-block_617564696f2d696e67657374",
+      "componentIds": [
+        "audio-ingest"
+      ],
+      "taskId": "TASK-RESOURCE-617564696f2d696e67657374",
+      "message": "Audio ingestion: Implementation needed."
+    },
+    {
+      "id": "resource-block_737474",
+      "componentIds": [
+        "stt"
+      ],
+      "taskId": "TASK-RESOURCE-737474",
+      "message": "Transcription: Implementation needed."
+    },
+    {
+      "id": "resource-block_7069692d726564616374",
+      "componentIds": [
+        "pii-redact"
+      ],
+      "taskId": "TASK-RESOURCE-7069692d726564616374",
+      "message": "PII redaction: Implementation needed."
+    },
+    {
+      "id": "resource-block_6b6e6f776c65646765",
+      "componentIds": [
+        "knowledge"
+      ],
+      "taskId": "TASK-RESOURCE-6b6e6f776c65646765",
+      "message": "Support knowledge base: Implementation needed."
+    },
+    {
+      "id": "resource-block_6173736973742d6f7263686573747261746f72",
+      "componentIds": [
+        "assist-orchestrator"
+      ],
+      "taskId": "TASK-RESOURCE-6173736973742d6f7263686573747261746f72",
+      "message": "Agent-assist orchestrator: Implementation needed."
+    },
+    {
+      "id": "resource-block_67656d696e69",
+      "componentIds": [
+        "gemini"
+      ],
+      "taskId": "TASK-RESOURCE-67656d696e69",
+      "message": "Gemini model: Implementation needed."
+    },
+    {
+      "id": "resource-block_6167656e742d6465736b746f70",
+      "componentIds": [
+        "agent-desktop"
+      ],
+      "taskId": "TASK-RESOURCE-6167656e742d6465736b746f70",
+      "message": "Support agent desktop: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_73756d6d6172792d73746f7265",
+      "componentIds": [
+        "summary-store"
+      ],
+      "taskId": "TASK-RESOURCE-73756d6d6172792d73746f7265",
+      "message": "Approved summaries & CRM drafts: Implementation needed."
+    },
+    {
+      "id": "resource-block_63726d",
+      "componentIds": [
+        "crm"
+      ],
+      "taskId": "TASK-RESOURCE-63726d",
+      "message": "Existing CRM: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_6175646974",
+      "componentIds": [
+        "audit"
+      ],
+      "taskId": "TASK-RESOURCE-6175646974",
+      "message": "Audit & monitoring: Implementation needed."
+    },
+    {
+      "id": "connection-652d63616c6c2d636f6e73656e74",
+      "edgeIds": [
+        "e-call-consent"
+      ],
+      "taskId": "TASK-INTEGRATION-652d63616c6c2d636f6e73656e74",
+      "message": "Wire call-source → consent-gate: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d636f6e73656e742d696e67657374",
+      "edgeIds": [
+        "e-consent-ingest"
+      ],
+      "taskId": "TASK-INTEGRATION-652d636f6e73656e742d696e67657374",
+      "message": "Wire consent-gate → audio-ingest: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d696e676573742d737474",
+      "edgeIds": [
+        "e-ingest-stt"
+      ],
+      "taskId": "TASK-INTEGRATION-652d696e676573742d737474",
+      "message": "Wire audio-ingest → stt: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d7374742d706969",
+      "edgeIds": [
+        "e-stt-pii"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7374742d706969",
+      "message": "Wire stt → pii-redact: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d7069692d6f726368",
+      "edgeIds": [
+        "e-pii-orch"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7069692d6f726368",
+      "message": "Wire pii-redact → assist-orchestrator: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6f7263682d6b62",
+      "edgeIds": [
+        "e-orch-kb"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6f7263682d6b62",
+      "message": "Wire assist-orchestrator → knowledge: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6f7263682d67656d696e69",
+      "edgeIds": [
+        "e-orch-gemini"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6f7263682d67656d696e69",
+      "message": "Wire assist-orchestrator → gemini: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6f7263682d6465736b",
+      "edgeIds": [
+        "e-orch-desk"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6f7263682d6465736b",
+      "message": "Wire assist-orchestrator → agent-desktop: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6465736b2d73746f7265",
+      "edgeIds": [
+        "e-desk-store"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6465736b2d73746f7265",
+      "message": "Wire agent-desktop → summary-store: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6465736b2d63726d",
+      "edgeIds": [
+        "e-desk-crm"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6465736b2d63726d",
+      "message": "Wire agent-desktop → crm: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d636f6e73656e742d6175646974",
+      "edgeIds": [
+        "e-consent-audit"
+      ],
+      "taskId": "TASK-INTEGRATION-652d636f6e73656e742d6175646974",
+      "message": "Wire consent-gate → audit: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d7069692d6175646974",
+      "edgeIds": [
+        "e-pii-audit"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7069692d6175646974",
+      "message": "Wire pii-redact → audit: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

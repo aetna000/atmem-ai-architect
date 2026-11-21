@@ -1,0 +1,54 @@
+{
+  "provider": "ibm-observability",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Redact secrets before model input",
+    "Link conclusions to exact trace or log IDs",
+    "Prompt injection in a log cannot issue tool calls",
+    "Missing spans yield uncertainty rather than invented causes",
+    "Repeated ingestion preserves a consistent incident timeline"
+  ],
+  "components": [
+    {
+      "id": "synthetic-services"
+    },
+    {
+      "id": "collector",
+      "service": "IBM Cloud Logs Routing + OpenTelemetry Collector on Code Engine"
+    },
+    {
+      "id": "redaction",
+      "service": "IBM Cloud Code Engine (redaction job)"
+    },
+    {
+      "id": "search-store",
+      "service": "IBM Cloud Databases for OpenSearch"
+    },
+    {
+      "id": "archive",
+      "service": "IBM Cloud Object Storage"
+    },
+    {
+      "id": "analysis-runtime",
+      "service": "IBM Cloud Code Engine (application)"
+    },
+    {
+      "id": "watsonx",
+      "service": "IBM watsonx.ai"
+    },
+    {
+      "id": "operator"
+    },
+    {
+      "id": "observability",
+      "service": "IBM Cloud Activity Tracker / Cloud Monitoring"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

@@ -1,0 +1,209 @@
+{
+  "revision": 1,
+  "rows": [
+    {
+      "id": "browser",
+      "address": "block_62726f77736572",
+      "label": "Staff browser",
+      "provider": "tools",
+      "service": "Staff browser",
+      "sourceExisting": true,
+      "existing": true,
+      "foundation": false,
+      "compute": false,
+      "reference": false,
+      "externalReference": true,
+      "existingServiceReference": null,
+      "invoice": false,
+      "implemented": true,
+      "resources": [],
+      "region": "To be selected",
+      "settings": {},
+      "dependencies": [],
+      "selection": "Explicit invoice composition or preserved existing reference",
+      "costDrivers": "Existing system or actor; review its externally owned costs and access contract.",
+      "terraform": "External staff browser — authenticated workflow channel generated; no browser infrastructure to provision"
+    },
+    {
+      "id": "invoice",
+      "address": "block_696e766f696365",
+      "label": "Invoice intake and review",
+      "provider": "gcp",
+      "service": "Google Cloud Run",
+      "sourceExisting": false,
+      "existing": false,
+      "foundation": false,
+      "compute": false,
+      "reference": false,
+      "externalReference": false,
+      "existingServiceReference": null,
+      "invoice": true,
+      "implemented": true,
+      "resources": [
+        "google_compute_network",
+        "google_sql_database_instance",
+        "google_storage_bucket",
+        "google_artifact_registry_repository"
+      ],
+      "region": "australia-southeast1",
+      "settings": {},
+      "dependencies": [
+        "browser"
+      ],
+      "selection": "Explicit invoice composition or preserved existing reference",
+      "costDrivers": "API/worker/parser/operator compute, private database/backup/storage, NAT/private endpoints, identity, registry, model tokens, retained object versions, logging and notification delivery. Verify current regional rates and quotas; capacity limits are not spending caps.",
+      "terraform": "Composed invoice API/worker/parser, durable SQL queue, private originals, review authorization, guarded accounting delivery and operating tasks generated; destination behavior remains unverified"
+    },
+    {
+      "id": "accounting",
+      "address": "block_6163636f756e74696e67",
+      "label": "Existing accounting service",
+      "provider": "tools",
+      "service": "Existing accounting service",
+      "sourceExisting": true,
+      "existing": true,
+      "foundation": false,
+      "compute": false,
+      "reference": false,
+      "externalReference": false,
+      "existingServiceReference": {
+        "id": "accounting",
+        "label": "Existing accounting service",
+        "provider": "tools",
+        "service": "Existing accounting service",
+        "ownership": "external",
+        "provision": false,
+        "import": false,
+        "behaviorValidated": false
+      },
+      "invoice": false,
+      "implemented": true,
+      "resources": [],
+      "region": "To be selected",
+      "settings": {},
+      "dependencies": [
+        "invoice"
+      ],
+      "selection": "Explicit invoice composition or preserved existing reference",
+      "costDrivers": "Existing system or actor; review its externally owned costs and access contract.",
+      "terraform": "Existing service reference — preserve without provisioning/import; actual connection acceptance required"
+    }
+  ],
+  "connections": [
+    {
+      "id": "staff-upload",
+      "source": "browser",
+      "target": "invoice",
+      "data": "Authenticated upload, review and status",
+      "generated": true,
+      "status": "Typed invoice contract/source generated; account, authorization and runtime acceptance required"
+    },
+    {
+      "id": "approved-action",
+      "source": "invoice",
+      "target": "accounting",
+      "data": "Approved, idempotent accounting operation",
+      "generated": true,
+      "status": "Typed invoice contract/source generated; account, authorization and runtime acceptance required"
+    }
+  ],
+  "invoicePlan": {
+    "entries": [
+      {
+        "row": {
+          "id": "invoice",
+          "address": "block_696e766f696365",
+          "label": "Invoice intake and review",
+          "provider": "gcp",
+          "service": "Google Cloud Run",
+          "sourceExisting": false,
+          "existing": false,
+          "foundation": false,
+          "compute": false,
+          "reference": false,
+          "externalReference": false,
+          "existingServiceReference": null,
+          "invoice": true,
+          "implemented": true,
+          "resources": [
+            "google_compute_network",
+            "google_sql_database_instance",
+            "google_storage_bucket",
+            "google_artifact_registry_repository"
+          ],
+          "region": "australia-southeast1",
+          "settings": {},
+          "dependencies": [
+            "browser"
+          ],
+          "selection": "Explicit invoice composition or preserved existing reference",
+          "costDrivers": "API/worker/parser/operator compute, private database/backup/storage, NAT/private endpoints, identity, registry, model tokens, retained object versions, logging and notification delivery. Verify current regional rates and quotas; capacity limits are not spending caps.",
+          "terraform": "Composed invoice API/worker/parser, durable SQL queue, private originals, review authorization, guarded accounting delivery and operating tasks generated; destination behavior remains unverified"
+        },
+        "provider": "gcp",
+        "browserIds": [
+          "browser"
+        ],
+        "accountingId": "accounting"
+      }
+    ],
+    "componentIds": [
+      "invoice"
+    ],
+    "edgeIds": [
+      "staff-upload",
+      "approved-action"
+    ]
+  },
+  "gaps": [],
+  "gapDetails": [],
+  "accessPlan": {
+    "bindings": [],
+    "connections": []
+  },
+  "asyncPlan": {
+    "entries": [],
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": []
+  },
+  "structuredApiPlan": {
+    "entries": []
+  },
+  "publicFaqPlan": {
+    "entries": [],
+    "componentIds": [],
+    "editorIds": [],
+    "edgeIds": []
+  },
+  "azureStructuredPlan": {
+    "entries": [],
+    "componentIds": []
+  },
+  "gcpStructuredPlan": {
+    "entries": [],
+    "componentIds": []
+  },
+  "ibmStructuredPlan": {
+    "entries": [],
+    "componentIds": []
+  },
+  "scope": "Typed composed invoice implementation; extra required systems and flows remain visible. Source generation and local qualifications do not prove the destination deployment.",
+  "sources": []
+}

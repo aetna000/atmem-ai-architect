@@ -1,0 +1,94 @@
+{
+  "provider": "gcp-observability",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Redact secrets before model input",
+    "Link conclusions to exact trace or log IDs",
+    "Prompt injection in a log cannot issue tool calls",
+    "Missing spans yield uncertainty rather than invented causes",
+    "Repeated ingestion preserves a consistent incident timeline"
+  ],
+  "staticAssessment": {
+    "kind": "static-graph-checks",
+    "checks": [
+      {
+        "name": "Application contains at least three required components",
+        "passed": true
+      },
+      {
+        "name": "Required components form one connected graph",
+        "passed": true
+      },
+      {
+        "name": "Proposed cloud resources retain the requested provider",
+        "passed": true
+      },
+      {
+        "name": "Proposed cloud components name concrete services",
+        "passed": true
+      },
+      {
+        "name": "AI application has not collapsed into only object storage",
+        "passed": true
+      }
+    ],
+    "passed": true,
+    "limitations": [
+      "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+    ],
+    "acceptanceRequirements": [
+      "Redact secrets before model input",
+      "Link conclusions to exact trace or log IDs",
+      "Prompt injection in a log cannot issue tool calls",
+      "Missing spans yield uncertainty rather than invented causes",
+      "Repeated ingestion preserves a consistent incident timeline"
+    ]
+  },
+  "components": [
+    {
+      "id": "src-synthetic"
+    },
+    {
+      "id": "otel-collector",
+      "service": "Cloud Run"
+    },
+    {
+      "id": "pubsub-raw",
+      "service": "Pub/Sub"
+    },
+    {
+      "id": "ingest-worker",
+      "service": "Cloud Run"
+    },
+    {
+      "id": "dlp",
+      "service": "Sensitive Data Protection (Cloud DLP)"
+    },
+    {
+      "id": "bq-telemetry",
+      "service": "BigQuery"
+    },
+    {
+      "id": "analysis-runtime",
+      "service": "Cloud Run"
+    },
+    {
+      "id": "vertex-gemini",
+      "service": "Vertex AI (Gemini)"
+    },
+    {
+      "id": "iap",
+      "service": "Identity-Aware Proxy"
+    },
+    {
+      "id": "operator"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

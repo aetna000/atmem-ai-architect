@@ -1,0 +1,629 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "sensor-history",
+      "address": "block_73656e736f722d686973746f7279",
+      "label": "Synthetic sensor histories",
+      "provider": "tools",
+      "service": "External synthetic fixture source",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "maintenance-history",
+      "address": "block_6d61696e74656e616e63652d686973746f7279",
+      "label": "Synthetic maintenance records",
+      "provider": "tools",
+      "service": "External synthetic fixture source",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "ingestion",
+      "address": "block_696e67657374696f6e",
+      "label": "Batch ingestion",
+      "provider": "azure",
+      "service": "Azure Data Factory",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "sensor-history",
+        "maintenance-history"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "data-lake",
+      "address": "block_646174612d6c616b65",
+      "label": "Versioned qualification data",
+      "provider": "azure",
+      "service": "Azure Data Lake Storage Gen2",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "ingestion",
+        "maintenance-ml",
+        "maintenance-app"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "maintenance-ml",
+      "address": "block_6d61696e74656e616e63652d6d6c",
+      "label": "Features, training, evaluation and prediction",
+      "provider": "azure",
+      "service": "Azure Machine Learning",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "data-lake",
+        "maintenance-app",
+        "prediction-orders"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "maintenance-app",
+      "address": "block_6d61696e74656e616e63652d617070",
+      "label": "Prediction and work-order application",
+      "provider": "azure",
+      "service": "Azure Functions",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "maintenance-ml",
+        "prediction-orders",
+        "operator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "prediction-orders",
+      "address": "block_70726564696374696f6e2d6f7264657273",
+      "label": "Prediction and approval ledger",
+      "provider": "azure",
+      "service": "Azure Cosmos DB",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "maintenance-app"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "operator",
+      "address": "block_6f70657261746f72",
+      "label": "Maintenance operator",
+      "provider": "tools",
+      "service": "External operator client",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "maintenance-app",
+        "operations-monitor"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "operations-monitor",
+      "address": "block_6f7065726174696f6e732d6d6f6e69746f72",
+      "label": "Operational and drift alerts",
+      "provider": "azure",
+      "service": "Azure Monitor",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "ingestion",
+        "maintenance-ml",
+        "maintenance-app"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "sensors-ingest",
+      "source": "sensor-history",
+      "target": "ingestion",
+      "data": "Copy timestamped sensor fixtures; connector unresolved",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "records-ingest",
+      "source": "maintenance-history",
+      "target": "ingestion",
+      "data": "Copy maintenance events and label timestamps",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "ingest-lake",
+      "source": "ingestion",
+      "target": "data-lake",
+      "data": "Managed-identity write: raw snapshots and quarantine",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "lake-ml",
+      "source": "data-lake",
+      "target": "maintenance-ml",
+      "data": "Read pinned datasets for point-in-time ML jobs",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "ml-lake",
+      "source": "maintenance-ml",
+      "target": "data-lake",
+      "data": "Write versioned features, artifacts and held-out reports",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "app-lake",
+      "source": "maintenance-app",
+      "target": "data-lake",
+      "data": "Read qualification replay inputs by snapshot",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "app-ml",
+      "source": "maintenance-app",
+      "target": "maintenance-ml",
+      "data": "Authenticated endpoint scoring request",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "ml-app",
+      "source": "maintenance-ml",
+      "target": "maintenance-app",
+      "data": "Return prediction, degraded status and versions",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "app-ledger",
+      "source": "maintenance-app",
+      "target": "prediction-orders",
+      "data": "Persist predictions; conditionally create and approve drafts",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "ledger-app",
+      "source": "prediction-orders",
+      "target": "maintenance-app",
+      "data": "Read draft state and previous idempotent outcome",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "operator-app",
+      "source": "operator",
+      "target": "maintenance-app",
+      "data": "Authenticated review, approve or reject; identity unresolved",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "app-operator",
+      "source": "maintenance-app",
+      "target": "operator",
+      "data": "Return prediction evidence and work-order draft status",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "ledger-ml",
+      "source": "prediction-orders",
+      "target": "maintenance-ml",
+      "data": "Read recent predictions for delayed-label evaluation",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "ingest-monitor",
+      "source": "ingestion",
+      "target": "operations-monitor",
+      "data": "Pipeline failures and quarantine metrics",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "ml-monitor",
+      "source": "maintenance-ml",
+      "target": "operations-monitor",
+      "data": "Publish drift, evaluation and endpoint metrics",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "app-monitor",
+      "source": "maintenance-app",
+      "target": "operations-monitor",
+      "data": "Publish errors, degraded results and approval audit events",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "monitor-operator",
+      "source": "operations-monitor",
+      "target": "operator",
+      "data": "Investigation alerts; delivery channel unresolved",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Synthetic sensor histories: Existing — reference/import plan needed.",
+    "Synthetic maintenance records: Existing — reference/import plan needed.",
+    "Batch ingestion: Implementation needed.",
+    "Versioned qualification data: Implementation needed.",
+    "Features, training, evaluation and prediction: Implementation needed.",
+    "Prediction and work-order application: Implementation needed.",
+    "Prediction and approval ledger: Implementation needed.",
+    "Maintenance operator: Existing — reference/import plan needed.",
+    "Operational and drift alerts: Implementation needed.",
+    "Wire sensor-history → ingestion: implement data flow, access policy and acceptance test.",
+    "Wire maintenance-history → ingestion: implement data flow, access policy and acceptance test.",
+    "Wire ingestion → data-lake: implement data flow, access policy and acceptance test.",
+    "Wire data-lake → maintenance-ml: implement data flow, access policy and acceptance test.",
+    "Wire maintenance-ml → data-lake: implement data flow, access policy and acceptance test.",
+    "Wire maintenance-app → data-lake: implement data flow, access policy and acceptance test.",
+    "Wire maintenance-app → maintenance-ml: implement data flow, access policy and acceptance test.",
+    "Wire maintenance-ml → maintenance-app: implement data flow, access policy and acceptance test.",
+    "Wire maintenance-app → prediction-orders: implement data flow, access policy and acceptance test.",
+    "Wire prediction-orders → maintenance-app: implement data flow, access policy and acceptance test.",
+    "Wire operator → maintenance-app: implement data flow, access policy and acceptance test.",
+    "Wire maintenance-app → operator: implement data flow, access policy and acceptance test.",
+    "Wire prediction-orders → maintenance-ml: implement data flow, access policy and acceptance test.",
+    "Wire ingestion → operations-monitor: implement data flow, access policy and acceptance test.",
+    "Wire maintenance-ml → operations-monitor: implement data flow, access policy and acceptance test.",
+    "Wire maintenance-app → operations-monitor: implement data flow, access policy and acceptance test.",
+    "Wire operations-monitor → operator: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "resource-block_73656e736f722d686973746f7279",
+      "componentIds": [
+        "sensor-history"
+      ],
+      "taskId": "TASK-RESOURCE-73656e736f722d686973746f7279",
+      "message": "Synthetic sensor histories: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_6d61696e74656e616e63652d686973746f7279",
+      "componentIds": [
+        "maintenance-history"
+      ],
+      "taskId": "TASK-RESOURCE-6d61696e74656e616e63652d686973746f7279",
+      "message": "Synthetic maintenance records: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_696e67657374696f6e",
+      "componentIds": [
+        "ingestion"
+      ],
+      "taskId": "TASK-RESOURCE-696e67657374696f6e",
+      "message": "Batch ingestion: Implementation needed."
+    },
+    {
+      "id": "resource-block_646174612d6c616b65",
+      "componentIds": [
+        "data-lake"
+      ],
+      "taskId": "TASK-RESOURCE-646174612d6c616b65",
+      "message": "Versioned qualification data: Implementation needed."
+    },
+    {
+      "id": "resource-block_6d61696e74656e616e63652d6d6c",
+      "componentIds": [
+        "maintenance-ml"
+      ],
+      "taskId": "TASK-RESOURCE-6d61696e74656e616e63652d6d6c",
+      "message": "Features, training, evaluation and prediction: Implementation needed."
+    },
+    {
+      "id": "resource-block_6d61696e74656e616e63652d617070",
+      "componentIds": [
+        "maintenance-app"
+      ],
+      "taskId": "TASK-RESOURCE-6d61696e74656e616e63652d617070",
+      "message": "Prediction and work-order application: Implementation needed."
+    },
+    {
+      "id": "resource-block_70726564696374696f6e2d6f7264657273",
+      "componentIds": [
+        "prediction-orders"
+      ],
+      "taskId": "TASK-RESOURCE-70726564696374696f6e2d6f7264657273",
+      "message": "Prediction and approval ledger: Implementation needed."
+    },
+    {
+      "id": "resource-block_6f70657261746f72",
+      "componentIds": [
+        "operator"
+      ],
+      "taskId": "TASK-RESOURCE-6f70657261746f72",
+      "message": "Maintenance operator: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_6f7065726174696f6e732d6d6f6e69746f72",
+      "componentIds": [
+        "operations-monitor"
+      ],
+      "taskId": "TASK-RESOURCE-6f7065726174696f6e732d6d6f6e69746f72",
+      "message": "Operational and drift alerts: Implementation needed."
+    },
+    {
+      "id": "connection-73656e736f72732d696e67657374",
+      "edgeIds": [
+        "sensors-ingest"
+      ],
+      "taskId": "TASK-INTEGRATION-73656e736f72732d696e67657374",
+      "message": "Wire sensor-history → ingestion: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-7265636f7264732d696e67657374",
+      "edgeIds": [
+        "records-ingest"
+      ],
+      "taskId": "TASK-INTEGRATION-7265636f7264732d696e67657374",
+      "message": "Wire maintenance-history → ingestion: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-696e676573742d6c616b65",
+      "edgeIds": [
+        "ingest-lake"
+      ],
+      "taskId": "TASK-INTEGRATION-696e676573742d6c616b65",
+      "message": "Wire ingestion → data-lake: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6c616b652d6d6c",
+      "edgeIds": [
+        "lake-ml"
+      ],
+      "taskId": "TASK-INTEGRATION-6c616b652d6d6c",
+      "message": "Wire data-lake → maintenance-ml: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6d6c2d6c616b65",
+      "edgeIds": [
+        "ml-lake"
+      ],
+      "taskId": "TASK-INTEGRATION-6d6c2d6c616b65",
+      "message": "Wire maintenance-ml → data-lake: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6170702d6c616b65",
+      "edgeIds": [
+        "app-lake"
+      ],
+      "taskId": "TASK-INTEGRATION-6170702d6c616b65",
+      "message": "Wire maintenance-app → data-lake: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6170702d6d6c",
+      "edgeIds": [
+        "app-ml"
+      ],
+      "taskId": "TASK-INTEGRATION-6170702d6d6c",
+      "message": "Wire maintenance-app → maintenance-ml: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6d6c2d617070",
+      "edgeIds": [
+        "ml-app"
+      ],
+      "taskId": "TASK-INTEGRATION-6d6c2d617070",
+      "message": "Wire maintenance-ml → maintenance-app: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6170702d6c6564676572",
+      "edgeIds": [
+        "app-ledger"
+      ],
+      "taskId": "TASK-INTEGRATION-6170702d6c6564676572",
+      "message": "Wire maintenance-app → prediction-orders: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6c65646765722d617070",
+      "edgeIds": [
+        "ledger-app"
+      ],
+      "taskId": "TASK-INTEGRATION-6c65646765722d617070",
+      "message": "Wire prediction-orders → maintenance-app: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6f70657261746f722d617070",
+      "edgeIds": [
+        "operator-app"
+      ],
+      "taskId": "TASK-INTEGRATION-6f70657261746f722d617070",
+      "message": "Wire operator → maintenance-app: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6170702d6f70657261746f72",
+      "edgeIds": [
+        "app-operator"
+      ],
+      "taskId": "TASK-INTEGRATION-6170702d6f70657261746f72",
+      "message": "Wire maintenance-app → operator: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6c65646765722d6d6c",
+      "edgeIds": [
+        "ledger-ml"
+      ],
+      "taskId": "TASK-INTEGRATION-6c65646765722d6d6c",
+      "message": "Wire prediction-orders → maintenance-ml: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-696e676573742d6d6f6e69746f72",
+      "edgeIds": [
+        "ingest-monitor"
+      ],
+      "taskId": "TASK-INTEGRATION-696e676573742d6d6f6e69746f72",
+      "message": "Wire ingestion → operations-monitor: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6d6c2d6d6f6e69746f72",
+      "edgeIds": [
+        "ml-monitor"
+      ],
+      "taskId": "TASK-INTEGRATION-6d6c2d6d6f6e69746f72",
+      "message": "Wire maintenance-ml → operations-monitor: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6170702d6d6f6e69746f72",
+      "edgeIds": [
+        "app-monitor"
+      ],
+      "taskId": "TASK-INTEGRATION-6170702d6d6f6e69746f72",
+      "message": "Wire maintenance-app → operations-monitor: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6d6f6e69746f722d6f70657261746f72",
+      "edgeIds": [
+        "monitor-operator"
+      ],
+      "taskId": "TASK-INTEGRATION-6d6f6e69746f722d6f70657261746f72",
+      "message": "Wire operations-monitor → operator: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

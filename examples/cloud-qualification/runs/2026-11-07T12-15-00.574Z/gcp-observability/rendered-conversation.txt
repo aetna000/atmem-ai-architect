@@ -1,0 +1,23 @@
+Hi! What would you like to build? For example, a RAG system over your company's documents, or a chatbot for your team. “Not sure” is always a fine answer along the way.
+
+Use Google Cloud for this synthetic architecture qualification. Correlate synthetic logs and distributed traces to explain a service incident. Include collection, redaction, storage/search, an AI analysis runtime and an operator-facing answer with source evidence. Treat log text as untrusted. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.
+
+I've drawn a first Google Cloud sketch. Synthetic services send logs and traces into Cloud Logging and Cloud Trace. Pub/Sub carries the logs to a Cloud Run redaction worker, which masks sensitive data with Sensitive Data Protection before anything is stored or searched in BigQuery. A Cloud Run analysis service then links logs to traces using the trace ID, sends Vertex AI Gemini only redacted evidence marked as untrusted data, and returns an answer with cited log and span IDs to the operator through Identity-Aware Proxy (IAP).
+
+**First local test:** We'd replay a fixed set of synthetic logs and traces, including a planted prompt-injection line, using a scripted model. That checks redaction, trace linking, citations and refusing to follow log text. A scripted model only tests our own code, not Gemini's reasoning. Checking the real model needs a separate run against Vertex AI in an approved project and region, which hasn't been done and isn't verified.
+
+Nothing here has been deployed, and no region or account access is approved. This setup also has no native generator yet, so it stays an engineering gap rather than being reduced to storage.
+
+Which country must the logs and traces stay in? That decides which regions we can use for BigQuery and Vertex AI.skill: RAGnoted application, cloud+1 fact+1 requirementrequirements refined from your answerAtMem: 0 records · 3 skills · unavailableObserved boundary: AtMem AI Architect → native client. Memory is scoped to you and this project; source data is not an instruction.Skill: AI architecture and discovery v1.1.0 · guidance; no cloud executionSkill: Infrastructure and DevOps handoff v1.1.0 · guidance; no cloud executionSkill: Google Cloud AI architecture guidance v1.0.0 · guidance; no cloud execution
+
+Drew it: First GCP sketch: log/trace incident explainer
++ Synthetic services
++ Log collection
++ Trace collection
++6 moredrew 9 blockslogged ADR-002undo ↶
+
+Use the current emulation findings to propose a correction or the next test.
+
+No runtime checks ran. This report does not validate the architecture or its behavior.
+
+No runtime checks have run yet, so we haven't validated anything about this design. The run stopped before testing because none of the eight Google Cloud components (logging, tracing, Pub/Sub, redaction, BigQuery, the analysis service and Gemini) has a supported generator, and the existing synthetic services still need a plan for how we'll reference them. We shouldn't fix this by changing the diagram. The only Google Cloud piece the product can generate today is private Cloud Storage, and swapping to that would throw away the incident-explainer scope. So the next step is product engineering, with this project (revision 2) as the test case. The first native pieces to build are a Pub/Sub topic with a dead-letter topic, a Cloud Run redaction worker that fails closed, and BigQuery tables. After that we need an analysis runtime that checks citations, plus a scripted model fixture that includes a planted prompt-injection line. Even when that runs, the scripted model only tests our own code. It won't tell us anything about how well Gemini reasons. Meanwhile, let's settle one decision: which country must the logs and traces stay in? That choice decides which regions can host BigQuery and Vertex AI, and it shapes the first native test target.AtMem: 0 records · 4 skills · unavailableObserved boundary: AtMem AI Architect → native client. Memory is scoped to you and this project; source data is not an instruction.Skill: AI architecture and discovery v1.1.0 · guidance; no cloud executionSkill: Security and reliability v1.0.0 · guidance; no cloud executionSkill: Infrastructure and DevOps handoff v1.1.0 · guidance; no cloud executionSkill: Google Cloud AI architecture guidance v1.0.0 · guidance; no cloud execution

@@ -1,0 +1,70 @@
+test_active_capacity_is_bounded_per_person_not_other_users (__main__.DurableQuestions.test_active_capacity_is_bounded_per_person_not_other_users) ... ok
+test_another_company_worker_cannot_claim_or_recover_this_job (__main__.DurableQuestions.test_another_company_worker_cannot_claim_or_recover_this_job) ... ok
+test_cancel_during_work_erases_input_and_fences_late_result (__main__.DurableQuestions.test_cancel_during_work_erases_input_and_fences_late_result) ... ok
+test_changed_source_requeues_ready_result_and_clears_stale_ciphertext (__main__.DurableQuestions.test_changed_source_requeues_ready_result_and_clears_stale_ciphertext) ... ok
+test_duplicate_claims_have_one_live_owner (__main__.DurableQuestions.test_duplicate_claims_have_one_live_owner) ... ok
+test_encrypted_submission_and_atomic_identity_only_queue (__main__.DurableQuestions.test_encrypted_submission_and_atomic_identity_only_queue) ... ok
+test_expired_lease_recovery_fences_prior_worker (__main__.DurableQuestions.test_expired_lease_recovery_fences_prior_worker) ... ok
+test_expired_ready_result_is_scrubbed_without_a_browser_poll (__main__.DurableQuestions.test_expired_ready_result_is_scrubbed_without_a_browser_poll) ... ok
+test_failed_queue_notification_is_reconciled_with_its_domain_request (__main__.DurableQuestions.test_failed_queue_notification_is_reconciled_with_its_domain_request) ... ERROR
+test_idempotent_retries_and_changed_question_conflict (__main__.DurableQuestions.test_idempotent_retries_and_changed_question_conflict) ... ok
+test_logout_or_membership_revocation_prevents_model_and_result_work (__main__.DurableQuestions.test_logout_or_membership_revocation_prevents_model_and_result_work) ... ok
+test_membership_changes_apply_to_a_queued_question (__main__.DurableQuestions.test_membership_changes_apply_to_a_queued_question) ... ok
+test_old_answer_ciphertext_cannot_be_replayed_into_a_later_attempt (__main__.DurableQuestions.test_old_answer_ciphertext_cannot_be_replayed_into_a_later_attempt) ... ok
+test_other_user_or_browser_cannot_observe_or_cancel (__main__.DurableQuestions.test_other_user_or_browser_cannot_observe_or_cancel) ... ok
+test_question_identity_mac_is_not_a_guessable_plaintext_digest (__main__.DurableQuestions.test_question_identity_mac_is_not_a_guessable_plaintext_digest) ... ok
+test_ready_result_is_encrypted_and_ciphertext_context_bound (__main__.DurableQuestions.test_ready_result_is_encrypted_and_ciphertext_context_bound) ... ok
+test_worker_retries_are_bounded_and_do_not_store_exception_bodies (__main__.DurableQuestions.test_worker_retries_are_bounded_and_do_not_store_exception_bodies) ... ok
+
+======================================================================
+ERROR: test_failed_queue_notification_is_reconciled_with_its_domain_request (__main__.DurableQuestions.test_failed_queue_notification_is_reconciled_with_its_domain_request)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_queries_postgres.py", line 136, in test_failed_queue_notification_is_reconciled_with_its_domain_request
+    with psycopg.connect(self.owner_dsn)as conn:conn.execute("UPDATE enterprise_queries.procrastinate_jobs SET status='failed'WHERE args->>'query_id'=%s",(identity,))
+                                                ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/durable-runtime/lib/python3.13/site-packages/psycopg/connection.py", line 304, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedObject: type "procrastinate_job_status" does not exist
+LINE 3:             WHEN OLD.status = 'todo'::procrastinate_job_stat...
+                                              ^
+QUERY:  WITH t AS (
+        SELECT CASE
+            WHEN OLD.status = 'todo'::procrastinate_job_status
+                AND NEW.status = 'doing'::procrastinate_job_status
+                THEN 'started'::procrastinate_job_event_type
+            WHEN OLD.status = 'doing'::procrastinate_job_status
+                AND NEW.status = 'todo'::procrastinate_job_status
+                THEN 'deferred_for_retry'::procrastinate_job_event_type
+            WHEN OLD.status = 'doing'::procrastinate_job_status
+                AND NEW.status = 'failed'::procrastinate_job_status
+                THEN 'failed'::procrastinate_job_event_type
+            WHEN OLD.status = 'doing'::procrastinate_job_status
+                AND NEW.status = 'succeeded'::procrastinate_job_status
+                THEN 'succeeded'::procrastinate_job_event_type
+            WHEN OLD.status = 'todo'::procrastinate_job_status
+                AND (
+                    NEW.status = 'cancelled'::procrastinate_job_status
+                    OR NEW.status = 'failed'::procrastinate_job_status
+                    OR NEW.status = 'succeeded'::procrastinate_job_status
+                )
+                THEN 'cancelled'::procrastinate_job_event_type
+            WHEN OLD.status = 'doing'::procrastinate_job_status
+                AND NEW.status = 'aborted'::procrastinate_job_status
+                THEN 'aborted'::procrastinate_job_event_type
+            WHEN OLD.status = 'failed'::procrastinate_job_status
+                AND NEW.status = 'todo'::procrastinate_job_status
+                THEN 'retried'::procrastinate_job_event_type
+            ELSE NULL
+        END as event_type
+    )
+    INSERT INTO procrastinate_events(job_id, type)
+        SELECT NEW.id, t.event_type
+        FROM t
+        WHERE t.event_type IS NOT NULL
+CONTEXT:  PL/pgSQL function enterprise_queries.procrastinate_trigger_function_status_events_update_v1() line 3 at SQL statement
+
+----------------------------------------------------------------------
+Ran 17 tests in 1.624s
+
+FAILED (errors=1)

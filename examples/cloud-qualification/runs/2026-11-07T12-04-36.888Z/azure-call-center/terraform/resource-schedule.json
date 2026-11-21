@@ -1,0 +1,730 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "caller",
+      "address": "block_63616c6c6572",
+      "label": "Synthetic caller",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "acs",
+      "address": "block_616373",
+      "label": "Call intake & audio stream",
+      "provider": "azure",
+      "service": "Azure Communication Services (Call Automation, media streaming)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "caller"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "consent",
+      "address": "block_636f6e73656e74",
+      "label": "Consent gate",
+      "provider": "azure",
+      "service": "Azure Functions",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "acs"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "speech",
+      "address": "block_737065656368",
+      "label": "Real-time transcription",
+      "provider": "azure",
+      "service": "Azure AI Speech (real-time speech to text)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "consent"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "pii",
+      "address": "block_706969",
+      "label": "PII redaction",
+      "provider": "azure",
+      "service": "Azure AI Language (PII detection)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "speech"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "orchestrator",
+      "address": "block_6f7263686573747261746f72",
+      "label": "Agent-assist orchestrator",
+      "provider": "azure",
+      "service": "Azure Container Apps",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "pii"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "search",
+      "address": "block_736561726368",
+      "label": "Knowledge index",
+      "provider": "azure",
+      "service": "Azure AI Search",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "orchestrator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "llm",
+      "address": "block_6c6c6d",
+      "label": "Language model",
+      "provider": "azure",
+      "service": "Azure OpenAI Service",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "orchestrator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "agentapp",
+      "address": "block_6167656e74617070",
+      "label": "Agent desktop",
+      "provider": "azure",
+      "service": "Azure App Service (web app)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "orchestrator",
+        "entra"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "entra",
+      "address": "block_656e747261",
+      "label": "Agent sign-in",
+      "provider": "azure",
+      "service": "Microsoft Entra ID",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "agent",
+      "address": "block_6167656e74",
+      "label": "Support agent",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "agentapp"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "crm",
+      "address": "block_63726d",
+      "label": "Existing CRM",
+      "provider": "tools",
+      "service": "Application runtime and API",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "agent"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "cosmos",
+      "address": "block_636f736d6f73",
+      "label": "Call records",
+      "provider": "azure",
+      "service": "Azure Cosmos DB",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "consent",
+        "agentapp"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "monitor",
+      "address": "block_6d6f6e69746f72",
+      "label": "Monitoring & audit",
+      "provider": "azure",
+      "service": "Azure Monitor / Application Insights",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "orchestrator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e-caller-acs",
+      "source": "caller",
+      "target": "acs",
+      "data": "inbound call",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-acs-consent",
+      "source": "acs",
+      "target": "consent",
+      "data": "consent response",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-consent-speech",
+      "source": "consent",
+      "target": "speech",
+      "data": "audio only if consented",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-consent-cosmos",
+      "source": "consent",
+      "target": "cosmos",
+      "data": "consent record",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-speech-pii",
+      "source": "speech",
+      "target": "pii",
+      "data": "raw transcript segments",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-pii-orch",
+      "source": "pii",
+      "target": "orchestrator",
+      "data": "redacted transcript",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-orch-search",
+      "source": "orchestrator",
+      "target": "search",
+      "data": "retrieve articles",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-orch-llm",
+      "source": "orchestrator",
+      "target": "llm",
+      "data": "grounded prompt (redacted)",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-orch-app",
+      "source": "orchestrator",
+      "target": "agentapp",
+      "data": "cited suggestions, summary & CRM drafts",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-entra-app",
+      "source": "entra",
+      "target": "agentapp",
+      "data": "agent sign-in",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-app-agent",
+      "source": "agentapp",
+      "target": "agent",
+      "data": "review & approve",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-app-cosmos",
+      "source": "agentapp",
+      "target": "cosmos",
+      "data": "approved summary + audit",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-agent-crm",
+      "source": "agent",
+      "target": "crm",
+      "data": "manual save of approved draft",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-orch-monitor",
+      "source": "orchestrator",
+      "target": "monitor",
+      "data": "telemetry",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Synthetic caller: Existing — reference/import plan needed.",
+    "Call intake & audio stream: Implementation needed.",
+    "Consent gate: Implementation needed.",
+    "Real-time transcription: Implementation needed.",
+    "PII redaction: Implementation needed.",
+    "Agent-assist orchestrator: Implementation needed.",
+    "Knowledge index: Implementation needed.",
+    "Language model: Implementation needed.",
+    "Agent desktop: Implementation needed.",
+    "Agent sign-in: Implementation needed.",
+    "Support agent: Existing — reference/import plan needed.",
+    "Existing CRM: Existing — reference/import plan needed.",
+    "Call records: Implementation needed.",
+    "Monitoring & audit: Implementation needed.",
+    "Wire caller → acs: implement data flow, access policy and acceptance test.",
+    "Wire acs → consent: implement data flow, access policy and acceptance test.",
+    "Wire consent → speech: implement data flow, access policy and acceptance test.",
+    "Wire consent → cosmos: implement data flow, access policy and acceptance test.",
+    "Wire speech → pii: implement data flow, access policy and acceptance test.",
+    "Wire pii → orchestrator: implement data flow, access policy and acceptance test.",
+    "Wire orchestrator → search: implement data flow, access policy and acceptance test.",
+    "Wire orchestrator → llm: implement data flow, access policy and acceptance test.",
+    "Wire orchestrator → agentapp: implement data flow, access policy and acceptance test.",
+    "Wire entra → agentapp: implement data flow, access policy and acceptance test.",
+    "Wire agentapp → agent: implement data flow, access policy and acceptance test.",
+    "Wire agentapp → cosmos: implement data flow, access policy and acceptance test.",
+    "Wire agent → crm: implement data flow, access policy and acceptance test.",
+    "Wire orchestrator → monitor: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "resource-block_63616c6c6572",
+      "componentIds": [
+        "caller"
+      ],
+      "taskId": "TASK-RESOURCE-63616c6c6572",
+      "message": "Synthetic caller: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_616373",
+      "componentIds": [
+        "acs"
+      ],
+      "taskId": "TASK-RESOURCE-616373",
+      "message": "Call intake & audio stream: Implementation needed."
+    },
+    {
+      "id": "resource-block_636f6e73656e74",
+      "componentIds": [
+        "consent"
+      ],
+      "taskId": "TASK-RESOURCE-636f6e73656e74",
+      "message": "Consent gate: Implementation needed."
+    },
+    {
+      "id": "resource-block_737065656368",
+      "componentIds": [
+        "speech"
+      ],
+      "taskId": "TASK-RESOURCE-737065656368",
+      "message": "Real-time transcription: Implementation needed."
+    },
+    {
+      "id": "resource-block_706969",
+      "componentIds": [
+        "pii"
+      ],
+      "taskId": "TASK-RESOURCE-706969",
+      "message": "PII redaction: Implementation needed."
+    },
+    {
+      "id": "resource-block_6f7263686573747261746f72",
+      "componentIds": [
+        "orchestrator"
+      ],
+      "taskId": "TASK-RESOURCE-6f7263686573747261746f72",
+      "message": "Agent-assist orchestrator: Implementation needed."
+    },
+    {
+      "id": "resource-block_736561726368",
+      "componentIds": [
+        "search"
+      ],
+      "taskId": "TASK-RESOURCE-736561726368",
+      "message": "Knowledge index: Implementation needed."
+    },
+    {
+      "id": "resource-block_6c6c6d",
+      "componentIds": [
+        "llm"
+      ],
+      "taskId": "TASK-RESOURCE-6c6c6d",
+      "message": "Language model: Implementation needed."
+    },
+    {
+      "id": "resource-block_6167656e74617070",
+      "componentIds": [
+        "agentapp"
+      ],
+      "taskId": "TASK-RESOURCE-6167656e74617070",
+      "message": "Agent desktop: Implementation needed."
+    },
+    {
+      "id": "resource-block_656e747261",
+      "componentIds": [
+        "entra"
+      ],
+      "taskId": "TASK-RESOURCE-656e747261",
+      "message": "Agent sign-in: Implementation needed."
+    },
+    {
+      "id": "resource-block_6167656e74",
+      "componentIds": [
+        "agent"
+      ],
+      "taskId": "TASK-RESOURCE-6167656e74",
+      "message": "Support agent: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_63726d",
+      "componentIds": [
+        "crm"
+      ],
+      "taskId": "TASK-RESOURCE-63726d",
+      "message": "Existing CRM: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_636f736d6f73",
+      "componentIds": [
+        "cosmos"
+      ],
+      "taskId": "TASK-RESOURCE-636f736d6f73",
+      "message": "Call records: Implementation needed."
+    },
+    {
+      "id": "resource-block_6d6f6e69746f72",
+      "componentIds": [
+        "monitor"
+      ],
+      "taskId": "TASK-RESOURCE-6d6f6e69746f72",
+      "message": "Monitoring & audit: Implementation needed."
+    },
+    {
+      "id": "connection-652d63616c6c65722d616373",
+      "edgeIds": [
+        "e-caller-acs"
+      ],
+      "taskId": "TASK-INTEGRATION-652d63616c6c65722d616373",
+      "message": "Wire caller → acs: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6163732d636f6e73656e74",
+      "edgeIds": [
+        "e-acs-consent"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6163732d636f6e73656e74",
+      "message": "Wire acs → consent: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d636f6e73656e742d737065656368",
+      "edgeIds": [
+        "e-consent-speech"
+      ],
+      "taskId": "TASK-INTEGRATION-652d636f6e73656e742d737065656368",
+      "message": "Wire consent → speech: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d636f6e73656e742d636f736d6f73",
+      "edgeIds": [
+        "e-consent-cosmos"
+      ],
+      "taskId": "TASK-INTEGRATION-652d636f6e73656e742d636f736d6f73",
+      "message": "Wire consent → cosmos: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d7370656563682d706969",
+      "edgeIds": [
+        "e-speech-pii"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7370656563682d706969",
+      "message": "Wire speech → pii: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d7069692d6f726368",
+      "edgeIds": [
+        "e-pii-orch"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7069692d6f726368",
+      "message": "Wire pii → orchestrator: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6f7263682d736561726368",
+      "edgeIds": [
+        "e-orch-search"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6f7263682d736561726368",
+      "message": "Wire orchestrator → search: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6f7263682d6c6c6d",
+      "edgeIds": [
+        "e-orch-llm"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6f7263682d6c6c6d",
+      "message": "Wire orchestrator → llm: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6f7263682d617070",
+      "edgeIds": [
+        "e-orch-app"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6f7263682d617070",
+      "message": "Wire orchestrator → agentapp: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d656e7472612d617070",
+      "edgeIds": [
+        "e-entra-app"
+      ],
+      "taskId": "TASK-INTEGRATION-652d656e7472612d617070",
+      "message": "Wire entra → agentapp: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6170702d6167656e74",
+      "edgeIds": [
+        "e-app-agent"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6170702d6167656e74",
+      "message": "Wire agentapp → agent: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6170702d636f736d6f73",
+      "edgeIds": [
+        "e-app-cosmos"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6170702d636f736d6f73",
+      "message": "Wire agentapp → cosmos: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6167656e742d63726d",
+      "edgeIds": [
+        "e-agent-crm"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6167656e742d63726d",
+      "message": "Wire agent → crm: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6f7263682d6d6f6e69746f72",
+      "edgeIds": [
+        "e-orch-monitor"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6f7263682d6d6f6e69746f72",
+      "message": "Wire orchestrator → monitor: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

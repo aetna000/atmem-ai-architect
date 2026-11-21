@@ -1,0 +1,15 @@
+Hi! What would you like to build? For example, a RAG system over your company's documents, or a chatbot for your team. “Not sure” is always a fine answer along the way.
+
+Use Google Cloud for this synthetic architecture qualification. Build an authenticated conversational assistant for synthetic users. Include an application, per-user conversation state, model runtime, bounded context and an escalation path. No external actions in this first test. Acceptance criteria: One user cannot read another conversation; Context and response sizes are bounded; Model outage produces a recoverable response; Deleting a conversation removes its stored context; Escalation retains the approved conversation context. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.
+
+I've drawn a first Google Cloud design: synthetic users sign in through Identity Platform, and a Cloud Run assistant keeps each user's conversations in Firestore and calls a Gemini model on Vertex AI with limited context. Escalations go to a human reviewer through Pub/Sub, and the first local test uses a fake model that returns scripted replies, including a simulated outage, so it can check sign-in rules, per-user isolation, size limits, outage recovery, deletion and escalation but not real Gemini quality, access, quotas or regional availability. Which country do the synthetic conversation data need to stay in, so we can choose a deployment region?skill: AI architecturenoted application, cloud+1 factAtMem: 0 records · 3 skills · unavailableObserved boundary: AtMem AI Architect → native client. Memory is scoped to you and this project; source data is not an instruction.Skill: AI architecture and discovery v1.2.0 · guidance; no cloud executionSkill: Infrastructure and DevOps handoff v1.1.0 · guidance; no cloud executionSkill: Google Cloud AI architecture guidance v1.0.0 · guidance; no cloud execution
+
+Drew it: Authenticated conversational assistant on Google Cloud (first sketch)
++ Synthetic user (browser)
++ Identity Platform
++ Assistant app (Cloud Run)
++5 moredrew 8 blockslogged ADR-002undo ↶
+
+Use the current emulation findings to propose a correction or the next test.
+
+Hmm, that didn't work: Provider request failed. Check its official CLI sign-in, model access and usage limits. No changes were applied.Fix connection

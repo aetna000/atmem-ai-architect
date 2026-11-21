@@ -1,0 +1,222 @@
+{
+  "version": 1,
+  "source": "Owner-requested synthetic benchmark, frozen before first run",
+  "providers": {
+    "aws": "AWS",
+    "azure": "Azure",
+    "gcp": "Google Cloud",
+    "ibm": "IBM Cloud"
+  },
+  "targetUserExchanges": 10,
+  "scenarios": [
+    {
+      "id": "01-ticket-triage",
+      "difficulty": "simple",
+      "name": "Ticket triage assistant",
+      "intent": "Build a small internal tool where our team pastes a support ticket and gets a short summary, topic and suggested urgency. A person reviews the suggestion; it must not send replies or change customer records.",
+      "facts": {
+        "users": "Ten staff members use it after signing in.",
+        "data": "We paste synthetic or redacted text, up to 20 KB per ticket. Do not retain ticket text after processing.",
+        "scale": "About 200 tickets per working day; bursts of five simultaneous requests.",
+        "location": "Our users are in Australia; use an Australian region where the chosen services support it. Flag anything that would leave Australia.",
+        "budget": "Propose a modest starting footprint and show sourced costs or explicit unknowns. Do not invent a price.",
+        "quality": "Return summary, topic, urgency and uncertainty as a validated JSON response. Malformed input, denied users and model failures must be handled safely."
+      },
+      "capabilities": [
+        "authenticated-input",
+        "model-invocation",
+        "validated-structured-output",
+        "human-review-boundary",
+        "safe-errors"
+      ],
+      "acceptance": [
+        "Authorized staff can submit text and receive schema-valid output.",
+        "Unknown identity, malformed/oversize input and model failure are handled safely.",
+        "No automated customer action and no retained raw ticket text."
+      ]
+    },
+    {
+      "id": "02-public-faq",
+      "difficulty": "simple",
+      "name": "Cited public FAQ",
+      "intent": "Build a public website assistant that answers questions from our twenty public help articles, cites the articles it used, and says when it does not know. We need to update and remove articles. It must not answer from private sources.",
+      "facts": {
+        "users": "Anonymous website visitors; an authorized editor manages the articles.",
+        "data": "Twenty public UTF-8 help articles under 30 KB each, supplied as files. No private content.",
+        "scale": "About 1,000 questions per day and five at once.",
+        "location": "Australia is preferred; make model/data-location limitations explicit.",
+        "quality": "Answers need valid source citations; unsupported questions must abstain; updates and deletions must affect retrieval.",
+        "budget": "Recommend the simplest suitable retrieval approach and a small footprint. Show assumptions and missing current price evidence."
+      },
+      "capabilities": [
+        "public-web",
+        "retrieval",
+        "model-invocation",
+        "citations-and-abstention",
+        "authorized-ingestion",
+        "update-delete"
+      ],
+      "acceptance": [
+        "Known questions retrieve expected sources and cite real article IDs.",
+        "Unanswerable queries abstain; forged citations fail.",
+        "Authorized updates/deletes affect later answers; unauthorized edits fail."
+      ]
+    },
+    {
+      "id": "03-document-intake",
+      "difficulty": "medium",
+      "name": "Asynchronous document intake",
+      "intent": "Users upload PDF invoices. Extract the supplier, invoice date, total and currency into a review queue. Delivery can repeat; retries must not create duplicate invoices. A reviewer approves a result before it is sent to our existing accounting API.",
+      "facts": {
+        "users": "Twenty signed-in staff and three reviewers; ordinary uploaders cannot approve.",
+        "data": "PDF invoices up to 10 MB, around 500 per day; they may contain personal data. Keep originals and extraction audit history for 90 days.",
+        "scale": "500 uploads per day, bursts of twenty. Jobs may take several minutes.",
+        "location": "Keep documents and extracted data in Australia; flag unverified service availability.",
+        "integrations": "The accounting system already exists. An administrator will supply its endpoint and credentials; treat it as external, not a new system to provision.",
+        "quality": "Use a durable job queue, stable invoice/job identity, bounded retries, a dead-letter/recovery path, approval checks and an idempotent outbound operation."
+      },
+      "capabilities": [
+        "authenticated-upload",
+        "pdf-extraction",
+        "durable-queue",
+        "idempotent-processing",
+        "approval",
+        "external-api",
+        "audit-and-recovery"
+      ],
+      "acceptance": [
+        "PDF upload reaches a reviewable extraction result.",
+        "Concurrent duplicate deliveries and worker restarts do not duplicate records.",
+        "Unauthorized approvals fail; approved outbound retries are idempotent.",
+        "Poison jobs remain recoverable with audit evidence."
+      ]
+    },
+    {
+      "id": "04-private-knowledge",
+      "difficulty": "medium",
+      "name": "Permission-aware knowledge assistant",
+      "intent": "Build an internal assistant over our existing SharePoint and Confluence content. People should get cited answers only from documents they can access. Permission revocation, edits and deletion must propagate. An outage in one source should not leak stale restricted content.",
+      "facts": {
+        "users": "Two hundred signed-in employees with different groups and document permissions.",
+        "data": "Ten thousand company documents. Source permissions are authoritative; content and authorization can change independently.",
+        "integrations": "SharePoint, Confluence and company sign-in already exist; preserve them and use supported API adapters. Native vendor integration is required, not just local fixture servers.",
+        "location": "Australia for content, indexes and processing; explain service/model residency gaps.",
+        "quality": "Check identity and authorization before model context and citations; unknown or expired permission evidence fails closed. Record freshness/revocation behavior and recovery.",
+        "scale": "Two hundred staff, roughly 3,000 questions daily."
+      },
+      "capabilities": [
+        "enterprise-identity",
+        "native-source-connectors",
+        "permission-aware-retrieval",
+        "revocation",
+        "citations",
+        "source-recovery",
+        "audit"
+      ],
+      "acceptance": [
+        "Alice cannot retrieve Bob-only titles, snippets, answers or citations.",
+        "Edits/deletes and permission revocations invalidate later retrieval.",
+        "Unknown identity and expired authorization evidence deny access.",
+        "Native source adapters implement documented API contracts and recover from outages."
+      ]
+    },
+    {
+      "id": "05-support-copilot",
+      "difficulty": "medium",
+      "name": "Human-approved support copilot",
+      "intent": "Build a support copilot that reads an existing CRM case, drafts a response from approved support knowledge, and recommends account actions. Nothing is sent or changed until a staff member explicitly approves it. Retries must not perform an action twice.",
+      "facts": {
+        "users": "Fifty support agents and five supervisors. Account-changing actions require supervisor approval.",
+        "integrations": "CRM and outbound mail already exist, with administrator-supplied API credentials. Do not recreate them.",
+        "data": "Cases contain customer personal data. Keep audit events but avoid raw sensitive model prompts in logs.",
+        "scale": "About 1,000 cases per day.",
+        "quality": "Treat customer/knowledge text as untrusted. Enforce tool allowlists, server-side approval, operation identity/idempotency, authorization and audit; a model recommendation cannot authorize an action.",
+        "location": "Australian customer data should remain in Australia; identify external-service boundaries."
+      },
+      "capabilities": [
+        "crm-adapter",
+        "retrieval",
+        "model-drafting",
+        "tool-allowlist",
+        "server-approval",
+        "idempotent-actions",
+        "audit",
+        "privacy"
+      ],
+      "acceptance": [
+        "Unapproved or unauthorized actions cannot execute.",
+        "Prompt-injected CRM content cannot add a tool or bypass approval.",
+        "Approved retries perform one action and record an auditable outcome.",
+        "Model/source/API failures preserve a recoverable workflow."
+      ]
+    },
+    {
+      "id": "06-metered-saas",
+      "difficulty": "hard",
+      "name": "Metered multi-tenant AI workspace",
+      "intent": "We already have a public website and a working local AI application. Host the application behind the existing website with sign-in, private project memory, paid credits and usage limits. Anonymous visitors may try a limited chat. Users must sign in before generating or downloading project artifacts. Preserve our website.",
+      "facts": {
+        "users": "Public visitors and signed-in account members. Projects belong to an account; only authorized members may access their content and artifacts.",
+        "data": "Conversation and project memory must survive restarts and multiple replicas. Do not use a per-container file database as shared production state.",
+        "money": "Payment webhooks may repeat or arrive concurrently. Reserve spend atomically, apply each paid credit once, and reconcile failures. A proposed trial allowance is a business assumption requiring approval; do not invent a currency or live payment credentials.",
+        "integrations": "The website and local application source already exist; the hosted application deployment is new. Keep source ownership separate from cloud deployment ownership. An operator will supply source/image references and provider account inputs.",
+        "quality": "Server-side identity, account/project authorization, protected jobs/artifacts, durable memory, concurrent credit controls, recovery and audit are required. Private ingress alone is not end-user authorization.",
+        "scale": "Initially 1,000 accounts, bursts of fifty concurrent chats; permit bounded horizontal scaling.",
+        "location": "Keep account/project data and processing within Australia where supported; expose unresolved service availability."
+      },
+      "capabilities": [
+        "existing-site-preservation",
+        "new-application-deployment",
+        "anonymous-trial",
+        "server-authentication",
+        "tenant-isolation",
+        "durable-memory-adapter",
+        "atomic-credit-reservation",
+        "webhook-idempotency",
+        "protected-artifacts",
+        "reconciliation"
+      ],
+      "acceptance": [
+        "Signed-out generation/download requests fail at the backend even if the UI is bypassed.",
+        "Cross-account/project reads, searches, jobs and artifacts are denied.",
+        "Memory survives replica replacement and concurrent writes.",
+        "Duplicate/concurrent webhooks and spend requests do not double-credit or overspend.",
+        "The existing website is referenced and integrated without destructive recreation."
+      ]
+    },
+    {
+      "id": "07-regulated-enterprise",
+      "difficulty": "hard",
+      "name": "Resilient regulated knowledge platform",
+      "intent": "Architect a regulated enterprise AI assistant spanning two existing document systems and an internal service API. It needs permission-aware retrieval, human-approved actions, data residency, dependable recovery and an operational handoff. Include ingestion, identity, application, data and model paths; do not reduce it to storage.",
+      "facts": {
+        "users": "Two thousand employees across multiple departments, with authoritative group and document permissions and a separate operations team.",
+        "data": "Eighty thousand documents and sensitive records. Ingestion must preserve source identity, updates/deletes and authorization. Explain retention, backup and tested restore requirements.",
+        "integrations": "Two existing document APIs and an internal case-management API are external dependencies; their endpoint/identity inputs will be supplied. Provide concrete adapters/contracts and a local test environment.",
+        "location": "Sensitive data and model processing must stay within the EU. Recommend a feasible region and model path on the requested provider, and verify availability rather than assume it.",
+        "quality": "Fail closed on unknown authorization. Bound model/tool work. Separate approval and execution; use durable, idempotent workflows. Define degradation during source/model outages, recovery, observability and least-privilege operations.",
+        "scale": "Two thousand employees, 20,000 queries daily and bursts of one hundred. Recommend measurable reliability/capacity targets as proposals, not existing policy.",
+        "operations": "The operator needs build/run, state, migration, secrets, monitoring, backup/restore, rollback and test instructions, with evidence of what actually ran."
+      },
+      "capabilities": [
+        "enterprise-identity",
+        "source-acl-ingestion",
+        "permission-aware-retrieval",
+        "human-approval",
+        "durable-workflow",
+        "residency",
+        "degraded-operation",
+        "backup-restore",
+        "observability",
+        "operational-handoff"
+      ],
+      "acceptance": [
+        "Unknown/revoked authorization fails closed before context and actions.",
+        "Source/model outages degrade safely; queues and recovery preserve operation identity.",
+        "Sensitive paths stay within an explicitly supported EU deployment/model boundary.",
+        "Restore and rollback procedures have concrete implementation and local acceptance fixtures.",
+        "The package contains the complete requested application and infrastructure scope with traceable verification."
+      ]
+    }
+  ]
+}

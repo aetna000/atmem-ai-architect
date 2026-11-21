@@ -1,0 +1,364 @@
+{
+  "message": "I've drawn the setup you described as an AWS test design: a file lands in a private S3 bucket, an SQS queue picks it up, a Lambda counts the words, and DynamoDB saves one result per file version, so a duplicate delivery can't overwrite a result. Failed messages are retried, and after repeated failures they move to a dead-letter queue; Sydney (ap-southeast-2) is shown only as a candidate region, not an approved one, and nothing gets deployed. The next missing decision is about alerts: who should be told when a message lands in the dead-letter queue, and is there an existing AWS SNS alert topic we can use? Production needs one.",
+  "phase": "Architecture",
+  "proposal": {
+    "baseRevision": 1,
+    "title": "Async S3 → SQS → Lambda word-count pipeline (synthetic test design)",
+    "body": "Scope: synthetic UTF-8 text files only, word counts saved per exact object version. Assumptions: AWS; Sydney (ap-southeast-2) is a candidate region, not an approved one; default limits are 256 MiB, 30 s timeout, concurrency 2, 1 MB input and 30-day logs. The SQS visibility timeout must be at least six times the function timeout. The generated resources include the execution role, logs, version, alias, event mapping and DLQ alarm. Production needs an existing, reviewed SNS alarm topic. This is a design, not a deployment.",
+    "next": {
+      "version": 1,
+      "revision": 1,
+      "name": "Async word-count qualification pipeline",
+      "provider": "aws",
+      "requirements": "",
+      "nodes": [
+        {
+          "id": "uploader",
+          "type": "resource",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "label": "Existing uploader (IAM principal)",
+            "kind": "source",
+            "provider": "tools",
+            "description": "Existing IAM caller that stores and reads synthetic text files. It is outside the provisioning scope, and its identity is not verified.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Internal",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "poc": false,
+            "binding": "aws-iam-principal"
+          }
+        },
+        {
+          "id": "bucket",
+          "type": "resource",
+          "position": {
+            "x": 380,
+            "y": 0
+          },
+          "data": {
+            "label": "Private source bucket",
+            "kind": "resource",
+            "provider": "aws",
+            "description": "Private, versioned bucket. When an object is created, it notifies the queue with the exact versionId.",
+            "config": {
+              "region": "ap-southeast-2 (candidate)",
+              "classification": "Internal",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "poc": true,
+            "service": "Amazon S3"
+          }
+        },
+        {
+          "id": "queue",
+          "type": "resource",
+          "position": {
+            "x": 760,
+            "y": 0
+          },
+          "data": {
+            "label": "Work queue",
+            "kind": "stream",
+            "provider": "aws",
+            "description": "Standard queue. Retries failed messages by redelivering them after the visibility timeout, which is at least six times the function timeout.",
+            "config": {
+              "region": "ap-southeast-2 (candidate)",
+              "classification": "Internal",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "poc": true,
+            "service": "Amazon SQS",
+            "implementation": "sqs-standard"
+          }
+        },
+        {
+          "id": "dlq",
+          "type": "resource",
+          "position": {
+            "x": 760,
+            "y": 200
+          },
+          "data": {
+            "label": "Dead-letter queue",
+            "kind": "resource",
+            "provider": "aws",
+            "description": "Holds poison messages after the maximum number of receives. Its generated alarm needs an existing SNS topic in production.",
+            "config": {
+              "region": "ap-southeast-2 (candidate)",
+              "classification": "Internal",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "poc": true,
+            "service": "Amazon SQS",
+            "implementation": "sqs-dead-letter"
+          }
+        },
+        {
+          "id": "worker",
+          "type": "resource",
+          "position": {
+            "x": 1140,
+            "y": 0
+          },
+          "data": {
+            "label": "Word-count worker",
+            "kind": "tool",
+            "provider": "aws",
+            "description": "Reads the exact object version and counts words. Reports partial batch failures. Owns its execution role, logs, version, alias and event mapping.",
+            "config": {
+              "region": "ap-southeast-2 (candidate)",
+              "classification": "Internal",
+              "timeout": 5000,
+              "memoryMb": 256,
+              "functionTimeoutSeconds": 30,
+              "concurrency": 2,
+              "maxInputBytes": 1000000,
+              "logRetentionDays": 30
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "poc": true,
+            "service": "AWS Lambda",
+            "implementation": "async-word-count"
+          }
+        },
+        {
+          "id": "results",
+          "type": "resource",
+          "position": {
+            "x": 1520,
+            "y": 0
+          },
+          "data": {
+            "label": "Word-count results",
+            "kind": "output",
+            "provider": "aws",
+            "description": "Uses a conditional write for each object version, so duplicate deliveries succeed without overwriting results.",
+            "config": {
+              "region": "ap-southeast-2 (candidate)",
+              "classification": "Internal",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "poc": true,
+            "service": "Amazon DynamoDB",
+            "implementation": "word-count-results"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "e-up-bucket",
+          "source": "uploader",
+          "target": "bucket",
+          "type": "smoothstep",
+          "label": "store/read files",
+          "access": "s3-read-write"
+        },
+        {
+          "id": "e-bucket-queue",
+          "source": "bucket",
+          "target": "queue",
+          "type": "smoothstep",
+          "label": "ObjectCreated event",
+          "integration": "s3-object-created"
+        },
+        {
+          "id": "e-queue-worker",
+          "source": "queue",
+          "target": "worker",
+          "type": "smoothstep",
+          "label": "event source mapping",
+          "integration": "sqs-lambda"
+        },
+        {
+          "id": "e-worker-bucket",
+          "source": "worker",
+          "target": "bucket",
+          "type": "smoothstep",
+          "label": "GetObjectVersion",
+          "integration": "lambda-s3-read"
+        },
+        {
+          "id": "e-worker-results",
+          "source": "worker",
+          "target": "results",
+          "type": "smoothstep",
+          "label": "conditional put count",
+          "integration": "lambda-dynamodb-write"
+        },
+        {
+          "id": "e-queue-dlq",
+          "source": "queue",
+          "target": "dlq",
+          "type": "smoothstep",
+          "label": "redrive after max receives",
+          "integration": "sqs-redrive"
+        }
+      ]
+    }
+  },
+  "requirementDrafts": [
+    {
+      "rationale": "Without this, SQS's at-least-once delivery could produce inconsistent or overwritten results.",
+      "basis": "User: \"Duplicate deliveries must be safe\"",
+      "id": "ai-idempotent-count",
+      "statement": "Proposed: each object version produces exactly one stored word count, and a duplicate delivery succeeds without overwriting it.",
+      "kind": "functional",
+      "category": "reliability",
+      "priority": "must",
+      "links": [
+        "worker",
+        "results"
+      ]
+    },
+    {
+      "rationale": "Poison messages would otherwise loop forever or be silently lost.",
+      "basis": "User: \"failures must retry, and poison messages must go to a dead-letter queue\"",
+      "id": "ai-retry-dlq",
+      "statement": "Proposed: failed messages are retried, then moved to a dead-letter queue after the maximum number of receives, with an alarm sent to an operator.",
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "priority": "must",
+      "links": [
+        "queue",
+        "dlq"
+      ]
+    },
+    {
+      "rationale": "This avoids recording an unapproved region as a decision.",
+      "basis": "User: \"Propose Sydney as a candidate region, but do not record that as an approved deployment region.\"",
+      "id": "ai-region",
+      "statement": "Proposed: the deployment region stays open; Sydney (ap-southeast-2) is a candidate only.",
+      "kind": "nonfunctional",
+      "category": "compliance",
+      "priority": "should",
+      "links": [
+        "bucket",
+        "queue",
+        "worker",
+        "results",
+        "dlq"
+      ]
+    }
+  ],
+  "decisionUpdates": [
+    {
+      "subject": "platform.cloud",
+      "value": "aws",
+      "sourceText": "Use AWS for this synthetic qualification design."
+    }
+  ],
+  "contextUsed": {
+    "status": "unavailable",
+    "enabled": true,
+    "engine": "AtMem 2.3.10 core SDK",
+    "recordsUsed": [],
+    "knowledgeRecordIds": [],
+    "skills": [
+      {
+        "id": "architecture",
+        "name": "AI architecture and discovery",
+        "provider": "all",
+        "stages": [
+          "discover",
+          "design",
+          "review"
+        ],
+        "version": "1.0.0",
+        "digest": "9ad2d605f02a4b5ecbc5310b2472f347a8c4301ece89714a0857d8405e075c90",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "devops",
+        "name": "Infrastructure and DevOps handoff",
+        "provider": "all",
+        "stages": [
+          "deploy",
+          "review"
+        ],
+        "version": "1.1.0",
+        "digest": "cd5a428597fbf388a12a863721d93e551c200f4ed30be3469fd8eae78262884c",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "aws",
+        "name": "AWS architecture guidance",
+        "provider": "aws",
+        "stages": [
+          "design",
+          "review",
+          "estimate",
+          "deploy"
+        ],
+        "version": "1.4.0",
+        "digest": "82147cbfe99396d8e659bc7c8d62ce57b0868983bc88c1ace0aaa860ecb9ba29",
+        "source": "https://raw.githubusercontent.com/aws/agent-toolkit-for-aws/fb298e0b6bf2b308a3d2c212b2a09b9bace8e090/plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+        "reference": {
+          "id": "aws",
+          "repository": "aws/agent-toolkit-for-aws",
+          "commit": "fb298e0b6bf2b308a3d2c212b2a09b9bace8e090",
+          "sourcePath": "plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+          "url": "https://raw.githubusercontent.com/aws/agent-toolkit-for-aws/fb298e0b6bf2b308a3d2c212b2a09b9bace8e090/plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+          "sha256": "aa8fef39ef6d64365e48827d9acc90b2b8755023f5c177341cf1c954c1057811",
+          "file": "agent-skills/upstream/aws/SKILL.md",
+          "status": "reference-only",
+          "note": "Imported source reference, not an enabled script/tool package. AtMem AI Architect specialist guidance is reviewed separately; referenced upstream companion files are not bundled.",
+          "integrity": true
+        },
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup",
+          "pricing.lookup"
+        ],
+        "enabled": true
+      }
+    ],
+    "tools": [],
+    "boundary": "AtMem AI Architect → native client",
+    "contextDigest": "ab0e506e4485d361880e54a50fd4c66df2a6177b072138cf8460839d16fc893c",
+    "projectId": "c0595035-ab94-4b84-819f-6667002ee4ee"
+  },
+  "priceQuotes": []
+}

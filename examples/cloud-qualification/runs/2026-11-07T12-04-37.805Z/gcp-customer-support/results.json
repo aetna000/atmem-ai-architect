@@ -1,0 +1,65 @@
+{
+  "provider": "gcp-customer-support",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Customer and tenant boundaries preserved",
+    "Answers cite approved knowledge",
+    "Unsupported promises escalate to staff",
+    "Sensitive customer fields excluded from model input",
+    "Approved ticket updates are idempotent and auditable"
+  ],
+  "components": [
+    {
+      "id": "staff"
+    },
+    {
+      "id": "iap",
+      "service": "Identity-Aware Proxy"
+    },
+    {
+      "id": "console",
+      "service": "Cloud Run"
+    },
+    {
+      "id": "orchestrator",
+      "service": "Cloud Run"
+    },
+    {
+      "id": "tickets"
+    },
+    {
+      "id": "kbstore",
+      "service": "Cloud Storage"
+    },
+    {
+      "id": "search",
+      "service": "Vertex AI Search"
+    },
+    {
+      "id": "crmadapter",
+      "service": "Cloud Run"
+    },
+    {
+      "id": "crm"
+    },
+    {
+      "id": "model",
+      "service": "Vertex AI Gemini"
+    },
+    {
+      "id": "escalation",
+      "service": "Pub/Sub"
+    },
+    {
+      "id": "audit",
+      "service": "Cloud Logging + Cloud Monitoring"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

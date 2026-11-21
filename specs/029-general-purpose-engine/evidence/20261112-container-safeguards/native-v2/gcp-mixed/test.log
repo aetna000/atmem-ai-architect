@@ -1,0 +1,37 @@
+tests/container.tftest.hcl... in progress
+  run "block_696e737472756d656e742dc2b5_security"... pass
+  run "block_696e737472756d656e742dc2b5_reject_mutable_image"... pass
+  run "block_696e737472756d656e742dc2b5_footprint"... pass
+  run "invalid_region_blocked"... pass
+  run "changed_accepted_region_blocked"... pass
+  run "unapproved_blocked"... pass
+tests/container.tftest.hcl... tearing down
+tests/container.tftest.hcl... pass
+tests/independent-placement.tftest.hcl... in progress
+  run "independent_accepted_placement"... pass
+  run "independent_cloud_run_location"... pass
+tests/independent-placement.tftest.hcl... tearing down
+tests/independent-placement.tftest.hcl... pass
+tests/independent-safeguards.tftest.hcl... in progress
+  run "independent_native_runtime_identity"... fail
+
+Error: Unknown condition value
+
+  on tests/independent-safeguards.tftest.hcl line 13, in run "independent_native_runtime_identity":
+  13:  condition = google_cloud_run_v2_service.block_696e737472756d656e742dc2b5.template[0].service_account == google_service_account.block_696e737472756d656e742dc2b5.email && google_cloud_run_v2_service.block_696e737472756d656e742dc2b5.deletion_protection == true
+    ├────────────────
+    │ google_cloud_run_v2_service.block_696e737472756d656e742dc2b5.deletion_protection is true
+    │ google_cloud_run_v2_service.block_696e737472756d656e742dc2b5.template[0].service_account is a string
+    │ google_service_account.block_696e737472756d656e742dc2b5.email is a string
+
+Condition expression could not be evaluated at this time. This means you have
+executed a `run` block with `command = plan` and one of the values your
+condition depended on is not known until after the plan has been applied.
+Either remove this value from your condition, or execute an `apply` command
+from this `run` block. Alternatively, if there is an override for this value,
+you can make it available during the plan phase by setting `override_during =
+plan` in the `override_` block.
+tests/independent-safeguards.tftest.hcl... tearing down
+tests/independent-safeguards.tftest.hcl... fail
+
+Failure! 8 passed, 1 failed.

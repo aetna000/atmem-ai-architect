@@ -1,0 +1,240 @@
+{
+  "revision": 1,
+  "rows": [
+    {
+      "id": "browser",
+      "address": "block_62726f77736572",
+      "label": "Staff browser",
+      "provider": "tools",
+      "service": "Service to be selected",
+      "sourceExisting": true,
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "External browser — no infrastructure to provision; connection behavior still requires validation",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "structured": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "externalReference": true,
+      "existingServiceReference": null,
+      "containerContract": null,
+      "implemented": true
+    },
+    {
+      "id": "workspace",
+      "address": "block_776f726b7370616365",
+      "label": "Structured AI workspace",
+      "provider": "ibm",
+      "service": "IBM Code Engine",
+      "sourceExisting": false,
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "au-syd",
+      "resources": [
+        "ibm_code_engine_app",
+        "ibm_resource_instance",
+        "ibm_appid_application",
+        "ibm_iam_trusted_profile",
+        "ibm_iam_trusted_profile_link"
+      ],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "browser"
+      ],
+      "terraform": "Composed IBM structured application source, browser, App ID authorization and keyless regional model transport generated; destination behavior unverified",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "structured": false,
+      "summary": false,
+      "settings": {
+        "outputContract": {
+          "instruction": "Classify the ticket and flag uncertainty; never take action.",
+          "fields": [
+            {
+              "name": "topic",
+              "type": "string",
+              "description": "Topic",
+              "values": [
+                "billing",
+                "other"
+              ]
+            },
+            {
+              "name": "uncertain",
+              "type": "boolean",
+              "description": "Needs human review"
+            }
+          ]
+        }
+      },
+      "reference": false,
+      "externalReference": false,
+      "existingServiceReference": null,
+      "containerContract": null,
+      "implemented": true
+    }
+  ],
+  "connections": [
+    {
+      "id": "browser-app",
+      "source": "browser",
+      "target": "workspace",
+      "data": "data",
+      "generated": true,
+      "status": "Scoped access policy generated; account and runtime verification required"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "publicFaqPlan": {
+    "entries": [],
+    "componentIds": [],
+    "editorIds": [],
+    "edgeIds": []
+  },
+  "azureStructuredPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gcpStructuredPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "ibmStructuredPlan": {
+    "entries": [
+      {
+        "row": {
+          "id": "workspace",
+          "address": "block_776f726b7370616365",
+          "label": "Structured AI workspace",
+          "provider": "ibm",
+          "service": "IBM Code Engine",
+          "sourceExisting": false,
+          "selection": "Needs service confirmation",
+          "existing": false,
+          "region": "au-syd",
+          "resources": [
+            "ibm_code_engine_app",
+            "ibm_resource_instance",
+            "ibm_appid_application",
+            "ibm_iam_trusted_profile",
+            "ibm_iam_trusted_profile_link"
+          ],
+          "costDrivers": "Confirm service, capacity and billable dimensions",
+          "dependencies": [
+            "browser"
+          ],
+          "terraform": "Composed IBM structured application source, browser, App ID authorization and keyless regional model transport generated; destination behavior unverified",
+          "foundation": false,
+          "compute": false,
+          "api": false,
+          "structured": false,
+          "summary": false,
+          "settings": {
+            "outputContract": {
+              "instruction": "Classify the ticket and flag uncertainty; never take action.",
+              "fields": [
+                {
+                  "name": "topic",
+                  "type": "string",
+                  "description": "Topic",
+                  "values": [
+                    "billing",
+                    "other"
+                  ]
+                },
+                {
+                  "name": "uncertain",
+                  "type": "boolean",
+                  "description": "Needs human review"
+                }
+              ]
+            }
+          },
+          "reference": false,
+          "externalReference": false,
+          "existingServiceReference": null,
+          "containerContract": null,
+          "implemented": true
+        },
+        "contract": {
+          "instruction": "Classify the ticket and flag uncertainty; never take action.",
+          "fields": [
+            {
+              "name": "topic",
+              "type": "string",
+              "description": "Topic",
+              "values": [
+                "billing",
+                "other"
+              ]
+            },
+            {
+              "name": "uncertain",
+              "type": "boolean",
+              "description": "Needs human review"
+            }
+          ]
+        },
+        "maxInput": 20000,
+        "maxTokens": 1024
+      }
+    ],
+    "componentIds": [
+      "workspace"
+    ],
+    "edgeIds": [
+      "browser-app"
+    ]
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "structuredApiPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [],
+  "gapDetails": [],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

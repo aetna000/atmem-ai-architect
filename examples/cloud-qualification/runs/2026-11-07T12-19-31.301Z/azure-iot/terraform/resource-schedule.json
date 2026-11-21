@@ -1,0 +1,534 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "sim",
+      "address": "block_73696d",
+      "label": "Synthetic device simulator",
+      "provider": "tools",
+      "service": "Storage or existing data connector",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "iothub",
+      "address": "block_696f74687562",
+      "label": "Azure IoT Hub",
+      "provider": "azure",
+      "service": "Azure IoT Hub",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "sim"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "eventhubs",
+      "address": "block_6576656e7468756273",
+      "label": "Azure Event Hubs (durable buffer)",
+      "provider": "azure",
+      "service": "Azure Event Hubs",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "iothub"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "validator",
+      "address": "block_76616c696461746f72",
+      "label": "Azure Functions validator & scorer",
+      "provider": "azure",
+      "service": "Azure Functions",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "eventhubs"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "quarantine",
+      "address": "block_71756172616e74696e65",
+      "label": "Azure Blob Storage (raw archive & quarantine)",
+      "provider": "azure",
+      "service": "Azure Blob Storage",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "eventhubs",
+        "validator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "registry",
+      "address": "block_7265676973747279",
+      "label": "Azure ML model registry",
+      "provider": "azure",
+      "service": "Azure Machine Learning",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "aml",
+      "address": "block_616d6c",
+      "label": "Azure ML online endpoint",
+      "provider": "azure",
+      "service": "Azure Machine Learning managed online endpoint",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "registry",
+        "validator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "cosmos",
+      "address": "block_636f736d6f73",
+      "label": "Azure Cosmos DB (results & idempotency)",
+      "provider": "azure",
+      "service": "Azure Cosmos DB",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "validator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "monitor",
+      "address": "block_6d6f6e69746f72",
+      "label": "Azure Monitor alerts",
+      "provider": "azure",
+      "service": "Azure Monitor",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "cosmos"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "operator",
+      "address": "block_6f70657261746f72",
+      "label": "Operator",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "monitor"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e-sim-iot",
+      "source": "sim",
+      "target": "iothub",
+      "data": "device telemetry (MQTT/HTTPS, per-device identity)",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-iot-eh",
+      "source": "iothub",
+      "target": "eventhubs",
+      "data": "message routing",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-eh-blob",
+      "source": "eventhubs",
+      "target": "quarantine",
+      "data": "Capture raw archive",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-eh-val",
+      "source": "eventhubs",
+      "target": "validator",
+      "data": "Event Hubs trigger (checkpointed)",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-val-blob",
+      "source": "validator",
+      "target": "quarantine",
+      "data": "rejected event + reason",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-reg-aml",
+      "source": "registry",
+      "target": "aml",
+      "data": "deploy model version",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-val-aml",
+      "source": "validator",
+      "target": "aml",
+      "data": "score request",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-val-cosmos",
+      "source": "validator",
+      "target": "cosmos",
+      "data": "idempotent result write",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-cosmos-mon",
+      "source": "cosmos",
+      "target": "monitor",
+      "data": "anomaly results / metrics",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-mon-op",
+      "source": "monitor",
+      "target": "operator",
+      "data": "action group alert",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Synthetic device simulator: Existing — reference/import plan needed.",
+    "Azure IoT Hub: Implementation needed.",
+    "Azure Event Hubs (durable buffer): Implementation needed.",
+    "Azure Functions validator & scorer: Implementation needed.",
+    "Azure Blob Storage (raw archive & quarantine): Implementation needed.",
+    "Azure ML model registry: Implementation needed.",
+    "Azure ML online endpoint: Implementation needed.",
+    "Azure Cosmos DB (results & idempotency): Implementation needed.",
+    "Azure Monitor alerts: Implementation needed.",
+    "Operator: Existing — reference/import plan needed.",
+    "Wire sim → iothub: implement data flow, access policy and acceptance test.",
+    "Wire iothub → eventhubs: implement data flow, access policy and acceptance test.",
+    "Wire eventhubs → quarantine: implement data flow, access policy and acceptance test.",
+    "Wire eventhubs → validator: implement data flow, access policy and acceptance test.",
+    "Wire validator → quarantine: implement data flow, access policy and acceptance test.",
+    "Wire registry → aml: implement data flow, access policy and acceptance test.",
+    "Wire validator → aml: implement data flow, access policy and acceptance test.",
+    "Wire validator → cosmos: implement data flow, access policy and acceptance test.",
+    "Wire cosmos → monitor: implement data flow, access policy and acceptance test.",
+    "Wire monitor → operator: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "resource-block_73696d",
+      "componentIds": [
+        "sim"
+      ],
+      "taskId": "TASK-RESOURCE-73696d",
+      "message": "Synthetic device simulator: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_696f74687562",
+      "componentIds": [
+        "iothub"
+      ],
+      "taskId": "TASK-RESOURCE-696f74687562",
+      "message": "Azure IoT Hub: Implementation needed."
+    },
+    {
+      "id": "resource-block_6576656e7468756273",
+      "componentIds": [
+        "eventhubs"
+      ],
+      "taskId": "TASK-RESOURCE-6576656e7468756273",
+      "message": "Azure Event Hubs (durable buffer): Implementation needed."
+    },
+    {
+      "id": "resource-block_76616c696461746f72",
+      "componentIds": [
+        "validator"
+      ],
+      "taskId": "TASK-RESOURCE-76616c696461746f72",
+      "message": "Azure Functions validator & scorer: Implementation needed."
+    },
+    {
+      "id": "resource-block_71756172616e74696e65",
+      "componentIds": [
+        "quarantine"
+      ],
+      "taskId": "TASK-RESOURCE-71756172616e74696e65",
+      "message": "Azure Blob Storage (raw archive & quarantine): Implementation needed."
+    },
+    {
+      "id": "resource-block_7265676973747279",
+      "componentIds": [
+        "registry"
+      ],
+      "taskId": "TASK-RESOURCE-7265676973747279",
+      "message": "Azure ML model registry: Implementation needed."
+    },
+    {
+      "id": "resource-block_616d6c",
+      "componentIds": [
+        "aml"
+      ],
+      "taskId": "TASK-RESOURCE-616d6c",
+      "message": "Azure ML online endpoint: Implementation needed."
+    },
+    {
+      "id": "resource-block_636f736d6f73",
+      "componentIds": [
+        "cosmos"
+      ],
+      "taskId": "TASK-RESOURCE-636f736d6f73",
+      "message": "Azure Cosmos DB (results & idempotency): Implementation needed."
+    },
+    {
+      "id": "resource-block_6d6f6e69746f72",
+      "componentIds": [
+        "monitor"
+      ],
+      "taskId": "TASK-RESOURCE-6d6f6e69746f72",
+      "message": "Azure Monitor alerts: Implementation needed."
+    },
+    {
+      "id": "resource-block_6f70657261746f72",
+      "componentIds": [
+        "operator"
+      ],
+      "taskId": "TASK-RESOURCE-6f70657261746f72",
+      "message": "Operator: Existing — reference/import plan needed."
+    },
+    {
+      "id": "connection-652d73696d2d696f74",
+      "edgeIds": [
+        "e-sim-iot"
+      ],
+      "taskId": "TASK-INTEGRATION-652d73696d2d696f74",
+      "message": "Wire sim → iothub: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d696f742d6568",
+      "edgeIds": [
+        "e-iot-eh"
+      ],
+      "taskId": "TASK-INTEGRATION-652d696f742d6568",
+      "message": "Wire iothub → eventhubs: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d65682d626c6f62",
+      "edgeIds": [
+        "e-eh-blob"
+      ],
+      "taskId": "TASK-INTEGRATION-652d65682d626c6f62",
+      "message": "Wire eventhubs → quarantine: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d65682d76616c",
+      "edgeIds": [
+        "e-eh-val"
+      ],
+      "taskId": "TASK-INTEGRATION-652d65682d76616c",
+      "message": "Wire eventhubs → validator: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d76616c2d626c6f62",
+      "edgeIds": [
+        "e-val-blob"
+      ],
+      "taskId": "TASK-INTEGRATION-652d76616c2d626c6f62",
+      "message": "Wire validator → quarantine: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d7265672d616d6c",
+      "edgeIds": [
+        "e-reg-aml"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7265672d616d6c",
+      "message": "Wire registry → aml: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d76616c2d616d6c",
+      "edgeIds": [
+        "e-val-aml"
+      ],
+      "taskId": "TASK-INTEGRATION-652d76616c2d616d6c",
+      "message": "Wire validator → aml: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d76616c2d636f736d6f73",
+      "edgeIds": [
+        "e-val-cosmos"
+      ],
+      "taskId": "TASK-INTEGRATION-652d76616c2d636f736d6f73",
+      "message": "Wire validator → cosmos: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d636f736d6f732d6d6f6e",
+      "edgeIds": [
+        "e-cosmos-mon"
+      ],
+      "taskId": "TASK-INTEGRATION-652d636f736d6f732d6d6f6e",
+      "message": "Wire cosmos → monitor: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6d6f6e2d6f70",
+      "edgeIds": [
+        "e-mon-op"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6d6f6e2d6f70",
+      "message": "Wire monitor → operator: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

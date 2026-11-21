@@ -1,0 +1,113 @@
+[
+  {
+    "id": "placed-browser-tests",
+    "label": "Sandboxed ARM browser tests",
+    "evidenceLevel": "local_container_check",
+    "contractSha256": "87efff981ea60754bd9b20f838c923cf0749509e3ba454de863c91a413df628c",
+    "available": true,
+    "applicability": {
+      "anyOf": [
+        "tests/browser.test.mjs"
+      ],
+      "allOf": [],
+      "noneOf": []
+    },
+    "runtimeEvidence": {
+      "receiptSha256": "9ca96106e74fb0790592f777ca7764916990536a1805363ae7419503fe8cf084",
+      "runtimeSha256": "f1f1c2b9bc76ee75cda5eb7c8057fbf481179ae0a66985f7eee7a4ce040e0975",
+      "observed": {
+        "kind": "node",
+        "executableVersion": "26.13.0",
+        "packages": {
+          "playwright-core": "1.64.1"
+        },
+        "serviceOperations": {},
+        "browserVersion": "156.0.8078.80"
+      },
+      "observedAt": "2026-11-12T03:13:46.120739+00:00",
+      "evidenceLevel": "operator_pinned_local_runtime_observation",
+      "scope": "Observed immutable image runtime only; artifact-vendored dependencies can differ. Null package versions mean unobserved distribution metadata, not proof an import is impossible. Null service operations are unknown; an actual operation list describes only the installed SDK model. Not application, account, cloud or requirement acceptance."
+    },
+    "placement": {
+      "workerId": "arm-browser",
+      "status": "configured"
+    },
+    "runtime": {
+      "imageId": "sha256:df7f71a8588253403dfa833c5c4aacc95ca340204a88d5483edd58131c7f1128",
+      "platform": "linux/arm64",
+      "isolationProfile": "chromium-userns-v1",
+      "environment": {
+        "ATMEM_PLAYWRIGHT_MODULE": "/opt/atmem/playwright-core/index.mjs"
+      },
+      "executable": "/usr/bin/node",
+      "testRunner": "node:test",
+      "executableScratchDirectories": []
+    }
+  },
+  {
+    "id": "placed-process-tests",
+    "label": "Full AMD64 process controls and SQL",
+    "evidenceLevel": "local_container_check",
+    "contractSha256": "d3ae7029f129d9d7f752df2e1e89a0fefc40598da8de29e6437f10c0ff0b8e45",
+    "available": true,
+    "applicability": {
+      "anyOf": [
+        "checks/test_amd64.py"
+      ],
+      "allOf": [],
+      "noneOf": []
+    },
+    "runtimeEvidence": {
+      "receiptSha256": "5250f32351de3e9f0ee1b1939d189bbb7eafe06d6ad7c18733e742ac377e0fa8",
+      "runtimeSha256": "8c35461b84505f911081f9a921af097b05c0ec8e4acadf5d235ec3e08e442186",
+      "observed": {
+        "kind": "python",
+        "executableVersion": "3.13.18",
+        "packages": {
+          "psycopg": "3.3.8",
+          "procrastinate": "3.10.0",
+          "postgresql-server": "17.11"
+        },
+        "serviceOperations": {},
+        "processControls": {
+          "noNewPrivileges": {
+            "supported": true,
+            "returnCode": 0,
+            "errno": 0
+          },
+          "seccompFilter": {
+            "supported": true,
+            "returnCode": 0,
+            "errno": 0
+          }
+        },
+        "executionContext": {
+          "processMachine": "x86_64",
+          "kernelRelease": "6.8.0-117-generic",
+          "kernelBootSha256": "1d5aaedd83a706f6c83576209a739a6ac3d363f21b8923d61bc5de2a82b0e844",
+          "uid": 65532
+        }
+      },
+      "observedAt": "2026-11-12T03:17:06.763218+00:00",
+      "evidenceLevel": "operator_pinned_local_runtime_observation",
+      "scope": "Observed immutable image metadata and the last recorded execution context; artifact-vendored dependencies can differ. Null package versions mean unobserved distribution metadata, not proof an import is impossible. Null service operations are unknown; an actual operation list describes only the installed SDK model. Not application, account, cloud or requirement acceptance. Process controls describe only the last observed execution context, not an image-only capability or current availability guarantee. Reobserve after worker, kernel, boot or policy changes. Null process controls are unobserved, not unsupported. Observation never grants permissions or changes safeguards.",
+      "executionContextSha256": "115d23ac3035a10188b4cef76b3f77403cdbce0ef6a4ecefc91dba0b3e1f5deb",
+      "processControlProbeSha256": "e92bcebad2fbbe84c50f27b17905f0084a75b52d63c94139a52e357880b9675d"
+    },
+    "placement": {
+      "workerId": "full-amd64",
+      "status": "configured"
+    },
+    "runtime": {
+      "imageId": "sha256:bafc5723ac59b025d42337e4c965e6d7b89a07da3d18b49a9384cfa70274f8e2",
+      "platform": "linux/amd64",
+      "isolationProfile": "postgresql-local-v1",
+      "environment": {},
+      "executable": "/usr/local/bin/python3",
+      "testRunner": "unittest",
+      "executableScratchDirectories": [
+        "/dependencies"
+      ]
+    }
+  }
+]

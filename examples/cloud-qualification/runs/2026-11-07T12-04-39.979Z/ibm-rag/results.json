@@ -1,0 +1,56 @@
+{
+  "provider": "ibm-rag",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Denied documents never reach the model",
+    "Known questions cite current source revisions",
+    "Unsupported questions abstain",
+    "Updates and deletions change retrieval",
+    "Revocation during generation suppresses the answer"
+  ],
+  "components": [
+    {
+      "id": "user",
+      "binding": "web-browser"
+    },
+    {
+      "id": "webapp",
+      "service": "IBM Cloud Code Engine (application)"
+    },
+    {
+      "id": "appid",
+      "service": "IBM Cloud App ID"
+    },
+    {
+      "id": "rag-api",
+      "service": "IBM Cloud Code Engine (application)"
+    },
+    {
+      "id": "catalog",
+      "service": "IBM Cloudant"
+    },
+    {
+      "id": "docs",
+      "service": "IBM Cloud Object Storage"
+    },
+    {
+      "id": "ingest",
+      "service": "IBM Cloud Code Engine (job)"
+    },
+    {
+      "id": "watsonx",
+      "service": "IBM watsonx.ai"
+    },
+    {
+      "id": "logs",
+      "service": "IBM Cloud Logs"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

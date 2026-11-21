@@ -1,0 +1,23 @@
+setUpClass (__main__.RuntimeDatabasePrivilegesTests) ... ERROR
+
+======================================================================
+ERROR: setUpClass (__main__.RuntimeDatabasePrivilegesTests)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/durable_privileges_acceptance.py", line 28, in setUpClass
+    def setUpClass(cls):cls.owner_dsn,cls.api_role,cls.worker_role,cls.api_dsn,cls.worker_dsn=create_runtime_roles()
+                                                                                              ~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/durable_privileges_acceptance.py", line 22, in create_runtime_roles
+    grant_runtime_roles(conn,api_role,worker_role)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/workflow_database.py", line 59, in grant_runtime_roles
+    conn.execute(sql.SQL('REVOKE ALL ({}) ON workflow.{} FROM {}').format(sql.SQL(',').join(map(sql.Identifier,fields)),sql.Identifier(table),name))
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/durable-runtime/lib/python3.13/site-packages/psycopg/connection.py", line 304, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.UndefinedColumn: column "{" of relation "accounts" does not exist
+
+----------------------------------------------------------------------
+Ran 0 tests in 0.038s
+
+FAILED (errors=1)

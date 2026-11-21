@@ -1,0 +1,59 @@
+{
+  "kind": "local-invoice-logical-backup-restore",
+  "recordedAt": "2026-11-10T02:53:07.651112+00:00",
+  "passed": true,
+  "checks": [
+    {
+      "name": "native-pg-dump",
+      "passed": true
+    },
+    {
+      "name": "native-pg-restore",
+      "passed": true
+    },
+    {
+      "name": "restored-extraction-and-approval-retained",
+      "passed": true
+    },
+    {
+      "name": "restored-inflight-deliveries-quarantined",
+      "passed": true
+    },
+    {
+      "name": "restored-deliveries-not-replayed",
+      "passed": true
+    },
+    {
+      "name": "restored-processing-leases-and-stale-jobs-fenced",
+      "passed": true
+    },
+    {
+      "name": "expired-restored-history-purged-before-reopening",
+      "passed": true
+    },
+    {
+      "name": "explicit-reconciliation-retains-approval-identity",
+      "passed": true
+    },
+    {
+      "name": "original-database-remains-untouched",
+      "passed": true
+    },
+    {
+      "name": "no-old-dispatch-notifications-remain",
+      "passed": true
+    }
+  ],
+  "sourceHashes": {
+    "scripts/qualify-invoice-restore.py": "f59dc4068aa78c6ee8c0506553bca309761fbaa3f969241a0ed5f66f65db1e0c",
+    "src/runtime/invoice_operations.py": "be3b6af29927536ac09eef08faefa0e1d98b11cd7620210b346df652bdddbf6b",
+    "src/runtime/workflow_database.py": "2b58f484050a35a98f7423e90ff0d10d03b1941cfede77edae7817548eebc100",
+    "src/runtime/workflow_schema.sql": "fe15a655c14eeda37bc3e4e60f0270de7bcb86d79ea9da4577246dca15806e59",
+    "src/runtime/durable_workflow.py": "3af38bf2d6c1446f75e53079c66c64b4d28070c7325a9a48083b02f9a41d1a49",
+    "src/runtime/workflow_worker.py": "d9e14b8231e6bc56d8cd6e36fd05ed13895e35c3fd9e55d19b5f74d7a7bceb3b"
+  },
+  "privateDumpRetainedLocally": true,
+  "boundary": "Actual local PostgreSQL native logical dump/restore into fresh synthetic databases, followed by quarantine, expiry purge and synthetic operator receipt reconciliation. No managed backup/PITR, cloud IAM, object restore, external accounting verification or RPO/RTO qualification.",
+  "cloudOperations": false,
+  "full28CaseAcceptanceComplete": false
+}

@@ -1,0 +1,34 @@
+{
+  "passed": true,
+  "checks": [
+    "Signed-out browser shows no invoice data",
+    "Upload persists an invoice and a real queue worker enters processing with pink brain activity",
+    "Ordinary uploader can inspect suggestions but cannot edit or approve",
+    "Untrusted supplier text cannot create browser markup",
+    "Background status refresh preserves unsaved corrections and flags a newer revision",
+    "Stale save is rejected by real database revision comparison without clearing edits",
+    "Saved corrections retain extraction and concurrent reviewer history in PostgreSQL",
+    "Original PDF download goes through the protected account API",
+    "Desktop and mobile review layouts fit without horizontal overflow",
+    "Explicit approval sends one action and invoice/history survive browser reload",
+    "Live membership revocation clears private invoice values and history",
+    "AJAX proxy session expiry returns 401 and clears private data instead of following a login redirect"
+  ],
+  "browserVersion": "153.0.8010.12",
+  "sourceHashes": {
+    "src/runtime/invoice_http.py": "4b5a84120e7fa9666ebe976de8271b785b464f4b1dc2087996e15c2c5a300209",
+    "src/runtime/invoice_retention.py": "b6602a67134c33964511d1c35940325bf8f5be6a5c65e5714b0a8b530b90cfc3",
+    "src/runtime/invoice_web.py": "77363d9b8bd126e283aed40032626f227df7a487d166dee83ecccb9dfb2e9785",
+    "src/runtime/invoice-web.html": "51f8a9a29f983c9af6c0bcd97f3abb9ffbd3aac55aabf73f6072762a8d43027f",
+    "src/runtime/invoice-web.js": "73c863478ba65aec92822bd3fbe6debcc89bfdbd835d667240e59252561afd99",
+    "src/runtime/invoice-web.css": "0a2dc7d7857516e36e0551610441e84cc4923e6009f8dd57178be38427bff42a",
+    "src/runtime/durable_workflow.py": "3af38bf2d6c1446f75e53079c66c64b4d28070c7325a9a48083b02f9a41d1a49",
+    "src/runtime/workflow_worker.py": "d9e14b8231e6bc56d8cd6e36fd05ed13895e35c3fd9e55d19b5f74d7a7bceb3b",
+    "src/runtime/workflow_database.py": "2b58f484050a35a98f7423e90ff0d10d03b1941cfede77edae7817548eebc100",
+    "scripts/invoice-browser-check.mjs": "9d0d9f56f16c8de6b9b0c5814dff90cd4ce14c0be349a96ec681e4b36b99c77a",
+    "scripts/invoice-browser-fixture.py": "cbebfaf8dd4459972a33ac3984dd23cca03147d5f7225736fdef7b8c7baca457",
+    "tests/runtime/invoice_http_acceptance.py": "7f84f3ff2243861e6b659a05069291f6470bf2f0c179be260b850a3713000afe"
+  },
+  "sourcesUnchanged": true,
+  "boundary": "Actual runtime/browser/PostgreSQL/queue/restricted DB logins; synthetic loopback identity, object storage, processor and destination. Not native cloud/model/OCR, deployment or complete project evidence."
+}

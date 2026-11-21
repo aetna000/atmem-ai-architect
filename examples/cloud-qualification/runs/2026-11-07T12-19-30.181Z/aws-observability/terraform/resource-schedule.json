@@ -1,0 +1,651 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "n-svc",
+      "address": "block_6e2d737663",
+      "label": "Synthetic services",
+      "provider": "tools",
+      "service": "Storage or existing data connector",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "n-cwl",
+      "address": "block_6e2d63776c",
+      "label": "Log collection",
+      "provider": "aws",
+      "service": "Amazon CloudWatch",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_cloudwatch_log_group"
+      ],
+      "costDrivers": "Logs, metrics, alarms and retention",
+      "dependencies": [
+        "n-svc"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "n-xray",
+      "address": "block_6e2d78726179",
+      "label": "Trace collection",
+      "provider": "aws",
+      "service": "AWS X-Ray",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "n-svc",
+        "n-analysis"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "n-firehose",
+      "address": "block_6e2d66697265686f7365",
+      "label": "Log delivery",
+      "provider": "aws",
+      "service": "Amazon Data Firehose",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "n-cwl"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "n-redact",
+      "address": "block_6e2d726564616374",
+      "label": "Secret redaction",
+      "provider": "aws",
+      "service": "AWS Lambda",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_lambda_function",
+        "aws_iam_role"
+      ],
+      "costDrivers": "Requests, duration, memory and logs",
+      "dependencies": [
+        "n-firehose"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "n-s3",
+      "address": "block_6e2d7333",
+      "label": "Redacted archive",
+      "provider": "aws",
+      "service": "Amazon S3",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_s3_bucket",
+        "aws_s3_bucket_public_access_block",
+        "aws_s3_bucket_server_side_encryption_configuration",
+        "aws_s3_bucket_versioning",
+        "aws_s3_bucket_ownership_controls",
+        "aws_s3_bucket_policy"
+      ],
+      "costDrivers": "Storage, requests, retrieval and transfer",
+      "dependencies": [
+        "n-firehose"
+      ],
+      "terraform": "S3 foundation generated",
+      "foundation": true,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": true
+    },
+    {
+      "id": "n-search",
+      "address": "block_6e2d736561726368",
+      "label": "Log & timeline search",
+      "provider": "aws",
+      "service": "Amazon OpenSearch",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Deployment mode, indexing/search capacity and storage",
+      "dependencies": [
+        "n-firehose",
+        "n-analysis"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "n-operator",
+      "address": "block_6e2d6f70657261746f72",
+      "label": "Incident operator",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "n-api",
+      "address": "block_6e2d617069",
+      "label": "Incident query API",
+      "provider": "aws",
+      "service": "Amazon API Gateway",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_apigatewayv2_api"
+      ],
+      "costDrivers": "API requests, transfer and access logs",
+      "dependencies": [
+        "n-operator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "n-analysis",
+      "address": "block_6e2d616e616c79736973",
+      "label": "Incident analysis runtime",
+      "provider": "aws",
+      "service": "AWS Lambda",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_lambda_function",
+        "aws_iam_role"
+      ],
+      "costDrivers": "Requests, duration, memory and logs",
+      "dependencies": [
+        "n-api"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "n-guardrails",
+      "address": "block_6e2d67756172647261696c73",
+      "label": "Prompt safety filter",
+      "provider": "aws",
+      "service": "Amazon Bedrock Guardrails",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_bedrock_guardrail"
+      ],
+      "costDrivers": "Enabled policy checks and text units; confirm each policy's charge",
+      "dependencies": [
+        "n-analysis"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "n-bedrock",
+      "address": "block_6e2d626564726f636b",
+      "label": "Foundation model",
+      "provider": "aws",
+      "service": "Amazon Bedrock",
+      "selection": "Explicit service field; deployment review required",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Model-specific input/output tokens; guardrails, embeddings and knowledge bases separately",
+      "dependencies": [
+        "n-analysis"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e-svc-cwl",
+      "source": "n-svc",
+      "target": "n-cwl",
+      "data": "application logs",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-svc-xray",
+      "source": "n-svc",
+      "target": "n-xray",
+      "data": "OTel trace segments",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-cwl-fh",
+      "source": "n-cwl",
+      "target": "n-firehose",
+      "data": "subscription filter",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-fh-redact",
+      "source": "n-firehose",
+      "target": "n-redact",
+      "data": "transform: redact + event ID",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-fh-s3",
+      "source": "n-firehose",
+      "target": "n-s3",
+      "data": "redacted archive",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-fh-search",
+      "source": "n-firehose",
+      "target": "n-search",
+      "data": "upsert by event ID",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-op-api",
+      "source": "n-operator",
+      "target": "n-api",
+      "data": "SigV4 incident question / evidence-cited answer",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-api-an",
+      "source": "n-api",
+      "target": "n-analysis",
+      "data": "Lambda proxy invoke",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-an-search",
+      "source": "n-analysis",
+      "target": "n-search",
+      "data": "read logs by trace ID/time",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-an-xray",
+      "source": "n-analysis",
+      "target": "n-xray",
+      "data": "BatchGetTraces (read-only)",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-an-guard",
+      "source": "n-analysis",
+      "target": "n-guardrails",
+      "data": "guardrail applied to call",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-an-bedrock",
+      "source": "n-analysis",
+      "target": "n-bedrock",
+      "data": "Converse, no tools",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Redacted archive: explicit caller access contract is missing.",
+    "Synthetic services: Existing — reference/import plan needed.",
+    "Log collection: Implementation needed.",
+    "Trace collection: Implementation needed.",
+    "Log delivery: Implementation needed.",
+    "Secret redaction: Implementation needed.",
+    "Log & timeline search: Implementation needed.",
+    "Incident operator: Existing — reference/import plan needed.",
+    "Incident query API: Implementation needed.",
+    "Incident analysis runtime: Implementation needed.",
+    "Prompt safety filter: Implementation needed.",
+    "Foundation model: Existing — reference/import plan needed.",
+    "Wire n-svc → n-cwl: implement data flow, access policy and acceptance test.",
+    "Wire n-svc → n-xray: implement data flow, access policy and acceptance test.",
+    "Wire n-cwl → n-firehose: implement data flow, access policy and acceptance test.",
+    "Wire n-firehose → n-redact: implement data flow, access policy and acceptance test.",
+    "Wire n-firehose → n-s3: implement data flow, access policy and acceptance test.",
+    "Wire n-firehose → n-search: implement data flow, access policy and acceptance test.",
+    "Wire n-operator → n-api: implement data flow, access policy and acceptance test.",
+    "Wire n-api → n-analysis: implement data flow, access policy and acceptance test.",
+    "Wire n-analysis → n-search: implement data flow, access policy and acceptance test.",
+    "Wire n-analysis → n-xray: implement data flow, access policy and acceptance test.",
+    "Wire n-analysis → n-guardrails: implement data flow, access policy and acceptance test.",
+    "Wire n-analysis → n-bedrock: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "access-block_6e2d7333",
+      "componentIds": [
+        "n-s3"
+      ],
+      "taskId": "TASK-RESOURCE-6e2d7333",
+      "message": "Redacted archive: explicit caller access contract is missing."
+    },
+    {
+      "id": "resource-block_6e2d737663",
+      "componentIds": [
+        "n-svc"
+      ],
+      "taskId": "TASK-RESOURCE-6e2d737663",
+      "message": "Synthetic services: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_6e2d63776c",
+      "componentIds": [
+        "n-cwl"
+      ],
+      "taskId": "TASK-RESOURCE-6e2d63776c",
+      "message": "Log collection: Implementation needed."
+    },
+    {
+      "id": "resource-block_6e2d78726179",
+      "componentIds": [
+        "n-xray"
+      ],
+      "taskId": "TASK-RESOURCE-6e2d78726179",
+      "message": "Trace collection: Implementation needed."
+    },
+    {
+      "id": "resource-block_6e2d66697265686f7365",
+      "componentIds": [
+        "n-firehose"
+      ],
+      "taskId": "TASK-RESOURCE-6e2d66697265686f7365",
+      "message": "Log delivery: Implementation needed."
+    },
+    {
+      "id": "resource-block_6e2d726564616374",
+      "componentIds": [
+        "n-redact"
+      ],
+      "taskId": "TASK-RESOURCE-6e2d726564616374",
+      "message": "Secret redaction: Implementation needed."
+    },
+    {
+      "id": "resource-block_6e2d736561726368",
+      "componentIds": [
+        "n-search"
+      ],
+      "taskId": "TASK-RESOURCE-6e2d736561726368",
+      "message": "Log & timeline search: Implementation needed."
+    },
+    {
+      "id": "resource-block_6e2d6f70657261746f72",
+      "componentIds": [
+        "n-operator"
+      ],
+      "taskId": "TASK-RESOURCE-6e2d6f70657261746f72",
+      "message": "Incident operator: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_6e2d617069",
+      "componentIds": [
+        "n-api"
+      ],
+      "taskId": "TASK-RESOURCE-6e2d617069",
+      "message": "Incident query API: Implementation needed."
+    },
+    {
+      "id": "resource-block_6e2d616e616c79736973",
+      "componentIds": [
+        "n-analysis"
+      ],
+      "taskId": "TASK-RESOURCE-6e2d616e616c79736973",
+      "message": "Incident analysis runtime: Implementation needed."
+    },
+    {
+      "id": "resource-block_6e2d67756172647261696c73",
+      "componentIds": [
+        "n-guardrails"
+      ],
+      "taskId": "TASK-RESOURCE-6e2d67756172647261696c73",
+      "message": "Prompt safety filter: Implementation needed."
+    },
+    {
+      "id": "resource-block_6e2d626564726f636b",
+      "componentIds": [
+        "n-bedrock"
+      ],
+      "taskId": "TASK-RESOURCE-6e2d626564726f636b",
+      "message": "Foundation model: Existing — reference/import plan needed."
+    },
+    {
+      "id": "connection-652d7376632d63776c",
+      "edgeIds": [
+        "e-svc-cwl"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7376632d63776c",
+      "message": "Wire n-svc → n-cwl: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d7376632d78726179",
+      "edgeIds": [
+        "e-svc-xray"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7376632d78726179",
+      "message": "Wire n-svc → n-xray: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d63776c2d6668",
+      "edgeIds": [
+        "e-cwl-fh"
+      ],
+      "taskId": "TASK-INTEGRATION-652d63776c2d6668",
+      "message": "Wire n-cwl → n-firehose: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d66682d726564616374",
+      "edgeIds": [
+        "e-fh-redact"
+      ],
+      "taskId": "TASK-INTEGRATION-652d66682d726564616374",
+      "message": "Wire n-firehose → n-redact: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d66682d7333",
+      "edgeIds": [
+        "e-fh-s3"
+      ],
+      "taskId": "TASK-INTEGRATION-652d66682d7333",
+      "message": "Wire n-firehose → n-s3: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d66682d736561726368",
+      "edgeIds": [
+        "e-fh-search"
+      ],
+      "taskId": "TASK-INTEGRATION-652d66682d736561726368",
+      "message": "Wire n-firehose → n-search: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6f702d617069",
+      "edgeIds": [
+        "e-op-api"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6f702d617069",
+      "message": "Wire n-operator → n-api: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6170692d616e",
+      "edgeIds": [
+        "e-api-an"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6170692d616e",
+      "message": "Wire n-api → n-analysis: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d616e2d736561726368",
+      "edgeIds": [
+        "e-an-search"
+      ],
+      "taskId": "TASK-INTEGRATION-652d616e2d736561726368",
+      "message": "Wire n-analysis → n-search: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d616e2d78726179",
+      "edgeIds": [
+        "e-an-xray"
+      ],
+      "taskId": "TASK-INTEGRATION-652d616e2d78726179",
+      "message": "Wire n-analysis → n-xray: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d616e2d6775617264",
+      "edgeIds": [
+        "e-an-guard"
+      ],
+      "taskId": "TASK-INTEGRATION-652d616e2d6775617264",
+      "message": "Wire n-analysis → n-guardrails: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d616e2d626564726f636b",
+      "edgeIds": [
+        "e-an-bedrock"
+      ],
+      "taskId": "TASK-INTEGRATION-652d616e2d626564726f636b",
+      "message": "Wire n-analysis → n-bedrock: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

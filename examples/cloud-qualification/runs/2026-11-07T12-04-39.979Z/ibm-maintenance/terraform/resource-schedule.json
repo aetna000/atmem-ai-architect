@@ -1,0 +1,601 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "sensors",
+      "address": "block_73656e736f7273",
+      "label": "Synthetic sensor histories",
+      "provider": "tools",
+      "service": "Storage or existing data connector",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "records",
+      "address": "block_7265636f726473",
+      "label": "Synthetic maintenance records",
+      "provider": "tools",
+      "service": "Storage or existing data connector",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "ingest",
+      "address": "block_696e67657374",
+      "label": "Telemetry ingestion",
+      "provider": "ibm",
+      "service": "IBM Event Streams",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "sensors"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "lake",
+      "address": "block_6c616b65",
+      "label": "Raw and curated data",
+      "provider": "ibm",
+      "service": "IBM Cloud Object Storage",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "ingest",
+        "records"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "features",
+      "address": "block_6665617475726573",
+      "label": "Feature preparation",
+      "provider": "ibm",
+      "service": "IBM Analytics Engine (Spark)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "lake"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "train",
+      "address": "block_747261696e",
+      "label": "Training + held-out evaluation",
+      "provider": "ibm",
+      "service": "IBM watsonx.ai Studio",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "features",
+        "monitor"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "registry",
+      "address": "block_7265676973747279",
+      "label": "Versioned model",
+      "provider": "ibm",
+      "service": "IBM watsonx.ai Runtime deployment space",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "train"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "predict",
+      "address": "block_70726564696374",
+      "label": "Batch failure-risk scoring",
+      "provider": "ibm",
+      "service": "IBM watsonx.ai Runtime batch deployment",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "registry",
+        "features"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "monitor",
+      "address": "block_6d6f6e69746f72",
+      "label": "Drift monitoring",
+      "provider": "ibm",
+      "service": "IBM Watson OpenScale (watsonx.governance)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "predict"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "workorder",
+      "address": "block_776f726b6f72646572",
+      "label": "Work-order draft service",
+      "provider": "ibm",
+      "service": "IBM Code Engine",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "predict"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "operator",
+      "address": "block_6f70657261746f72",
+      "label": "Maintenance operator",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "workorder"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "source": "sensors",
+      "target": "ingest",
+      "data": "publish readings",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e2",
+      "source": "ingest",
+      "target": "lake",
+      "data": "land telemetry batches",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e3",
+      "source": "records",
+      "target": "lake",
+      "data": "upload records",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e4",
+      "source": "lake",
+      "target": "features",
+      "data": "read raw data",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e5",
+      "source": "features",
+      "target": "train",
+      "data": "time-split feature sets",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e6",
+      "source": "train",
+      "target": "registry",
+      "data": "register version + eval",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e7",
+      "source": "registry",
+      "target": "predict",
+      "data": "promoted version",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e8",
+      "source": "features",
+      "target": "predict",
+      "data": "latest features",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e9",
+      "source": "predict",
+      "target": "monitor",
+      "data": "scores + inputs",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e10",
+      "source": "monitor",
+      "target": "train",
+      "data": "retrain review alert",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e11",
+      "source": "predict",
+      "target": "workorder",
+      "data": "risk scores",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e12",
+      "source": "workorder",
+      "target": "operator",
+      "data": "draft for approval",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Synthetic sensor histories: Existing — reference/import plan needed.",
+    "Synthetic maintenance records: Existing — reference/import plan needed.",
+    "Telemetry ingestion: Implementation needed.",
+    "Raw and curated data: Implementation needed.",
+    "Feature preparation: Implementation needed.",
+    "Training + held-out evaluation: Implementation needed.",
+    "Versioned model: Implementation needed.",
+    "Batch failure-risk scoring: Implementation needed.",
+    "Drift monitoring: Implementation needed.",
+    "Work-order draft service: Implementation needed.",
+    "Maintenance operator: Existing — reference/import plan needed.",
+    "Wire sensors → ingest: implement data flow, access policy and acceptance test.",
+    "Wire ingest → lake: implement data flow, access policy and acceptance test.",
+    "Wire records → lake: implement data flow, access policy and acceptance test.",
+    "Wire lake → features: implement data flow, access policy and acceptance test.",
+    "Wire features → train: implement data flow, access policy and acceptance test.",
+    "Wire train → registry: implement data flow, access policy and acceptance test.",
+    "Wire registry → predict: implement data flow, access policy and acceptance test.",
+    "Wire features → predict: implement data flow, access policy and acceptance test.",
+    "Wire predict → monitor: implement data flow, access policy and acceptance test.",
+    "Wire monitor → train: implement data flow, access policy and acceptance test.",
+    "Wire predict → workorder: implement data flow, access policy and acceptance test.",
+    "Wire workorder → operator: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "resource-block_73656e736f7273",
+      "componentIds": [
+        "sensors"
+      ],
+      "taskId": "TASK-RESOURCE-73656e736f7273",
+      "message": "Synthetic sensor histories: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_7265636f726473",
+      "componentIds": [
+        "records"
+      ],
+      "taskId": "TASK-RESOURCE-7265636f726473",
+      "message": "Synthetic maintenance records: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_696e67657374",
+      "componentIds": [
+        "ingest"
+      ],
+      "taskId": "TASK-RESOURCE-696e67657374",
+      "message": "Telemetry ingestion: Implementation needed."
+    },
+    {
+      "id": "resource-block_6c616b65",
+      "componentIds": [
+        "lake"
+      ],
+      "taskId": "TASK-RESOURCE-6c616b65",
+      "message": "Raw and curated data: Implementation needed."
+    },
+    {
+      "id": "resource-block_6665617475726573",
+      "componentIds": [
+        "features"
+      ],
+      "taskId": "TASK-RESOURCE-6665617475726573",
+      "message": "Feature preparation: Implementation needed."
+    },
+    {
+      "id": "resource-block_747261696e",
+      "componentIds": [
+        "train"
+      ],
+      "taskId": "TASK-RESOURCE-747261696e",
+      "message": "Training + held-out evaluation: Implementation needed."
+    },
+    {
+      "id": "resource-block_7265676973747279",
+      "componentIds": [
+        "registry"
+      ],
+      "taskId": "TASK-RESOURCE-7265676973747279",
+      "message": "Versioned model: Implementation needed."
+    },
+    {
+      "id": "resource-block_70726564696374",
+      "componentIds": [
+        "predict"
+      ],
+      "taskId": "TASK-RESOURCE-70726564696374",
+      "message": "Batch failure-risk scoring: Implementation needed."
+    },
+    {
+      "id": "resource-block_6d6f6e69746f72",
+      "componentIds": [
+        "monitor"
+      ],
+      "taskId": "TASK-RESOURCE-6d6f6e69746f72",
+      "message": "Drift monitoring: Implementation needed."
+    },
+    {
+      "id": "resource-block_776f726b6f72646572",
+      "componentIds": [
+        "workorder"
+      ],
+      "taskId": "TASK-RESOURCE-776f726b6f72646572",
+      "message": "Work-order draft service: Implementation needed."
+    },
+    {
+      "id": "resource-block_6f70657261746f72",
+      "componentIds": [
+        "operator"
+      ],
+      "taskId": "TASK-RESOURCE-6f70657261746f72",
+      "message": "Maintenance operator: Existing — reference/import plan needed."
+    },
+    {
+      "id": "connection-6531",
+      "edgeIds": [
+        "e1"
+      ],
+      "taskId": "TASK-INTEGRATION-6531",
+      "message": "Wire sensors → ingest: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6532",
+      "edgeIds": [
+        "e2"
+      ],
+      "taskId": "TASK-INTEGRATION-6532",
+      "message": "Wire ingest → lake: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6533",
+      "edgeIds": [
+        "e3"
+      ],
+      "taskId": "TASK-INTEGRATION-6533",
+      "message": "Wire records → lake: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6534",
+      "edgeIds": [
+        "e4"
+      ],
+      "taskId": "TASK-INTEGRATION-6534",
+      "message": "Wire lake → features: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6535",
+      "edgeIds": [
+        "e5"
+      ],
+      "taskId": "TASK-INTEGRATION-6535",
+      "message": "Wire features → train: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6536",
+      "edgeIds": [
+        "e6"
+      ],
+      "taskId": "TASK-INTEGRATION-6536",
+      "message": "Wire train → registry: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6537",
+      "edgeIds": [
+        "e7"
+      ],
+      "taskId": "TASK-INTEGRATION-6537",
+      "message": "Wire registry → predict: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6538",
+      "edgeIds": [
+        "e8"
+      ],
+      "taskId": "TASK-INTEGRATION-6538",
+      "message": "Wire features → predict: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6539",
+      "edgeIds": [
+        "e9"
+      ],
+      "taskId": "TASK-INTEGRATION-6539",
+      "message": "Wire predict → monitor: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-653130",
+      "edgeIds": [
+        "e10"
+      ],
+      "taskId": "TASK-INTEGRATION-653130",
+      "message": "Wire monitor → train: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-653131",
+      "edgeIds": [
+        "e11"
+      ],
+      "taskId": "TASK-INTEGRATION-653131",
+      "message": "Wire predict → workorder: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-653132",
+      "edgeIds": [
+        "e12"
+      ],
+      "taskId": "TASK-INTEGRATION-653132",
+      "message": "Wire workorder → operator: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

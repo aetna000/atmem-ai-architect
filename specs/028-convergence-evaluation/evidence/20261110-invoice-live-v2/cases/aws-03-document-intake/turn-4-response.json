@@ -1,0 +1,296 @@
+{
+  "message": "We\u2019ll preserve 500 uploads a day, bursts of twenty, jobs lasting several minutes and your existing accounting system, and make durable recovery and duplicate-safe delivery explicit in the design. Let\u2019s retain the composed AWS workflow; Sydney approval, accounting residency/compatibility and destination validation remain open before handoff.",
+  "phase": "Architecture",
+  "proposal": {
+    "baseRevision": 4,
+    "title": "Refine durable invoice processing and external accounting delivery",
+    "body": "Preserve all three components, positions, connections and existing requirements. Extend the composed workflow with twenty-upload bursts, asynchronous multi-minute jobs, stable identities, bounded retries and an explicit dead-letter/recovery path. Keep accounting external, with administrator-supplied destination configuration and secret references. These are design contracts, not implementation or deployment evidence; no new region approval or compatibility is inferred.",
+    "next": {
+      "version": 1,
+      "revision": 4,
+      "name": "Asynchronous document intake",
+      "provider": "aws",
+      "requirements": "Users upload PDF invoices. Extract the supplier, invoice date, total and currency into a review queue. Delivery can repeat; retries must not create duplicate invoices. A reviewer approves a result before it is sent to our existing accounting API. Use AWS. Recommend a coherent system and the engineering choices. Ask only a small material business question when needed; do not make me configure the system.",
+      "nodes": [
+        {
+          "id": "staff-browser",
+          "type": "resource",
+          "position": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "data": {
+            "label": "Invoice upload and review",
+            "kind": "source",
+            "provider": "tools",
+            "description": "Existing staff browser outside provisioning scope. Serves twenty signed-in staff and three reviewers; whether these populations overlap is unspecified. Staff upload PDF invoices and inspect extracted fields alongside source evidence. Only authorized reviewers may approve a specific result revision; ordinary uploaders cannot approve. Authentication and application reviewer membership are separate controls enforced by the workflow server.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "deploymentMode": "reference",
+            "poc": true,
+            "role": "human",
+            "topologyGroup": "Staff access",
+            "service": "Web browser",
+            "binding": "web-browser"
+          }
+        },
+        {
+          "id": "invoice-workflow",
+          "type": "resource",
+          "position": {
+            "x": 480.0,
+            "y": 0.0
+          },
+          "data": {
+            "label": "Invoice processing and approval",
+            "kind": "resource",
+            "provider": "aws",
+            "description": "Composed invoice-workflow deployment unit on Amazon ECS. Owns browser/API, background worker, isolated PDF/OCR parser, private versioned Amazon S3 originals, durable PostgreSQL queue/outbox on Amazon RDS, staff sign-in, SQL user/reviewer membership, regional model integration, separate workload identities and operating tasks/monitoring. Current scope covers PDF upload, extraction of supplier/invoice date/total/currency, evidence-backed review, approval, accounting delivery and recovery. Serves twenty signed-in staff and three reviewers; population overlap is unspecified. Ordinary uploaders cannot approve, including through direct API requests. Server-side approval binds the exact result revision, source and destination contract; changed results invalidate approval and model output cannot authorize delivery. Accept PDFs up to 10,000,000 bytes; the proposed 100-page safeguard remains reviewable. Design for 500 uploads/day and bursts of twenty; validate admission with twenty concurrent submissions as a proposed interpretation of a burst. Jobs may take several minutes: return a durable job identity and status after accepted intake, process asynchronously and let staff revisit progress without holding the upload request open. A monthly volume is not confirmed. Invoices may contain personal data. Persist stable invoice/job identity and exact source object version; transactionally commit processing state and queue notification. Use fenced worker leases, recovery of stalled jobs and bounded retries with backoff. Exhausted jobs enter a durable failed/dead-letter state in the owned PostgreSQL workflow, visible to authorized operators with failure history and controlled replay using the same identity. Do not provision a duplicate queue service for this internal responsibility. Accounting delivery uses a transactional outbox, stable outbound operation ID and immutable payload identity. Recheck authorization and approval before delivery. Fence ambiguous external outcomes for reconciliation; do not blindly resend or create a new operation ID. Destination must independently pass normalized-action-v1 and durable idempotency acceptance. An administrator supplies the existing accounting endpoint and credentials through reviewed destination configuration and managed secret references; never put credentials in the diagram, logs or client responses. Retain originals and extraction audit history for 90 days. Implement scheduled cleanup and review object versions, backups and restore behavior; retention eligibility alone does not prove erasure, and the retention start event and exact deletion deadline remain unresolved. Propose Sydney ap-southeast-2, not yet user-approved, with documents, extracted data, model processing, invoice-bearing logs, backups and state restricted to Australia. No silent overseas inference or recovery fallback. Propose encryption, authorized staff/workload access and exclusion of invoice content from operational logs. Accounting residency is unresolved. Acceptance must cover burst intake, multi-minute processing, worker interruption, duplicate deliveries, exhausted retries, controlled recovery, denied uploader approval, exact-revision reviewer approval and accounting success followed by a lost response. Service/model availability, quotas, model retention policy, destination connectivity/compatibility, exact image build/scan evidence, restore and alert delivery remain unverified.",
+            "config": {
+              "maxPdfBytes": 10000000,
+              "retentionDays": 90,
+              "region": "ap-southeast-2",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "deploymentMode": "create",
+            "poc": true,
+            "role": "app",
+            "topologyGroup": "Invoice workflow",
+            "service": "Amazon ECS",
+            "implementation": "invoice-workflow"
+          }
+        },
+        {
+          "id": "accounting-api",
+          "type": "resource",
+          "position": {
+            "x": 960.0,
+            "y": 0.0
+          },
+          "data": {
+            "label": "Existing accounting API",
+            "kind": "tool",
+            "provider": "tools",
+            "description": "Client-owned existing accounting service outside provisioning scope; retain as a reference without recreation or modification. Receives only approved invoice results. An administrator will supply its endpoint and credentials through reviewed destination configuration and managed secret references; no credentials belong in the diagram. Vendor, hosting/processing locations, authentication mechanism and retention behavior remain unknown. Australian residency must be established before sending invoice data. Its adapter must independently pass normalized-action-v1 acceptance, including durable idempotency for repeated operation IDs with identical payloads, rejection of conflicting payload reuse and reconciliation after ambiguous responses. The workflow must preserve operation identity across retries and recovery. Compatibility, effective access, residency and live connectivity are not established by this diagram.",
+            "config": {
+              "region": "Existing location \u2014 unconfirmed",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "deploymentMode": "reference",
+            "poc": true,
+            "role": "app",
+            "topologyGroup": "Existing accounting",
+            "service": "Existing accounting API",
+            "binding": "existing-service"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "staff-to-invoice-workflow",
+          "source": "staff-browser",
+          "target": "invoice-workflow",
+          "type": "smoothstep",
+          "label": "Authenticated HTTPS: upload \u2192 durable job/status; review evidence; reviewer-only approval",
+          "integration": "browser-https"
+        },
+        {
+          "id": "approved-invoice-to-accounting",
+          "source": "invoice-workflow",
+          "target": "accounting-api",
+          "type": "smoothstep",
+          "label": "Approved accounting API: stable operation/payload identity, receipt and uncertain-outcome reconciliation",
+          "integration": "approved-accounting-api"
+        }
+      ]
+    }
+  },
+  "requirementDrafts": [
+    {
+      "rationale": "Exhausted retries must remain recoverable without losing accepted invoices or allowing replay to bypass approval or duplicate accounting writes.",
+      "basis": "\u201cUse a durable job queue, stable invoice/job identity, bounded retries, a dead-letter/recovery path, approval checks and an idempotent outbound operation.\u201d",
+      "id": "ai-invoice-recovery",
+      "statement": "Persist accepted work and stable invoice/job identities durably. Bound retries, recover interrupted workers and retain exhausted jobs in an operator-visible dead-letter/recovery state with failure history. Controlled replay must preserve identity and approval boundaries. Demonstrate recovery after interruption and retry exhaustion without lost work or duplicate accounting delivery.",
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "priority": "must",
+      "links": [
+        "invoice-workflow"
+      ]
+    },
+    {
+      "rationale": "Keeping accounting outside provisioning scope prevents accidental replacement; reviewed secret handling and adapter acceptance are needed for safe delivery.",
+      "basis": "\u201cThe accounting system already exists. An administrator will supply its endpoint and credentials; treat it as external, not a new system to provision.\u201d",
+      "id": "ai-invoice-accounting-integration",
+      "statement": "Integrate with the existing accounting system without provisioning or modifying it. Accept administrator-supplied endpoint configuration and securely referenced credentials. Before delivery, independently qualify authentication, Australian processing geography, normalized-action-v1 compatibility, durable idempotency and ambiguous-outcome reconciliation. Keep unresolved destinations blocked from receiving invoice data.",
+      "kind": "functional",
+      "category": "security",
+      "priority": "must",
+      "links": [
+        "invoice-workflow",
+        "accounting-api"
+      ]
+    }
+  ],
+  "requirementUpdates": [
+    {
+      "rationale": "Daily volume alone misses burst admission and long-running processing; asynchronous durable status avoids tying job completion to an upload connection.",
+      "id": "ai-invoice-capacity",
+      "statement": "Support 500 PDF uploads per day and bursts of twenty, with jobs that may take several minutes. Durably accept work, return stable job identity/status and process asynchronously without losing accepted invoices. Proposed acceptance exercises twenty concurrent submissions, representative PDFs and interrupted-worker recovery; no completion-time ceiling is confirmed.",
+      "sourceText": "500 uploads per day, bursts of twenty. Jobs may take several minutes."
+    },
+    {
+      "rationale": "Stable identity must survive retries and recovery; an ambiguous accounting response cannot safely trigger a fresh operation.",
+      "id": "ai-invoice-idempotency",
+      "statement": "Repeated processing or delivery of the same invoice operation must not create duplicate accounting invoices. Preserve durable invoice/job identity and outbound operation/payload identity across bounded retries and recovery. Reconcile ambiguous external outcomes before resending unless destination idempotency is independently established. Acceptance must cover duplicate delivery, worker interruption and an accounting write followed by a lost response.",
+      "sourceText": "Use a durable job queue, stable invoice/job identity, bounded retries, a dead-letter/recovery path, approval checks and an idempotent outbound operation."
+    }
+  ],
+  "contextUsed": {
+    "status": "ready",
+    "enabled": true,
+    "engine": "AtMem 2.3.10 core SDK",
+    "recordsUsed": [],
+    "knowledgeRecordIds": [
+      "rec_646317615895417a8b59e704b491681f",
+      "rec_dd035bbc30284433b8e93b0047414c74",
+      "rec_4b6eebe375ca4f65b20a0f96e5cb6b48",
+      "rec_aa826b5fbd514988af8aaf13e5030b6f",
+      "rec_ad6ece2064114a1995d52353c394c6ff",
+      "rec_021cc8786038458598db3b17443fbfef",
+      "rec_cfcd23ef27ad41e18ab19654ae5cb161"
+    ],
+    "skills": [
+      {
+        "id": "composition",
+        "name": "Architecture composition and engineering judgment",
+        "provider": "all",
+        "stages": [
+          "discover",
+          "design",
+          "review",
+          "deploy"
+        ],
+        "version": "1.0.0",
+        "digest": "df2291a4e0d48a979d4f7c6e99da046bdedfc0e54d41e0b5379b2bc8086b5be6",
+        "summary": "Choose and compose blocks through responsibility, contracts, state, identity, failure modes and trade-offs; verify the complete system.",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "architecture",
+        "name": "AI architecture and discovery",
+        "provider": "all",
+        "stages": [
+          "discover",
+          "design",
+          "review"
+        ],
+        "version": "1.3.0",
+        "digest": "c5cc1056e3ed9a00799882f3a7f4ff2e957e4941fe10e4fd865f5c02ceb01058",
+        "summary": "Clarify outcome, users, existing systems, data ownership and constraints. Evolve the diagram incrementally. Derive functional requirements and propose measurable quality targets as assumptions needing confirmation. Compare clouds against the actual requirements; do not assume an enterprise identity provider or a vendor. Keep proposed and accepted decisions distinct.",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "security",
+        "name": "Security and reliability",
+        "provider": "all",
+        "stages": [
+          "design",
+          "review",
+          "deploy"
+        ],
+        "version": "1.0.0",
+        "digest": "c75cf46b29eb786b27d88d36604f521d6d287182d47df7d5c03845585d64f914",
+        "summary": "Check data classification, residency, access boundaries, encryption choices, approval of automated actions, reliability and recovery. A drawn control is not enforcement evidence. Explain missing controls and tests. Propose requirements from the components and paths; mark default targets as suggestions, never existing company policy.",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "aws",
+        "name": "AWS architecture guidance",
+        "provider": "aws",
+        "stages": [
+          "design",
+          "review",
+          "estimate",
+          "deploy"
+        ],
+        "version": "1.4.0",
+        "digest": "82147cbfe99396d8e659bc7c8d62ce57b0868983bc88c1ace0aaa860ecb9ba29",
+        "summary": "Apply AWS Well-Architected concerns to the drawn workload with evidence. Distinguish Bedrock on-demand model access, knowledge-base/vector storage, guardrails and IAM; they are separate concerns. S3 storage, requests and transfer are separate cost dimensions. A diagram is not a complete Well-Architected review. Native generation currently covers only S3 foundations.",
+        "source": "https://raw.githubusercontent.com/aws/agent-toolkit-for-aws/fb298e0b6bf2b308a3d2c212b2a09b9bace8e090/plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+        "reference": {
+          "id": "aws",
+          "repository": "aws/agent-toolkit-for-aws",
+          "commit": "fb298e0b6bf2b308a3d2c212b2a09b9bace8e090",
+          "sourcePath": "plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+          "url": "https://raw.githubusercontent.com/aws/agent-toolkit-for-aws/fb298e0b6bf2b308a3d2c212b2a09b9bace8e090/plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+          "sha256": "aa8fef39ef6d64365e48827d9acc90b2b8755023f5c177341cf1c954c1057811",
+          "file": "agent-skills/upstream/aws/SKILL.md",
+          "status": "reference-only",
+          "note": "Imported source reference, not an enabled script/tool package. AtMem AI Architect specialist guidance is reviewed separately; referenced upstream companion files are not bundled.",
+          "integrity": true
+        },
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup",
+          "pricing.lookup"
+        ],
+        "enabled": true
+      }
+    ],
+    "tools": [],
+    "boundary": "AtMem AI Architect \u2192 native client",
+    "contextDigest": "60fc9365fe670c73fd2338d2ddb5d806c154da3e63ea544cdbcf937ffe3f6353",
+    "projectId": "evaluation-aws-03-document-intake",
+    "responseRepairAttempts": 0,
+    "modelResponseEncodings": [
+      "compact_patch"
+    ],
+    "modelResponseJsonBytes": 9372
+  },
+  "priceQuotes": []
+}

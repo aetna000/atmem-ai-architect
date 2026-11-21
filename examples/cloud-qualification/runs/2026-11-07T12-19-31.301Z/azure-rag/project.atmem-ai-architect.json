@@ -1,0 +1,501 @@
+{
+  "format": "atmem.ai-architect.project",
+  "formatVersion": "2.3.0",
+  "meta": {
+    "id": "d03077a4-ba88-4e5e-9aa3-adf9ba83c73c",
+    "name": "Azure permission-aware RAG qualification",
+    "createdAt": "2026-11-07T12:22:43.766Z",
+    "updatedAt": "2026-11-07T12:22:43.766Z",
+    "revision": 2,
+    "generator": "atmem-ai-architect 0.2.0"
+  },
+  "design": {
+    "provider": "azure",
+    "nodes": [
+      {
+        "id": "user",
+        "type": "resource",
+        "position": {
+          "x": 50,
+          "y": 330
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Signed-in user (browser)",
+          "provider": "tools",
+          "kind": "tool",
+          "description": "Existing person using a browser; an external client reference, not provisioned.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "role": "human"
+        }
+      },
+      {
+        "id": "web",
+        "type": "resource",
+        "position": {
+          "x": 470,
+          "y": 330
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Web app",
+          "provider": "azure",
+          "kind": "output",
+          "description": "Authenticated chat UI; signs in with Entra ID (auth code + PKCE), calls the RAG API with an access token and displays cited answers or abstentions.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "app",
+          "service": "Azure Static Web Apps"
+        }
+      },
+      {
+        "id": "entra",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 340
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Identity",
+          "provider": "azure",
+          "kind": "guard",
+          "description": "Issues tokens for users; the API validates the JWT and maps subject/groups to catalog ACLs. Tenant and app registration are not yet decided.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "guard",
+          "service": "Microsoft Entra ID"
+        }
+      },
+      {
+        "id": "rag-api",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 330
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "RAG API",
+          "provider": "azure",
+          "kind": "agent",
+          "description": "HTTP-triggered, token-validated function. Modules: bounded keyword retrieval, ACL filtering before the prompt is built, prompt with citations, abstention when no support, revision and ACL recheck before returning (suppresses on revocation). Returns the answer to the web app. Uses a managed identity for Cosmos DB and Azure OpenAI.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "app",
+          "service": "Azure Functions"
+        }
+      },
+      {
+        "id": "catalog",
+        "type": "resource",
+        "position": {
+          "x": 1730,
+          "y": 610
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Catalog, ACLs and keyword index",
+          "provider": "azure",
+          "kind": "resource",
+          "description": "Stores document chunks, keyword terms, explicit ACLs, current revision IDs and tombstones for deletions. The API only reads; ingestion writes conditionally.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "index",
+          "service": "Azure Cosmos DB"
+        }
+      },
+      {
+        "id": "model",
+        "type": "resource",
+        "position": {
+          "x": 1730,
+          "y": 330
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Model runtime",
+          "provider": "azure",
+          "kind": "predict",
+          "description": "Chat model deployment called by the RAG API with permitted excerpts only. The model, region and quota are unverified. The local test uses a scripted mock instead.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "llm",
+          "service": "Azure OpenAI Service"
+        }
+      },
+      {
+        "id": "operator",
+        "type": "resource",
+        "position": {
+          "x": 470,
+          "y": 620
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Content operator",
+          "provider": "tools",
+          "kind": "tool",
+          "description": "Existing operator who uploads, updates and deletes synthetic documents and their ACL metadata.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "role": "human"
+        }
+      },
+      {
+        "id": "docs-blob",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 620
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Source documents",
+          "provider": "azure",
+          "kind": "source",
+          "description": "Private container with versioning; holds synthetic UTF-8 documents plus ACL metadata.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "data",
+          "service": "Azure Blob Storage"
+        }
+      },
+      {
+        "id": "ingest-fn",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 620
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Ingestion",
+          "provider": "azure",
+          "kind": "tool",
+          "description": "Blob-triggered (Event Grid) function: chunks text, extracts keywords, writes ACLs and revisions, and tombstones deleted documents in the catalog. Must be idempotent.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "ingest",
+          "service": "Azure Functions"
+        }
+      },
+      {
+        "id": "monitor",
+        "type": "resource",
+        "position": {
+          "x": 1730,
+          "y": 50
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Audit and telemetry",
+          "provider": "azure",
+          "kind": "monitor",
+          "description": "Logs queries, retrieval decisions, denials, abstentions and suppressions, without document content.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "monitor",
+          "service": "Application Insights"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e-user-web",
+        "source": "user",
+        "target": "web",
+        "type": "smoothstep",
+        "label": "HTTPS"
+      },
+      {
+        "id": "e-web-entra",
+        "source": "web",
+        "target": "entra",
+        "type": "smoothstep",
+        "label": "sign-in (auth code + PKCE)"
+      },
+      {
+        "id": "e-web-api",
+        "source": "web",
+        "target": "rag-api",
+        "type": "smoothstep",
+        "label": "question + bearer token / cited answer"
+      },
+      {
+        "id": "e-entra-api",
+        "source": "entra",
+        "target": "rag-api",
+        "type": "smoothstep",
+        "label": "JWT validation"
+      },
+      {
+        "id": "e-api-catalog",
+        "source": "rag-api",
+        "target": "catalog",
+        "type": "smoothstep",
+        "label": "ACL-filtered keyword read + revision recheck"
+      },
+      {
+        "id": "e-api-model",
+        "source": "rag-api",
+        "target": "model",
+        "type": "smoothstep",
+        "label": "chat completion (permitted excerpts only)"
+      },
+      {
+        "id": "e-op-blob",
+        "source": "operator",
+        "target": "docs-blob",
+        "type": "smoothstep",
+        "label": "upload/update/delete documents"
+      },
+      {
+        "id": "e-blob-ingest",
+        "source": "docs-blob",
+        "target": "ingest-fn",
+        "type": "smoothstep",
+        "label": "blob created/deleted event"
+      },
+      {
+        "id": "e-ingest-catalog",
+        "source": "ingest-fn",
+        "target": "catalog",
+        "type": "smoothstep",
+        "label": "conditional upsert/tombstone"
+      },
+      {
+        "id": "e-api-monitor",
+        "source": "rag-api",
+        "target": "monitor",
+        "type": "smoothstep",
+        "label": "audit events"
+      }
+    ]
+  },
+  "discovery": {
+    "problem": "Synthetic small collection; bounded keyword retrieval; enforce source ACLs; cite current revisions; abstain when unsupported; updates/deletions change retrieval; revocation during generation suppresses answer.",
+    "brief": {
+      "application": "Use Azure for this synthetic architecture qualification. Answer questions over a small synthetic document collection with citations. Include ingestion, retrieval, model runtime, identity enforcement and an authenticated application. Use bounded keyword retrieval for this first test and keep all source permissions. Acceptance criteria: Denied documents never reach the model; Known questions cite current source revisions; Unsupported questions abstain; Updates and deletions change retrieval; Revocation during generation suppresses the answer. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+      "cloud": "Azure"
+    },
+    "facts": [
+      {
+        "id": "fact-be7b0883",
+        "name": "cloud.preference",
+        "value": "azure",
+        "unit": "provider",
+        "text": "Use Azure for this synthetic architecture qualification. Answer questions over a small synthetic document collection with citations. Include ingestion, retrieval, model runtime, identity enforcement and an authenticated application. Use bounded keyword retrieval for this first test and keep all sour",
+        "madeAt": "2026-11-07"
+      }
+    ],
+    "workflow": "knowledge-assistant",
+    "asked": [],
+    "lastAsked": {
+      "id": "knowledge-assistant:0",
+      "topic": "data",
+      "question": "Where do the files live, and roughly how many are there?",
+      "beginner": "For example “SharePoint and a shared drive, about 20,000 files”.",
+      "why": "It shapes the RAG design."
+    }
+  },
+  "requirements": [
+    {
+      "id": "req-25451243",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Every answer shows its sources",
+      "priority": "should",
+      "status": "open",
+      "source": "user",
+      "links": []
+    },
+    {
+      "id": "ai-denied-never-to-model",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Documents a user is not permitted to read are filtered out before prompt construction and never reach the model.",
+      "rationale": "Leaking denied content through generated answers would breach source permissions.",
+      "basis": "User: \"Denied documents never reach the model\"; \"keep all source permissions\".",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "rag-api",
+        "catalog",
+        "model"
+      ]
+    },
+    {
+      "id": "ai-cite-current-revision",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Answers to known questions cite the current revision of each source used.",
+      "rationale": "Stale citations undermine trust and auditability.",
+      "basis": "User: \"Known questions cite current source revisions\".",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "rag-api",
+        "catalog"
+      ]
+    },
+    {
+      "id": "ai-abstain-unsupported",
+      "kind": "functional",
+      "category": "reliability",
+      "statement": "When no permitted source supports the question, the assistant abstains instead of answering.",
+      "rationale": "Prevents ungrounded answers.",
+      "basis": "User: \"Unsupported questions abstain\".",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "rag-api",
+        "model"
+      ]
+    },
+    {
+      "id": "ai-updates-deletions",
+      "kind": "functional",
+      "category": "reliability",
+      "statement": "Updates and deletions of source documents change retrieval results once ingestion has completed.",
+      "rationale": "Deleted or superseded content must not be retrievable.",
+      "basis": "User: \"Updates and deletions change retrieval\".",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "ingest-fn",
+        "catalog",
+        "docs-blob"
+      ]
+    },
+    {
+      "id": "ai-revocation-mid-generation",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "If a user's access to a cited source is revoked during generation, the answer is suppressed by an authorization recheck before it is returned.",
+      "rationale": "Closes the gap between the retrieval check and the response.",
+      "basis": "User: \"Revocation during generation suppresses the answer\".",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "rag-api",
+        "catalog",
+        "entra"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use Azure for this synthetic architecture qualification",
+      "options": "",
+      "decision": "azure",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.azure-permission-aware-rag-qualification-architecture",
+      "title": "Azure permission-aware RAG qualification architecture",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "End-to-end Azure sketch: Entra ID sign-in, Static Web Apps front end, RAG API on Azure Functions (keyword retrieval, ACL filter, revision recheck, abstention and citations as application modules), Cosmos DB catalog, Blob Storage source documents with an ingestion function, Azure OpenAI and Application Insights. Assumptions: the region is not selected, the model deployment and access are unverified, and only Blob Storage has a typed generator. Everything else needs engineering. Nothing is deployed.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "extensions": {
+    "requirementNumbers": {
+      "req-25451243": 1,
+      "drv-data-access": 2,
+      "drv-data-location": 3,
+      "ai-denied-never-to-model": 4,
+      "ai-cite-current-revision": 5,
+      "ai-abstain-unsupported": 6,
+      "ai-updates-deletions": 7,
+      "ai-revocation-mid-generation": 8
+    },
+    "choices": {},
+    "conceptSig": null
+  }
+}

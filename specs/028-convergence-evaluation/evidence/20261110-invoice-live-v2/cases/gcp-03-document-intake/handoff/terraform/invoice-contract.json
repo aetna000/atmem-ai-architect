@@ -1,0 +1,14 @@
+{
+  "format": "invoice-workflow-v1",
+  "provider": "gcp",
+  "componentId": "invoice-workflow",
+  "accountingComponentId": "existing-accounting",
+  "limits": {
+    "maxPdfBytes": 10000000,
+    "maxPdfPages": 100,
+    "retentionDays": 90
+  },
+  "review": "Separate live SQL user/reviewer roles; only approved payload hashes admit accounting delivery.",
+  "accounting": "Existing normalized-action-v1 adapter, destination contract digest and stable operation identity. Actual accounting compatibility/idempotency is independently accepted; uncertain outcomes are fenced and reconciled, not blindly retried.",
+  "evidence": "Generated source and contracts; not account-plan, cloud runtime or production evidence."
+}

@@ -1,0 +1,61 @@
+{
+  "provider": "azure-maintenance",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Time-based split prevents future-label leakage",
+    "Missing sensors produce an explicit degraded result",
+    "Prediction records include feature and model versions",
+    "Evaluate false alarms and missed faults on held-out data",
+    "Work orders require approval and are idempotent"
+  ],
+  "components": [
+    {
+      "id": "sensors"
+    },
+    {
+      "id": "records"
+    },
+    {
+      "id": "ingest",
+      "service": "Azure Event Hubs"
+    },
+    {
+      "id": "lake",
+      "service": "Azure Data Lake Storage Gen2"
+    },
+    {
+      "id": "features",
+      "service": "Azure Machine Learning pipeline"
+    },
+    {
+      "id": "train",
+      "service": "Azure Machine Learning training job"
+    },
+    {
+      "id": "registry",
+      "service": "Azure Machine Learning model registry"
+    },
+    {
+      "id": "predict",
+      "service": "Azure Machine Learning batch endpoint"
+    },
+    {
+      "id": "monitor",
+      "service": "Azure Machine Learning model monitoring + Azure Monitor"
+    },
+    {
+      "id": "workorder",
+      "service": "Azure Functions"
+    },
+    {
+      "id": "operator"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

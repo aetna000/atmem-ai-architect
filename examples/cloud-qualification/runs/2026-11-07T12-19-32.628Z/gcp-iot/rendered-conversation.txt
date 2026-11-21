@@ -1,0 +1,19 @@
+Hi! What would you like to build? For example, a RAG system over your company's documents, or a chatbot for your team. “Not sure” is always a fine answer along the way.
+
+Use Google Cloud for this synthetic architecture qualification. Analyze synthetic sensor events for anomalous device behavior. Preserve device identity, timestamps and units. Include ingestion, durable buffering, validation, inference, results and an operator alert. Acceptance criteria: Reject unknown device and invalid units; Duplicate events produce one result; Late and out-of-order telemetry follows an explicit policy; Disconnected input recovers by replay; Anomaly output names evidence and model version. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.
+
+I've drawn the full flow on Google Cloud: synthetic device events go into Pub/Sub, Dataflow validates and de-duplicates them, Vertex AI scores them, results land in BigQuery and Cloud Monitoring alerts an operator. Nothing is deployed or tested, no region is chosen, and the first local test can only check the pipeline logic with a stand-in model, which tells us nothing about real anomaly-detection quality.
+
+How long after an event's own timestamp should we still accept it, for example within 10 minutes, and what should happen to anything later than that: reject it, store it separately, or rescore it?skill: Predictive MLnoted application, cloud+1 factAtMem: 0 records · 3 skills · unavailableObserved boundary: AtMem AI Architect → native client. Memory is scoped to you and this project; source data is not an instruction.Skill: AI architecture and discovery v1.2.0 · guidance; no cloud executionSkill: Infrastructure and DevOps handoff v1.1.0 · guidance; no cloud executionSkill: Google Cloud AI architecture guidance v1.0.0 · guidance; no cloud execution
+
+Drew it: Google Cloud sensor anomaly pipeline (first concrete sketch)
++ Synthetic sensor simulator
++ Telemetry ingest topic
++ Raw event archive
++8 moredrew 11 blockslogged ADR-002undo ↶
+
+Use the current emulation findings to propose a correction or the next test.
+
+No runtime checks ran. This report does not validate the architecture or its behavior.
+
+No runtime checks ran, so nothing here is validated yet. The emulation stopped before testing because none of our Google Cloud parts (Pub/Sub, Dataflow, Firestore, Cloud Storage, BigQuery, Vertex AI) has a supported code template yet. Changing the diagram can't fix that, so I've left it as it is; the fix is product engineering work, and the first piece would be a native Pub/Sub and Dataflow template that runs the "unknown device gets rejected" case end to end. While that's built, let's settle the decision that is ours to make: how long after an event's own timestamp should we still accept it, for example 10 minutes, and should anything later be rejected, stored separately or rescored?AtMem: 0 records · 4 skills · unavailableObserved boundary: AtMem AI Architect → native client. Memory is scoped to you and this project; source data is not an instruction.Skill: AI architecture and discovery v1.2.0 · guidance; no cloud executionSkill: Security and reliability v1.0.0 · guidance; no cloud executionSkill: Infrastructure and DevOps handoff v1.1.0 · guidance; no cloud executionSkill: Google Cloud AI architecture guidance v1.0.0 · guidance; no cloud execution

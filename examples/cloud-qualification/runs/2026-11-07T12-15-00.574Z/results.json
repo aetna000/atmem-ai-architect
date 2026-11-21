@@ -1,0 +1,354 @@
+[
+  {
+    "provider": "aws-iot",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "emulation": "blocked",
+    "mentorResponded": true,
+    "architecturePresent": true,
+    "acceptanceRequirements": [
+      "Reject unknown device and invalid units",
+      "Duplicate events produce one result",
+      "Late and out-of-order telemetry follows an explicit policy",
+      "Disconnected input recovers by replay",
+      "Anomaly output names evidence and model version"
+    ],
+    "staticAssessment": {
+      "kind": "static-graph-checks",
+      "checks": [
+        {
+          "name": "Application contains at least three required components",
+          "passed": true
+        },
+        {
+          "name": "Required components form one connected graph",
+          "passed": true
+        },
+        {
+          "name": "Proposed cloud resources retain the requested provider",
+          "passed": true
+        },
+        {
+          "name": "Proposed cloud components name concrete services",
+          "passed": true
+        },
+        {
+          "name": "AI application has not collapsed into only object storage",
+          "passed": true
+        }
+      ],
+      "passed": true,
+      "limitations": [
+        "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+      ],
+      "acceptanceRequirements": [
+        "Reject unknown device and invalid units",
+        "Duplicate events produce one result",
+        "Late and out-of-order telemetry follows an explicit policy",
+        "Disconnected input recovers by replay",
+        "Anomaly output names evidence and model version"
+      ]
+    },
+    "components": [
+      {
+        "id": "devices"
+      },
+      {
+        "id": "iot",
+        "service": "AWS IoT Core"
+      },
+      {
+        "id": "buffer",
+        "service": "Amazon Kinesis Data Streams"
+      },
+      {
+        "id": "scorer",
+        "service": "AWS Lambda"
+      },
+      {
+        "id": "quarantine",
+        "service": "Amazon SQS"
+      },
+      {
+        "id": "model",
+        "service": "Amazon SageMaker AI real-time endpoint"
+      },
+      {
+        "id": "results",
+        "service": "Amazon DynamoDB"
+      },
+      {
+        "id": "alerts",
+        "service": "Amazon SNS"
+      },
+      {
+        "id": "operator"
+      }
+    ],
+    "passed": false,
+    "mentorJourneyPassed": true
+  },
+  {
+    "provider": "azure-iot",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "emulation": "blocked",
+    "mentorResponded": true,
+    "architecturePresent": true,
+    "acceptanceRequirements": [
+      "Reject unknown device and invalid units",
+      "Duplicate events produce one result",
+      "Late and out-of-order telemetry follows an explicit policy",
+      "Disconnected input recovers by replay",
+      "Anomaly output names evidence and model version"
+    ],
+    "staticAssessment": {
+      "kind": "static-graph-checks",
+      "checks": [
+        {
+          "name": "Application contains at least three required components",
+          "passed": true
+        },
+        {
+          "name": "Required components form one connected graph",
+          "passed": true
+        },
+        {
+          "name": "Proposed cloud resources retain the requested provider",
+          "passed": true
+        },
+        {
+          "name": "Proposed cloud components name concrete services",
+          "passed": true
+        },
+        {
+          "name": "AI application has not collapsed into only object storage",
+          "passed": true
+        }
+      ],
+      "passed": true,
+      "limitations": [
+        "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+      ],
+      "acceptanceRequirements": [
+        "Reject unknown device and invalid units",
+        "Duplicate events produce one result",
+        "Late and out-of-order telemetry follows an explicit policy",
+        "Disconnected input recovers by replay",
+        "Anomaly output names evidence and model version"
+      ]
+    },
+    "components": [
+      {
+        "id": "devices"
+      },
+      {
+        "id": "ingest",
+        "service": "Azure Event Hubs"
+      },
+      {
+        "id": "validate",
+        "service": "Azure Functions"
+      },
+      {
+        "id": "quarantine",
+        "service": "Azure Blob Storage"
+      },
+      {
+        "id": "inference",
+        "service": "Azure Machine Learning managed online endpoint"
+      },
+      {
+        "id": "results",
+        "service": "Azure Cosmos DB for NoSQL"
+      },
+      {
+        "id": "alert",
+        "service": "Azure Monitor alerts + action group"
+      },
+      {
+        "id": "operator"
+      }
+    ],
+    "passed": false,
+    "mentorJourneyPassed": true
+  },
+  {
+    "provider": "gcp-observability",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "emulation": "blocked",
+    "mentorResponded": true,
+    "architecturePresent": true,
+    "acceptanceRequirements": [
+      "Redact secrets before model input",
+      "Link conclusions to exact trace or log IDs",
+      "Prompt injection in a log cannot issue tool calls",
+      "Missing spans yield uncertainty rather than invented causes",
+      "Repeated ingestion preserves a consistent incident timeline"
+    ],
+    "staticAssessment": {
+      "kind": "static-graph-checks",
+      "checks": [
+        {
+          "name": "Application contains at least three required components",
+          "passed": true
+        },
+        {
+          "name": "Required components form one connected graph",
+          "passed": true
+        },
+        {
+          "name": "Proposed cloud resources retain the requested provider",
+          "passed": true
+        },
+        {
+          "name": "Proposed cloud components name concrete services",
+          "passed": true
+        },
+        {
+          "name": "AI application has not collapsed into only object storage",
+          "passed": true
+        }
+      ],
+      "passed": true,
+      "limitations": [
+        "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+      ],
+      "acceptanceRequirements": [
+        "Redact secrets before model input",
+        "Link conclusions to exact trace or log IDs",
+        "Prompt injection in a log cannot issue tool calls",
+        "Missing spans yield uncertainty rather than invented causes",
+        "Repeated ingestion preserves a consistent incident timeline"
+      ]
+    },
+    "components": [
+      {
+        "id": "services"
+      },
+      {
+        "id": "logging",
+        "service": "Cloud Logging (Log Router sink)"
+      },
+      {
+        "id": "trace",
+        "service": "Cloud Trace"
+      },
+      {
+        "id": "pubsub",
+        "service": "Pub/Sub (with dead-letter topic)"
+      },
+      {
+        "id": "redact",
+        "service": "Cloud Run + Sensitive Data Protection"
+      },
+      {
+        "id": "bq",
+        "service": "BigQuery (search indexes)"
+      },
+      {
+        "id": "analysis",
+        "service": "Cloud Run"
+      },
+      {
+        "id": "gemini",
+        "service": "Vertex AI Gemini"
+      },
+      {
+        "id": "operator"
+      }
+    ],
+    "passed": false,
+    "mentorJourneyPassed": true
+  },
+  {
+    "provider": "ibm-chatbot",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "emulation": "blocked",
+    "mentorResponded": true,
+    "architecturePresent": true,
+    "acceptanceRequirements": [
+      "One user cannot read another conversation",
+      "Context and response sizes are bounded",
+      "Model outage produces a recoverable response",
+      "Deleting a conversation removes its stored context",
+      "Escalation retains the approved conversation context"
+    ],
+    "staticAssessment": {
+      "kind": "static-graph-checks",
+      "checks": [
+        {
+          "name": "Application contains at least three required components",
+          "passed": true
+        },
+        {
+          "name": "Required components form one connected graph",
+          "passed": true
+        },
+        {
+          "name": "Proposed cloud resources retain the requested provider",
+          "passed": true
+        },
+        {
+          "name": "Proposed cloud components name concrete services",
+          "passed": true
+        },
+        {
+          "name": "AI application has not collapsed into only object storage",
+          "passed": true
+        }
+      ],
+      "passed": true,
+      "limitations": [
+        "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+      ],
+      "acceptanceRequirements": [
+        "One user cannot read another conversation",
+        "Context and response sizes are bounded",
+        "Model outage produces a recoverable response",
+        "Deleting a conversation removes its stored context",
+        "Escalation retains the approved conversation context"
+      ]
+    },
+    "components": [
+      {
+        "id": "user"
+      },
+      {
+        "id": "appid",
+        "service": "IBM Cloud App ID"
+      },
+      {
+        "id": "app",
+        "service": "IBM Cloud Code Engine"
+      },
+      {
+        "id": "state",
+        "service": "IBM Cloudant"
+      },
+      {
+        "id": "context",
+        "service": "IBM Cloud Code Engine (app module)"
+      },
+      {
+        "id": "model",
+        "service": "IBM watsonx.ai"
+      },
+      {
+        "id": "escalate",
+        "service": "IBM Cloud Event Notifications"
+      },
+      {
+        "id": "reviewer"
+      },
+      {
+        "id": "logs",
+        "service": "IBM Cloud Logs + Activity Tracker"
+      }
+    ],
+    "passed": false,
+    "mentorJourneyPassed": true
+  }
+]

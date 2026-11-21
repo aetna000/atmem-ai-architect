@@ -1,0 +1,42 @@
+{
+  "name": "atmem-ai-architect",
+  "version": "0.1.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "node scripts/embed-runtimes.mjs && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "node scripts/embed-runtimes.mjs && node --test tests/*.test.mjs",
+    "local": "node scripts/local.mjs",
+    "test:server": ".venv/bin/python -m unittest discover -s server/tests -v",
+    "test:browser": "node scripts/voice-smoke.mjs && node scripts/smoke.mjs && node scripts/delivery-smoke.mjs",
+    "notices": "node scripts/dependency-notices.mjs",
+    "test:delivery": "node scripts/delivery-smoke.mjs",
+    "test:terraform": "node scripts/terraform-check.mjs",
+    "setup:memory": "python3 scripts/setup-memory.py",
+    "test:memory": "node scripts/run-memory-e2e.mjs",
+    "test:voice": "node scripts/voice-smoke.mjs",
+    "test:handoff": "node scripts/handoff-check.mjs",
+    "test:aws:live": "node scripts/aws-scenario-live.mjs",
+    "test:emulation": ".venv/bin/python scripts/aws-emulation-check.py",
+    "test:emulation:browser": "node scripts/emulation-browser-check.mjs",
+    "setup:emulation:clouds": "python3 scripts/setup-cloud-emulators.py",
+    "test:emulation:clouds": "node scripts/cloud-storage-check.mjs",
+    "test:mentor:live": "node scripts/cloud-mentor-live.mjs",
+    "test:enterprise": ".venv/bin/python -m unittest discover -s tests/runtime -p \"enterprise_*_acceptance.py\" -v"
+  },
+  "dependencies": {
+    "@xyflow/react": "12.10.0",
+    "dagre": "0.8.5",
+    "fflate": "0.8.3",
+    "jspdf": "4.2.1",
+    "lucide-react": "0.468.0",
+    "react": "19.2.0",
+    "react-dom": "19.2.0"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "vite": "6.4.5"
+  }
+}

@@ -1,0 +1,534 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "user",
+      "address": "block_75736572",
+      "label": "Signed-in user (browser)",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "web",
+      "address": "block_776562",
+      "label": "Web app",
+      "provider": "azure",
+      "service": "Azure Static Web Apps",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "user"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "entra",
+      "address": "block_656e747261",
+      "label": "Identity",
+      "provider": "azure",
+      "service": "Microsoft Entra ID",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "web"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "rag-api",
+      "address": "block_7261672d617069",
+      "label": "RAG API",
+      "provider": "azure",
+      "service": "Azure Functions",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "web",
+        "entra"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "catalog",
+      "address": "block_636174616c6f67",
+      "label": "Catalog, ACLs and keyword index",
+      "provider": "azure",
+      "service": "Azure Cosmos DB",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "rag-api",
+        "ingest-fn"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "model",
+      "address": "block_6d6f64656c",
+      "label": "Model runtime",
+      "provider": "azure",
+      "service": "Azure OpenAI Service",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "rag-api"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "operator",
+      "address": "block_6f70657261746f72",
+      "label": "Content operator",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "docs-blob",
+      "address": "block_646f63732d626c6f62",
+      "label": "Source documents",
+      "provider": "azure",
+      "service": "Azure Blob Storage",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "operator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "ingest-fn",
+      "address": "block_696e676573742d666e",
+      "label": "Ingestion",
+      "provider": "azure",
+      "service": "Azure Functions",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "docs-blob"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "monitor",
+      "address": "block_6d6f6e69746f72",
+      "label": "Audit and telemetry",
+      "provider": "azure",
+      "service": "Application Insights",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "rag-api"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e-user-web",
+      "source": "user",
+      "target": "web",
+      "data": "HTTPS",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-web-entra",
+      "source": "web",
+      "target": "entra",
+      "data": "sign-in (auth code + PKCE)",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-web-api",
+      "source": "web",
+      "target": "rag-api",
+      "data": "question + bearer token / cited answer",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-entra-api",
+      "source": "entra",
+      "target": "rag-api",
+      "data": "JWT validation",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-api-catalog",
+      "source": "rag-api",
+      "target": "catalog",
+      "data": "ACL-filtered keyword read + revision recheck",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-api-model",
+      "source": "rag-api",
+      "target": "model",
+      "data": "chat completion (permitted excerpts only)",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-op-blob",
+      "source": "operator",
+      "target": "docs-blob",
+      "data": "upload/update/delete documents",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-blob-ingest",
+      "source": "docs-blob",
+      "target": "ingest-fn",
+      "data": "blob created/deleted event",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-ingest-catalog",
+      "source": "ingest-fn",
+      "target": "catalog",
+      "data": "conditional upsert/tombstone",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-api-monitor",
+      "source": "rag-api",
+      "target": "monitor",
+      "data": "audit events",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Signed-in user (browser): Existing — reference/import plan needed.",
+    "Web app: Implementation needed.",
+    "Identity: Implementation needed.",
+    "RAG API: Implementation needed.",
+    "Catalog, ACLs and keyword index: Implementation needed.",
+    "Model runtime: Implementation needed.",
+    "Content operator: Existing — reference/import plan needed.",
+    "Source documents: Implementation needed.",
+    "Ingestion: Implementation needed.",
+    "Audit and telemetry: Implementation needed.",
+    "Wire user → web: implement data flow, access policy and acceptance test.",
+    "Wire web → entra: implement data flow, access policy and acceptance test.",
+    "Wire web → rag-api: implement data flow, access policy and acceptance test.",
+    "Wire entra → rag-api: implement data flow, access policy and acceptance test.",
+    "Wire rag-api → catalog: implement data flow, access policy and acceptance test.",
+    "Wire rag-api → model: implement data flow, access policy and acceptance test.",
+    "Wire operator → docs-blob: implement data flow, access policy and acceptance test.",
+    "Wire docs-blob → ingest-fn: implement data flow, access policy and acceptance test.",
+    "Wire ingest-fn → catalog: implement data flow, access policy and acceptance test.",
+    "Wire rag-api → monitor: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "resource-block_75736572",
+      "componentIds": [
+        "user"
+      ],
+      "taskId": "TASK-RESOURCE-75736572",
+      "message": "Signed-in user (browser): Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_776562",
+      "componentIds": [
+        "web"
+      ],
+      "taskId": "TASK-RESOURCE-776562",
+      "message": "Web app: Implementation needed."
+    },
+    {
+      "id": "resource-block_656e747261",
+      "componentIds": [
+        "entra"
+      ],
+      "taskId": "TASK-RESOURCE-656e747261",
+      "message": "Identity: Implementation needed."
+    },
+    {
+      "id": "resource-block_7261672d617069",
+      "componentIds": [
+        "rag-api"
+      ],
+      "taskId": "TASK-RESOURCE-7261672d617069",
+      "message": "RAG API: Implementation needed."
+    },
+    {
+      "id": "resource-block_636174616c6f67",
+      "componentIds": [
+        "catalog"
+      ],
+      "taskId": "TASK-RESOURCE-636174616c6f67",
+      "message": "Catalog, ACLs and keyword index: Implementation needed."
+    },
+    {
+      "id": "resource-block_6d6f64656c",
+      "componentIds": [
+        "model"
+      ],
+      "taskId": "TASK-RESOURCE-6d6f64656c",
+      "message": "Model runtime: Implementation needed."
+    },
+    {
+      "id": "resource-block_6f70657261746f72",
+      "componentIds": [
+        "operator"
+      ],
+      "taskId": "TASK-RESOURCE-6f70657261746f72",
+      "message": "Content operator: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_646f63732d626c6f62",
+      "componentIds": [
+        "docs-blob"
+      ],
+      "taskId": "TASK-RESOURCE-646f63732d626c6f62",
+      "message": "Source documents: Implementation needed."
+    },
+    {
+      "id": "resource-block_696e676573742d666e",
+      "componentIds": [
+        "ingest-fn"
+      ],
+      "taskId": "TASK-RESOURCE-696e676573742d666e",
+      "message": "Ingestion: Implementation needed."
+    },
+    {
+      "id": "resource-block_6d6f6e69746f72",
+      "componentIds": [
+        "monitor"
+      ],
+      "taskId": "TASK-RESOURCE-6d6f6e69746f72",
+      "message": "Audit and telemetry: Implementation needed."
+    },
+    {
+      "id": "connection-652d757365722d776562",
+      "edgeIds": [
+        "e-user-web"
+      ],
+      "taskId": "TASK-INTEGRATION-652d757365722d776562",
+      "message": "Wire user → web: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d7765622d656e747261",
+      "edgeIds": [
+        "e-web-entra"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7765622d656e747261",
+      "message": "Wire web → entra: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d7765622d617069",
+      "edgeIds": [
+        "e-web-api"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7765622d617069",
+      "message": "Wire web → rag-api: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d656e7472612d617069",
+      "edgeIds": [
+        "e-entra-api"
+      ],
+      "taskId": "TASK-INTEGRATION-652d656e7472612d617069",
+      "message": "Wire entra → rag-api: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6170692d636174616c6f67",
+      "edgeIds": [
+        "e-api-catalog"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6170692d636174616c6f67",
+      "message": "Wire rag-api → catalog: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6170692d6d6f64656c",
+      "edgeIds": [
+        "e-api-model"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6170692d6d6f64656c",
+      "message": "Wire rag-api → model: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6f702d626c6f62",
+      "edgeIds": [
+        "e-op-blob"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6f702d626c6f62",
+      "message": "Wire operator → docs-blob: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d626c6f622d696e67657374",
+      "edgeIds": [
+        "e-blob-ingest"
+      ],
+      "taskId": "TASK-INTEGRATION-652d626c6f622d696e67657374",
+      "message": "Wire docs-blob → ingest-fn: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d696e676573742d636174616c6f67",
+      "edgeIds": [
+        "e-ingest-catalog"
+      ],
+      "taskId": "TASK-INTEGRATION-652d696e676573742d636174616c6f67",
+      "message": "Wire ingest-fn → catalog: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6170692d6d6f6e69746f72",
+      "edgeIds": [
+        "e-api-monitor"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6170692d6d6f6e69746f72",
+      "message": "Wire rag-api → monitor: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

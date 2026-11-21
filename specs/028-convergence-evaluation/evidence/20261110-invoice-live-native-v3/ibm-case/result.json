@@ -1,0 +1,80 @@
+{
+  "case": "ibm-03-document-intake",
+  "scenario": "03-document-intake",
+  "difficulty": "medium",
+  "provider": "ibm",
+  "userExchanges": 3,
+  "clarificationQuestions": 1,
+  "technicalQuestions": 0,
+  "repeatedQuestions": 0,
+  "convergedWithoutQuestion": true,
+  "durationSeconds": 149.14,
+  "clientFactKeysDelivered": [
+    "data",
+    "integrations",
+    "location",
+    "quality",
+    "scale",
+    "users"
+  ],
+  "clientBriefComplete": true,
+  "turns": [
+    {
+      "turn": 1,
+      "question": "Which country must invoice data stay in?",
+      "repeatedQuestion": false,
+      "scopePreserved": true,
+      "proposal": true,
+      "internalResponseRepairs": 0,
+      "modelResponseEncodings": [
+        "compact_patch"
+      ],
+      "modelResponseJsonBytes": 8755,
+      "technicalQuestion": false
+    },
+    {
+      "turn": 2,
+      "question": null,
+      "repeatedQuestion": false,
+      "scopePreserved": true,
+      "proposal": true,
+      "internalResponseRepairs": 0,
+      "modelResponseEncodings": [
+        "compact_patch"
+      ],
+      "modelResponseJsonBytes": 7343,
+      "clientFactCompletionQueued": true
+    },
+    {
+      "turn": 3,
+      "question": null,
+      "repeatedQuestion": false,
+      "scopePreserved": true,
+      "proposal": true,
+      "internalResponseRepairs": 0,
+      "modelResponseEncodings": [
+        "compact_patch"
+      ],
+      "modelResponseJsonBytes": 11529
+    }
+  ],
+  "error": null,
+  "package": {
+    "staticCandidate": true,
+    "implementationRequired": 0,
+    "connectionGaps": 0,
+    "fatalFindings": [],
+    "wrongProviderNodes": [],
+    "files": 133,
+    "tasks": 37,
+    "runtime": "not_yet_qualified",
+    "nearDeploymentQualified": false
+  },
+  "acceptance": [
+    "PDF upload reaches a reviewable extraction result.",
+    "Concurrent duplicate deliveries and worker restarts do not duplicate records.",
+    "Unauthorized approvals fail; approved outbound retries are idempotent.",
+    "Poison jobs remain recoverable with audit evidence."
+  ],
+  "status": "requires_independent_review_and_runtime_qualification"
+}

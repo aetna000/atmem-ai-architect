@@ -1,0 +1,379 @@
+{
+  "version": 1,
+  "revision": 2,
+  "name": "IBM sensor anomaly detection qualification",
+  "provider": "ibm",
+  "requirements": "",
+  "nodes": [
+    {
+      "id": "sensors",
+      "type": "resource",
+      "position": {
+        "x": 50,
+        "y": 190
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Synthetic sensor producer",
+        "provider": "tools",
+        "kind": "stream",
+        "description": "Existing synthetic event generator. It emits {deviceId, timestamp (ISO-8601 UTC), metric, value, unit}. It is outside provisioning scope.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "poc": true
+      }
+    },
+    {
+      "id": "event-streams",
+      "type": "resource",
+      "position": {
+        "x": 470,
+        "y": 190
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Raw events topic",
+        "provider": "ibm",
+        "kind": "resource",
+        "description": "Kafka topic 'sensor-raw', keyed by deviceId to keep per-device order. It provides durable buffering with configurable retention, so consumers can replay events.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "ingest",
+        "service": "IBM Event Streams"
+      }
+    },
+    {
+      "id": "validator",
+      "type": "resource",
+      "position": {
+        "x": 890,
+        "y": 190
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Event validator",
+        "provider": "ibm",
+        "kind": "guard",
+        "description": "Consumer app that checks the schema, device identity, timestamp format and allowed units. It passes valid events through unchanged. Rejected events go to the dead-letter topic with a reason.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "IBM Code Engine"
+      }
+    },
+    {
+      "id": "dlq",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 50
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Rejected events topic",
+        "provider": "ibm",
+        "kind": "resource",
+        "description": "Dead-letter topic 'sensor-rejected' for invalid events, kept for review and replay.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "IBM Event Streams"
+      }
+    },
+    {
+      "id": "inference",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Anomaly scoring",
+        "provider": "ibm",
+        "kind": "predict",
+        "description": "Online deployment that scores validated events and returns an anomaly score and flag, with deviceId, timestamp and unit echoed back. The model type is not yet chosen. Locally, a scripted response stands in for it.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "model",
+        "service": "IBM watsonx.ai Runtime deployment"
+      }
+    },
+    {
+      "id": "results",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 190
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Anomaly results",
+        "provider": "ibm",
+        "kind": "output",
+        "description": "Stores one document per scored event (deviceId, timestamp, value, unit, score, flag, model version), with idempotent ids.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "measures": [
+          {
+            "label": "Identity/timestamp/unit preserved",
+            "path": "preserved",
+            "op": "==",
+            "target": true
+          }
+        ],
+        "service": "IBM Cloudant"
+      }
+    },
+    {
+      "id": "alerts",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 470
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Operator alert",
+        "provider": "ibm",
+        "kind": "monitor",
+        "description": "Sends an alert when an event is flagged as anomalous. The destination (email or Slack, for example) is still to be decided.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "IBM Cloud Event Notifications"
+      }
+    },
+    {
+      "id": "operator",
+      "type": "resource",
+      "position": {
+        "x": 2150,
+        "y": 470
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Operator",
+        "provider": "tools",
+        "kind": "tool",
+        "description": "Person who receives and handles anomaly alerts.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "role": "human"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "sensors",
+      "target": "event-streams",
+      "type": "smoothstep",
+      "label": "produce events (Kafka)"
+    },
+    {
+      "id": "e2",
+      "source": "event-streams",
+      "target": "validator",
+      "type": "smoothstep",
+      "label": "consume sensor-raw"
+    },
+    {
+      "id": "e3",
+      "source": "validator",
+      "target": "dlq",
+      "type": "smoothstep",
+      "label": "rejected + reason"
+    },
+    {
+      "id": "e4",
+      "source": "validator",
+      "target": "inference",
+      "type": "smoothstep",
+      "label": "score valid event"
+    },
+    {
+      "id": "e5",
+      "source": "inference",
+      "target": "results",
+      "type": "smoothstep",
+      "label": "write score"
+    },
+    {
+      "id": "e6",
+      "source": "inference",
+      "target": "alerts",
+      "type": "smoothstep",
+      "label": "anomaly flagged"
+    },
+    {
+      "id": "e7",
+      "source": "alerts",
+      "target": "operator",
+      "type": "smoothstep",
+      "label": "notify"
+    }
+  ],
+  "id": "c6544571-ce59-4788-b7b3-b9cb6f09386d",
+  "brief": {
+    "application": "Use IBM Cloud for this synthetic architecture qualification. Analyze synthetic sensor events for anomalous device behavior. Preserve device identity, timestamps and units. Include ingestion, durable buffering, validation, inference, results and an operator alert. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+    "cloud": "IBM"
+  },
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use IBM Cloud for this synthetic architecture qualification",
+      "options": "",
+      "decision": "ibm",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.ibm-cloud-sensor-anomaly-detection-pipeline-first-sketch",
+      "title": "IBM Cloud sensor anomaly detection pipeline (first sketch)",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: ingestion, durable buffering, validation, anomaly inference, results storage and operator alerting on IBM Cloud for synthetic sensor events. Assumptions: region not selected and no account access verified. The model is unspecified (labels unknown). None of these components has a native Terraform generator yet, so engineering is required. Local tests use scripted model outputs only.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "needs": [
+    {
+      "id": "ai-preserve-fields",
+      "kind": "functional",
+      "category": "reliability",
+      "statement": "Every stored result and alert keeps the source deviceId, original timestamp and unit unchanged.",
+      "rationale": "If identity, time or units are lost or converted, operators could act on the wrong device or misread values.",
+      "basis": "User: \"Preserve device identity, timestamps and units.\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "validator",
+        "inference",
+        "results",
+        "alerts"
+      ]
+    },
+    {
+      "id": "ai-reject-invalid",
+      "kind": "functional",
+      "category": "reliability",
+      "statement": "Proposed: invalid events go to a dead-letter topic with a rejection reason, are never scored, and can be replayed.",
+      "rationale": "Bad input silently scored would produce false alarms or hide real anomalies.",
+      "basis": "User asked for validation and durable buffering.",
+      "priority": "should",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "validator",
+        "dlq"
+      ]
+    },
+    {
+      "id": "ai-model-validation",
+      "kind": "nonfunctional",
+      "category": "other",
+      "statement": "Proposed: anomaly model quality is accepted only after evaluation on held-out data from a later time period. Mocked responses count as pipeline tests only.",
+      "rationale": "Mocks prove the wiring, not detection quality. Without a time-based evaluation, false-alarm rates are unknown.",
+      "basis": "User: \"distinguish mocked model behavior from actual model validation\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "inference"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "extensions": {
+    "requirementNumbers": {
+      "drv-data-access": 1,
+      "drv-data-location": 2,
+      "ai-preserve-fields": 3,
+      "ai-reject-invalid": 4,
+      "ai-model-validation": 5
+    }
+  },
+  "facts": [
+    {
+      "id": "fact-9ae90b80",
+      "name": "cloud.preference",
+      "value": "ibm",
+      "unit": "provider",
+      "text": "Use IBM Cloud for this synthetic architecture qualification. Analyze synthetic sensor events for anomalous device behavior. Preserve device identity, timestamps and units. Include ingestion, durable buffering, validation, inference, results and an operator alert. Draw the complete end-to-end archite",
+      "madeAt": "2026-11-07"
+    }
+  ],
+  "workflow": "predictive",
+  "asked": [],
+  "lastAsked": {
+    "id": "predictive:0",
+    "topic": "data",
+    "question": "How much history do you have for what you want to predict?",
+    "beginner": "For example “three years of sales by store” or “failure records since 2020”.",
+    "why": "It shapes the Predictive ML design."
+  },
+  "choices": {},
+  "conceptSig": null
+}

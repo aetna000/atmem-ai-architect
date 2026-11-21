@@ -1,0 +1,306 @@
+{
+  "message": "We\u2019ve captured 20 signed-in staff, three reviewers, around 500 potentially personal-data invoices daily, a 10 MB PDF limit and 90-day retention. Let\u2019s update the design with server-enforced reviewer permissions and retention controls; Australian service availability and accounting residency remain unverified.",
+  "phase": "Architecture",
+  "proposal": {
+    "baseRevision": 3,
+    "title": "Refine staff permissions, invoice limits and retention",
+    "body": "Preserve the existing Google Cloud workflow, accounting integration, IDs and layout. Incorporate the stated staff roles, daily volume, PDF limit and retention period. Reviewer membership must be enforced by the server. Retention cleanup, backups and recovery require acceptance evidence; Sydney remains proposed and regional availability remains unverified.",
+    "next": {
+      "version": 1,
+      "revision": 3,
+      "name": "Asynchronous document intake",
+      "provider": "gcp",
+      "requirements": "Users upload PDF invoices. Extract the supplier, invoice date, total and currency into a review queue. Delivery can repeat; retries must not create duplicate invoices. A reviewer approves a result before it is sent to our existing accounting API. Use Google Cloud. Recommend a coherent system and the engineering choices. Ask only a small material business question when needed; do not make me configure the system.",
+      "nodes": [
+        {
+          "id": "staff-browser",
+          "type": "resource",
+          "position": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "data": {
+            "label": "Staff uploaders and reviewers",
+            "kind": "tool",
+            "provider": "tools",
+            "description": "Existing browsers used by 20 signed-in staff, with three reviewers identified; whether reviewers are included in the 20 is unspecified. Staff upload PDFs and inspect permitted processing results. Only authorized reviewers may approve the exact reviewed revision; ordinary uploaders cannot approve. The server enforces membership and permissions on every relevant request. Client reference outside provisioning scope; staff identity provider and access geography remain unresolved.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "deploymentMode": "reference",
+            "poc": true,
+            "role": "human",
+            "topologyGroup": "Staff access",
+            "service": "Web browser",
+            "binding": "web-browser"
+          }
+        },
+        {
+          "id": "invoice-workflow",
+          "type": "resource",
+          "position": {
+            "x": 440.0,
+            "y": 0.0
+          },
+          "data": {
+            "label": "Invoice intake, review and approved delivery",
+            "kind": "resource",
+            "provider": "gcp",
+            "description": "Proposed composed delivery unit on Google Cloud Run: browser/API, background worker and isolated PDF/OCR parser. Owns Cloud SQL for PostgreSQL transactional queue/outbox and review state, private versioned Google Cloud Storage originals, regional Vertex AI extraction, staff sign-in, SQL user/reviewer membership and separate keyless workload identities. Supports 20 signed-in staff and three reviewers; ordinary uploaders cannot approve, enforced server-side rather than through UI controls. Planning workload is approximately 500 PDF invoices daily, up to 10,000,000 bytes each; burst rate and processing-time targets remain unspecified. Proposed parser bound remains 100 pages. Documents may contain personal data: restrict document, extracted-field and audit access to authorized staff, keep document contents out of operational logs, and isolate temporary parser data. Returns supplier, invoice date, total, currency, source evidence and processing status in the review UI. Parser alone sees untrusted PDF bytes and has no database, model or accounting identity. Persist intake identity and results; commit state and queued work atomically, fence worker leases and recover stalled work. Bind approval to the exact source/result revision and destination contract; edits invalidate approval. Send only approved payloads using a durable operation ID and stable payload identity. Retry only within a verified accounting idempotency contract; uncertain outcomes pause for reconciliation rather than creating a new send. Owns bounded retries, audit events, monitoring, alerts, retention and restore/reconciliation operating tasks. Retain originals and extraction audit history for the requested 90 days; propose intake time as the retention clock, pending confirmation when implementing lifecycle rules. Cleanup must account for processing state, object versions, database records, backups and restored copies; backup/version windows and deletion timing need destination review, so no exact universal erasure deadline is claimed. Required boundary: documents and extracted data remain stored and processed in Australia, including temporary parser data, model requests/results, sensitive logs, database backups, object versions and recovery copies. Sydney (australia-southeast1) is proposed, not accepted or verified. Verify Cloud Run, Cloud SQL, storage, selected Vertex AI model, private networking, quotas, processing geography and zonal recovery before implementation approval. Do not silently use global model endpoints, overseas replication or overseas failover. Model retention/caching/logging policy, staff identity/access geography and accounting residency/adapter acceptance remain unresolved. This capability is not evidence of deployment or combined-system validation.",
+            "config": {
+              "maxPdfBytes": 10000000,
+              "retentionDays": 90,
+              "region": "australia-southeast1",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "deploymentMode": "create",
+            "poc": true,
+            "role": "app",
+            "topologyGroup": "Invoice processing",
+            "service": "Google Cloud Run",
+            "implementation": "invoice-workflow"
+          }
+        },
+        {
+          "id": "existing-accounting",
+          "type": "resource",
+          "position": {
+            "x": 880.0,
+            "y": 0.0
+          },
+          "data": {
+            "label": "Existing accounting API",
+            "kind": "tool",
+            "provider": "tools",
+            "description": "Client-owned existing accounting service; reference only, never recreated or modified by this design. Receives only reviewer-approved invoice payloads. Its adapter must independently pass normalized-action-v1 acceptance for authentication, schema, durable idempotency, stable operation/payload identity and outcome reconciliation. Native vendor compatibility and deployment location are unknown. Australian storage and processing of submitted invoice data must be established before enabling delivery; do not assume the existing service satisfies the residency boundary.",
+            "config": {
+              "region": "Existing location unknown",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "deploymentMode": "reference",
+            "poc": true,
+            "role": "app",
+            "topologyGroup": "Accounting integration",
+            "service": "Existing accounting API",
+            "binding": "existing-service"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "staff-to-invoice-workflow",
+          "source": "staff-browser",
+          "target": "invoice-workflow",
+          "type": "smoothstep",
+          "label": "HTTPS: upload PDF, review fields/status, approve revision",
+          "integration": "browser-https"
+        },
+        {
+          "id": "approved-invoices-to-accounting",
+          "source": "invoice-workflow",
+          "target": "existing-accounting",
+          "type": "smoothstep",
+          "label": "HTTPS: approved invoice + stable operation ID; receipt/reconciliation",
+          "integration": "approved-accounting-api"
+        }
+      ]
+    }
+  },
+  "requirementDrafts": [
+    {
+      "rationale": "Makes the stated upload boundary enforceable and records the workload without inventing a peak rate or processing deadline.",
+      "basis": "\u201cPDF invoices up to 10 MB, around 500 per day\u201d",
+      "id": "ai-invoice-intake-limits",
+      "statement": "The workflow shall accept PDF invoices up to 10 MB and reject oversized uploads before extraction. Capacity planning shall use approximately 500 invoices daily; peak-load and completion-time acceptance targets remain open.",
+      "kind": "functional",
+      "category": "scalability",
+      "priority": "must",
+      "links": [
+        "invoice-workflow"
+      ]
+    },
+    {
+      "rationale": "Preserves originals and extraction evidence for review while requiring lifecycle rules to address versions, backups and recovery copies.",
+      "basis": "\u201cKeep originals and extraction audit history for 90 days.\u201d",
+      "id": "ai-invoice-retention",
+      "statement": "Original invoices and extraction audit history shall be retained for 90 days. Proposed lifecycle controls shall cover primary records, object versions and recovery copies; retention-clock semantics, backup windows and deletion completion shall be documented and tested before production.",
+      "kind": "nonfunctional",
+      "category": "compliance",
+      "priority": "must",
+      "links": [
+        "invoice-workflow"
+      ],
+      "measure": {
+        "metric": "Original and extraction audit retention period",
+        "op": "==",
+        "target": 90.0,
+        "unit": "days"
+      }
+    },
+    {
+      "rationale": "Personal data can leak through document access, temporary parser files and diagnostic logging; these are proposed controls requiring implementation evidence.",
+      "basis": "\u201cthey may contain personal data\u201d and the invoice-workflow document, parser and audit responsibilities.",
+      "id": "ai-invoice-personal-data",
+      "statement": "Proposed controls shall restrict access to invoice originals, extracted personal data and audit history to authorized staff, exclude document contents from operational logs, and clean up temporary parser data. Authorization-denial and cleanup tests shall demonstrate these boundaries before production.",
+      "kind": "nonfunctional",
+      "category": "security",
+      "priority": "must",
+      "links": [
+        "staff-browser",
+        "invoice-workflow"
+      ]
+    }
+  ],
+  "requirementUpdates": [
+    {
+      "rationale": "Adds the explicit reviewer boundary while retaining exact-revision approval and audit protections.",
+      "id": "ai-invoice-approval",
+      "statement": "The workflow shall support 20 signed-in staff and three reviewers. Ordinary uploaders shall be denied approval server-side; only an authorized reviewer may approve the exact invoice result revision for accounting submission. Proposed revision binding shall invalidate approval after changes and record the reviewer and approved payload.",
+      "sourceText": "Twenty signed-in staff and three reviewers; ordinary uploaders cannot approve."
+    }
+  ],
+  "contextUsed": {
+    "status": "ready",
+    "enabled": true,
+    "engine": "AtMem 2.3.10 core SDK",
+    "recordsUsed": [],
+    "knowledgeRecordIds": [
+      "rec_646317615895417a8b59e704b491681f",
+      "rec_5ea8453e66b045feb0d264ad083137a5",
+      "rec_c61d0de924474d429b23753a9cc98552",
+      "rec_4b6eebe375ca4f65b20a0f96e5cb6b48",
+      "rec_403bf09042d249a1807db4ee1b8210b6",
+      "rec_1f0d71dcccd9402cb44ffe0f8016d8b7"
+    ],
+    "skills": [
+      {
+        "id": "composition",
+        "name": "Architecture composition and engineering judgment",
+        "provider": "all",
+        "stages": [
+          "discover",
+          "design",
+          "review",
+          "deploy"
+        ],
+        "version": "1.0.0",
+        "digest": "df2291a4e0d48a979d4f7c6e99da046bdedfc0e54d41e0b5379b2bc8086b5be6",
+        "summary": "Choose and compose blocks through responsibility, contracts, state, identity, failure modes and trade-offs; verify the complete system.",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "architecture",
+        "name": "AI architecture and discovery",
+        "provider": "all",
+        "stages": [
+          "discover",
+          "design",
+          "review"
+        ],
+        "version": "1.3.0",
+        "digest": "c5cc1056e3ed9a00799882f3a7f4ff2e957e4941fe10e4fd865f5c02ceb01058",
+        "summary": "Clarify outcome, users, existing systems, data ownership and constraints. Evolve the diagram incrementally. Derive functional requirements and propose measurable quality targets as assumptions needing confirmation. Compare clouds against the actual requirements; do not assume an enterprise identity provider or a vendor. Keep proposed and accepted decisions distinct.",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "security",
+        "name": "Security and reliability",
+        "provider": "all",
+        "stages": [
+          "design",
+          "review",
+          "deploy"
+        ],
+        "version": "1.0.0",
+        "digest": "c75cf46b29eb786b27d88d36604f521d6d287182d47df7d5c03845585d64f914",
+        "summary": "Check data classification, residency, access boundaries, encryption choices, approval of automated actions, reliability and recovery. A drawn control is not enforcement evidence. Explain missing controls and tests. Propose requirements from the components and paths; mark default targets as suggestions, never existing company policy.",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "gcp",
+        "name": "Google Cloud AI architecture guidance",
+        "provider": "gcp",
+        "stages": [
+          "design",
+          "review",
+          "estimate",
+          "deploy"
+        ],
+        "version": "1.0.0",
+        "digest": "55ff77e0dd1d1ac7e3b826aa8bd0b2dfc4ee93f0439f457c581abfcafb766705",
+        "summary": "Match model runtime, retrieval, storage, identity and network boundaries to the project. Distinguish architecture guidance from validated commands. Verify regional model availability, quotas and residency before estimating/deploying. The pinned platform architecture reference has additional companion manuals; those commands are not enabled in AtMem AI Architect.",
+        "source": "https://raw.githubusercontent.com/google/skills/a1a942f058366f70e11e36fda390ac4019272c9c/skills/cloud/agent-platform-architecture/SKILL.md",
+        "reference": {
+          "id": "gcp",
+          "repository": "google/skills",
+          "commit": "a1a942f058366f70e11e36fda390ac4019272c9c",
+          "sourcePath": "skills/cloud/agent-platform-architecture/SKILL.md",
+          "url": "https://raw.githubusercontent.com/google/skills/a1a942f058366f70e11e36fda390ac4019272c9c/skills/cloud/agent-platform-architecture/SKILL.md",
+          "sha256": "db60e7b5d1128403132720c1445cfc2e26049f0651db14e71e94de074d175d48",
+          "file": "agent-skills/upstream/gcp/SKILL.md",
+          "status": "reference-only",
+          "note": "Imported source reference, not an enabled script/tool package. AtMem AI Architect specialist guidance is reviewed separately; referenced upstream companion files are not bundled.",
+          "integrity": true
+        },
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      }
+    ],
+    "tools": [],
+    "boundary": "AtMem AI Architect \u2192 native client",
+    "contextDigest": "7182ea5b3560630ecee86eab691201dbcee62e4c064a9b97ced5d8b1cce95d00",
+    "projectId": "evaluation-gcp-03-document-intake",
+    "responseRepairAttempts": 0,
+    "modelResponseEncodings": [
+      "compact_patch"
+    ],
+    "modelResponseJsonBytes": 7335
+  },
+  "priceQuotes": []
+}

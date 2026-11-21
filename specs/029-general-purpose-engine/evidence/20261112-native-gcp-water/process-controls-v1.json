@@ -1,0 +1,58 @@
+{
+  "rows": [
+    {
+      "name": "gcp-amd64",
+      "image": "sha256:bafc5723ac59b025d42337e4c965e6d7b89a07da3d18b49a9384cfa70274f8e2",
+      "platform": "linux/amd64",
+      "observed": {
+        "machine": "x86_64",
+        "python": "3.13.18",
+        "uid": 65532,
+        "layout": {
+          "instructionBytes": 8,
+          "programBytes": 16,
+          "pointerOffset": 8
+        },
+        "noNewPrivileges": {
+          "return": 0,
+          "errno": 0
+        },
+        "allowOnlyAdditionalFilter": {
+          "return": -1,
+          "errno": 22
+        },
+        "cloudOperations": false
+      }
+    },
+    {
+      "name": "native-arm64",
+      "image": "sha256:df7f71a8588253403dfa833c5c4aacc95ca340204a88d5483edd58131c7f1128",
+      "platform": "linux/arm64",
+      "observed": {
+        "machine": "aarch64",
+        "python": "3.12.3",
+        "uid": 65532,
+        "layout": {
+          "instructionBytes": 8,
+          "programBytes": 16,
+          "pointerOffset": 8
+        },
+        "noNewPrivileges": {
+          "return": 0,
+          "errno": 0
+        },
+        "allowOnlyAdditionalFilter": {
+          "return": 0,
+          "errno": 0
+        },
+        "cloudOperations": false
+      }
+    }
+  ],
+  "daemonArchitecture": "aarch64",
+  "sameProbeAndOuterPolicy": true,
+  "probeSha256": "f74e43f8c15f2b68dc6a17c5735479d17a86fd56d7aa445db9ce9003be22aa49",
+  "clientSourceExecuted": false,
+  "comparisonLimit": "Different Python/image builds, identical measured64-bit ctypes layout and allow-only libc prctl program. Current context capability only; no full native-AMD64-kernel test or universal emulator diagnosis.",
+  "cloudOperations": false
+}

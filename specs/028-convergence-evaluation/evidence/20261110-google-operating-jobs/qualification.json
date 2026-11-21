@@ -1,0 +1,51 @@
+{
+  "kind": "google-invoice-operating-job-qualification",
+  "recordedAt": "2026-11-10T06:05:58.515489+00:00",
+  "passed": true,
+  "checks": {
+    "apiOperator": 87,
+    "nativeGoogleMockPlans": 10,
+    "exactGoogleOperatorImageChecksEachPG17AndPG18": 12,
+    "actualOfflineProxyLifecycleCases": 2,
+    "actualEmittedRunnerFakeCliCases": 5,
+    "restrictedDeliveryImageQueueChecks": 5,
+    "javascript": 309,
+    "server": 208,
+    "build": true
+  },
+  "image": "sha256:4b8aa1cb42568bcd67e3fe3f447f58fa42847c93bc88383c0c09e6d9ea6772b0",
+  "security": {
+    "kind": "exact-local-image-vulnerability-inventory",
+    "image": "sha256:4b8aa1cb42568bcd67e3fe3f447f58fa42847c93bc88383c0c09e6d9ea6772b0",
+    "allScansCompleted": true,
+    "severityCounts": {
+      "LOW": 65,
+      "HIGH": 47,
+      "MEDIUM": 74
+    },
+    "withReportedFix": {},
+    "boundary": "Cached metadata, offline exact-image scan; open findings remain. No clean security or production acceptance."
+  },
+  "sources": {
+    "src/invoice-gcp.mjs": "49d478cea3236d092267ebdd939140b21a672dc32d8488abb7cb2e3eca607eae",
+    "src/invoice-gcp-operations.mjs": "a70a38bee9330fe0106d6b0ba53354fb460d64021171ad99ab8e347511e91725",
+    "src/invoice-operations.mjs": "6480ede456203191e060e05ce45a18dd77a24d9fc0e655da3d8e288855a0e2cf",
+    "src/runtime/invoice_operator_job.py": "8819b71ade379fd1892470257796e3b94581eba90a9c50531a450d9a7b16474b",
+    "src/runtime/invoice-sources.json": "83c1284256e271e1a6852e8f0e770306ace4431c94bd3ebf211878ea6f27b424",
+    "scripts/qualify-invoice-cloud.mjs": "72d7c75c1693b793247571082a48dc0ac6b091980974dc087c2aad5cb6b93746",
+    "scripts/qualify-invoice-operator-image.py": "4075e58ed7bbb6859abd52d015dc91ef5dd854e460af18affcb9437a1eef4e74",
+    "scripts/qualify-invoice-proxy-job.py": "dbcd91c83c6d08561cf64fd8c79f4892d728bca1bbe63fe9848083db70338571",
+    "scripts/qualify-invoice-operator-runner.py": "087b29e6fac7259a41f13a1cbe6a5d795eefc6263a30f5265488d63ea4f0b86c",
+    "tests/invoice-application.test.mjs": "b1d159b40b1420e6bcbc7c4441c265696ecbf8f4aae6dda9ef628089b333c82d",
+    "tests/runtime/invoice_operator_job_acceptance.py": "7f7eeb30de24b05d43aa443475af16f5b69a0690bcb67cc3bca357f9922e57fd"
+  },
+  "cloudOperations": false,
+  "completeMediumCasesCounted": 0,
+  "full28CaseAcceptanceComplete": false,
+  "remaining": [
+    "IBM native fixed operator/bootstrap/scheduled maintenance and monitoring wrapper.",
+    "Whole invoice state/Spec Kit/capability integration and complete four-provider business conversations/exports.",
+    "Remaining medium/hard families, full 28-case repair pass and held-out variants."
+  ],
+  "boundary": "Native schemas/mocks and exact Linux images with local fixture SQL/protocols only. Google metadata HTTP responses, Cloud SQL IAM marker roles and command CLIs are explicitly synthetic. Proxy lifecycle uses two actual immutable containers in a network-disabled namespace; success substitutes SQL work only to isolate lifecycle. No actual Cloud SQL IAM/certificates/managed privileges, private connection, native scheduler, telemetry/notification delivery, account plan or deployment qualification."
+}

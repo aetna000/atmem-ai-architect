@@ -1,0 +1,49 @@
+{
+  "status": "passed",
+  "backend": "moto-s3-compatibility",
+  "backendVersion": "5.2.5",
+  "checks": [
+    {
+      "name": "documents: generated S3-compatible upload/read preserves bytes",
+      "passed": true
+    },
+    {
+      "name": "documents: prior object version recovery",
+      "passed": true
+    },
+    {
+      "name": "documents: exact-version cleanup",
+      "passed": true
+    }
+  ],
+  "capabilities": [
+    {
+      "service": "ibm object storage",
+      "mode": "generated-client data-plane checks"
+    }
+  ],
+  "limitations": [
+    "Local API checks do not validate Terraform apply, real IAM, account policy, region availability, networking, billing or production operations.",
+    "Synthetic client credentials are not deployment identities.",
+    "Only the explicit private object storage contract is exercised; other provider services are not emulated.",
+    "This is S3 protocol compatibility coverage, not IBM COS service emulation: IBM IAM, OAuth/HMAC behavior, endpoints and COS-specific errors require IBM validation."
+  ],
+  "message": "Generated client functions exercised against local storage APIs. Review the unverified boundaries before planning deployment.",
+  "version": 1,
+  "workerDigest": "b39ff2d2d594aa734e298d2a79b252b709d1cc19c2eabbf8eac3509114e998b2",
+  "designRevision": 1,
+  "environment": "staging",
+  "artifactDigest": "b2c74819d8a714a9a086bd34af275a783609bffb08dcf906e8799758e2906edc",
+  "fileDigests": {
+    "main.tf.json": "bbb634f95f9fa0d98a32d8dc131fe66302c75a6bd2c0188b2df786d0f901d517",
+    "resource-schedule.json": "9370ebf995e5602f55836ce31c813f07b027b0901f1ce7938aa89f2ecdb30ee6",
+    "storage_client.py": "bc68bf9a0d6d99116a58592ea9808cf6f9a8c0d92d6d468fb5c07031d1b1554e",
+    "deployment.tfvars.json.example": "18e3c41e2a176f2d987dd350c19d1f25855ec1abd37bd090de15648f3aced5b9",
+    ".gitignore": "9a60f6bfb5f6e76ea84be64714359d1e607d46b6404e2b1ec97683148252af28",
+    "tests/storage.tftest.hcl": "769616371b9684328036136cedf0a5d63abf24b8439515f994bf973e7cb7b3a4",
+    "README.md": "33b5ba50102bd1d3b3e8aca7c6db90c9074319651bd85b343f450fd98c0c910a"
+  },
+  "cloudOperations": false,
+  "terraformApply": "not_run",
+  "workspaceCleanup": "passed"
+}

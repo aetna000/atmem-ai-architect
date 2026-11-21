@@ -1,0 +1,51 @@
+{
+  "provider": "gcp-cloud-operations",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Inventory credentials are read-only",
+    "Untrusted resource tags cannot trigger commands",
+    "Plans identify affected resources and costs as estimates",
+    "Drift after review invalidates approval",
+    "Apply requires separate authorization and a rollback or recovery plan"
+  ],
+  "components": [
+    {
+      "id": "operator"
+    },
+    {
+      "id": "inventory",
+      "service": "Cloud Storage"
+    },
+    {
+      "id": "analyzer",
+      "service": "Cloud Run jobs"
+    },
+    {
+      "id": "policy",
+      "service": "Cloud Run (Open Policy Agent rules)"
+    },
+    {
+      "id": "planner",
+      "service": "Vertex AI (Gemini)"
+    },
+    {
+      "id": "diff",
+      "service": "Cloud Storage (versioned)"
+    },
+    {
+      "id": "approval",
+      "service": "Cloud Run service + Firestore (approval records)"
+    },
+    {
+      "id": "audit",
+      "service": "Cloud Logging + BigQuery log sink"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

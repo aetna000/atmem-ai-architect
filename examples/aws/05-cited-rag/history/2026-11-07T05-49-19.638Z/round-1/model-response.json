@@ -1,0 +1,376 @@
+{
+  "message": "I've drawn our AWS qualification design: a sign-in-protected web app and API, a keyword-retrieval Lambda over a catalog of up to 100 documents, and an answer step on Amazon Bedrock that cites its sources or says there isn't enough evidence. Sydney (ap-southeast-2) is marked only as a candidate region, and I haven't checked whether the model or services are available there. The biggest open decision is which model we use.\n\nWhich Bedrock model ID should we use (the text name that starts with the provider, like `provider.model-name:version`)? Or should we leave it as a required input for now?",
+  "phase": "Architecture",
+  "proposal": {
+    "baseRevision": 1,
+    "title": "Bounded keyword RAG on AWS (qualification sketch)",
+    "body": "Scope: synthetic qualification only, with no deployment. The web app (CloudFront + Cognito with PKCE and MFA) calls an authenticated HTTP API. The API calls a keyword-retrieval Lambda, which reads a DynamoDB catalog (up to 100 documents, with ACLs and revisions) and calls an existing Bedrock model through Converse. An operator loads documents through the generated management tool. Assumptions: Sydney (ap-southeast-2) is a candidate region only and is not approved. Model access, quotas and regional support are unverified. The model ID is still to be selected.",
+    "next": {
+      "version": 1,
+      "revision": 1,
+      "name": "An AWS assistant that answers questions…",
+      "provider": "aws",
+      "requirements": "",
+      "nodes": [
+        {
+          "id": "web",
+          "type": "resource",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "label": "Web app",
+            "kind": "output",
+            "provider": "aws",
+            "description": "Browser chat interface. It owns private S3 assets and CloudFront access control, and shows answers with citations or an insufficient-evidence notice.",
+            "config": {
+              "region": "Candidate: ap-southeast-2 (Sydney), not approved",
+              "classification": "Internal",
+              "timeout": 10000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "poc": true,
+            "role": "app",
+            "service": "Amazon CloudFront",
+            "implementation": "rag-web-app"
+          }
+        },
+        {
+          "id": "cognito",
+          "type": "resource",
+          "position": {
+            "x": 0,
+            "y": 240
+          },
+          "data": {
+            "label": "User sign-in",
+            "kind": "guard",
+            "provider": "aws",
+            "description": "User pool with admin-created users, required software-token MFA, access-token scope and catalog-backed identity/region mappings.",
+            "config": {
+              "region": "Candidate: ap-southeast-2 (Sydney), not approved",
+              "classification": "Internal",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "poc": true,
+            "service": "Amazon Cognito",
+            "implementation": "rag-user-pool"
+          }
+        },
+        {
+          "id": "api",
+          "type": "resource",
+          "position": {
+            "x": 400,
+            "y": 0
+          },
+          "data": {
+            "label": "RAG API",
+            "kind": "tool",
+            "provider": "aws",
+            "description": "Bounded, authenticated HTTP API with a JWT browser route. There is no anonymous access.",
+            "config": {
+              "region": "Candidate: ap-southeast-2 (Sydney), not approved",
+              "classification": "Internal",
+              "timeout": 10000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "poc": true,
+            "role": "app",
+            "service": "Amazon API Gateway",
+            "implementation": "iam-rag-api"
+          }
+        },
+        {
+          "id": "rag-fn",
+          "type": "resource",
+          "position": {
+            "x": 800,
+            "y": 0
+          },
+          "data": {
+            "label": "Keyword retrieval + answer",
+            "kind": "agent",
+            "provider": "aws",
+            "description": "Runs ACL- and region-filtered keyword retrieval, rechecks revisions so deleted or updated documents aren't cited, builds a cited answer or returns 'insufficient evidence'. It owns its execution role, logs, version and alias.",
+            "config": {
+              "region": "Candidate: ap-southeast-2 (Sydney), not approved",
+              "classification": "Internal",
+              "timeout": 10000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "poc": true,
+            "service": "AWS Lambda",
+            "implementation": "bounded-keyword-rag"
+          }
+        },
+        {
+          "id": "catalog",
+          "type": "resource",
+          "position": {
+            "x": 1200,
+            "y": 0
+          },
+          "data": {
+            "label": "Document catalog",
+            "kind": "source",
+            "provider": "aws",
+            "description": "Stores up to 100 small UTF-8 synthetic documents with explicit ACLs and revisions. An operator ingests, updates and deletes documents through the generated management tool. Caller roles cannot write to it.",
+            "config": {
+              "region": "Candidate: ap-southeast-2 (Sydney), not approved",
+              "classification": "Internal",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "poc": true,
+            "role": "index",
+            "service": "Amazon DynamoDB",
+            "implementation": "bounded-rag-catalog"
+          }
+        },
+        {
+          "id": "bedrock",
+          "type": "resource",
+          "position": {
+            "x": 1200,
+            "y": 240
+          },
+          "data": {
+            "label": "Foundation model",
+            "kind": "predict",
+            "provider": "aws",
+            "description": "Existing direct foundation model, selected by a required model-ID input. Access, Converse support, quotas and regional availability are unverified.",
+            "config": {
+              "region": "Candidate: ap-southeast-2 (Sydney), not approved",
+              "classification": "Internal",
+              "timeout": 10000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "poc": true,
+            "role": "llm",
+            "service": "Amazon Bedrock",
+            "binding": "aws-bedrock-model"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "e-web-cognito",
+          "source": "web",
+          "target": "cognito",
+          "type": "smoothstep",
+          "label": "sign-in (OAuth PKCE)",
+          "integration": "oauth-pkce"
+        },
+        {
+          "id": "e-cognito-api",
+          "source": "cognito",
+          "target": "api",
+          "type": "smoothstep",
+          "label": "JWT authorizer",
+          "integration": "jwt-authorizer"
+        },
+        {
+          "id": "e-web-api",
+          "source": "web",
+          "target": "api",
+          "type": "smoothstep",
+          "label": "question → cited answer",
+          "integration": "web-rag-api"
+        },
+        {
+          "id": "e-api-fn",
+          "source": "api",
+          "target": "rag-fn",
+          "type": "smoothstep",
+          "label": "invoke",
+          "integration": "http-api-lambda"
+        },
+        {
+          "id": "e-fn-catalog",
+          "source": "rag-fn",
+          "target": "catalog",
+          "type": "smoothstep",
+          "label": "keyword lookup (ACL-filtered)",
+          "integration": "lambda-catalog-read"
+        },
+        {
+          "id": "e-fn-bedrock",
+          "source": "rag-fn",
+          "target": "bedrock",
+          "type": "smoothstep",
+          "label": "Converse (grounded prompt)",
+          "integration": "bedrock-converse"
+        }
+      ]
+    }
+  },
+  "requirementDrafts": [
+    {
+      "rationale": "Proposed: stops the assistant from giving unsupported answers.",
+      "basis": "User: \"It must say when evidence is insufficient\"",
+      "id": "ai-insufficient-evidence",
+      "statement": "When the retrieved documents do not support an answer, the assistant must say the evidence is insufficient instead of answering.",
+      "kind": "functional",
+      "category": "reliability",
+      "priority": "must",
+      "links": [
+        "rag-fn",
+        "bedrock"
+      ]
+    },
+    {
+      "rationale": "Proposed: stale citations would undermine trust. The update delay is still to be confirmed, so no target is set yet.",
+      "basis": "User: \"reflect document updates and deletions\"",
+      "id": "ai-doc-lifecycle",
+      "statement": "Updated or deleted documents must be reflected in later answers; answers must never cite a deleted or outdated version.",
+      "kind": "functional",
+      "category": "reliability",
+      "priority": "must",
+      "links": [
+        "catalog",
+        "rag-fn"
+      ]
+    },
+    {
+      "rationale": "Sets the scope boundary for this test, so it isn't presented as vector search.",
+      "basis": "User: \"bounded keyword-retrieval mode for at most 100 small documents\"",
+      "id": "ai-bounded-scope",
+      "statement": "This qualification uses keyword retrieval over at most 100 small UTF-8 documents. Managed vector retrieval is out of scope.",
+      "kind": "nonfunctional",
+      "category": "scalability",
+      "priority": "must",
+      "links": [
+        "catalog",
+        "rag-fn"
+      ],
+      "measure": {
+        "metric": "documents in collection",
+        "op": "<=",
+        "target": 100,
+        "unit": "documents"
+      }
+    }
+  ],
+  "requirementUpdates": [
+    {
+      "rationale": "",
+      "id": "req-00d9fe34",
+      "statement": "Every answer cites the source documents it used.",
+      "sourceText": "answers questions from a small synthetic document collection with source citations"
+    }
+  ],
+  "decisionUpdates": [
+    {
+      "subject": "platform.cloud",
+      "value": "aws",
+      "sourceText": "Use AWS for this synthetic qualification design."
+    }
+  ],
+  "contextUsed": {
+    "status": "unavailable",
+    "enabled": true,
+    "engine": "AtMem 2.3.10 core SDK",
+    "recordsUsed": [],
+    "knowledgeRecordIds": [],
+    "skills": [
+      {
+        "id": "architecture",
+        "name": "AI architecture and discovery",
+        "provider": "all",
+        "stages": [
+          "discover",
+          "design",
+          "review"
+        ],
+        "version": "1.0.0",
+        "digest": "9ad2d605f02a4b5ecbc5310b2472f347a8c4301ece89714a0857d8405e075c90",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "devops",
+        "name": "Infrastructure and DevOps handoff",
+        "provider": "all",
+        "stages": [
+          "deploy",
+          "review"
+        ],
+        "version": "1.1.0",
+        "digest": "cd5a428597fbf388a12a863721d93e551c200f4ed30be3469fd8eae78262884c",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "aws",
+        "name": "AWS architecture guidance",
+        "provider": "aws",
+        "stages": [
+          "design",
+          "review",
+          "estimate",
+          "deploy"
+        ],
+        "version": "1.4.0",
+        "digest": "82147cbfe99396d8e659bc7c8d62ce57b0868983bc88c1ace0aaa860ecb9ba29",
+        "source": "https://raw.githubusercontent.com/aws/agent-toolkit-for-aws/fb298e0b6bf2b308a3d2c212b2a09b9bace8e090/plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+        "reference": {
+          "id": "aws",
+          "repository": "aws/agent-toolkit-for-aws",
+          "commit": "fb298e0b6bf2b308a3d2c212b2a09b9bace8e090",
+          "sourcePath": "plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+          "url": "https://raw.githubusercontent.com/aws/agent-toolkit-for-aws/fb298e0b6bf2b308a3d2c212b2a09b9bace8e090/plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+          "sha256": "aa8fef39ef6d64365e48827d9acc90b2b8755023f5c177341cf1c954c1057811",
+          "file": "agent-skills/upstream/aws/SKILL.md",
+          "status": "reference-only",
+          "note": "Imported source reference, not an enabled script/tool package. AtMem AI Architect specialist guidance is reviewed separately; referenced upstream companion files are not bundled.",
+          "integrity": true
+        },
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup",
+          "pricing.lookup"
+        ],
+        "enabled": true
+      }
+    ],
+    "tools": [],
+    "boundary": "AtMem AI Architect → native client",
+    "contextDigest": "ab0e506e4485d361880e54a50fd4c66df2a6177b072138cf8460839d16fc893c",
+    "projectId": "23e2e249-e57e-41b9-8157-6702fc481b01"
+  },
+  "priceQuotes": []
+}

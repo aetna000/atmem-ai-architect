@@ -1,0 +1,7 @@
+# Runnable local candidate:0.2.0-alpha.1
+
+Frozen source f883e7c; UI http://127.0.0.1:5279. Full381 server/376 JavaScript checks pass with no skips after explicit optional dependency preparation. Production build and actual browser draft/navigation/reload/version checks pass. Source archive/web-build hashes and exact local command are in release-record.json; manual card and rollback are docs/LOCAL_ENGINEERING.md. Source files are unchanged; only three explicitly installed dependency symlinks are untracked. No installed dependencies or account credentials are in the git source archive. Static web build alone does not supply the backend.
+
+Offered local candidate is separate from owner testing/acceptance, roadmap acceptance and original complete-project acceptance. Those counts remain0; measured quality unknown. Current AWS/Azure generation on engine-equivalent source0b8fe07 is in progress; prior scoped native/connected/transfer proofs retain exact differing source and artifact boundaries.
+
+Preserve initial missing optional runtime/scratch-directory failures and occupied-port browser failure. Reuse explicit installed memory/IBM/storage emulation dependency runtimes and create the scratch parent before the full configured suites. No application assertions or gates changed to repair those setup failures. Next source repairs two fixtures to create their own scratch parent; this is not part of frozen f883e7c. Chunk-size warning is retained. Optional owner feedback does not block continued programme work.

@@ -1,0 +1,89 @@
+test_completion_requires_verified_exact_snapshot_and_records_operator_without_sending (__main__.InvoiceOperatorTests.test_completion_requires_verified_exact_snapshot_and_records_operator_without_sending) ... ERROR
+test_expiry_removes_exact_scope_data_and_queue_history_and_preserves_young_and_other_account (__main__.InvoiceOperatorTests.test_expiry_removes_exact_scope_data_and_queue_history_and_preserves_young_and_other_account) ... ERROR
+test_live_lease_blocks_purge_and_rolls_back_without_erasing_evidence (__main__.InvoiceOperatorTests.test_live_lease_blocks_purge_and_rolls_back_without_erasing_evidence) ... FAIL
+test_membership_changes_are_explicit_and_runtime_roles_cannot_operate_or_purge (__main__.InvoiceOperatorTests.test_membership_changes_are_explicit_and_runtime_roles_cannot_operate_or_purge) ... ERROR
+test_restore_quarantines_stale_delivery_in_bounded_progressing_batches_without_replaying (__main__.InvoiceOperatorTests.test_restore_quarantines_stale_delivery_in_bounded_progressing_batches_without_replaying) ... ERROR
+
+======================================================================
+ERROR: test_completion_requires_verified_exact_snapshot_and_records_operator_without_sending (__main__.InvoiceOperatorTests.test_completion_requires_verified_exact_snapshot_and_records_operator_without_sending)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/invoice_operations_acceptance.py", line 60, in test_completion_requires_verified_exact_snapshot_and_records_operator_without_sending
+    with self.store.connect()as conn:receipt=reconcile_completed(conn,**self.scope(),operation_id=operation,payload_sha256=digest,external_id='receipt-1',operator='authorized.operator')
+                                             ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/invoice_operations.py", line 77, in reconcile_completed
+    extract,dispatch=owned_scope(conn,account_id,namespace)
+                     ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/invoice_operations.py", line 19, in owned_scope
+    if not isinstance(namespace,str)or not re.fullmatch(r'[a-zA-Z0-9-]{1,20}',namespace):raise ValueError('Use the owned workflow namespace')
+                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: Use the owned workflow namespace
+
+======================================================================
+ERROR: test_expiry_removes_exact_scope_data_and_queue_history_and_preserves_young_and_other_account (__main__.InvoiceOperatorTests.test_expiry_removes_exact_scope_data_and_queue_history_and_preserves_young_and_other_account)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/invoice_operations_acceptance.py", line 28, in test_expiry_removes_exact_scope_data_and_queue_history_and_preserves_young_and_other_account
+    with self.store.connect()as conn:receipt=purge_expired(conn,**self.scope())
+                                             ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/invoice_operations.py", line 47, in purge_expired
+    ids,extract,dispatch=quiescent_rows(conn,account_id,namespace,expired=True,limit=limit)
+                         ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/invoice_operations.py", line 31, in quiescent_rows
+    extract,dispatch=owned_scope(conn,account_id,namespace)
+                     ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/invoice_operations.py", line 19, in owned_scope
+    if not isinstance(namespace,str)or not re.fullmatch(r'[a-zA-Z0-9-]{1,20}',namespace):raise ValueError('Use the owned workflow namespace')
+                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: Use the owned workflow namespace
+
+======================================================================
+ERROR: test_membership_changes_are_explicit_and_runtime_roles_cannot_operate_or_purge (__main__.InvoiceOperatorTests.test_membership_changes_are_explicit_and_runtime_roles_cannot_operate_or_purge)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/invoice_operations_acceptance.py", line 65, in test_membership_changes_are_explicit_and_runtime_roles_cannot_operate_or_purge
+    with self.store.connect()as conn:set_membership(conn,**self.scope(),subject=subject,roles=['reviewer'])
+                                     ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/invoice_operations.py", line 96, in set_membership
+    owned_scope(conn,account_id,namespace)
+    ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/invoice_operations.py", line 19, in owned_scope
+    if not isinstance(namespace,str)or not re.fullmatch(r'[a-zA-Z0-9-]{1,20}',namespace):raise ValueError('Use the owned workflow namespace')
+                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: Use the owned workflow namespace
+
+======================================================================
+ERROR: test_restore_quarantines_stale_delivery_in_bounded_progressing_batches_without_replaying (__main__.InvoiceOperatorTests.test_restore_quarantines_stale_delivery_in_bounded_progressing_batches_without_replaying)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/invoice_operations_acceptance.py", line 49, in test_restore_quarantines_stale_delivery_in_bounded_progressing_batches_without_replaying
+    with self.store.connect()as conn:self.assertEqual(quarantine_restored_deliveries(conn,**self.scope(),workloads_stopped=True,limit=1)['quarantinedDeliveries'],expected)
+                                                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/invoice_operations.py", line 62, in quarantine_restored_deliveries
+    ids,extract,dispatch=quiescent_rows(conn,account_id,namespace,restoring=True,limit=limit)
+                         ~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/invoice_operations.py", line 31, in quiescent_rows
+    extract,dispatch=owned_scope(conn,account_id,namespace)
+                     ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/invoice_operations.py", line 19, in owned_scope
+    if not isinstance(namespace,str)or not re.fullmatch(r'[a-zA-Z0-9-]{1,20}',namespace):raise ValueError('Use the owned workflow namespace')
+                                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: Use the owned workflow namespace
+
+======================================================================
+FAIL: test_live_lease_blocks_purge_and_rolls_back_without_erasing_evidence (__main__.InvoiceOperatorTests.test_live_lease_blocks_purge_and_rolls_back_without_erasing_evidence)
+----------------------------------------------------------------------
+ValueError: Use the owned workflow namespace
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/invoice_operations_acceptance.py", line 37, in test_live_lease_blocks_purge_and_rolls_back_without_erasing_evidence
+    with self.assertRaisesRegex(ValueError,'live execution'):
+         ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "live execution" does not match "Use the owned workflow namespace"
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.461s
+
+FAILED (failures=1, errors=4)

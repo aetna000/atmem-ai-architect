@@ -1,0 +1,109 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.44kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.13-slim-trixie@sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20
+#2 DONE 1.2s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 2B done
+#3 DONE 0.0s
+
+#4 [wheels 1/3] FROM docker.io/library/python:3.13-slim-trixie@sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20
+#4 resolve docker.io/library/python:3.13-slim-trixie@sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20 0.0s done
+#4 DONE 0.0s
+
+#5 [stage-1 2/7] WORKDIR /app
+#5 CACHED
+
+#6 [internal] load build context
+#6 transferring context: 387.01kB 0.0s done
+#6 DONE 0.0s
+
+#7 [wheels 2/3] COPY requirements.lock /build/requirements.lock
+#7 CACHED
+
+#8 [wheels 3/3] RUN python -I -m pip --isolated download --only-binary=:all: --require-hashes --dest /wheels -r /build/requirements.lock
+#8 CACHED
+
+#9 [stage-1 3/7] ADD --checksum=sha256:8c27c342230503b73dfde629642c3b352e87b554e06d60cf58772f236a305ceb https://deb.debian.org/debian-security/pool/updates/main/z/zlib/zlib1g_1.3.dfsg%2breally1.3.1-1%2bdeb13u1_amd64.deb /tmp/zlib1g.deb
+#9 DONE 0.1s
+
+#10 [stage-1 3/7] ADD --checksum=sha256:8c27c342230503b73dfde629642c3b352e87b554e06d60cf58772f236a305ceb https://deb.debian.org/debian-security/pool/updates/main/z/zlib/zlib1g_1.3.dfsg%2breally1.3.1-1%2bdeb13u1_amd64.deb /tmp/zlib1g.deb
+#10 DONE 0.0s
+
+#11 [stage-1 4/7] RUN dpkg -i /tmp/zlib1g.deb && rm /tmp/zlib1g.deb
+#11 0.375 (Reading database ... 5658 files and directories currently installed.)
+#11 0.376 Preparing to unpack /tmp/zlib1g.deb ...
+#11 0.391 Unpacking zlib1g:amd64 (1:1.3.dfsg+really1.3.1-1+deb13u1) over (1:1.3.dfsg+really1.3.1-1+b1) ...
+#11 0.509 Setting up zlib1g:amd64 (1:1.3.dfsg+really1.3.1-1+deb13u1) ...
+#11 0.517 Processing triggers for libc-bin (2.41-12+deb13u4) ...
+#11 DONE 0.6s
+
+#12 [stage-1 5/7] COPY requirements.lock /app/requirements.lock
+#12 DONE 0.0s
+
+#13 [stage-1 6/7] RUN --mount=type=bind,from=wheels,source=/wheels,target=/wheels,readonly python -I -m pip --isolated install --no-index --find-links=/wheels --only-binary=:all: --no-cache-dir --require-hashes -r /app/requirements.lock && python -I -m pip --isolated check && python -I -m pip --isolated uninstall --yes pip && rm -rf /usr/local/lib/python3.13/ensurepip
+#13 3.445 Looking in links: /wheels
+#13 3.461 Processing /wheels/annotated_doc-0.0.5-py3-none-any.whl (from -r /app/requirements.lock (line 1))
+#13 3.490 Processing /wheels/annotated_types-0.8.0-py3-none-any.whl (from -r /app/requirements.lock (line 3))
+#13 3.498 Processing /wheels/anyio-4.16.0-py3-none-any.whl (from -r /app/requirements.lock (line 5))
+#13 3.511 Processing /wheels/asgiref-3.13.0-py3-none-any.whl (from -r /app/requirements.lock (line 7))
+#13 3.517 Processing /wheels/attrs-26.1.0-py3-none-any.whl (from -r /app/requirements.lock (line 9))
+#13 3.524 Processing /wheels/boto3-1.43.123-py3-none-any.whl (from -r /app/requirements.lock (line 11))
+#13 3.533 Processing /wheels/botocore-1.43.123-py3-none-any.whl (from -r /app/requirements.lock (line 13))
+#13 3.719 Processing /wheels/certifi-2026.10.23-py3-none-any.whl (from -r /app/requirements.lock (line 15))
+#13 3.728 Processing /wheels/cffi-2.1.1-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (from -r /app/requirements.lock (line 17))
+#13 3.739 Processing /wheels/charset_normalizer-3.5.2-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl (from -r /app/requirements.lock (line 117))
+#13 3.758 Processing /wheels/click-8.5.1-py3-none-any.whl (from -r /app/requirements.lock (line 289))
+#13 3.766 Processing /wheels/croniter-7.0.0-py3-none-any.whl (from -r /app/requirements.lock (line 291))
+#13 3.781 Processing /wheels/cryptography-50.0.2-cp311-abi3-manylinux_2_34_x86_64.whl (from -r /app/requirements.lock (line 293))
+#13 3.827 Processing /wheels/fastapi-0.162.0-py3-none-any.whl (from -r /app/requirements.lock (line 352))
+#13 3.840 Processing /wheels/h11-0.16.0-py3-none-any.whl (from -r /app/requirements.lock (line 354))
+#13 3.843 Processing /wheels/idna-3.20-py3-none-any.whl (from -r /app/requirements.lock (line 356))
+#13 3.847 Processing /wheels/jmespath-1.1.0-py3-none-any.whl (from -r /app/requirements.lock (line 358))
+#13 3.850 Processing /wheels/msal-1.39.0-py3-none-any.whl (from -r /app/requirements.lock (line 360))
+#13 3.855 Processing /wheels/opentelemetry_api-1.45.2-py3-none-any.whl (from -r /app/requirements.lock (line 362))
+#13 3.858 Processing /wheels/packaging-26.3-py3-none-any.whl (from -r /app/requirements.lock (line 364))
+#13 3.864 Processing /wheels/procrastinate-3.10.0-py3-none-any.whl (from -r /app/requirements.lock (line 366))
+#13 3.871 Processing /wheels/psycopg-3.3.8-py3-none-any.whl (from -r /app/requirements.lock (line 368))
+#13 3.895 Processing /wheels/psycopg_binary-3.3.8-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (from -r /app/requirements.lock (line 370))
+#13 3.944 Processing /wheels/psycopg_pool-3.3.3-py3-none-any.whl (from -r /app/requirements.lock (line 437))
+#13 3.949 Processing /wheels/pycparser-3.12-py3-none-any.whl (from -r /app/requirements.lock (line 439))
+#13 3.959 Processing /wheels/pydantic-2.14.3-py3-none-any.whl (from -r /app/requirements.lock (line 441))
+#13 3.993 Processing /wheels/pydantic_core-2.50.4-cp313-cp313-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (from -r /app/requirements.lock (line 443))
+#13 4.041 Processing /wheels/pyjwt-2.15.1-py3-none-any.whl (from -r /app/requirements.lock (line 583))
+#13 4.056 Processing /wheels/python_dateutil-2.9.0.post0-py2.py3-none-any.whl (from -r /app/requirements.lock (line 585))
+#13 4.075 Processing /wheels/requests-2.34.2-py3-none-any.whl (from -r /app/requirements.lock (line 587))
+#13 4.090 Processing /wheels/s3transfer-0.19.3-py3-none-any.whl (from -r /app/requirements.lock (line 589))
+#13 4.102 Processing /wheels/six-1.17.0-py2.py3-none-any.whl (from -r /app/requirements.lock (line 591))
+#13 4.112 Processing /wheels/starlette-1.10.0-py3-none-any.whl (from -r /app/requirements.lock (line 593))
+#13 4.126 Processing /wheels/typing_extensions-4.16.0-py3-none-any.whl (from -r /app/requirements.lock (line 595))
+#13 4.136 Processing /wheels/typing_inspection-0.4.5-py3-none-any.whl (from -r /app/requirements.lock (line 597))
+#13 4.147 Processing /wheels/urllib3-2.8.0-py3-none-any.whl (from -r /app/requirements.lock (line 599))
+#13 4.156 Processing /wheels/uvicorn-0.54.0-py3-none-any.whl (from -r /app/requirements.lock (line 601))
+#13 4.562 Installing collected packages: urllib3, typing_extensions, six, PyJWT, pycparser, psycopg-binary, psycopg, packaging, jmespath, idna, h11, click, charset-normalizer, certifi, attrs, asgiref, annotated-types, annotated-doc, uvicorn, typing-inspection, requests, python-dateutil, pydantic_core, psycopg-pool, opentelemetry-api, cffi, anyio, starlette, pydantic, cryptography, croniter, botocore, s3transfer, procrastinate, fastapi, msal, boto3
+#13 8.703 
+#13 8.715 Successfully installed PyJWT-2.15.1 annotated-doc-0.0.5 annotated-types-0.8.0 anyio-4.16.0 asgiref-3.13.0 attrs-26.1.0 boto3-1.43.123 botocore-1.43.123 certifi-2026.10.23 cffi-2.1.1 charset-normalizer-3.5.2 click-8.5.1 croniter-7.0.0 cryptography-50.0.2 fastapi-0.162.0 h11-0.16.0 idna-3.20 jmespath-1.1.0 msal-1.39.0 opentelemetry-api-1.45.2 packaging-26.3 procrastinate-3.10.0 psycopg-3.3.8 psycopg-binary-3.3.8 psycopg-pool-3.3.3 pycparser-3.12 pydantic-2.14.3 pydantic_core-2.50.4 python-dateutil-2.9.0.post0 requests-2.34.2 s3transfer-0.19.3 six-1.17.0 starlette-1.10.0 typing-inspection-0.4.5 typing_extensions-4.16.0 urllib3-2.8.0 uvicorn-0.54.0
+#13 8.718 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#13 9.558 No broken requirements found.
+#13 10.45 Found existing installation: pip 26.2.2
+#13 10.50 Uninstalling pip-26.2.2:
+#13 10.77   Successfully uninstalled pip-26.2.2
+#13 10.79 WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+#13 DONE 11.0s
+
+#14 [stage-1 7/7] COPY runtime/ /app/
+#14 DONE 0.1s
+
+#15 exporting to image
+#15 exporting layers
+#15 exporting layers 3.7s done
+#15 exporting manifest sha256:c004713c24b2a134d50d7aae418bd10e257dfbfde4220a3ac66174aee1207b67 done
+#15 exporting config sha256:3f3320c2e8113ee23232ee7320be7020daf508e11318dcf8aab1c14f75dbfd46 done
+#15 exporting attestation manifest sha256:8538cfb2aa266f7e8c28c4f9f9100070e0a4adcef354c5fbd7a5048333e08477 0.0s done
+#15 exporting manifest list sha256:209db35d1ca9086bc963c98e54739953b031e13788cad9d53783df347c6acef0 done
+#15 naming to docker.io/library/atmem-private-aws:qualification-45e6ddb6098a2476 done
+#15 DONE 3.8s

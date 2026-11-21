@@ -1,0 +1,6 @@
+- [x] T1 optional pinned dependencies and notices
+- [x] T2 isolated server-owned generation and worker boundary
+- [x] T3 stateful service and emitted-runtime scenarios
+- [x] T4 pre-download UI, cancellation and evidence download
+- [x] T5 seven-scenario and failure/negative validation
+- [x] T6 archive, runbook and hosted-worker contract

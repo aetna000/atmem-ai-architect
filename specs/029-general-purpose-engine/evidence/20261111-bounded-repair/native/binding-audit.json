@@ -1,0 +1,108 @@
+{
+  "passed": true,
+  "sourceCommit": "322568b18c81c33d0cf9974b55316ed1dd057bcb",
+  "sessionId": "551d8b69-c5b8-4301-a992-db15d6a045f7",
+  "projectId": "e54b5b28-9e4b-4486-8c2b-aac5b87836c1",
+  "model": "gpt-6.1-sol",
+  "effort": "high",
+  "nativeTurns": [
+    {
+      "runId": "a32b633e-7aba-40d2-a949-4ef98211d370",
+      "turnIdentitySha256": "8df47227d5772bd442b2eec5adf20b563d978bd424becdde2cb2e680a56bab80",
+      "storedStatus": "completed",
+      "nativeStatus": "completed"
+    },
+    {
+      "runId": "26875dc8-ffcc-416e-a3f4-4b6edbd809ec",
+      "turnIdentitySha256": "c18ae6734ca544c681866762012933b21124113fe6b31ae809c91ee7dece2d5b",
+      "storedStatus": "completed",
+      "nativeStatus": "completed"
+    }
+  ],
+  "automaticRepairs": 1,
+  "unchangedTestSha256": {
+    "test_rainfall.py": "f5940cb568038ca9b58b6a3b414b4e29c1920e1f6cee9d80bc856a946ec7918f"
+  },
+  "changedFiles": [
+    "README.md",
+    "rainfall.py"
+  ],
+  "calls": [
+    {
+      "tool": "atmem_check_catalog",
+      "turnIdentitySha256": "8df47227d5772bd442b2eec5adf20b563d978bd424becdde2cb2e680a56bab80",
+      "state": "finished",
+      "success": true,
+      "requestSha256": "b4ad4a94c192377edc950a73f26046d04fb4046afed5ff647c8f023fbe1a6515",
+      "resultSha256": "a74dc2435feb1b5d13e4617245f2a5699cec499c91ee64728df8b6df22510abd"
+    },
+    {
+      "tool": "atmem_knowledge_search",
+      "turnIdentitySha256": "8df47227d5772bd442b2eec5adf20b563d978bd424becdde2cb2e680a56bab80",
+      "state": "finished",
+      "success": true,
+      "requestSha256": "8021f0050fc089762a8fd601329e1583e98fcee0c0d50b290f71ac3c42b5ef06",
+      "resultSha256": "be1a4097f2d9cb75ed2998aa71c9719eff1d9d79df93f4b466a498520305880e"
+    },
+    {
+      "tool": "atmem_check_read",
+      "turnIdentitySha256": "c18ae6734ca544c681866762012933b21124113fe6b31ae809c91ee7dece2d5b",
+      "state": "finished",
+      "success": true,
+      "requestSha256": "d8dd87bd5aca0e0c6bac6cb3733b6834ce66a2c2a5f18d156404c754baa4f09c",
+      "resultSha256": "17e39f9b0321997ef1ed7547e83b530d3254c93f2350cc0c62f90430608c6115"
+    },
+    {
+      "tool": "atmem_check_working",
+      "turnIdentitySha256": "c18ae6734ca544c681866762012933b21124113fe6b31ae809c91ee7dece2d5b",
+      "state": "finished",
+      "success": true,
+      "requestSha256": "75056b7b03e406ab6970a81eedd1d1673a7d972c7d2fa7140c7a0272efec869d",
+      "resultSha256": "dc025d751948f37bdc1f4942617d7b5591ef91d4febf7d989dc11f332397ab62"
+    },
+    {
+      "tool": "atmem_check_read",
+      "turnIdentitySha256": "c18ae6734ca544c681866762012933b21124113fe6b31ae809c91ee7dece2d5b",
+      "state": "finished",
+      "success": true,
+      "requestSha256": "654f42ccbfb8c5822c9178b742fc50a2eebb1127824ed9dcdbd5d385f66679fb",
+      "resultSha256": "1098eff57ac10e7fca0bdf5afea0b34d7a2727bea25686f4bf7f4b1b1f5f89b5"
+    }
+  ],
+  "reportPages": [
+    {
+      "checkId": "11fef5fe-9249-480b-938e-cf8a4917b75b",
+      "offset": 0,
+      "nextOffset": null,
+      "outputSha256": "37564d795d3675d32070fcfce69ea25c47c6328a8b0928f89ac420472b5ad282",
+      "totalCharacters": 2514
+    },
+    {
+      "checkId": "da7aea90-0a54-47f0-a1a2-f6c233e7ee76",
+      "offset": 0,
+      "nextOffset": null,
+      "outputSha256": "0f4d7b2f7ccd9134bb07e8b97f38bda7a5ff97fe8962460f6583cb83c4d8fd46",
+      "totalCharacters": 1163
+    }
+  ],
+  "independentOracleSha256": "d155ada4bce58e34dfefd147204ed48515ff83d80858ff5d6b3c185bf49a0fb7",
+  "independentResults": [
+    {
+      "phase": "before",
+      "status": "failed",
+      "artifactSha256": "b2f7929e86fe7d066fe0009d62b4722dd1b692065adee0c3e5b8313ef17d3b19",
+      "output": "Traceback (most recent call last):\n  File \"<string>\", line 8, in <module>\n    equal([],0);equal([9],9);equal([3,7,11],21);equal([0]*366,0);equal([1]*366,366);equal([10**400,0],10**400)\n                ~~~~~^^^^^^^\n  File \"<string>\", line 7, in equal\n    before=list(values);assert total_mm(values)==expected,(values,expected);assert values==before;checks+=1\n                               ^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: ([9], 9)\n"
+    },
+    {
+      "phase": "after",
+      "status": "passed",
+      "artifactSha256": "e52f74a68572f02fe5657e752ad1dbbf95da9784536e6533167f4cb96d41ad80",
+      "output": "INDEPENDENT_RAINFALL_PASSED 108\n"
+    }
+  ],
+  "finalCheckedSha256": "e52f74a68572f02fe5657e752ad1dbbf95da9784536e6533167f4cb96d41ad80",
+  "finalDownloadedMatchesCheckedBytes": true,
+  "sourceChangedDuringRun": [],
+  "cloudOperations": false,
+  "boundary": "Explicit deliberate-defect qualification through real primary UI/API/native thread; same-model bounded repair, full failed report read and unchanged generated tests. Independent isolated numeric/input/boundary behavior fails old bytes and passes repaired bytes. Not an uncoached architecture, hidden holdout, 28-case acceptance or quality advantage."
+}

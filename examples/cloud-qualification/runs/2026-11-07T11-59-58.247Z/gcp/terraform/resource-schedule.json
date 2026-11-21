@@ -1,0 +1,88 @@
+{
+  "revision": 2,
+  "provider": "gcp",
+  "rows": [
+    {
+      "id": "caller",
+      "address": "block_63616c6c6572",
+      "label": "Existing service identity",
+      "provider": "tools",
+      "service": "Existing service identity",
+      "existing": true,
+      "foundation": false,
+      "compute": false,
+      "reference": true,
+      "implemented": true,
+      "resources": [],
+      "settings": {},
+      "region": "To be selected",
+      "dependencies": [],
+      "terraform": "Existing principal reference; permissions require review"
+    },
+    {
+      "id": "bucket",
+      "address": "block_6275636b6574",
+      "label": "Private document bucket",
+      "provider": "gcp",
+      "service": "Google Cloud Storage",
+      "existing": false,
+      "foundation": true,
+      "compute": false,
+      "reference": false,
+      "implemented": true,
+      "resources": [
+        "google_storage_bucket",
+        "google_storage_bucket_iam_member"
+      ],
+      "settings": {},
+      "region": "australia-southeast1 (candidate)",
+      "dependencies": [],
+      "terraform": "Typed native storage and scoped object permissions generated; cloud verification required"
+    }
+  ],
+  "connections": [
+    {
+      "id": "caller-bucket",
+      "source": "caller",
+      "target": "bucket",
+      "type": "smoothstep",
+      "label": "upload / read / delete objects",
+      "access": "storage-object-admin",
+      "generated": true
+    }
+  ],
+  "storageContracts": [
+    {
+      "id": "bucket",
+      "address": "block_6275636b6574",
+      "callerId": "caller"
+    }
+  ],
+  "gapDetails": [],
+  "gaps": [],
+  "accessPlan": {
+    "bindings": [],
+    "connections": []
+  },
+  "asyncPlan": {
+    "pipelines": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": []
+  },
+  "scope": "Native storage foundation only; emulator does not validate IAM or control-plane deployment.",
+  "sources": []
+}

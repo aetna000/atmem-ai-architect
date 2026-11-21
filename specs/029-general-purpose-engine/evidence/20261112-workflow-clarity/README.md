@@ -1,0 +1,11 @@
+# Workflow clarity checkpoint
+
+Source implementation: one immutable navigation catalogue separates destinations from completion. All eight sections remain reachable; visits send no model work or checkpoint acknowledgement. Board, Requirements and unified Choices stay in Design; Country/region shows accepted facts and unknowns; Infrastructure, Review, Costs and Delivery are discoverable. The old redirect and automatic Options/Costs model effects are removed; review/completion gates remain in the journey controller. Explicit discussion and pricing tool responses remain supported.
+
+Earlier pending clarity changes are included: findings distinguished from actual questions, focused design-fix request, visible AtMem status/dashboard and clearer local-check/preflight controls. Real AtMem2.3.10 create/recall/isolation/opt-out proof uses a fresh temporary database, never the owner database. Full shared expertise preload and native engineering retrieval are still incomplete.
+
+Validation:557 JS tests pass with zero failures/skips; production build passes (existing bundle-size warning). Navigation browser receipt proves all eight destinations/numbers, combined choices, unknown locations retained, zero model/emulation requests and desktop/mobile rendering. Review regression receipt proves findings, focused fix, known-missing test gate, visible memory and opt-out feedback using synthetic APIs. No owner projects are written and no real model is invoked. Failed browser attempts retained under MEM0: fixture whitespace/open-attribute assumptions, actual mobile overflow and unintended auto-consultation were corrected before the final pass.
+
+The owner5288 preview was inspected read-only: root/canvas render, zero page/request errors; no old preview was patched/restarted. Source5297 is a test frontend, not an offered fully connected app. CSS files unchanged. Screenshots/logs: .local/external-artifacts/navigation-clarity/ and review-clarity/.
+
+Remaining: unify native implementation artifact, checks and final download; simplify Build and remaining icon/report controls; verify an actual complete generation-to-clean-unpack journey. This checkpoint does not earn alpha.5, another original28 qualification, owner acceptance or a measured quality percentage.

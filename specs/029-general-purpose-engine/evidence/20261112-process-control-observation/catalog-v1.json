@@ -1,0 +1,123 @@
+[
+  {
+    "id": "python-sql-gcp-tests",
+    "label": "Python3.13/Google/PostgreSQL17 with native dependency scratch",
+    "evidenceLevel": "local_container_check",
+    "contractSha256": "ee4e3abd24cdbf01622bfa9cebb37df70a4875e139b22cc7e349eb0ef7811f36",
+    "available": true,
+    "applicability": {
+      "anyOf": [
+        "**/test_*.py"
+      ],
+      "allOf": [
+        "**/workflow_schema.sql"
+      ],
+      "noneOf": [],
+      "anyFileSha256": [
+        {
+          "pattern": "**/test-requirements.lock",
+          "sha256": "872663ae3c96d4c74141eace1d05c076b257ae08751ae0bb11f4da3ed8ab6260"
+        }
+      ]
+    },
+    "runtimeEvidence": {
+      "receiptSha256": "7cece64357e3e20555d773032bf6180f3d23ebc52695ff5c52dfc7b474a36bb3",
+      "runtimeSha256": "8c35461b84505f911081f9a921af097b05c0ec8e4acadf5d235ec3e08e442186",
+      "observed": {
+        "kind": "python",
+        "executableVersion": "3.13.18",
+        "packages": {
+          "fastapi": "0.162.0",
+          "procrastinate": "3.10.0",
+          "psycopg": "3.3.8",
+          "postgresql-server": "17.11"
+        },
+        "serviceOperations": {},
+        "processControls": {
+          "noNewPrivileges": {
+            "supported": true,
+            "returnCode": 0,
+            "errno": 0
+          },
+          "seccompFilter": {
+            "supported": false,
+            "returnCode": -1,
+            "errno": 22
+          }
+        },
+        "executionContext": {
+          "processMachine": "x86_64",
+          "kernelRelease": "6.8.0-117-generic",
+          "kernelBootSha256": "301799edae64b968a31befdd6e5f85e6cf18045e28ebe3c05de7fcd6e1799958",
+          "uid": 65532
+        }
+      },
+      "observedAt": "2026-11-12T00:12:12.907669+00:00",
+      "evidenceLevel": "operator_pinned_local_runtime_observation",
+      "scope": "Observed immutable image metadata and the last recorded execution context; artifact-vendored dependencies can differ. Null package versions mean unobserved distribution metadata, not proof an import is impossible. Null service operations are unknown; an actual operation list describes only the installed SDK model. Not application, account, cloud or requirement acceptance. Process controls describe only the last observed execution context, not an image-only capability or current availability guarantee. Reobserve after worker, kernel, boot or policy changes. Null process controls are unobserved, not unsupported. Observation never grants permissions or changes safeguards.",
+      "executionContextSha256": "f6833dea17241b25c6b4d9b75b2f6f19434cfe9dd89f2c5ad995e6f14a943d68",
+      "processControlProbeSha256": "e92bcebad2fbbe84c50f27b17905f0084a75b52d63c94139a52e357880b9675d"
+    },
+    "runtime": {
+      "imageId": "sha256:bafc5723ac59b025d42337e4c965e6d7b89a07da3d18b49a9384cfa70274f8e2",
+      "platform": "linux/amd64",
+      "isolationProfile": "postgresql-local-v1",
+      "environment": {},
+      "executable": "/usr/local/bin/python3",
+      "testRunner": "unittest",
+      "executableScratchDirectories": [
+        "/dependencies"
+      ]
+    }
+  },
+  {
+    "id": "python-arm-controls",
+    "label": "Native ARM64 Python process-control observation",
+    "evidenceLevel": "local_container_check",
+    "contractSha256": "cc3c7ae1989c5c23a61dc46d5b314e5b237b8f52a2bdb48eb975e42e8ff586af",
+    "available": true,
+    "applicability": null,
+    "runtimeEvidence": {
+      "receiptSha256": "170dbf991712873e105417d434d144523ed687d15d0ce93fdb11647aa797f040",
+      "runtimeSha256": "c353e3720ef0fc86546eee5dbcac6496721350428cd7ab7c6fa58f241d80b027",
+      "observed": {
+        "kind": "python",
+        "executableVersion": "3.12.3",
+        "packages": {},
+        "serviceOperations": {},
+        "processControls": {
+          "noNewPrivileges": {
+            "supported": true,
+            "returnCode": 0,
+            "errno": 0
+          },
+          "seccompFilter": {
+            "supported": true,
+            "returnCode": 0,
+            "errno": 0
+          }
+        },
+        "executionContext": {
+          "processMachine": "aarch64",
+          "kernelRelease": "6.8.0-117-generic",
+          "kernelBootSha256": "301799edae64b968a31befdd6e5f85e6cf18045e28ebe3c05de7fcd6e1799958",
+          "uid": 65532
+        }
+      },
+      "observedAt": "2026-11-12T00:12:11.180603+00:00",
+      "evidenceLevel": "operator_pinned_local_runtime_observation",
+      "scope": "Observed immutable image metadata and the last recorded execution context; artifact-vendored dependencies can differ. Null package versions mean unobserved distribution metadata, not proof an import is impossible. Null service operations are unknown; an actual operation list describes only the installed SDK model. Not application, account, cloud or requirement acceptance. Process controls describe only the last observed execution context, not an image-only capability or current availability guarantee. Reobserve after worker, kernel, boot or policy changes. Null process controls are unobserved, not unsupported. Observation never grants permissions or changes safeguards.",
+      "executionContextSha256": "ae99a6f6987fb357b2407b441f2fc83799f4459d0061670b3f8fd71217504182",
+      "processControlProbeSha256": "e92bcebad2fbbe84c50f27b17905f0084a75b52d63c94139a52e357880b9675d"
+    },
+    "runtime": {
+      "imageId": "sha256:df7f71a8588253403dfa833c5c4aacc95ca340204a88d5483edd58131c7f1128",
+      "platform": "linux/arm64",
+      "isolationProfile": "standard-v1",
+      "environment": {},
+      "executable": "/usr/bin/python3",
+      "testRunner": "unittest",
+      "executableScratchDirectories": []
+    }
+  }
+]

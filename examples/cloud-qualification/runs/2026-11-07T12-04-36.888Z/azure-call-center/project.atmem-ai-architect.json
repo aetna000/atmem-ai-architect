@@ -1,0 +1,595 @@
+{
+  "format": "atmem.ai-architect.project",
+  "formatVersion": "2.3.0",
+  "meta": {
+    "id": "5d6fa5f7-215a-4f73-85b2-2f929c36d07e",
+    "name": "Azure agent-assist for synthetic support calls",
+    "createdAt": "2026-11-07T12:11:23.060Z",
+    "updatedAt": "2026-11-07T12:11:23.060Z",
+    "revision": 2,
+    "generator": "atmem-ai-architect 0.2.0"
+  },
+  "design": {
+    "provider": "azure",
+    "nodes": [
+      {
+        "id": "caller",
+        "type": "resource",
+        "position": {
+          "x": 50,
+          "y": 695
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Synthetic caller",
+          "provider": "tools",
+          "kind": "source",
+          "description": "Test caller placing synthetic inbound calls. Outside provisioning scope.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "poc": true,
+          "role": "human"
+        }
+      },
+      {
+        "id": "acs",
+        "type": "resource",
+        "position": {
+          "x": 470,
+          "y": 695
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Call intake & audio stream",
+          "provider": "azure",
+          "kind": "stream",
+          "description": "Answers inbound calls only and plays the consent prompt. Streams audio only after consent is recorded. Outbound calling is not enabled.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "ingest",
+          "service": "Azure Communication Services (Call Automation, media streaming)"
+        }
+      },
+      {
+        "id": "consent",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 695
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Consent gate",
+          "provider": "azure",
+          "kind": "guard",
+          "description": "Records the caller's consent decision with a timestamp and call ID in Cosmos DB. Blocks transcription when consent is refused or missing (fail closed).",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "guard",
+          "service": "Azure Functions"
+        }
+      },
+      {
+        "id": "speech",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 340
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Real-time transcription",
+          "provider": "azure",
+          "kind": "predict",
+          "description": "Turns consented audio into a live transcript, labelled by speaker.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "model",
+          "service": "Azure AI Speech (real-time speech to text)"
+        }
+      },
+      {
+        "id": "pii",
+        "type": "resource",
+        "position": {
+          "x": 1730,
+          "y": 340
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "PII redaction",
+          "provider": "azure",
+          "kind": "guard",
+          "description": "Redacts personal data from transcript segments before any prompt, storage or display beyond the live call.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "guard",
+          "service": "Azure AI Language (PII detection)"
+        }
+      },
+      {
+        "id": "orchestrator",
+        "type": "resource",
+        "position": {
+          "x": 2150,
+          "y": 340
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Agent-assist orchestrator",
+          "provider": "azure",
+          "kind": "agent",
+          "description": "Retrieves knowledge for redacted transcript turns and asks the model for cited suggestions. Drafts the call summary and the CRM update. It has read-only tools and no CRM write or calling permission.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "app",
+          "service": "Azure Container Apps"
+        }
+      },
+      {
+        "id": "search",
+        "type": "resource",
+        "position": {
+          "x": 2570,
+          "y": 50
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Knowledge index",
+          "provider": "azure",
+          "kind": "tool",
+          "description": "Index of approved support articles used to ground suggestions. Source content is treated as untrusted data.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "index",
+          "service": "Azure AI Search"
+        }
+      },
+      {
+        "id": "llm",
+        "type": "resource",
+        "position": {
+          "x": 2570,
+          "y": 330
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Language model",
+          "provider": "azure",
+          "kind": "predict",
+          "description": "Model deployment for suggestions and summaries. It only receives redacted text. The model, region and quota are still to be chosen and checked.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "llm",
+          "service": "Azure OpenAI Service"
+        }
+      },
+      {
+        "id": "agentapp",
+        "type": "resource",
+        "position": {
+          "x": 2570,
+          "y": 610
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Agent desktop",
+          "provider": "azure",
+          "kind": "output",
+          "description": "Shows live suggestions with sources. The agent edits and approves the summary and CRM draft. Nothing is sent onward without approval.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "app",
+          "service": "Azure App Service (web app)"
+        }
+      },
+      {
+        "id": "entra",
+        "type": "resource",
+        "position": {
+          "x": 2150,
+          "y": 910
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Agent sign-in",
+          "provider": "azure",
+          "kind": "resource",
+          "description": "Signs agents in to the desktop app and assigns roles. The tenant is not yet confirmed.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "service": "Microsoft Entra ID"
+        }
+      },
+      {
+        "id": "agent",
+        "type": "resource",
+        "position": {
+          "x": 2990,
+          "y": 610
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Support agent",
+          "provider": "tools",
+          "kind": "tool",
+          "description": "Person who handles the call, approves the summary and manually saves the CRM draft.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "poc": true,
+          "role": "human"
+        }
+      },
+      {
+        "id": "crm",
+        "type": "resource",
+        "position": {
+          "x": 3410,
+          "y": 610
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Existing CRM",
+          "provider": "tools",
+          "kind": "tool",
+          "description": "The current CRM, product not yet named. The system has no write access. Only the agent saves the update.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "existing"
+        }
+      },
+      {
+        "id": "cosmos",
+        "type": "resource",
+        "position": {
+          "x": 2990,
+          "y": 1050
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Call records",
+          "provider": "azure",
+          "kind": "history",
+          "description": "Stores the consent record, redacted transcript, approved summary, CRM draft and approval audit trail. Retention is not yet decided.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "data",
+          "service": "Azure Cosmos DB"
+        }
+      },
+      {
+        "id": "monitor",
+        "type": "resource",
+        "position": {
+          "x": 2570,
+          "y": 890
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Monitoring & audit",
+          "provider": "azure",
+          "kind": "monitor",
+          "description": "Collects traces, latency, errors and redaction failures. Logs exclude raw PII.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "monitor",
+          "service": "Azure Monitor / Application Insights"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e-caller-acs",
+        "source": "caller",
+        "target": "acs",
+        "type": "smoothstep",
+        "label": "inbound call"
+      },
+      {
+        "id": "e-acs-consent",
+        "source": "acs",
+        "target": "consent",
+        "type": "smoothstep",
+        "label": "consent response"
+      },
+      {
+        "id": "e-consent-speech",
+        "source": "consent",
+        "target": "speech",
+        "type": "smoothstep",
+        "label": "audio only if consented"
+      },
+      {
+        "id": "e-consent-cosmos",
+        "source": "consent",
+        "target": "cosmos",
+        "type": "smoothstep",
+        "label": "consent record"
+      },
+      {
+        "id": "e-speech-pii",
+        "source": "speech",
+        "target": "pii",
+        "type": "smoothstep",
+        "label": "raw transcript segments"
+      },
+      {
+        "id": "e-pii-orch",
+        "source": "pii",
+        "target": "orchestrator",
+        "type": "smoothstep",
+        "label": "redacted transcript"
+      },
+      {
+        "id": "e-orch-search",
+        "source": "orchestrator",
+        "target": "search",
+        "type": "smoothstep",
+        "label": "retrieve articles"
+      },
+      {
+        "id": "e-orch-llm",
+        "source": "orchestrator",
+        "target": "llm",
+        "type": "smoothstep",
+        "label": "grounded prompt (redacted)"
+      },
+      {
+        "id": "e-orch-app",
+        "source": "orchestrator",
+        "target": "agentapp",
+        "type": "smoothstep",
+        "label": "cited suggestions, summary & CRM drafts"
+      },
+      {
+        "id": "e-entra-app",
+        "source": "entra",
+        "target": "agentapp",
+        "type": "smoothstep",
+        "label": "agent sign-in"
+      },
+      {
+        "id": "e-app-agent",
+        "source": "agentapp",
+        "target": "agent",
+        "type": "smoothstep",
+        "label": "review & approve"
+      },
+      {
+        "id": "e-app-cosmos",
+        "source": "agentapp",
+        "target": "cosmos",
+        "type": "smoothstep",
+        "label": "approved summary + audit"
+      },
+      {
+        "id": "e-agent-crm",
+        "source": "agent",
+        "target": "crm",
+        "type": "smoothstep",
+        "label": "manual save of approved draft"
+      },
+      {
+        "id": "e-orch-monitor",
+        "source": "orchestrator",
+        "target": "monitor",
+        "type": "smoothstep",
+        "label": "telemetry"
+      }
+    ]
+  },
+  "discovery": {
+    "problem": "",
+    "brief": {
+      "application": "Use Azure for this synthetic architecture qualification. Assist an agent during a synthetic support call. Include consent, audio ingestion, transcription, PII redaction, grounded agent suggestions, an approved call summary and a draft update to an existing CRM. Do not place calls or write CRM records automatically. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+      "cloud": "Azure"
+    },
+    "facts": [
+      {
+        "id": "fact-9d836e70",
+        "name": "cloud.preference",
+        "value": "azure",
+        "unit": "provider",
+        "text": "Use Azure for this synthetic architecture qualification. Assist an agent during a synthetic support call. Include consent, audio ingestion, transcription, PII redaction, grounded agent suggestions, an approved call summary and a draft update to an existing CRM. Do not place calls or write CRM record",
+        "madeAt": "2026-11-07"
+      },
+      {
+        "id": "fact-74ebc056",
+        "name": "data.sensitive",
+        "value": true,
+        "unit": "flag",
+        "text": "Use Azure for this synthetic architecture qualification. Assist an agent during a synthetic support call. Include consent, audio ingestion, transcription, PII redaction, grounded agent suggestions, an approved call summary and a draft update to an existing CRM. Do not place calls or write CRM record",
+        "madeAt": "2026-11-07"
+      }
+    ],
+    "workflow": "agentic-automation",
+    "asked": [],
+    "lastAsked": {
+      "id": "agentic-automation:0",
+      "topic": "systems",
+      "question": "Which tools should it be allowed to use?",
+      "beginner": "For example “read and update tickets, send emails, look up orders”.",
+      "why": "It shapes the An agent with tools design."
+    }
+  },
+  "requirements": [
+    {
+      "id": "ai-consent-gate",
+      "kind": "functional",
+      "category": "compliance",
+      "statement": "Proposed: no audio may be transcribed or stored until the caller's consent is recorded. Missing or refused consent stops processing.",
+      "rationale": "Recording without consent creates legal risk. A fail-closed gate makes this testable.",
+      "basis": "User: \"Include consent, audio ingestion, transcription\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "acs",
+        "consent",
+        "speech",
+        "cosmos"
+      ]
+    },
+    {
+      "id": "ai-redact-before-model",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Proposed: transcript text is redacted for PII before it reaches the model, storage or logs.",
+      "rationale": "Stops personal data from leaking into prompts, records and logs.",
+      "basis": "User: \"PII redaction\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "pii",
+        "llm",
+        "cosmos",
+        "monitor"
+      ]
+    },
+    {
+      "id": "ai-human-approval",
+      "kind": "functional",
+      "category": "security",
+      "statement": "Proposed: the system never places calls or writes CRM records. The summary and CRM draft need the agent's approval, and only the agent saves to the CRM.",
+      "rationale": "Prevents unreviewed AI output from changing customer records.",
+      "basis": "User: \"Do not place calls or write CRM records automatically.\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "agentapp",
+        "agent",
+        "crm",
+        "orchestrator"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use Azure for this synthetic architecture qualification",
+      "options": "",
+      "decision": "azure",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.azure-agent-assist-for-synthetic-support-calls-first-concrete-sketch",
+      "title": "Azure agent-assist for synthetic support calls (first concrete sketch)",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: inbound synthetic call → consent gate → real-time transcription → PII redaction → grounded suggestions to a human agent → agent-approved summary and CRM draft. The system never makes outbound calls or writes to the CRM. The agent copies the approved draft into the existing CRM themselves. Assumptions: region not chosen; service availability, model access and quotas not checked; Terraform generator coverage for these Azure services is not native, so engineering is required. Local tests use mocked speech, PII and model behaviour only.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "extensions": {
+    "requirementNumbers": {
+      "drv-data-access": 1,
+      "drv-data-location": 2,
+      "ai-consent-gate": 3,
+      "ai-redact-before-model": 4,
+      "ai-human-approval": 5
+    },
+    "choices": {},
+    "conceptSig": null
+  }
+}

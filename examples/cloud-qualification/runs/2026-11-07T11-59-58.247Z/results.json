@@ -1,0 +1,77 @@
+[
+  {
+    "provider": "aws",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "emulation": "passed",
+    "mentorResponded": true,
+    "components": [
+      {
+        "id": "operator",
+        "binding": "aws-iam-principal"
+      },
+      {
+        "id": "doc-bucket",
+        "service": "Amazon S3"
+      }
+    ],
+    "passed": true
+  },
+  {
+    "provider": "azure",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "emulation": "passed",
+    "mentorResponded": true,
+    "components": [
+      {
+        "id": "caller",
+        "binding": "cloud-storage-principal"
+      },
+      {
+        "id": "blob-store",
+        "service": "Azure Blob Storage",
+        "implementation": "private-object-storage"
+      }
+    ],
+    "passed": true
+  },
+  {
+    "provider": "gcp",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "emulation": "passed",
+    "mentorResponded": true,
+    "components": [
+      {
+        "id": "caller",
+        "binding": "cloud-storage-principal"
+      },
+      {
+        "id": "bucket",
+        "service": "Google Cloud Storage",
+        "implementation": "private-object-storage"
+      }
+    ],
+    "passed": true
+  },
+  {
+    "provider": "ibm",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "emulation": "passed",
+    "mentorResponded": true,
+    "components": [
+      {
+        "id": "service-identity",
+        "binding": "cloud-storage-principal"
+      },
+      {
+        "id": "doc-store",
+        "service": "IBM Cloud Object Storage",
+        "implementation": "private-object-storage"
+      }
+    ],
+    "passed": true
+  }
+]

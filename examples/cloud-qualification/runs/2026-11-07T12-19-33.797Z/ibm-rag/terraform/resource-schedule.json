@@ -1,0 +1,534 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "operator",
+      "address": "block_6f70657261746f72",
+      "label": "Content operator",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "cos",
+      "address": "block_636f73",
+      "label": "Source documents",
+      "provider": "ibm",
+      "service": "IBM Cloud Object Storage",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "operator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "ingest",
+      "address": "block_696e67657374",
+      "label": "Ingestion job",
+      "provider": "ibm",
+      "service": "IBM Cloud Code Engine (job)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "cos"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "catalog",
+      "address": "block_636174616c6f67",
+      "label": "RAG catalog",
+      "provider": "ibm",
+      "service": "IBM Cloudant",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "ingest",
+        "ragapi"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "user",
+      "address": "block_75736572",
+      "label": "Employee browser",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "webapp",
+      "address": "block_776562617070",
+      "label": "Web application",
+      "provider": "ibm",
+      "service": "IBM Cloud Code Engine (app)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "user"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "appid",
+      "address": "block_6170706964",
+      "label": "Identity",
+      "provider": "ibm",
+      "service": "IBM Cloud App ID",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "webapp"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "ragapi",
+      "address": "block_726167617069",
+      "label": "RAG API",
+      "provider": "ibm",
+      "service": "IBM Cloud Code Engine (app)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "webapp",
+        "appid"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "llm",
+      "address": "block_6c6c6d",
+      "label": "Model runtime",
+      "provider": "ibm",
+      "service": "IBM watsonx.ai",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "ragapi"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "logs",
+      "address": "block_6c6f6773",
+      "label": "Audit & logs",
+      "provider": "ibm",
+      "service": "IBM Cloud Logs",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "ragapi"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e-op-cos",
+      "source": "operator",
+      "target": "cos",
+      "data": "upload docs + ACLs",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-cos-ingest",
+      "source": "cos",
+      "target": "ingest",
+      "data": "changed objects",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-ingest-cat",
+      "source": "ingest",
+      "target": "catalog",
+      "data": "conditional upsert/delete",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-user-web",
+      "source": "user",
+      "target": "webapp",
+      "data": "HTTPS",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-web-appid",
+      "source": "webapp",
+      "target": "appid",
+      "data": "OIDC sign-in (PKCE)",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-web-api",
+      "source": "webapp",
+      "target": "ragapi",
+      "data": "question + bearer token",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-appid-api",
+      "source": "appid",
+      "target": "ragapi",
+      "data": "token validation keys",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-api-cat",
+      "source": "ragapi",
+      "target": "catalog",
+      "data": "ACL-filtered keyword search + recheck",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-api-llm",
+      "source": "ragapi",
+      "target": "llm",
+      "data": "permitted passages only",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-api-logs",
+      "source": "ragapi",
+      "target": "logs",
+      "data": "audit events",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Content operator: Existing — reference/import plan needed.",
+    "Source documents: Implementation needed.",
+    "Ingestion job: Implementation needed.",
+    "RAG catalog: Implementation needed.",
+    "Employee browser: Existing — reference/import plan needed.",
+    "Web application: Implementation needed.",
+    "Identity: Implementation needed.",
+    "RAG API: Implementation needed.",
+    "Model runtime: Implementation needed.",
+    "Audit & logs: Implementation needed.",
+    "Wire operator → cos: implement data flow, access policy and acceptance test.",
+    "Wire cos → ingest: implement data flow, access policy and acceptance test.",
+    "Wire ingest → catalog: implement data flow, access policy and acceptance test.",
+    "Wire user → webapp: implement data flow, access policy and acceptance test.",
+    "Wire webapp → appid: implement data flow, access policy and acceptance test.",
+    "Wire webapp → ragapi: implement data flow, access policy and acceptance test.",
+    "Wire appid → ragapi: implement data flow, access policy and acceptance test.",
+    "Wire ragapi → catalog: implement data flow, access policy and acceptance test.",
+    "Wire ragapi → llm: implement data flow, access policy and acceptance test.",
+    "Wire ragapi → logs: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "resource-block_6f70657261746f72",
+      "componentIds": [
+        "operator"
+      ],
+      "taskId": "TASK-RESOURCE-6f70657261746f72",
+      "message": "Content operator: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_636f73",
+      "componentIds": [
+        "cos"
+      ],
+      "taskId": "TASK-RESOURCE-636f73",
+      "message": "Source documents: Implementation needed."
+    },
+    {
+      "id": "resource-block_696e67657374",
+      "componentIds": [
+        "ingest"
+      ],
+      "taskId": "TASK-RESOURCE-696e67657374",
+      "message": "Ingestion job: Implementation needed."
+    },
+    {
+      "id": "resource-block_636174616c6f67",
+      "componentIds": [
+        "catalog"
+      ],
+      "taskId": "TASK-RESOURCE-636174616c6f67",
+      "message": "RAG catalog: Implementation needed."
+    },
+    {
+      "id": "resource-block_75736572",
+      "componentIds": [
+        "user"
+      ],
+      "taskId": "TASK-RESOURCE-75736572",
+      "message": "Employee browser: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_776562617070",
+      "componentIds": [
+        "webapp"
+      ],
+      "taskId": "TASK-RESOURCE-776562617070",
+      "message": "Web application: Implementation needed."
+    },
+    {
+      "id": "resource-block_6170706964",
+      "componentIds": [
+        "appid"
+      ],
+      "taskId": "TASK-RESOURCE-6170706964",
+      "message": "Identity: Implementation needed."
+    },
+    {
+      "id": "resource-block_726167617069",
+      "componentIds": [
+        "ragapi"
+      ],
+      "taskId": "TASK-RESOURCE-726167617069",
+      "message": "RAG API: Implementation needed."
+    },
+    {
+      "id": "resource-block_6c6c6d",
+      "componentIds": [
+        "llm"
+      ],
+      "taskId": "TASK-RESOURCE-6c6c6d",
+      "message": "Model runtime: Implementation needed."
+    },
+    {
+      "id": "resource-block_6c6f6773",
+      "componentIds": [
+        "logs"
+      ],
+      "taskId": "TASK-RESOURCE-6c6f6773",
+      "message": "Audit & logs: Implementation needed."
+    },
+    {
+      "id": "connection-652d6f702d636f73",
+      "edgeIds": [
+        "e-op-cos"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6f702d636f73",
+      "message": "Wire operator → cos: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d636f732d696e67657374",
+      "edgeIds": [
+        "e-cos-ingest"
+      ],
+      "taskId": "TASK-INTEGRATION-652d636f732d696e67657374",
+      "message": "Wire cos → ingest: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d696e676573742d636174",
+      "edgeIds": [
+        "e-ingest-cat"
+      ],
+      "taskId": "TASK-INTEGRATION-652d696e676573742d636174",
+      "message": "Wire ingest → catalog: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d757365722d776562",
+      "edgeIds": [
+        "e-user-web"
+      ],
+      "taskId": "TASK-INTEGRATION-652d757365722d776562",
+      "message": "Wire user → webapp: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d7765622d6170706964",
+      "edgeIds": [
+        "e-web-appid"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7765622d6170706964",
+      "message": "Wire webapp → appid: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d7765622d617069",
+      "edgeIds": [
+        "e-web-api"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7765622d617069",
+      "message": "Wire webapp → ragapi: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d61707069642d617069",
+      "edgeIds": [
+        "e-appid-api"
+      ],
+      "taskId": "TASK-INTEGRATION-652d61707069642d617069",
+      "message": "Wire appid → ragapi: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6170692d636174",
+      "edgeIds": [
+        "e-api-cat"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6170692d636174",
+      "message": "Wire ragapi → catalog: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6170692d6c6c6d",
+      "edgeIds": [
+        "e-api-llm"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6170692d6c6c6d",
+      "message": "Wire ragapi → llm: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6170692d6c6f6773",
+      "edgeIds": [
+        "e-api-logs"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6170692d6c6f6773",
+      "message": "Wire ragapi → logs: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

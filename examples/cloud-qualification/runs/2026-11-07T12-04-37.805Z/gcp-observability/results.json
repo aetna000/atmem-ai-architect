@@ -1,0 +1,46 @@
+{
+  "provider": "gcp-observability",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Redact secrets before model input",
+    "Link conclusions to exact trace or log IDs",
+    "Prompt injection in a log cannot issue tool calls",
+    "Missing spans yield uncertainty rather than invented causes",
+    "Repeated ingestion preserves a consistent incident timeline"
+  ],
+  "components": [
+    {
+      "id": "svc-apps"
+    },
+    {
+      "id": "collect",
+      "service": "Cloud Logging + Cloud Trace (log sink to Pub/Sub)"
+    },
+    {
+      "id": "redact",
+      "service": "Cloud Run job + Sensitive Data Protection"
+    },
+    {
+      "id": "store",
+      "service": "BigQuery (redacted logs + spans, partitioned by time)"
+    },
+    {
+      "id": "analyst",
+      "service": "Cloud Run service (service account, read-only BigQuery)"
+    },
+    {
+      "id": "model",
+      "service": "Vertex AI Gemini (model ID to be selected)"
+    },
+    {
+      "id": "operator"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

@@ -1,0 +1,583 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "sim",
+      "address": "block_73696d",
+      "label": "Synthetic sensor simulator",
+      "provider": "tools",
+      "service": "Storage or existing data connector",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "pubsub",
+      "address": "block_707562737562",
+      "label": "Telemetry ingest topic",
+      "provider": "gcp",
+      "service": "Pub/Sub",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "sim"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "archive",
+      "address": "block_61726368697665",
+      "label": "Raw event archive",
+      "provider": "gcp",
+      "service": "Cloud Storage",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "dataflow"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "registry_db",
+      "address": "block_72656769737472795f6462",
+      "label": "Device registry",
+      "provider": "gcp",
+      "service": "Firestore",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "dataflow"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "dataflow",
+      "address": "block_64617461666c6f77",
+      "label": "Validation and windowing pipeline",
+      "provider": "gcp",
+      "service": "Dataflow",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "pubsub"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "dlq",
+      "address": "block_646c71",
+      "label": "Rejected events topic",
+      "provider": "gcp",
+      "service": "Pub/Sub",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "dataflow"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "vertex",
+      "address": "block_766572746578",
+      "label": "Anomaly model endpoint",
+      "provider": "gcp",
+      "service": "Vertex AI Endpoints",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "dataflow",
+        "modelreg"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "modelreg",
+      "address": "block_6d6f64656c726567",
+      "label": "Model registry",
+      "provider": "gcp",
+      "service": "Vertex AI Model Registry",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "bq",
+      "address": "block_6271",
+      "label": "Anomaly results",
+      "provider": "gcp",
+      "service": "BigQuery",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "dataflow"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "monitoring",
+      "address": "block_6d6f6e69746f72696e67",
+      "label": "Operator alerting",
+      "provider": "gcp",
+      "service": "Cloud Monitoring",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "bq",
+        "dlq"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "operator",
+      "address": "block_6f70657261746f72",
+      "label": "Operator",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "monitoring"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e-sim-pubsub",
+      "source": "sim",
+      "target": "pubsub",
+      "data": "publish telemetry",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-pubsub-df",
+      "source": "pubsub",
+      "target": "dataflow",
+      "data": "streaming pull / replay via seek",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-df-archive",
+      "source": "dataflow",
+      "target": "archive",
+      "data": "archive raw events",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-df-reg",
+      "source": "dataflow",
+      "target": "registry_db",
+      "data": "device and unit lookup",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-df-dlq",
+      "source": "dataflow",
+      "target": "dlq",
+      "data": "rejected with reason",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-df-vertex",
+      "source": "dataflow",
+      "target": "vertex",
+      "data": "predict feature window",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-reg-vertex",
+      "source": "modelreg",
+      "target": "vertex",
+      "data": "deploy model version",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-df-bq",
+      "source": "dataflow",
+      "target": "bq",
+      "data": "write result with idempotent key",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-bq-mon",
+      "source": "bq",
+      "target": "monitoring",
+      "data": "anomaly metric",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-dlq-mon",
+      "source": "dlq",
+      "target": "monitoring",
+      "data": "reject rate",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-mon-op",
+      "source": "monitoring",
+      "target": "operator",
+      "data": "alert notification",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Synthetic sensor simulator: Existing — reference/import plan needed.",
+    "Telemetry ingest topic: Implementation needed.",
+    "Raw event archive: Implementation needed.",
+    "Device registry: Implementation needed.",
+    "Validation and windowing pipeline: Implementation needed.",
+    "Rejected events topic: Implementation needed.",
+    "Anomaly model endpoint: Implementation needed.",
+    "Model registry: Implementation needed.",
+    "Anomaly results: Implementation needed.",
+    "Operator alerting: Implementation needed.",
+    "Operator: Existing — reference/import plan needed.",
+    "Wire sim → pubsub: implement data flow, access policy and acceptance test.",
+    "Wire pubsub → dataflow: implement data flow, access policy and acceptance test.",
+    "Wire dataflow → archive: implement data flow, access policy and acceptance test.",
+    "Wire dataflow → registry_db: implement data flow, access policy and acceptance test.",
+    "Wire dataflow → dlq: implement data flow, access policy and acceptance test.",
+    "Wire dataflow → vertex: implement data flow, access policy and acceptance test.",
+    "Wire modelreg → vertex: implement data flow, access policy and acceptance test.",
+    "Wire dataflow → bq: implement data flow, access policy and acceptance test.",
+    "Wire bq → monitoring: implement data flow, access policy and acceptance test.",
+    "Wire dlq → monitoring: implement data flow, access policy and acceptance test.",
+    "Wire monitoring → operator: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "resource-block_73696d",
+      "componentIds": [
+        "sim"
+      ],
+      "taskId": "TASK-RESOURCE-73696d",
+      "message": "Synthetic sensor simulator: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_707562737562",
+      "componentIds": [
+        "pubsub"
+      ],
+      "taskId": "TASK-RESOURCE-707562737562",
+      "message": "Telemetry ingest topic: Implementation needed."
+    },
+    {
+      "id": "resource-block_61726368697665",
+      "componentIds": [
+        "archive"
+      ],
+      "taskId": "TASK-RESOURCE-61726368697665",
+      "message": "Raw event archive: Implementation needed."
+    },
+    {
+      "id": "resource-block_72656769737472795f6462",
+      "componentIds": [
+        "registry_db"
+      ],
+      "taskId": "TASK-RESOURCE-72656769737472795f6462",
+      "message": "Device registry: Implementation needed."
+    },
+    {
+      "id": "resource-block_64617461666c6f77",
+      "componentIds": [
+        "dataflow"
+      ],
+      "taskId": "TASK-RESOURCE-64617461666c6f77",
+      "message": "Validation and windowing pipeline: Implementation needed."
+    },
+    {
+      "id": "resource-block_646c71",
+      "componentIds": [
+        "dlq"
+      ],
+      "taskId": "TASK-RESOURCE-646c71",
+      "message": "Rejected events topic: Implementation needed."
+    },
+    {
+      "id": "resource-block_766572746578",
+      "componentIds": [
+        "vertex"
+      ],
+      "taskId": "TASK-RESOURCE-766572746578",
+      "message": "Anomaly model endpoint: Implementation needed."
+    },
+    {
+      "id": "resource-block_6d6f64656c726567",
+      "componentIds": [
+        "modelreg"
+      ],
+      "taskId": "TASK-RESOURCE-6d6f64656c726567",
+      "message": "Model registry: Implementation needed."
+    },
+    {
+      "id": "resource-block_6271",
+      "componentIds": [
+        "bq"
+      ],
+      "taskId": "TASK-RESOURCE-6271",
+      "message": "Anomaly results: Implementation needed."
+    },
+    {
+      "id": "resource-block_6d6f6e69746f72696e67",
+      "componentIds": [
+        "monitoring"
+      ],
+      "taskId": "TASK-RESOURCE-6d6f6e69746f72696e67",
+      "message": "Operator alerting: Implementation needed."
+    },
+    {
+      "id": "resource-block_6f70657261746f72",
+      "componentIds": [
+        "operator"
+      ],
+      "taskId": "TASK-RESOURCE-6f70657261746f72",
+      "message": "Operator: Existing — reference/import plan needed."
+    },
+    {
+      "id": "connection-652d73696d2d707562737562",
+      "edgeIds": [
+        "e-sim-pubsub"
+      ],
+      "taskId": "TASK-INTEGRATION-652d73696d2d707562737562",
+      "message": "Wire sim → pubsub: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d7075627375622d6466",
+      "edgeIds": [
+        "e-pubsub-df"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7075627375622d6466",
+      "message": "Wire pubsub → dataflow: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d64662d61726368697665",
+      "edgeIds": [
+        "e-df-archive"
+      ],
+      "taskId": "TASK-INTEGRATION-652d64662d61726368697665",
+      "message": "Wire dataflow → archive: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d64662d726567",
+      "edgeIds": [
+        "e-df-reg"
+      ],
+      "taskId": "TASK-INTEGRATION-652d64662d726567",
+      "message": "Wire dataflow → registry_db: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d64662d646c71",
+      "edgeIds": [
+        "e-df-dlq"
+      ],
+      "taskId": "TASK-INTEGRATION-652d64662d646c71",
+      "message": "Wire dataflow → dlq: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d64662d766572746578",
+      "edgeIds": [
+        "e-df-vertex"
+      ],
+      "taskId": "TASK-INTEGRATION-652d64662d766572746578",
+      "message": "Wire dataflow → vertex: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d7265672d766572746578",
+      "edgeIds": [
+        "e-reg-vertex"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7265672d766572746578",
+      "message": "Wire modelreg → vertex: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d64662d6271",
+      "edgeIds": [
+        "e-df-bq"
+      ],
+      "taskId": "TASK-INTEGRATION-652d64662d6271",
+      "message": "Wire dataflow → bq: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d62712d6d6f6e",
+      "edgeIds": [
+        "e-bq-mon"
+      ],
+      "taskId": "TASK-INTEGRATION-652d62712d6d6f6e",
+      "message": "Wire bq → monitoring: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d646c712d6d6f6e",
+      "edgeIds": [
+        "e-dlq-mon"
+      ],
+      "taskId": "TASK-INTEGRATION-652d646c712d6d6f6e",
+      "message": "Wire dlq → monitoring: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6d6f6e2d6f70",
+      "edgeIds": [
+        "e-mon-op"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6d6f6e2d6f70",
+      "message": "Wire monitoring → operator: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "provider": "aws-rag",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "passed",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Denied documents never reach the model",
+    "Known questions cite current source revisions",
+    "Unsupported questions abstain",
+    "Updates and deletions change retrieval",
+    "Revocation during generation suppresses the answer"
+  ],
+  "components": [
+    {
+      "id": "browser",
+      "binding": "web-browser"
+    },
+    {
+      "id": "web",
+      "service": "Amazon CloudFront",
+      "implementation": "rag-web-app"
+    },
+    {
+      "id": "cognito",
+      "service": "Amazon Cognito",
+      "implementation": "rag-user-pool"
+    },
+    {
+      "id": "api",
+      "service": "Amazon API Gateway",
+      "implementation": "iam-rag-api"
+    },
+    {
+      "id": "rag",
+      "service": "AWS Lambda",
+      "implementation": "bounded-keyword-rag"
+    },
+    {
+      "id": "catalog",
+      "service": "Amazon DynamoDB",
+      "implementation": "bounded-rag-catalog"
+    },
+    {
+      "id": "bedrock",
+      "service": "Amazon Bedrock",
+      "binding": "aws-bedrock-model"
+    }
+  ],
+  "passed": true,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

@@ -1,0 +1,110 @@
+{
+  "format": "enterprise-application-files-v1",
+  "files": [
+    "enterprise_identity.py",
+    "enterprise_sources.py",
+    "enterprise_knowledge.py",
+    "enterprise_auth_store.py",
+    "enterprise_auth_schema.sql",
+    "enterprise_oauth.py",
+    "enterprise_sessions.py",
+    "enterprise_http.py",
+    "enterprise_web.py",
+    "enterprise_queries.py",
+    "enterprise_queries_schema.sql",
+    "enterprise_query_service.py",
+    "enterprise_audit.py",
+    "enterprise_audit_schema.sql",
+    "enterprise_models.py",
+    "enterprise_secrets.py",
+    "enterprise_configuration.py",
+    "enterprise_native.py",
+    "enterprise_worker.py",
+    "enterprise_operator.py",
+    "workflow_connection.py",
+    "workflow_errors.py",
+    "enterprise_google_jobs.py",
+    "enterprise_google_transfer.py",
+    "enterprise-aws-task-template.json",
+    "enterprise_aws_jobs.py",
+    "enterprise_aws_objects.py",
+    "enterprise_aws_transfer.py",
+    "enterprise_aws_hosts.py",
+    "enterprise_aws_host_probe.py",
+    "enterprise_document_jobs.py",
+    "enterprise_document_jobs_schema.sql",
+    "aws_json_model.py",
+    "azure_structured.py",
+    "gcp_structured.py",
+    "ibm_structured.py",
+    "structured_output.py",
+    "structured_http.py",
+    "policy_review.py",
+    "enterprise_extraction_cache.py",
+    "enterprise_extraction_schema.sql",
+    "enterprise_parser_transport.py",
+    "enterprise_document_contract.py",
+    "enterprise_document_job.py",
+    "public_faq.py",
+    "faq-output-contract.json",
+    "enterprise-web.html",
+    "enterprise-web-app.js",
+    "enterprise-web.css",
+    "enterprise-web-notices.txt",
+    "enterprise-web-lock.json"
+  ],
+  "providerFiles": {
+    "aws": [
+      "rds-global-ca.pem",
+      "rds-ca-source.json"
+    ],
+    "azure": [],
+    "gcp": [],
+    "ibm": []
+  },
+  "entrypoints": {
+    "api": [
+      "python",
+      "-I",
+      "/app/enterprise_native.py",
+      "api"
+    ],
+    "worker": [
+      "python",
+      "-I",
+      "/app/enterprise_worker.py"
+    ],
+    "operator": [
+      "python",
+      "-I",
+      "/app/enterprise_operator.py"
+    ]
+  },
+  "nativeDocumentWorkerProviders": [
+    "aws",
+    "gcp"
+  ],
+  "scope": "Application source inventory and owned entrypoints; not whole-project, native account or deployment acceptance.",
+  "parserFiles": [
+    "enterprise_document_contract.py",
+    "EnterpriseDocument.java",
+    "enterprise_document.py",
+    "enterprise_document_cli.py",
+    "enterprise_document_job.py",
+    "enterprise_parser_service.py",
+    "enterprise-document.Dockerfile",
+    "enterprise-document-lock.json"
+  ],
+  "pdfParserFiles": [
+    "invoice_document.py",
+    "invoice_extraction.py",
+    "structured_output.py",
+    "invoice_parser_cli.py",
+    "invoice_parser_service.py",
+    "invoice_parser_identity.py",
+    "parser-requirements.lock",
+    "invoice-parser-python-lock.json",
+    "invoice-parser-lock.json",
+    "invoice-parser.Dockerfile"
+  ]
+}

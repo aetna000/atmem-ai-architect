@@ -1,0 +1,54 @@
+{
+  "provider": "gcp-chatbot",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "One user cannot read another conversation",
+    "Context and response sizes are bounded",
+    "Model outage produces a recoverable response",
+    "Deleting a conversation removes its stored context",
+    "Escalation retains the approved conversation context"
+  ],
+  "components": [
+    {
+      "id": "user"
+    },
+    {
+      "id": "idp",
+      "service": "Identity Platform"
+    },
+    {
+      "id": "app",
+      "service": "Cloud Run"
+    },
+    {
+      "id": "context",
+      "service": "Cloud Run (in-app module)"
+    },
+    {
+      "id": "state",
+      "service": "Firestore (Native mode)"
+    },
+    {
+      "id": "model",
+      "service": "Vertex AI (Gemini)"
+    },
+    {
+      "id": "escalate",
+      "service": "Pub/Sub"
+    },
+    {
+      "id": "human"
+    },
+    {
+      "id": "ops",
+      "service": "Cloud Logging & Cloud Monitoring"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

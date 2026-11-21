@@ -1,0 +1,388 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "caller-alice",
+      "address": "block_63616c6c65722d616c696365",
+      "label": "Alice (synthetic IAM caller)",
+      "provider": "tools",
+      "service": "Existing AWS IAM principal",
+      "selection": "Explicit principal binding",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing IAM principal — required ARN input generated",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": true,
+      "implemented": true
+    },
+    {
+      "id": "caller-bob",
+      "address": "block_63616c6c65722d626f62",
+      "label": "Bob (synthetic IAM caller)",
+      "provider": "tools",
+      "service": "Existing AWS IAM principal",
+      "selection": "Explicit principal binding",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing IAM principal — required ARN input generated",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": true,
+      "implemented": true
+    },
+    {
+      "id": "rag-api",
+      "address": "block_7261672d617069",
+      "label": "IAM-authenticated RAG API",
+      "provider": "aws",
+      "service": "Amazon API Gateway",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "ap-southeast-2 (candidate, not approved)",
+      "resources": [
+        "aws_apigatewayv2_api"
+      ],
+      "costDrivers": "API requests, transfer and access logs",
+      "dependencies": [
+        "caller-alice",
+        "caller-bob"
+      ],
+      "terraform": "Bounded IAM-authenticated RAG implementation generated",
+      "foundation": false,
+      "compute": false,
+      "api": true,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": true
+    },
+    {
+      "id": "rag-lambda",
+      "address": "block_7261672d6c616d626461",
+      "label": "Bounded keyword RAG",
+      "provider": "aws",
+      "service": "AWS Lambda",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "ap-southeast-2 (candidate, not approved)",
+      "resources": [
+        "aws_lambda_function",
+        "aws_iam_role"
+      ],
+      "costDrivers": "Requests, duration, memory and logs",
+      "dependencies": [
+        "rag-api"
+      ],
+      "terraform": "Bounded IAM-authenticated RAG implementation generated",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": true
+    },
+    {
+      "id": "rag-catalog",
+      "address": "block_7261672d636174616c6f67",
+      "label": "Document and ACL catalog",
+      "provider": "aws",
+      "service": "Amazon DynamoDB",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "ap-southeast-2 (candidate, not approved)",
+      "resources": [
+        "aws_dynamodb_table"
+      ],
+      "costDrivers": "Read/write requests, storage and backup",
+      "dependencies": [
+        "rag-lambda"
+      ],
+      "terraform": "Bounded IAM-authenticated RAG implementation generated",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": true
+    },
+    {
+      "id": "bedrock-model",
+      "address": "block_626564726f636b2d6d6f64656c",
+      "label": "Foundation model",
+      "provider": "aws",
+      "service": "Amazon Bedrock",
+      "selection": "Explicit service field; deployment review required",
+      "existing": true,
+      "region": "ap-southeast-2 (candidate, not approved)",
+      "resources": [],
+      "costDrivers": "Model-specific input/output tokens; guardrails, embeddings and knowledge bases separately",
+      "dependencies": [
+        "rag-lambda"
+      ],
+      "terraform": "Bounded IAM-authenticated RAG implementation generated",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": true
+    }
+  ],
+  "connections": [
+    {
+      "id": "e-alice-api",
+      "source": "caller-alice",
+      "target": "rag-api",
+      "data": "SigV4 question",
+      "generated": true,
+      "status": "Scoped access policy generated; account and runtime verification required"
+    },
+    {
+      "id": "e-bob-api",
+      "source": "caller-bob",
+      "target": "rag-api",
+      "data": "SigV4 question",
+      "generated": true,
+      "status": "Scoped access policy generated; account and runtime verification required"
+    },
+    {
+      "id": "e-api-lambda",
+      "source": "rag-api",
+      "target": "rag-lambda",
+      "data": "invoke with caller identity",
+      "generated": true,
+      "status": "Scoped access policy generated; account and runtime verification required"
+    },
+    {
+      "id": "e-lambda-catalog",
+      "source": "rag-lambda",
+      "target": "rag-catalog",
+      "data": "read ACL-filtered evidence",
+      "generated": true,
+      "status": "Scoped access policy generated; account and runtime verification required"
+    },
+    {
+      "id": "e-lambda-model",
+      "source": "rag-lambda",
+      "target": "bedrock-model",
+      "data": "Converse with permitted evidence",
+      "generated": true,
+      "status": "Scoped access policy generated; account and runtime verification required"
+    }
+  ],
+  "accessPlan": {
+    "connections": [
+      {
+        "id": "e-alice-api",
+        "source": "caller-alice",
+        "target": "rag-api",
+        "access": "api-invoke",
+        "principalVariable": "principal_block_63616c6c65722d616c696365_arn"
+      },
+      {
+        "id": "e-bob-api",
+        "source": "caller-bob",
+        "target": "rag-api",
+        "access": "api-invoke",
+        "principalVariable": "principal_block_63616c6c65722d626f62_arn"
+      }
+    ],
+    "bindings": [
+      {
+        "id": "caller-alice",
+        "variable": "principal_block_63616c6c65722d616c696365_arn"
+      },
+      {
+        "id": "caller-bob",
+        "variable": "principal_block_63616c6c65722d626f62_arn"
+      }
+    ]
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [
+      {
+        "worker": {
+          "id": "rag-lambda",
+          "address": "block_7261672d6c616d626461",
+          "label": "Bounded keyword RAG",
+          "provider": "aws",
+          "service": "AWS Lambda",
+          "selection": "Explicit service field; deployment review required",
+          "existing": false,
+          "region": "ap-southeast-2 (candidate, not approved)",
+          "resources": [
+            "aws_lambda_function",
+            "aws_iam_role"
+          ],
+          "costDrivers": "Requests, duration, memory and logs",
+          "dependencies": [
+            "rag-api"
+          ],
+          "terraform": "Bounded IAM-authenticated RAG implementation generated",
+          "foundation": false,
+          "compute": false,
+          "api": false,
+          "summary": false,
+          "settings": {},
+          "reference": false,
+          "implemented": true
+        },
+        "api": {
+          "id": "rag-api",
+          "address": "block_7261672d617069",
+          "label": "IAM-authenticated RAG API",
+          "provider": "aws",
+          "service": "Amazon API Gateway",
+          "selection": "Explicit service field; deployment review required",
+          "existing": false,
+          "region": "ap-southeast-2 (candidate, not approved)",
+          "resources": [
+            "aws_apigatewayv2_api"
+          ],
+          "costDrivers": "API requests, transfer and access logs",
+          "dependencies": [
+            "caller-alice",
+            "caller-bob"
+          ],
+          "terraform": "Bounded IAM-authenticated RAG implementation generated",
+          "foundation": false,
+          "compute": false,
+          "api": true,
+          "summary": false,
+          "settings": {},
+          "reference": false,
+          "implemented": true
+        },
+        "table": {
+          "id": "rag-catalog",
+          "address": "block_7261672d636174616c6f67",
+          "label": "Document and ACL catalog",
+          "provider": "aws",
+          "service": "Amazon DynamoDB",
+          "selection": "Explicit service field; deployment review required",
+          "existing": false,
+          "region": "ap-southeast-2 (candidate, not approved)",
+          "resources": [
+            "aws_dynamodb_table"
+          ],
+          "costDrivers": "Read/write requests, storage and backup",
+          "dependencies": [
+            "rag-lambda"
+          ],
+          "terraform": "Bounded IAM-authenticated RAG implementation generated",
+          "foundation": false,
+          "compute": false,
+          "api": false,
+          "summary": false,
+          "settings": {},
+          "reference": false,
+          "implemented": true
+        },
+        "model": {
+          "id": "bedrock-model",
+          "address": "block_626564726f636b2d6d6f64656c",
+          "label": "Foundation model",
+          "provider": "aws",
+          "service": "Amazon Bedrock",
+          "selection": "Explicit service field; deployment review required",
+          "existing": true,
+          "region": "ap-southeast-2 (candidate, not approved)",
+          "resources": [],
+          "costDrivers": "Model-specific input/output tokens; guardrails, embeddings and knowledge bases separately",
+          "dependencies": [
+            "rag-lambda"
+          ],
+          "terraform": "Bounded IAM-authenticated RAG implementation generated",
+          "foundation": false,
+          "compute": false,
+          "api": false,
+          "summary": false,
+          "settings": {},
+          "reference": false,
+          "implemented": true
+        },
+        "edges": [
+          {
+            "id": "e-api-lambda",
+            "source": "rag-api",
+            "target": "rag-lambda",
+            "type": "smoothstep",
+            "label": "invoke with caller identity",
+            "integration": "http-api-lambda"
+          },
+          {
+            "id": "e-lambda-catalog",
+            "source": "rag-lambda",
+            "target": "rag-catalog",
+            "type": "smoothstep",
+            "label": "read ACL-filtered evidence",
+            "integration": "lambda-catalog-read"
+          },
+          {
+            "id": "e-lambda-model",
+            "source": "rag-lambda",
+            "target": "bedrock-model",
+            "type": "smoothstep",
+            "label": "Converse with permitted evidence",
+            "integration": "bedrock-converse"
+          }
+        ]
+      }
+    ],
+    "componentIds": [
+      "rag-lambda",
+      "rag-api",
+      "rag-catalog",
+      "bedrock-model"
+    ],
+    "edgeIds": [
+      "e-api-lambda",
+      "e-lambda-catalog",
+      "e-lambda-model"
+    ]
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [],
+  "gapDetails": [],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

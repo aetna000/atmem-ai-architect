@@ -1,0 +1,86 @@
+[
+  {
+    "id": "5bb920cc-2dfa-49a1-bffc-fd794ffa9a4b",
+    "sessionId": "205b5fb5-f296-40c8-9770-fa9e5f80186e",
+    "runId": "cb930c1f-244f-4e93-aa0e-7c99386b62cc",
+    "state": "local_checks_passed",
+    "artifact": {
+      "id": "91f01644-6a47-4278-851f-02bf8300e702",
+      "sha256": "bea50c6b0677d3d20b74a6916780edf79a0fe7c4e8208901a42f561d985afdad"
+    },
+    "plan": {
+      "artifactId": "91f01644-6a47-4278-851f-02bf8300e702",
+      "artifactSha256": "bea50c6b0677d3d20b74a6916780edf79a0fe7c4e8208901a42f561d985afdad",
+      "decisions": [
+        {
+          "validatorId": "python-tests",
+          "label": "Local Python tests",
+          "state": "manual_only",
+          "contractSha256": "936375972451b9f74b0a728368c2d79f2bd0703890ac4ae0d83743c7c3ac4d87",
+          "applicability": null,
+          "assessment": null
+        },
+        {
+          "validatorId": "lambda-python312-tests",
+          "label": "Lambda Python 3.12 ARM64 tests",
+          "state": "not_applicable",
+          "contractSha256": "e61c4ac765008487ac61c2f9b628331c59dcfae8bb35c09c689aeeb574c6b363",
+          "applicability": {
+            "anyOf": [
+              "test_*.py",
+              "tests/test_*.py"
+            ],
+            "allOf": [
+              "tests/__init__.py"
+            ],
+            "noneOf": []
+          },
+          "assessment": {
+            "applies": false,
+            "matchedAnyOf": [],
+            "missingAllOf": [
+              "tests/__init__.py"
+            ],
+            "matchedNoneOf": []
+          }
+        },
+        {
+          "validatorId": "python-tests-folder",
+          "label": "Python unittest tests-folder discovery",
+          "state": "manual_only",
+          "contractSha256": "23943a5f5a755d10b7f9c6f53cd4f0a34ce4a69d8ef9b4a789479564d2f6b909",
+          "applicability": null,
+          "assessment": null
+        },
+        {
+          "validatorId": "node-browser-tests",
+          "label": "Node and Chromium tests (Playwright 1.64.1)",
+          "state": "selected",
+          "contractSha256": "745cc90f598477c0adec233ee207760e9e463abb1d53fd2c184e755a14b26e61",
+          "applicability": {
+            "anyOf": [
+              "**/*.test.mjs",
+              "**/*.test.js"
+            ],
+            "allOf": [],
+            "noneOf": []
+          },
+          "assessment": {
+            "applies": true,
+            "matchedAnyOf": [
+              "**/*.test.mjs"
+            ],
+            "missingAllOf": [],
+            "matchedNoneOf": []
+          }
+        }
+      ],
+      "selectionStatus": "checks_selected",
+      "acceptance": "not_established_by_file_applicability"
+    },
+    "checks": [
+      "d9228dd3-69de-46af-9d73-c1ebbbdd7d71"
+    ],
+    "acceptance": "not_established_by_local_checks"
+  }
+]

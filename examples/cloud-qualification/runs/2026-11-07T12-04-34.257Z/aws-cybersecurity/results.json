@@ -1,0 +1,78 @@
+{
+  "provider": "aws-cybersecurity",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Payloads and log instructions are treated as untrusted data",
+    "Restricted security evidence stays within analyst permissions",
+    "Severity claims cite observed evidence and uncertainty",
+    "Duplicate alerts preserve the investigation audit trail",
+    "Containment requires explicit approval and reversible action planning"
+  ],
+  "components": [
+    {
+      "id": "n-alerts"
+    },
+    {
+      "id": "n-raw",
+      "service": "Amazon S3"
+    },
+    {
+      "id": "n-ingestq",
+      "service": "Amazon SQS"
+    },
+    {
+      "id": "n-dlq",
+      "service": "Amazon SQS"
+    },
+    {
+      "id": "n-redact",
+      "service": "AWS Lambda"
+    },
+    {
+      "id": "n-redacted",
+      "service": "Amazon S3"
+    },
+    {
+      "id": "n-orch",
+      "service": "AWS Step Functions"
+    },
+    {
+      "id": "n-assets"
+    },
+    {
+      "id": "n-logs",
+      "service": "Amazon OpenSearch Service"
+    },
+    {
+      "id": "n-retrieve",
+      "service": "AWS Lambda"
+    },
+    {
+      "id": "n-triage",
+      "service": "AWS Lambda"
+    },
+    {
+      "id": "n-bedrock",
+      "service": "Amazon Bedrock",
+      "binding": "aws-bedrock-model"
+    },
+    {
+      "id": "n-cases",
+      "service": "Amazon DynamoDB"
+    },
+    {
+      "id": "n-audit",
+      "service": "Amazon S3"
+    },
+    {
+      "id": "n-analyst"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

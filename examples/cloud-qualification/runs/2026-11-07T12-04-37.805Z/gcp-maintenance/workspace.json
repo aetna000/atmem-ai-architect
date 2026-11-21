@@ -1,0 +1,518 @@
+{
+  "version": 1,
+  "revision": 2,
+  "name": "GCP predictive maintenance (synthetic)",
+  "provider": "gcp",
+  "domain": "maintenance",
+  "requirements": "",
+  "nodes": [
+    {
+      "id": "sensors",
+      "type": "resource",
+      "position": {
+        "x": 50,
+        "y": 50
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Synthetic sensor histories",
+        "provider": "tools",
+        "kind": "stream",
+        "description": "Synthetic sensor data publisher outside the provisioning scope.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "poc": true,
+        "role": "data"
+      }
+    },
+    {
+      "id": "records",
+      "type": "resource",
+      "position": {
+        "x": 470,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Synthetic maintenance records",
+        "provider": "tools",
+        "kind": "history",
+        "description": "Synthetic historical failure and repair records (CSV exports) used for labels.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "poc": true,
+        "role": "data"
+      }
+    },
+    {
+      "id": "pubsub",
+      "type": "resource",
+      "position": {
+        "x": 470,
+        "y": 50
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Sensor ingestion",
+        "provider": "gcp",
+        "kind": "stream",
+        "description": "Topic receiving sensor events; dead-letter topic for bad messages.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "ingest",
+        "service": "Pub/Sub"
+      }
+    },
+    {
+      "id": "dataflow",
+      "type": "resource",
+      "position": {
+        "x": 890,
+        "y": 50
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Stream processing",
+        "provider": "gcp",
+        "kind": "features",
+        "description": "Validates, deduplicates and windows sensor events into BigQuery.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "ingest",
+        "service": "Dataflow"
+      }
+    },
+    {
+      "id": "gcs",
+      "type": "resource",
+      "position": {
+        "x": 890,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Records landing bucket",
+        "provider": "gcp",
+        "kind": "history",
+        "description": "Private bucket for maintenance record files, versioned.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "data",
+        "service": "Cloud Storage"
+      }
+    },
+    {
+      "id": "bq",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 190
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Feature preparation",
+        "provider": "gcp",
+        "kind": "features",
+        "description": "Joins sensor windows with records; builds point-in-time features and failure labels.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "data",
+        "service": "BigQuery"
+      }
+    },
+    {
+      "id": "train",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 115
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Training + held-out evaluation",
+        "provider": "gcp",
+        "kind": "train",
+        "description": "Trains the model and evaluates on a later held-out time window; registers only if gate passes.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "model",
+        "service": "Vertex AI Pipelines / Training"
+      }
+    },
+    {
+      "id": "registry",
+      "type": "resource",
+      "position": {
+        "x": 2150,
+        "y": 115
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Versioned model",
+        "provider": "gcp",
+        "kind": "registry",
+        "description": "Stores model versions with evaluation metrics and lineage.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "model",
+        "service": "Vertex AI Model Registry"
+      }
+    },
+    {
+      "id": "predict",
+      "type": "resource",
+      "position": {
+        "x": 2570,
+        "y": 190
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Maintenance risk scoring",
+        "provider": "gcp",
+        "kind": "predict",
+        "description": "Scores latest equipment features on a schedule; writes risk scores.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "model",
+        "service": "Vertex AI Batch Prediction"
+      }
+    },
+    {
+      "id": "monitor",
+      "type": "resource",
+      "position": {
+        "x": 2990,
+        "y": 50
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Drift monitoring",
+        "provider": "gcp",
+        "kind": "monitor",
+        "description": "Compares feature/prediction distributions with training baseline; alerts owner.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "monitor",
+        "service": "Vertex AI Model Monitoring + Cloud Monitoring"
+      }
+    },
+    {
+      "id": "workorder",
+      "type": "resource",
+      "position": {
+        "x": 2990,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Work-order draft service",
+        "provider": "gcp",
+        "kind": "output",
+        "description": "Turns high-risk scores into draft work orders with evidence; drafts only, no equipment control, audit logged.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "app",
+        "measures": [
+          {
+            "label": "No automatic control actions",
+            "path": "control_actions",
+            "op": "==",
+            "target": 0
+          }
+        ],
+        "service": "Cloud Run"
+      }
+    },
+    {
+      "id": "operator",
+      "type": "resource",
+      "position": {
+        "x": 3410,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Maintenance operator",
+        "provider": "tools",
+        "kind": "tool",
+        "description": "Reviews and approves or rejects drafts.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "role": "human"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "sensors",
+      "target": "pubsub",
+      "type": "smoothstep",
+      "label": "publish events"
+    },
+    {
+      "id": "e2",
+      "source": "pubsub",
+      "target": "dataflow",
+      "type": "smoothstep",
+      "label": "subscription"
+    },
+    {
+      "id": "e3",
+      "source": "dataflow",
+      "target": "bq",
+      "type": "smoothstep",
+      "label": "windowed readings"
+    },
+    {
+      "id": "e4",
+      "source": "records",
+      "target": "gcs",
+      "type": "smoothstep",
+      "label": "upload records"
+    },
+    {
+      "id": "e5",
+      "source": "gcs",
+      "target": "bq",
+      "type": "smoothstep",
+      "label": "load records/labels"
+    },
+    {
+      "id": "e6",
+      "source": "bq",
+      "target": "train",
+      "type": "smoothstep",
+      "label": "training + holdout sets"
+    },
+    {
+      "id": "e7",
+      "source": "train",
+      "target": "registry",
+      "type": "smoothstep",
+      "label": "register passing version"
+    },
+    {
+      "id": "e8",
+      "source": "registry",
+      "target": "predict",
+      "type": "smoothstep",
+      "label": "approved version"
+    },
+    {
+      "id": "e9",
+      "source": "bq",
+      "target": "predict",
+      "type": "smoothstep",
+      "label": "latest features"
+    },
+    {
+      "id": "e10",
+      "source": "predict",
+      "target": "monitor",
+      "type": "smoothstep",
+      "label": "predictions + inputs"
+    },
+    {
+      "id": "e11",
+      "source": "predict",
+      "target": "workorder",
+      "type": "smoothstep",
+      "label": "risk scores"
+    },
+    {
+      "id": "e12",
+      "source": "workorder",
+      "target": "operator",
+      "type": "smoothstep",
+      "label": "draft for review"
+    }
+  ],
+  "id": "c2a4d76f-dfaa-4995-a44f-239cd9d7c18b",
+  "brief": {
+    "application": "Use Google Cloud for this synthetic architecture qualification. Predict equipment maintenance needs from synthetic sensor histories and maintenance records. Include ingestion, feature preparation, a versioned prediction model, held-out evaluation, drift monitoring and an operator work-order draft. No automatic equipment control. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+    "cloud": "Google Cloud"
+  },
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use Google Cloud for this synthetic architecture qualification",
+      "options": "",
+      "decision": "gcp",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.gcp-predictive-maintenance-end-to-end-sketch",
+      "title": "GCP predictive maintenance end-to-end sketch",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Proposed Google Cloud architecture for synthetic qualification: ingestion, features, training with time-based held-out evaluation, versioned registry, batch prediction, drift monitoring, and operator-reviewed work-order drafts. Assumptions: region not selected; batch scoring; no equipment control; services not verified for region/quotas; nothing deployed.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "needs": [
+    {
+      "id": "ai-human-approved-work-orders",
+      "kind": "functional",
+      "category": "security",
+      "statement": "Predictions may only produce work-order drafts for operator review; the system must never issue equipment control commands.",
+      "rationale": "Prevents unsafe automated actions from false alarms.",
+      "basis": "User: \"an operator work-order draft. No automatic equipment control.\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "workorder",
+        "operator"
+      ]
+    },
+    {
+      "id": "ai-time-based-holdout",
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "statement": "Each model version must be evaluated on a later, held-out time window before registration; metric and threshold to be agreed.",
+      "rationale": "Random splits leak future data and overstate accuracy.",
+      "basis": "User: \"held-out evaluation\" and \"versioned prediction model\".",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "train",
+        "registry"
+      ]
+    },
+    {
+      "id": "ai-drift-monitoring",
+      "kind": "nonfunctional",
+      "category": "maintainability",
+      "statement": "Feature and prediction drift must be monitored against the training baseline and alert the model owner; thresholds to be confirmed.",
+      "rationale": "Sensor behaviour changes silently degrade predictions.",
+      "basis": "User: \"drift monitoring\".",
+      "priority": "should",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "monitor",
+        "predict"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "extensions": {
+    "requirementNumbers": {
+      "drv-data-access": 1,
+      "drv-data-location": 2,
+      "ai-human-approved-work-orders": 3,
+      "ai-time-based-holdout": 4,
+      "ai-drift-monitoring": 5
+    }
+  },
+  "facts": [
+    {
+      "id": "fact-30f48853",
+      "name": "cloud.preference",
+      "value": "gcp",
+      "unit": "provider",
+      "text": "Use Google Cloud for this synthetic architecture qualification. Predict equipment maintenance needs from synthetic sensor histories and maintenance records. Include ingestion, feature preparation, a versioned prediction model, held-out evaluation, drift monitoring and an operator work-order draft. N",
+      "madeAt": "2026-11-07"
+    }
+  ],
+  "workflow": "predictive",
+  "asked": [],
+  "lastAsked": {
+    "id": "predictive:0",
+    "topic": "data",
+    "question": "How much history do you have for what you want to predict?",
+    "beginner": "For example “three years of sales by store” or “failure records since 2020”.",
+    "why": "It shapes the Predictive ML design."
+  },
+  "choices": {},
+  "conceptSig": null
+}

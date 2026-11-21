@@ -1,0 +1,58 @@
+{
+  "provider": "gcp-rag",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Denied documents never reach the model",
+    "Known questions cite current source revisions",
+    "Unsupported questions abstain",
+    "Updates and deletions change retrieval",
+    "Revocation during generation suppresses the answer"
+  ],
+  "components": [
+    {
+      "id": "user"
+    },
+    {
+      "id": "idp",
+      "service": "Identity Platform"
+    },
+    {
+      "id": "webapp",
+      "service": "Cloud Run"
+    },
+    {
+      "id": "ragapi",
+      "service": "Cloud Run"
+    },
+    {
+      "id": "catalog",
+      "service": "Firestore"
+    },
+    {
+      "id": "gemini",
+      "service": "Vertex AI (Gemini)"
+    },
+    {
+      "id": "operator"
+    },
+    {
+      "id": "docs",
+      "service": "Cloud Storage"
+    },
+    {
+      "id": "ingest",
+      "service": "Cloud Run jobs"
+    },
+    {
+      "id": "audit",
+      "service": "Cloud Logging / Cloud Monitoring"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

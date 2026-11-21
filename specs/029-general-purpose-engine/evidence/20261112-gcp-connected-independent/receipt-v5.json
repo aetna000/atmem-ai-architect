@@ -1,0 +1,116 @@
+{
+  "format": "atmem.independent-connected-receiver",
+  "version": 1,
+  "attempt": "v5",
+  "fixtureId": "1e597cf6f64c4f0fac833b7bf27d2480",
+  "imageId": "sha256:9bfe8fdcf3f9e885587df44ac14e0d2ff0df6356a0d3188a0e021e5193d1662f",
+  "postgresImage": "sha256:996e9dc583ba9f0265a2c75547a9c95fb22c251e394749cab205a0a00e1856a1",
+  "artifactSha256": "69bdacf7d6813bfdd977b007abe7c94d8c3308cb2e09f9fd09c6cb39cf61031d",
+  "checks": [
+    {
+      "name": "clean image, separate PostgreSQL17, delivered operator CLI and restricted identities",
+      "passed": true,
+      "observedAt": "2026-11-12T01:58:27.816565+00:00"
+    },
+    {
+      "name": "four concurrent HTTP submissions commit one operation and initial queue job",
+      "passed": true,
+      "observedAt": "2026-11-12T01:58:35.505209+00:00"
+    },
+    {
+      "name": "frozen10 valid/25 invalid sources through actual HTTP, SQL, queue and processing children; no delivery before approval",
+      "passed": true,
+      "observedAt": "2026-11-12T01:59:38.093374+00:00"
+    },
+    {
+      "name": "signed IAP denials, live SQL membership and account/owner isolation ignore role/group claims",
+      "passed": true,
+      "observedAt": "2026-11-12T01:59:49.481068+00:00"
+    },
+    {
+      "name": "exact inspection, empty edit, stale/tampered/revoked denials and real TLS seven-field delivery",
+      "passed": true,
+      "observedAt": "2026-11-12T02:00:07.784111+00:00"
+    },
+    {
+      "name": "runtime SQL roles cannot enroll, erase history or perform schema DDL",
+      "passed": true,
+      "observedAt": "2026-11-12T02:00:37.355719+00:00"
+    },
+    {
+      "name": "strict Origin/media/query/duplicate JSON, full note bounds and both derived-number mutation directions",
+      "passed": true,
+      "observedAt": "2026-11-12T02:00:55.372798+00:00"
+    },
+    {
+      "name": "changed endpoint, payload and application-policy bindings cannot reuse an inspection",
+      "passed": true,
+      "observedAt": "2026-11-12T02:01:15.203725+00:00"
+    },
+    {
+      "name": "real SQL expired/reclaimed extraction and dispatch leases reject stale completion; no unverified replay",
+      "passed": true,
+      "observedAt": "2026-11-12T02:01:27.983530+00:00"
+    },
+    {
+      "name": "ambiguous external effect remains unknown across repeated approval and real worker/database container restarts",
+      "passed": true,
+      "observedAt": "2026-11-12T02:01:53.533904+00:00",
+      "workerVolatileInputsRestoredIdentically": true
+    }
+  ],
+  "evaluatorSources": {
+    "run.py": "163ad76da8820498348164e8eabf61807754c3baef01e8d4576d678e58fc10bd",
+    "control.py": "300bdb03b4ed5444972dbf39120ca1c7e8b2b164fe0f933f4ed8ae4dfd160e61",
+    "destination.py": "b39d8ae5e3608a950911eb7e2f764e917864080cdedaf01fdaa9ca65b8cbc78d"
+  },
+  "cloudOperations": false,
+  "nativeGoogleIdentityOrAccountAcceptance": false,
+  "ownerProjectWrites": 0,
+  "fullAcceptance": false,
+  "resourcesCleaned": true,
+  "containerControls": [
+    {
+      "role": "api",
+      "imageId": "sha256:9bfe8fdcf3f9e885587df44ac14e0d2ff0df6356a0d3188a0e021e5193d1662f",
+      "user": "10001:10001",
+      "network": "atmem-recv-1e597cf6f6-net",
+      "hostPorts": false,
+      "readOnlyRoot": true,
+      "capDropAll": true,
+      "noHostBindMounts": true
+    },
+    {
+      "role": "worker",
+      "imageId": "sha256:9bfe8fdcf3f9e885587df44ac14e0d2ff0df6356a0d3188a0e021e5193d1662f",
+      "user": "10001:10001",
+      "network": "atmem-recv-1e597cf6f6-net",
+      "hostPorts": false,
+      "readOnlyRoot": true,
+      "capDropAll": true,
+      "noHostBindMounts": true
+    },
+    {
+      "role": "control",
+      "imageId": "sha256:9bfe8fdcf3f9e885587df44ac14e0d2ff0df6356a0d3188a0e021e5193d1662f",
+      "user": "10001:10001",
+      "network": "atmem-recv-1e597cf6f6-net",
+      "hostPorts": false,
+      "readOnlyRoot": true,
+      "capDropAll": true,
+      "noHostBindMounts": true
+    },
+    {
+      "role": "db",
+      "imageId": "sha256:996e9dc583ba9f0265a2c75547a9c95fb22c251e394749cab205a0a00e1856a1",
+      "user": "999:999",
+      "network": "atmem-recv-1e597cf6f6-net",
+      "hostPorts": false,
+      "readOnlyRoot": true,
+      "capDropAll": true,
+      "noHostBindMounts": true
+    }
+  ],
+  "connectedGroupsPassed": 10,
+  "connectedScopePassed": true
+}

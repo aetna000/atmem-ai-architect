@@ -1,0 +1,51 @@
+test_actual_native_and_scanned_pdf (enterprise_document_linux.CompanyDocuments.test_actual_native_and_scanned_pdf) ... ok
+test_actual_office_and_text_content (enterprise_document_linux.CompanyDocuments.test_actual_office_and_text_content) ... ok
+test_archive_not_recursively_admitted (enterprise_document_linux.CompanyDocuments.test_archive_not_recursively_admitted) ... ok
+test_declared_mime_cannot_mislabel_content (enterprise_document_linux.CompanyDocuments.test_declared_mime_cannot_mislabel_content) ... ok
+test_encrypted_empty_malformed_oversized_inputs_rejected (enterprise_document_linux.CompanyDocuments.test_encrypted_empty_malformed_oversized_inputs_rejected) ... ok
+test_large_text_rejected_without_partial_result (enterprise_document_linux.CompanyDocuments.test_large_text_rejected_without_partial_result) ... ok
+test_response_bound_to_bytes_mime_and_schema (enterprise_document_linux.CompanyDocuments.test_response_bound_to_bytes_mime_and_schema) ... ok
+test_busy_parser_returns_retryable_status (enterprise_parser_rpc_linux.NativeDocumentRpc.test_busy_parser_returns_retryable_status) ... ok
+test_duplicate_type_and_ambiguous_framing_denied (enterprise_parser_rpc_linux.NativeDocumentRpc.test_duplicate_type_and_ambiguous_framing_denied) ... ok
+test_mime_mismatch_never_returns_partial_text (enterprise_parser_rpc_linux.NativeDocumentRpc.test_mime_mismatch_never_returns_partial_text) ... ok
+test_missing_wrong_and_duplicate_credentials_denied (enterprise_parser_rpc_linux.NativeDocumentRpc.test_missing_wrong_and_duplicate_credentials_denied) ... ok
+test_owned_caller_gets_actual_docx (enterprise_parser_rpc_linux.NativeDocumentRpc.test_owned_caller_gets_actual_docx) ... ok
+test_edit_during_model_withholds_answer_and_citation (enterprise_document_composition_linux.NativeDocumentComposition.test_edit_during_model_withholds_answer_and_citation) ... FAIL
+test_outage_recovery_performs_fresh_download_and_parse (enterprise_document_composition_linux.NativeDocumentComposition.test_outage_recovery_performs_fresh_download_and_parse) ... ERROR
+test_real_office_text_reaches_context_and_exact_citation (enterprise_document_composition_linux.NativeDocumentComposition.test_real_office_text_reaches_context_and_exact_citation) ... ERROR
+test_revocation_while_parsing_denies_model_context (enterprise_document_composition_linux.NativeDocumentComposition.test_revocation_while_parsing_denies_model_context) ... ok
+
+======================================================================
+ERROR: test_outage_recovery_performs_fresh_download_and_parse (enterprise_document_composition_linux.NativeDocumentComposition.test_outage_recovery_performs_fresh_download_and_parse)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/qualification/tests/runtime/enterprise_document_composition_linux.py", line 110, in test_outage_recovery_performs_fresh_download_and_parse
+    self.engine.answer('How much paid leave?', 'alice')
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/qualification/src/runtime/enterprise_knowledge.py", line 77, in answer
+    raise SourceUnavailable('knowledge_answer_withheld')from None
+enterprise_sources.SourceUnavailable: knowledge_answer_withheld
+
+======================================================================
+ERROR: test_real_office_text_reaches_context_and_exact_citation (enterprise_document_composition_linux.NativeDocumentComposition.test_real_office_text_reaches_context_and_exact_citation)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/qualification/tests/runtime/enterprise_document_composition_linux.py", line 88, in test_real_office_text_reaches_context_and_exact_citation
+    value = self.engine.answer('How much paid leave do staff receive?', 'alice')
+  File "/tmp/qualification/src/runtime/enterprise_knowledge.py", line 77, in answer
+    raise SourceUnavailable('knowledge_answer_withheld')from None
+enterprise_sources.SourceUnavailable: knowledge_answer_withheld
+
+======================================================================
+FAIL: test_edit_during_model_withholds_answer_and_citation (enterprise_document_composition_linux.NativeDocumentComposition.test_edit_during_model_withholds_answer_and_citation)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/qualification/tests/runtime/enterprise_document_composition_linux.py", line 106, in test_edit_during_model_withholds_answer_and_citation
+    self.assertEqual(len(self.models), 1)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 0 != 1
+
+----------------------------------------------------------------------
+Ran 16 tests in 46.552s
+
+FAILED (failures=1, errors=2)

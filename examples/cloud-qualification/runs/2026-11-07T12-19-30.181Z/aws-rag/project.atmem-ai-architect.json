@@ -1,0 +1,418 @@
+{
+  "format": "atmem.ai-architect.project",
+  "formatVersion": "2.3.0",
+  "meta": {
+    "id": "86fe3f05-8126-49e0-b307-bf3cc353da86",
+    "name": "Synthetic cited Q&A qualification (AWS)",
+    "createdAt": "2026-11-07T12:22:19.060Z",
+    "updatedAt": "2026-11-07T12:22:19.060Z",
+    "revision": 2,
+    "generator": "atmem-ai-architect 0.2.0"
+  },
+  "design": {
+    "provider": "aws",
+    "nodes": [
+      {
+        "id": "user",
+        "type": "resource",
+        "position": {
+          "x": 50,
+          "y": 190
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Signed-in user (browser)",
+          "provider": "tools",
+          "kind": "tool",
+          "description": "A person using a browser. This is an external client reference, not a provisioned service.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "binding": "web-browser",
+          "role": "human"
+        }
+      },
+      {
+        "id": "web",
+        "type": "resource",
+        "position": {
+          "x": 470,
+          "y": 190
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Web app",
+          "provider": "aws",
+          "kind": "output",
+          "description": "Serves the web app from private S3 assets that only CloudFront can read. Handles sign-in with authorization code + PKCE and calls the API with an access token. Shows cited answers, or an abstention when the sources don't support an answer.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "implementation": "rag-web-app",
+          "role": "app",
+          "service": "Amazon CloudFront"
+        }
+      },
+      {
+        "id": "cognito",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 115
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "User sign-in",
+          "provider": "aws",
+          "kind": "guard",
+          "description": "User pool with admin-created users, required software-token MFA and an access-token scope. Each user's identity and employee-region mapping comes from the catalog.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "implementation": "rag-user-pool",
+          "role": "guard",
+          "service": "Amazon Cognito"
+        }
+      },
+      {
+        "id": "api",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 190
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Authenticated RAG API",
+          "provider": "aws",
+          "kind": "guard",
+          "description": "Bounded authenticated endpoint. A JWT route serves the browser. There is no anonymous access, and unknown identities fail closed.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "implementation": "iam-rag-api",
+          "role": "app",
+          "service": "Amazon API Gateway"
+        }
+      },
+      {
+        "id": "rag",
+        "type": "resource",
+        "position": {
+          "x": 1730,
+          "y": 190
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Retrieval & answer function",
+          "provider": "aws",
+          "kind": "agent",
+          "description": "Does keyword retrieval, filtering by each document's access list and region before anything reaches the model. Re-checks revisions and authorization after generation, so an answer is suppressed if access was revoked. Returns the answer with citations to current revisions, or abstains. Owns its execution role, logs, version and alias.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "implementation": "bounded-keyword-rag",
+          "role": "app",
+          "service": "AWS Lambda"
+        }
+      },
+      {
+        "id": "catalog",
+        "type": "resource",
+        "position": {
+          "x": 2150,
+          "y": 50
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Document & permissions catalog",
+          "provider": "aws",
+          "kind": "source",
+          "description": "Holds up to 100 small synthetic UTF-8 documents with their revisions, explicit access lists and identity mappings. An operator ingests, updates and deletes documents using the generated management tool. Callers can't write to it.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "implementation": "bounded-rag-catalog",
+          "role": "index",
+          "service": "Amazon DynamoDB"
+        }
+      },
+      {
+        "id": "bedrock",
+        "type": "resource",
+        "position": {
+          "x": 2150,
+          "y": 330
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Foundation model",
+          "provider": "aws",
+          "kind": "predict",
+          "description": "A direct foundation model called through Converse. The model ID, region support, access and quotas are still to be selected and verified. Local emulation uses scripted responses only.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "poc": true,
+          "binding": "aws-bedrock-model",
+          "role": "llm",
+          "service": "Amazon Bedrock"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e-user-web",
+        "source": "user",
+        "target": "web",
+        "type": "smoothstep",
+        "label": "HTTPS",
+        "integration": "browser-https"
+      },
+      {
+        "id": "e-web-cognito",
+        "source": "web",
+        "target": "cognito",
+        "type": "smoothstep",
+        "label": "sign-in (PKCE + MFA)",
+        "integration": "oauth-pkce"
+      },
+      {
+        "id": "e-cognito-api",
+        "source": "cognito",
+        "target": "api",
+        "type": "smoothstep",
+        "label": "JWT authorizer",
+        "integration": "jwt-authorizer"
+      },
+      {
+        "id": "e-web-api",
+        "source": "web",
+        "target": "api",
+        "type": "smoothstep",
+        "label": "question / cited answer",
+        "integration": "web-rag-api"
+      },
+      {
+        "id": "e-api-rag",
+        "source": "api",
+        "target": "rag",
+        "type": "smoothstep",
+        "label": "invoke",
+        "integration": "http-api-lambda"
+      },
+      {
+        "id": "e-rag-catalog",
+        "source": "rag",
+        "target": "catalog",
+        "type": "smoothstep",
+        "label": "permitted keyword lookup",
+        "integration": "lambda-catalog-read"
+      },
+      {
+        "id": "e-rag-bedrock",
+        "source": "rag",
+        "target": "bedrock",
+        "type": "smoothstep",
+        "label": "Converse (permitted text only)",
+        "integration": "bedrock-converse"
+      }
+    ]
+  },
+  "discovery": {
+    "problem": "",
+    "brief": {
+      "application": "Use AWS for this synthetic architecture qualification. Answer questions over a small synthetic document collection with citations. Include ingestion, retrieval, model runtime, identity enforcement and an authenticated application. Use bounded keyword retrieval for this first test and keep all source permissions. Acceptance criteria: Denied documents never reach the model; Known questions cite current source revisions; Unsupported questions abstain; Updates and deletions change retrieval; Revocation during generation suppresses the answer. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+      "cloud": "AWS"
+    },
+    "facts": [
+      {
+        "id": "fact-f5af614b",
+        "name": "cloud.preference",
+        "value": "aws",
+        "unit": "provider",
+        "text": "Use AWS for this synthetic architecture qualification. Answer questions over a small synthetic document collection with citations. Include ingestion, retrieval, model runtime, identity enforcement and an authenticated application. Use bounded keyword retrieval for this first test and keep all source",
+        "madeAt": "2026-11-07"
+      }
+    ],
+    "workflow": "knowledge-assistant",
+    "asked": [],
+    "lastAsked": {
+      "id": "knowledge-assistant:0",
+      "topic": "data",
+      "question": "Where do the files live, and roughly how many are there?",
+      "beginner": "For example “SharePoint and a shared drive, about 20,000 files”.",
+      "why": "It shapes the RAG design."
+    }
+  },
+  "requirements": [
+    {
+      "id": "req-352ddf46",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Every answer shows its sources",
+      "priority": "should",
+      "status": "open",
+      "source": "user",
+      "links": []
+    },
+    {
+      "id": "ai-denied-never-to-model",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Documents the user isn't allowed to read are filtered out before the model call and never reach it.",
+      "rationale": "Prevents restricted content from leaking through generated answers.",
+      "basis": "User acceptance criterion: \"Denied documents never reach the model\".",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "rag",
+        "catalog",
+        "bedrock"
+      ]
+    },
+    {
+      "id": "ai-cite-current-revisions",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Answers to known questions cite the current revision of each source document they use.",
+      "rationale": "Lets users verify an answer and avoids citing stale content.",
+      "basis": "\"Known questions cite current source revisions\".",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "rag",
+        "catalog"
+      ]
+    },
+    {
+      "id": "ai-abstain-unsupported",
+      "kind": "functional",
+      "category": "reliability",
+      "statement": "When no permitted source supports an answer, the system abstains instead of generating one.",
+      "rationale": "Reduces ungrounded or invented answers.",
+      "basis": "\"Unsupported questions abstain\".",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "rag"
+      ]
+    },
+    {
+      "id": "ai-updates-deletions",
+      "kind": "functional",
+      "category": "reliability",
+      "statement": "Updates and deletions in the catalog change what retrieval returns.",
+      "rationale": "Stops retrieval from serving content that has been removed or replaced.",
+      "basis": "\"Updates and deletions change retrieval\".",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "catalog",
+        "rag"
+      ]
+    },
+    {
+      "id": "ai-revocation-suppress",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "If a user's access is revoked while an answer is being generated, that answer is suppressed.",
+      "rationale": "Closes the gap between the permission check and delivering the answer.",
+      "basis": "\"Revocation during generation suppresses the answer\".",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "rag",
+        "catalog"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use AWS for this synthetic architecture qualification",
+      "options": "",
+      "decision": "aws",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.aws-bounded-keyword-rag-with-authenticated-web-app",
+      "title": "AWS bounded keyword RAG with authenticated web app",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: this is an architecture qualification using synthetic documents only. A browser user reaches the web app through CloudFront. The app signs users in with Cognito (authorization code with PKCE, plus MFA). Questions go through API Gateway, which checks the sign-in token, to a Lambda function. The Lambda does permission-aware keyword retrieval from a DynamoDB catalog and calls Bedrock through the Converse API. Ingestion: an operator loads the source documents and their explicit access lists using the generated catalog management tool. Assumptions: retrieval is keyword-based, not vector search. The Bedrock model ID, region, account and model access are all still unverified. Nothing has been deployed.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "extensions": {
+    "requirementNumbers": {
+      "req-352ddf46": 1,
+      "drv-data-access": 2,
+      "drv-data-location": 3,
+      "ai-denied-never-to-model": 4,
+      "ai-cite-current-revisions": 5,
+      "ai-abstain-unsupported": 6,
+      "ai-updates-deletions": 7,
+      "ai-revocation-suppress": 8
+    },
+    "choices": {},
+    "conceptSig": null
+  }
+}

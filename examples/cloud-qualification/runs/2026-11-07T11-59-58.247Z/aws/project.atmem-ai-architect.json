@@ -1,0 +1,193 @@
+{
+  "format": "atmem.ai-architect.project",
+  "formatVersion": "2.3.0",
+  "meta": {
+    "id": "522ee968-0088-4f90-931c-d0eb58ad320f",
+    "name": "A private place on AWS to store a small…",
+    "createdAt": "2026-11-07T12:00:22.175Z",
+    "updatedAt": "2026-11-07T12:00:22.175Z",
+    "revision": 2,
+    "generator": "atmem-ai-architect 0.2.0"
+  },
+  "design": {
+    "provider": "aws",
+    "nodes": [
+      {
+        "id": "operator",
+        "type": "resource",
+        "position": {
+          "x": 50,
+          "y": 50
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Existing IAM operator",
+          "provider": "tools",
+          "kind": "tool",
+          "description": "Existing IAM principal outside the provisioning scope. Uploads, reads and deletes test documents. ARN supplied as a reviewable input and never stored in the diagram.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "binding": "aws-iam-principal"
+        }
+      },
+      {
+        "id": "doc-bucket",
+        "type": "resource",
+        "position": {
+          "x": 470,
+          "y": 50
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Private test document bucket",
+          "provider": "aws",
+          "kind": "resource",
+          "description": "Private S3 bucket for synthetic text documents. Block Public Access is on, server-side encryption and versioning are enabled, and the bucket policy grants access only to the named operator.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "data",
+          "service": "Amazon S3"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "operator-to-bucket",
+        "source": "operator",
+        "target": "doc-bucket",
+        "type": "smoothstep",
+        "label": "upload / read / delete objects (scoped)",
+        "access": "s3-read-write"
+      }
+    ]
+  },
+  "discovery": {
+    "problem": "",
+    "brief": {
+      "application": "I need a private place on AWS to store a small set of synthetic text documents for a deployment test. Keep public access blocked and enable encryption and versioning. This first scenario only needs storage; no AI, database or web application. An existing IAM operator needs upload, read and delete access. Draw the caller and its explicit scoped access contract. Do not deploy.",
+      "cloud": "AWS"
+    },
+    "facts": [
+      {
+        "id": "fact-46aee22a",
+        "name": "cloud.preference",
+        "value": "aws",
+        "unit": "provider",
+        "text": "I need a private place on AWS to store a small set of synthetic text documents for a deployment test. Keep public access blocked and enable encryption and versioning. This first scenario only needs storage; no AI, database or web application. An existing IAM operator needs upload, read and delete ac",
+        "madeAt": "2026-11-07"
+      }
+    ],
+    "workflow": "document-processing",
+    "asked": [],
+    "lastAsked": {
+      "id": "document-processing:0",
+      "topic": "data",
+      "question": "What kinds of documents arrive, and how many a month?",
+      "beginner": "For example “invoices, about 3,000 a month, mostly PDF”.",
+      "why": "It shapes the Document extraction design."
+    }
+  },
+  "requirements": [
+    {
+      "id": "ai-private-storage",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Proposed: the test bucket blocks all public access and enables server-side encryption and object versioning.",
+      "rationale": "Stops accidental public exposure and allows recovery of overwritten objects.",
+      "basis": "\"Keep public access blocked and enable encryption and versioning.\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "doc-bucket"
+      ]
+    },
+    {
+      "id": "ai-operator-access",
+      "kind": "functional",
+      "category": "security",
+      "statement": "Proposed: only the existing IAM operator can upload, read and delete objects. No other principal gets access, and delete coverage must be confirmed in the typed contract.",
+      "rationale": "An explicit least-privilege contract avoids broad grants. Unconfirmed delete permission could cause failures during test cleanup.",
+      "basis": "\"An existing IAM operator needs upload, read and delete access.\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "operator",
+        "doc-bucket"
+      ]
+    },
+    {
+      "id": "ai-scope-storage-only",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Proposed: this first scenario covers storage only and excludes AI, databases and web applications. Nothing is deployed from this design.",
+      "rationale": "Clear limits keep the deployment test small and reviewable.",
+      "basis": "\"This first scenario only needs storage; no AI, database or web application.\" and \"Do not deploy.\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "doc-bucket"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: I need a private place on AWS",
+      "options": "",
+      "decision": "aws",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.private-s3-test-bucket-with-scoped-existing-operator-access",
+      "title": "Private S3 test bucket with scoped existing-operator access",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: one proposed private Amazon S3 bucket (Block Public Access, server-side encryption, versioning) for synthetic text documents, plus the existing IAM operator as an external caller with one s3-read-write access contract. No AI, database or web app. Assumptions: region not yet selected; operator ARN supplied later as a Terraform input; identity not verified; delete permission must be confirmed against the s3-read-write contract. No deployment.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "extensions": {
+    "requirementNumbers": {
+      "drv-data-access": 1,
+      "drv-data-location": 2,
+      "ai-private-storage": 3,
+      "ai-operator-access": 4,
+      "ai-scope-storage-only": 5
+    },
+    "choices": {},
+    "conceptSig": null
+  }
+}

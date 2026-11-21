@@ -1,0 +1,485 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "user",
+      "address": "block_75736572",
+      "label": "Synthetic test user (browser)",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "webapp",
+      "address": "block_776562617070",
+      "label": "Q&A web app",
+      "provider": "ibm",
+      "service": "IBM Cloud Code Engine (application)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "user"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "appid",
+      "address": "block_6170706964",
+      "label": "Sign-in & identity",
+      "provider": "ibm",
+      "service": "IBM Cloud App ID",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "webapp"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "rag-api",
+      "address": "block_7261672d617069",
+      "label": "RAG API (keyword retrieval)",
+      "provider": "ibm",
+      "service": "IBM Cloud Code Engine (application)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "appid",
+        "webapp"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "catalog",
+      "address": "block_636174616c6f67",
+      "label": "Keyword catalog + ACLs",
+      "provider": "ibm",
+      "service": "IBM Cloudant",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "rag-api",
+        "ingest"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "docs",
+      "address": "block_646f6373",
+      "label": "Synthetic document store",
+      "provider": "ibm",
+      "service": "IBM Cloud Object Storage",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "ingest",
+      "address": "block_696e67657374",
+      "label": "Ingestion job",
+      "provider": "ibm",
+      "service": "IBM Cloud Code Engine (job)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "docs"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "watsonx",
+      "address": "block_776174736f6e78",
+      "label": "Model runtime",
+      "provider": "ibm",
+      "service": "IBM watsonx.ai",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "rag-api"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "logs",
+      "address": "block_6c6f6773",
+      "label": "Audit & logs",
+      "provider": "ibm",
+      "service": "IBM Cloud Logs",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "rag-api"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e-user-web",
+      "source": "user",
+      "target": "webapp",
+      "data": "HTTPS",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-web-appid",
+      "source": "webapp",
+      "target": "appid",
+      "data": "OIDC sign-in (PKCE)",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-appid-api",
+      "source": "appid",
+      "target": "rag-api",
+      "data": "token validation (JWT)",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-web-api",
+      "source": "webapp",
+      "target": "rag-api",
+      "data": "question + token → cited answer",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-api-catalog",
+      "source": "rag-api",
+      "target": "catalog",
+      "data": "keyword search, ACL-filtered",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-api-model",
+      "source": "rag-api",
+      "target": "watsonx",
+      "data": "prompt with permitted passages",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-docs-ingest",
+      "source": "docs",
+      "target": "ingest",
+      "data": "read documents + ACLs",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-ingest-catalog",
+      "source": "ingest",
+      "target": "catalog",
+      "data": "write chunks, keywords, ACLs",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-api-logs",
+      "source": "rag-api",
+      "target": "logs",
+      "data": "audit events",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Synthetic test user (browser): Existing — reference/import plan needed.",
+    "Q&A web app: Implementation needed.",
+    "Sign-in & identity: Implementation needed.",
+    "RAG API (keyword retrieval): Implementation needed.",
+    "Keyword catalog + ACLs: Implementation needed.",
+    "Synthetic document store: Implementation needed.",
+    "Ingestion job: Implementation needed.",
+    "Model runtime: Implementation needed.",
+    "Audit & logs: Implementation needed.",
+    "Wire user → webapp: implement data flow, access policy and acceptance test.",
+    "Wire webapp → appid: implement data flow, access policy and acceptance test.",
+    "Wire appid → rag-api: implement data flow, access policy and acceptance test.",
+    "Wire webapp → rag-api: implement data flow, access policy and acceptance test.",
+    "Wire rag-api → catalog: implement data flow, access policy and acceptance test.",
+    "Wire rag-api → watsonx: implement data flow, access policy and acceptance test.",
+    "Wire docs → ingest: implement data flow, access policy and acceptance test.",
+    "Wire ingest → catalog: implement data flow, access policy and acceptance test.",
+    "Wire rag-api → logs: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "resource-block_75736572",
+      "componentIds": [
+        "user"
+      ],
+      "taskId": "TASK-RESOURCE-75736572",
+      "message": "Synthetic test user (browser): Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_776562617070",
+      "componentIds": [
+        "webapp"
+      ],
+      "taskId": "TASK-RESOURCE-776562617070",
+      "message": "Q&A web app: Implementation needed."
+    },
+    {
+      "id": "resource-block_6170706964",
+      "componentIds": [
+        "appid"
+      ],
+      "taskId": "TASK-RESOURCE-6170706964",
+      "message": "Sign-in & identity: Implementation needed."
+    },
+    {
+      "id": "resource-block_7261672d617069",
+      "componentIds": [
+        "rag-api"
+      ],
+      "taskId": "TASK-RESOURCE-7261672d617069",
+      "message": "RAG API (keyword retrieval): Implementation needed."
+    },
+    {
+      "id": "resource-block_636174616c6f67",
+      "componentIds": [
+        "catalog"
+      ],
+      "taskId": "TASK-RESOURCE-636174616c6f67",
+      "message": "Keyword catalog + ACLs: Implementation needed."
+    },
+    {
+      "id": "resource-block_646f6373",
+      "componentIds": [
+        "docs"
+      ],
+      "taskId": "TASK-RESOURCE-646f6373",
+      "message": "Synthetic document store: Implementation needed."
+    },
+    {
+      "id": "resource-block_696e67657374",
+      "componentIds": [
+        "ingest"
+      ],
+      "taskId": "TASK-RESOURCE-696e67657374",
+      "message": "Ingestion job: Implementation needed."
+    },
+    {
+      "id": "resource-block_776174736f6e78",
+      "componentIds": [
+        "watsonx"
+      ],
+      "taskId": "TASK-RESOURCE-776174736f6e78",
+      "message": "Model runtime: Implementation needed."
+    },
+    {
+      "id": "resource-block_6c6f6773",
+      "componentIds": [
+        "logs"
+      ],
+      "taskId": "TASK-RESOURCE-6c6f6773",
+      "message": "Audit & logs: Implementation needed."
+    },
+    {
+      "id": "connection-652d757365722d776562",
+      "edgeIds": [
+        "e-user-web"
+      ],
+      "taskId": "TASK-INTEGRATION-652d757365722d776562",
+      "message": "Wire user → webapp: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d7765622d6170706964",
+      "edgeIds": [
+        "e-web-appid"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7765622d6170706964",
+      "message": "Wire webapp → appid: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d61707069642d617069",
+      "edgeIds": [
+        "e-appid-api"
+      ],
+      "taskId": "TASK-INTEGRATION-652d61707069642d617069",
+      "message": "Wire appid → rag-api: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d7765622d617069",
+      "edgeIds": [
+        "e-web-api"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7765622d617069",
+      "message": "Wire webapp → rag-api: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6170692d636174616c6f67",
+      "edgeIds": [
+        "e-api-catalog"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6170692d636174616c6f67",
+      "message": "Wire rag-api → catalog: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6170692d6d6f64656c",
+      "edgeIds": [
+        "e-api-model"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6170692d6d6f64656c",
+      "message": "Wire rag-api → watsonx: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d646f63732d696e67657374",
+      "edgeIds": [
+        "e-docs-ingest"
+      ],
+      "taskId": "TASK-INTEGRATION-652d646f63732d696e67657374",
+      "message": "Wire docs → ingest: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d696e676573742d636174616c6f67",
+      "edgeIds": [
+        "e-ingest-catalog"
+      ],
+      "taskId": "TASK-INTEGRATION-652d696e676573742d636174616c6f67",
+      "message": "Wire ingest → catalog: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6170692d6c6f6773",
+      "edgeIds": [
+        "e-api-logs"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6170692d6c6f6773",
+      "message": "Wire rag-api → logs: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

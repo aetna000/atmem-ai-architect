@@ -1,0 +1,411 @@
+{
+  "format": "atmem.ai-architect.project",
+  "formatVersion": "2.3.0",
+  "meta": {
+    "id": "8f874204-b081-4be8-accd-2fd07d432c9b",
+    "name": "Synthetic sensor anomaly detection (AWS)",
+    "createdAt": "2026-11-07T12:05:23.762Z",
+    "updatedAt": "2026-11-07T12:05:23.762Z",
+    "revision": 2,
+    "generator": "atmem-ai-architect 0.2.0"
+  },
+  "design": {
+    "provider": "aws",
+    "nodes": [
+      {
+        "id": "sim",
+        "type": "resource",
+        "position": {
+          "x": 50,
+          "y": 190
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Synthetic device simulator",
+          "provider": "tools",
+          "kind": "source",
+          "description": "Existing test publisher. It sends JSON events with deviceId, timestamp (ISO-8601 UTC), metric, value and unit. It sits outside the provisioning scope.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "poc": true
+        }
+      },
+      {
+        "id": "iot",
+        "type": "resource",
+        "position": {
+          "x": 470,
+          "y": 190
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Ingestion",
+          "provider": "aws",
+          "kind": "stream",
+          "description": "MQTT ingestion with per-device X.509 identity. A topic rule forwards events unchanged to Kinesis, partitioned by deviceId.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "service": "AWS IoT Core"
+        }
+      },
+      {
+        "id": "kds",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 190
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Durable buffer",
+          "provider": "aws",
+          "kind": "resource",
+          "description": "Ordered per-device buffer with replay. The retention period is still to be decided.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "service": "Amazon Kinesis Data Streams"
+        }
+      },
+      {
+        "id": "validate",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 190
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Validation",
+          "provider": "aws",
+          "kind": "guard",
+          "description": "Checks the schema, units and timestamps without changing deviceId, timestamp or unit. Uses partial-batch failure reporting and idempotent processing on deviceId+timestamp.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "service": "AWS Lambda"
+        }
+      },
+      {
+        "id": "dlq",
+        "type": "resource",
+        "position": {
+          "x": 1730,
+          "y": 50
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Rejected events",
+          "provider": "aws",
+          "kind": "resource",
+          "description": "Dead-letter queue for invalid or failed events, kept for investigation and replay.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "service": "Amazon SQS"
+        }
+      },
+      {
+        "id": "model",
+        "type": "resource",
+        "position": {
+          "x": 1730,
+          "y": 330
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Anomaly inference",
+          "provider": "aws",
+          "kind": "predict",
+          "description": "Returns an anomaly score and flag for each event. Local tests use a scripted mock; the real model (or a threshold rule) is not decided yet.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "service": "Amazon SageMaker AI (real-time endpoint)"
+        }
+      },
+      {
+        "id": "results",
+        "type": "resource",
+        "position": {
+          "x": 2150,
+          "y": 190
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Results store",
+          "provider": "aws",
+          "kind": "output",
+          "description": "Stores the score per event, keyed by deviceId + timestamp, with the original unit and model version.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "service": "Amazon DynamoDB"
+        }
+      },
+      {
+        "id": "alert",
+        "type": "resource",
+        "position": {
+          "x": 2150,
+          "y": 470
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Operator alert",
+          "provider": "aws",
+          "kind": "monitor",
+          "description": "Publishes an alert when an event is flagged as anomalous. The topic and subscribers are still to be reviewed.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "service": "Amazon SNS"
+        }
+      },
+      {
+        "id": "operator",
+        "type": "resource",
+        "position": {
+          "x": 2570,
+          "y": 470
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Operator",
+          "provider": "tools",
+          "kind": "tool",
+          "description": "The person who receives and triages anomaly alerts.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "role": "human"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "source": "sim",
+        "target": "iot",
+        "type": "smoothstep",
+        "label": "MQTT publish (TLS, device cert)"
+      },
+      {
+        "id": "e2",
+        "source": "iot",
+        "target": "kds",
+        "type": "smoothstep",
+        "label": "IoT rule → PutRecord"
+      },
+      {
+        "id": "e3",
+        "source": "kds",
+        "target": "validate",
+        "type": "smoothstep",
+        "label": "event source mapping"
+      },
+      {
+        "id": "e4",
+        "source": "validate",
+        "target": "dlq",
+        "type": "smoothstep",
+        "label": "invalid / failed events"
+      },
+      {
+        "id": "e5",
+        "source": "validate",
+        "target": "model",
+        "type": "smoothstep",
+        "label": "InvokeEndpoint"
+      },
+      {
+        "id": "e6",
+        "source": "model",
+        "target": "results",
+        "type": "smoothstep",
+        "label": "PutItem score"
+      },
+      {
+        "id": "e7",
+        "source": "model",
+        "target": "alert",
+        "type": "smoothstep",
+        "label": "Publish if anomalous"
+      },
+      {
+        "id": "e8",
+        "source": "alert",
+        "target": "operator",
+        "type": "smoothstep",
+        "label": "email/SMS notification"
+      }
+    ]
+  },
+  "discovery": {
+    "problem": "",
+    "brief": {
+      "application": "Use AWS for this synthetic architecture qualification. Analyze synthetic sensor events for anomalous device behavior. Preserve device identity, timestamps and units. Include ingestion, durable buffering, validation, inference, results and an operator alert. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+      "cloud": "AWS"
+    },
+    "facts": [
+      {
+        "id": "fact-d7508214",
+        "name": "cloud.preference",
+        "value": "aws",
+        "unit": "provider",
+        "text": "Use AWS for this synthetic architecture qualification. Analyze synthetic sensor events for anomalous device behavior. Preserve device identity, timestamps and units. Include ingestion, durable buffering, validation, inference, results and an operator alert. Draw the complete end-to-end architecture ",
+        "madeAt": "2026-11-07"
+      }
+    ],
+    "workflow": "predictive",
+    "asked": [],
+    "lastAsked": {
+      "id": "predictive:0",
+      "topic": "data",
+      "question": "How much history do you have for what you want to predict?",
+      "beginner": "For example “three years of sales by store” or “failure records since 2020”.",
+      "why": "It shapes the Predictive ML design."
+    }
+  },
+  "requirements": [
+    {
+      "id": "ai-preserve-identity",
+      "kind": "functional",
+      "category": "reliability",
+      "statement": "Every stored result and alert keeps the original deviceId, timestamp and unit unchanged.",
+      "rationale": "If identity or units are lost, alerts can't be traced back to a device and readings may be misread.",
+      "basis": "User: \"Preserve device identity, timestamps and units.\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "validate",
+        "results",
+        "alert"
+      ]
+    },
+    {
+      "id": "ai-invalid-events",
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "statement": "Invalid events are rejected to a dead-letter queue, never silently dropped, and can be replayed.",
+      "rationale": "Durable buffering only helps if bad events stay visible and can be recovered.",
+      "basis": "User asked for durable buffering and validation.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "validate",
+        "dlq",
+        "kds"
+      ]
+    },
+    {
+      "id": "ai-false-alarms",
+      "kind": "nonfunctional",
+      "category": "performance",
+      "statement": "Proposal: before the model goes live, agree on an acceptable false-alarm rate and evaluate the model on time-ordered labelled data.",
+      "rationale": "A mocked model only proves the wiring. Too many false alarms will lead operators to ignore alerts.",
+      "basis": "User: \"distinguish mocked model behavior from actual model validation\"",
+      "priority": "should",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "model",
+        "alert"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use AWS for this synthetic architecture qualification",
+      "options": "",
+      "decision": "aws",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.aws-sensor-anomaly-pipeline-first-sketch",
+      "title": "AWS sensor anomaly pipeline – first sketch",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: synthetic sensor events → ingestion → durable buffer → validation → inference → results → operator alert. Assumptions: region not selected; anomaly model and labels undecided; no typed Terraform generator exists for IoT Core, Kinesis, SageMaker or SNS, so those parts need engineering work. The diagram shows design intent only; nothing is deployed or verified.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "extensions": {
+    "requirementNumbers": {
+      "drv-data-access": 1,
+      "drv-data-location": 2,
+      "ai-preserve-identity": 3,
+      "ai-invalid-events": 4,
+      "ai-false-alarms": 5
+    },
+    "choices": {},
+    "conceptSig": null
+  }
+}

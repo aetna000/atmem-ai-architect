@@ -1,0 +1,514 @@
+{
+  "version": 1,
+  "revision": 2,
+  "name": "Agent assist for synthetic support calls (Google Cloud)",
+  "provider": "gcp",
+  "requirements": "",
+  "nodes": [
+    {
+      "id": "call-source",
+      "type": "resource",
+      "position": {
+        "x": 50,
+        "y": 470
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Synthetic call / telephony source",
+        "provider": "tools",
+        "kind": "source",
+        "description": "An existing or synthetic call audio source outside provisioning scope. It receives calls only; the system never places calls.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "service": "Synthetic audio stream (test fixture)"
+      }
+    },
+    {
+      "id": "consent-gate",
+      "type": "resource",
+      "position": {
+        "x": 470,
+        "y": 470
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Consent gate",
+        "provider": "gcp",
+        "kind": "guard",
+        "description": "Records the caller's consent with a timestamp. If consent is missing, the audio stops here.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "guard",
+        "service": "Cloud Run (consent service) + Firestore consent record"
+      }
+    },
+    {
+      "id": "audio-ingest",
+      "type": "resource",
+      "position": {
+        "x": 890,
+        "y": 340
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Audio ingestion",
+        "provider": "gcp",
+        "kind": "stream",
+        "description": "Receives consented audio over gRPC/WebSocket and streams it to Speech-to-Text. Raw audio is not kept unless a retention rule is agreed.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "ingest",
+        "service": "Cloud Run streaming gateway"
+      }
+    },
+    {
+      "id": "stt",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 340
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Transcription",
+        "provider": "gcp",
+        "kind": "predict",
+        "description": "Streaming transcription in near real time. Language and model choice depend on the region; availability is unverified.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "model",
+        "service": "Cloud Speech-to-Text V2 (streaming)"
+      }
+    },
+    {
+      "id": "pii-redact",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 340
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "PII redaction",
+        "provider": "gcp",
+        "kind": "guard",
+        "description": "Removes personal details from transcript segments before any model, storage or log sees them.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "guard",
+        "service": "Sensitive Data Protection (DLP API) de-identify"
+      }
+    },
+    {
+      "id": "knowledge",
+      "type": "resource",
+      "position": {
+        "x": 2570,
+        "y": 50
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Support knowledge base",
+        "provider": "gcp",
+        "kind": "resource",
+        "description": "Approved support articles used to ground suggestions. The source content is still to be confirmed.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "role": "index",
+        "service": "Vertex AI Search data store"
+      }
+    },
+    {
+      "id": "assist-orchestrator",
+      "type": "resource",
+      "position": {
+        "x": 2150,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Agent-assist orchestrator",
+        "provider": "gcp",
+        "kind": "agent",
+        "description": "Takes the redacted transcript, retrieves passages and asks Gemini for cited suggestions, a summary and a CRM draft. It has no tool for placing calls or writing to the CRM.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "app",
+        "service": "Cloud Run (orchestrator)"
+      }
+    },
+    {
+      "id": "gemini",
+      "type": "resource",
+      "position": {
+        "x": 2570,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Gemini model",
+        "provider": "gcp",
+        "kind": "predict",
+        "description": "Generates suggestions and summaries. Model version, quotas and regional access are unverified; local tests use scripted replies.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "role": "llm",
+        "service": "Gemini on Vertex AI"
+      }
+    },
+    {
+      "id": "agent-desktop",
+      "type": "resource",
+      "position": {
+        "x": 2570,
+        "y": 610
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Support agent desktop",
+        "provider": "tools",
+        "kind": "tool",
+        "description": "The support agent (a person) sees suggestions and edits/approves the summary and the CRM draft.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "role": "human"
+      }
+    },
+    {
+      "id": "summary-store",
+      "type": "resource",
+      "position": {
+        "x": 2990,
+        "y": 470
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Approved summaries & CRM drafts",
+        "provider": "gcp",
+        "kind": "output",
+        "description": "Stores redacted summaries and CRM drafts with their approval status and who approved them.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "output",
+        "service": "Firestore"
+      }
+    },
+    {
+      "id": "crm",
+      "type": "resource",
+      "position": {
+        "x": 2990,
+        "y": 750
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Existing CRM",
+        "provider": "tools",
+        "kind": "tool",
+        "description": "The existing CRM, outside provisioning scope. The system has no write access; the agent applies an approved draft by hand.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "existing"
+      }
+    },
+    {
+      "id": "audit",
+      "type": "resource",
+      "position": {
+        "x": 2150,
+        "y": 610
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Audit & monitoring",
+        "provider": "gcp",
+        "kind": "monitor",
+        "description": "Logs consent decisions, redaction results, approvals and errors, without raw personal data.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "role": "monitor",
+        "service": "Cloud Logging + Cloud Monitoring"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-call-consent",
+      "source": "call-source",
+      "target": "consent-gate",
+      "type": "smoothstep",
+      "label": "caller consent prompt"
+    },
+    {
+      "id": "e-consent-ingest",
+      "source": "consent-gate",
+      "target": "audio-ingest",
+      "type": "smoothstep",
+      "label": "consented audio only"
+    },
+    {
+      "id": "e-ingest-stt",
+      "source": "audio-ingest",
+      "target": "stt",
+      "type": "smoothstep",
+      "label": "streaming recognize"
+    },
+    {
+      "id": "e-stt-pii",
+      "source": "stt",
+      "target": "pii-redact",
+      "type": "smoothstep",
+      "label": "transcript segments"
+    },
+    {
+      "id": "e-pii-orch",
+      "source": "pii-redact",
+      "target": "assist-orchestrator",
+      "type": "smoothstep",
+      "label": "redacted transcript"
+    },
+    {
+      "id": "e-orch-kb",
+      "source": "assist-orchestrator",
+      "target": "knowledge",
+      "type": "smoothstep",
+      "label": "search grounding passages"
+    },
+    {
+      "id": "e-orch-gemini",
+      "source": "assist-orchestrator",
+      "target": "gemini",
+      "type": "smoothstep",
+      "label": "generateContent (redacted)"
+    },
+    {
+      "id": "e-orch-desk",
+      "source": "assist-orchestrator",
+      "target": "agent-desktop",
+      "type": "smoothstep",
+      "label": "cited suggestions, draft summary & CRM draft"
+    },
+    {
+      "id": "e-desk-store",
+      "source": "agent-desktop",
+      "target": "summary-store",
+      "type": "smoothstep",
+      "label": "approved summary / draft"
+    },
+    {
+      "id": "e-desk-crm",
+      "source": "agent-desktop",
+      "target": "crm",
+      "type": "smoothstep",
+      "label": "agent applies draft manually"
+    },
+    {
+      "id": "e-consent-audit",
+      "source": "consent-gate",
+      "target": "audit",
+      "type": "smoothstep",
+      "label": "consent events"
+    },
+    {
+      "id": "e-pii-audit",
+      "source": "pii-redact",
+      "target": "audit",
+      "type": "smoothstep",
+      "label": "redaction findings"
+    }
+  ],
+  "id": "6e964895-a354-4e20-be17-0b66f9db6fc6",
+  "brief": {
+    "application": "Use Google Cloud for this synthetic architecture qualification. Assist an agent during a synthetic support call. Include consent, audio ingestion, transcription, PII redaction, grounded agent suggestions, an approved call summary and a draft update to an existing CRM. Do not place calls or write CRM records automatically. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+    "cloud": "Google Cloud"
+  },
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use Google Cloud for this synthetic architecture qualification.",
+      "options": "",
+      "decision": "gcp",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.google-cloud-agent-assist-sketch-for-synthetic-support-calls",
+      "title": "Google Cloud agent-assist sketch for synthetic support calls",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: consent, audio ingestion, streaming transcription, PII redaction, grounded suggestions, an approved summary and a draft CRM update, all for synthetic calls. Assumptions: no outbound calls and no automated CRM writes; the agent approves summaries and drafts and applies CRM changes by hand. The region, project and model access are not verified. Nothing has a typed generator yet, so implementation is engineering work.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "needs": [
+    {
+      "id": "ai-consent-before-audio",
+      "kind": "functional",
+      "category": "compliance",
+      "statement": "Proposed: no call audio is transcribed or processed until consent is recorded; without consent, nothing is processed.",
+      "rationale": "Prevents processing call audio without consent, which is a legal and trust risk.",
+      "basis": "User: \"Include consent, audio ingestion...\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "consent-gate",
+        "audio-ingest"
+      ]
+    },
+    {
+      "id": "ai-redact-before-model",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Proposed: personal details are removed from transcripts before any model call, storage or log.",
+      "rationale": "Limits exposure of personal data to the model and logs.",
+      "basis": "User: \"PII redaction\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "pii-redact",
+        "gemini",
+        "summary-store",
+        "audit"
+      ]
+    },
+    {
+      "id": "ai-human-approval-no-auto-write",
+      "kind": "functional",
+      "category": "security",
+      "statement": "Proposed: summaries and CRM updates are drafts until the agent approves them; the system can't place calls or write CRM records.",
+      "rationale": "Prevents unreviewed AI output from changing customer records.",
+      "basis": "User: \"Do not place calls or write CRM records automatically.\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "assist-orchestrator",
+        "agent-desktop",
+        "crm"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "extensions": {
+    "requirementNumbers": {
+      "drv-data-access": 1,
+      "drv-data-location": 2,
+      "ai-consent-before-audio": 3,
+      "ai-redact-before-model": 4,
+      "ai-human-approval-no-auto-write": 5
+    }
+  },
+  "facts": [
+    {
+      "id": "fact-c541881b",
+      "name": "cloud.preference",
+      "value": "gcp",
+      "unit": "provider",
+      "text": "Use Google Cloud for this synthetic architecture qualification. Assist an agent during a synthetic support call. Include consent, audio ingestion, transcription, PII redaction, grounded agent suggestions, an approved call summary and a draft update to an existing CRM. Do not place calls or write CRM",
+      "madeAt": "2026-11-07"
+    },
+    {
+      "id": "fact-7775396b",
+      "name": "data.sensitive",
+      "value": true,
+      "unit": "flag",
+      "text": "Use Google Cloud for this synthetic architecture qualification. Assist an agent during a synthetic support call. Include consent, audio ingestion, transcription, PII redaction, grounded agent suggestions, an approved call summary and a draft update to an existing CRM. Do not place calls or write CRM",
+      "madeAt": "2026-11-07"
+    }
+  ],
+  "workflow": "agentic-automation",
+  "asked": [],
+  "lastAsked": {
+    "id": "agentic-automation:0",
+    "topic": "systems",
+    "question": "Which tools should it be allowed to use?",
+    "beginner": "For example “read and update tickets, send emails, look up orders”.",
+    "why": "It shapes the An agent with tools design."
+  },
+  "choices": {},
+  "conceptSig": null
+}

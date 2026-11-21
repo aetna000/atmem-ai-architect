@@ -1,0 +1,50 @@
+Frameworks interrupted files 27 seconds 900.478
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py", line 128, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py", line 719, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/engine-paired/20261111-isolated-same-model/source/scripts/engine-evaluation/paired-native.py", line 133, in main
+    for name in manifest['armOrder']:results.append(await arm(args,name,brief))
+                                                    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/engine-paired/20261111-isolated-same-model/source/scripts/engine-evaluation/paired-native.py", line 81, in arm
+    try:event=await asyncio.wait_for(engine.next_event(scope,session['id']),max(.01,deadline-time.monotonic()))
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/tasks.py", line 488, in wait_for
+    return await fut
+           ^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/engine-paired/20261111-isolated-same-model/source/server/engineering_sessions.py", line 261, in next_event
+    event=await self.backend.next_event(scope,row['handle'])
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/engine-paired/20261111-isolated-same-model/source/server/codex_engineering_backend.py", line 209, in next_event
+    message=await client.notification()
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/engine-paired/20261111-isolated-same-model/source/scripts/engine-evaluation/paired-native.py", line 64, in notification
+    message=await super().notification(**kwargs)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/engine-paired/20261111-isolated-same-model/source/server/codex_app_server.py", line 107, in notification
+    done, _ = await asyncio.wait({received, closed}, timeout=timeout,
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                                 return_when=asyncio.FIRST_COMPLETED)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/tasks.py", line 432, in wait
+    return await _wait(fs, timeout, return_when, loop)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/tasks.py", line 521, in _wait
+    await waiter
+asyncio.exceptions.CancelledError
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/engine-paired/20261111-isolated-same-model/source/scripts/engine-evaluation/paired-native.py", line 155, in <module>
+    asyncio.run(main(args))
+    ~~~~~~~~~~~^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py", line 205, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py", line 133, in run
+    raise KeyboardInterrupt()
+KeyboardInterrupt

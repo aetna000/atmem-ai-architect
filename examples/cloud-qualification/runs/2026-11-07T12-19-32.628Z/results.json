@@ -1,0 +1,412 @@
+[
+  {
+    "provider": "gcp-iot",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "emulation": "blocked",
+    "mentorResponded": true,
+    "architecturePresent": true,
+    "acceptanceRequirements": [
+      "Reject unknown device and invalid units",
+      "Duplicate events produce one result",
+      "Late and out-of-order telemetry follows an explicit policy",
+      "Disconnected input recovers by replay",
+      "Anomaly output names evidence and model version"
+    ],
+    "staticAssessment": {
+      "kind": "static-graph-checks",
+      "checks": [
+        {
+          "name": "Application contains at least three required components",
+          "passed": true
+        },
+        {
+          "name": "Required components form one connected graph",
+          "passed": true
+        },
+        {
+          "name": "Proposed cloud resources retain the requested provider",
+          "passed": true
+        },
+        {
+          "name": "Proposed cloud components name concrete services",
+          "passed": true
+        },
+        {
+          "name": "AI application has not collapsed into only object storage",
+          "passed": true
+        }
+      ],
+      "passed": true,
+      "limitations": [
+        "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+      ],
+      "acceptanceRequirements": [
+        "Reject unknown device and invalid units",
+        "Duplicate events produce one result",
+        "Late and out-of-order telemetry follows an explicit policy",
+        "Disconnected input recovers by replay",
+        "Anomaly output names evidence and model version"
+      ]
+    },
+    "components": [
+      {
+        "id": "sim"
+      },
+      {
+        "id": "pubsub",
+        "service": "Pub/Sub"
+      },
+      {
+        "id": "archive",
+        "service": "Cloud Storage"
+      },
+      {
+        "id": "registry_db",
+        "service": "Firestore"
+      },
+      {
+        "id": "dataflow",
+        "service": "Dataflow"
+      },
+      {
+        "id": "dlq",
+        "service": "Pub/Sub"
+      },
+      {
+        "id": "vertex",
+        "service": "Vertex AI Endpoints"
+      },
+      {
+        "id": "modelreg",
+        "service": "Vertex AI Model Registry"
+      },
+      {
+        "id": "bq",
+        "service": "BigQuery"
+      },
+      {
+        "id": "monitoring",
+        "service": "Cloud Monitoring"
+      },
+      {
+        "id": "operator"
+      }
+    ],
+    "passed": false,
+    "mentorJourneyPassed": true
+  },
+  {
+    "provider": "gcp-observability",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "emulation": "blocked",
+    "mentorResponded": true,
+    "architecturePresent": true,
+    "acceptanceRequirements": [
+      "Redact secrets before model input",
+      "Link conclusions to exact trace or log IDs",
+      "Prompt injection in a log cannot issue tool calls",
+      "Missing spans yield uncertainty rather than invented causes",
+      "Repeated ingestion preserves a consistent incident timeline"
+    ],
+    "staticAssessment": {
+      "kind": "static-graph-checks",
+      "checks": [
+        {
+          "name": "Application contains at least three required components",
+          "passed": true
+        },
+        {
+          "name": "Required components form one connected graph",
+          "passed": true
+        },
+        {
+          "name": "Proposed cloud resources retain the requested provider",
+          "passed": true
+        },
+        {
+          "name": "Proposed cloud components name concrete services",
+          "passed": true
+        },
+        {
+          "name": "AI application has not collapsed into only object storage",
+          "passed": true
+        }
+      ],
+      "passed": true,
+      "limitations": [
+        "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+      ],
+      "acceptanceRequirements": [
+        "Redact secrets before model input",
+        "Link conclusions to exact trace or log IDs",
+        "Prompt injection in a log cannot issue tool calls",
+        "Missing spans yield uncertainty rather than invented causes",
+        "Repeated ingestion preserves a consistent incident timeline"
+      ]
+    },
+    "components": [
+      {
+        "id": "src-synthetic"
+      },
+      {
+        "id": "otel-collector",
+        "service": "Cloud Run"
+      },
+      {
+        "id": "pubsub-raw",
+        "service": "Pub/Sub"
+      },
+      {
+        "id": "ingest-worker",
+        "service": "Cloud Run"
+      },
+      {
+        "id": "dlp",
+        "service": "Sensitive Data Protection (Cloud DLP)"
+      },
+      {
+        "id": "bq-telemetry",
+        "service": "BigQuery"
+      },
+      {
+        "id": "analysis-runtime",
+        "service": "Cloud Run"
+      },
+      {
+        "id": "vertex-gemini",
+        "service": "Vertex AI (Gemini)"
+      },
+      {
+        "id": "iap",
+        "service": "Identity-Aware Proxy"
+      },
+      {
+        "id": "operator"
+      }
+    ],
+    "passed": false,
+    "mentorJourneyPassed": true
+  },
+  {
+    "provider": "gcp-rag",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "emulation": "blocked",
+    "mentorResponded": true,
+    "architecturePresent": true,
+    "acceptanceRequirements": [
+      "Denied documents never reach the model",
+      "Known questions cite current source revisions",
+      "Unsupported questions abstain",
+      "Updates and deletions change retrieval",
+      "Revocation during generation suppresses the answer"
+    ],
+    "staticAssessment": {
+      "kind": "static-graph-checks",
+      "checks": [
+        {
+          "name": "Application contains at least three required components",
+          "passed": true
+        },
+        {
+          "name": "Required components form one connected graph",
+          "passed": true
+        },
+        {
+          "name": "Proposed cloud resources retain the requested provider",
+          "passed": true
+        },
+        {
+          "name": "Proposed cloud components name concrete services",
+          "passed": true
+        },
+        {
+          "name": "AI application has not collapsed into only object storage",
+          "passed": true
+        }
+      ],
+      "passed": true,
+      "limitations": [
+        "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+      ],
+      "acceptanceRequirements": [
+        "Denied documents never reach the model",
+        "Known questions cite current source revisions",
+        "Unsupported questions abstain",
+        "Updates and deletions change retrieval",
+        "Revocation during generation suppresses the answer"
+      ]
+    },
+    "components": [
+      {
+        "id": "user"
+      },
+      {
+        "id": "idp",
+        "service": "Identity Platform"
+      },
+      {
+        "id": "web",
+        "service": "Cloud Run"
+      },
+      {
+        "id": "rag-api",
+        "service": "Cloud Run"
+      },
+      {
+        "id": "catalog",
+        "service": "Firestore"
+      },
+      {
+        "id": "model",
+        "service": "Vertex AI (Gemini)"
+      },
+      {
+        "id": "operator"
+      },
+      {
+        "id": "docs",
+        "service": "Cloud Storage"
+      },
+      {
+        "id": "ingest",
+        "service": "Cloud Run"
+      },
+      {
+        "id": "logs",
+        "service": "Cloud Logging"
+      }
+    ],
+    "passed": false,
+    "mentorJourneyPassed": true
+  },
+  {
+    "provider": "gcp-chatbot",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "emulation": "blocked",
+    "mentorResponded": false,
+    "architecturePresent": true,
+    "acceptanceRequirements": [
+      "One user cannot read another conversation",
+      "Context and response sizes are bounded",
+      "Model outage produces a recoverable response",
+      "Deleting a conversation removes its stored context",
+      "Escalation retains the approved conversation context"
+    ],
+    "staticAssessment": {
+      "kind": "static-graph-checks",
+      "checks": [
+        {
+          "name": "Application contains at least three required components",
+          "passed": true
+        },
+        {
+          "name": "Required components form one connected graph",
+          "passed": true
+        },
+        {
+          "name": "Proposed cloud resources retain the requested provider",
+          "passed": true
+        },
+        {
+          "name": "Proposed cloud components name concrete services",
+          "passed": true
+        },
+        {
+          "name": "AI application has not collapsed into only object storage",
+          "passed": true
+        }
+      ],
+      "passed": true,
+      "limitations": [
+        "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+      ],
+      "acceptanceRequirements": [
+        "One user cannot read another conversation",
+        "Context and response sizes are bounded",
+        "Model outage produces a recoverable response",
+        "Deleting a conversation removes its stored context",
+        "Escalation retains the approved conversation context"
+      ]
+    },
+    "components": [
+      {
+        "id": "user"
+      },
+      {
+        "id": "idp",
+        "service": "Identity Platform"
+      },
+      {
+        "id": "app",
+        "service": "Cloud Run"
+      },
+      {
+        "id": "state",
+        "service": "Firestore"
+      },
+      {
+        "id": "model",
+        "service": "Vertex AI (Gemini API)"
+      },
+      {
+        "id": "escalation",
+        "service": "Pub/Sub"
+      },
+      {
+        "id": "reviewer"
+      },
+      {
+        "id": "ops",
+        "service": "Cloud Monitoring"
+      }
+    ],
+    "passed": false,
+    "mentorJourneyPassed": false
+  },
+  {
+    "provider": "gcp-version-control",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "passed": false,
+    "error": "Model request failed"
+  },
+  {
+    "provider": "gcp-maintenance",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "passed": false,
+    "error": "Model request failed"
+  },
+  {
+    "provider": "gcp-customer-support",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "passed": false,
+    "error": "Model request failed"
+  },
+  {
+    "provider": "gcp-call-center",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "passed": false,
+    "error": "Model request failed"
+  },
+  {
+    "provider": "gcp-cloud-operations",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "passed": false,
+    "error": "Model request failed"
+  },
+  {
+    "provider": "gcp-cybersecurity",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "passed": false,
+    "error": "Model request failed"
+  }
+]

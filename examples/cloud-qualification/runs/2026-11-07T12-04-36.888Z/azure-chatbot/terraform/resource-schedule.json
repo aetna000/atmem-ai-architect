@@ -1,0 +1,468 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "chat-user",
+      "address": "block_636861742d75736572",
+      "label": "Synthetic user (browser)",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "entra-auth",
+      "address": "block_656e7472612d61757468",
+      "label": "Sign-in",
+      "provider": "azure",
+      "service": "Microsoft Entra External ID",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "chat-app"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "chat-app",
+      "address": "block_636861742d617070",
+      "label": "Chat application",
+      "provider": "azure",
+      "service": "Azure App Service",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "chat-user"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "conversation-store",
+      "address": "block_636f6e766572736174696f6e2d73746f7265",
+      "label": "Conversation state",
+      "provider": "azure",
+      "service": "Azure Cosmos DB for NoSQL",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "chat-app"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "model-runtime",
+      "address": "block_6d6f64656c2d72756e74696d65",
+      "label": "Model runtime",
+      "provider": "azure",
+      "service": "Azure OpenAI (Azure AI Foundry)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "chat-app"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "content-safety",
+      "address": "block_636f6e74656e742d736166657479",
+      "label": "Safety check",
+      "provider": "azure",
+      "service": "Azure AI Content Safety",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "chat-app"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "escalation-queue",
+      "address": "block_657363616c6174696f6e2d7175657565",
+      "label": "Escalation queue",
+      "provider": "azure",
+      "service": "Azure Service Bus",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "chat-app"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "human-reviewer",
+      "address": "block_68756d616e2d7265766965776572",
+      "label": "Human reviewer",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "escalation-queue"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "monitoring",
+      "address": "block_6d6f6e69746f72696e67",
+      "label": "Monitoring and audit",
+      "provider": "azure",
+      "service": "Azure Monitor / Application Insights",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "chat-app"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e-user-app",
+      "source": "chat-user",
+      "target": "chat-app",
+      "data": "HTTPS chat and reply",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-app-auth",
+      "source": "chat-app",
+      "target": "entra-auth",
+      "data": "OIDC sign-in, token validation",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-app-store",
+      "source": "chat-app",
+      "target": "conversation-store",
+      "data": "read/write own user's turns",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-app-model",
+      "source": "chat-app",
+      "target": "model-runtime",
+      "data": "bounded prompt via chat completions",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-app-safety",
+      "source": "chat-app",
+      "target": "content-safety",
+      "data": "screen input and output",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-app-escalate",
+      "source": "chat-app",
+      "target": "escalation-queue",
+      "data": "send escalation ticket",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-queue-human",
+      "source": "escalation-queue",
+      "target": "human-reviewer",
+      "data": "review escalated conversation",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-app-monitor",
+      "source": "chat-app",
+      "target": "monitoring",
+      "data": "telemetry and audit events",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Synthetic user (browser): Existing — reference/import plan needed.",
+    "Sign-in: Implementation needed.",
+    "Chat application: Implementation needed.",
+    "Conversation state: Implementation needed.",
+    "Model runtime: Implementation needed.",
+    "Safety check: Implementation needed.",
+    "Escalation queue: Implementation needed.",
+    "Human reviewer: Existing — reference/import plan needed.",
+    "Monitoring and audit: Implementation needed.",
+    "Wire chat-user → chat-app: implement data flow, access policy and acceptance test.",
+    "Wire chat-app → entra-auth: implement data flow, access policy and acceptance test.",
+    "Wire chat-app → conversation-store: implement data flow, access policy and acceptance test.",
+    "Wire chat-app → model-runtime: implement data flow, access policy and acceptance test.",
+    "Wire chat-app → content-safety: implement data flow, access policy and acceptance test.",
+    "Wire chat-app → escalation-queue: implement data flow, access policy and acceptance test.",
+    "Wire escalation-queue → human-reviewer: implement data flow, access policy and acceptance test.",
+    "Wire chat-app → monitoring: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "resource-block_636861742d75736572",
+      "componentIds": [
+        "chat-user"
+      ],
+      "taskId": "TASK-RESOURCE-636861742d75736572",
+      "message": "Synthetic user (browser): Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_656e7472612d61757468",
+      "componentIds": [
+        "entra-auth"
+      ],
+      "taskId": "TASK-RESOURCE-656e7472612d61757468",
+      "message": "Sign-in: Implementation needed."
+    },
+    {
+      "id": "resource-block_636861742d617070",
+      "componentIds": [
+        "chat-app"
+      ],
+      "taskId": "TASK-RESOURCE-636861742d617070",
+      "message": "Chat application: Implementation needed."
+    },
+    {
+      "id": "resource-block_636f6e766572736174696f6e2d73746f7265",
+      "componentIds": [
+        "conversation-store"
+      ],
+      "taskId": "TASK-RESOURCE-636f6e766572736174696f6e2d73746f7265",
+      "message": "Conversation state: Implementation needed."
+    },
+    {
+      "id": "resource-block_6d6f64656c2d72756e74696d65",
+      "componentIds": [
+        "model-runtime"
+      ],
+      "taskId": "TASK-RESOURCE-6d6f64656c2d72756e74696d65",
+      "message": "Model runtime: Implementation needed."
+    },
+    {
+      "id": "resource-block_636f6e74656e742d736166657479",
+      "componentIds": [
+        "content-safety"
+      ],
+      "taskId": "TASK-RESOURCE-636f6e74656e742d736166657479",
+      "message": "Safety check: Implementation needed."
+    },
+    {
+      "id": "resource-block_657363616c6174696f6e2d7175657565",
+      "componentIds": [
+        "escalation-queue"
+      ],
+      "taskId": "TASK-RESOURCE-657363616c6174696f6e2d7175657565",
+      "message": "Escalation queue: Implementation needed."
+    },
+    {
+      "id": "resource-block_68756d616e2d7265766965776572",
+      "componentIds": [
+        "human-reviewer"
+      ],
+      "taskId": "TASK-RESOURCE-68756d616e2d7265766965776572",
+      "message": "Human reviewer: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_6d6f6e69746f72696e67",
+      "componentIds": [
+        "monitoring"
+      ],
+      "taskId": "TASK-RESOURCE-6d6f6e69746f72696e67",
+      "message": "Monitoring and audit: Implementation needed."
+    },
+    {
+      "id": "connection-652d757365722d617070",
+      "edgeIds": [
+        "e-user-app"
+      ],
+      "taskId": "TASK-INTEGRATION-652d757365722d617070",
+      "message": "Wire chat-user → chat-app: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6170702d61757468",
+      "edgeIds": [
+        "e-app-auth"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6170702d61757468",
+      "message": "Wire chat-app → entra-auth: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6170702d73746f7265",
+      "edgeIds": [
+        "e-app-store"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6170702d73746f7265",
+      "message": "Wire chat-app → conversation-store: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6170702d6d6f64656c",
+      "edgeIds": [
+        "e-app-model"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6170702d6d6f64656c",
+      "message": "Wire chat-app → model-runtime: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6170702d736166657479",
+      "edgeIds": [
+        "e-app-safety"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6170702d736166657479",
+      "message": "Wire chat-app → content-safety: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6170702d657363616c617465",
+      "edgeIds": [
+        "e-app-escalate"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6170702d657363616c617465",
+      "message": "Wire chat-app → escalation-queue: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d71756575652d68756d616e",
+      "edgeIds": [
+        "e-queue-human"
+      ],
+      "taskId": "TASK-INTEGRATION-652d71756575652d68756d616e",
+      "message": "Wire escalation-queue → human-reviewer: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6170702d6d6f6e69746f72",
+      "edgeIds": [
+        "e-app-monitor"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6170702d6d6f6e69746f72",
+      "message": "Wire chat-app → monitoring: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

@@ -1,0 +1,121 @@
+{
+  "recordedAt": "2026-11-10T18:30:35.396693+00:00",
+  "passed": true,
+  "checks": [
+    {
+      "check": "transfer-image",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "parser-image",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "policy.docx-input-volume",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "policy.docx-output-volume",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "policy.docx-download",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "policy.docx-parse",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "policy.docx-upload",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "policy.docx-collect",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "policy.docx-three-stage-byte-bound-answer",
+      "passed": true
+    },
+    {
+      "check": "policy.docx-input-cleanup",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "policy.docx-output-cleanup",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "invoice-scan.pdf-input-volume",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "invoice-scan.pdf-output-volume",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "invoice-scan.pdf-download",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "invoice-scan.pdf-parse",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "invoice-scan.pdf-upload",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "invoice-scan.pdf-collect",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "invoice-scan.pdf-three-stage-byte-bound-answer",
+      "passed": true
+    },
+    {
+      "check": "invoice-scan.pdf-input-cleanup",
+      "passed": true,
+      "exitCode": 0
+    },
+    {
+      "check": "invoice-scan.pdf-output-cleanup",
+      "passed": true,
+      "exitCode": 0
+    }
+  ],
+  "sourceHashes": {
+    "scripts/qualify-enterprise-aws-jobs.py": "6a9666d8b149d5927e65e48ea8b627fd730ab4ddfa9301944cc4120af529094e",
+    "tests/runtime/enterprise_aws_jobs_contract.py": "ef22d4a7c431f32ba276fbe1e3e79d35d985c35b7b114cac5e7b8b42b8dea37f",
+    "src/runtime/enterprise-aws-task-template.json": "09ba0056bf975e811c82c6b721d66a7653be3ab8b48a080cd75ef82355ce4ffe",
+    "src/runtime/enterprise_aws_jobs.py": "7a0f194bb6e7667f79c02d5171ee28dbc5f577ce202a3d9e8a7c7828f1e96a77",
+    "src/runtime/enterprise_aws_objects.py": "f94c0fb8e78450e3d92d0f45d9e7eeadd523a171c2a59358a2054adc90108682",
+    "src/runtime/enterprise_aws_transfer.py": "beac1f5410d1054d6e48bb48817e365d442a28fa095b9ce752b7a5f2eac88651",
+    "src/runtime/enterprise_document_job.py": "d56dfb04a9189623392f35b68987ec96288e2ba75120ce4488c71eef0ebd2d4a",
+    "src/runtime/enterprise_document_contract.py": "a751fd81979884b1d3023c2527248f2da99f823348dfe81236488f9ea31bfe42",
+    "tests/fixtures/providers/aws-ecs-2014-11-13-botocore-1.43.123.json.gz": "bfeebe050469cd26db24b1be3ed402807d131b25fc147a45733310583104215c",
+    "benchmarks/convergence/fixtures/enterprise-documents/policy.docx": "79fb19e7ad90a74a671728612d2415f5e0834f797cd5f7d9ba31ce9e6ebd9a49",
+    "benchmarks/convergence/fixtures/invoices/invoice-scan.pdf": "c579469b4d27b6a9167465933e2166a9afb11d3b907e2391453e8dd8977a185d"
+  },
+  "coreImageId": "sha256:fe9bfe324ebd70da18cb31980df78b1527014a3b3931b7f7f095d079b07d64c1",
+  "parserImageId": "sha256:0e6089395cc36c96986ef500026af794dd07f2a8c97196e7c0df726fbe465c82",
+  "cloudOperations": false,
+  "scope": "Actual ECS-plan transfer CLI, root/CHOWN handoff, two separate task-like POSIX volumes, parser and Office/scanned-PDF consumer in restricted owned Linux. S3 is an explicit SDK fixture. Local network/logging/PID restrictions do not prove native host policy, ECS scheduling, identity, termination, recovery or whole-project acceptance."
+}

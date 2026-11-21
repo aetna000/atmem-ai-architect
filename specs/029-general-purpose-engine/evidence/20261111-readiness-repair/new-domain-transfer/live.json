@@ -1,0 +1,101 @@
+{
+  "status": "artifacts_captured",
+  "projectId": "9f28d666-143e-400d-a3a9-a3faccd567aa",
+  "sourceCommit": "e6781178901fe84c6eff82fb9df04af3d51c2132",
+  "model": "gpt-6.1-sol",
+  "effort": "high",
+  "startedAt": "2026-11-11T04:33:59.907Z",
+  "observationSeconds": 900,
+  "classification": "uncoached-new-domain-transfer",
+  "cloudOperations": false,
+  "sessionId": "2aadbe66-4183-438f-94b2-8a7cc6e30b0d",
+  "job": {
+    "id": "2aadbe66-4183-438f-94b2-8a7cc6e30b0d",
+    "model": "gpt-6.1-sol",
+    "effort": "high",
+    "state": "idle",
+    "run": "076582e4-9b35-4711-b273-18fb09db5276",
+    "last_status": "completed"
+  },
+  "finalizations": [
+    {
+      "id": "1b1dd882-7e45-4f6a-beec-b28ef38e63c5",
+      "sessionId": "2aadbe66-4183-438f-94b2-8a7cc6e30b0d",
+      "runId": "076582e4-9b35-4711-b273-18fb09db5276",
+      "state": "local_checks_passed",
+      "artifact": {
+        "id": "8f5b037f-07a9-4673-b817-f121a90b9d19",
+        "sha256": "6cab298de7fd61d79d571510b7bc3f9403e7682be243c8f80637aa9c15a624b3"
+      },
+      "plan": {
+        "artifactId": "8f5b037f-07a9-4673-b817-f121a90b9d19",
+        "artifactSha256": "6cab298de7fd61d79d571510b7bc3f9403e7682be243c8f80637aa9c15a624b3",
+        "decisions": [
+          {
+            "validatorId": "python-tests",
+            "label": "Local Python tests",
+            "state": "manual_only",
+            "contractSha256": "043eed0a328aeab4b0ab3967fbfac34190f55c780d0ed3353a1272b7d9095fd5",
+            "applicability": null,
+            "assessment": null
+          },
+          {
+            "validatorId": "lambda-python312-tests",
+            "label": "Lambda Python 3.12 ARM64 tests",
+            "state": "manual_only",
+            "contractSha256": "bdc72982e14614743d0f61714ac7650ae7025b731e2461ab8d97522ff06c102c",
+            "applicability": null,
+            "assessment": null
+          },
+          {
+            "validatorId": "python-tests-folder",
+            "label": "Python unittest tests-folder discovery",
+            "state": "manual_only",
+            "contractSha256": "eff77e56d4739e3a53083b668c85a9b2fd9d8247c27ead96eb6d355a1a0143cc",
+            "applicability": null,
+            "assessment": null
+          },
+          {
+            "validatorId": "node-browser-tests",
+            "label": "Node and Chromium tests (Playwright 1.64.1)",
+            "state": "selected",
+            "contractSha256": "5ca216c1d852f06dbf5a0498bf4022193ed7c5f845bed4125f810f1ecc089462",
+            "applicability": {
+              "anyOf": [
+                "**/*.test.mjs",
+                "**/*.test.js"
+              ],
+              "allOf": [],
+              "noneOf": []
+            },
+            "assessment": {
+              "applies": true,
+              "matchedAnyOf": [
+                "**/*.test.mjs"
+              ],
+              "missingAllOf": [],
+              "matchedNoneOf": []
+            }
+          }
+        ],
+        "selectionStatus": "checks_selected",
+        "acceptance": "not_established_by_file_applicability"
+      },
+      "checks": [
+        "bcd02cfc-c88c-49af-941f-c7e9dc4061a2"
+      ],
+      "acceptance": "not_established_by_local_checks"
+    }
+  ],
+  "automaticRepairs": 0,
+  "artifactId": "8f5b037f-07a9-4673-b817-f121a90b9d19",
+  "artifactSha256": "6cab298de7fd61d79d571510b7bc3f9403e7682be243c8f80637aa9c15a624b3",
+  "fileCount": 14,
+  "acceptedRequests": 1,
+  "steeringAccepted": 0,
+  "reloadWithoutReplay": true,
+  "sourceChangedDuringRun": [],
+  "errors": [],
+  "independentAcceptance": "not_established",
+  "scope": "Actual primary Build UI, authenticated product API and live native harness; external brief and ordered natural updates. Source/artifact/intent preservation is not requirement, complete-system, holdout or release acceptance."
+}

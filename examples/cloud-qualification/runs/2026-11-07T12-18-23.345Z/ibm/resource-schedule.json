@@ -1,0 +1,88 @@
+{
+  "revision": 2,
+  "provider": "ibm",
+  "rows": [
+    {
+      "id": "service-identity",
+      "address": "block_736572766963652d6964656e74697479",
+      "label": "Existing service identity",
+      "provider": "tools",
+      "service": "Existing service identity",
+      "existing": true,
+      "foundation": false,
+      "compute": false,
+      "reference": true,
+      "implemented": true,
+      "resources": [],
+      "settings": {},
+      "region": "To be selected",
+      "dependencies": [],
+      "terraform": "Existing principal reference; permissions require review"
+    },
+    {
+      "id": "doc-store",
+      "address": "block_646f632d73746f7265",
+      "label": "Synthetic document bucket",
+      "provider": "ibm",
+      "service": "IBM Cloud Object Storage",
+      "existing": false,
+      "foundation": true,
+      "compute": false,
+      "reference": false,
+      "implemented": true,
+      "resources": [
+        "ibm_cos_bucket",
+        "ibm_iam_service_policy"
+      ],
+      "settings": {},
+      "region": "au-syd (candidate)",
+      "dependencies": [],
+      "terraform": "Typed native storage and scoped object permissions generated; cloud verification required"
+    }
+  ],
+  "connections": [
+    {
+      "id": "e-identity-store",
+      "source": "service-identity",
+      "target": "doc-store",
+      "type": "smoothstep",
+      "label": "Upload / read / delete objects (scoped IAM)",
+      "access": "storage-object-admin",
+      "generated": true
+    }
+  ],
+  "storageContracts": [
+    {
+      "id": "doc-store",
+      "address": "block_646f632d73746f7265",
+      "callerId": "service-identity"
+    }
+  ],
+  "gapDetails": [],
+  "gaps": [],
+  "accessPlan": {
+    "bindings": [],
+    "connections": []
+  },
+  "asyncPlan": {
+    "pipelines": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": []
+  },
+  "scope": "Native storage foundation only; emulator does not validate IAM or control-plane deployment.",
+  "sources": []
+}

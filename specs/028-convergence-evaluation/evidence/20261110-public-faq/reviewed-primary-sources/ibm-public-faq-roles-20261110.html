@@ -1,0 +1,181 @@
+<!DOCTYPE html><html lang="en"><head><!-- 1. Charset & Viewport --><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><!-- 2. Core SEO Tags --><title>Assigning access to an individual bucket | IBM Cloud Docs</title><meta name="description" content="IBM Cloud Object Storage is a highly available, durable, and secure platform for storing unstructured data."><link rel="canonical" href="https://cloud.ibm.com/docs/cloud-object-storage?topic=cloud-object-storage-iam-bucket-permissions">  <link rel="alternate" hreflang="x-default" href="https://cloud.ibm.com/docs/cloud-object-storage?topic=cloud-object-storage-iam-bucket-permissions"><link rel="alternate" hreflang="en"    href="https://cloud.ibm.com/docs/cloud-object-storage?topic=cloud-object-storage-iam-bucket-permissions&amp;locale=en"><link rel="alternate" hreflang="de"    href="https://cloud.ibm.com/docs/cloud-object-storage?topic=cloud-object-storage-iam-bucket-permissions&amp;locale=de"><link rel="alternate" hreflang="es"    href="https://cloud.ibm.com/docs/cloud-object-storage?topic=cloud-object-storage-iam-bucket-permissions&amp;locale=es"><link rel="alternate" hreflang="fr"    href="https://cloud.ibm.com/docs/cloud-object-storage?topic=cloud-object-storage-iam-bucket-permissions&amp;locale=fr"><link rel="alternate" hreflang="it"    href="https://cloud.ibm.com/docs/cloud-object-storage?topic=cloud-object-storage-iam-bucket-permissions&amp;locale=it"><link rel="alternate" hreflang="ja"    href="https://cloud.ibm.com/docs/cloud-object-storage?topic=cloud-object-storage-iam-bucket-permissions&amp;locale=ja"><link rel="alternate" hreflang="ko"    href="https://cloud.ibm.com/docs/cloud-object-storage?topic=cloud-object-storage-iam-bucket-permissions&amp;locale=ko"><link rel="alternate" hreflang="pt-BR" href="https://cloud.ibm.com/docs/cloud-object-storage?topic=cloud-object-storage-iam-bucket-permissions&amp;locale=pt-BR"><link rel="alternate" hreflang="zh-CN" href="https://cloud.ibm.com/docs/cloud-object-storage?topic=cloud-object-storage-iam-bucket-permissions&amp;locale=zh-CN"><link rel="alternate" hreflang="zh-TW" href="https://cloud.ibm.com/docs/cloud-object-storage?topic=cloud-object-storage-iam-bucket-permissions&amp;locale=zh-TW"><link rel="alternate" type="text/markdown" href="/docs/cloud-object-storage?topic=cloud-object-storage-iam-bucket-permissions&amp;format=markdown"><link rel="index" type="text/plain" href="/docs/llms.txt"><!-- 3. Open Graph Tags --><meta property="og:title" content="Assigning access to an individual bucket | IBM Cloud Docs"><meta property="og:description" content="IBM Cloud Object Storage is a highly available, durable, and secure platform for storing unstructured data."><meta property="og:type" content="website"><meta property="og:url" content="https://cloud.ibm.com/docs/cloud-object-storage?topic=cloud-object-storage-iam-bucket-permissions"><meta property="og:locale" content="en"><meta property="og:image" content="https://1.www.s81c.com/common/images/ibm-leadspace-1200x627.jpg"><!-- 4. Site Verification & Custom IBM Metas --><meta name="google-site-verification" content="FJU6EFEZJfI5Chm8K8fXriRjSTNMFXDBuo8o5FGuBOQ" /><meta name="google-site-verification" content="jGI9fX-364BaZ4wE87D7GkX32GG8m8qsKqKEyV_Czqo" /><meta name="IBM.WTMSite" content="IBM_CloudDocs"><meta http-equiv="X-UA-Compatible" content="IE=edge" /><meta name="build-version" content="3.3.0"><link nonce="281dedc02c35ce7a4977e2382751160a" rel="icon" type="image/png" href="/media/docs/images/homepage/favicon.png"><link nonce="281dedc02c35ce7a4977e2382751160a" rel="stylesheet" href='/docs/cache/9dcd56-2605838068/css/docs.css'><script nonce="281dedc02c35ce7a4977e2382751160a" src="https://1.www.s81c.com/common/stats/ibm-common.js" type="text/javascript" async="async" integrity="sha384-xt7pH7uXX91Fr2ri94rfzhlejwY3oLAy5Nx4kWovU80gbagMvAyxZ1odmE65nRzu" crossorigin="anonymous"></script><style nonce="281dedc02c35ce7a4977e2382751160a">body {font-family: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;font-weight: 400;color: #161616;margin: 0;padding: 0;}.doc-ui {background-color: #f4f4f4;padding: 1rem;}</style><script nonce="281dedc02c35ce7a4977e2382751160a" type="text/javascript">window._ibmAnalytics = {"settings": {"name": "IBM Cloud Documentation","isSpa": true,"tealiumProfileName": "in-app-usage"},"onLoad": [["ibmStats.pageview", []]]};digitalData = {"page": {"pageInfo": {"ibm": {"siteId": "IBM_" + _ibmAnalytics.settings.name,}},"category": {"primaryCategory": "PC100"}}};</script><script nonce="281dedc02c35ce7a4977e2382751160a" type="text/javascript">var lang;lang = "en";if (lang) {lang = lang.toLowerCase().replace("_", "-");} else {lang = "en";}if (lang === "pt") lang = "pt-pt";</script><script nonce="281dedc02c35ce7a4977e2382751160a" type="text/javascript">var exampleDomainName = "cloud.ibm.com";var productKey = 'bluemix';var appRoute = '';var contextRoot = '/docs/';var aceCommonRoute = 'https://cloud.ibm.com/api/v5';var enableDownloadPDF = 'cos';var enableImageComponent = 'show';var appEnv = 'hide';var enableOldInternalHomepage = '';</script><!-- Analytics enable SPA --><script nonce="281dedc02c35ce7a4977e2382751160a" type="text/javascript">window._analytics = {autoPageEventSpa: true,autoFormEvents: true};process = {env: {},};window.headerConfig = {headerDOMLoaded: true,noChatbot: true};</script></head><body><div id="doc-ui" class="doc-ui  v5"><h1 class="doc-page-title">Assigning access to an individual bucket</h1><!-- Docs body --><!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+  <meta name="DC.Publisher" content="IBM Corporation">
+  <meta name="DC.rights" content="&#xA9; Copyright IBM Corporation 2017, 2024">
+  <meta name="IBM.Country" content="ZZ">
+  <meta name="DC.Date" content="2024-04-16">
+  <meta name="keywords" content="access control, iam, basics, buckets">
+  <meta name="subcollection" content="cloud-object-storage">
+  <meta name="description" content="Assign access roles for users and Service IDs against buckets, by using either the UI or the CLI to create policies.">
+  <meta name="content.type" content="topic">
+  <meta name="tags" content="{{ services }}">
+  <meta name="account.plan" content="{{ account-plan }}">
+  <meta name="completion.time" content="{{ completion-time }}">
+  <meta name="version" content="{{ version }}">
+  <meta name="deployment.url" content="{{ deployment-url }}">
+  <meta name="industry" content="{{ industry }}">
+  <meta name="compliance" content="{{ compliance }}">
+  <meta name="use.case" content="{{ use-case }}">
+  <meta name="source.format" content="markdown">
+
+  <meta name="github.edit" content="yes" repo="https://github.com/ibm-cloud-docs/cloud-object-storage/blob/master/buckets.md">
+  <meta name="github.issue" content="yes" repo="https://github.com/ibm-cloud-docs/cloud-object-storage/issues/new/choose">
+
+  <!-- Licensed Materials - Property of IBM -->
+  <!-- US Government Users Restricted Rights -->
+  <!-- Use, duplication or disclosure restricted by -->
+  <!-- GSA ADP Schedule Contract with IBM Corp. -->
+
+  <title>Assigning access to an individual bucket</title>
+</head>
+
+<body>
+  <main role="main">
+    <article aria-labelledby="iam-bucket-permissions" role="article">
+      <section id="section-iam-bucket-permissions">
+        <h1 id="iam-bucket-permissions">Assigning access to an individual bucket</h1>
+        <p>Assign access roles for users and Service IDs against buckets, by using either the UI or the CLI to create policies.</p>
+        <table>
+          <caption caption-side="top">Buckets</caption>
+          <thead>
+            <tr>
+              <th style="text-align:left">Access role</th>
+              <th>Example actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="text-align:left">Manager</td>
+              <td>Make objects public, create, and destroy buckets and objects</td>
+            </tr>
+            <tr>
+              <td style="text-align:left">Writer</td>
+              <td>Create and destroy buckets and objects</td>
+            </tr>
+            <tr>
+              <td style="text-align:left">Reader</td>
+              <td>List buckets, list objects, and download objects.</td>
+            </tr>
+            <tr>
+              <td style="text-align:left">Content Reader</td>
+              <td>List and download objects</td>
+            </tr>
+            <tr>
+              <td style="text-align:left">Object Reader</td>
+              <td>Download objects</td>
+            </tr>
+            <tr>
+              <td style="text-align:left">Object Writer</td>
+              <td>Upload objects</td>
+            </tr>
+          </tbody>
+        </table>
+        <section id="section-iam-user-access">
+          <h2 id="iam-user-access">Granting access to a user</h2>
+          <p>If the user needs to be able to use the console and is able to see the list of all buckets within an instance, you can use a custom platform access role. This allows them to view only the contents of specific buckets. If it is not appropriate
+            for a user to read the names of other buckets then it is necessary to design and implement a custom portal or other user interface using the API.</p>
+          <p>If the user interacts with data by using the API and doesn't require console access, <em>and</em> they are a member of your account, you can grant access to a single bucket without any access to the parent instance using the default roles.</p>
+        </section>
+        <section id="section-iam-policy-enforcement">
+          <h2 id="iam-policy-enforcement">Policy enforcement</h2>
+          <p>IAM policies are enforced hierarchically from greatest level of access to most restricted. Conflicts are resolved to the more permissive policy. For example, if a user has both the <code>Writer</code> and <code>Reader</code> service access role
+            on a bucket, the policy granting the <code>Reader</code> role is ignored.</p>
+          <p>This is also applicable to service instance and bucket level policies.</p>
+          <ul>
+            <li>If a user has a policy granting the <code>Writer</code> role on a service instance and the <code>Reader</code> role on a single bucket, the bucket-level policy is ignored.</li>
+            <li>If a user has a policy granting the <code>Reader</code> role on a service instance and the <code>Writer</code> role on a single bucket, both policies are enforced and the more permissive <code>Writer</code> role takes precedence for the individual
+              bucket.</li>
+          </ul>
+          <p>If it is necessary to restrict access to a single bucket (or set of buckets), ensure that the user or Service ID doesn't have any other instance level policies by using either the console or CLI.</p>
+          <p>See <a href="/docs/account?topic=account-account_setup">Best practices for organizing resources and assigning access</a> to learn more.</p>
+          <section id="section-iam-policy-enforcement-console" class="ph" data-hd-interface="ui">
+            <h3 id="iam-policy-enforcement-console">Create a new policy for a user</h3>
+            <p>To create a new bucket-level policy:</p>
+            <ol>
+              <li>Navigate to the <strong>Access IAM</strong> console from the <strong>Manage</strong> menu.</li>
+              <li>Select <strong>Users</strong> from the left navigation menu.</li>
+              <li>Select a user.</li>
+              <li>Select the <strong>Access Policies</strong> tab to view the user's existing policies, assign a new policy, or edit an existing policy.</li>
+              <li>Click <strong>Assign access</strong> to create a new policy.</li>
+              <li>Choose <strong>Assign access to resources</strong>.</li>
+              <li>First, select <strong>Cloud Object Storage</strong> from the services menu.</li>
+              <li>Then, select the appropriate service instance. Enter <code>bucket</code> in the <strong>Resource type</strong> field and the bucket name in the <strong>Resource ID</strong> field.</li>
+              <li>Select the wanted service access role. Selecting the lozenge with the number of actions show the actions available to the role, as exemplified for &quot;Content Reader&quot; in Figure 1.</li>
+              <li>Click <strong>Assign</strong></li>
+            </ol>
+            <p>
+              <figure>
+                <figcaption>Example actions per Content Reader role</figcaption>
+                <img src="images/console-iam-changes-role-cos.png" alt="Role information">
+              </figure>
+            </p>
+            <p class="tip">Note that leaving the <strong>Resource Type</strong> or <strong>Resource</strong> fields blank creates an instance-level policy.</p>
+          </section>
+          <section id="section-iam-policy-enforcement-cli" class="ph" data-hd-interface="cli">
+            <h3 id="iam-policy-enforcement-cli">Create a new policy for a user CLI command</h3>
+            <p>From a terminal run the following command. Replace <code>USER_NAME</code> with the user's email address, <code>ROLE</code> with the role to assign, <code>RESOURCE_INSTANCE_ID</code> with the ID of your service instance, and <code>BUCKET_NAME</code>              with the name of the bucket:</p>
+            <pre class="codeblock"><code class="lang-sh hljs">ibmcloud iam user-policy-create USER_NAME \
+      --roles ROLE \
+      --service-name cloud-object-storage \
+      --service-instance RESOURCE_INSTANCE_ID \
+      --resource-type bucket \
+      --resource BUCKET_NAME
+</code></pre>
+            <p>To list existing policies:</p>
+            <pre class="codeblock"><code class="lang-sh hljs">ibmcloud iam user-policies USER_NAME
+</code></pre>
+            <p>To edit an existing policy, use the policy ID from the list output:</p>
+            <pre class="codeblock"><code class="lang-sh hljs">ibmcloud iam user-policy-update USER_NAME POLICY_ID \
+      --roles ROLE \
+      --service-name cloud-object-storage \
+      --service-instance RESOURCE_INSTANCE_ID \
+      --resource-type bucket \
+      --resource BUCKET_NAME
+</code></pre>
+          </section>
+        </section>
+        <section id="section-iam-service-id">
+          <h2 id="iam-service-id">Granting access to a Service ID</h2>
+          <p>If you need to grant access to a bucket for an application or other non-human entity, use a Service ID. The Service ID can be created specifically for this purpose, or can be an existing Service ID already in use.</p>
+          <section id="section-iam-service-id-console" class="ph" data-hd-interface="ui">
+            <h3 id="iam-service-id-console">Create a new policy for a user</h3>
+            <ol>
+              <li>Navigate to the <strong>Access (IAM)</strong> console from the <strong>Manage</strong> menu.</li>
+              <li>Select <strong>Service IDs</strong> from the left navigation menu.</li>
+              <li>Select a Service ID to view any existing policies, and assign a new policy or edit an existing policy.</li>
+              <li>Select the service instance, service ID, and desired role.</li>
+              <li>Enter <code>bucket</code> in the <strong>Resource Type</strong> field and the bucket name in the <strong>Resource</strong> field.</li>
+              <li>Click <strong>Submit</strong></li>
+            </ol>
+            <p class="tip">Note that leaving the <strong>Resource Type</strong> or <strong>Resource</strong> fields blank creates an instance-level policy.</p>
+          </section>
+          <section id="section-iam-service-id-cli" class="ph" data-hd-interface="cli">
+            <h3 id="iam-service-id-cli">Create a new policy for a Service ID</h3>
+            <p>From a terminal run the following command. Replace <code>SERVICE_ID_NAME</code> with the name of your Service ID, <code>ROLE</code> with the role to assign, <code>RESOURCE_INSTANCE_ID</code> with the ID of your service instance, and <code>BUCKET_NAME</code>              with the name of the bucket:</p>
+            <pre class="codeblock"><code class="lang-sh hljs">ibmcloud iam service-policy-create SERVICE_ID_NAME \
+      --roles ROLE \
+      --service-name cloud-object-storage \
+      --service-instance RESOURCE_INSTANCE_ID \
+      --resource-type bucket \
+      --resource BUCKET_NAME
+</code></pre>
+            <p>To list existing policies:</p>
+            <pre class="codeblock"><code class="lang-sh hljs">ibmcloud iam service-policies SERVICE_ID_NAME
+</code></pre>
+            <p>To edit an existing policy, use the policy ID from the list output:</p>
+            <pre class="codeblock"><code class="lang-sh hljs">ibmcloud iam service-policy-update SERVICE_ID_NAME POLICY_ID \
+      --roles ROLE \
+      --service-name cloud-object-storage \
+      --service-instance RESOURCE_INSTANCE_ID \
+      --resource-type bucket \
+      --resource BUCKET_NAME
+</code></pre></section>
+        </section>
+      </section>
+    </article>
+  </main>
+<script type="text/javascript"  src="/M-2ZExgX51/97GC/m3V4S8/hiiYLpL4GzN8S0rYQu/QjNEdkQB/Tho-TH5/ED3Y"></script></body>
+</html></div></body></html>

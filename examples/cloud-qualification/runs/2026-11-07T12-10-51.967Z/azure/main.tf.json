@@ -1,0 +1,145 @@
+{
+  "terraform": {
+    "required_version": ">= 1.7.0, < 2.0.0",
+    "required_providers": {
+      "azurerm": {
+        "source": "hashicorp/azurerm",
+        "version": "~> 4.0"
+      }
+    }
+  },
+  "provider": {
+    "azurerm": {
+      "features": {},
+      "subscription_id": "${var.subscription_id}",
+      "storage_use_azuread": true
+    }
+  },
+  "variable": {
+    "review_approved": {
+      "type": "bool",
+      "default": false,
+      "description": "Explicitly review the real destination, permissions, cost and plan before apply."
+    },
+    "region": {
+      "type": "string",
+      "description": "Reviewed provider-native region; emulator region does not select a deployment location."
+    },
+    "subscription_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Reviewed Azure subscription UUID."
+    },
+    "resource_group_name": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing reviewed resource group."
+    },
+    "principal_object_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing Entra principal object UUID; no credentials."
+    },
+    "block_646f63756d656e7473_name": {
+      "type": "string",
+      "nullable": false,
+      "description": "Globally unique reviewed storage name."
+    }
+  },
+  "locals": {
+    "unfinished_work": []
+  },
+  "resource": {
+    "terraform_data": {
+      "review_gate": {
+        "input": {
+          "design_revision": 1,
+          "environment": "staging"
+        },
+        "lifecycle": {
+          "precondition": [
+            {
+              "condition": "${var.review_approved && length(local.unfinished_work) == 0}",
+              "error_message": "Unfinished work or missing review blocks deployment."
+            }
+          ]
+        }
+      }
+    },
+    "azurerm_storage_account": {
+      "block_646f63756d656e7473": {
+        "name": "${var.block_646f63756d656e7473_name}",
+        "resource_group_name": "${var.resource_group_name}",
+        "location": "${var.region}",
+        "account_tier": "Standard",
+        "account_replication_type": "LRS",
+        "account_kind": "StorageV2",
+        "min_tls_version": "TLS1_2",
+        "https_traffic_only_enabled": true,
+        "allow_nested_items_to_be_public": false,
+        "shared_access_key_enabled": false,
+        "blob_properties": {
+          "versioning_enabled": true,
+          "delete_retention_policy": {
+            "days": 7
+          }
+        },
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_storage_container": {
+      "block_646f63756d656e7473": {
+        "name": "documents",
+        "storage_account_id": "${azurerm_storage_account.block_646f63756d656e7473.id}",
+        "container_access_type": "private",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_role_definition": {
+      "block_646f63756d656e7473": {
+        "name": "AtMem object CRUD ${var.block_646f63756d656e7473_name}",
+        "scope": "${azurerm_storage_account.block_646f63756d656e7473.id}",
+        "permissions": [
+          {
+            "data_actions": [
+              "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read",
+              "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write",
+              "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/delete"
+            ]
+          }
+        ],
+        "assignable_scopes": [
+          "${azurerm_storage_account.block_646f63756d656e7473.id}"
+        ],
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_role_assignment": {
+      "block_646f63756d656e7473": {
+        "scope": "${azurerm_storage_container.block_646f63756d656e7473.resource_manager_id}",
+        "role_definition_id": "${azurerm_role_definition.block_646f63756d656e7473.role_definition_resource_id}",
+        "principal_id": "${var.principal_object_id}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    }
+  },
+  "output": {
+    "design_revision": {
+      "value": 1
+    },
+    "environment": {
+      "value": "staging"
+    }
+  }
+}

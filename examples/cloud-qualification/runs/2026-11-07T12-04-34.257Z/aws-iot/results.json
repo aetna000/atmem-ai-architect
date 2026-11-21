@@ -1,0 +1,54 @@
+{
+  "provider": "aws-iot",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Reject unknown device and invalid units",
+    "Duplicate events produce one result",
+    "Late and out-of-order telemetry follows an explicit policy",
+    "Disconnected input recovers by replay",
+    "Anomaly output names evidence and model version"
+  ],
+  "components": [
+    {
+      "id": "sim"
+    },
+    {
+      "id": "iot",
+      "service": "AWS IoT Core"
+    },
+    {
+      "id": "kds",
+      "service": "Amazon Kinesis Data Streams"
+    },
+    {
+      "id": "validate",
+      "service": "AWS Lambda"
+    },
+    {
+      "id": "dlq",
+      "service": "Amazon SQS"
+    },
+    {
+      "id": "model",
+      "service": "Amazon SageMaker AI (real-time endpoint)"
+    },
+    {
+      "id": "results",
+      "service": "Amazon DynamoDB"
+    },
+    {
+      "id": "alert",
+      "service": "Amazon SNS"
+    },
+    {
+      "id": "operator"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

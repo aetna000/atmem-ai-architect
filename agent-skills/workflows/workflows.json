@@ -1,0 +1,601 @@
+{
+  "version": "1.2.0",
+  "note": "Service names are design suggestions to validate, not verified recommendations. Coverage: sketch.",
+  "workflows": [
+    {
+      "id": "knowledge-assistant",
+      "name": "RAG",
+      "summary": "answering questions from your documents, with sources",
+      "detect": "\\brag\\b|retrieval|chat ?bot|answer(?:ing|s)?\\b|knowledge (?:assistant|base|search)|search|chat with|support (team|desk)|help ?desk|ask .{0,50}(?:documents|files|policies|manuals)",
+      "questions": [
+        {
+          "topic": "data",
+          "question": "Where do the files live, and roughly how many are there?",
+          "beginner": "For example “SharePoint and a shared drive, about 20,000 files”."
+        },
+        {
+          "topic": "quality",
+          "question": "Should people only get answers from files they're allowed to open?",
+          "beginner": "Most companies say yes — answers follow the file's permissions.",
+          "adds": "acl"
+        },
+        {
+          "topic": "systems",
+          "question": "Where should people chat with it?",
+          "beginner": "For example Microsoft Teams, Slack, or a page on the intranet.",
+          "adds": "channel"
+        },
+        {
+          "topic": "systems",
+          "question": "Which company sign-in do people use?",
+          "beginner": "For example Microsoft Entra ID, Okta or Google Workspace.",
+          "adds": "identity"
+        },
+        {
+          "topic": "quality",
+          "question": "Should every answer show the files it came from?",
+          "beginner": "Usually yes, so people can check.",
+          "adds": "citations"
+        }
+      ],
+      "sketch": {
+        "nodes": [
+          {
+            "key": "docs",
+            "role": "data",
+            "category": "Data",
+            "label": {
+              "generic": "Document store",
+              "aws": "Amazon S3 documents",
+              "azure": "SharePoint / Blob documents",
+              "gcp": "Cloud Storage documents",
+              "ibm": "IBM Cloud Object Storage documents"
+            },
+            "description": "Where the source documents live"
+          },
+          {
+            "key": "ingest",
+            "role": "ingest",
+            "category": "Data",
+            "label": {
+              "generic": "Ingest & chunk",
+              "aws": "Bedrock Knowledge Bases ingestion",
+              "azure": "Azure AI Search indexer",
+              "gcp": "Vertex AI Search ingestion",
+              "ibm": "watsonx.ai document ingestion"
+            },
+            "description": "Split documents and create embeddings"
+          },
+          {
+            "key": "index",
+            "role": "index",
+            "category": "Data",
+            "label": {
+              "generic": "Vector index",
+              "aws": "OpenSearch Serverless vectors",
+              "azure": "Azure AI Search vectors",
+              "gcp": "Vertex AI Vector Search",
+              "ibm": "watsonx.data Milvus"
+            },
+            "description": "Find the passages relevant to a question"
+          },
+          {
+            "key": "llm",
+            "role": "llm",
+            "category": "Intelligence",
+            "label": {
+              "generic": "Language model",
+              "aws": "Amazon Bedrock",
+              "azure": "Microsoft Foundry models",
+              "gcp": "Gemini on Vertex AI",
+              "ibm": "watsonx.ai Granite"
+            },
+            "description": "Write the answer from retrieved passages"
+          },
+          {
+            "key": "guard",
+            "role": "guard",
+            "category": "Governance",
+            "label": {
+              "generic": "Guardrail & access check",
+              "aws": "Bedrock Guardrails + IAM",
+              "azure": "Azure AI Content Safety + Entra ID",
+              "gcp": "Model Armor + Cloud IAM",
+              "ibm": "watsonx.governance guardrails"
+            },
+            "description": "Block unsafe or unauthorised answers"
+          },
+          {
+            "key": "app",
+            "role": "app",
+            "category": "Delivery",
+            "label": {
+              "generic": "Chat interface"
+            },
+            "description": "Where people ask questions"
+          }
+        ],
+        "edges": [
+          [
+            "docs",
+            "ingest",
+            "documents"
+          ],
+          [
+            "ingest",
+            "index",
+            "embeddings"
+          ],
+          [
+            "index",
+            "llm",
+            "passages"
+          ],
+          [
+            "llm",
+            "guard",
+            "draft answer"
+          ],
+          [
+            "guard",
+            "app",
+            "answer with sources"
+          ]
+        ]
+      },
+      "knows": [
+        "shared-file connectors",
+        "chunking & embeddings",
+        "vector index",
+        "permission-aware retrieval",
+        "company sign-in (SSO)",
+        "grounded answers with sources",
+        "chatbot channels",
+        "feedback & evaluation"
+      ],
+      "concept": {
+        "sources": [
+          {
+            "cue": "sharepoint|onedrive|microsoft 365|m365|office 365",
+            "label": "SharePoint & OneDrive files"
+          },
+          {
+            "cue": "google drive|gdrive|google workspace",
+            "label": "Google Drive files"
+          },
+          {
+            "cue": "\\bs3\\b|bucket",
+            "label": "S3 documents"
+          },
+          {
+            "cue": "file share|network drive|shared drive|nas",
+            "label": "File shares"
+          },
+          {
+            "cue": "confluence|wiki",
+            "label": "Confluence / wiki"
+          }
+        ],
+        "defaultSource": "Your documents",
+        "companyWide": "company|organi[sz]ation|enterprise|everyone|all staff|employees|whole (business|company)|company-wide",
+        "permissions": "permission|who (can|may) see|allowed to (see|open)|confidential|restricted|access control",
+        "sso": "sso|single sign|entra|okta|azure ad|active directory|google workspace|sign[- ]?in",
+        "feedback": "feedback|quality|evaluat|accura|thumbs|measure",
+        "channels": [
+          {
+            "cue": "teams",
+            "label": "Microsoft Teams bot"
+          },
+          {
+            "cue": "slack",
+            "label": "Slack bot"
+          },
+          {
+            "cue": "intranet|web|portal|website",
+            "label": "Web chat"
+          }
+        ],
+        "defaultChannel": "Chatbot",
+        "labels": {
+          "connector": {
+            "generic": "Connectors & sync",
+            "aws": "Bedrock Knowledge Bases connectors",
+            "azure": "Azure AI Search indexers",
+            "gcp": "Vertex AI Search connectors",
+            "ibm": "watsonx Discovery connectors"
+          },
+          "ingest": {
+            "generic": "Chunk & embed",
+            "aws": "Titan embeddings",
+            "azure": "Azure OpenAI embeddings",
+            "gcp": "Vertex AI embeddings",
+            "ibm": "watsonx.ai embeddings"
+          },
+          "index": {
+            "generic": "Vector index",
+            "aws": "OpenSearch Serverless vectors",
+            "azure": "Azure AI Search vectors",
+            "gcp": "Vertex AI Vector Search",
+            "ibm": "watsonx.data Milvus"
+          },
+          "identity": {
+            "generic": "Company sign-in (SSO)",
+            "aws": "IAM Identity Center",
+            "azure": "Microsoft Entra ID",
+            "gcp": "Cloud Identity",
+            "ibm": "IBM Security Verify"
+          },
+          "acl": {
+            "generic": "Permissions sync (who sees what)"
+          },
+          "llm": {
+            "generic": "Language model",
+            "aws": "Amazon Bedrock",
+            "azure": "Microsoft Foundry models",
+            "gcp": "Gemini on Vertex AI",
+            "ibm": "watsonx.ai Granite"
+          },
+          "guard": {
+            "generic": "Guardrails",
+            "aws": "Bedrock Guardrails",
+            "azure": "Azure AI Content Safety",
+            "gcp": "Model Armor",
+            "ibm": "watsonx.governance guardrails"
+          },
+          "feedback": {
+            "generic": "Feedback & evaluation"
+          }
+        },
+        "documents": "document|files?\\b|pdf|policy|policies|manual|knowledge|wiki|sharepoint|drive",
+        "chat": "chat ?bot|chat|assistant|ask|question|teams|slack",
+        "index": "search index|vector|embedding|index",
+        "guardrails": "guardrail|safe|unsafe|filter|moderat"
+      }
+    },
+    {
+      "id": "document-processing",
+      "name": "Document extraction",
+      "summary": "reading incoming documents and pulling out the details",
+      "detect": "invoice|receipt|form|extract|ocr|scan|claim|contract|application form|purchase order|classif(y|ication) (of )?documents|paperwork",
+      "questions": [
+        {
+          "topic": "data",
+          "question": "What kinds of documents arrive, and how many a month?",
+          "beginner": "For example “invoices, about 3,000 a month, mostly PDF”."
+        },
+        {
+          "topic": "quality",
+          "question": "What happens when the system isn't sure — should a person check it?",
+          "beginner": "A review queue for low-confidence items is common."
+        },
+        {
+          "topic": "systems",
+          "question": "Where should the extracted information go?",
+          "beginner": "For example your finance system or a spreadsheet."
+        }
+      ],
+      "sketch": {
+        "nodes": [
+          {
+            "key": "inbox",
+            "role": "data",
+            "category": "Data",
+            "label": {
+              "generic": "Incoming documents",
+              "aws": "Amazon S3 inbox",
+              "azure": "Blob Storage inbox",
+              "gcp": "Cloud Storage inbox",
+              "ibm": "Cloud Object Storage inbox"
+            },
+            "description": "Uploaded or emailed documents"
+          },
+          {
+            "key": "extract",
+            "role": "ingest",
+            "category": "Intelligence",
+            "label": {
+              "generic": "Text & field extraction",
+              "aws": "Amazon Textract",
+              "azure": "Azure AI Document Intelligence",
+              "gcp": "Document AI",
+              "ibm": "watsonx document understanding"
+            },
+            "description": "Read text, tables and fields"
+          },
+          {
+            "key": "llm",
+            "role": "llm",
+            "category": "Intelligence",
+            "label": {
+              "generic": "Language model checks",
+              "aws": "Amazon Bedrock",
+              "azure": "Microsoft Foundry models",
+              "gcp": "Gemini on Vertex AI",
+              "ibm": "watsonx.ai Granite"
+            },
+            "description": "Classify, validate and summarise"
+          },
+          {
+            "key": "review",
+            "role": "human",
+            "category": "Governance",
+            "label": {
+              "generic": "Human review queue"
+            },
+            "description": "A person checks low-confidence items"
+          },
+          {
+            "key": "system",
+            "role": "app",
+            "category": "Integration",
+            "label": {
+              "generic": "System of record"
+            },
+            "description": "Where the results are saved"
+          }
+        ],
+        "edges": [
+          [
+            "inbox",
+            "extract",
+            "documents"
+          ],
+          [
+            "extract",
+            "llm",
+            "fields"
+          ],
+          [
+            "llm",
+            "review",
+            "checked fields"
+          ],
+          [
+            "review",
+            "system",
+            "approved record"
+          ]
+        ]
+      },
+      "knows": [
+        "OCR & layout",
+        "field extraction",
+        "validation with an LLM",
+        "human review queue",
+        "system-of-record update"
+      ]
+    },
+    {
+      "id": "predictive",
+      "name": "Predictive ML",
+      "summary": "learning from history to predict or forecast",
+      "detect": "predict|forecast|churn|failure|maintenance|demand|risk score|anomal|fraud|propensity|score",
+      "questions": [
+        {
+          "topic": "data",
+          "question": "How much history do you have for what you want to predict?",
+          "beginner": "For example “three years of sales by store” or “failure records since 2020”."
+        },
+        {
+          "topic": "quality",
+          "question": "How far ahead do you need the prediction, and how will people act on it?",
+          "beginner": "For example “a week ahead, so planners can schedule repairs”."
+        },
+        {
+          "topic": "quality",
+          "question": "How will you know the model is good enough?",
+          "beginner": "For example “right 8 times out of 10 on past data”."
+        }
+      ],
+      "template": {
+        "maintenance": "failure|maintenance|sensor|equipment|asset|pump|machine",
+        "default": "analytics"
+      },
+      "knows": [
+        "feature pipeline",
+        "training & registry",
+        "model endpoint",
+        "drift monitoring",
+        "explanations"
+      ]
+    },
+    {
+      "id": "agentic-automation",
+      "name": "An agent with tools",
+      "summary": "planning steps and using your tools to get work done",
+      "detect": "automate|automation|agent|take action|book|schedule|triage|route|ticket|email|workflow|copilot|assistant that (does|handles)",
+      "questions": [
+        {
+          "topic": "systems",
+          "question": "Which tools should it be allowed to use?",
+          "beginner": "For example “read and update tickets, send emails, look up orders”."
+        },
+        {
+          "topic": "quality",
+          "question": "Which actions need a person to approve them first?",
+          "beginner": "Anything that spends money or contacts customers usually does."
+        },
+        {
+          "topic": "quality",
+          "question": "What should it never do?",
+          "beginner": "For example “never delete records” or “never promise refunds”."
+        }
+      ],
+      "sketch": {
+        "nodes": [
+          {
+            "key": "trigger",
+            "role": "data",
+            "category": "Data",
+            "label": {
+              "generic": "Requests & events",
+              "aws": "Amazon EventBridge",
+              "azure": "Azure Event Grid",
+              "gcp": "Eventarc",
+              "ibm": "IBM Event Streams"
+            },
+            "description": "What starts the work: messages, tickets, events"
+          },
+          {
+            "key": "agent",
+            "role": "llm",
+            "category": "Intelligence",
+            "label": {
+              "generic": "Agent planner",
+              "aws": "Amazon Bedrock Agents",
+              "azure": "Foundry Agent Service",
+              "gcp": "Vertex AI Agent Engine",
+              "ibm": "watsonx Orchestrate"
+            },
+            "description": "Decides which steps and tools to use"
+          },
+          {
+            "key": "tools",
+            "role": "app",
+            "category": "Integration",
+            "label": {
+              "generic": "Business tools (APIs)"
+            },
+            "description": "The actions it may take"
+          },
+          {
+            "key": "approve",
+            "role": "human",
+            "category": "Governance",
+            "label": {
+              "generic": "Approval step"
+            },
+            "description": "A person approves sensitive actions"
+          },
+          {
+            "key": "audit",
+            "role": "output",
+            "category": "Delivery",
+            "label": {
+              "generic": "Audit log"
+            },
+            "description": "Record of every action taken"
+          }
+        ],
+        "edges": [
+          [
+            "trigger",
+            "agent",
+            "request"
+          ],
+          [
+            "agent",
+            "approve",
+            "proposed action"
+          ],
+          [
+            "approve",
+            "tools",
+            "approved action"
+          ],
+          [
+            "tools",
+            "audit",
+            "result"
+          ]
+        ]
+      },
+      "knows": [
+        "planning",
+        "tool calling",
+        "approval steps",
+        "guardrails",
+        "audit log"
+      ]
+    },
+    {
+      "id": "general",
+      "name": "AI architecture",
+      "summary": "the general design skill: your data, the model, and where people use it",
+      "detect": "",
+      "general": true,
+      "knows": [
+        "data sources",
+        "model choice",
+        "where people use it",
+        "security & access",
+        "cost drivers"
+      ],
+      "questions": [
+        {
+          "topic": "data",
+          "question": "What information will it work with, and where does it live?",
+          "beginner": "For example a database, documents, or another system's data."
+        },
+        {
+          "topic": "systems",
+          "question": "Where will people use it — an app, a chat, or another system calling it?",
+          "beginner": "For example a web page, Teams, or an API for your own software."
+        }
+      ],
+      "concept": {
+        "sources": [
+          {
+            "cue": "sharepoint|onedrive",
+            "label": "SharePoint & OneDrive files"
+          },
+          {
+            "cue": "google drive",
+            "label": "Google Drive files"
+          },
+          {
+            "cue": "database|sql|postgres|mysql",
+            "label": "Your database"
+          },
+          {
+            "cue": "crm|salesforce|hubspot",
+            "label": "CRM"
+          },
+          {
+            "cue": "erp|sap",
+            "label": "ERP"
+          },
+          {
+            "cue": "document|files?\\b|pdf",
+            "label": "Your documents"
+          },
+          {
+            "cue": "email|inbox",
+            "label": "Email"
+          }
+        ],
+        "channels": [
+          {
+            "cue": "teams",
+            "label": "Microsoft Teams"
+          },
+          {
+            "cue": "slack",
+            "label": "Slack"
+          },
+          {
+            "cue": "chat ?bot|chat",
+            "label": "Chatbot"
+          },
+          {
+            "cue": "\\bapi\\b|integrat",
+            "label": "API for your apps"
+          },
+          {
+            "cue": "web|website|portal|app\\b",
+            "label": "Web app"
+          }
+        ],
+        "labels": {
+          "llm": {
+            "generic": "AI model",
+            "aws": "Amazon Bedrock",
+            "azure": "Microsoft Foundry models",
+            "gcp": "Gemini on Vertex AI",
+            "ibm": "watsonx.ai"
+          }
+        }
+      }
+    }
+  ]
+}

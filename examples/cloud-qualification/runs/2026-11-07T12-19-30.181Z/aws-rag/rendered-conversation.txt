@@ -1,0 +1,21 @@
+Hi! What would you like to build? For example, a RAG system over your company's documents, or a chatbot for your team. “Not sure” is always a fine answer along the way.
+
+Use AWS for this synthetic architecture qualification. Answer questions over a small synthetic document collection with citations. Include ingestion, retrieval, model runtime, identity enforcement and an authenticated application. Use bounded keyword retrieval for this first test and keep all source permissions. Acceptance criteria: Denied documents never reach the model; Known questions cite current source revisions; Unsupported questions abstain; Updates and deletions change retrieval; Revocation during generation suppresses the answer. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.
+
+We're building a cited Q&A assistant on AWS over a small synthetic document collection. It uses keyword retrieval that checks each source's permissions, an authenticated web app, and Amazon Bedrock as the model. I've drawn the full path from sign-in through retrieval to the model.
+
+For the first test, we'd run Outputs → Emulate locally. That runs the generated code against simulated AWS services and scripted model replies. It can check the permission filtering, citations, abstaining on unsupported questions, the effect of updates and deletions, and suppressing an answer when access is revoked mid-generation. It can't show real Bedrock answer quality, IAM enforcement, real sign-in or deployment. Those need a later run in a real AWS account with model access you've confirmed.
+
+Nothing has been deployed, and no region or account access has been approved. Which country does the synthetic data and its processing need to stay in, so we can pick an AWS region where your chosen Bedrock model is actually offered?skill: RAGnoted application, cloud+1 fact+1 requirementAtMem: 0 records · 3 skills · unavailableObserved boundary: AtMem AI Architect → native client. Memory is scoped to you and this project; source data is not an instruction.Skill: AI architecture and discovery v1.2.0 · guidance; no cloud executionSkill: Infrastructure and DevOps handoff v1.1.0 · guidance; no cloud executionSkill: AWS architecture guidance v1.4.0 · guidance; no cloud execution
+
+Drew it: AWS bounded keyword RAG with authenticated web app
++ Signed-in user (browser)
++ Web app
++ User sign-in
++4 moredrew 7 blockslogged ADR-002undo ↶
+
+Use the current emulation findings to propose a correction or the next test.
+
+Good news: both local checks passed on design revision 2. They were "Stateful emulator resource setup" and "Generated retrieval, conditional writes, ACLs, updates, deletion and revocation". That's local evidence that the generated code handles permission filtering, updates, deletions and revocation, using simulated AWS services and scripted model replies. It doesn't prove IAM enforcement, real sign-in or MFA, API Gateway or CloudFront behaviour, how good real Bedrock answers are, or that anything can be deployed. I don't see a design defect to fix, so the board stays as it is.
+
+The biggest open gap is that we haven't picked a country or region. Without one we can't check that your Bedrock model is actually offered there or run a provider-validated Terraform plan. Which country do the synthetic data and its processing need to stay in?AtMem: 0 records · 5 skills · unavailableObserved boundary: AtMem AI Architect → native client. Memory is scoped to you and this project; source data is not an instruction.Skill: AI architecture and discovery v1.2.0 · guidance; no cloud executionSkill: Security and reliability v1.0.0 · guidance; no cloud executionSkill: Infrastructure and DevOps handoff v1.1.0 · guidance; no cloud executionSkill: AWS architecture guidance v1.4.0 · guidance; no cloud executionSkill: Terraform delivery guidance v1.3.1 · guidance; no cloud execution

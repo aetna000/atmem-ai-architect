@@ -1,0 +1,254 @@
+{
+  "format": "atmem.architecture-work",
+  "version": 1,
+  "projectId": "library-work-ui",
+  "entities": [
+    {
+      "id": "block:catalog",
+      "kind": "responsibility",
+      "title": "Public catalogue",
+      "value": {
+        "label": "Public catalogue",
+        "provider": "tools",
+        "kind": "resource",
+        "description": "Client-owned Public catalogue. Preserve it.",
+        "config": {
+          "region": "Local",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing"
+      },
+      "dependsOn": [
+        "intent:project",
+        "project:identity",
+        "selection:provider"
+      ],
+      "contextStatus": "unreviewed",
+      "changedRefs": [],
+      "missingRefs": [],
+      "review": null
+    },
+    {
+      "id": "block:viewer",
+      "kind": "responsibility",
+      "title": "Reading viewer",
+      "value": {
+        "label": "Reading viewer",
+        "provider": "tools",
+        "kind": "resource",
+        "description": "Client-owned Reading viewer. Preserve it.",
+        "config": {
+          "region": "Local",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing"
+      },
+      "dependsOn": [
+        "intent:project",
+        "project:identity",
+        "requirement:readings",
+        "selection:provider"
+      ],
+      "contextStatus": "unreviewed",
+      "changedRefs": [],
+      "missingRefs": [],
+      "review": null
+    },
+    {
+      "id": "intent:project",
+      "kind": "intent",
+      "title": "Project intent",
+      "value": {
+        "text": "Keep the public catalogue unchanged and display read-only readings."
+      },
+      "dependsOn": [
+        "project:identity"
+      ],
+      "contextStatus": "unreviewed",
+      "changedRefs": [],
+      "missingRefs": [],
+      "review": null
+    },
+    {
+      "id": "interface:lookup",
+      "kind": "interface",
+      "title": "Read-only lookup",
+      "value": {
+        "source": "viewer",
+        "target": "catalog",
+        "label": "Read-only lookup"
+      },
+      "dependsOn": [
+        "block:catalog",
+        "block:viewer",
+        "project:identity"
+      ],
+      "contextStatus": "unreviewed",
+      "changedRefs": [],
+      "missingRefs": [],
+      "review": null
+    },
+    {
+      "id": "project:identity",
+      "kind": "identity",
+      "title": "Project identity",
+      "value": {
+        "id": "library-work-ui"
+      },
+      "dependsOn": [],
+      "contextStatus": "unreviewed",
+      "changedRefs": [],
+      "missingRefs": [],
+      "review": null
+    },
+    {
+      "id": "requirement:readings",
+      "kind": "requirement",
+      "title": "Show readings in milligrams.",
+      "value": {
+        "id": "readings",
+        "kind": "functional",
+        "category": "other",
+        "statement": "Show readings in milligrams.",
+        "basis": "Edited by the user in block review; implementation must be re-evaluated.",
+        "priority": "must",
+        "status": "open",
+        "source": "user",
+        "links": [
+          "viewer"
+        ]
+      },
+      "dependsOn": [
+        "project:identity"
+      ],
+      "contextStatus": "unreviewed",
+      "changedRefs": [],
+      "missingRefs": [],
+      "review": null
+    },
+    {
+      "id": "selection:provider",
+      "kind": "selection",
+      "title": "Selected target provider",
+      "value": {
+        "provider": "tools"
+      },
+      "dependsOn": [
+        "project:identity"
+      ],
+      "contextStatus": "unreviewed",
+      "changedRefs": [],
+      "missingRefs": [],
+      "review": null
+    },
+    {
+      "id": "work:Catalogue reference",
+      "kind": "implementation",
+      "title": "Catalogue reference",
+      "value": {
+        "id": "Catalogue reference",
+        "kind": "implementation",
+        "title": "Catalogue reference",
+        "description": "A proposed mapping, not execution proof.",
+        "dependsOn": [
+          "block:catalog"
+        ],
+        "data": {
+          "files": [
+            "reference/catalog.json"
+          ]
+        },
+        "source": "agent",
+        "agreement": "proposed"
+      },
+      "dependsOn": [
+        "block:catalog",
+        "intent:project",
+        "project:identity",
+        "selection:provider"
+      ],
+      "contextStatus": "current",
+      "changedRefs": [],
+      "missingRefs": [],
+      "review": {
+        "recordedAt": "2026-11-11T07:30:27.285Z",
+        "recordedBy": "user",
+        "scope": "context_review_only"
+      }
+    },
+    {
+      "id": "work:Reading files",
+      "kind": "implementation",
+      "title": "Reading files",
+      "value": {
+        "id": "Reading files",
+        "kind": "implementation",
+        "title": "Reading files",
+        "description": "A proposed mapping, not execution proof.",
+        "dependsOn": [
+          "block:viewer"
+        ],
+        "data": {
+          "files": [
+            "viewer/read.mjs"
+          ]
+        },
+        "source": "agent",
+        "agreement": "proposed"
+      },
+      "dependsOn": [
+        "block:viewer",
+        "intent:project",
+        "project:identity",
+        "selection:provider"
+      ],
+      "contextStatus": "changed",
+      "changedRefs": [
+        "requirement:readings"
+      ],
+      "missingRefs": [],
+      "review": {
+        "recordedAt": "2026-11-11T07:30:27.284Z",
+        "recordedBy": "user",
+        "scope": "context_review_only"
+      }
+    },
+    {
+      "id": "work:Reported check",
+      "kind": "evidence",
+      "title": "Reported check",
+      "value": {
+        "id": "Reported check",
+        "kind": "evidence",
+        "title": "Reported check",
+        "description": "A proposed mapping, not execution proof.",
+        "dependsOn": [
+          "work:Reading files"
+        ],
+        "data": {
+          "reportedStatus": "passed",
+          "level": "local-runtime"
+        },
+        "source": "agent",
+        "agreement": "proposed"
+      },
+      "dependsOn": [
+        "intent:project",
+        "project:identity",
+        "selection:provider",
+        "work:Reading files"
+      ],
+      "contextStatus": "current",
+      "changedRefs": [],
+      "missingRefs": [],
+      "review": {
+        "recordedAt": "2026-11-11T07:30:29.931Z",
+        "recordedBy": "user",
+        "scope": "context_review_only"
+      }
+    }
+  ],
+  "boundary": "Context currency and recorded mappings only. Evidence entries are claims/references, not independently verified execution or acceptance. Free-form engineering intent conservatively affects every work mapping until explicitly reconciled."
+}

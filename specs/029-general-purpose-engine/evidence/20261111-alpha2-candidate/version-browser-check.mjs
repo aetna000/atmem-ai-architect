@@ -1,0 +1,13 @@
+import {chromium} from '/Users/javadtaghia/gitlab/ai-architect-workbench/node_modules/@playwright/test/index.mjs';
+import fs from 'node:fs';import assert from 'node:assert/strict';
+const out='/Users/javadtaghia/gitlab/ai-architect-workbench/.local/engine-product/alpha2-candidate';const browser=await chromium.launch({headless:true}),page=await browser.newPage({viewport:{width:1440,height:1000}}),requests=[],errors=[];
+page.on('request',r=>{if(/\/api\/engineering\/(create|start|steer)$/.test(r.url()))requests.push(r.url());});page.on('pageerror',e=>errors.push(e.message));
+try{
+ await page.addInitScript(()=>{localStorage.setItem('atforma-connection-v1',JSON.stringify({provider:'codex',model:'gpt-6.1-sol',effort:'high'}));localStorage.setItem('atmem-workspace-view-v1','build');});
+ await page.goto('http://127.0.0.1:5283');await page.getByRole('heading',{name:'Build your project',exact:true}).waitFor();await page.getByTitle('About AtMem AI Architect',{exact:true}).click();await page.getByText('0.2.0-alpha.2',{exact:false}).waitFor();await page.screenshot({path:out+'/about.png'});await page.keyboard.press('Escape');
+ await page.locator('#project-file-input').setInputFiles('/Users/javadtaghia/gitlab/ai-architect-workbench/specs/029-general-purpose-engine/evidence/20261111-artifact-reconciliation/native/project-m.json');
+ await page.getByRole('tab',{name:'Build',exact:true}).click();await page.locator('.engineering-panel .architecture-work > summary').click();await page.getByText('Earlier artifact retained',{exact:true}).waitFor();await page.getByText('Saved context matches',{exact:true}).waitFor();
+ await page.getByRole('heading',{name:'Linked artifacts',exact:true}).scrollIntoViewIfNeeded();await page.screenshot({path:out+'/imported-context.png'});
+ await page.reload();await page.getByRole('heading',{name:'Build your project',exact:true}).waitFor();await page.waitForFunction(()=>JSON.parse(localStorage.getItem('atforma-workspace-v3')).extensions.architectureWork.artifactMappings.length===2);assert.deepEqual(requests,[]);assert.deepEqual(errors,[]);
+ fs.writeFileSync(out+'/version-browser.json',JSON.stringify({passed:true,visibleVersion:'0.2.0-alpha.2',verifiedUrl:'http://127.0.0.1:5283',publicProjectFilePickerImport:true,mappingHistoryVersions:2,reloadPreserved:true,nativeCreateStartSteerRequests:0,errors,boundary:'Actual frozen candidate/browser and real session service; version, file-picker metadata import/projection and reload with no inference. Imported metadata does not authenticate the original session/artifact store; actual native qualification is recorded separately.'},null,2)+'\n');console.log('Frozen alpha.2 version/project-model/reload smoke passed with no inference.');
+}finally{await browser.close();}

@@ -1,0 +1,220 @@
+{
+  "message": "So you want a small AWS service where an authenticated caller sends a synthetic text document and gets back its word and character counts, with no model and no public endpoint. I've sketched an existing IAM caller invoking a Lambda function directly (the text-statistics function), with its own least-privilege role and CloudWatch logs; Sydney (ap-southeast-2) is marked only as a candidate region, not an approved one. The next decision that matters most is the country: which country must the test documents and logs stay in?",
+  "phase": "Architecture",
+  "proposal": {
+    "baseRevision": 1,
+    "title": "First sketch: authenticated word/character count on AWS Lambda",
+    "body": "Scope: an existing IAM caller invokes AWS Lambda directly using IAM authentication (lambda-invoke). There is no HTTP API and no anonymous endpoint. The Lambda function returns the word and character counts. The generated execution role, CloudWatch log group, published version and live alias belong to the function. Assumptions: the proposed defaults are 64 KiB input, 128 MiB memory, 10-second timeout, concurrency 1 and 30-day log retention, and all of them can be reviewed. Sydney (ap-southeast-2) is a candidate region only. It is not approved, and regional availability has not been verified. The design uses synthetic test data only. This is not a deployment.",
+    "next": {
+      "version": 1,
+      "revision": 1,
+      "name": "Authenticated text statistics (AWS qualification)",
+      "provider": "aws",
+      "requirements": "",
+      "nodes": [
+        {
+          "id": "caller",
+          "type": "resource",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "label": "Existing IAM caller",
+            "kind": "source",
+            "provider": "tools",
+            "description": "An existing same-account IAM principal outside the provisioning scope. It sends {text} by signed Lambda Invoke. Its ARN is a Terraform input and has not been verified.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Internal",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "poc": true,
+            "binding": "aws-iam-principal"
+          }
+        },
+        {
+          "id": "text-stats",
+          "type": "resource",
+          "position": {
+            "x": 400,
+            "y": 0
+          },
+          "data": {
+            "label": "Text statistics function",
+            "kind": "tool",
+            "provider": "aws",
+            "description": "Takes {text} and returns the word count (words separated by whitespace) and the Unicode code-point character count to the caller. It owns its least-privilege execution role, a scoped CloudWatch log group, a published version and a live alias. It has no public URL.",
+            "config": {
+              "region": "ap-southeast-2 (candidate, not approved)",
+              "classification": "Internal",
+              "timeout": 10000,
+              "memoryMb": 128,
+              "functionTimeoutSeconds": 10,
+              "concurrency": 1,
+              "maxInputBytes": 65536,
+              "logRetentionDays": 30
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "poc": true,
+            "service": "AWS Lambda",
+            "implementation": "text-statistics"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "caller-text-stats",
+          "source": "caller",
+          "target": "text-stats",
+          "type": "smoothstep",
+          "label": "IAM-signed Invoke → counts returned",
+          "access": "lambda-invoke"
+        }
+      ]
+    }
+  },
+  "requirementDrafts": [
+    {
+      "rationale": "Defines what the service must return, so acceptance tests can check it.",
+      "basis": "\"returns its word count and character count\"",
+      "id": "ai-text-counts",
+      "statement": "Proposed: given {text}, the service returns a word count (whitespace-delimited) and a Unicode code-point character count.",
+      "kind": "functional",
+      "category": "other",
+      "priority": "must",
+      "links": [
+        "text-stats"
+      ]
+    },
+    {
+      "rationale": "Prevents unauthenticated use and keeps the attack surface minimal.",
+      "basis": "\"authenticated invocation\" and \"No ... public anonymous endpoint\"",
+      "id": "ai-auth-only",
+      "statement": "Proposed: only explicitly authorised IAM principals can invoke the function. There is no public or anonymous endpoint.",
+      "kind": "nonfunctional",
+      "category": "security",
+      "priority": "must",
+      "links": [
+        "caller",
+        "text-stats"
+      ]
+    },
+    {
+      "rationale": "Supports troubleshooting while limiting how long log data is kept.",
+      "basis": "\"operational logs\"",
+      "id": "ai-ops-logs",
+      "statement": "Proposed: the function writes operational logs to a scoped log group, with a retention period that still needs confirming (30-day default proposed).",
+      "kind": "nonfunctional",
+      "category": "maintainability",
+      "priority": "should",
+      "links": [
+        "text-stats"
+      ]
+    }
+  ],
+  "decisionUpdates": [
+    {
+      "subject": "platform.cloud",
+      "value": "aws",
+      "sourceText": "Use AWS for this synthetic qualification design."
+    }
+  ],
+  "contextUsed": {
+    "status": "unavailable",
+    "enabled": true,
+    "engine": "AtMem 2.3.10 core SDK",
+    "recordsUsed": [],
+    "knowledgeRecordIds": [],
+    "skills": [
+      {
+        "id": "architecture",
+        "name": "AI architecture and discovery",
+        "provider": "all",
+        "stages": [
+          "discover",
+          "design",
+          "review"
+        ],
+        "version": "1.0.0",
+        "digest": "9ad2d605f02a4b5ecbc5310b2472f347a8c4301ece89714a0857d8405e075c90",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "devops",
+        "name": "Infrastructure and DevOps handoff",
+        "provider": "all",
+        "stages": [
+          "deploy",
+          "review"
+        ],
+        "version": "1.1.0",
+        "digest": "cd5a428597fbf388a12a863721d93e551c200f4ed30be3469fd8eae78262884c",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "aws",
+        "name": "AWS architecture guidance",
+        "provider": "aws",
+        "stages": [
+          "design",
+          "review",
+          "estimate",
+          "deploy"
+        ],
+        "version": "1.4.0",
+        "digest": "82147cbfe99396d8e659bc7c8d62ce57b0868983bc88c1ace0aaa860ecb9ba29",
+        "source": "https://raw.githubusercontent.com/aws/agent-toolkit-for-aws/fb298e0b6bf2b308a3d2c212b2a09b9bace8e090/plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+        "reference": {
+          "id": "aws",
+          "repository": "aws/agent-toolkit-for-aws",
+          "commit": "fb298e0b6bf2b308a3d2c212b2a09b9bace8e090",
+          "sourcePath": "plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+          "url": "https://raw.githubusercontent.com/aws/agent-toolkit-for-aws/fb298e0b6bf2b308a3d2c212b2a09b9bace8e090/plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+          "sha256": "aa8fef39ef6d64365e48827d9acc90b2b8755023f5c177341cf1c954c1057811",
+          "file": "agent-skills/upstream/aws/SKILL.md",
+          "status": "reference-only",
+          "note": "Imported source reference, not an enabled script/tool package. AtMem AI Architect specialist guidance is reviewed separately; referenced upstream companion files are not bundled.",
+          "integrity": true
+        },
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup",
+          "pricing.lookup"
+        ],
+        "enabled": true
+      }
+    ],
+    "tools": [],
+    "boundary": "AtMem AI Architect → native client",
+    "contextDigest": "ab0e506e4485d361880e54a50fd4c66df2a6177b072138cf8460839d16fc893c",
+    "projectId": "f999e44a-3fbb-462a-8010-6ba4e8c86bbf"
+  },
+  "priceQuotes": []
+}

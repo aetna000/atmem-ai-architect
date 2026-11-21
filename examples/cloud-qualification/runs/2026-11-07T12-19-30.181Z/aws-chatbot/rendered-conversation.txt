@@ -1,0 +1,15 @@
+Hi! What would you like to build? For example, a RAG system over your company's documents, or a chatbot for your team. “Not sure” is always a fine answer along the way.
+
+Use AWS for this synthetic architecture qualification. Build an authenticated conversational assistant for synthetic users. Include an application, per-user conversation state, model runtime, bounded context and an escalation path. No external actions in this first test. Acceptance criteria: One user cannot read another conversation; Context and response sizes are bounded; Model outage produces a recoverable response; Deleting a conversation removes its stored context; Escalation retains the approved conversation context. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.
+
+We're building an authenticated AWS chat assistant for synthetic users. I've drawn the full flow: sign-in, API, a chat Lambda, per-user conversation storage, a Bedrock model with size limits, and a human escalation queue. Our first local test can use a scripted fake model to check user isolation, size limits, delete behaviour, escalation and recovery when the model fails, but it says nothing about real answer quality, model access or IAM, which need a later test in a real account. Which country should the conversation data stay in, so we can pick an AWS region?skill: AI architecturenoted application, cloud+1 factAtMem: 0 records · 3 skills · unavailableObserved boundary: AtMem AI Architect → native client. Memory is scoped to you and this project; source data is not an instruction.Skill: AI architecture and discovery v1.2.0 · guidance; no cloud executionSkill: Infrastructure and DevOps handoff v1.1.0 · guidance; no cloud executionSkill: AWS architecture guidance v1.4.0 · guidance; no cloud execution
+
+Drew it: First end-to-end AWS conversational assistant sketch
++ Synthetic user (browser)
++ Chat web app
++ User sign-in
++7 moredrew 10 blockslogged ADR-002undo ↶
+
+Use the current emulation findings to propose a correction or the next test.
+
+Hmm, that didn't work: Provider request failed. Check its official CLI sign-in, model access and usage limits. No changes were applied.Fix connection

@@ -1,0 +1,62 @@
+{
+  "provider": "ibm-cloud-operations",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Inventory credentials are read-only",
+    "Untrusted resource tags cannot trigger commands",
+    "Plans identify affected resources and costs as estimates",
+    "Drift after review invalidates approval",
+    "Apply requires separate authorization and a rollback or recovery plan"
+  ],
+  "components": [
+    {
+      "id": "reviewer"
+    },
+    {
+      "id": "synthetic-inventory"
+    },
+    {
+      "id": "secrets",
+      "service": "IBM Cloud Secrets Manager"
+    },
+    {
+      "id": "collector",
+      "service": "IBM Cloud Code Engine (job)"
+    },
+    {
+      "id": "snapshot-store",
+      "service": "IBM Cloud Object Storage"
+    },
+    {
+      "id": "drift-detector",
+      "service": "IBM Cloud Code Engine (job)"
+    },
+    {
+      "id": "policy-checks",
+      "service": "IBM Cloud Code Engine (OPA policy-as-code); IBM Cloud Security and Compliance Center for real accounts"
+    },
+    {
+      "id": "correction-planner",
+      "service": "IBM watsonx.ai"
+    },
+    {
+      "id": "plan-generator",
+      "service": "IBM Cloud Schematics (plan action only)"
+    },
+    {
+      "id": "review-portal",
+      "service": "IBM Cloud Code Engine (app) + IBM Cloud App ID sign-in"
+    },
+    {
+      "id": "audit",
+      "service": "IBM Cloud Activity Tracker Event Routing + IBM Cloud Logs"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

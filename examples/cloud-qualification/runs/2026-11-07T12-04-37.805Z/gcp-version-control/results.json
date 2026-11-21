@@ -1,0 +1,55 @@
+{
+  "provider": "gcp-version-control",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Repository and branch permissions enforced",
+    "Untrusted repository instructions cannot trigger execution",
+    "Findings link to lines in the reviewed commit",
+    "A changed head commit invalidates the review",
+    "Retry does not post duplicate comments and posting requires approval"
+  ],
+  "components": [
+    {
+      "id": "repo"
+    },
+    {
+      "id": "webhook",
+      "service": "Cloud Run"
+    },
+    {
+      "id": "queue",
+      "service": "Pub/Sub"
+    },
+    {
+      "id": "worker",
+      "service": "Cloud Run"
+    },
+    {
+      "id": "secrets",
+      "service": "Secret Manager"
+    },
+    {
+      "id": "model",
+      "service": "Vertex AI (Gemini)"
+    },
+    {
+      "id": "guard",
+      "service": "Cloud Run (worker module)"
+    },
+    {
+      "id": "drafts",
+      "service": "Firestore"
+    },
+    {
+      "id": "audit",
+      "service": "Cloud Logging and Cloud Monitoring"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

@@ -1,0 +1,15 @@
+{
+  "url": "https://raw.githubusercontent.com/microsoft/playwright/cfe490d941f992655948eee8fd4fd94e1c4234bf/utils/docker/seccomp_profile.json",
+  "commit": "cfe490d941f992655948eee8fd4fd94e1c4234bf",
+  "sha256": "e53c15d248f57bceec0a3a16fad1b4ab0d05a7bddb455f86a60e2dba5612cdf7",
+  "defaultAction": "SCMP_ACT_ERRNO",
+  "syscallGroups": 27,
+  "scope": "Pinned upstream Docker seccomp profile with Chromium user-namespace permissions; operator review/probe only, not yet a product worker registration.",
+  "upstreamSha256": "cc3e61cabda6bbc1e53e54d27ba4d55a9d3be829b6dd1a596f4a7b31b1cc7849",
+  "operatorDelta": {
+    "allow": [
+      "chroot"
+    ],
+    "reason": "Chromium user-namespace sandbox invokes chroot after creating its namespace; outside user namespace the nonroot/cap-drop caller must still fail. Probe only; no product registration or hosted security claim."
+  }
+}

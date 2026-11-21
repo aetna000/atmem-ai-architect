@@ -1,0 +1,536 @@
+{
+  "version": 1,
+  "purpose": "Authored engineering summaries; no upstream source code copied into user projects.",
+  "records": [
+    {
+      "id": "aws-container-boundaries",
+      "provider": "aws",
+      "topic": "container-deployment",
+      "practice": "Separate task execution identity from application task identity; scope permissions to the supplied image and workload.",
+      "source": {
+        "repository": "terraform-aws-modules/terraform-aws-ecs",
+        "commit": "135c225c75c7f0044966329c55ad8d647b358a57",
+        "url": "https://github.com/terraform-aws-modules/terraform-aws-ecs/tree/135c225c75c7f0044966329c55ad8d647b358a57",
+        "license": "Apache-2.0",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "limitations": [
+        "Not proof of a user deployment or combined system.",
+        "Verify versions, prerequisites and application behavior separately."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
+    },
+    {
+      "id": "azure-container-boundaries",
+      "provider": "azure",
+      "topic": "container-deployment",
+      "practice": "Specify the existing container environment, application identity, registry authentication, probes and scaling.",
+      "source": {
+        "repository": "Azure/terraform-azurerm-avm-res-app-containerapp",
+        "commit": "0dc4faf510f8eb7ca6d151e1be6a47fb55a0074b",
+        "url": "https://github.com/Azure/terraform-azurerm-avm-res-app-containerapp/tree/0dc4faf510f8eb7ca6d151e1be6a47fb55a0074b",
+        "license": "MIT",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "limitations": [
+        "Not proof of a user deployment or combined system.",
+        "Verify versions, prerequisites and application behavior separately."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
+    },
+    {
+      "id": "gcp-container-boundaries",
+      "provider": "gcp",
+      "topic": "container-deployment",
+      "practice": "Compose explicit service, IAM and network boundaries from provider-specific patterns; verify application connections separately.",
+      "source": {
+        "repository": "GoogleCloudPlatform/cloud-foundation-fabric",
+        "commit": "da9bab1152ff0155e4f59992e518981fda6c9f39",
+        "url": "https://github.com/GoogleCloudPlatform/cloud-foundation-fabric/tree/da9bab1152ff0155e4f59992e518981fda6c9f39",
+        "license": "Apache-2.0",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "limitations": [
+        "Not proof of a user deployment or combined system.",
+        "Verify versions, prerequisites and application behavior separately."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
+    },
+    {
+      "id": "ibm-container-boundaries",
+      "provider": "ibm",
+      "topic": "container-deployment",
+      "practice": "Separate the Code Engine project, application, image secrets, configuration and service bindings; distinguish existing and new projects.",
+      "source": {
+        "repository": "terraform-ibm-modules/terraform-ibm-code-engine",
+        "commit": "1d81e9b7481abbb79c7cce5bb4585dcbdc11073c",
+        "url": "https://github.com/terraform-ibm-modules/terraform-ibm-code-engine/tree/1d81e9b7481abbb79c7cce5bb4585dcbdc11073c",
+        "license": "Apache-2.0",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "limitations": [
+        "Not proof of a user deployment or combined system.",
+        "Verify versions, prerequisites and application behavior separately."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
+    },
+    {
+      "id": "aws-structured-output-boundary",
+      "provider": "aws",
+      "topic": "structured-generation",
+      "practice": "Use a supported model with the Converse JSON-schema output contract, then independently validate bounded application input and output. Handle unsupported schema/model responses and model failures; structured output does not establish authorization or task accuracy.",
+      "source": {
+        "kind": "documentation",
+        "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/structured-output.html",
+        "sha256": "cdbf4b796ed8c9e6e3be430a1fa086710916cb9ce2c27b16f9a87ed6ca4b4432",
+        "retrievedAt": "2026-11-09T16:52:14.475436+00:00",
+        "redistribution": "Metadata and original authored summary only; source HTML retained in local review cache.",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "limitations": [
+        "Documentation review only; no account, combined-system or deployed validation.",
+        "Verify actual model/service version, regional support and application behavior."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
+    },
+    {
+      "id": "azure-user-and-workload-identity",
+      "provider": "azure",
+      "topic": "identity-boundaries",
+      "practice": "Federated Container Apps authentication addresses user sign-in. Managed identity addresses application access to services; it is not user or tenant authorization. Configure the app registration, allowed audiences and HTTPS authentication boundary, then enforce application-specific access and test denied requests.",
+      "source": {
+        "kind": "documentation",
+        "url": "https://learn.microsoft.com/en-us/azure/container-apps/authentication",
+        "sha256": "aaa6d9f14ea77f452cf19b1118ba10fba20a7bbfaaa122eca982b8640284bfc0",
+        "retrievedAt": "2026-11-09T16:52:14.475436+00:00",
+        "redistribution": "Metadata and original authored summary only; source HTML retained in local review cache.",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "limitations": [
+        "Documentation review only; no account, combined-system or deployed validation.",
+        "Verify actual model/service version, regional support and application behavior."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
+    },
+    {
+      "id": "gcp-enduser-and-session-boundaries",
+      "provider": "gcp",
+      "topic": "identity-boundaries",
+      "practice": "Choose the end-user authentication path deliberately: verify Identity Platform/Firebase ID tokens in the application, or use the documented internal-user IAP path where appropriate. Cloud Run IAM alone is not browser application authorization. Sessions are not shared across replicas; durable user/project state needs a shared adapter and tenancy tests.",
+      "source": {
+        "kind": "documentation",
+        "url": "https://docs.cloud.google.com/run/docs/authenticating/end-users",
+        "sha256": "c5c9e6fff0172d480483d8aafdb39c316039ead507c2a0c84029888e974f8363",
+        "retrievedAt": "2026-11-09T16:52:14.475436+00:00",
+        "redistribution": "Metadata and original authored summary only; source HTML retained in local review cache.",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "limitations": [
+        "Documentation review only; no account, combined-system or deployed validation.",
+        "Verify actual model/service version, regional support and application behavior."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
+    },
+    {
+      "id": "ibm-workload-identity-boundary",
+      "provider": "ibm",
+      "topic": "identity-boundaries",
+      "practice": "Code Engine trusted profiles provide workload access to IBM services through a compute-resource token and scoped IAM trust. They do not implement end-user sign-in, account/project membership or application authorization. Keep workload and user trust boundaries distinct and verify both.",
+      "source": {
+        "kind": "documentation",
+        "url": "https://cloud.ibm.com/docs/codeengine?topic=codeengine-trusted-profiles-authentication-file",
+        "sha256": "8ff9bba9eae3bf66cb59a0a4ebccc7d1d629397ceb49fe5a99cdc4fa278b2cb4",
+        "retrievedAt": "2026-11-09T16:52:14.475436+00:00",
+        "redistribution": "Metadata and original authored summary only; source HTML retained in local review cache.",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "limitations": [
+        "Documentation review only; no account, combined-system or deployed validation.",
+        "Verify actual model/service version, regional support and application behavior."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
+    },
+    {
+      "id": "aws-model-data-lifecycle",
+      "provider": "aws",
+      "topic": "model-data-lifecycle",
+      "practice": "Do not infer zero provider retention from no application database or no training. Bedrock retention depends on model, API, region and account/project settings. For Runtime, verify regional account mode none; unknown/denied reads fail closed. Account-wide changes can affect existing workloads and require authorization. Read-only checks are not a model-quality or deployment test.",
+      "source": {
+        "kind": "documentation",
+        "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/data-retention.html",
+        "sha256": "6738d9e52297b277a48a34e4b0d7dcc07c684211d43cce21531571b460e13220",
+        "retrievedAt": "2026-11-09T17:30:25.946914+00:00",
+        "redistribution": "Metadata and original authored summary only; source HTML retained in local review cache.",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "limitations": [
+        "Policy documentation review, not account configuration or deployed verification.",
+        "Do not assume all model APIs, features, contracts or regions have identical controls."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
+    },
+    {
+      "id": "azure-model-data-lifecycle",
+      "provider": "azure",
+      "topic": "model-data-lifecycle",
+      "practice": "Application non-retention is distinct from Azure model-service abuse monitoring. Modified abuse monitoring has eligibility and approval requirements. Verify the exact service, model and account arrangement before promising zero retention; do not transfer Microsoft 365 or another product exemption to this application.",
+      "source": {
+        "kind": "documentation",
+        "url": "https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/abuse-monitoring",
+        "sha256": "9226ce47888b5b65c0ca391f17f92cd941b6f754377249ecc506ca92de4842bb",
+        "retrievedAt": "2026-11-09T17:30:26.771762+00:00",
+        "redistribution": "Metadata and original authored summary only; source HTML retained in local review cache.",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "limitations": [
+        "Policy documentation review, not account configuration or deployed verification.",
+        "Do not assume all model APIs, features, contracts or regions have identical controls."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
+    },
+    {
+      "id": "gcp-model-data-lifecycle",
+      "provider": "gcp",
+      "topic": "model-data-lifecycle",
+      "practice": "No-training and no application history do not establish zero retention. Review abuse monitoring, model/features, request-response logging, grounding, interaction state and implicit durable caching. Some grounding features retain data; global endpoints can change processing location. Verify account/project controls and regional scope before claims.",
+      "source": {
+        "kind": "documentation",
+        "url": "https://docs.cloud.google.com/gemini-enterprise-agent-platform/resources/zero-data-retention",
+        "sha256": "2ca5198836380fee0c3335672825b87f88bbd589c30e46b504012634e45586e3",
+        "retrievedAt": "2026-11-09T17:30:26.739440+00:00",
+        "redistribution": "Metadata and original authored summary only; source HTML retained in local review cache.",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "limitations": [
+        "Policy documentation review, not account configuration or deployed verification.",
+        "Do not assume all model APIs, features, contracts or regions have identical controls."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
+    },
+    {
+      "id": "azure-structured-application-composition",
+      "provider": "azure",
+      "topic": "authenticated-structured-ai-application",
+      "practice": "A composed internal application must implement the API and browser alongside hosting: verify the Entra token signature, issuer/tenant, API audience, authorized browser client, delegated scope and assigned user role; never trust caller-provided identity headers. Use managed workload identity and account-scoped model permissions. Package real source with locked dependencies and exact build/image inputs. Keep authorization outside model text and validate output fields before returning them.",
+      "source": {
+        "kind": "documentation",
+        "url": "https://learn.microsoft.com/en-us/entra/identity-platform/claims-validation",
+        "sha256": "d1abf4203e2a234a5ec2f9467ca6c33a2d7685cff6c38c0fb54e55c4b98dbf87",
+        "retrievedAt": "2026-11-09T19:09:01.198180+00:00",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "localEvidence": [
+        "src/azure-structured.mjs",
+        "src/runtime/azure_structured.py",
+        "src/runtime/azure_acceptance.py",
+        "scripts/qualify-azure-structured.mjs",
+        "server/tests/test_azure_emulation.py"
+      ],
+      "limitations": [
+        "Local RSA/ASGI and scripted model/policy transport tests, plus native AzureRM/AzureAD schemas and mock plans; no deployed identity or model behavior proven.",
+        "JWT roles remain usable until token expiry; no continuous revocation or tenant MFA policy is established.",
+        "Account data handling requires approved ContentLogging=false before inference. Image startup/scan, real Entra flow, managed-identity exchange, model quality, region availability and authorized account plan remain pending.",
+        "Existing company group and RBAC-mode ACR are destination prerequisites; private networks, persistence, tenancy and workflows require more capabilities."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
+    },
+    {
+      "id": "gcp-structured-application-composition",
+      "provider": "gcp",
+      "topic": "authenticated-structured-ai-application",
+      "practice": "Use Cloud Run IAP and company-group access as the browser authorization boundary; independently verify the ES256 signed IAP header, fixed key origin, issuer, exact service audience and bounded lifetime. Unsigned identity headers or a caller bearer header do not establish IAP access. Separate keyless runtime and image-pulling identities; allow only required model/policy reads. Keep model output behind strict schema checks and human review.",
+      "source": {
+        "kind": "documentation",
+        "url": "https://docs.cloud.google.com/iap/docs/signed-headers-howto",
+        "sha256": "961eeec669b9a5ee1bb7ff504f882482aa88a4fdfb8f5b59a4de26b7794a44b8",
+        "retrievedAt": "2026-11-09T19:31:47.147762+00:00",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "localEvidence": [
+        "src/gcp-structured.mjs",
+        "src/runtime/gcp_structured.py",
+        "src/runtime/gcp_acceptance.py",
+        "scripts/qualify-structured-provider.mjs",
+        "scripts/iap-web-check.mjs",
+        "server/tests/test_gcp_emulation.py"
+      ],
+      "limitations": [
+        "Real local ES256/ASGI tests and scripted transport checks, native Google/Google-beta schemas and mock plans; no live IAP, model or destination proof.",
+        "IAP session/group policy and signed-header expiry are distinct from continuous directory revocation or verified MFA.",
+        "No app persistence does not prove provider zero retention. Destination-owner abuse-policy review is attested; caching/logging/sharing controls are separately read at runtime. No fabricated approval API or project-wide policy write.",
+        "Requires an organization-owned project, existing group and registry, reviewed regional model, built/tested image and account inputs. Image startup/scan, account plans, durable state and workflows remain pending."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
+    },
+    {
+      "id": "ibm-structured-application-composition",
+      "provider": "ibm",
+      "topic": "authenticated-structured-ai-application",
+      "practice": "Separate user authorization from workload authentication. Use the reviewed ContainerAuthenticator with the fixed Code Engine token path and dedicated trusted profile; never embed an application API key. Scope service grants to the reviewed runtime instance and separately verify watsonx project access. Package runnable source and complete hash-locked dependencies. Isolate provider SDK closures that conflict rather than weakening their requirements.",
+      "source": {
+        "kind": "repository",
+        "repository": "IBM/python-sdk-core",
+        "commit": "eca14f9284e8e0f69ec3f73f8ef20066bfe31a30",
+        "url": "https://github.com/IBM/python-sdk-core/blob/eca14f9284e8e0f69ec3f73f8ef20066bfe31a30/ibm_cloud_sdk_core/authenticators/container_authenticator.py",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "localEvidence": [
+        "src/ibm-structured.mjs",
+        "src/runtime/ibm_acceptance.py",
+        "scripts/setup-structured-runtime.py"
+      ],
+      "limitations": [
+        "15 local cryptographic/HTTP/SDK/scripted checks and Linux/schema/mock evidence; no live identity, model-quality or deployment proof.",
+        "New owned App ID tenant only; no existing SSO, MFA, immediate JWT revocation or global logout.",
+        "Instance-scoped Writer is broader than inference; project membership is separate. Policy review is operator attestation, not a provider approval API.",
+        "Verify existing project/registry/pull secret, regional model/plan/quotas/costs. Persistence and workflows need further implementation."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
+    },
+    {
+      "id": "aws-public-catalog-runtime-editor-separation",
+      "provider": "aws",
+      "topic": "public-cited-faq-and-authorized-source-lifecycle",
+      "practice": "For small synchronous public assistants, use the generated Python Lambda/HTTP API v2 contract with a hash-pinned reviewed Mangum adapter and deterministic Linux ZIP. App Runner is closed to new customers; do not default to it or make a basic visitor resolve eligibility. Keep runtime S3 catalog.json read/model invocation separate from an existing company editor assumed role with conditional catalog Get/Put. Bound concurrency, fail closed on policy/source/output failures, and test the real Lambda event adapter and exact Linux ZIP.",
+      "source": {
+        "kind": "documentation",
+        "url": "https://docs.aws.amazon.com/apigateway/latest/developerguide/http-api-develop-integrations-lambda.html",
+        "sha256": "886f0bbce1abbcfd21d682354c59102bb0779f1b5542e3ba9f04d37d7a268124",
+        "retrievedAt": "2026-11-09T22:11:45.139015+00:00",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "localEvidence": [
+        "src/public-faq-clouds.mjs",
+        "src/runtime/public_catalog_store.py",
+        "src/runtime/public_catalog_admin.py",
+        "server/tests/test_public_catalog_store.py",
+        "src/aws-public-faq.mjs"
+      ],
+      "limitations": [
+        "Public-only UTF-8 text catalog; no private enterprise connector or arbitrary source URL fetching.",
+        "Local HTTP/catalog/native transport fixtures and Terraform schemas/mock plans do not establish real cloud IAM or effective inherited access.",
+        "Exact source membership and quotes do not prove factual entailment. Real model answer/citation/abstention, image scanning, destination capacity/cost/abuse controls and deployed behavior need separate evidence."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
+    },
+    {
+      "id": "azure-public-catalog-runtime-editor-separation",
+      "provider": "azure",
+      "topic": "public-cited-faq-and-authorized-source-lifecycle",
+      "practice": "Use managed identity for runtime Blob Data Reader on the dedicated private catalog container and a separate existing editor group for container-scoped edits. Disable anonymous blob access and shared storage keys. Conditional ETags prevent lost edits; source freshness is checked before returning an answer.",
+      "source": {
+        "kind": "documentation",
+        "url": "https://learn.microsoft.com/en-us/azure/storage/blobs/assign-azure-role-data-access",
+        "sha256": "0489122ce32660f826db3f1837dd9d6a30fb361909b64d11e35b7f9d13707ecb",
+        "retrievedAt": "2026-11-09T21:57:15.719569+00:00",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "localEvidence": [
+        "src/public-faq-clouds.mjs",
+        "src/runtime/public_catalog_store.py",
+        "src/runtime/public_catalog_admin.py",
+        "server/tests/test_public_catalog_store.py"
+      ],
+      "limitations": [
+        "Public-only UTF-8 text catalog; no private enterprise connector or arbitrary source URL fetching.",
+        "Local HTTP/catalog/native transport fixtures and Terraform schemas/mock plans do not establish real cloud IAM or effective inherited access.",
+        "Exact source membership and quotes do not prove factual entailment. Real model answer/citation/abstention, image scanning, destination capacity/cost/abuse controls and deployed behavior need separate evidence."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
+    },
+    {
+      "id": "gcp-public-catalog-runtime-editor-separation",
+      "provider": "gcp",
+      "topic": "public-cited-faq-and-authorized-source-lifecycle",
+      "practice": "Use a dedicated keyless workload with bucket-scoped object-get authority and separate existing editor get/create/delete permissions. Bind read operations to the observed object generation and use ifGenerationMatch for conditional catalog publication; zero means create only when absent. Public application access must not make the bucket public.",
+      "source": {
+        "kind": "documentation",
+        "url": "https://docs.cloud.google.com/storage/docs/json_api/v1/objects/insert",
+        "sha256": "a59b37e81ed820ea39e803ba9d8832a53359232890f33e8b7cd6f4496ef6e5f5",
+        "retrievedAt": "2026-11-09T21:57:16.913614+00:00",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "localEvidence": [
+        "src/public-faq-clouds.mjs",
+        "src/runtime/public_catalog_store.py",
+        "src/runtime/public_catalog_admin.py",
+        "server/tests/test_public_catalog_store.py"
+      ],
+      "limitations": [
+        "Public-only UTF-8 text catalog; no private enterprise connector or arbitrary source URL fetching.",
+        "Local HTTP/catalog/native transport fixtures and Terraform schemas/mock plans do not establish real cloud IAM or effective inherited access.",
+        "Exact source membership and quotes do not prove factual entailment. Real model answer/citation/abstention, image scanning, destination capacity/cost/abuse controls and deployed behavior need separate evidence."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
+    },
+    {
+      "id": "ibm-public-catalog-runtime-editor-separation",
+      "provider": "ibm",
+      "topic": "public-cited-faq-and-authorized-source-lifecycle",
+      "practice": "Separate exact Code Engine trusted-profile runtime Object Reader from an existing company editor access group receiving Object Reader/Object Writer on the dedicated bucket. Object Writer is broader than PUT but does not administer or make the bucket public. Preserve explicit resource_type=bucket and resource=bucket-name; inherited instance grants can broaden effective access.",
+      "source": {
+        "kind": "documentation",
+        "url": "https://cloud.ibm.com/docs/cloud-object-storage?topic=cloud-object-storage-iam-bucket-permissions",
+        "sha256": "f76d5abe26cb7156565dbcbe2ad3d082617e8e9fbb20ccd1b2215639fde592a9",
+        "retrievedAt": "2026-11-09T21:57:21.839918+00:00",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "localEvidence": [
+        "src/public-faq-clouds.mjs",
+        "src/runtime/public_catalog_store.py",
+        "src/runtime/public_catalog_admin.py",
+        "server/tests/test_public_catalog_store.py"
+      ],
+      "limitations": [
+        "Public-only UTF-8 text catalog; no private enterprise connector or arbitrary source URL fetching.",
+        "Local HTTP/catalog/native transport fixtures and Terraform schemas/mock plans do not establish real cloud IAM or effective inherited access.",
+        "Exact source membership and quotes do not prove factual entailment. Real model answer/citation/abstention, image scanning, destination capacity/cost/abuse controls and deployed behavior need separate evidence."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
+    },
+    {
+      "id": "durable-approval-and-uncertain-outcome",
+      "provider": "portable",
+      "providers": [
+        "aws",
+        "azure",
+        "gcp",
+        "ibm"
+      ],
+      "topic": "durable-human-approved-workflow",
+      "practice": "Commit business state and queue notification in one PostgreSQL transaction. Fence worker leases; recover native stalled jobs and orphaned domain leases. Bind approval to the exact result revision, source and destination contract. A model cannot authorize an action. An uncertain external outcome must not become a fresh approval/send cycle after revocation. Replay only under a verified destination idempotency contract with the same operation and payload identity.",
+      "source": {
+        "repository": "procrastinate-org/procrastinate",
+        "commit": "8b6398329d915b7299c0d936e567facaebea8903",
+        "url": "https://github.com/procrastinate-org/procrastinate/tree/8b6398329d915b7299c0d936e567facaebea8903",
+        "license": "MIT",
+        "archived": false
+      },
+      "evidenceLevel": "locally-tested",
+      "localVerification": {
+        "receipt": "specs/028-convergence-evaluation/evidence/20261110-invoice-runtime/durable-current/receipt.json",
+        "sha256": "f16b70cb12e8675eb60705e771eb9a3db053729dfff352f45f184eafa5e542eb",
+        "scope": "54 native local PostgreSQL/queue/role/SIGKILL/TLS/deadline checks; synthetic processors/destinations."
+      },
+      "limitations": [
+        "Not a provider deployment or complete workflow. Native identity, PDF/storage composition, retention/restore and vendor reconciliation require separate evidence.",
+        "Review destination idempotency durability/window and dependency maintenance before use."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active"
+    },
+    {
+      "id": "ibm-regional-registry-is-not-code-engine-region",
+      "provider": "ibm",
+      "topic": "provider-specific-endpoints-and-artifact-delivery",
+      "practice": "Use the publisher\u2019s explicit region-to-registry mapping. Sydney Code Engine region au-syd pulls from au.icr.io, not an invented au-syd.icr.io host. Keep accepted placement and reject an implicit global registry fallback. Validate fully resolved native image references in addition to provider schemas and local container startup; those checks catch different defects.",
+      "source": {
+        "kind": "documentation",
+        "url": "https://cloud.ibm.com/docs/Registry?topic=Registry-registry_overview",
+        "sha256": "da5b058a61dc4b1a731f9c5a3f9f3951bceb7fbac4f5e78d1017277374989fa2",
+        "retrievedAt": "2026-11-10T04:47:14.118853+00:00",
+        "archived": false
+      },
+      "evidenceLevel": "locally-tested",
+      "localEvidence": [
+        "src/ibm-registry.mjs",
+        "tests/ibm-registry.test.mjs",
+        "specs/028-convergence-evaluation/evidence/20261110-ibm-invoice-native"
+      ],
+      "limitations": [
+        "Dated endpoint mapping, not proof of registry credentials, quotas, image publication or a destination deployment.",
+        "Regional registry backup locations and artifact residency require separate review; a regional hostname does not prove every replica remains in that region."
+      ],
+      "reviewedAt": "2026-11-10",
+      "status": "active",
+      "localVerification": {
+        "receipt": "specs/028-convergence-evaluation/evidence/20261110-ibm-invoice-native/registry-structured/qualification.json",
+        "sha256": "9ef7fc10c2f17973f670239ffad4d9b19ddb4c42443339d81911d1860e16c4d6",
+        "scope": "Native resolved Sydney image-host mock regression; local SDK/source checks. No registry login, image pull/push or cloud behavior."
+      }
+    },
+    {
+      "id": "aws-model-api-region-feature-intersection",
+      "provider": "aws",
+      "topic": "model-api-region-and-feature-selection",
+      "practice": "Select the model/version, API, inference route and feature intersection explicitly; a service region is insufficient. The reviewed amazon.nova-lite-v1:0 card supports Converse on bedrock-runtime and in-region ap-southeast-2, but not native structured outputs. APAC inference profiles can route beyond Sydney. Plain JSON with application validation is different from a provider-enforced schema. This is one model-specific reference, not a default model recommendation or a generic capability for other models.",
+      "source": {
+        "kind": "documentation",
+        "url": "https://docs.aws.amazon.com/bedrock/latest/userguide/model-card-amazon-nova-lite.html",
+        "sha256": "7a1a06e5c6f6c110327785d039277bbdf53d3204fc4796910213b58cdccbd6a0",
+        "retrievedAt": "2026-11-11T02:43:08.268623+00:00",
+        "redistribution": "Metadata and original authored summary only; full source stays in local review cache.",
+        "archived": false
+      },
+      "evidenceLevel": "source-reviewed",
+      "limitations": [
+        "No account access, model quality, retention settings, quota or price is established.",
+        "Model/API/region/features can change; recheck the dated card. Local contract tests remain separate from actual vendor execution."
+      ],
+      "reviewedAt": "2026-11-11",
+      "status": "active"
+    },
+    {
+      "id": "aws-bedrock-account-retention-read",
+      "provider": "aws",
+      "topic": "model-data-lifecycle-api",
+      "practice": "Use regional Bedrock control-plane GetAccountDataRetention (Python get_account_data_retention), GET /data-retention without arguments; response has mode and updatedAt. For a zero-retention contract, proceed only on literal none; missing/other modes, denial, throttling and timeout fail closed before inference. Verify actual SDK support. Grant bedrock:GetAccountDataRetention only; do not auto-change account-wide settings or replace an available machine check with an unverified attestation.",
+      "source": {
+        "kind": "documentation",
+        "url": "https://docs.aws.amazon.com/bedrock/latest/APIReference/API_GetAccountDataRetention.html",
+        "sha256": "cc53b0f02009f32bd9472de76982b6067d5a1aa3630247f4aaa596014d3782ea",
+        "retrievedAt": "2026-11-11T04:40:47.481638+00:00",
+        "redistribution": "Metadata and authored summary only; source HTML retained in local cache.",
+        "archived": false
+      },
+      "evidenceLevel": "locally-tested",
+      "localVerification": {
+        "receipt": "specs/029-general-purpose-engine/evidence/20261111-runtime-dependencies/sdk/receipt.json",
+        "sha256": "681eaa48138d0b1df36c4cf2636fcfefc5bac889d07579c1edd4abad7db2a0ba",
+        "scope": "boto3/botocore1.43.123 selected Bedrock/Runtime services:13 schema/endpoint and signed synthetic loopback GET/mode/timestamp/denial/throttle/timeout checks on Python3.12 ARM64 and3.13 AMD64; no cloud requests."
+      },
+      "limitations": [
+        "SDK1.42.97 lacks this operation; qualify dependency packaging and application gates. A source wheel is not an installed SDK.",
+        "Not account/model availability, retention-state, atomicity/drift, deployment, other SDK services/languages or optional CRT proof. Preserve existing configuration ownership."
+      ],
+      "reviewedAt": "2026-11-11",
+      "status": "active"
+    }
+  ]
+}

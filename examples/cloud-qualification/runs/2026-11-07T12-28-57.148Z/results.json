@@ -1,0 +1,92 @@
+[
+  {
+    "provider": "gcp-cloud-operations",
+    "architectProvider": "codex",
+    "evidenceKind": "real-model-browser-run",
+    "cloudOperations": false,
+    "emulation": "blocked",
+    "mentorResponded": true,
+    "architecturePresent": true,
+    "acceptanceRequirements": [
+      "Inventory credentials are read-only",
+      "Untrusted resource tags cannot trigger commands",
+      "Plans identify affected resources and costs as estimates",
+      "Drift after review invalidates approval",
+      "Apply requires separate authorization and a rollback or recovery plan"
+    ],
+    "staticAssessment": {
+      "kind": "static-graph-checks",
+      "checks": [
+        {
+          "name": "Application contains at least three required components",
+          "passed": true
+        },
+        {
+          "name": "Required components form one connected graph",
+          "passed": true
+        },
+        {
+          "name": "Proposed cloud resources retain the requested provider",
+          "passed": true
+        },
+        {
+          "name": "Proposed cloud components name concrete services",
+          "passed": true
+        },
+        {
+          "name": "AI application has not collapsed into only object storage",
+          "passed": true
+        }
+      ],
+      "passed": true,
+      "limitations": [
+        "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+      ],
+      "acceptanceRequirements": [
+        "Inventory credentials are read-only",
+        "Untrusted resource tags cannot trigger commands",
+        "Plans identify affected resources and costs as estimates",
+        "Drift after review invalidates approval",
+        "Apply requires separate authorization and a rollback or recovery plan"
+      ]
+    },
+    "components": [
+      {
+        "id": "reviewer"
+      },
+      {
+        "id": "synthetic-inventory"
+      },
+      {
+        "id": "asset-inventory",
+        "service": "Cloud Asset Inventory"
+      },
+      {
+        "id": "qualification-app",
+        "service": "Cloud Run"
+      },
+      {
+        "id": "proposal-model",
+        "service": "Vertex AI"
+      },
+      {
+        "id": "plan-worker",
+        "service": "Cloud Build"
+      },
+      {
+        "id": "review-artifacts",
+        "service": "Google Cloud Storage"
+      },
+      {
+        "id": "drift-schedule",
+        "service": "Cloud Scheduler"
+      },
+      {
+        "id": "audit-logs",
+        "service": "Cloud Logging"
+      }
+    ],
+    "passed": false,
+    "mentorJourneyPassed": true
+  }
+]

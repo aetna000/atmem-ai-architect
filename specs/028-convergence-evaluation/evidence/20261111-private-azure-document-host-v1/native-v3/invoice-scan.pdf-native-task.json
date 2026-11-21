@@ -1,0 +1,21 @@
+{
+  "id": "document",
+  "commandLine": "python -I /app/enterprise_document_cli.py --job",
+  "containerSettings": {
+    "imageName": "ownedregistry.azurecr.io/parser@sha256:0e6089395cc36c96986ef500026af794dd07f2a8c97196e7c0df726fbe465c82",
+    "containerRunOptions": "--rm --network=none --read-only --cap-drop=ALL --security-opt=no-new-privileges:true --pids-limit=128 --memory=2g --memory-swap=2g --cpus=2 --log-driver=none --label=atmem.document.owner=da7fe9345163ce7b1e65bacd3e6a6db56c2a552d4ab589641cdaf1ff3804274c --label=atmem.document.request=b981a095ea00431586a974b2390ffb646802192705544b3f9de4fe7e0a0ade78 --label=atmem.document.policy=7d10ae116e23d95260e8ae8db518070780879f1d7190fc0313ae908944adcf5f --label=atmem.document.stage=parser --tmpfs=/tmp:rw,noexec,nosuid,nodev,size=128m --mount=type=volume,source=atmem-document-b981a095ea00431586a974b2390ffb646802192705544b3f9de4fe7e0a0ade78-input,target=/input,readonly --mount=type=volume,source=atmem-document-b981a095ea00431586a974b2390ffb646802192705544b3f9de4fe7e0a0ade78-output,target=/output",
+    "containerHostBatchBindMounts": [],
+    "workingDirectory": "containerImageDefault"
+  },
+  "userIdentity": {
+    "autoUser": {
+      "scope": "task",
+      "elevationLevel": "nonadmin"
+    }
+  },
+  "constraints": {
+    "maxWallClockTime": "PT2M",
+    "maxTaskRetryCount": 0,
+    "retentionTime": "PT0S"
+  }
+}

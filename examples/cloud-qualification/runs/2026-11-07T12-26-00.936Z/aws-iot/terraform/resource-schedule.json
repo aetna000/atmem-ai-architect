@@ -1,0 +1,814 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "sensor-client",
+      "address": "block_73656e736f722d636c69656e74",
+      "label": "Synthetic sensor client",
+      "provider": "tools",
+      "service": "Storage or existing data connector",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "iot-ingest",
+      "address": "block_696f742d696e67657374",
+      "label": "Device ingestion",
+      "provider": "aws",
+      "service": "AWS ingestion service",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Messages, connections, processing and retention",
+      "dependencies": [
+        "sensor-client"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "event-buffer",
+      "address": "block_6576656e742d627566666572",
+      "label": "Durable telemetry buffer",
+      "provider": "aws",
+      "service": "AWS ingestion service",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Messages, connections, processing and retention",
+      "dependencies": [
+        "iot-ingest",
+        "operator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "anomaly-worker",
+      "address": "block_616e6f6d616c792d776f726b6572",
+      "label": "Validate and analyze telemetry",
+      "provider": "aws",
+      "service": "AWS Lambda",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_lambda_function",
+        "aws_iam_role"
+      ],
+      "costDrivers": "Requests, duration, memory and logs",
+      "dependencies": [
+        "event-buffer",
+        "model-endpoint"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "device-registry",
+      "address": "block_6465766963652d7265676973747279",
+      "label": "Approved devices and units",
+      "provider": "aws",
+      "service": "Amazon DynamoDB",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_dynamodb_table"
+      ],
+      "costDrivers": "Read/write requests, storage and backup",
+      "dependencies": [
+        "anomaly-worker"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "model-endpoint",
+      "address": "block_6d6f64656c2d656e64706f696e74",
+      "label": "Versioned anomaly inference",
+      "provider": "aws",
+      "service": "Amazon SageMaker AI",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Training, serving instances, processing and storage",
+      "dependencies": [
+        "anomaly-worker"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "results-state",
+      "address": "block_726573756c74732d7374617465",
+      "label": "Results, event state and alert outbox",
+      "provider": "aws",
+      "service": "Amazon DynamoDB",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_dynamodb_table"
+      ],
+      "costDrivers": "Read/write requests, storage and backup",
+      "dependencies": [
+        "anomaly-worker"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "failure-store",
+      "address": "block_6661696c7572652d73746f7265",
+      "label": "Rejected events and recovery records",
+      "provider": "aws",
+      "service": "Amazon S3",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_s3_bucket",
+        "aws_s3_bucket_public_access_block",
+        "aws_s3_bucket_server_side_encryption_configuration",
+        "aws_s3_bucket_versioning",
+        "aws_s3_bucket_ownership_controls",
+        "aws_s3_bucket_policy"
+      ],
+      "costDrivers": "Storage, requests, retrieval and transfer",
+      "dependencies": [
+        "iot-ingest",
+        "anomaly-worker",
+        "alert-dispatch",
+        "operator"
+      ],
+      "terraform": "S3 foundation generated",
+      "foundation": true,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": true
+    },
+    {
+      "id": "alert-dispatch",
+      "address": "block_616c6572742d6469737061746368",
+      "label": "Deliver pending alerts",
+      "provider": "aws",
+      "service": "AWS Lambda",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_lambda_function",
+        "aws_iam_role"
+      ],
+      "costDrivers": "Requests, duration, memory and logs",
+      "dependencies": [
+        "results-state"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "alert-topic",
+      "address": "block_616c6572742d746f706963",
+      "label": "Operator notifications",
+      "provider": "aws",
+      "service": "Amazon SNS",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "alert-dispatch",
+        "observability"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "operator",
+      "address": "block_6f70657261746f72",
+      "label": "Qualification operator",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "alert-topic"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "observability",
+      "address": "block_6f62736572766162696c697479",
+      "label": "Pipeline health and alarms",
+      "provider": "aws",
+      "service": "Amazon CloudWatch",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_cloudwatch_log_group"
+      ],
+      "costDrivers": "Logs, metrics, alarms and retention",
+      "dependencies": [
+        "iot-ingest",
+        "event-buffer",
+        "anomaly-worker",
+        "model-endpoint",
+        "alert-dispatch"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e-client-ingest",
+      "source": "sensor-client",
+      "target": "iot-ingest",
+      "data": "Authenticated MQTT telemetry; stable IDs; reconnect replay",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-ingest-buffer",
+      "source": "iot-ingest",
+      "target": "event-buffer",
+      "data": "IoT rule → Kinesis PutRecord; device partition key",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-ingest-failure",
+      "source": "iot-ingest",
+      "target": "failure-store",
+      "data": "Rule error action → S3 failed-forwarding envelope",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-buffer-worker",
+      "source": "event-buffer",
+      "target": "anomaly-worker",
+      "data": "Kinesis event-source mapping; checkpoint/retry/replay",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-worker-registry",
+      "source": "anomaly-worker",
+      "target": "device-registry",
+      "data": "DynamoDB consistent read: device and allowed units",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-worker-model",
+      "source": "anomaly-worker",
+      "target": "model-endpoint",
+      "data": "SageMaker Runtime InvokeEndpoint; version-pinned features",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-model-worker",
+      "source": "model-endpoint",
+      "target": "anomaly-worker",
+      "data": "Score, contributing evidence and model version",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-worker-results",
+      "source": "anomaly-worker",
+      "target": "results-state",
+      "data": "Read event state; TransactWriteItems result + outbox",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-worker-failure",
+      "source": "anomaly-worker",
+      "target": "failure-store",
+      "data": "S3 rejection records / exhausted batch payloads",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-results-dispatch",
+      "source": "results-state",
+      "target": "alert-dispatch",
+      "data": "DynamoDB Streams event-source mapping: outbox items",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-dispatch-topic",
+      "source": "alert-dispatch",
+      "target": "alert-topic",
+      "data": "SNS Publish: stable alert ID, evidence, model version",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-dispatch-failure",
+      "source": "alert-dispatch",
+      "target": "failure-store",
+      "data": "Exhausted stream delivery → S3 recovery payload",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-topic-operator",
+      "source": "alert-topic",
+      "target": "operator",
+      "data": "Confirmed subscription; destination/channel undecided",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-operator-failure",
+      "source": "operator",
+      "target": "failure-store",
+      "data": "Review recovery records using scoped tool; access unresolved",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-operator-replay",
+      "source": "operator",
+      "target": "event-buffer",
+      "data": "Recovery tool replays eligible original events; implementation needed",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-ingest-monitor",
+      "source": "iot-ingest",
+      "target": "observability",
+      "data": "Ingest and rule-action failure metrics",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-buffer-monitor",
+      "source": "event-buffer",
+      "target": "observability",
+      "data": "Stream throughput and consumer lag metrics",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-worker-monitor",
+      "source": "anomaly-worker",
+      "target": "observability",
+      "data": "Errors, rejections, replay and idempotency metrics",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-model-monitor",
+      "source": "model-endpoint",
+      "target": "observability",
+      "data": "Inference latency and endpoint errors",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-dispatch-monitor",
+      "source": "alert-dispatch",
+      "target": "observability",
+      "data": "Delivery errors, stream age and pending-alert metrics",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-monitor-topic",
+      "source": "observability",
+      "target": "alert-topic",
+      "data": "CloudWatch alarm actions → SNS notifications",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Rejected events and recovery records: explicit caller access contract is missing.",
+    "Synthetic sensor client: Existing — reference/import plan needed.",
+    "Device ingestion: Implementation needed.",
+    "Durable telemetry buffer: Implementation needed.",
+    "Validate and analyze telemetry: Implementation needed.",
+    "Approved devices and units: Implementation needed.",
+    "Versioned anomaly inference: Implementation needed.",
+    "Results, event state and alert outbox: Implementation needed.",
+    "Deliver pending alerts: Implementation needed.",
+    "Operator notifications: Implementation needed.",
+    "Qualification operator: Existing — reference/import plan needed.",
+    "Pipeline health and alarms: Implementation needed.",
+    "Wire sensor-client → iot-ingest: implement data flow, access policy and acceptance test.",
+    "Wire iot-ingest → event-buffer: implement data flow, access policy and acceptance test.",
+    "Wire iot-ingest → failure-store: implement data flow, access policy and acceptance test.",
+    "Wire event-buffer → anomaly-worker: implement data flow, access policy and acceptance test.",
+    "Wire anomaly-worker → device-registry: implement data flow, access policy and acceptance test.",
+    "Wire anomaly-worker → model-endpoint: implement data flow, access policy and acceptance test.",
+    "Wire model-endpoint → anomaly-worker: implement data flow, access policy and acceptance test.",
+    "Wire anomaly-worker → results-state: implement data flow, access policy and acceptance test.",
+    "Wire anomaly-worker → failure-store: implement data flow, access policy and acceptance test.",
+    "Wire results-state → alert-dispatch: implement data flow, access policy and acceptance test.",
+    "Wire alert-dispatch → alert-topic: implement data flow, access policy and acceptance test.",
+    "Wire alert-dispatch → failure-store: implement data flow, access policy and acceptance test.",
+    "Wire alert-topic → operator: implement data flow, access policy and acceptance test.",
+    "Wire operator → failure-store: implement data flow, access policy and acceptance test.",
+    "Wire operator → event-buffer: implement data flow, access policy and acceptance test.",
+    "Wire iot-ingest → observability: implement data flow, access policy and acceptance test.",
+    "Wire event-buffer → observability: implement data flow, access policy and acceptance test.",
+    "Wire anomaly-worker → observability: implement data flow, access policy and acceptance test.",
+    "Wire model-endpoint → observability: implement data flow, access policy and acceptance test.",
+    "Wire alert-dispatch → observability: implement data flow, access policy and acceptance test.",
+    "Wire observability → alert-topic: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "access-block_6661696c7572652d73746f7265",
+      "componentIds": [
+        "failure-store"
+      ],
+      "taskId": "TASK-RESOURCE-6661696c7572652d73746f7265",
+      "message": "Rejected events and recovery records: explicit caller access contract is missing."
+    },
+    {
+      "id": "resource-block_73656e736f722d636c69656e74",
+      "componentIds": [
+        "sensor-client"
+      ],
+      "taskId": "TASK-RESOURCE-73656e736f722d636c69656e74",
+      "message": "Synthetic sensor client: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_696f742d696e67657374",
+      "componentIds": [
+        "iot-ingest"
+      ],
+      "taskId": "TASK-RESOURCE-696f742d696e67657374",
+      "message": "Device ingestion: Implementation needed."
+    },
+    {
+      "id": "resource-block_6576656e742d627566666572",
+      "componentIds": [
+        "event-buffer"
+      ],
+      "taskId": "TASK-RESOURCE-6576656e742d627566666572",
+      "message": "Durable telemetry buffer: Implementation needed."
+    },
+    {
+      "id": "resource-block_616e6f6d616c792d776f726b6572",
+      "componentIds": [
+        "anomaly-worker"
+      ],
+      "taskId": "TASK-RESOURCE-616e6f6d616c792d776f726b6572",
+      "message": "Validate and analyze telemetry: Implementation needed."
+    },
+    {
+      "id": "resource-block_6465766963652d7265676973747279",
+      "componentIds": [
+        "device-registry"
+      ],
+      "taskId": "TASK-RESOURCE-6465766963652d7265676973747279",
+      "message": "Approved devices and units: Implementation needed."
+    },
+    {
+      "id": "resource-block_6d6f64656c2d656e64706f696e74",
+      "componentIds": [
+        "model-endpoint"
+      ],
+      "taskId": "TASK-RESOURCE-6d6f64656c2d656e64706f696e74",
+      "message": "Versioned anomaly inference: Implementation needed."
+    },
+    {
+      "id": "resource-block_726573756c74732d7374617465",
+      "componentIds": [
+        "results-state"
+      ],
+      "taskId": "TASK-RESOURCE-726573756c74732d7374617465",
+      "message": "Results, event state and alert outbox: Implementation needed."
+    },
+    {
+      "id": "resource-block_616c6572742d6469737061746368",
+      "componentIds": [
+        "alert-dispatch"
+      ],
+      "taskId": "TASK-RESOURCE-616c6572742d6469737061746368",
+      "message": "Deliver pending alerts: Implementation needed."
+    },
+    {
+      "id": "resource-block_616c6572742d746f706963",
+      "componentIds": [
+        "alert-topic"
+      ],
+      "taskId": "TASK-RESOURCE-616c6572742d746f706963",
+      "message": "Operator notifications: Implementation needed."
+    },
+    {
+      "id": "resource-block_6f70657261746f72",
+      "componentIds": [
+        "operator"
+      ],
+      "taskId": "TASK-RESOURCE-6f70657261746f72",
+      "message": "Qualification operator: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_6f62736572766162696c697479",
+      "componentIds": [
+        "observability"
+      ],
+      "taskId": "TASK-RESOURCE-6f62736572766162696c697479",
+      "message": "Pipeline health and alarms: Implementation needed."
+    },
+    {
+      "id": "connection-652d636c69656e742d696e67657374",
+      "edgeIds": [
+        "e-client-ingest"
+      ],
+      "taskId": "TASK-INTEGRATION-652d636c69656e742d696e67657374",
+      "message": "Wire sensor-client → iot-ingest: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d696e676573742d627566666572",
+      "edgeIds": [
+        "e-ingest-buffer"
+      ],
+      "taskId": "TASK-INTEGRATION-652d696e676573742d627566666572",
+      "message": "Wire iot-ingest → event-buffer: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d696e676573742d6661696c757265",
+      "edgeIds": [
+        "e-ingest-failure"
+      ],
+      "taskId": "TASK-INTEGRATION-652d696e676573742d6661696c757265",
+      "message": "Wire iot-ingest → failure-store: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6275666665722d776f726b6572",
+      "edgeIds": [
+        "e-buffer-worker"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6275666665722d776f726b6572",
+      "message": "Wire event-buffer → anomaly-worker: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d776f726b65722d7265676973747279",
+      "edgeIds": [
+        "e-worker-registry"
+      ],
+      "taskId": "TASK-INTEGRATION-652d776f726b65722d7265676973747279",
+      "message": "Wire anomaly-worker → device-registry: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d776f726b65722d6d6f64656c",
+      "edgeIds": [
+        "e-worker-model"
+      ],
+      "taskId": "TASK-INTEGRATION-652d776f726b65722d6d6f64656c",
+      "message": "Wire anomaly-worker → model-endpoint: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6d6f64656c2d776f726b6572",
+      "edgeIds": [
+        "e-model-worker"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6d6f64656c2d776f726b6572",
+      "message": "Wire model-endpoint → anomaly-worker: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d776f726b65722d726573756c7473",
+      "edgeIds": [
+        "e-worker-results"
+      ],
+      "taskId": "TASK-INTEGRATION-652d776f726b65722d726573756c7473",
+      "message": "Wire anomaly-worker → results-state: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d776f726b65722d6661696c757265",
+      "edgeIds": [
+        "e-worker-failure"
+      ],
+      "taskId": "TASK-INTEGRATION-652d776f726b65722d6661696c757265",
+      "message": "Wire anomaly-worker → failure-store: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d726573756c74732d6469737061746368",
+      "edgeIds": [
+        "e-results-dispatch"
+      ],
+      "taskId": "TASK-INTEGRATION-652d726573756c74732d6469737061746368",
+      "message": "Wire results-state → alert-dispatch: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d64697370617463682d746f706963",
+      "edgeIds": [
+        "e-dispatch-topic"
+      ],
+      "taskId": "TASK-INTEGRATION-652d64697370617463682d746f706963",
+      "message": "Wire alert-dispatch → alert-topic: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d64697370617463682d6661696c757265",
+      "edgeIds": [
+        "e-dispatch-failure"
+      ],
+      "taskId": "TASK-INTEGRATION-652d64697370617463682d6661696c757265",
+      "message": "Wire alert-dispatch → failure-store: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d746f7069632d6f70657261746f72",
+      "edgeIds": [
+        "e-topic-operator"
+      ],
+      "taskId": "TASK-INTEGRATION-652d746f7069632d6f70657261746f72",
+      "message": "Wire alert-topic → operator: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6f70657261746f722d6661696c757265",
+      "edgeIds": [
+        "e-operator-failure"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6f70657261746f722d6661696c757265",
+      "message": "Wire operator → failure-store: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6f70657261746f722d7265706c6179",
+      "edgeIds": [
+        "e-operator-replay"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6f70657261746f722d7265706c6179",
+      "message": "Wire operator → event-buffer: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d696e676573742d6d6f6e69746f72",
+      "edgeIds": [
+        "e-ingest-monitor"
+      ],
+      "taskId": "TASK-INTEGRATION-652d696e676573742d6d6f6e69746f72",
+      "message": "Wire iot-ingest → observability: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6275666665722d6d6f6e69746f72",
+      "edgeIds": [
+        "e-buffer-monitor"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6275666665722d6d6f6e69746f72",
+      "message": "Wire event-buffer → observability: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d776f726b65722d6d6f6e69746f72",
+      "edgeIds": [
+        "e-worker-monitor"
+      ],
+      "taskId": "TASK-INTEGRATION-652d776f726b65722d6d6f6e69746f72",
+      "message": "Wire anomaly-worker → observability: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6d6f64656c2d6d6f6e69746f72",
+      "edgeIds": [
+        "e-model-monitor"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6d6f64656c2d6d6f6e69746f72",
+      "message": "Wire model-endpoint → observability: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d64697370617463682d6d6f6e69746f72",
+      "edgeIds": [
+        "e-dispatch-monitor"
+      ],
+      "taskId": "TASK-INTEGRATION-652d64697370617463682d6d6f6e69746f72",
+      "message": "Wire alert-dispatch → observability: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6d6f6e69746f722d746f706963",
+      "edgeIds": [
+        "e-monitor-topic"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6d6f6e69746f722d746f706963",
+      "message": "Wire observability → alert-topic: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

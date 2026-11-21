@@ -1,0 +1,58 @@
+{
+  "provider": "azure-observability",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Redact secrets before model input",
+    "Link conclusions to exact trace or log IDs",
+    "Prompt injection in a log cannot issue tool calls",
+    "Missing spans yield uncertainty rather than invented causes",
+    "Repeated ingestion preserves a consistent incident timeline"
+  ],
+  "components": [
+    {
+      "id": "svc-synthetic"
+    },
+    {
+      "id": "collect",
+      "service": "Azure Event Hubs (via OpenTelemetry Collector)"
+    },
+    {
+      "id": "redact",
+      "service": "Azure Functions (Event Hubs trigger)"
+    },
+    {
+      "id": "store",
+      "service": "Azure Data Explorer"
+    },
+    {
+      "id": "analysis",
+      "service": "Azure Container Apps"
+    },
+    {
+      "id": "shield",
+      "service": "Azure AI Content Safety (Prompt Shields)"
+    },
+    {
+      "id": "model",
+      "service": "Azure OpenAI Service"
+    },
+    {
+      "id": "operator-app",
+      "service": "Azure App Service (Entra ID sign-in)"
+    },
+    {
+      "id": "operator"
+    },
+    {
+      "id": "observe",
+      "service": "Azure Monitor + Application Insights"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

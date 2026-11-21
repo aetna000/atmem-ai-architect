@@ -1,0 +1,437 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "sensor-sim",
+      "address": "block_73656e736f722d73696d",
+      "label": "Synthetic sensor event generator",
+      "provider": "tools",
+      "service": "Storage or existing data connector",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "ingest",
+      "address": "block_696e67657374",
+      "label": "Ingestion topic",
+      "provider": "gcp",
+      "service": "Google Cloud Pub/Sub",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "sensor-sim"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "validate",
+      "address": "block_76616c6964617465",
+      "label": "Validation & feature window",
+      "provider": "gcp",
+      "service": "Dataflow (Apache Beam streaming)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "ingest"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "dlq",
+      "address": "block_646c71",
+      "label": "Rejected events (dead-letter)",
+      "provider": "gcp",
+      "service": "Google Cloud Pub/Sub",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "validate"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "infer",
+      "address": "block_696e666572",
+      "label": "Anomaly scoring model",
+      "provider": "gcp",
+      "service": "Vertex AI online prediction endpoint",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "validate"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "results",
+      "address": "block_726573756c7473",
+      "label": "Anomaly results",
+      "provider": "gcp",
+      "service": "BigQuery",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "infer"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "alert",
+      "address": "block_616c657274",
+      "label": "Operator alerting",
+      "provider": "gcp",
+      "service": "Cloud Monitoring alerting policy",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "results",
+        "dlq"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "operator",
+      "address": "block_6f70657261746f72",
+      "label": "Operator",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "alert"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e-sim-ingest",
+      "source": "sensor-sim",
+      "target": "ingest",
+      "data": "publish events",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-ingest-validate",
+      "source": "ingest",
+      "target": "validate",
+      "data": "streaming pull",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-validate-dlq",
+      "source": "validate",
+      "target": "dlq",
+      "data": "rejected + reason",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-validate-infer",
+      "source": "validate",
+      "target": "infer",
+      "data": "predict request (window)",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-infer-results",
+      "source": "infer",
+      "target": "results",
+      "data": "score → streaming insert via Dataflow",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-results-alert",
+      "source": "results",
+      "target": "alert",
+      "data": "anomaly metric",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-dlq-alert",
+      "source": "dlq",
+      "target": "alert",
+      "data": "backlog metric",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-alert-operator",
+      "source": "alert",
+      "target": "operator",
+      "data": "notification",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Synthetic sensor event generator: Existing — reference/import plan needed.",
+    "Ingestion topic: Implementation needed.",
+    "Validation & feature window: Implementation needed.",
+    "Rejected events (dead-letter): Implementation needed.",
+    "Anomaly scoring model: Implementation needed.",
+    "Anomaly results: Implementation needed.",
+    "Operator alerting: Implementation needed.",
+    "Operator: Existing — reference/import plan needed.",
+    "Wire sensor-sim → ingest: implement data flow, access policy and acceptance test.",
+    "Wire ingest → validate: implement data flow, access policy and acceptance test.",
+    "Wire validate → dlq: implement data flow, access policy and acceptance test.",
+    "Wire validate → infer: implement data flow, access policy and acceptance test.",
+    "Wire infer → results: implement data flow, access policy and acceptance test.",
+    "Wire results → alert: implement data flow, access policy and acceptance test.",
+    "Wire dlq → alert: implement data flow, access policy and acceptance test.",
+    "Wire alert → operator: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "resource-block_73656e736f722d73696d",
+      "componentIds": [
+        "sensor-sim"
+      ],
+      "taskId": "TASK-RESOURCE-73656e736f722d73696d",
+      "message": "Synthetic sensor event generator: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_696e67657374",
+      "componentIds": [
+        "ingest"
+      ],
+      "taskId": "TASK-RESOURCE-696e67657374",
+      "message": "Ingestion topic: Implementation needed."
+    },
+    {
+      "id": "resource-block_76616c6964617465",
+      "componentIds": [
+        "validate"
+      ],
+      "taskId": "TASK-RESOURCE-76616c6964617465",
+      "message": "Validation & feature window: Implementation needed."
+    },
+    {
+      "id": "resource-block_646c71",
+      "componentIds": [
+        "dlq"
+      ],
+      "taskId": "TASK-RESOURCE-646c71",
+      "message": "Rejected events (dead-letter): Implementation needed."
+    },
+    {
+      "id": "resource-block_696e666572",
+      "componentIds": [
+        "infer"
+      ],
+      "taskId": "TASK-RESOURCE-696e666572",
+      "message": "Anomaly scoring model: Implementation needed."
+    },
+    {
+      "id": "resource-block_726573756c7473",
+      "componentIds": [
+        "results"
+      ],
+      "taskId": "TASK-RESOURCE-726573756c7473",
+      "message": "Anomaly results: Implementation needed."
+    },
+    {
+      "id": "resource-block_616c657274",
+      "componentIds": [
+        "alert"
+      ],
+      "taskId": "TASK-RESOURCE-616c657274",
+      "message": "Operator alerting: Implementation needed."
+    },
+    {
+      "id": "resource-block_6f70657261746f72",
+      "componentIds": [
+        "operator"
+      ],
+      "taskId": "TASK-RESOURCE-6f70657261746f72",
+      "message": "Operator: Existing — reference/import plan needed."
+    },
+    {
+      "id": "connection-652d73696d2d696e67657374",
+      "edgeIds": [
+        "e-sim-ingest"
+      ],
+      "taskId": "TASK-INTEGRATION-652d73696d2d696e67657374",
+      "message": "Wire sensor-sim → ingest: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d696e676573742d76616c6964617465",
+      "edgeIds": [
+        "e-ingest-validate"
+      ],
+      "taskId": "TASK-INTEGRATION-652d696e676573742d76616c6964617465",
+      "message": "Wire ingest → validate: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d76616c69646174652d646c71",
+      "edgeIds": [
+        "e-validate-dlq"
+      ],
+      "taskId": "TASK-INTEGRATION-652d76616c69646174652d646c71",
+      "message": "Wire validate → dlq: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d76616c69646174652d696e666572",
+      "edgeIds": [
+        "e-validate-infer"
+      ],
+      "taskId": "TASK-INTEGRATION-652d76616c69646174652d696e666572",
+      "message": "Wire validate → infer: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d696e6665722d726573756c7473",
+      "edgeIds": [
+        "e-infer-results"
+      ],
+      "taskId": "TASK-INTEGRATION-652d696e6665722d726573756c7473",
+      "message": "Wire infer → results: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d726573756c74732d616c657274",
+      "edgeIds": [
+        "e-results-alert"
+      ],
+      "taskId": "TASK-INTEGRATION-652d726573756c74732d616c657274",
+      "message": "Wire results → alert: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d646c712d616c657274",
+      "edgeIds": [
+        "e-dlq-alert"
+      ],
+      "taskId": "TASK-INTEGRATION-652d646c712d616c657274",
+      "message": "Wire dlq → alert: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d616c6572742d6f70657261746f72",
+      "edgeIds": [
+        "e-alert-operator"
+      ],
+      "taskId": "TASK-INTEGRATION-652d616c6572742d6f70657261746f72",
+      "message": "Wire alert → operator: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

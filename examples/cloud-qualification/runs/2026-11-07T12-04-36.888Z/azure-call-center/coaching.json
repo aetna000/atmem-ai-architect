@@ -1,0 +1,117 @@
+{
+  "message": "The emulation found no failing checks. The design holds together: every flow is connected, consent is checked before transcription, and the CRM step stays manual. It is still blocked because no supported generator covers the Azure parts yet: call intake, consent, Speech, Language PII, the orchestrator, AI Search and Azure OpenAI. The synthetic caller also has no reference plan. None of these blocks fit an existing typed contract without cutting scope, so I'm leaving the board unchanged. The fix is product engineering work: native Azure implementations, using this artifact (73895101…) and revision 2 to reproduce the problem. After that, we rerun emulation on a new artifact. While that work happens, let's settle a decision that only you can make, because it fixes where Speech, Language and the OpenAI model can run: which country must the call audio and transcripts stay in?",
+  "phase": "Architecture",
+  "contextUsed": {
+    "status": "unavailable",
+    "enabled": true,
+    "engine": "AtMem 2.3.10 core SDK",
+    "recordsUsed": [],
+    "knowledgeRecordIds": [],
+    "skills": [
+      {
+        "id": "architecture",
+        "name": "AI architecture and discovery",
+        "provider": "all",
+        "stages": [
+          "discover",
+          "design",
+          "review"
+        ],
+        "version": "1.1.0",
+        "digest": "448a3d2854feb60d82c926656c4a04905141989fdbdffeb3add6082df7889f5d",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "security",
+        "name": "Security and reliability",
+        "provider": "all",
+        "stages": [
+          "design",
+          "review",
+          "deploy"
+        ],
+        "version": "1.0.0",
+        "digest": "c75cf46b29eb786b27d88d36604f521d6d287182d47df7d5c03845585d64f914",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "devops",
+        "name": "Infrastructure and DevOps handoff",
+        "provider": "all",
+        "stages": [
+          "deploy",
+          "review"
+        ],
+        "version": "1.1.0",
+        "digest": "cd5a428597fbf388a12a863721d93e551c200f4ed30be3469fd8eae78262884c",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "azure",
+        "name": "Azure architecture guidance",
+        "provider": "azure",
+        "stages": [
+          "design",
+          "review",
+          "estimate",
+          "deploy"
+        ],
+        "version": "1.0.0",
+        "digest": "74e6109d663b16e00202c05700dd4bcb9f7ea379f6561806610392af67762145",
+        "source": "https://raw.githubusercontent.com/microsoft/azure-skills/3c89228484f4a9241d255ec7c703976d13277c2d/skills/azure-reliability/SKILL.md",
+        "reference": {
+          "id": "azure",
+          "repository": "microsoft/azure-skills",
+          "commit": "3c89228484f4a9241d255ec7c703976d13277c2d",
+          "sourcePath": "skills/azure-reliability/SKILL.md",
+          "url": "https://raw.githubusercontent.com/microsoft/azure-skills/3c89228484f4a9241d255ec7c703976d13277c2d/skills/azure-reliability/SKILL.md",
+          "sha256": "a70f0a799c8f3cf805ada741e82af31a149b57cb1e2388d7805036492cdceb71",
+          "file": "agent-skills/upstream/azure/SKILL.md",
+          "status": "reference-only",
+          "note": "Imported source reference, not an enabled script/tool package. AtMem AI Architect specialist guidance is reviewed separately; referenced upstream companion files are not bundled.",
+          "integrity": true
+        },
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      }
+    ],
+    "tools": [],
+    "boundary": "AtMem AI Architect → native client",
+    "contextDigest": "775704b6d8eb743848f757cab5a5f2eb9c92f1e3eccafbd5eaa55120c711956a",
+    "projectId": "5d6fa5f7-215a-4f73-85b2-2f929c36d07e"
+  },
+  "priceQuotes": []
+}

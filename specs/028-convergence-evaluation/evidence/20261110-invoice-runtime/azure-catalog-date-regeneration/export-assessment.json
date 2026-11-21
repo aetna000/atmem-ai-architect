@@ -1,0 +1,418 @@
+{
+  "quality": {
+    "version": 1,
+    "fatalFindings": [],
+    "designRevision": 4,
+    "catalogueVersion": 3,
+    "providers": [
+      "azure"
+    ],
+    "skills": [
+      {
+        "id": "architecture",
+        "sha256": "c5cc1056e3ed9a00799882f3a7f4ff2e957e4941fe10e4fd865f5c02ceb01058"
+      },
+      {
+        "id": "composition",
+        "sha256": "df2291a4e0d48a979d4f7c6e99da046bdedfc0e54d41e0b5379b2bc8086b5be6"
+      },
+      {
+        "id": "terraform",
+        "sha256": "492329421a332c8e2f47cb753973d766e881dde6542029657c98e74b6a308cfc"
+      },
+      {
+        "id": "security",
+        "sha256": "c75cf46b29eb786b27d88d36604f521d6d287182d47df7d5c03845585d64f914"
+      },
+      {
+        "id": "devops",
+        "sha256": "cd5a428597fbf388a12a863721d93e551c200f4ed30be3469fd8eae78262884c"
+      },
+      {
+        "id": "finops",
+        "sha256": "8154254b2d49bb536ac6663a74cd245ebbca391fbc11713ce2c282998e57a930"
+      },
+      {
+        "id": "azure",
+        "sha256": "74e6109d663b16e00202c05700dd4bcb9f7ea379f6561806610392af67762145"
+      }
+    ],
+    "skillUsage": "Referenced reviewed guidance; model execution of skills is not attested by this export.",
+    "components": [
+      {
+        "id": "faq-visitors",
+        "provider": "tools",
+        "ownership": "existing",
+        "contracts": [],
+        "coverage": "reference_or_external_contract"
+      },
+      {
+        "id": "faq-app",
+        "provider": "azure",
+        "ownership": "proposed",
+        "contracts": [
+          "azure-public-faq-app"
+        ],
+        "coverage": "generated_unverified"
+      },
+      {
+        "id": "faq-editor",
+        "provider": "tools",
+        "ownership": "existing",
+        "contracts": [],
+        "coverage": "reference_or_external_contract"
+      }
+    ],
+    "findings": [],
+    "infrastructureComplete": true,
+    "validation": {
+      "schema": "not_run",
+      "runtime": "not_run",
+      "cloudPlan": "not_run"
+    },
+    "deploymentCandidate": false,
+    "evidenceBoundary": "A matching contract identifies compiler capability only. Resources, edges, application behavior and destination configuration require independent validation."
+  },
+  "resourcePlan": {
+    "revision": 4,
+    "rows": [
+      {
+        "id": "faq-visitors",
+        "address": "block_6661712d76697369746f7273",
+        "label": "Website visitors",
+        "provider": "tools",
+        "service": "Web browser",
+        "sourceExisting": true,
+        "selection": "Needs service confirmation",
+        "existing": true,
+        "region": "External client",
+        "resources": [],
+        "costDrivers": "Confirm service, capacity and billable dimensions",
+        "dependencies": [],
+        "terraform": "External browser \u2014 no infrastructure to provision; connection behavior still requires validation",
+        "foundation": false,
+        "compute": false,
+        "api": false,
+        "structured": false,
+        "summary": false,
+        "settings": {},
+        "reference": false,
+        "externalReference": true,
+        "existingServiceReference": null,
+        "containerContract": null,
+        "implemented": true
+      },
+      {
+        "id": "faq-app",
+        "address": "block_6661712d617070",
+        "label": "Public help assistant",
+        "provider": "azure",
+        "service": "Azure App Service",
+        "sourceExisting": false,
+        "selection": "Needs service confirmation",
+        "existing": false,
+        "region": "australiaeast",
+        "resources": [
+          "azurerm_linux_web_app",
+          "azurerm_storage_account",
+          "azurerm_storage_container"
+        ],
+        "costDrivers": "Compute and HTTP requests, model input/output tokens, catalog read/write/versioned storage, logs and transfer; verify current regional service/model prices and quotas. Capacity limits are not invoice caps.",
+        "dependencies": [
+          "faq-visitors",
+          "faq-editor"
+        ],
+        "terraform": "Public-only cited FAQ source, browser, private catalog, separate editor/runtime roles and regional model transport generated; destination behavior unverified",
+        "foundation": false,
+        "compute": false,
+        "api": false,
+        "structured": false,
+        "summary": false,
+        "settings": {},
+        "reference": false,
+        "externalReference": false,
+        "existingServiceReference": null,
+        "containerContract": null,
+        "implemented": true
+      },
+      {
+        "id": "faq-editor",
+        "address": "block_6661712d656469746f72",
+        "label": "Authorized article editor",
+        "provider": "tools",
+        "service": "Existing authorized operator",
+        "sourceExisting": true,
+        "selection": "Needs service confirmation",
+        "existing": true,
+        "region": "External operator",
+        "resources": [],
+        "costDrivers": "Confirm service, capacity and billable dimensions",
+        "dependencies": [],
+        "terraform": "Existing public catalog editor \u2014 provider-native role/group input and separate conditional editor CLI generated; actual access unverified",
+        "foundation": false,
+        "compute": false,
+        "api": false,
+        "structured": false,
+        "summary": false,
+        "settings": {},
+        "reference": false,
+        "externalReference": false,
+        "existingServiceReference": null,
+        "containerContract": null,
+        "implemented": true
+      }
+    ],
+    "connections": [
+      {
+        "id": "faq-visitors-to-app",
+        "source": "faq-visitors",
+        "target": "faq-app",
+        "data": "HTTPS questions \u2192 cited answers or \u201cI don\u2019t know\u201d",
+        "generated": true,
+        "status": "Scoped access policy generated; account and runtime verification required"
+      },
+      {
+        "id": "faq-editor-to-app",
+        "source": "faq-editor",
+        "target": "faq-app",
+        "data": "Authorized CLI: publish, update and remove public articles",
+        "generated": true,
+        "status": "Scoped access policy generated; account and runtime verification required"
+      }
+    ],
+    "accessPlan": {
+      "connections": [],
+      "bindings": []
+    },
+    "asyncPlan": {
+      "pipelines": [],
+      "componentIds": [],
+      "edgeIds": []
+    },
+    "publicFaqPlan": {
+      "entries": [
+        {
+          "row": {
+            "id": "faq-app",
+            "address": "block_6661712d617070",
+            "label": "Public help assistant",
+            "provider": "azure",
+            "service": "Azure App Service",
+            "sourceExisting": false,
+            "selection": "Needs service confirmation",
+            "existing": false,
+            "region": "australiaeast",
+            "resources": [
+              "azurerm_linux_web_app",
+              "azurerm_storage_account",
+              "azurerm_storage_container"
+            ],
+            "costDrivers": "Compute and HTTP requests, model input/output tokens, catalog read/write/versioned storage, logs and transfer; verify current regional service/model prices and quotas. Capacity limits are not invoice caps.",
+            "dependencies": [
+              "faq-visitors",
+              "faq-editor"
+            ],
+            "terraform": "Public-only cited FAQ source, browser, private catalog, separate editor/runtime roles and regional model transport generated; destination behavior unverified",
+            "foundation": false,
+            "compute": false,
+            "api": false,
+            "structured": false,
+            "summary": false,
+            "settings": {},
+            "reference": false,
+            "externalReference": false,
+            "existingServiceReference": null,
+            "containerContract": null,
+            "implemented": true
+          },
+          "provider": "azure"
+        }
+      ],
+      "componentIds": [
+        "faq-app"
+      ],
+      "editorIds": [
+        "faq-editor"
+      ],
+      "edgeIds": [
+        "faq-visitors-to-app",
+        "faq-editor-to-app"
+      ]
+    },
+    "azureStructuredPlan": {
+      "entries": [],
+      "componentIds": [],
+      "edgeIds": []
+    },
+    "gcpStructuredPlan": {
+      "entries": [],
+      "componentIds": [],
+      "edgeIds": []
+    },
+    "ibmStructuredPlan": {
+      "entries": [],
+      "componentIds": [],
+      "edgeIds": []
+    },
+    "summaryPlan": {
+      "entries": [],
+      "modelIds": [],
+      "edgeIds": []
+    },
+    "structuredApiPlan": {
+      "entries": [],
+      "componentIds": [],
+      "edgeIds": []
+    },
+    "ragPlan": {
+      "entries": [],
+      "componentIds": [],
+      "edgeIds": []
+    },
+    "sourceContractPlan": {
+      "sources": [],
+      "connections": []
+    },
+    "webPlan": {
+      "entries": [],
+      "componentIds": [],
+      "edgeIds": []
+    },
+    "gaps": [],
+    "gapDetails": [],
+    "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+    "sources": [
+      "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+      "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+      "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+      "https://aws.amazon.com/bedrock/pricing/"
+    ]
+  },
+  "files": [
+    "spec-kit/interfaces.json",
+    "spec-kit/implementation-map.json",
+    "spec-kit/readiness.json",
+    "spec-kit/readiness.md",
+    "START_HERE.md",
+    "AGENTS.md",
+    "spec-kit/plan.md",
+    "spec-kit/tasks.md",
+    "spec-kit/tasks.json",
+    "spec-kit/context.json",
+    "spec-kit/questions.md",
+    "spec-kit/contracts.md",
+    "spec-kit/validation.md",
+    "spec-kit/progress.json",
+    "spec-kit/decision-log.md",
+    "spec-kit/implementation-spec.md",
+    "project.atmem-ai-architect.json",
+    "specification.md",
+    "architecture-and-deployment.md",
+    "diagram.mmd",
+    "decisions.md",
+    "resource-schedule.json",
+    "estimate.json",
+    "handoff.md",
+    "terraform/applications/block_6661712d617070/public_faq.py",
+    "terraform/applications/block_6661712d617070/public_catalog_store.py",
+    "terraform/applications/block_6661712d617070/public_faq_app.py",
+    "terraform/applications/block_6661712d617070/structured_http.py",
+    "terraform/applications/block_6661712d617070/structured_output.py",
+    "terraform/applications/block_6661712d617070/azure_structured.py",
+    "terraform/applications/block_6661712d617070/public_catalog_admin.py",
+    "terraform/applications/block_6661712d617070/web/index.html",
+    "terraform/applications/block_6661712d617070/web/app.css",
+    "terraform/applications/block_6661712d617070/web/app.js",
+    "terraform/applications/block_6661712d617070/faq_core_acceptance.py",
+    "terraform/applications/block_6661712d617070/faq_http_acceptance.py",
+    "terraform/applications/block_6661712d617070/faq_catalog_admin_acceptance.py",
+    "terraform/applications/block_6661712d617070/faq_catalog_store_acceptance.py",
+    "terraform/applications/block_6661712d617070/faq_acceptance.py",
+    "terraform/applications/block_6661712d617070/requirements.lock",
+    "terraform/applications/block_6661712d617070/dependency-sources.json",
+    "terraform/applications/block_6661712d617070/test-requirements.lock",
+    "terraform/applications/block_6661712d617070/test-dependency-sources.json",
+    "terraform/applications/block_6661712d617070/container-base.json",
+    "terraform/applications/block_6661712d617070/output-contract.json",
+    "terraform/applications/block_6661712d617070/faq-deployment.json",
+    "terraform/applications/block_6661712d617070/Dockerfile",
+    "terraform/applications/block_6661712d617070/.dockerignore",
+    "terraform/applications/block_6661712d617070/BUILD.md",
+    "terraform/.terraform.lock.hcl",
+    "terraform/main.tf.json",
+    "terraform/resource-schedule.json",
+    "terraform/deployment.tfvars.json.example",
+    "terraform/.gitignore",
+    "terraform/tests/public-faq.tftest.hcl",
+    "terraform/README.md",
+    "terraform/generation-quality.json",
+    "README.md",
+    "generation-quality.json",
+    "manifest.json"
+  ],
+  "digests": {
+    "spec-kit/interfaces.json": "6df073ca3bb232f158c8623d3605bf365640685ab7870da2ee7099fcca7f5d06",
+    "spec-kit/implementation-map.json": "322bd225f0cc2cd6b1169d5bc1dd5ec44cec9cde9118503682fe87f5ab46182b",
+    "spec-kit/readiness.json": "536057c0833de9ef4605b26e9cf8a78ae52da3e2a7edd5c63df223a0371376c8",
+    "spec-kit/readiness.md": "5315160b3450aece92209621e8b48cc63d1c4e02284330edfa7b080ec53f1281",
+    "START_HERE.md": "bb6cdda1d67ce3f6354415a128a406c51c5a90fc7b48cecc54d6b89bed087abb",
+    "AGENTS.md": "4fa2f0ba7733ef8b9ff88a4f6f559fbce9c970767c30eda57ccef39d0681ee77",
+    "spec-kit/plan.md": "ddf94e39a0a83ac6b0e5d226209625de87d0eab6c782d2d8b5cf569d4bbc5133",
+    "spec-kit/tasks.md": "405254308b7d345349373d776c6cf109c5882963787ca11718472d4c2ec41afd",
+    "spec-kit/tasks.json": "1fb0389e8cc91d5ded34c774c76a4356dba876ed3ea576b8d929f31a434f0d39",
+    "spec-kit/context.json": "2aaac69a32888755c079447adff2c16f10b8edf4d5ea0062b8f378b67d693756",
+    "spec-kit/questions.md": "6eca597fc04b784a50f50feaa8c6d1078903e0c749589d258f5c9b40958aba85",
+    "spec-kit/contracts.md": "c3db58318839750f5631bb216d127fc553b1fc84b94df247f1a5c46a5a351d95",
+    "spec-kit/validation.md": "7d15e9065dfef77fdedf4748ad200426c31600c444201536daad00b06a1bc5e4",
+    "spec-kit/progress.json": "a713a129effae5a53db78c0aa81a9ee0bea417c9e3d09b87c8d6a2e91c640b6f",
+    "spec-kit/decision-log.md": "6aec8d736c95f289dd07eb6ed715ce88bf8d401a4d6f877ab806a232f7411081",
+    "spec-kit/implementation-spec.md": "f7a891578209fc9e5d478ce8b1684a4c00c4ffc432d06dac92a8dd29cf345fb1",
+    "project.atmem-ai-architect.json": "00fe39703e61a4e606f210b9de2257e3f287d4802a3bad82bb405f4296fe8972",
+    "specification.md": "ab05569e807e922b0235347aa020fdfc6195435e2a8c8f0a99404b7be34d89a8",
+    "architecture-and-deployment.md": "9c49791c151c2ca200f27d44c68e00d473ac1da25062cc517e3e9516285cb656",
+    "diagram.mmd": "26d2c9577e257e0bccb964447a285075dc3b63e12f1b56127ca6ef95e4a48f95",
+    "decisions.md": "16dfd5d659f2b4db9f3060e18230a4b41ac8f02f3122146fc976caa96deaac46",
+    "resource-schedule.json": "0347c3385c74f5a15ab599cc05229534d507be8856f87b61c919bc0fcff3d006",
+    "estimate.json": "db362320efc29daf587b9a74bbaf8cd94cc3df02d8246dd829abd46226ba1f22",
+    "handoff.md": "59bb3efde078624655c98aafc51d636c086193ec1f5183f4e87acd7cef31a519",
+    "terraform/applications/block_6661712d617070/public_faq.py": "af088fc3cb2c9228a39f589ff2e96820e7f10c52d34727585bbcd8f528ec07dc",
+    "terraform/applications/block_6661712d617070/public_catalog_store.py": "befaf496ae75a72542c5017e0111e88b4576ddf5473ea1edb6b6e52980a927e3",
+    "terraform/applications/block_6661712d617070/public_faq_app.py": "61530e02bfa49fb839ccb9f5a9a917aec79a7bf02a71ded0a6bfe4b96f479c35",
+    "terraform/applications/block_6661712d617070/structured_http.py": "fae1e7d092c1d17e90cb2af41aeb19ce786b38a1a813427197b1ad56dd0006ab",
+    "terraform/applications/block_6661712d617070/structured_output.py": "432c730c54bd7dcae7b52fb73edc67d2e7b44b890e68254fdee832cb4c2304bc",
+    "terraform/applications/block_6661712d617070/azure_structured.py": "faf1bdfd9e5c0335dd639483130d1b35ed3dbe2322e66b6a51a6d244967c6930",
+    "terraform/applications/block_6661712d617070/public_catalog_admin.py": "4856976323b8769266b609b05fc0b36ea38f665cd00383185feca9c76c2067c7",
+    "terraform/applications/block_6661712d617070/web/index.html": "3d2aa2263242e806d7993be4296754748188d5cea20a46e1e44080207e2e5bfd",
+    "terraform/applications/block_6661712d617070/web/app.css": "8273852979404ba88156ca3127b6fb56937b047788181246f3e9be47e695ae53",
+    "terraform/applications/block_6661712d617070/web/app.js": "165d69055fa00e070aff37d331847ffaf1bc5d8af05a8cc7e4283c99f8dc2a73",
+    "terraform/applications/block_6661712d617070/faq_core_acceptance.py": "c2d92f0de4dab69f514b0fad5de199de71abb1e857ca7dab3437dfdf28a0e3ec",
+    "terraform/applications/block_6661712d617070/faq_http_acceptance.py": "e55a920e701ae6961a2100acdf6aba21b37446d6a17d0960c0b714fd82a4d4f5",
+    "terraform/applications/block_6661712d617070/faq_catalog_admin_acceptance.py": "2a36d15be9540b35e69673b9a7da03cee3388101e0d0027d63e38d6014224438",
+    "terraform/applications/block_6661712d617070/faq_catalog_store_acceptance.py": "65320dd17748345ab04a8566a745c3cd91923e0d0f1b1fde3a8eeaf821f3c3f6",
+    "terraform/applications/block_6661712d617070/faq_acceptance.py": "efabdbf1d9c9f2a4304984b3d3eef4c3d83472d3d90a096e5ac6d74b7be389ae",
+    "terraform/applications/block_6661712d617070/requirements.lock": "6d8d8a055191987ad7279c7ee80721d52d2a5481714f4f5f2fb146f840f541e9",
+    "terraform/applications/block_6661712d617070/dependency-sources.json": "75d82ea900f5bde6bd84c7aed971e069b535fba3c24d48c8339e14dafecf6f43",
+    "terraform/applications/block_6661712d617070/test-requirements.lock": "54894d4de170917d97979422e764854555ad23ff16c253128540602cc1791bf0",
+    "terraform/applications/block_6661712d617070/test-dependency-sources.json": "8a4c9c3daff2e034da95e9dad9916d46cb7eb1b228b2f940c7e200698f9c1a64",
+    "terraform/applications/block_6661712d617070/container-base.json": "b2adfde9b3215f7f0299806e211b49438be95ea3c2b995e905452cce2dfd0650",
+    "terraform/applications/block_6661712d617070/output-contract.json": "b50bf00e664626d92c570b70327f2981f092196c1941c5df41d125b403abb0ee",
+    "terraform/applications/block_6661712d617070/faq-deployment.json": "4f37d360135b38ec1663fa0bdd291ab806df5a546c689e786fd7ad20a03eb472",
+    "terraform/applications/block_6661712d617070/Dockerfile": "86f1e5fcd4ceecbdedce94fba6393a06325fd09a10eeb06814d386f4a5c92c9b",
+    "terraform/applications/block_6661712d617070/.dockerignore": "46c005eb151c93ea7e432d478fabc399dfc8ba02cadb8fd4ad211ebadf9e6bea",
+    "terraform/applications/block_6661712d617070/BUILD.md": "965a0b21f79fef568efad08fcc3acff58e4d6b69bb27144713f2303659657acf",
+    "terraform/.terraform.lock.hcl": "9a31049e0a4751405bf8b67e8351212c71eb22ada434174a9d3e5595ddefded1",
+    "terraform/main.tf.json": "79af5d7d99fa67ad4fcf4ee6e44d6f306c2d2f5d0fcffa809fe97f9288491eaa",
+    "terraform/resource-schedule.json": "0347c3385c74f5a15ab599cc05229534d507be8856f87b61c919bc0fcff3d006",
+    "terraform/deployment.tfvars.json.example": "e3ac6cfa808574f244c34a574b95d6e4b73e42936e5b1b94e8ed6e1bf526f422",
+    "terraform/.gitignore": "df1071d57e71aca6d7555205982729969b8be26f2a4c9810797ee897b1e5901c",
+    "terraform/tests/public-faq.tftest.hcl": "869ecd7639947b1e2ffe1d442a088e987798b028b72c6494b6b19af43510ee76",
+    "terraform/README.md": "f32cfe21b31e79332424474057b030dc82ccecb08e138f10ea7bf728466a919b",
+    "terraform/generation-quality.json": "50d5d6077ca376c6437db87c630d4b6d1278f6fd5dfd21aa98ca7a4632452bf9",
+    "README.md": "c56e43e007d0f7e758e89e05abe0c48b5beea6fb1342e60bca0dcb7d8371f82b",
+    "generation-quality.json": "50d5d6077ca376c6437db87c630d4b6d1278f6fd5dfd21aa98ca7a4632452bf9",
+    "manifest.json": "728a6904434e4972e3b3aec06b04fb476628416e4e5d84c33cbfc3852b623f90"
+  },
+  "taskCount": 29,
+  "missingDependencies": [],
+  "scopeEvidence": "Static export facts only. Runtime and semantic completeness require independent qualification."
+}

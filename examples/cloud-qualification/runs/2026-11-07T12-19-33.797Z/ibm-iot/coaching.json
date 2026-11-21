@@ -1,0 +1,106 @@
+{
+  "message": "Here's where things stand: no runtime checks ran, so the design isn't validated yet, and the empty failures list doesn't mean it's correct. Every blocker comes from the same cause. None of the IBM pieces (Event Streams, Code Engine, Cloudant, watsonx.ai, PostgreSQL, Event Notifications) has a supported generator contract. The only IBM contract available is private object storage, and switching to it would shrink this pipeline down to storage.\n\nSo the fix isn't a diagram change. It needs product engineering: a native Event Streams/Code Engine implementation that can reproduce this artifact (digest 5c94f945…, revision 2). The two existing systems (the synthetic publisher and the operator) also each need a plan for how they connect into the pipeline.\n\nMeanwhile, we can close a design decision those tests will need. How late can an event arrive and still be scored, for example \"up to 5 minutes late, anything later is rejected with a reason\"?",
+  "phase": "Architecture Review",
+  "contextUsed": {
+    "status": "unavailable",
+    "enabled": true,
+    "engine": "AtMem 2.3.10 core SDK",
+    "recordsUsed": [],
+    "knowledgeRecordIds": [],
+    "skills": [
+      {
+        "id": "architecture",
+        "name": "AI architecture and discovery",
+        "provider": "all",
+        "stages": [
+          "discover",
+          "design",
+          "review"
+        ],
+        "version": "1.2.0",
+        "digest": "91b2f386ad4b94a02191901c9ba0b3c8d82f6189a50bf8b9a23a5c02f2f4a841",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "security",
+        "name": "Security and reliability",
+        "provider": "all",
+        "stages": [
+          "design",
+          "review",
+          "deploy"
+        ],
+        "version": "1.0.0",
+        "digest": "c75cf46b29eb786b27d88d36604f521d6d287182d47df7d5c03845585d64f914",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "devops",
+        "name": "Infrastructure and DevOps handoff",
+        "provider": "all",
+        "stages": [
+          "deploy",
+          "review"
+        ],
+        "version": "1.1.0",
+        "digest": "cd5a428597fbf388a12a863721d93e551c200f4ed30be3469fd8eae78262884c",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "ibm",
+        "name": "IBM Cloud architecture guidance",
+        "provider": "ibm",
+        "stages": [
+          "design",
+          "review",
+          "estimate",
+          "deploy"
+        ],
+        "version": "1.0.0",
+        "digest": "658048ca51abcef3583e00a3b707691237ba956258ea0151d3f9062cd1cebcb9",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      }
+    ],
+    "tools": [],
+    "boundary": "AtMem AI Architect → native client",
+    "contextDigest": "7008b3fe0382a8ba7b5e74f16e7b0e4167a8a728ebc7cb7d0326a8d58c66b5df",
+    "projectId": "1f5531cc-0ac3-461a-86e0-ff6a4b8c500c"
+  },
+  "priceQuotes": []
+}

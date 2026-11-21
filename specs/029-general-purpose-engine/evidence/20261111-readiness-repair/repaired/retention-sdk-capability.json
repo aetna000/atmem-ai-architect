@@ -1,0 +1,25 @@
+{
+  "validator": "retention-sdk-capability",
+  "artifactSha256": "4b352878fd8555d87f28f6c06a642ebf4752c95575fa9f3abdfcb1ca875aa0e3",
+  "imageId": "sha256:cdb746c1eb56b61de56e1b5e78f6194392eb00494a1bb257a592852e72d8314b",
+  "runtimeConfigImageId": "sha256:efb920a19905e2b73c3e56eb22d52b052026b62050ec32eb3c7b28aba449cfc7",
+  "platform": "linux/arm64",
+  "isolationProfile": "standard-v1",
+  "runtimeEnvironment": {},
+  "command": [
+    "/var/lang/bin/python3.12",
+    "-c",
+    "import boto3,botocore,botocore.session,json; model=botocore.session.get_session().get_service_model('bedrock'); print(json.dumps({'boto3':boto3.__version__,'botocore':botocore.__version__,'getAccountDataRetentionAvailable':'GetAccountDataRetention' in model.operation_names,'operationCount':len(model.operation_names),'networkRequests':0}))"
+  ],
+  "status": "passed",
+  "exitCode": 0,
+  "skipped": 0,
+  "testsReported": null,
+  "reason": null,
+  "output": "{\"boto3\": \"1.42.97\", \"botocore\": \"1.42.97\", \"getAccountDataRetentionAvailable\": false, \"operationCount\": 101, \"networkRequests\": 0}\n",
+  "outputTruncated": false,
+  "durationSeconds": 0.365,
+  "evidenceLevel": "local_container_check",
+  "cloudOperations": false,
+  "boundary": "Actual declared local cached SDK service-model inspection, no clients or network/account calls. Command success does not establish that the required operation exists or was implemented."
+}

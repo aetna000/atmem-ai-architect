@@ -1,0 +1,486 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "user",
+      "address": "block_75736572",
+      "label": "Synthetic user",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "appid",
+      "address": "block_6170706964",
+      "label": "Sign-in",
+      "provider": "ibm",
+      "service": "IBM Cloud App ID",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "app"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "app",
+      "address": "block_617070",
+      "label": "Assistant app",
+      "provider": "ibm",
+      "service": "IBM Cloud Code Engine",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "user",
+        "model"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "state",
+      "address": "block_7374617465",
+      "label": "Conversation state",
+      "provider": "ibm",
+      "service": "IBM Cloudant",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "app"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "context",
+      "address": "block_636f6e74657874",
+      "label": "Context bounder",
+      "provider": "ibm",
+      "service": "Logic in the IBM Cloud Code Engine app",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "app"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "model",
+      "address": "block_6d6f64656c",
+      "label": "Model runtime",
+      "provider": "ibm",
+      "service": "IBM watsonx.ai",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "context"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "escalate",
+      "address": "block_657363616c617465",
+      "label": "Escalation",
+      "provider": "ibm",
+      "service": "IBM Cloud Event Notifications",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "app"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "agent_queue",
+      "address": "block_6167656e745f7175657565",
+      "label": "Human support",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "escalate"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "logs",
+      "address": "block_6c6f6773",
+      "label": "Logs & audit",
+      "provider": "ibm",
+      "service": "IBM Cloud Logs + Activity Tracker",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "app"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e-user-app",
+      "source": "user",
+      "target": "app",
+      "data": "HTTPS chat",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-app-appid",
+      "source": "app",
+      "target": "appid",
+      "data": "OIDC sign-in / token check",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-app-state",
+      "source": "app",
+      "target": "state",
+      "data": "read/write own history",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-app-context",
+      "source": "app",
+      "target": "context",
+      "data": "bounded prompt",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-context-model",
+      "source": "context",
+      "target": "model",
+      "data": "inference request",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-model-app",
+      "source": "model",
+      "target": "app",
+      "data": "answer returned to user",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-app-esc",
+      "source": "app",
+      "target": "escalate",
+      "data": "handoff event",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-esc-queue",
+      "source": "escalate",
+      "target": "agent_queue",
+      "data": "notify",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-app-logs",
+      "source": "app",
+      "target": "logs",
+      "data": "logs & audit",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Synthetic user: Existing — reference/import plan needed.",
+    "Sign-in: Implementation needed.",
+    "Assistant app: Implementation needed.",
+    "Conversation state: Implementation needed.",
+    "Context bounder: Implementation needed.",
+    "Model runtime: Implementation needed.",
+    "Escalation: Implementation needed.",
+    "Human support: Existing — reference/import plan needed.",
+    "Logs & audit: Implementation needed.",
+    "Wire user → app: implement data flow, access policy and acceptance test.",
+    "Wire app → appid: implement data flow, access policy and acceptance test.",
+    "Wire app → state: implement data flow, access policy and acceptance test.",
+    "Wire app → context: implement data flow, access policy and acceptance test.",
+    "Wire context → model: implement data flow, access policy and acceptance test.",
+    "Wire model → app: implement data flow, access policy and acceptance test.",
+    "Wire app → escalate: implement data flow, access policy and acceptance test.",
+    "Wire escalate → agent_queue: implement data flow, access policy and acceptance test.",
+    "Wire app → logs: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "resource-block_75736572",
+      "componentIds": [
+        "user"
+      ],
+      "taskId": "TASK-RESOURCE-75736572",
+      "message": "Synthetic user: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_6170706964",
+      "componentIds": [
+        "appid"
+      ],
+      "taskId": "TASK-RESOURCE-6170706964",
+      "message": "Sign-in: Implementation needed."
+    },
+    {
+      "id": "resource-block_617070",
+      "componentIds": [
+        "app"
+      ],
+      "taskId": "TASK-RESOURCE-617070",
+      "message": "Assistant app: Implementation needed."
+    },
+    {
+      "id": "resource-block_7374617465",
+      "componentIds": [
+        "state"
+      ],
+      "taskId": "TASK-RESOURCE-7374617465",
+      "message": "Conversation state: Implementation needed."
+    },
+    {
+      "id": "resource-block_636f6e74657874",
+      "componentIds": [
+        "context"
+      ],
+      "taskId": "TASK-RESOURCE-636f6e74657874",
+      "message": "Context bounder: Implementation needed."
+    },
+    {
+      "id": "resource-block_6d6f64656c",
+      "componentIds": [
+        "model"
+      ],
+      "taskId": "TASK-RESOURCE-6d6f64656c",
+      "message": "Model runtime: Implementation needed."
+    },
+    {
+      "id": "resource-block_657363616c617465",
+      "componentIds": [
+        "escalate"
+      ],
+      "taskId": "TASK-RESOURCE-657363616c617465",
+      "message": "Escalation: Implementation needed."
+    },
+    {
+      "id": "resource-block_6167656e745f7175657565",
+      "componentIds": [
+        "agent_queue"
+      ],
+      "taskId": "TASK-RESOURCE-6167656e745f7175657565",
+      "message": "Human support: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_6c6f6773",
+      "componentIds": [
+        "logs"
+      ],
+      "taskId": "TASK-RESOURCE-6c6f6773",
+      "message": "Logs & audit: Implementation needed."
+    },
+    {
+      "id": "connection-652d757365722d617070",
+      "edgeIds": [
+        "e-user-app"
+      ],
+      "taskId": "TASK-INTEGRATION-652d757365722d617070",
+      "message": "Wire user → app: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6170702d6170706964",
+      "edgeIds": [
+        "e-app-appid"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6170702d6170706964",
+      "message": "Wire app → appid: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6170702d7374617465",
+      "edgeIds": [
+        "e-app-state"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6170702d7374617465",
+      "message": "Wire app → state: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6170702d636f6e74657874",
+      "edgeIds": [
+        "e-app-context"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6170702d636f6e74657874",
+      "message": "Wire app → context: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d636f6e746578742d6d6f64656c",
+      "edgeIds": [
+        "e-context-model"
+      ],
+      "taskId": "TASK-INTEGRATION-652d636f6e746578742d6d6f64656c",
+      "message": "Wire context → model: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6d6f64656c2d617070",
+      "edgeIds": [
+        "e-model-app"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6d6f64656c2d617070",
+      "message": "Wire model → app: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6170702d657363",
+      "edgeIds": [
+        "e-app-esc"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6170702d657363",
+      "message": "Wire app → escalate: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6573632d7175657565",
+      "edgeIds": [
+        "e-esc-queue"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6573632d7175657565",
+      "message": "Wire escalate → agent_queue: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6170702d6c6f6773",
+      "edgeIds": [
+        "e-app-logs"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6170702d6c6f6773",
+      "message": "Wire app → logs: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

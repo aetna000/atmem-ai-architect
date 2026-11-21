@@ -1,0 +1,55 @@
+{
+  "id": "qualification-ibm-storage",
+  "version": 1,
+  "revision": 1,
+  "name": "IBM Cloud Object Storage qualification",
+  "provider": "ibm",
+  "requirements": "Private versioned object storage. An existing service identity uploads, reads and deletes synthetic documents. Provider-managed encryption; authenticated public endpoint.",
+  "nodes": [
+    {
+      "id": "documents",
+      "type": "resource",
+      "position": {
+        "x": 400,
+        "y": 100
+      },
+      "data": {
+        "label": "IBM Cloud Object Storage",
+        "service": "IBM Cloud Object Storage",
+        "provider": "ibm",
+        "kind": "source",
+        "origin": "proposed",
+        "implementation": "private-object-storage",
+        "config": {
+          "region": "au-syd",
+          "classification": "Internal"
+        }
+      }
+    },
+    {
+      "id": "operator",
+      "type": "resource",
+      "position": {
+        "x": 50,
+        "y": 100
+      },
+      "data": {
+        "label": "Existing storage operator",
+        "provider": "tools",
+        "kind": "tool",
+        "origin": "existing",
+        "binding": "cloud-storage-principal",
+        "config": {}
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "object-access",
+      "source": "operator",
+      "target": "documents",
+      "label": "Upload, read and delete objects",
+      "access": "storage-object-admin"
+    }
+  ]
+}

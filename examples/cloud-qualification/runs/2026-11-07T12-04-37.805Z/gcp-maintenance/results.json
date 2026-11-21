@@ -1,0 +1,65 @@
+{
+  "provider": "gcp-maintenance",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Time-based split prevents future-label leakage",
+    "Missing sensors produce an explicit degraded result",
+    "Prediction records include feature and model versions",
+    "Evaluate false alarms and missed faults on held-out data",
+    "Work orders require approval and are idempotent"
+  ],
+  "components": [
+    {
+      "id": "sensors"
+    },
+    {
+      "id": "records"
+    },
+    {
+      "id": "pubsub",
+      "service": "Pub/Sub"
+    },
+    {
+      "id": "dataflow",
+      "service": "Dataflow"
+    },
+    {
+      "id": "gcs",
+      "service": "Cloud Storage"
+    },
+    {
+      "id": "bq",
+      "service": "BigQuery"
+    },
+    {
+      "id": "train",
+      "service": "Vertex AI Pipelines / Training"
+    },
+    {
+      "id": "registry",
+      "service": "Vertex AI Model Registry"
+    },
+    {
+      "id": "predict",
+      "service": "Vertex AI Batch Prediction"
+    },
+    {
+      "id": "monitor",
+      "service": "Vertex AI Model Monitoring + Cloud Monitoring"
+    },
+    {
+      "id": "workorder",
+      "service": "Cloud Run"
+    },
+    {
+      "id": "operator"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

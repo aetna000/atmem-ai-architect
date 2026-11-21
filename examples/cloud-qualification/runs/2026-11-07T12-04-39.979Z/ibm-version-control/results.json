@@ -1,0 +1,46 @@
+{
+  "provider": "ibm-version-control",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Repository and branch permissions enforced",
+    "Untrusted repository instructions cannot trigger execution",
+    "Findings link to lines in the reviewed commit",
+    "A changed head commit invalidates the review",
+    "Retry does not post duplicate comments and posting requires approval"
+  ],
+  "components": [
+    {
+      "id": "repo"
+    },
+    {
+      "id": "reviewer",
+      "service": "IBM Cloud Code Engine"
+    },
+    {
+      "id": "secrets",
+      "service": "IBM Cloud Secrets Manager"
+    },
+    {
+      "id": "guard",
+      "service": "IBM Cloud Code Engine (in reviewer job)"
+    },
+    {
+      "id": "model",
+      "service": "IBM watsonx.ai"
+    },
+    {
+      "id": "reviewer-human"
+    },
+    {
+      "id": "logs",
+      "service": "IBM Cloud Logs + Activity Tracker"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

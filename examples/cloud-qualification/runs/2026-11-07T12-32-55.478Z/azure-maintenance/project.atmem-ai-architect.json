@@ -1,0 +1,520 @@
+{
+  "format": "atmem.ai-architect.project",
+  "formatVersion": "2.3.0",
+  "meta": {
+    "id": "55c9dda7-e5ed-47c1-abca-db5ce548dbc3",
+    "name": "Azure synthetic predictive maintenance qualification",
+    "createdAt": "2026-11-07T12:34:45.844Z",
+    "updatedAt": "2026-11-07T12:34:45.844Z",
+    "revision": 2,
+    "generator": "atmem-ai-architect 0.2.0",
+    "domain": "maintenance"
+  },
+  "design": {
+    "provider": "azure",
+    "nodes": [
+      {
+        "id": "sensor-history",
+        "type": "resource",
+        "position": {
+          "x": 50,
+          "y": 445
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Synthetic sensor histories",
+          "provider": "tools",
+          "kind": "stream",
+          "description": "External qualification fixture input, outside Azure provisioning scope. Timestamped equipment readings with deliberate gaps and late arrivals; fixture creation and location remain to be supplied.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "poc": true,
+          "role": "data",
+          "service": "External synthetic fixture source"
+        }
+      },
+      {
+        "id": "maintenance-history",
+        "type": "resource",
+        "position": {
+          "x": 50,
+          "y": 165
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Synthetic maintenance records",
+          "provider": "tools",
+          "kind": "history",
+          "description": "External qualification fixture input, outside provisioning scope. Equipment identifiers, maintenance events and candidate fault labels with event and availability timestamps; label meaning requires agreement.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "poc": true,
+          "role": "data",
+          "service": "External synthetic fixture source"
+        }
+      },
+      {
+        "id": "ingestion",
+        "type": "resource",
+        "position": {
+          "x": 470,
+          "y": 315
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Batch ingestion",
+          "provider": "azure",
+          "kind": "resource",
+          "description": "Azure Data Factory pipelines ingest both fixture sources into versioned raw storage, validate schemas and equipment IDs, quarantine malformed records and record replay checkpoints. Source connectors, managed identity and retry policies require implementation and verification.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "ingest",
+          "service": "Azure Data Factory"
+        }
+      },
+      {
+        "id": "data-lake",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 165
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Versioned qualification data",
+          "provider": "azure",
+          "kind": "resource",
+          "description": "Azure Data Lake Storage Gen2 stores raw snapshots, curated features, split manifests, model artifacts and evaluation reports under distinct paths. Preserve immutable dataset references and feature-code versions. Private access, scoped identities, retention and recovery need engineering and review.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "data",
+          "service": "Azure Data Lake Storage Gen2"
+        }
+      },
+      {
+        "id": "maintenance-ml",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 305
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Features, training, evaluation and prediction",
+          "provider": "azure",
+          "kind": "resource",
+          "description": "Azure Machine Learning workspace owns feature jobs, training compute, MLflow model versions, evaluation jobs, a managed prediction endpoint and drift jobs; these are owned subresources, not separate conceptual services. Point-in-time joins use only information available at prediction time; split chronologically before fitting transforms, freeze a later holdout and report false alarms and missed faults. Register dataset, feature and model versions; controlled promotion requires reviewed evaluatio",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "model",
+          "service": "Azure Machine Learning"
+        }
+      },
+      {
+        "id": "maintenance-app",
+        "type": "resource",
+        "position": {
+          "x": 1730,
+          "y": 145
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Prediction and work-order application",
+          "provider": "azure",
+          "kind": "resource",
+          "description": "Azure Functions hosts authenticated operator routes, synthetic replay orchestration and work-order draft generation. Calls the ML endpoint and persists risk, degraded status, event time, dataset, feature and model versions. Presents drafts for explicit operator approval; uses an atomic conditional write and stable idempotency key to prevent duplicate approved orders. Degraded results require review. Returns prediction and draft details directly. No equipment control or external maintenance-syste",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "app",
+          "service": "Azure Functions"
+        }
+      },
+      {
+        "id": "prediction-orders",
+        "type": "resource",
+        "position": {
+          "x": 2150,
+          "y": 50
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Prediction and approval ledger",
+          "provider": "azure",
+          "kind": "resource",
+          "description": "Azure Cosmos DB stores versioned prediction records, draft revisions, approval identity/time and idempotency keys. Partition related workflow records by equipment; conditional updates and transactional operations within the partition enforce approval transitions and duplicate protection. Retention, backup and recovery settings remain to be agreed.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "data",
+          "service": "Azure Cosmos DB"
+        }
+      },
+      {
+        "id": "operator",
+        "type": "resource",
+        "position": {
+          "x": 2570,
+          "y": 370
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Maintenance operator",
+          "provider": "tools",
+          "kind": "resource",
+          "description": "External human reviewer using an authenticated qualification client; no client application or identity is claimed provisioned. Reviews prediction evidence and degraded status, then explicitly approves or rejects work-order drafts.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "poc": true,
+          "role": "human",
+          "service": "External operator client"
+        }
+      },
+      {
+        "id": "operations-monitor",
+        "type": "resource",
+        "position": {
+          "x": 2150,
+          "y": 370
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Operational and drift alerts",
+          "provider": "azure",
+          "kind": "resource",
+          "description": "Azure Monitor collects pipeline failures, endpoint errors, degraded-result rates, approval failures and custom drift/evaluation metrics. Alert routing, diagnostic settings, telemetry permissions, retention and response owner require implementation. Drift thresholds remain unconfirmed; alerts prompt investigation rather than automatic retraining or equipment action.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "monitor",
+          "service": "Azure Monitor"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "sensors-ingest",
+        "source": "sensor-history",
+        "target": "ingestion",
+        "type": "smoothstep",
+        "label": "Copy timestamped sensor fixtures; connector unresolved"
+      },
+      {
+        "id": "records-ingest",
+        "source": "maintenance-history",
+        "target": "ingestion",
+        "type": "smoothstep",
+        "label": "Copy maintenance events and label timestamps"
+      },
+      {
+        "id": "ingest-lake",
+        "source": "ingestion",
+        "target": "data-lake",
+        "type": "smoothstep",
+        "label": "Managed-identity write: raw snapshots and quarantine"
+      },
+      {
+        "id": "lake-ml",
+        "source": "data-lake",
+        "target": "maintenance-ml",
+        "type": "smoothstep",
+        "label": "Read pinned datasets for point-in-time ML jobs"
+      },
+      {
+        "id": "ml-lake",
+        "source": "maintenance-ml",
+        "target": "data-lake",
+        "type": "smoothstep",
+        "label": "Write versioned features, artifacts and held-out reports"
+      },
+      {
+        "id": "app-lake",
+        "source": "maintenance-app",
+        "target": "data-lake",
+        "type": "smoothstep",
+        "label": "Read qualification replay inputs by snapshot"
+      },
+      {
+        "id": "app-ml",
+        "source": "maintenance-app",
+        "target": "maintenance-ml",
+        "type": "smoothstep",
+        "label": "Authenticated endpoint scoring request"
+      },
+      {
+        "id": "ml-app",
+        "source": "maintenance-ml",
+        "target": "maintenance-app",
+        "type": "smoothstep",
+        "label": "Return prediction, degraded status and versions"
+      },
+      {
+        "id": "app-ledger",
+        "source": "maintenance-app",
+        "target": "prediction-orders",
+        "type": "smoothstep",
+        "label": "Persist predictions; conditionally create and approve drafts"
+      },
+      {
+        "id": "ledger-app",
+        "source": "prediction-orders",
+        "target": "maintenance-app",
+        "type": "smoothstep",
+        "label": "Read draft state and previous idempotent outcome"
+      },
+      {
+        "id": "operator-app",
+        "source": "operator",
+        "target": "maintenance-app",
+        "type": "smoothstep",
+        "label": "Authenticated review, approve or reject; identity unresolved"
+      },
+      {
+        "id": "app-operator",
+        "source": "maintenance-app",
+        "target": "operator",
+        "type": "smoothstep",
+        "label": "Return prediction evidence and work-order draft status"
+      },
+      {
+        "id": "ledger-ml",
+        "source": "prediction-orders",
+        "target": "maintenance-ml",
+        "type": "smoothstep",
+        "label": "Read recent predictions for delayed-label evaluation"
+      },
+      {
+        "id": "ingest-monitor",
+        "source": "ingestion",
+        "target": "operations-monitor",
+        "type": "smoothstep",
+        "label": "Pipeline failures and quarantine metrics"
+      },
+      {
+        "id": "ml-monitor",
+        "source": "maintenance-ml",
+        "target": "operations-monitor",
+        "type": "smoothstep",
+        "label": "Publish drift, evaluation and endpoint metrics"
+      },
+      {
+        "id": "app-monitor",
+        "source": "maintenance-app",
+        "target": "operations-monitor",
+        "type": "smoothstep",
+        "label": "Publish errors, degraded results and approval audit events"
+      },
+      {
+        "id": "monitor-operator",
+        "source": "operations-monitor",
+        "target": "operator",
+        "type": "smoothstep",
+        "label": "Investigation alerts; delivery channel unresolved"
+      }
+    ]
+  },
+  "discovery": {
+    "problem": "Include synthetic sensor histories and maintenance records, ingestion, point-in-time feature preparation, versioned model training and prediction, time-separated held-out evaluation, drift monitoring and operator work-order drafts. Prevent future-label leakage. Missing sensors must produce an explicit degraded result. Persist feature and model versions with predictions. Report false alarms and missed faults on held-out data. Work orders require approval and idempotency; no automatic equipment control. Proposed batch qualification replay. Country, region, prediction horizon, fault labels, acceptance thresholds, access identities and operational ownership remain open. Native Azure ML application generation and integrations require engineering; no deployment or validation is claimed.",
+    "brief": {
+      "application": "Use Azure for this synthetic architecture qualification. Predict equipment maintenance needs from synthetic sensor histories and maintenance records. Include ingestion, feature preparation, a versioned prediction model, held-out evaluation, drift monitoring and an operator work-order draft. No automatic equipment control. Acceptance criteria: Time-based split prevents future-label leakage; Missing sensors produce an explicit degraded result; Prediction records include feature and model versions; Evaluate false alarms and missed faults on held-out data; Work orders require approval and are idempotent. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+      "cloud": "Azure"
+    },
+    "facts": [
+      {
+        "id": "fact-836c2fa6",
+        "name": "cloud.preference",
+        "value": "azure",
+        "unit": "provider",
+        "text": "Use Azure for this synthetic architecture qualification. Predict equipment maintenance needs from synthetic sensor histories and maintenance records. Include ingestion, feature preparation, a versioned prediction model, held-out evaluation, drift monitoring and an operator work-order draft. No autom",
+        "madeAt": "2026-11-07"
+      }
+    ],
+    "workflow": "predictive",
+    "asked": [],
+    "lastAsked": {
+      "id": "predictive:0",
+      "topic": "data",
+      "question": "How much history do you have for what you want to predict?",
+      "beginner": "For example “three years of sales by store” or “failure records since 2020”.",
+      "why": "It shapes the Predictive ML design."
+    }
+  },
+  "requirements": [
+    {
+      "id": "ai-time-safe-evaluation",
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "statement": "Construct features using event and availability timestamps, split chronologically before fitting transformations, and evaluate a frozen model on untouched later-period data, reporting false alarms and missed faults; acceptable thresholds remain open.",
+      "rationale": "Prevents training from using information unavailable when a prediction would have been made.",
+      "basis": "“Time-based split prevents future-label leakage” and requested feature preparation.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "maintenance-ml",
+        "data-lake"
+      ]
+    },
+    {
+      "id": "ai-missing-sensor-status",
+      "kind": "functional",
+      "category": "reliability",
+      "statement": "Return and persist explicit degraded status when required sensors are missing, including the missing inputs, and present that status to the reviewing operator.",
+      "rationale": "Avoids presenting incomplete sensor evidence as an ordinary reliable prediction.",
+      "basis": "“Missing sensors produce an explicit degraded result”.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "maintenance-ml",
+        "maintenance-app",
+        "prediction-orders"
+      ]
+    },
+    {
+      "id": "ai-prediction-lineage",
+      "kind": "functional",
+      "category": "maintainability",
+      "statement": "Persist feature and model versions with each prediction and retain references to the input dataset snapshot and evaluation evidence.",
+      "rationale": "Makes each prediction traceable to the exact transformation and model used.",
+      "basis": "“Prediction records include feature and model versions”.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "maintenance-ml",
+        "data-lake",
+        "prediction-orders"
+      ]
+    },
+    {
+      "id": "ai-approved-idempotent-orders",
+      "kind": "functional",
+      "category": "security",
+      "statement": "Create work orders as drafts, require an authorized operator's explicit approval, record the approval, and atomically prevent duplicate orders for the same idempotency key; provide no automatic equipment-control path.",
+      "rationale": "Prevents unapproved actions and duplicate orders when requests are retried.",
+      "basis": "“Work orders require approval and are idempotent” and “No automatic equipment control.”",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "maintenance-app",
+        "prediction-orders",
+        "operator"
+      ]
+    },
+    {
+      "id": "ai-drift-review",
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "statement": "Monitor feature drift and, when fault labels become available, prediction errors; route findings for investigation with model and feature versions attached, using thresholds and an operational owner to be agreed.",
+      "rationale": "Detects changing input patterns and prediction performance without treating a drift signal as permission to change the model.",
+      "basis": "“Include ... drift monitoring” and held-out evaluation of false alarms and missed faults.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "maintenance-ml",
+        "operations-monitor",
+        "prediction-orders"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use Azure for this synthetic architecture qualification.",
+      "options": "",
+      "decision": "azure",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.sketch-the-complete-azure-maintenance-qualification-workflow",
+      "title": "Sketch the complete Azure maintenance qualification workflow",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Adds ingestion, versioned data, feature preparation, training, held-out evaluation, model registration, prediction, drift monitoring and operator-approved work-order drafts. Azure Machine Learning owns its jobs, registry and endpoint within one service boundary; Azure Functions owns the qualification application's prediction orchestration and approval workflow. Batch replay is proposed for synthetic qualification; production cadence remains open. All cloud integrations require engineering: the available native generator does not implement this Azure ML application. Region, account access, service availability, identity configuration and connectivity are unverified. No deployment or tests have run. First local test: replay timestamped synthetic fixtures, including late maintenance labels, missing sensors and duplicate approval requests; assert point-in-time feature construction, explicit degraded results, version fields and one persisted work order per idempotency key. Scripted model outputs validate contracts only. Actual model validation requires training and evaluation on untouched later-period data, reporting false alarms and missed faults with thresholds still to be agreed. Synthetic evaluation alone does not establish real-equipment performance.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "extensions": {
+    "requirementNumbers": {
+      "drv-data-access": 1,
+      "drv-data-location": 2,
+      "ai-time-safe-evaluation": 3,
+      "ai-missing-sensor-status": 4,
+      "ai-prediction-lineage": 5,
+      "ai-approved-idempotent-orders": 6,
+      "ai-drift-review": 7
+    },
+    "choices": {},
+    "conceptSig": null
+  }
+}

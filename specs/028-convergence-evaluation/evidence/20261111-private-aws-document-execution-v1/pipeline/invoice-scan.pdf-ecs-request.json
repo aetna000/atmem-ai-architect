@@ -1,0 +1,235 @@
+{
+  "family": "document-a0302f604f4a470ca155d3b1896a18ce51d07dac310f491cb88e872466e14c34",
+  "networkMode": "bridge",
+  "requiresCompatibilities": [
+    "EC2"
+  ],
+  "runtimePlatform": {
+    "cpuArchitecture": "X86_64",
+    "operatingSystemFamily": "LINUX"
+  },
+  "placementConstraints": [
+    {
+      "type": "memberOf",
+      "expression": "attribute:atmem-document-policy == eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+    }
+  ],
+  "taskRoleArn": "arn:aws:iam::123456789012:role/document-transfer",
+  "executionRoleArn": "arn:aws:iam::123456789012:role/document-image-pull",
+  "containerDefinitions": [
+    {
+      "name": "download",
+      "image": "123456789012.dkr.ecr.ap-southeast-2.amazonaws.com/document-transfer@sha256:a84a7e2b541f866dcb9a887840e442d375dbe57804c27f8db8fb876fcc586b59",
+      "user": "0:0",
+      "essential": false,
+      "cpu": 128,
+      "memory": 256,
+      "readonlyRootFilesystem": true,
+      "privileged": false,
+      "dockerSecurityOptions": [
+        "no-new-privileges"
+      ],
+      "linuxParameters": {
+        "capabilities": {
+          "drop": [
+            "ALL"
+          ],
+          "add": [
+            "CHOWN"
+          ]
+        },
+        "initProcessEnabled": true,
+        "maxSwap": 0
+      },
+      "stopTimeout": 5,
+      "ulimits": [
+        {
+          "name": "nofile",
+          "softLimit": 256,
+          "hardLimit": 256
+        }
+      ],
+      "entryPoint": [
+        "python"
+      ],
+      "command": [
+        "-I",
+        "/app/enterprise_aws_transfer.py",
+        "download"
+      ],
+      "environment": [
+        {
+          "name": "DOCUMENT_JOB",
+          "value": "{\"format\":\"enterprise-aws-document-transfer-v1\",\"accountId\":\"123456789012\",\"region\":\"ap-southeast-2\",\"bucket\":\"owned-document-bytes\",\"request\":{\"format\":\"enterprise-document-job-v1\",\"requestId\":\"a0302f604f4a470ca155d3b1896a18ce51d07dac310f491cb88e872466e14c34\",\"sha256\":\"c579469b4d27b6a9167465933e2166a9afb11d3b907e2391453e8dd8977a185d\",\"mediaType\":\"application/pdf\"},\"inputETag\":\"\\\"dddddddddddddddddddddddddddddddd\\\"\"}"
+        }
+      ],
+      "mountPoints": [
+        {
+          "sourceVolume": "input",
+          "containerPath": "/work/input",
+          "readOnly": false
+        },
+        {
+          "sourceVolume": "output",
+          "containerPath": "/work/output",
+          "readOnly": false
+        }
+      ]
+    },
+    {
+      "name": "parser",
+      "image": "123456789012.dkr.ecr.ap-southeast-2.amazonaws.com/document-parser@sha256:0e6089395cc36c96986ef500026af794dd07f2a8c97196e7c0df726fbe465c82",
+      "user": "10001:10001",
+      "essential": false,
+      "cpu": 1792,
+      "memory": 2048,
+      "readonlyRootFilesystem": true,
+      "privileged": false,
+      "dockerSecurityOptions": [
+        "no-new-privileges"
+      ],
+      "linuxParameters": {
+        "capabilities": {
+          "drop": [
+            "ALL"
+          ]
+        },
+        "initProcessEnabled": true,
+        "maxSwap": 0,
+        "tmpfs": [
+          {
+            "containerPath": "/tmp",
+            "size": 128,
+            "mountOptions": [
+              "rw",
+              "noexec",
+              "nosuid",
+              "nodev"
+            ]
+          }
+        ]
+      },
+      "stopTimeout": 5,
+      "ulimits": [
+        {
+          "name": "nofile",
+          "softLimit": 256,
+          "hardLimit": 256
+        }
+      ],
+      "disableNetworking": true,
+      "entryPoint": [
+        "python"
+      ],
+      "command": [
+        "-I",
+        "/app/enterprise_document_cli.py",
+        "--job"
+      ],
+      "dependsOn": [
+        {
+          "containerName": "download",
+          "condition": "SUCCESS"
+        }
+      ],
+      "startTimeout": 60,
+      "mountPoints": [
+        {
+          "sourceVolume": "input",
+          "containerPath": "/input",
+          "readOnly": true
+        },
+        {
+          "sourceVolume": "output",
+          "containerPath": "/output",
+          "readOnly": false
+        }
+      ]
+    },
+    {
+      "name": "upload",
+      "image": "123456789012.dkr.ecr.ap-southeast-2.amazonaws.com/document-transfer@sha256:a84a7e2b541f866dcb9a887840e442d375dbe57804c27f8db8fb876fcc586b59",
+      "user": "10001:10001",
+      "essential": true,
+      "cpu": 128,
+      "memory": 256,
+      "readonlyRootFilesystem": true,
+      "privileged": false,
+      "dockerSecurityOptions": [
+        "no-new-privileges"
+      ],
+      "linuxParameters": {
+        "capabilities": {
+          "drop": [
+            "ALL"
+          ]
+        },
+        "initProcessEnabled": true,
+        "maxSwap": 0
+      },
+      "stopTimeout": 5,
+      "ulimits": [
+        {
+          "name": "nofile",
+          "softLimit": 256,
+          "hardLimit": 256
+        }
+      ],
+      "entryPoint": [
+        "python"
+      ],
+      "command": [
+        "-I",
+        "/app/enterprise_aws_transfer.py",
+        "upload"
+      ],
+      "environment": [
+        {
+          "name": "DOCUMENT_JOB",
+          "value": "{\"format\":\"enterprise-aws-document-transfer-v1\",\"accountId\":\"123456789012\",\"region\":\"ap-southeast-2\",\"bucket\":\"owned-document-bytes\",\"request\":{\"format\":\"enterprise-document-job-v1\",\"requestId\":\"a0302f604f4a470ca155d3b1896a18ce51d07dac310f491cb88e872466e14c34\",\"sha256\":\"c579469b4d27b6a9167465933e2166a9afb11d3b907e2391453e8dd8977a185d\",\"mediaType\":\"application/pdf\"},\"inputETag\":\"\\\"dddddddddddddddddddddddddddddddd\\\"\"}"
+        }
+      ],
+      "mountPoints": [
+        {
+          "sourceVolume": "input",
+          "containerPath": "/work/input",
+          "readOnly": true
+        },
+        {
+          "sourceVolume": "output",
+          "containerPath": "/work/output",
+          "readOnly": true
+        }
+      ],
+      "dependsOn": [
+        {
+          "containerName": "parser",
+          "condition": "SUCCESS"
+        }
+      ],
+      "startTimeout": 120
+    }
+  ],
+  "volumes": [
+    {
+      "name": "input",
+      "dockerVolumeConfiguration": {
+        "scope": "task",
+        "driver": "local"
+      }
+    },
+    {
+      "name": "output",
+      "dockerVolumeConfiguration": {
+        "scope": "task",
+        "driver": "local"
+      }
+    }
+  ],
+  "tags": [
+    {
+      "key": "atmem-workload",
+      "value": "document-parser"
+    }
+  ]
+}

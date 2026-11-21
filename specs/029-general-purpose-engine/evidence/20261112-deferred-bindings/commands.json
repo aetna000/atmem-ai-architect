@@ -1,0 +1,14 @@
+{
+  "cwd": "/Users/javadtaghia/gitlab/ai-architect-workbench",
+  "emitTemplates": "node specs/029-general-purpose-engine/evidence/20261112-deferred-bindings/emit-templates.mjs v1",
+  "checkEntrypoint": ".local/external-artifacts/application-contracts/locked-test-runtime-v1/bin/python -I specs/029-general-purpose-engine/evidence/20261112-deferred-bindings/check-template-api.py <emitted application directory> <fresh receipt path>",
+  "handoff": "node specs/029-general-purpose-engine/evidence/20261112-deferred-bindings/check-handoff.mjs",
+  "regressionEmit": "node specs/029-general-purpose-engine/evidence/20261112-deferred-bindings/emit-regression.mjs v2",
+  "regressionRun": ".local/external-artifacts/application-contracts/locked-test-runtime-v1/bin/python -I .local/external-artifacts/deferred-bindings/regression-v2/aws/applications/block_626f6f747374726170/tests/run.py --fixture /Users/javadtaghia/gitlab/ai-architect-workbench/.local/durable-postgres/fixture.json --out /Users/javadtaghia/gitlab/ai-architect-workbench/.local/external-artifacts/deferred-bindings/regression-v2/aws/applications/block_626f6f747374726170/.local/regression-v1",
+  "checks": [
+    "npm test",
+    "npm run test:server",
+    "npm run build"
+  ],
+  "reproduction": "Select fresh output revisions/directories, update matching checker input paths, and use only the owned nonce-guarded local SQL fixture. No cloud credentials required or used."
+}

@@ -1,0 +1,449 @@
+{
+  "format": "atmem.ai-architect.project",
+  "formatVersion": "2.3.0",
+  "meta": {
+    "id": "1916e742-ad7a-42df-a5a9-bad74ed677a8",
+    "name": "AWS PR review assistant (synthetic)",
+    "createdAt": "2026-11-07T12:08:54.241Z",
+    "updatedAt": "2026-11-07T12:08:54.241Z",
+    "revision": 2,
+    "generator": "atmem-ai-architect 0.2.0"
+  },
+  "design": {
+    "provider": "aws",
+    "nodes": [
+      {
+        "id": "repo",
+        "type": "resource",
+        "position": {
+          "x": 50,
+          "y": 190
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Existing Git repository host",
+          "provider": "tools",
+          "kind": "source",
+          "description": "Existing repository with synthetic PR. Sends signed PR webhook; serves diff and file contents to a read-only, repo-scoped token. Never modified.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "existing"
+        }
+      },
+      {
+        "id": "apigw",
+        "type": "resource",
+        "position": {
+          "x": 470,
+          "y": 50
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "PR webhook endpoint",
+          "provider": "aws",
+          "kind": "resource",
+          "description": "Receives PR events. A small validator checks the webhook signature and allowed repository, then enqueues. Rejects unknown repos.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "ingest",
+          "service": "Amazon API Gateway (HTTP API)"
+        }
+      },
+      {
+        "id": "queue",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 50
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Review job queue",
+          "provider": "aws",
+          "kind": "resource",
+          "description": "Buffers review jobs keyed by repo+PR+head commit SHA for idempotent processing.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "service": "Amazon SQS"
+        }
+      },
+      {
+        "id": "dlq",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 50
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Failed review jobs",
+          "provider": "aws",
+          "kind": "resource",
+          "description": "Holds jobs that failed repeatedly, for operator inspection.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "service": "Amazon SQS (dead-letter queue)"
+        }
+      },
+      {
+        "id": "worker",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 330
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "PR review worker",
+          "provider": "aws",
+          "kind": "agent",
+          "description": "Fetches only the authorized diff and relevant changed files (size-bounded), treats code as untrusted text and never executes it. Builds the prompt, calls the model, validates that each comment maps to a changed line, and stores drafts. No push or merge permissions.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "app",
+          "service": "AWS Lambda"
+        }
+      },
+      {
+        "id": "secrets",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 340
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Read-only repo credential",
+          "provider": "aws",
+          "kind": "resource",
+          "description": "Stores the read-only repo token, readable only by the worker role. The value never appears in the diagram.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "service": "AWS Secrets Manager"
+        }
+      },
+      {
+        "id": "model",
+        "type": "resource",
+        "position": {
+          "x": 1730,
+          "y": 50
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Review model",
+          "provider": "aws",
+          "kind": "predict",
+          "description": "Foundation model invoked via Converse. Model ID, access, region and quotas still need verification. Mocked in local tests.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "binding": "aws-bedrock-model",
+          "role": "llm",
+          "service": "Amazon Bedrock"
+        }
+      },
+      {
+        "id": "drafts",
+        "type": "resource",
+        "position": {
+          "x": 1730,
+          "y": 330
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Draft review comments",
+          "provider": "aws",
+          "kind": "resource",
+          "description": "Stores line-linked draft comments per PR/head SHA (file, line, side, text, model ID). Uses conditional writes for idempotency.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Confidential",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "service": "Amazon DynamoDB"
+        }
+      },
+      {
+        "id": "reviewer",
+        "type": "resource",
+        "position": {
+          "x": 2150,
+          "y": 330
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Human code reviewer",
+          "provider": "tools",
+          "kind": "tool",
+          "description": "Reviews the drafts. Whether they get posted to the PR is an open decision.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "role": "human"
+        }
+      },
+      {
+        "id": "logs",
+        "type": "resource",
+        "position": {
+          "x": 1730,
+          "y": 610
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Logs and metrics",
+          "provider": "aws",
+          "kind": "monitor",
+          "description": "Worker logs (no source code bodies), latency, errors and a DLQ depth alarm.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "service": "Amazon CloudWatch"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e-repo-api",
+        "source": "repo",
+        "target": "apigw",
+        "type": "smoothstep",
+        "label": "signed PR webhook"
+      },
+      {
+        "id": "e-api-queue",
+        "source": "apigw",
+        "target": "queue",
+        "type": "smoothstep",
+        "label": "enqueue review job"
+      },
+      {
+        "id": "e-queue-worker",
+        "source": "queue",
+        "target": "worker",
+        "type": "smoothstep",
+        "label": "trigger review"
+      },
+      {
+        "id": "e-queue-dlq",
+        "source": "queue",
+        "target": "dlq",
+        "type": "smoothstep",
+        "label": "redrive after retries"
+      },
+      {
+        "id": "e-secret-worker",
+        "source": "secrets",
+        "target": "worker",
+        "type": "smoothstep",
+        "label": "read-only token"
+      },
+      {
+        "id": "e-repo-worker",
+        "source": "repo",
+        "target": "worker",
+        "type": "smoothstep",
+        "label": "read diff + changed files only"
+      },
+      {
+        "id": "e-worker-model",
+        "source": "worker",
+        "target": "model",
+        "type": "smoothstep",
+        "label": "Converse: analyze diff"
+      },
+      {
+        "id": "e-worker-drafts",
+        "source": "worker",
+        "target": "drafts",
+        "type": "smoothstep",
+        "label": "write line-linked drafts"
+      },
+      {
+        "id": "e-drafts-reviewer",
+        "source": "drafts",
+        "target": "reviewer",
+        "type": "smoothstep",
+        "label": "drafts for review"
+      },
+      {
+        "id": "e-worker-logs",
+        "source": "worker",
+        "target": "logs",
+        "type": "smoothstep",
+        "label": "logs and metrics"
+      }
+    ]
+  },
+  "discovery": {
+    "problem": "",
+    "brief": {
+      "application": "Use AWS for this synthetic architecture qualification. Review a synthetic pull request from an existing repository. Retrieve only the authorized diff and relevant files, analyze it with AI, and draft review comments linked to changed lines. Preserve the existing repository. Never push, merge or execute repository code. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+      "cloud": "AWS"
+    },
+    "facts": [
+      {
+        "id": "fact-57d18736",
+        "name": "cloud.preference",
+        "value": "aws",
+        "unit": "provider",
+        "text": "Use AWS for this synthetic architecture qualification. Review a synthetic pull request from an existing repository. Retrieve only the authorized diff and relevant files, analyze it with AI, and draft review comments linked to changed lines. Preserve the existing repository. Never push, merge or exec",
+        "madeAt": "2026-11-07"
+      }
+    ],
+    "workflow": "general",
+    "asked": [],
+    "lastAsked": {
+      "id": "general:0",
+      "topic": "data",
+      "question": "What information will it work with, and where does it live?",
+      "beginner": "For example a database, documents, or another system's data.",
+      "why": "It shapes the AI architecture design."
+    }
+  },
+  "requirements": [
+    {
+      "id": "ai-readonly-repo",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "The system shall only read the authorized PR diff and relevant changed files. It shall never push, merge, check out or execute repository code.",
+      "rationale": "Prevents changes to the repository and blocks code-execution or prompt-injection attacks through untrusted code.",
+      "basis": "User: \"Retrieve only the authorized diff and relevant files… Never push, merge or execute repository code.\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "worker",
+        "secrets",
+        "repo"
+      ]
+    },
+    {
+      "id": "ai-line-linked-drafts",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Every draft comment shall reference a file and a line that exists in the PR diff. Comments that can't be mapped to a changed line shall be rejected.",
+      "rationale": "Comments on lines outside the diff mislead reviewers and can fail when posted.",
+      "basis": "User: \"draft review comments linked to changed lines\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "worker",
+        "drafts"
+      ]
+    },
+    {
+      "id": "ai-model-validation",
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "statement": "Proposed: model quality shall be checked against the real Bedrock model on a labelled set of synthetic PRs, kept separate from mocked local tests.",
+      "rationale": "Mocked replies prove the plumbing works but say nothing about review quality, model access or quotas.",
+      "basis": "User: \"distinguish mocked model behavior from actual model validation\"",
+      "priority": "should",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "model"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use AWS for this synthetic architecture qualification",
+      "options": "",
+      "decision": "aws",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.aws-pr-review-assistant-first-end-to-end-sketch",
+      "title": "AWS PR review assistant – first end-to-end sketch",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: review one synthetic PR from an existing repository: authorized diff retrieval, AI analysis, and line-linked draft comments. Read-only on the repository; no push, merge or code execution. Assumptions: the repo host supports signed webhooks and a read-only app token; Bedrock model and region not yet selected; whether comments get posted back is still undecided. The custom ingest and review components aren't covered by the native generator yet and still need engineering.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "extensions": {
+    "requirementNumbers": {
+      "drv-data-access": 1,
+      "drv-data-location": 2,
+      "ai-readonly-repo": 3,
+      "ai-line-linked-drafts": 4,
+      "ai-model-validation": 5
+    },
+    "choices": {},
+    "conceptSig": null
+  }
+}

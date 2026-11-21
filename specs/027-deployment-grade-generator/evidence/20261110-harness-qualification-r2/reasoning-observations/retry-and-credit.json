@@ -1,0 +1,116 @@
+{
+  "case": "retry-and-credit",
+  "prompt": "A service grants paid credit from a payment webhook. Delivery is at least once; two requests can arrive concurrently and a process may crash after updating the balance. Explain how the blocks must interact to prevent double credit and recover safely. Do not invent a payment vendor or currency. Do not draw a proposal, request tools or claim tests ran. Keep the answer under 180 words.",
+  "response": {
+    "message": "We need each paid credit applied once despite concurrent deliveries and crashes: the webhook receiver verifies authenticity and successful payment status, validates the account and credit against trusted payment records, durably records the event before acknowledging it, and passes work to a retryable worker using a stable payment/credit-operation key rather than a delivery-attempt ID.\n\nThe worker must use one database transaction to insert a uniquely keyed credit-ledger entry, atomically increment the balance, mark processing complete and record any outgoing notification in an outbox; concurrent duplicates encounter the unique constraint and cannot credit again, crashes before commit roll everything back, crashes after commit safely replay as already completed, and an outbox dispatcher retries notifications with downstream deduplication while failed work remains recoverable through bounded retries, an alerted dead-letter path and reconciliation against payment records.\n\n**Which database holds the balance?** This determines how we enforce the atomic transaction\u2014for example, PostgreSQL, DynamoDB, or \u201cnot sure\u201d.",
+    "phase": "Architecture Review",
+    "contextUsed": {
+      "status": "ready",
+      "enabled": true,
+      "engine": "AtMem 2.3.10 core SDK",
+      "recordsUsed": [],
+      "knowledgeRecordIds": [
+        "rec_f6380539ac7f4df8bec63b60b80a772c",
+        "rec_4b613e3afd1f406dae847ed42f2c5947",
+        "rec_cd3e2a83d4e04e6d84b0145df84123a9",
+        "rec_16d1406304104f0d8314ee87394d47fb",
+        "rec_cb5c12ac1e4e4151be273e53d93aaa6c",
+        "rec_0d7cdd7fdd524317bd0c93d17635583c",
+        "rec_1e65fde061814090ad1fcad84912c661",
+        "rec_d32cb6d1783f4419acf4c4cf57b27992"
+      ],
+      "skills": [
+        {
+          "id": "composition",
+          "name": "Architecture composition and engineering judgment",
+          "provider": "all",
+          "stages": [
+            "discover",
+            "design",
+            "review",
+            "deploy"
+          ],
+          "version": "1.0.0",
+          "digest": "df2291a4e0d48a979d4f7c6e99da046bdedfc0e54d41e0b5379b2bc8086b5be6",
+          "summary": "Choose and compose blocks through responsibility, contracts, state, identity, failure modes and trade-offs; verify the complete system.",
+          "source": "AtMem AI Architect reviewed specialist guidance",
+          "reference": null,
+          "integrity": true,
+          "coverage": "guidance; no cloud execution",
+          "tools": [
+            "memory.lookup",
+            "project.read",
+            "skills.lookup"
+          ],
+          "enabled": true
+        },
+        {
+          "id": "architecture",
+          "name": "AI architecture and discovery",
+          "provider": "all",
+          "stages": [
+            "discover",
+            "design",
+            "review"
+          ],
+          "version": "1.2.1",
+          "digest": "a91ce698f48bafb6d814cc256eda46e4b0f94faa9fa48a131004f00a77b63a6e",
+          "summary": "Clarify outcome, users, existing systems, data ownership and constraints. Evolve the diagram incrementally. Derive functional requirements and propose measurable quality targets as assumptions needing confirmation. Compare clouds against the actual requirements; do not assume an enterprise identity provider or a vendor. Keep proposed and accepted decisions distinct.",
+          "source": "AtMem AI Architect reviewed specialist guidance",
+          "reference": null,
+          "integrity": true,
+          "coverage": "guidance; no cloud execution",
+          "tools": [
+            "memory.lookup",
+            "project.read",
+            "skills.lookup"
+          ],
+          "enabled": true
+        },
+        {
+          "id": "aws",
+          "name": "AWS architecture guidance",
+          "provider": "aws",
+          "stages": [
+            "design",
+            "review",
+            "estimate",
+            "deploy"
+          ],
+          "version": "1.4.0",
+          "digest": "82147cbfe99396d8e659bc7c8d62ce57b0868983bc88c1ace0aaa860ecb9ba29",
+          "summary": "Apply AWS Well-Architected concerns to the drawn workload with evidence. Distinguish Bedrock on-demand model access, knowledge-base/vector storage, guardrails and IAM; they are separate concerns. S3 storage, requests and transfer are separate cost dimensions. A diagram is not a complete Well-Architected review. Native generation currently covers only S3 foundations.",
+          "source": "https://raw.githubusercontent.com/aws/agent-toolkit-for-aws/fb298e0b6bf2b308a3d2c212b2a09b9bace8e090/plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+          "reference": {
+            "id": "aws",
+            "repository": "aws/agent-toolkit-for-aws",
+            "commit": "fb298e0b6bf2b308a3d2c212b2a09b9bace8e090",
+            "sourcePath": "plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+            "url": "https://raw.githubusercontent.com/aws/agent-toolkit-for-aws/fb298e0b6bf2b308a3d2c212b2a09b9bace8e090/plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+            "sha256": "aa8fef39ef6d64365e48827d9acc90b2b8755023f5c177341cf1c954c1057811",
+            "file": "agent-skills/upstream/aws/SKILL.md",
+            "status": "reference-only",
+            "note": "Imported source reference, not an enabled script/tool package. AtMem AI Architect specialist guidance is reviewed separately; referenced upstream companion files are not bundled.",
+            "integrity": true
+          },
+          "integrity": true,
+          "coverage": "guidance; no cloud execution",
+          "tools": [
+            "memory.lookup",
+            "project.read",
+            "skills.lookup",
+            "pricing.lookup"
+          ],
+          "enabled": true
+        }
+      ],
+      "tools": [],
+      "boundary": "AtMem AI Architect \u2192 native client",
+      "contextDigest": "311b243f25f5cee0b4410f0006ae98a9842d5ab41362340d82503bc3807c0dd2",
+      "projectId": "evaluation-retry-and-credit-001"
+    },
+    "priceQuotes": []
+  },
+  "durationSeconds": 15.0,
+  "status": "observed_not_independently_graded"
+}

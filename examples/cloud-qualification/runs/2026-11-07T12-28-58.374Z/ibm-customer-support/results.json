@@ -1,0 +1,98 @@
+{
+  "provider": "ibm-customer-support",
+  "architectProvider": "codex",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Customer and tenant boundaries preserved",
+    "Answers cite approved knowledge",
+    "Unsupported promises escalate to staff",
+    "Sensitive customer fields excluded from model input",
+    "Approved ticket updates are idempotent and auditable"
+  ],
+  "staticAssessment": {
+    "kind": "static-graph-checks",
+    "checks": [
+      {
+        "name": "Application contains at least three required components",
+        "passed": true
+      },
+      {
+        "name": "Required components form one connected graph",
+        "passed": true
+      },
+      {
+        "name": "Proposed cloud resources retain the requested provider",
+        "passed": true
+      },
+      {
+        "name": "Proposed cloud components name concrete services",
+        "passed": true
+      },
+      {
+        "name": "AI application has not collapsed into only object storage",
+        "passed": true
+      }
+    ],
+    "passed": true,
+    "limitations": [
+      "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+    ],
+    "acceptanceRequirements": [
+      "Customer and tenant boundaries preserved",
+      "Answers cite approved knowledge",
+      "Unsupported promises escalate to staff",
+      "Sensitive customer fields excluded from model input",
+      "Approved ticket updates are idempotent and auditable"
+    ]
+  },
+  "components": [
+    {
+      "id": "support-staff",
+      "binding": "web-browser"
+    },
+    {
+      "id": "staff-identity",
+      "service": "IBM Cloud App ID"
+    },
+    {
+      "id": "support-app",
+      "service": "IBM Cloud Code Engine"
+    },
+    {
+      "id": "ticket-queue"
+    },
+    {
+      "id": "existing-crm"
+    },
+    {
+      "id": "approved-knowledge"
+    },
+    {
+      "id": "knowledge-storage",
+      "service": "IBM Cloud Object Storage"
+    },
+    {
+      "id": "support-state",
+      "service": "IBM Cloud Databases for PostgreSQL"
+    },
+    {
+      "id": "draft-model",
+      "service": "IBM watsonx.ai"
+    },
+    {
+      "id": "app-secrets",
+      "service": "IBM Cloud Secrets Manager"
+    },
+    {
+      "id": "application-logs",
+      "service": "IBM Cloud Logs"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

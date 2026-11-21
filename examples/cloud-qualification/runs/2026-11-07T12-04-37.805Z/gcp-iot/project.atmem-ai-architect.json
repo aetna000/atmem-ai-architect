@@ -1,0 +1,406 @@
+{
+  "format": "atmem.ai-architect.project",
+  "formatVersion": "2.3.0",
+  "meta": {
+    "id": "2cf0d5e8-c02f-4612-8245-bad72c95b490",
+    "name": "GCP synthetic sensor anomaly detection",
+    "createdAt": "2026-11-07T12:05:32.520Z",
+    "updatedAt": "2026-11-07T12:05:32.520Z",
+    "revision": 2,
+    "generator": "atmem-ai-architect 0.2.0"
+  },
+  "design": {
+    "provider": "gcp",
+    "nodes": [
+      {
+        "id": "sensor-sim",
+        "type": "resource",
+        "position": {
+          "x": 50,
+          "y": 190
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Synthetic sensor event generator",
+          "provider": "tools",
+          "kind": "source",
+          "description": "Existing synthetic event producer, outside the provisioning scope. It sends JSON events with device_id, event timestamp, metric, value and unit.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "poc": true
+        }
+      },
+      {
+        "id": "ingest",
+        "type": "resource",
+        "position": {
+          "x": 470,
+          "y": 190
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Ingestion topic",
+          "provider": "gcp",
+          "kind": "stream",
+          "description": "Pub/Sub topic and subscription that durably buffer events with retention, so they can be replayed. The publisher authenticates with a scoped service account. device_id is the ordering key.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "ingest",
+          "service": "Google Cloud Pub/Sub"
+        }
+      },
+      {
+        "id": "validate",
+        "type": "resource",
+        "position": {
+          "x": 890,
+          "y": 190
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Validation & feature window",
+          "provider": "gcp",
+          "kind": "guard",
+          "description": "Validates the schema, unit whitelist and timestamp sanity, and keeps device_id, event time and unit unchanged. It builds per-device windows for scoring and sends rejected events to the dead-letter topic with a reason.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "guard",
+          "service": "Dataflow (Apache Beam streaming)"
+        }
+      },
+      {
+        "id": "dlq",
+        "type": "resource",
+        "position": {
+          "x": 1730,
+          "y": 330
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Rejected events (dead-letter)",
+          "provider": "gcp",
+          "kind": "resource",
+          "description": "Dead-letter topic for invalid or unprocessable events, kept for inspection and replay.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "service": "Google Cloud Pub/Sub"
+        }
+      },
+      {
+        "id": "infer",
+        "type": "resource",
+        "position": {
+          "x": 1310,
+          "y": 50
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Anomaly scoring model",
+          "provider": "gcp",
+          "kind": "predict",
+          "description": "Returns an anomaly score and flag for each device window. In local tests it is a scripted mock. The real model, its training labels and its thresholds are not decided yet.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "model",
+          "service": "Vertex AI online prediction endpoint"
+        }
+      },
+      {
+        "id": "results",
+        "type": "resource",
+        "position": {
+          "x": 1730,
+          "y": 50
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Anomaly results",
+          "provider": "gcp",
+          "kind": "output",
+          "description": "Results table with device_id, event timestamp, unit, value, score, flag and model version, partitioned by event date.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "output",
+          "measures": [
+            {
+              "label": "Identity/timestamp/unit preserved",
+              "path": "preserved_fields_ratio",
+              "op": ">=",
+              "target": 1
+            }
+          ],
+          "service": "BigQuery"
+        }
+      },
+      {
+        "id": "alert",
+        "type": "resource",
+        "position": {
+          "x": 2150,
+          "y": 190
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Operator alerting",
+          "provider": "gcp",
+          "kind": "monitor",
+          "description": "Raises an alert from a log-based metric on flagged anomalies. It also alerts on dead-letter backlog and pipeline lag.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "proposed",
+          "poc": true,
+          "role": "monitor",
+          "service": "Cloud Monitoring alerting policy"
+        }
+      },
+      {
+        "id": "operator",
+        "type": "resource",
+        "position": {
+          "x": 2570,
+          "y": 190
+        },
+        "data": {
+          "inputPosition": "left",
+          "outputPosition": "right",
+          "label": "Operator",
+          "provider": "tools",
+          "kind": "tool",
+          "description": "Existing on-call person who receives alerts through an email or chat notification channel that is still to be confirmed.",
+          "config": {
+            "region": "To be selected",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "origin": "existing",
+          "role": "human"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e-sim-ingest",
+        "source": "sensor-sim",
+        "target": "ingest",
+        "type": "smoothstep",
+        "label": "publish events"
+      },
+      {
+        "id": "e-ingest-validate",
+        "source": "ingest",
+        "target": "validate",
+        "type": "smoothstep",
+        "label": "streaming pull"
+      },
+      {
+        "id": "e-validate-dlq",
+        "source": "validate",
+        "target": "dlq",
+        "type": "smoothstep",
+        "label": "rejected + reason"
+      },
+      {
+        "id": "e-validate-infer",
+        "source": "validate",
+        "target": "infer",
+        "type": "smoothstep",
+        "label": "predict request (window)"
+      },
+      {
+        "id": "e-infer-results",
+        "source": "infer",
+        "target": "results",
+        "type": "smoothstep",
+        "label": "score → streaming insert via Dataflow"
+      },
+      {
+        "id": "e-results-alert",
+        "source": "results",
+        "target": "alert",
+        "type": "smoothstep",
+        "label": "anomaly metric"
+      },
+      {
+        "id": "e-dlq-alert",
+        "source": "dlq",
+        "target": "alert",
+        "type": "smoothstep",
+        "label": "backlog metric"
+      },
+      {
+        "id": "e-alert-operator",
+        "source": "alert",
+        "target": "operator",
+        "type": "smoothstep",
+        "label": "notification"
+      }
+    ]
+  },
+  "discovery": {
+    "problem": "",
+    "brief": {
+      "application": "Use Google Cloud for this synthetic architecture qualification. Analyze synthetic sensor events for anomalous device behavior. Preserve device identity, timestamps and units. Include ingestion, durable buffering, validation, inference, results and an operator alert. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+      "cloud": "Google Cloud"
+    },
+    "facts": [
+      {
+        "id": "fact-d4a2e357",
+        "name": "cloud.preference",
+        "value": "gcp",
+        "unit": "provider",
+        "text": "Use Google Cloud for this synthetic architecture qualification. Analyze synthetic sensor events for anomalous device behavior. Preserve device identity, timestamps and units. Include ingestion, durable buffering, validation, inference, results and an operator alert. Draw the complete end-to-end arch",
+        "madeAt": "2026-11-07"
+      }
+    ],
+    "workflow": "predictive",
+    "asked": [],
+    "lastAsked": {
+      "id": "predictive:0",
+      "topic": "data",
+      "question": "How much history do you have for what you want to predict?",
+      "beginner": "For example “three years of sales by store” or “failure records since 2020”.",
+      "why": "It shapes the Predictive ML design."
+    }
+  },
+  "requirements": [
+    {
+      "id": "ai-preserve-fields",
+      "kind": "functional",
+      "category": "reliability",
+      "statement": "Every accepted event and result must keep the original device_id, event timestamp and unit unchanged from ingestion to the results table.",
+      "rationale": "If identity or units are lost, alerts can point to the wrong device or misread values.",
+      "basis": "User: \"Preserve device identity, timestamps and units.\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "ingest",
+        "validate",
+        "infer",
+        "results"
+      ],
+      "measure": {
+        "metric": "preserved field ratio",
+        "op": ">=",
+        "target": 1,
+        "unit": "ratio"
+      }
+    },
+    {
+      "id": "ai-invalid-events",
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "statement": "Invalid events go to a dead-letter topic with a rejection reason. They are never silently dropped, and a growing backlog alerts the operator.",
+      "rationale": "Without this, bad data either corrupts scores or disappears unnoticed.",
+      "basis": "User asked for validation, durable buffering and an operator alert.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "validate",
+        "dlq",
+        "alert"
+      ]
+    },
+    {
+      "id": "ai-model-evaluation",
+      "kind": "nonfunctional",
+      "category": "other",
+      "statement": "Proposed: before go-live, check the anomaly model on a time-based holdout with labelled anomalies and set acceptable detection and false-alarm rates. Mocked model tests are not evidence of model quality.",
+      "rationale": "Too many false alarms will lead operators to ignore alerts, and missed anomalies defeat the purpose.",
+      "basis": "User: \"distinguish mocked model behavior from actual model validation\".",
+      "priority": "should",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "infer"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use Google Cloud for this synthetic architecture qualification",
+      "options": "",
+      "decision": "gcp",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.gcp-sensor-anomaly-detection-first-end-to-end-sketch",
+      "title": "GCP sensor anomaly detection – first end-to-end sketch",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: synthetic sensor events → Pub/Sub (durable buffer) → Dataflow validation (schema check that keeps device_id, timestamp and unit; rejected events go to a dead-letter topic) → Vertex AI online endpoint (anomaly score) → BigQuery results → Cloud Monitoring alert to an existing operator. Assumptions: the region is not chosen yet; the model is a placeholder until we agree on labels and evaluation; local tests use a mocked model. Native Terraform for these GCP services is not generated yet, so engineering work is still needed. Nothing has been deployed or verified.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "extensions": {
+    "requirementNumbers": {
+      "drv-data-access": 1,
+      "drv-data-location": 2,
+      "ai-preserve-fields": 3,
+      "ai-invalid-events": 4,
+      "ai-model-evaluation": 5
+    },
+    "choices": {},
+    "conceptSig": null
+  }
+}

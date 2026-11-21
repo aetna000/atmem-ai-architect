@@ -1,0 +1,28 @@
+.build-design-button { gap:6px; white-space:normal; }
+.conversation-activity { min-width:0; }
+.turn-activity { min-width:0; margin:5px 0 12px; color:var(--muted); font-size:12px; }
+.turn-activity-row { display:flex; gap:8px; align-items:center; min-width:0; }
+.turn-activity-toggle { display:flex; align-items:center; min-width:0; flex:1; gap:5px; border:0; border-radius:5px; padding:5px 2px; min-height:30px; background:transparent; color:inherit; font:inherit; text-align:left; cursor:pointer; }
+.turn-activity-toggle:hover { color:var(--ink); }
+.turn-activity-toggle:focus-visible,.turn-inline-action:focus-visible { outline:2px solid var(--action); outline-offset:3px; }
+.turn-activity-label { flex-shrink:0; }
+.turn-latest { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.turn-chevron { margin-left:auto; padding-left:4px; }
+.turn-state-icon { display:inline-block; width:14px; text-align:center; flex-shrink:0; }
+.turn-state-icon.is-working { animation:turn-working 1.5s linear infinite; }
+.turn-inline-action { flex-shrink:0; border:0; background:transparent; color:var(--muted); text-decoration:underline; font:inherit; min-height:30px; padding:4px; cursor:pointer; }
+.turn-activity-details { margin:2px 0 0 7px; padding:2px 0 2px 14px; border-left:1px solid var(--line); overflow-wrap:anywhere; }
+.turn-activity-details ol { list-style:none; margin:0; padding:0; }
+.turn-activity-details li { padding:4px 0; margin:0; }
+.turn-activity-details p { margin:3px 0; }
+.turn-selection { font-size:11px; color:var(--muted); margin-bottom:8px; }
+.turn-activity-details .chat-markdown { color:var(--ink); }
+.turn-activity-details pre { white-space:pre-wrap; overflow-wrap:anywhere; }
+.legacy-activity { border-block:1px solid var(--line); margin:10px 0; color:var(--muted); font-size:12px; }
+.legacy-activity > summary { padding:9px 2px; cursor:pointer; }
+.legacy-activity > p { margin:4px 0 8px; }
+.turn-activity.has-error .turn-activity-label { color:var(--color-error,#a82837); }
+@keyframes turn-working { to { transform:rotate(360deg); } }
+@media (prefers-reduced-motion:reduce) { .turn-state-icon.is-working { animation:none; } }
+
+@media (max-width:480px) { .turn-activity-toggle,.turn-inline-action { min-height:40px; } }

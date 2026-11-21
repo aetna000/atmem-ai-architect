@@ -1,0 +1,118 @@
+{
+  "status": "artifacts_captured",
+  "projectId": "90442e24-62b5-4183-9e0a-726a32046f3c",
+  "sourceCommit": "0b8fe07e8ceea1506e65e88e051e08baa1c31d1a",
+  "model": "gpt-6.1-sol",
+  "effort": "high",
+  "startedAt": "2026-11-11T05:31:43.313Z",
+  "observationSeconds": 1800,
+  "classification": "uncoached-exposed",
+  "cloudOperations": false,
+  "sessionId": "869051d9-e6ec-4bb2-95d6-58221e985d2c",
+  "job": {
+    "id": "869051d9-e6ec-4bb2-95d6-58221e985d2c",
+    "model": "gpt-6.1-sol",
+    "effort": "high",
+    "state": "idle",
+    "run": "7f0f7834-ad27-4eb1-9a16-38cbf8973843",
+    "last_status": "completed"
+  },
+  "finalizations": [
+    {
+      "id": "eedc920e-d296-40af-a0b5-8dcda2ade72e",
+      "sessionId": "869051d9-e6ec-4bb2-95d6-58221e985d2c",
+      "runId": "7f0f7834-ad27-4eb1-9a16-38cbf8973843",
+      "state": "local_checks_passed",
+      "artifact": {
+        "id": "db542a47-bf51-4802-b5eb-104bd5e2fa49",
+        "sha256": "1b3bdaac06abece237c58fe5742aff6ef58d38ca3f54c35edb075c1c2cda6996"
+      },
+      "plan": {
+        "artifactId": "db542a47-bf51-4802-b5eb-104bd5e2fa49",
+        "artifactSha256": "1b3bdaac06abece237c58fe5742aff6ef58d38ca3f54c35edb075c1c2cda6996",
+        "decisions": [
+          {
+            "validatorId": "python-tests",
+            "label": "Local Python tests",
+            "state": "manual_only",
+            "contractSha256": "936375972451b9f74b0a728368c2d79f2bd0703890ac4ae0d83743c7c3ac4d87",
+            "applicability": null,
+            "assessment": null
+          },
+          {
+            "validatorId": "lambda-python312-tests",
+            "label": "Lambda Python 3.12 ARM64 tests",
+            "state": "selected",
+            "contractSha256": "e61c4ac765008487ac61c2f9b628331c59dcfae8bb35c09c689aeeb574c6b363",
+            "applicability": {
+              "anyOf": [
+                "test_*.py",
+                "tests/test_*.py"
+              ],
+              "allOf": [
+                "tests/__init__.py"
+              ],
+              "noneOf": []
+            },
+            "assessment": {
+              "applies": true,
+              "matchedAnyOf": [
+                "tests/test_*.py"
+              ],
+              "missingAllOf": [],
+              "matchedNoneOf": []
+            }
+          },
+          {
+            "validatorId": "python-tests-folder",
+            "label": "Python unittest tests-folder discovery",
+            "state": "manual_only",
+            "contractSha256": "23943a5f5a755d10b7f9c6f53cd4f0a34ce4a69d8ef9b4a789479564d2f6b909",
+            "applicability": null,
+            "assessment": null
+          },
+          {
+            "validatorId": "node-browser-tests",
+            "label": "Node and Chromium tests (Playwright 1.64.1)",
+            "state": "selected",
+            "contractSha256": "745cc90f598477c0adec233ee207760e9e463abb1d53fd2c184e755a14b26e61",
+            "applicability": {
+              "anyOf": [
+                "**/*.test.mjs",
+                "**/*.test.js"
+              ],
+              "allOf": [],
+              "noneOf": []
+            },
+            "assessment": {
+              "applies": true,
+              "matchedAnyOf": [
+                "**/*.test.mjs"
+              ],
+              "missingAllOf": [],
+              "matchedNoneOf": []
+            }
+          }
+        ],
+        "selectionStatus": "checks_selected",
+        "acceptance": "not_established_by_file_applicability"
+      },
+      "checks": [
+        "a0149092-2b84-4b35-aad7-65c91ea30c68",
+        "1d67504d-a56c-4e32-b94e-e85615a2a326"
+      ],
+      "acceptance": "not_established_by_local_checks"
+    }
+  ],
+  "automaticRepairs": 0,
+  "artifactId": "db542a47-bf51-4802-b5eb-104bd5e2fa49",
+  "artifactSha256": "1b3bdaac06abece237c58fe5742aff6ef58d38ca3f54c35edb075c1c2cda6996",
+  "fileCount": 39,
+  "acceptedRequests": 1,
+  "steeringAccepted": 3,
+  "reloadWithoutReplay": true,
+  "sourceChangedDuringRun": [],
+  "errors": [],
+  "independentAcceptance": "not_established",
+  "scope": "Actual primary Build UI, authenticated product API and live native harness; external brief and ordered natural updates. Source/artifact/intent preservation is not requirement, complete-system, holdout or release acceptance."
+}

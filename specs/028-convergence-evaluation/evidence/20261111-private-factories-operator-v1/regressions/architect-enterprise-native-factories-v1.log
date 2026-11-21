@@ -1,0 +1,185 @@
+test_all_four_factories_queue_execute_and_release_with_distinct_native_sql_roles (__main__.NativeFactories.test_all_four_factories_queue_execute_and_release_with_distinct_native_sql_roles) ... 
+  test_all_four_factories_queue_execute_and_release_with_distinct_native_sql_roles (__main__.NativeFactories.test_all_four_factories_queue_execute_and_release_with_distinct_native_sql_roles) (provider='aws') ... FAIL
+  test_all_four_factories_queue_execute_and_release_with_distinct_native_sql_roles (__main__.NativeFactories.test_all_four_factories_queue_execute_and_release_with_distinct_native_sql_roles) (provider='azure') ... FAIL
+  test_all_four_factories_queue_execute_and_release_with_distinct_native_sql_roles (__main__.NativeFactories.test_all_four_factories_queue_execute_and_release_with_distinct_native_sql_roles) (provider='gcp') ... FAIL
+  test_all_four_factories_queue_execute_and_release_with_distinct_native_sql_roles (__main__.NativeFactories.test_all_four_factories_queue_execute_and_release_with_distinct_native_sql_roles) (provider='ibm') ... FAIL
+test_all_four_factories_queue_execute_and_release_with_distinct_native_sql_roles (__main__.NativeFactories.test_all_four_factories_queue_execute_and_release_with_distinct_native_sql_roles) ... FAIL
+test_api_can_restart_without_regenerating_keys_or_losing_durable_question (__main__.NativeFactories.test_api_can_restart_without_regenerating_keys_or_losing_durable_question) ... FAIL
+test_api_has_no_sync_inference_route_and_cannot_start_worker_or_receive_adapters (__main__.NativeFactories.test_api_has_no_sync_inference_route_and_cannot_start_worker_or_receive_adapters) ... Executing <Task finished name='Task-12' coro=<NativeFactories.asyncSetUp() done, defined at /Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_native_postgres.py:55> result=None created at /opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py:101> took 0.112 seconds
+FAIL
+test_api_startup_rejects_worker_database_and_inherited_authority_or_history_writes (__main__.NativeFactories.test_api_startup_rejects_worker_database_and_inherited_authority_or_history_writes) ... ok
+test_factory_never_migrates_or_adopts_a_stale_schema (__main__.NativeFactories.test_factory_never_migrates_or_adopts_a_stale_schema) ... ok
+test_revocation_between_worker_result_and_api_release_is_not_bypassed_by_factory (__main__.NativeFactories.test_revocation_between_worker_result_and_api_release_is_not_bypassed_by_factory) ... Executing <Task finished name='Task-28' coro=<NativeFactories.asyncSetUp() done, defined at /Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_native_postgres.py:55> result=None created at /opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py:101> took 0.106 seconds
+FAIL
+test_worker_requires_matching_byte_bound_executor_before_question_admission (__main__.NativeFactories.test_worker_requires_matching_byte_bound_executor_before_question_admission) ... FAIL
+
+======================================================================
+FAIL: test_all_four_factories_queue_execute_and_release_with_distinct_native_sql_roles (__main__.NativeFactories.test_all_four_factories_queue_execute_and_release_with_distinct_native_sql_roles) (provider='aws')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_native_postgres.py", line 96, in test_all_four_factories_queue_execute_and_release_with_distinct_native_sql_roles
+    api=self.make(provider,'api');worker=self.make(provider,'worker');await self.browser(api)
+                                                                      ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_native_postgres.py", line 85, in browser
+    await self.f.login();await self.f.connect_all()
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_http_postgres.py", line 93, in connect_all
+    state=await self.start_graph();response=await self.finish_graph(state);self.assertEqual(response.status_code,303,response.text)
+                                                                           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 400 != 303 : <!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>We could not finish connecting SharePoint</title><main><h1>We could not finish connecting SharePoint</h1><p>Return to your workspace, sign in if needed, and choose Connect again.</p><a href="/">Return to your workspace</a></main></html>
+
+======================================================================
+FAIL: test_all_four_factories_queue_execute_and_release_with_distinct_native_sql_roles (__main__.NativeFactories.test_all_four_factories_queue_execute_and_release_with_distinct_native_sql_roles) (provider='azure')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_native_postgres.py", line 96, in test_all_four_factories_queue_execute_and_release_with_distinct_native_sql_roles
+    api=self.make(provider,'api');worker=self.make(provider,'worker');await self.browser(api)
+                                                                      ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_native_postgres.py", line 85, in browser
+    await self.f.login();await self.f.connect_all()
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_http_postgres.py", line 93, in connect_all
+    state=await self.start_graph();response=await self.finish_graph(state);self.assertEqual(response.status_code,303,response.text)
+                                                                           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 400 != 303 : <!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>We could not finish connecting SharePoint</title><main><h1>We could not finish connecting SharePoint</h1><p>Return to your workspace, sign in if needed, and choose Connect again.</p><a href="/">Return to your workspace</a></main></html>
+
+======================================================================
+FAIL: test_all_four_factories_queue_execute_and_release_with_distinct_native_sql_roles (__main__.NativeFactories.test_all_four_factories_queue_execute_and_release_with_distinct_native_sql_roles) (provider='gcp')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_native_postgres.py", line 96, in test_all_four_factories_queue_execute_and_release_with_distinct_native_sql_roles
+    api=self.make(provider,'api');worker=self.make(provider,'worker');await self.browser(api)
+                                                                      ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_native_postgres.py", line 85, in browser
+    await self.f.login();await self.f.connect_all()
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_http_postgres.py", line 93, in connect_all
+    state=await self.start_graph();response=await self.finish_graph(state);self.assertEqual(response.status_code,303,response.text)
+                                                                           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 400 != 303 : <!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>We could not finish connecting SharePoint</title><main><h1>We could not finish connecting SharePoint</h1><p>Return to your workspace, sign in if needed, and choose Connect again.</p><a href="/">Return to your workspace</a></main></html>
+
+======================================================================
+FAIL: test_all_four_factories_queue_execute_and_release_with_distinct_native_sql_roles (__main__.NativeFactories.test_all_four_factories_queue_execute_and_release_with_distinct_native_sql_roles) (provider='ibm')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_native_postgres.py", line 96, in test_all_four_factories_queue_execute_and_release_with_distinct_native_sql_roles
+    api=self.make(provider,'api');worker=self.make(provider,'worker');await self.browser(api)
+                                                                      ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_native_postgres.py", line 85, in browser
+    await self.f.login();await self.f.connect_all()
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_http_postgres.py", line 93, in connect_all
+    state=await self.start_graph();response=await self.finish_graph(state);self.assertEqual(response.status_code,303,response.text)
+                                                                           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 400 != 303 : <!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>We could not finish connecting SharePoint</title><main><h1>We could not finish connecting SharePoint</h1><p>Return to your workspace, sign in if needed, and choose Connect again.</p><a href="/">Return to your workspace</a></main></html>
+
+======================================================================
+FAIL: test_all_four_factories_queue_execute_and_release_with_distinct_native_sql_roles (__main__.NativeFactories.test_all_four_factories_queue_execute_and_release_with_distinct_native_sql_roles)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 119, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_native_postgres.py", line 105, in test_all_four_factories_queue_execute_and_release_with_distinct_native_sql_roles
+    self.assertEqual(self.model_factories,['aws','azure','gcp','ibm']);self.assertEqual(len(self.extracts),1)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: [] != ['aws', 'azure', 'gcp', 'ibm']
+
+Second list contains 4 additional elements.
+First extra element 0:
+'aws'
+
+- []
++ ['aws', 'azure', 'gcp', 'ibm']
+
+======================================================================
+FAIL: test_api_can_restart_without_regenerating_keys_or_losing_durable_question (__main__.NativeFactories.test_api_can_restart_without_regenerating_keys_or_losing_durable_question)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 119, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_native_postgres.py", line 149, in test_api_can_restart_without_regenerating_keys_or_losing_durable_question
+    first=self.make('gcp','api');await self.browser(first);identity=await self.submit()
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_native_postgres.py", line 85, in browser
+    await self.f.login();await self.f.connect_all()
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_http_postgres.py", line 93, in connect_all
+    state=await self.start_graph();response=await self.finish_graph(state);self.assertEqual(response.status_code,303,response.text)
+                                                                           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 400 != 303 : <!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>We could not finish connecting SharePoint</title><main><h1>We could not finish connecting SharePoint</h1><p>Return to your workspace, sign in if needed, and choose Connect again.</p><a href="/">Return to your workspace</a></main></html>
+
+======================================================================
+FAIL: test_api_has_no_sync_inference_route_and_cannot_start_worker_or_receive_adapters (__main__.NativeFactories.test_api_has_no_sync_inference_route_and_cannot_start_worker_or_receive_adapters)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 119, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_native_postgres.py", line 108, in test_api_has_no_sync_inference_route_and_cannot_start_worker_or_receive_adapters
+    api=self.make('gcp','api');await self.browser(api)
+                               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_native_postgres.py", line 85, in browser
+    await self.f.login();await self.f.connect_all()
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_http_postgres.py", line 93, in connect_all
+    state=await self.start_graph();response=await self.finish_graph(state);self.assertEqual(response.status_code,303,response.text)
+                                                                           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 400 != 303 : <!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>We could not finish connecting SharePoint</title><main><h1>We could not finish connecting SharePoint</h1><p>Return to your workspace, sign in if needed, and choose Connect again.</p><a href="/">Return to your workspace</a></main></html>
+
+======================================================================
+FAIL: test_revocation_between_worker_result_and_api_release_is_not_bypassed_by_factory (__main__.NativeFactories.test_revocation_between_worker_result_and_api_release_is_not_bypassed_by_factory)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 119, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_native_postgres.py", line 135, in test_revocation_between_worker_result_and_api_release_is_not_bypassed_by_factory
+    api=self.make('gcp','api');worker=self.make('gcp','worker');await self.browser(api)
+                                                                ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_native_postgres.py", line 85, in browser
+    await self.f.login();await self.f.connect_all()
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_http_postgres.py", line 93, in connect_all
+    state=await self.start_graph();response=await self.finish_graph(state);self.assertEqual(response.status_code,303,response.text)
+                                                                           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 400 != 303 : <!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>We could not finish connecting SharePoint</title><main><h1>We could not finish connecting SharePoint</h1><p>Return to your workspace, sign in if needed, and choose Connect again.</p><a href="/">Return to your workspace</a></main></html>
+
+======================================================================
+FAIL: test_worker_requires_matching_byte_bound_executor_before_question_admission (__main__.NativeFactories.test_worker_requires_matching_byte_bound_executor_before_question_admission)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 119, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_native_postgres.py", line 143, in test_worker_requires_matching_byte_bound_executor_before_question_admission
+    api=self.make('gcp','api');await self.browser(api)
+                               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_native_postgres.py", line 85, in browser
+    await self.f.login();await self.f.connect_all()
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_http_postgres.py", line 93, in connect_all
+    state=await self.start_graph();response=await self.finish_graph(state);self.assertEqual(response.status_code,303,response.text)
+                                                                           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 400 != 303 : <!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>We could not finish connecting SharePoint</title><main><h1>We could not finish connecting SharePoint</h1><p>Return to your workspace, sign in if needed, and choose Connect again.</p><a href="/">Return to your workspace</a></main></html>
+
+----------------------------------------------------------------------
+Ran 7 tests in 1.952s
+
+FAILED (failures=9)

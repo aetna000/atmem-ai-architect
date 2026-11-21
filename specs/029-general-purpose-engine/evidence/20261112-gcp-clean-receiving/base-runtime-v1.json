@@ -1,0 +1,61 @@
+{
+  "format": "atmem.runtime-observation",
+  "version": 1,
+  "passed": true,
+  "observedAt": "2026-11-12T01:13:33.781187+00:00",
+  "runtime": {
+    "imageId": "sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20",
+    "platform": "linux/amd64",
+    "executable": "/usr/local/bin/python3",
+    "bootstrapPython": "/usr/local/bin/python3",
+    "isolationProfile": "standard-v1",
+    "environment": {}
+  },
+  "runtimeSha256": "0c535345ef957348e944c2a29a57654be37ea4f88c492d0346e17e43fcd2a77d",
+  "workerPolicySha256": "f0ef6725d4a7c36acbdd7d46c01f75a3163d7fce1cdfd73c69b24c54b1e069af",
+  "workerIdentitySha256": "ef3120888454651e683d4bea780cddb1e0663f40b6c3704a5770162fe2e9a004",
+  "observerSha256": "7f63ad760d40b6e1ff871d5bb346431e0f68ab8d79601a1d0bc41e232457be46",
+  "probe": {
+    "validator": "runtime-observation",
+    "artifactSha256": "8739c76e681f900923b900c9df0ef75cf421d39cabb54650c4b9ad19b6a76d85",
+    "imageId": "sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20",
+    "runtimeConfigImageId": "sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20",
+    "platform": "linux/amd64",
+    "isolationProfile": "standard-v1",
+    "runtimeEnvironment": {},
+    "command": [
+      "/usr/local/bin/python3",
+      "-I",
+      "-c",
+      "\nimport importlib.metadata,json,os,sys\npackages,services=json.loads(sys.argv[1]);versions={}\nfor name in packages:\n try:versions[name]=importlib.metadata.version(name)\n except importlib.metadata.PackageNotFoundError:versions[name]=None\noperations={}\nif services:\n try:\n  import botocore.session\n except ModuleNotFoundError:\n  operations={name:None for name in services}\n else:\n  session=botocore.session.get_session()\n  for name in services:operations[name]=sorted(session.get_service_model(name).operation_names)\nif 'ATMEM_TEST_POSTGRES_DSN' in os.environ:\n import psycopg\n with psycopg.connect(os.environ['ATMEM_TEST_POSTGRES_DSN']) as connection:\n  versions['postgresql-server']=connection.execute('SHOW server_version').fetchone()[0].split()[0]\nresult={'kind':'python','executableVersion':sys.version.split()[0],'packages':versions,'serviceOperations':operations}\n\nprint(json.dumps(result))\n",
+      "[[\"pip\", \"fastapi\", \"uvicorn\", \"psycopg\", \"PyJWT\", \"google-auth\"], []]"
+    ],
+    "status": "passed",
+    "exitCode": 0,
+    "executableScratch": false,
+    "skipped": 0,
+    "testsReported": null,
+    "reason": null,
+    "output": "{\"kind\": \"python\", \"executableVersion\": \"3.13.18\", \"packages\": {\"pip\": \"26.2.2\", \"fastapi\": null, \"uvicorn\": null, \"psycopg\": null, \"PyJWT\": null, \"google-auth\": null}, \"serviceOperations\": {}}\n",
+    "outputTruncated": false,
+    "durationSeconds": 6.614,
+    "evidenceLevel": "local_container_check",
+    "cloudOperations": false,
+    "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+  },
+  "cloudOperations": false,
+  "scope": "Empty source archive in the registered immutable local image/profile. No application code, cloud client, account or network dependency is used. Null package versions mean distribution metadata unavailable; not proof that importing a module is impossible. Service operations describe the installed botocore model only, not account/API availability.",
+  "observed": {
+    "kind": "python",
+    "executableVersion": "3.13.18",
+    "packages": {
+      "pip": "26.2.2",
+      "fastapi": null,
+      "uvicorn": null,
+      "psycopg": null,
+      "PyJWT": null,
+      "google-auth": null
+    },
+    "serviceOperations": {}
+  }
+}

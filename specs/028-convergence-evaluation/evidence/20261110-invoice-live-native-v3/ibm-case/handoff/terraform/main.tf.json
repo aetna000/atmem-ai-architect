@@ -1,0 +1,1412 @@
+{
+  "terraform": {
+    "required_version": ">= 1.17.1, < 2.0.0",
+    "required_providers": {
+      "ibm": {
+        "source": "IBM-Cloud/ibm",
+        "version": "2.9.0"
+      }
+    }
+  },
+  "provider": {
+    "ibm": {
+      "region": "${var.region}"
+    }
+  },
+  "variable": {
+    "review_approved": {
+      "type": "bool",
+      "default": false
+    },
+    "applications_enabled": {
+      "type": "bool",
+      "default": false,
+      "description": "Enable only after native SQL identity/schema/membership bootstrap, secret population and immutable image publication are reviewed."
+    },
+    "region": {
+      "type": "string",
+      "nullable": false,
+      "description": "Reviewed single deployment/data region; verify current service/model availability and quotas.",
+      "validation": {
+        "condition": "${var.region == \"au-syd\"}",
+        "error_message": "Placement is bound to this design. Update and regenerate the design before changing region."
+      },
+      "default": "au-syd"
+    },
+    "account_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Expected existing IBM Cloud account. No account is created.",
+      "validation": {
+        "condition": "${can(regex(\"^[0-9a-f]{32}$\",var.account_id))}",
+        "error_message": "Supply the reviewed account_id input."
+      }
+    },
+    "resource_group_name": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing reviewed destination resource group; never recreated.",
+      "validation": {
+        "condition": "${can(regex(\"^[A-Za-z0-9 _.-]{1,128}$\",var.resource_group_name))}",
+        "error_message": "Supply the reviewed resource_group_name input."
+      }
+    },
+    "model_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Reviewed regional watsonx JSON-object model; verify lifecycle, regional availability and processing terms.",
+      "validation": {
+        "condition": "${can(regex(\"^[a-z0-9][a-z0-9_.-]{0,79}/[a-z0-9][a-z0-9_.-]{0,99}$\",var.model_id))}",
+        "error_message": "Supply the reviewed model_id input."
+      }
+    },
+    "watsonx_project_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing watsonx project; authorize only the worker trusted profile and associate its runtime instance.",
+      "validation": {
+        "condition": "${can(regex(\"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$\",var.watsonx_project_id))}",
+        "error_message": "Supply the reviewed watsonx_project_id input."
+      }
+    },
+    "runtime_instance_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing associated watsonx.ai Runtime instance GUID, not a deployment ID.",
+      "validation": {
+        "condition": "${can(regex(\"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$\",var.runtime_instance_id))}",
+        "error_message": "Supply the reviewed runtime_instance_id input."
+      }
+    },
+    "accounting_endpoint": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing reviewed accounting HTTPS adapter; never provision a replacement.",
+      "validation": {
+        "condition": "${can(regex(\"^https://[A-Za-z0-9.-]+(:[0-9]{1,5})?(/[^?#@ ]*)?$\",var.accounting_endpoint))}",
+        "error_message": "Supply the reviewed accounting_endpoint input."
+      }
+    },
+    "accounting_scope": {
+      "type": "string",
+      "nullable": false,
+      "description": "Reviewed accounting scope bound to each approval.",
+      "validation": {
+        "condition": "${can(regex(\"^[A-Za-z0-9_.:/-]{1,200}$\",var.accounting_scope))}",
+        "error_message": "Supply the reviewed accounting_scope input."
+      }
+    },
+    "registry_pull_secret": {
+      "type": "string",
+      "nullable": false,
+      "description": "Name of the separately populated registry-pull secret in the new owned Code Engine project. No credential in Terraform.",
+      "validation": {
+        "condition": "${can(regex(\"^[a-z][a-z0-9-]{1,61}[a-z0-9]$\",var.registry_pull_secret))}",
+        "error_message": "Supply the reviewed registry_pull_secret input."
+      }
+    },
+    "runtime_image": {
+      "type": "string",
+      "nullable": false,
+      "description": "Reviewed immutable image in this package-owned regional registry namespace. Empty during foundation.",
+      "validation": {
+        "condition": "${!(var.applications_enabled || var.operations_enabled) || can(regex(\"@sha256:[0-9a-f]{64}$\",var.runtime_image))}",
+        "error_message": "Use the reviewed immutable image digest before releasing applications."
+      },
+      "default": ""
+    },
+    "parser_image": {
+      "type": "string",
+      "nullable": false,
+      "description": "Reviewed immutable image in this package-owned regional registry namespace. Empty during foundation.",
+      "validation": {
+        "condition": "${!(var.applications_enabled) || can(regex(\"@sha256:[0-9a-f]{64}$\",var.parser_image))}",
+        "error_message": "Use the reviewed immutable image digest before releasing applications."
+      },
+      "default": ""
+    },
+    "staff_subjects": {
+      "type": "set(string)",
+      "default": [],
+      "description": "Explicit existing admin-enrolled App ID subjects. Application membership/reviewer grants are separately admitted in SQL.",
+      "validation": {
+        "condition": "${alltrue([for subject in var.staff_subjects : can(regex(\"^[A-Za-z0-9_.:@-]{1,200}$\",subject))])}",
+        "error_message": "Use exact verified staff subjects, never public signup or display-name guesses."
+      }
+    },
+    "policy_review_base64": {
+      "type": "string",
+      "default": "",
+      "description": "Scoped expiring model privacy/processing-terms review. Empty blocks inference; no approval is fabricated."
+    },
+    "replay_review_base64": {
+      "type": "string",
+      "default": "",
+      "description": "Scoped expiring acceptance of actual accounting idempotency. Empty disables automatic uncertain replay."
+    },
+    "operations_enabled": {
+      "type": "bool",
+      "default": false,
+      "description": "Create the three fixed SQL operating tasks after reviewed immutable image publication. Scheduling and alert acceptance are separate."
+    },
+    "maintenance_enabled": {
+      "type": "bool",
+      "default": false,
+      "description": "Enable operating alerts after bootstrap; separately install the owned cron sources and verify successful runs before application release."
+    },
+    "operator_logs_instance_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing reviewed same-region Cloud Logs instance receiving this region's Code Engine platform logs. Existing account routing is preserved.",
+      "validation": {
+        "condition": "${can(regex(\"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$\",var.operator_logs_instance_id))}",
+        "error_message": "Supply the reviewed operator_logs_instance_id input."
+      }
+    },
+    "operator_notification_integration_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing verified Cloud Logs outgoing integration numeric ID; verify intended on-call recipients/delivery without exposing its endpoint or credentials.",
+      "validation": {
+        "condition": "${can(regex(\"^[1-9][0-9]{0,9}$\",var.operator_notification_integration_id)) && try(tonumber(var.operator_notification_integration_id),0) <= 4294967295}",
+        "error_message": "Supply the reviewed operator_notification_integration_id input."
+      }
+    }
+  },
+  "locals": {
+    "name": "${format(\"invoice-%s\",substr(sha256(\"https://atmem.ai/workspaces/evaluation-ibm-03-document-intake/block_696e766f6963652d776f726b666c6f77/staging\"),0,12))}",
+    "account_uuid": "${uuidv5(\"url\",\"https://atmem.ai/workspaces/evaluation-ibm-03-document-intake/block_696e766f6963652d776f726b666c6f77/staging\")}",
+    "api_db_user": "${format(\"invoice_api_%s\",substr(sha256(\"https://atmem.ai/workspaces/evaluation-ibm-03-document-intake/block_696e766f6963652d776f726b666c6f77/staging\"),0,12))}",
+    "worker_db_user": "${format(\"invoice_worker_%s\",substr(sha256(\"https://atmem.ai/workspaces/evaluation-ibm-03-document-intake/block_696e766f6963652d776f726b666c6f77/staging\"),0,12))}",
+    "destination_contract": {
+      "id": "normalized-action-v1",
+      "endpointSha256": "${sha256(var.accounting_endpoint)}",
+      "scope": "${var.accounting_scope}",
+      "mappingVersion": 1
+    },
+    "destination_contract_base64": "${base64encode(jsonencode(local.destination_contract))}",
+    "database_config_name": "${local.name}-database",
+    "parser_secret_name": "${local.name}-parser",
+    "api_secret_name": "${local.name}-api-sql",
+    "worker_secret_name": "${local.name}-worker",
+    "bucket_name": "${format(\"%s-%s\",local.name,substr(var.account_id,0,8))}",
+    "operator_deployment": {
+      "provider": "ibm",
+      "deploymentId": "${local.account_uuid}",
+      "accountId": "${local.account_uuid}",
+      "namespace": "invoice",
+      "tenantId": null,
+      "bindings": {
+        "api": {
+          "name": "${local.api_db_user}",
+          "principal": "${uuidv5(\"url\",\"https://atmem.ai/workspaces/evaluation-ibm-03-document-intake/block_696e766f6963652d776f726b666c6f77/staging/api-sql-credential\")}"
+        },
+        "worker": {
+          "name": "${local.worker_db_user}",
+          "principal": "${uuidv5(\"url\",\"https://atmem.ai/workspaces/evaluation-ibm-03-document-intake/block_696e766f6963652d776f726b666c6f77/staging/worker-sql-credential\")}"
+        }
+      }
+    },
+    "operator_secret_name": "${local.name}-operator-sql",
+    "unfinished_work": []
+  },
+  "data": {
+    "ibm_resource_group": {
+      "destination": {
+        "name": "${var.resource_group_name}"
+      }
+    }
+  },
+  "resource": {
+    "terraform_data": {
+      "review_gate": {
+        "input": {
+          "design_revision": 4,
+          "environment": "staging",
+          "provider": "ibm"
+        },
+        "lifecycle": {
+          "precondition": [
+            {
+              "condition": "${var.review_approved}",
+              "error_message": "Review the actual source, placement, identities, existing accounting contract, costs, operations and destination account before any apply."
+            },
+            {
+              "condition": "${!(var.applications_enabled || var.operations_enabled) || startswith(var.runtime_image,format(\"%s/%s/runtime@sha256:\",lookup({\"au-syd\":\"au.icr.io\",\"br-sao\":\"br.icr.io\",\"ca-mon\":\"ca2.icr.io\",\"ca-tor\":\"ca.icr.io\",\"eu-de\":\"de.icr.io\",\"eu-es\":\"es.icr.io\",\"eu-gb\":\"uk.icr.io\",\"in-che\":\"in.icr.io\",\"in-mum\":\"in2.icr.io\",\"jp-osa\":\"jp2.icr.io\",\"jp-tok\":\"jp.icr.io\",\"us-south\":\"us.icr.io\"},var.region),local.name))}",
+              "error_message": "Images must use the exact owned regional registry namespace, not an invented hostname or foreign repository."
+            },
+            {
+              "condition": "${!(var.applications_enabled) || startswith(var.parser_image,format(\"%s/%s/parser@sha256:\",lookup({\"au-syd\":\"au.icr.io\",\"br-sao\":\"br.icr.io\",\"ca-mon\":\"ca2.icr.io\",\"ca-tor\":\"ca.icr.io\",\"eu-de\":\"de.icr.io\",\"eu-es\":\"es.icr.io\",\"eu-gb\":\"uk.icr.io\",\"in-che\":\"in.icr.io\",\"in-mum\":\"in2.icr.io\",\"jp-osa\":\"jp2.icr.io\",\"jp-tok\":\"jp.icr.io\",\"us-south\":\"us.icr.io\"},var.region),local.name))}",
+              "error_message": "Images must use the exact owned regional registry namespace, not an invented hostname or foreign repository."
+            },
+            {
+              "condition": "${data.ibm_resource_group.destination.account_id == var.account_id && (!var.applications_enabled || length(var.staff_subjects)>0)}",
+              "error_message": "Verify the destination account and explicit staff admission before release."
+            },
+            {
+              "condition": "${!var.maintenance_enabled || var.operations_enabled}",
+              "error_message": "Operating alerts and schedules require fixed operator tasks."
+            },
+            {
+              "condition": "${!var.applications_enabled || (var.operations_enabled && var.maintenance_enabled)}",
+              "error_message": "Initialize SQL and verify operating schedules, log routing and notifications before application release."
+            },
+            {
+              "condition": "${length(local.unfinished_work) == 0}",
+              "error_message": "Preserved requirements/components/connections are not all implemented. Inspect resource-schedule.json and repair the generator composition; do not clear unfinished_work."
+            }
+          ]
+        }
+      }
+    },
+    "ibm_code_engine_project": {
+      "block_696e766f6963652d776f726b666c6f77": {
+        "name": "${local.name}",
+        "resource_group_id": "${data.ibm_resource_group.destination.id}",
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_cr_namespace": {
+      "block_696e766f6963652d776f726b666c6f77": {
+        "name": "${local.name}",
+        "resource_group_id": "${data.ibm_resource_group.destination.id}",
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_database": {
+      "block_696e766f6963652d776f726b666c6f77": {
+        "name": "${local.name}",
+        "service": "databases-for-postgresql",
+        "plan": "standard",
+        "location": "${var.region}",
+        "resource_group_id": "${data.ibm_resource_group.destination.id}",
+        "version": "18",
+        "service_endpoints": "private",
+        "deletion_protection": true,
+        "group": {
+          "group_id": "member",
+          "memory": {
+            "allocation_mb": 2048
+          },
+          "disk": {
+            "allocation_mb": 20480
+          },
+          "members": {
+            "allocation_count": 2
+          }
+        },
+        "configuration": "{\"log_statement\":\"none\",\"log_min_error_statement\":\"panic\",\"log_parameter_max_length_on_error\":0}",
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_resource_instance": {
+      "block_696e766f6963652d776f726b666c6f77_documents": {
+        "name": "${local.name}-documents",
+        "service": "cloud-object-storage",
+        "plan": "standard",
+        "location": "global",
+        "resource_group_id": "${data.ibm_resource_group.destination.id}",
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f6963652d776f726b666c6f77_identity": {
+        "name": "${local.name}-staff",
+        "service": "appid",
+        "plan": "graduated-tier",
+        "location": "${var.region}",
+        "resource_group_id": "${data.ibm_resource_group.destination.id}",
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_cos_bucket": {
+      "block_696e766f6963652d776f726b666c6f77": {
+        "bucket_name": "${local.bucket_name}",
+        "resource_instance_id": "${ibm_resource_instance.block_696e766f6963652d776f726b666c6f77_documents.id}",
+        "region_location": "${var.region}",
+        "storage_class": "standard",
+        "endpoint_type": "public",
+        "force_delete": false,
+        "object_versioning": {
+          "enable": true
+        },
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_cos_bucket_lifecycle_configuration": {
+      "block_696e766f6963652d776f726b666c6f77": {
+        "bucket_crn": "${ibm_cos_bucket.block_696e766f6963652d776f726b666c6f77.crn}",
+        "bucket_location": "${var.region}",
+        "endpoint_type": "public",
+        "lifecycle_rule": [
+          {
+            "rule_id": "invoice-originals-90-days",
+            "status": "enable",
+            "filter": {
+              "prefix": "accounts/"
+            },
+            "expiration": {
+              "days": 90
+            },
+            "noncurrent_version_expiration": {
+              "noncurrent_days": 1
+            }
+          },
+          {
+            "rule_id": "unfinished-upload-cleanup",
+            "status": "enable",
+            "filter": {
+              "prefix": "accounts/"
+            },
+            "abort_incomplete_multipart_upload": {
+              "days_after_initiation": 1
+            }
+          }
+        ],
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_iam_trusted_profile": {
+      "block_696e766f6963652d776f726b666c6f77_api": {
+        "name": "${local.name}-api",
+        "description": "Dedicated invoice api; SQL login and business membership are independent.",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f6963652d776f726b666c6f77_worker": {
+        "name": "${local.name}-worker",
+        "description": "Dedicated invoice worker; SQL login and business membership are independent.",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_iam_trusted_profile_link": {
+      "block_696e766f6963652d776f726b666c6f77_api": {
+        "count": "${var.applications_enabled ? 1 : 0}",
+        "profile_id": "${ibm_iam_trusted_profile.block_696e766f6963652d776f726b666c6f77_api.profile_id}",
+        "cr_type": "CE",
+        "link": {
+          "crn": "${ibm_code_engine_project.block_696e766f6963652d776f726b666c6f77.crn}",
+          "component_name": "${local.name}-api",
+          "component_type": "app"
+        },
+        "depends_on": [
+          "terraform_data.review_gate",
+          "ibm_code_engine_app.block_696e766f6963652d776f726b666c6f77_api"
+        ]
+      },
+      "block_696e766f6963652d776f726b666c6f77_worker": {
+        "count": "${var.applications_enabled ? 1 : 0}",
+        "profile_id": "${ibm_iam_trusted_profile.block_696e766f6963652d776f726b666c6f77_worker.profile_id}",
+        "cr_type": "CE",
+        "link": {
+          "crn": "${ibm_code_engine_project.block_696e766f6963652d776f726b666c6f77.crn}",
+          "component_name": "${local.name}-worker",
+          "component_type": "app"
+        },
+        "depends_on": [
+          "terraform_data.review_gate",
+          "ibm_code_engine_app.block_696e766f6963652d776f726b666c6f77_worker"
+        ]
+      }
+    },
+    "ibm_iam_trusted_profile_policy": {
+      "block_696e766f6963652d776f726b666c6f77_api_documents": {
+        "iam_id": "${ibm_iam_trusted_profile.block_696e766f6963652d776f726b666c6f77_api.iam_id}",
+        "roles": [
+          "Object Reader",
+          "Object Writer"
+        ],
+        "resources": {
+          "service": "cloud-object-storage",
+          "resource_instance_id": "${ibm_resource_instance.block_696e766f6963652d776f726b666c6f77_documents.guid}",
+          "resource_type": "bucket",
+          "resource": "${local.bucket_name}"
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f6963652d776f726b666c6f77_worker_documents": {
+        "iam_id": "${ibm_iam_trusted_profile.block_696e766f6963652d776f726b666c6f77_worker.iam_id}",
+        "roles": [
+          "Object Reader"
+        ],
+        "resources": {
+          "service": "cloud-object-storage",
+          "resource_instance_id": "${ibm_resource_instance.block_696e766f6963652d776f726b666c6f77_documents.guid}",
+          "resource_type": "bucket",
+          "resource": "${local.bucket_name}"
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f6963652d776f726b666c6f77_model": {
+        "iam_id": "${ibm_iam_trusted_profile.block_696e766f6963652d776f726b666c6f77_worker.iam_id}",
+        "roles": [
+          "Writer"
+        ],
+        "resources": {
+          "service": "pm-20",
+          "resource_instance_id": "${var.runtime_instance_id}",
+          "region": "${var.region}"
+        },
+        "description": "Instance-scoped native watsonx role. Writer is broader than prediction-only; separate project collaborator admission remains required.",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_appid_application": {
+      "block_696e766f6963652d776f726b666c6f77": {
+        "tenant_id": "${ibm_resource_instance.block_696e766f6963652d776f726b666c6f77_identity.guid}",
+        "name": "${local.name}",
+        "type": "singlepageapp",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_appid_application_scopes": {
+      "block_696e766f6963652d776f726b666c6f77": {
+        "tenant_id": "${ibm_resource_instance.block_696e766f6963652d776f726b666c6f77_identity.guid}",
+        "client_id": "${ibm_appid_application.block_696e766f6963652d776f726b666c6f77.client_id}",
+        "scopes": [
+          "process"
+        ],
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_appid_role": {
+      "block_696e766f6963652d776f726b666c6f77": {
+        "tenant_id": "${ibm_resource_instance.block_696e766f6963652d776f726b666c6f77_identity.guid}",
+        "name": "InvoiceStaff",
+        "access": [
+          {
+            "application_id": "${ibm_appid_application.block_696e766f6963652d776f726b666c6f77.client_id}",
+            "scopes": [
+              "process"
+            ]
+          }
+        ],
+        "depends_on": [
+          "terraform_data.review_gate",
+          "ibm_appid_application_scopes.block_696e766f6963652d776f726b666c6f77"
+        ]
+      }
+    },
+    "ibm_appid_user_roles": {
+      "block_696e766f6963652d776f726b666c6f77": {
+        "for_each": "${var.applications_enabled ? var.staff_subjects : toset([])}",
+        "tenant_id": "${ibm_resource_instance.block_696e766f6963652d776f726b666c6f77_identity.guid}",
+        "subject": "${each.value}",
+        "role_ids": [
+          "${ibm_appid_role.block_696e766f6963652d776f726b666c6f77.role_id}"
+        ],
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_appid_idp_cloud_directory": {
+      "block_696e766f6963652d776f726b666c6f77": {
+        "tenant_id": "${ibm_resource_instance.block_696e766f6963652d776f726b666c6f77_identity.guid}",
+        "is_active": true,
+        "signup_enabled": false,
+        "self_service_enabled": false,
+        "welcome_enabled": false,
+        "reset_password_enabled": true,
+        "reset_password_notification_enabled": true,
+        "identity_field": "email",
+        "identity_confirm_access_mode": "FULL",
+        "identity_confirm_methods": [
+          "email"
+        ],
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_appid_idp_google": {
+      "block_696e766f6963652d776f726b666c6f77": {
+        "tenant_id": "${ibm_resource_instance.block_696e766f6963652d776f726b666c6f77_identity.guid}",
+        "is_active": false,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_appid_idp_facebook": {
+      "block_696e766f6963652d776f726b666c6f77": {
+        "tenant_id": "${ibm_resource_instance.block_696e766f6963652d776f726b666c6f77_identity.guid}",
+        "is_active": false,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_appid_idp_saml": {
+      "block_696e766f6963652d776f726b666c6f77": {
+        "tenant_id": "${ibm_resource_instance.block_696e766f6963652d776f726b666c6f77_identity.guid}",
+        "is_active": false,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_code_engine_app": {
+      "block_696e766f6963652d776f726b666c6f77_api": {
+        "count": "${var.applications_enabled ? 1 : 0}",
+        "project_id": "${ibm_code_engine_project.block_696e766f6963652d776f726b666c6f77.project_id}",
+        "name": "${local.name}-api",
+        "image_reference": "${var.runtime_image}",
+        "image_secret": "${var.registry_pull_secret}",
+        "image_port": 8080,
+        "managed_domain_mappings": "local_public",
+        "run_as_user": 10001,
+        "run_service_account": "none",
+        "run_compute_resource_token_enabled": true,
+        "scale_cpu_limit": "1",
+        "scale_memory_limit": "1G",
+        "scale_min_instances": 1,
+        "scale_max_instances": 1,
+        "scale_concurrency": 32,
+        "scale_concurrency_target": 16,
+        "scale_request_timeout": 300,
+        "run_env_variables": [
+          {
+            "name": "ACCOUNT_ID",
+            "value": "${local.account_uuid}",
+            "type": "literal"
+          },
+          {
+            "name": "REGION",
+            "value": "${var.region}",
+            "type": "literal"
+          },
+          {
+            "name": "WORKFLOW_NAMESPACE",
+            "value": "invoice",
+            "type": "literal"
+          },
+          {
+            "name": "DATABASE_NAME",
+            "value": "ibmclouddb",
+            "type": "literal"
+          },
+          {
+            "name": "DOCUMENT_BUCKET",
+            "value": "${local.bucket_name}",
+            "type": "literal"
+          },
+          {
+            "name": "DESTINATION_CONTRACT_BASE64",
+            "value": "${local.destination_contract_base64}",
+            "type": "literal"
+          },
+          {
+            "name": "SERVICE_NAME",
+            "value": "${local.name}-api",
+            "type": "literal"
+          },
+          {
+            "name": "PUBLIC_ORIGIN_MODE",
+            "value": "code-engine-default",
+            "type": "literal"
+          },
+          {
+            "name": "DATABASE_USER",
+            "value": "${local.api_db_user}",
+            "type": "literal"
+          },
+          {
+            "name": "IAM_PROFILE_ID",
+            "value": "${ibm_iam_trusted_profile.block_696e766f6963652d776f726b666c6f77_api.profile_id}",
+            "type": "literal"
+          },
+          {
+            "name": "APPID_TENANT_ID",
+            "value": "${ibm_resource_instance.block_696e766f6963652d776f726b666c6f77_identity.guid}",
+            "type": "literal"
+          },
+          {
+            "name": "APPID_CLIENT_ID",
+            "value": "${ibm_appid_application.block_696e766f6963652d776f726b666c6f77.client_id}",
+            "type": "literal"
+          },
+          {
+            "name": "APPID_ISSUER",
+            "value": "${ibm_appid_application.block_696e766f6963652d776f726b666c6f77.oauth_server_url}",
+            "type": "literal"
+          },
+          {
+            "name": "AUTH_SCOPE",
+            "value": "${local.name}/process",
+            "type": "literal"
+          },
+          {
+            "name": "DATABASE_HOST",
+            "type": "config_map_key_reference",
+            "key": "host",
+            "reference": "${local.database_config_name}"
+          },
+          {
+            "name": "DATABASE_PORT",
+            "type": "config_map_key_reference",
+            "key": "port",
+            "reference": "${local.database_config_name}"
+          },
+          {
+            "name": "DATABASE_CA_PEM",
+            "type": "config_map_key_reference",
+            "key": "ca_pem",
+            "reference": "${local.database_config_name}"
+          },
+          {
+            "name": "DATABASE_PASSWORD",
+            "type": "secret_key_reference",
+            "key": "password",
+            "reference": "${local.api_secret_name}"
+          }
+        ],
+        "probe_readiness": {
+          "type": "http",
+          "path": "/healthz",
+          "port": 8080,
+          "initial_delay": 2,
+          "interval": 5,
+          "timeout": 2,
+          "failure_threshold": 12
+        },
+        "depends_on": [
+          "terraform_data.review_gate",
+          "ibm_iam_trusted_profile_policy.block_696e766f6963652d776f726b666c6f77_api_documents"
+        ]
+      },
+      "block_696e766f6963652d776f726b666c6f77_worker": {
+        "count": "${var.applications_enabled ? 1 : 0}",
+        "project_id": "${ibm_code_engine_project.block_696e766f6963652d776f726b666c6f77.project_id}",
+        "name": "${local.name}-worker",
+        "image_reference": "${var.runtime_image}",
+        "image_secret": "${var.registry_pull_secret}",
+        "image_port": 8080,
+        "managed_domain_mappings": "local",
+        "run_as_user": 10001,
+        "run_service_account": "none",
+        "run_compute_resource_token_enabled": true,
+        "scale_cpu_limit": "1",
+        "scale_memory_limit": "1G",
+        "scale_min_instances": 1,
+        "scale_max_instances": 1,
+        "scale_concurrency": 1,
+        "scale_concurrency_target": 1,
+        "scale_request_timeout": 300,
+        "run_env_variables": [
+          {
+            "name": "ACCOUNT_ID",
+            "value": "${local.account_uuid}",
+            "type": "literal"
+          },
+          {
+            "name": "REGION",
+            "value": "${var.region}",
+            "type": "literal"
+          },
+          {
+            "name": "WORKFLOW_NAMESPACE",
+            "value": "invoice",
+            "type": "literal"
+          },
+          {
+            "name": "DATABASE_NAME",
+            "value": "ibmclouddb",
+            "type": "literal"
+          },
+          {
+            "name": "DOCUMENT_BUCKET",
+            "value": "${local.bucket_name}",
+            "type": "literal"
+          },
+          {
+            "name": "DESTINATION_CONTRACT_BASE64",
+            "value": "${local.destination_contract_base64}",
+            "type": "literal"
+          },
+          {
+            "name": "DATABASE_USER",
+            "value": "${local.worker_db_user}",
+            "type": "literal"
+          },
+          {
+            "name": "IAM_PROFILE_ID",
+            "value": "${ibm_iam_trusted_profile.block_696e766f6963652d776f726b666c6f77_worker.profile_id}",
+            "type": "literal"
+          },
+          {
+            "name": "IBM_ACCOUNT_ID",
+            "value": "${var.account_id}",
+            "type": "literal"
+          },
+          {
+            "name": "WATSONX_PROJECT_ID",
+            "value": "${var.watsonx_project_id}",
+            "type": "literal"
+          },
+          {
+            "name": "RUNTIME_INSTANCE_ID",
+            "value": "${var.runtime_instance_id}",
+            "type": "literal"
+          },
+          {
+            "name": "MODEL_REGION",
+            "value": "${var.region}",
+            "type": "literal"
+          },
+          {
+            "name": "MODEL_ID",
+            "value": "${var.model_id}",
+            "type": "literal"
+          },
+          {
+            "name": "MAX_OUTPUT_TOKENS",
+            "value": "2048",
+            "type": "literal"
+          },
+          {
+            "name": "POLICY_REVIEW_BASE64",
+            "value": "${var.policy_review_base64}",
+            "type": "literal"
+          },
+          {
+            "name": "PARSER_ENDPOINT",
+            "value": "${ibm_code_engine_app.block_696e766f6963652d776f726b666c6f77_parser[0].endpoint}/extract",
+            "type": "literal"
+          },
+          {
+            "name": "DESTINATION_ENDPOINT",
+            "value": "${var.accounting_endpoint}",
+            "type": "literal"
+          },
+          {
+            "name": "DESTINATION_SCOPE",
+            "value": "${var.accounting_scope}",
+            "type": "literal"
+          },
+          {
+            "name": "DESTINATION_REPLAY_REVIEW_BASE64",
+            "value": "${var.replay_review_base64}",
+            "type": "literal"
+          },
+          {
+            "name": "DATABASE_HOST",
+            "type": "config_map_key_reference",
+            "key": "host",
+            "reference": "${local.database_config_name}"
+          },
+          {
+            "name": "DATABASE_PORT",
+            "type": "config_map_key_reference",
+            "key": "port",
+            "reference": "${local.database_config_name}"
+          },
+          {
+            "name": "DATABASE_CA_PEM",
+            "type": "config_map_key_reference",
+            "key": "ca_pem",
+            "reference": "${local.database_config_name}"
+          },
+          {
+            "name": "DATABASE_PASSWORD",
+            "type": "secret_key_reference",
+            "key": "password",
+            "reference": "${local.worker_secret_name}"
+          },
+          {
+            "name": "DESTINATION_TOKEN",
+            "type": "secret_key_reference",
+            "key": "accounting_token",
+            "reference": "${local.worker_secret_name}"
+          },
+          {
+            "name": "PARSER_SHARED_TOKEN",
+            "type": "secret_key_reference",
+            "key": "token",
+            "reference": "${local.parser_secret_name}"
+          }
+        ],
+        "run_commands": [
+          "python",
+          "-I",
+          "/app/invoice_worker.py"
+        ],
+        "probe_readiness": {
+          "type": "http",
+          "path": "/healthz",
+          "port": 8080,
+          "initial_delay": 2,
+          "interval": 5,
+          "timeout": 2,
+          "failure_threshold": 12
+        },
+        "depends_on": [
+          "terraform_data.review_gate",
+          "ibm_iam_trusted_profile_policy.block_696e766f6963652d776f726b666c6f77_worker_documents",
+          "ibm_iam_trusted_profile_policy.block_696e766f6963652d776f726b666c6f77_model"
+        ]
+      },
+      "block_696e766f6963652d776f726b666c6f77_parser": {
+        "count": "${var.applications_enabled ? 1 : 0}",
+        "project_id": "${ibm_code_engine_project.block_696e766f6963652d776f726b666c6f77.project_id}",
+        "name": "${local.name}-parser",
+        "image_reference": "${var.parser_image}",
+        "image_secret": "${var.registry_pull_secret}",
+        "image_port": 8080,
+        "managed_domain_mappings": "local_private",
+        "run_as_user": 10001,
+        "run_service_account": "none",
+        "run_compute_resource_token_enabled": false,
+        "scale_cpu_limit": "1",
+        "scale_memory_limit": "2G",
+        "scale_min_instances": 1,
+        "scale_max_instances": 1,
+        "scale_concurrency": 1,
+        "scale_concurrency_target": 1,
+        "scale_request_timeout": 150,
+        "run_env_variables": [
+          {
+            "name": "PARSER_AUTH_MODE",
+            "value": "shared-token",
+            "type": "literal"
+          },
+          {
+            "name": "PARSER_SHARED_TOKEN",
+            "type": "secret_key_reference",
+            "key": "token",
+            "reference": "${local.parser_secret_name}"
+          }
+        ],
+        "run_commands": [
+          "python",
+          "-I",
+          "/app/invoice_parser_service.py"
+        ],
+        "probe_readiness": {
+          "type": "http",
+          "path": "/healthz",
+          "port": 8080,
+          "initial_delay": 2,
+          "interval": 5,
+          "timeout": 2,
+          "failure_threshold": 12
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_appid_redirect_urls": {
+      "block_696e766f6963652d776f726b666c6f77": {
+        "count": "${var.applications_enabled ? 1 : 0}",
+        "tenant_id": "${ibm_resource_instance.block_696e766f6963652d776f726b666c6f77_identity.guid}",
+        "urls": [
+          "${ibm_code_engine_app.block_696e766f6963652d776f726b666c6f77_api[0].endpoint}/"
+        ],
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_code_engine_job": {
+      "block_696e766f6963652d776f726b666c6f77_operator_initialize": {
+        "count": "${var.operations_enabled ? 1 : 0}",
+        "project_id": "${ibm_code_engine_project.block_696e766f6963652d776f726b666c6f77.project_id}",
+        "name": "${local.name}-initialize",
+        "image_reference": "${var.runtime_image}",
+        "image_secret": "${var.registry_pull_secret}",
+        "run_commands": [
+          "python",
+          "-I",
+          "/app/invoice_operator_job.py"
+        ],
+        "run_arguments": [
+          "initialize",
+          "--execute"
+        ],
+        "run_mode": "task",
+        "run_as_user": 10001,
+        "run_service_account": "none",
+        "run_compute_resource_token_enabled": false,
+        "scale_array_spec": "0",
+        "scale_cpu_limit": "1",
+        "scale_memory_limit": "1G",
+        "scale_max_execution_time": 960,
+        "scale_retry_limit": 0,
+        "run_env_variables": [
+          {
+            "name": "DATABASE_NAME",
+            "value": "ibmclouddb",
+            "type": "literal"
+          },
+          {
+            "name": "OPERATOR_DEPLOYMENT_BASE64",
+            "value": "${base64encode(jsonencode(local.operator_deployment))}",
+            "type": "literal"
+          },
+          {
+            "name": "DATABASE_HOST",
+            "type": "config_map_key_reference",
+            "key": "host",
+            "reference": "${local.database_config_name}"
+          },
+          {
+            "name": "DATABASE_PORT",
+            "type": "config_map_key_reference",
+            "key": "port",
+            "reference": "${local.database_config_name}"
+          },
+          {
+            "name": "DATABASE_CA_PEM",
+            "type": "config_map_key_reference",
+            "key": "ca_pem",
+            "reference": "${local.database_config_name}"
+          },
+          {
+            "name": "DATABASE_USER",
+            "type": "config_map_key_reference",
+            "key": "operator_user",
+            "reference": "${local.database_config_name}"
+          },
+          {
+            "name": "DATABASE_PASSWORD",
+            "type": "secret_key_reference",
+            "key": "password",
+            "reference": "${local.operator_secret_name}"
+          },
+          {
+            "name": "API_DATABASE_PASSWORD",
+            "type": "secret_key_reference",
+            "key": "password",
+            "reference": "${local.api_secret_name}"
+          },
+          {
+            "name": "WORKER_DATABASE_PASSWORD",
+            "type": "secret_key_reference",
+            "key": "password",
+            "reference": "${local.worker_secret_name}"
+          }
+        ],
+        "depends_on": [
+          "terraform_data.review_gate",
+          "ibm_database.block_696e766f6963652d776f726b666c6f77"
+        ]
+      },
+      "block_696e766f6963652d776f726b666c6f77_operator_maintain": {
+        "count": "${var.operations_enabled ? 1 : 0}",
+        "project_id": "${ibm_code_engine_project.block_696e766f6963652d776f726b666c6f77.project_id}",
+        "name": "${local.name}-maintain",
+        "image_reference": "${var.runtime_image}",
+        "image_secret": "${var.registry_pull_secret}",
+        "run_commands": [
+          "python",
+          "-I",
+          "/app/invoice_operator_job.py"
+        ],
+        "run_arguments": [
+          "maintain",
+          "--execute"
+        ],
+        "run_mode": "task",
+        "run_as_user": 10001,
+        "run_service_account": "none",
+        "run_compute_resource_token_enabled": false,
+        "scale_array_spec": "0",
+        "scale_cpu_limit": "1",
+        "scale_memory_limit": "1G",
+        "scale_max_execution_time": 960,
+        "scale_retry_limit": 0,
+        "run_env_variables": [
+          {
+            "name": "DATABASE_NAME",
+            "value": "ibmclouddb",
+            "type": "literal"
+          },
+          {
+            "name": "OPERATOR_DEPLOYMENT_BASE64",
+            "value": "${base64encode(jsonencode(local.operator_deployment))}",
+            "type": "literal"
+          },
+          {
+            "name": "DATABASE_HOST",
+            "type": "config_map_key_reference",
+            "key": "host",
+            "reference": "${local.database_config_name}"
+          },
+          {
+            "name": "DATABASE_PORT",
+            "type": "config_map_key_reference",
+            "key": "port",
+            "reference": "${local.database_config_name}"
+          },
+          {
+            "name": "DATABASE_CA_PEM",
+            "type": "config_map_key_reference",
+            "key": "ca_pem",
+            "reference": "${local.database_config_name}"
+          },
+          {
+            "name": "DATABASE_USER",
+            "type": "config_map_key_reference",
+            "key": "operator_user",
+            "reference": "${local.database_config_name}"
+          },
+          {
+            "name": "DATABASE_PASSWORD",
+            "type": "secret_key_reference",
+            "key": "password",
+            "reference": "${local.operator_secret_name}"
+          }
+        ],
+        "depends_on": [
+          "terraform_data.review_gate",
+          "ibm_database.block_696e766f6963652d776f726b666c6f77"
+        ]
+      },
+      "block_696e766f6963652d776f726b666c6f77_operator_monitor": {
+        "count": "${var.operations_enabled ? 1 : 0}",
+        "project_id": "${ibm_code_engine_project.block_696e766f6963652d776f726b666c6f77.project_id}",
+        "name": "${local.name}-monitor",
+        "image_reference": "${var.runtime_image}",
+        "image_secret": "${var.registry_pull_secret}",
+        "run_commands": [
+          "python",
+          "-I",
+          "/app/invoice_operator_job.py"
+        ],
+        "run_arguments": [
+          "monitor",
+          "--execute"
+        ],
+        "run_mode": "task",
+        "run_as_user": 10001,
+        "run_service_account": "none",
+        "run_compute_resource_token_enabled": false,
+        "scale_array_spec": "0",
+        "scale_cpu_limit": "1",
+        "scale_memory_limit": "1G",
+        "scale_max_execution_time": 960,
+        "scale_retry_limit": 0,
+        "run_env_variables": [
+          {
+            "name": "DATABASE_NAME",
+            "value": "ibmclouddb",
+            "type": "literal"
+          },
+          {
+            "name": "OPERATOR_DEPLOYMENT_BASE64",
+            "value": "${base64encode(jsonencode(local.operator_deployment))}",
+            "type": "literal"
+          },
+          {
+            "name": "DATABASE_HOST",
+            "type": "config_map_key_reference",
+            "key": "host",
+            "reference": "${local.database_config_name}"
+          },
+          {
+            "name": "DATABASE_PORT",
+            "type": "config_map_key_reference",
+            "key": "port",
+            "reference": "${local.database_config_name}"
+          },
+          {
+            "name": "DATABASE_CA_PEM",
+            "type": "config_map_key_reference",
+            "key": "ca_pem",
+            "reference": "${local.database_config_name}"
+          },
+          {
+            "name": "DATABASE_USER",
+            "type": "config_map_key_reference",
+            "key": "operator_user",
+            "reference": "${local.database_config_name}"
+          },
+          {
+            "name": "DATABASE_PASSWORD",
+            "type": "secret_key_reference",
+            "key": "password",
+            "reference": "${local.operator_secret_name}"
+          }
+        ],
+        "depends_on": [
+          "terraform_data.review_gate",
+          "ibm_database.block_696e766f6963652d776f726b666c6f77"
+        ]
+      }
+    },
+    "ibm_logs_alert_definition": {
+      "block_696e766f6963652d776f726b666c6f77_failed": {
+        "instance_id": "${var.operator_logs_instance_id}",
+        "region": "${var.region}",
+        "name": "${local.name}-failed",
+        "description": "Owned SQL operator failed. Verify native log samples, alert evaluation and existing on-call delivery before release; no customer invoice data in notifications.",
+        "enabled": "${var.maintenance_enabled}",
+        "phantom_mode": false,
+        "priority": "p2",
+        "type": "logs_threshold",
+        "logs_threshold": {
+          "condition_type": "more_than_or_unspecified",
+          "evaluation_delay_ms": 60000,
+          "notification_payload_filter": [],
+          "logs_filter": {
+            "simple_filter": {
+              "lucene_query": "app:\"codeengine\" AND codeengine.projectGuid:\"${ibm_code_engine_project.block_696e766f6963652d776f726b666c6f77.project_id}\" AND codeengine.region:\"${var.region}\" AND (codeengine.component:\"${local.name}-initialize\" OR codeengine.component:\"${local.name}-maintain\" OR codeengine.component:\"${local.name}-monitor\") AND ((message:\"invoice-operator-v1\" AND (message:\"failed\" OR message:\"attention\" OR message:\"backlog\")) OR level:\"error\" OR level:\"fatal\")"
+            }
+          },
+          "rules": [
+            {
+              "condition": {
+                "threshold": 0,
+                "time_window": {
+                  "logs_time_window_specific_value": "minutes_5_or_unspecified"
+                }
+              },
+              "override": {
+                "priority": "p2"
+              }
+            }
+          ],
+          "undetected_values_management": {
+            "auto_retire_timeframe": "never_or_unspecified",
+            "trigger_undetected_values": false
+          }
+        },
+        "notification_group": {
+          "webhooks": [
+            {
+              "minutes": 1,
+              "notify_on": "triggered_and_resolved",
+              "integration": {
+                "integration_id": "${tonumber(var.operator_notification_integration_id)}"
+              }
+            }
+          ]
+        },
+        "incidents_settings": {
+          "minutes": 10,
+          "notify_on": "triggered_and_resolved"
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f6963652d776f726b666c6f77_monitor_missing": {
+        "instance_id": "${var.operator_logs_instance_id}",
+        "region": "${var.region}",
+        "name": "${local.name}-monitor_missing",
+        "description": "Owned SQL operator monitor_missing. Verify native log samples, alert evaluation and existing on-call delivery before release; no customer invoice data in notifications.",
+        "enabled": "${var.maintenance_enabled}",
+        "phantom_mode": false,
+        "priority": "p2",
+        "type": "logs_threshold",
+        "logs_threshold": {
+          "condition_type": "less_than",
+          "evaluation_delay_ms": 60000,
+          "notification_payload_filter": [],
+          "logs_filter": {
+            "simple_filter": {
+              "lucene_query": "app:\"codeengine\" AND codeengine.projectGuid:\"${ibm_code_engine_project.block_696e766f6963652d776f726b666c6f77.project_id}\" AND codeengine.region:\"${var.region}\" AND codeengine.component:\"${local.name}-monitor\" AND message:\"invoice-operator-v1\" AND message:\"ok\""
+            }
+          },
+          "rules": [
+            {
+              "condition": {
+                "threshold": 1,
+                "time_window": {
+                  "logs_time_window_specific_value": "hours_2"
+                }
+              },
+              "override": {
+                "priority": "p2"
+              }
+            }
+          ],
+          "undetected_values_management": {
+            "auto_retire_timeframe": "never_or_unspecified",
+            "trigger_undetected_values": true
+          }
+        },
+        "notification_group": {
+          "webhooks": [
+            {
+              "minutes": 1,
+              "notify_on": "triggered_and_resolved",
+              "integration": {
+                "integration_id": "${tonumber(var.operator_notification_integration_id)}"
+              }
+            }
+          ]
+        },
+        "incidents_settings": {
+          "minutes": 10,
+          "notify_on": "triggered_and_resolved"
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f6963652d776f726b666c6f77_maintenance_missing": {
+        "instance_id": "${var.operator_logs_instance_id}",
+        "region": "${var.region}",
+        "name": "${local.name}-maintenance_missing",
+        "description": "Owned SQL operator maintenance_missing. Verify native log samples, alert evaluation and existing on-call delivery before release; no customer invoice data in notifications.",
+        "enabled": "${var.maintenance_enabled}",
+        "phantom_mode": false,
+        "priority": "p2",
+        "type": "logs_threshold",
+        "logs_threshold": {
+          "condition_type": "less_than",
+          "evaluation_delay_ms": 60000,
+          "notification_payload_filter": [],
+          "logs_filter": {
+            "simple_filter": {
+              "lucene_query": "app:\"codeengine\" AND codeengine.projectGuid:\"${ibm_code_engine_project.block_696e766f6963652d776f726b666c6f77.project_id}\" AND codeengine.region:\"${var.region}\" AND codeengine.component:\"${local.name}-maintain\" AND message:\"invoice-operator-v1\" AND message:\"ok\""
+            }
+          },
+          "rules": [
+            {
+              "condition": {
+                "threshold": 1,
+                "time_window": {
+                  "logs_time_window_specific_value": "hours_36"
+                }
+              },
+              "override": {
+                "priority": "p2"
+              }
+            }
+          ],
+          "undetected_values_management": {
+            "auto_retire_timeframe": "never_or_unspecified",
+            "trigger_undetected_values": true
+          }
+        },
+        "notification_group": {
+          "webhooks": [
+            {
+              "minutes": 1,
+              "notify_on": "triggered_and_resolved",
+              "integration": {
+                "integration_id": "${tonumber(var.operator_notification_integration_id)}"
+              }
+            }
+          ]
+        },
+        "incidents_settings": {
+          "minutes": 10,
+          "notify_on": "triggered_and_resolved"
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    }
+  },
+  "output": {
+    "application_url": {
+      "value": "${var.applications_enabled ? ibm_code_engine_app.block_696e766f6963652d776f726b666c6f77_api[0].endpoint : null}"
+    },
+    "code_engine_project": {
+      "value": "${ibm_code_engine_project.block_696e766f6963652d776f726b666c6f77.project_id}"
+    },
+    "registry": {
+      "value": "${lookup({\"au-syd\":\"au.icr.io\",\"br-sao\":\"br.icr.io\",\"ca-mon\":\"ca2.icr.io\",\"ca-tor\":\"ca.icr.io\",\"eu-de\":\"de.icr.io\",\"eu-es\":\"es.icr.io\",\"eu-gb\":\"uk.icr.io\",\"in-che\":\"in.icr.io\",\"in-mum\":\"in2.icr.io\",\"jp-osa\":\"jp2.icr.io\",\"jp-tok\":\"jp.icr.io\",\"us-south\":\"us.icr.io\"},var.region)}/${local.name}"
+    },
+    "operator_deployment": {
+      "value": {
+        "provider": "ibm",
+        "deploymentId": "${local.account_uuid}",
+        "accountId": "${local.account_uuid}",
+        "namespace": "invoice",
+        "tenantId": null,
+        "bindings": {
+          "api": {
+            "name": "${local.api_db_user}",
+            "principal": "${uuidv5(\"url\",\"https://atmem.ai/workspaces/evaluation-ibm-03-document-intake/block_696e766f6963652d776f726b666c6f77/staging/api-sql-credential\")}"
+          },
+          "worker": {
+            "name": "${local.worker_db_user}",
+            "principal": "${uuidv5(\"url\",\"https://atmem.ai/workspaces/evaluation-ibm-03-document-intake/block_696e766f6963652d776f726b666c6f77/staging/worker-sql-credential\")}"
+          }
+        }
+      }
+    },
+    "database_bootstrap": {
+      "value": {
+        "deploymentCrn": "${ibm_database.block_696e766f6963652d776f726b666c6f77.id}",
+        "database": "ibmclouddb",
+        "projectId": "${ibm_code_engine_project.block_696e766f6963652d776f726b666c6f77.project_id}",
+        "databaseConfig": "${local.database_config_name}",
+        "apiSecret": "${local.api_secret_name}",
+        "workerSecret": "${local.worker_secret_name}",
+        "parserSecret": "${local.parser_secret_name}",
+        "registryPullSecret": "${var.registry_pull_secret}"
+      }
+    },
+    "operator_log_queries": {
+      "value": {
+        "failed": "app:\"codeengine\" AND codeengine.projectGuid:\"${ibm_code_engine_project.block_696e766f6963652d776f726b666c6f77.project_id}\" AND codeengine.region:\"${var.region}\" AND (codeengine.component:\"${local.name}-initialize\" OR codeengine.component:\"${local.name}-maintain\" OR codeengine.component:\"${local.name}-monitor\") AND ((message:\"invoice-operator-v1\" AND (message:\"failed\" OR message:\"attention\" OR message:\"backlog\")) OR level:\"error\" OR level:\"fatal\")",
+        "monitor_missing": "app:\"codeengine\" AND codeengine.projectGuid:\"${ibm_code_engine_project.block_696e766f6963652d776f726b666c6f77.project_id}\" AND codeengine.region:\"${var.region}\" AND codeengine.component:\"${local.name}-monitor\" AND message:\"invoice-operator-v1\" AND message:\"ok\"",
+        "maintenance_missing": "app:\"codeengine\" AND codeengine.projectGuid:\"${ibm_code_engine_project.block_696e766f6963652d776f726b666c6f77.project_id}\" AND codeengine.region:\"${var.region}\" AND codeengine.component:\"${local.name}-maintain\" AND message:\"invoice-operator-v1\" AND message:\"ok\""
+      }
+    },
+    "operator_jobs": {
+      "value": {
+        "account": "${var.account_id}",
+        "region": "${var.region}",
+        "projectId": "${ibm_code_engine_project.block_696e766f6963652d776f726b666c6f77.project_id}",
+        "maintenanceEnabled": "${var.maintenance_enabled}",
+        "operatorSecret": "${local.operator_secret_name}",
+        "names": {
+          "initialize": "${local.name}-initialize",
+          "maintain": "${local.name}-maintain",
+          "monitor": "${local.name}-monitor"
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,492 @@
+{
+  "version": 1,
+  "revision": 2,
+  "name": "IBM predictive maintenance qualification",
+  "provider": "ibm",
+  "domain": "maintenance",
+  "requirements": "",
+  "nodes": [
+    {
+      "id": "sensors",
+      "type": "resource",
+      "position": {
+        "x": 50,
+        "y": 405
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Synthetic sensor histories",
+        "provider": "tools",
+        "kind": "stream",
+        "description": "Synthetic telemetry generator (existing caller, outside provisioning scope).",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "poc": true,
+        "role": "data"
+      }
+    },
+    {
+      "id": "records",
+      "type": "resource",
+      "position": {
+        "x": 470,
+        "y": 125
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Synthetic maintenance records",
+        "provider": "tools",
+        "kind": "history",
+        "description": "Synthetic failure/repair history used as labels.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "poc": true,
+        "role": "data"
+      }
+    },
+    {
+      "id": "ingest",
+      "type": "resource",
+      "position": {
+        "x": 470,
+        "y": 405
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Telemetry ingestion",
+        "provider": "ibm",
+        "kind": "stream",
+        "description": "Kafka topics receive sensor readings; a consumer lands batches in Object Storage.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "ingest",
+        "service": "IBM Event Streams"
+      }
+    },
+    {
+      "id": "lake",
+      "type": "resource",
+      "position": {
+        "x": 890,
+        "y": 265
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Raw and curated data",
+        "provider": "ibm",
+        "kind": "resource",
+        "description": "Private buckets for raw telemetry, maintenance records, feature sets and evaluation reports.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "data",
+        "service": "IBM Cloud Object Storage"
+      }
+    },
+    {
+      "id": "features",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 265
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Feature preparation",
+        "provider": "ibm",
+        "kind": "features",
+        "description": "Windowed sensor aggregates joined to failure labels with point-in-time correctness.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "ingest",
+        "service": "IBM Analytics Engine (Spark)"
+      }
+    },
+    {
+      "id": "train",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 340
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Training + held-out evaluation",
+        "provider": "ibm",
+        "kind": "train",
+        "description": "Trains on earlier periods, evaluates on a later held-out time window; reports precision/recall and false alarms.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "model",
+        "service": "IBM watsonx.ai Studio"
+      }
+    },
+    {
+      "id": "registry",
+      "type": "resource",
+      "position": {
+        "x": 2150,
+        "y": 340
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Versioned model",
+        "provider": "ibm",
+        "kind": "registry",
+        "description": "Stores model versions with training data reference and evaluation results; promotion is a manual approval.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "model",
+        "service": "IBM watsonx.ai Runtime deployment space"
+      }
+    },
+    {
+      "id": "predict",
+      "type": "resource",
+      "position": {
+        "x": 2570,
+        "y": 265
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Batch failure-risk scoring",
+        "provider": "ibm",
+        "kind": "predict",
+        "description": "Scores each asset's risk from latest features using the promoted model version.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "model",
+        "service": "IBM watsonx.ai Runtime batch deployment"
+      }
+    },
+    {
+      "id": "monitor",
+      "type": "resource",
+      "position": {
+        "x": 2990,
+        "y": 50
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Drift monitoring",
+        "provider": "ibm",
+        "kind": "monitor",
+        "description": "Tracks input/prediction drift and quality against later labels; alerts trigger retraining review.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "monitor",
+        "service": "IBM Watson OpenScale (watsonx.governance)"
+      }
+    },
+    {
+      "id": "workorder",
+      "type": "resource",
+      "position": {
+        "x": 2990,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Work-order draft service",
+        "provider": "ibm",
+        "kind": "output",
+        "description": "Builds draft work orders for high-risk assets with model version and reasons. Drafts only; never controls equipment.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "app",
+        "measures": [
+          {
+            "label": "Drafts require operator approval",
+            "path": "draft.requiresApproval",
+            "op": "==",
+            "target": true
+          }
+        ],
+        "service": "IBM Code Engine"
+      }
+    },
+    {
+      "id": "operator",
+      "type": "resource",
+      "position": {
+        "x": 3410,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Maintenance operator",
+        "provider": "tools",
+        "kind": "tool",
+        "description": "Reviews, edits, approves or rejects drafts.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "role": "human"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "sensors",
+      "target": "ingest",
+      "type": "smoothstep",
+      "label": "publish readings"
+    },
+    {
+      "id": "e2",
+      "source": "ingest",
+      "target": "lake",
+      "type": "smoothstep",
+      "label": "land telemetry batches"
+    },
+    {
+      "id": "e3",
+      "source": "records",
+      "target": "lake",
+      "type": "smoothstep",
+      "label": "upload records"
+    },
+    {
+      "id": "e4",
+      "source": "lake",
+      "target": "features",
+      "type": "smoothstep",
+      "label": "read raw data"
+    },
+    {
+      "id": "e5",
+      "source": "features",
+      "target": "train",
+      "type": "smoothstep",
+      "label": "time-split feature sets"
+    },
+    {
+      "id": "e6",
+      "source": "train",
+      "target": "registry",
+      "type": "smoothstep",
+      "label": "register version + eval"
+    },
+    {
+      "id": "e7",
+      "source": "registry",
+      "target": "predict",
+      "type": "smoothstep",
+      "label": "promoted version"
+    },
+    {
+      "id": "e8",
+      "source": "features",
+      "target": "predict",
+      "type": "smoothstep",
+      "label": "latest features"
+    },
+    {
+      "id": "e9",
+      "source": "predict",
+      "target": "monitor",
+      "type": "smoothstep",
+      "label": "scores + inputs"
+    },
+    {
+      "id": "e10",
+      "source": "monitor",
+      "target": "train",
+      "type": "smoothstep",
+      "label": "retrain review alert"
+    },
+    {
+      "id": "e11",
+      "source": "predict",
+      "target": "workorder",
+      "type": "smoothstep",
+      "label": "risk scores"
+    },
+    {
+      "id": "e12",
+      "source": "workorder",
+      "target": "operator",
+      "type": "smoothstep",
+      "label": "draft for approval"
+    }
+  ],
+  "id": "a3e3f89b-619e-450d-a863-4fb5d98e02c6",
+  "brief": {
+    "application": "Use IBM Cloud for this synthetic architecture qualification. Predict equipment maintenance needs from synthetic sensor histories and maintenance records. Include ingestion, feature preparation, a versioned prediction model, held-out evaluation, drift monitoring and an operator work-order draft. No automatic equipment control. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+    "cloud": "IBM"
+  },
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use IBM Cloud for this synthetic architecture qualification",
+      "options": "",
+      "decision": "ibm",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.ibm-cloud-predictive-maintenance-end-to-end-sketch",
+      "title": "IBM Cloud predictive maintenance end-to-end sketch",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: synthetic sensor histories and maintenance records → ingestion → features → time-split training/evaluation → versioned model → batch scoring → drift monitoring → operator-approved work-order draft. Assumptions: region not selected, IBM plans/model access unverified, no automatic equipment control. Design intent only; no native IBM generator for these ML components yet, so engineering is required.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "needs": [
+    {
+      "id": "ai-human-approval",
+      "kind": "functional",
+      "category": "security",
+      "statement": "Proposed: predictions only produce work-order drafts that an operator approves; the system never controls equipment.",
+      "rationale": "Prevents unsafe automated actions from a wrong prediction.",
+      "basis": "User: \"No automatic equipment control\" and \"operator work-order draft\".",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "workorder",
+        "operator"
+      ]
+    },
+    {
+      "id": "ai-time-holdout",
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "statement": "Proposed: each model version is evaluated on a later held-out time window, and the results are stored with the version before it can be promoted.",
+      "rationale": "Random splits leak future information and overstate accuracy.",
+      "basis": "User: \"a versioned prediction model, held-out evaluation\".",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "train",
+        "registry"
+      ]
+    },
+    {
+      "id": "ai-drift",
+      "kind": "nonfunctional",
+      "category": "maintainability",
+      "statement": "Proposed: input and prediction drift are monitored, and alerts trigger a retraining review. Thresholds are still to be agreed.",
+      "rationale": "Sensor behaviour changes and quietly makes the model worse over time.",
+      "basis": "User: \"drift monitoring\".",
+      "priority": "should",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "monitor"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "extensions": {
+    "requirementNumbers": {
+      "drv-data-access": 1,
+      "drv-data-location": 2,
+      "ai-human-approval": 3,
+      "ai-time-holdout": 4,
+      "ai-drift": 5
+    }
+  },
+  "facts": [
+    {
+      "id": "fact-d44e6393",
+      "name": "cloud.preference",
+      "value": "ibm",
+      "unit": "provider",
+      "text": "Use IBM Cloud for this synthetic architecture qualification. Predict equipment maintenance needs from synthetic sensor histories and maintenance records. Include ingestion, feature preparation, a versioned prediction model, held-out evaluation, drift monitoring and an operator work-order draft. No a",
+      "madeAt": "2026-11-07"
+    }
+  ],
+  "workflow": "predictive",
+  "asked": [],
+  "lastAsked": {
+    "id": "predictive:0",
+    "topic": "data",
+    "question": "How much history do you have for what you want to predict?",
+    "beginner": "For example “three years of sales by store” or “failure records since 2020”.",
+    "why": "It shapes the Predictive ML design."
+  },
+  "choices": {},
+  "conceptSig": null
+}

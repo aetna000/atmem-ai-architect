@@ -1,0 +1,54 @@
+{
+  "provider": "ibm-chatbot",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "One user cannot read another conversation",
+    "Context and response sizes are bounded",
+    "Model outage produces a recoverable response",
+    "Deleting a conversation removes its stored context",
+    "Escalation retains the approved conversation context"
+  ],
+  "components": [
+    {
+      "id": "user"
+    },
+    {
+      "id": "appid",
+      "service": "IBM Cloud App ID"
+    },
+    {
+      "id": "app",
+      "service": "IBM Cloud Code Engine"
+    },
+    {
+      "id": "state",
+      "service": "IBM Cloudant"
+    },
+    {
+      "id": "context",
+      "service": "Logic in the IBM Cloud Code Engine app"
+    },
+    {
+      "id": "model",
+      "service": "IBM watsonx.ai"
+    },
+    {
+      "id": "escalate",
+      "service": "IBM Cloud Event Notifications"
+    },
+    {
+      "id": "agent_queue"
+    },
+    {
+      "id": "logs",
+      "service": "IBM Cloud Logs + Activity Tracker"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

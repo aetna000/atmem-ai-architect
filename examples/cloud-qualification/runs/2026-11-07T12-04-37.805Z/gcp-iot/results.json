@@ -1,0 +1,50 @@
+{
+  "provider": "gcp-iot",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Reject unknown device and invalid units",
+    "Duplicate events produce one result",
+    "Late and out-of-order telemetry follows an explicit policy",
+    "Disconnected input recovers by replay",
+    "Anomaly output names evidence and model version"
+  ],
+  "components": [
+    {
+      "id": "sensor-sim"
+    },
+    {
+      "id": "ingest",
+      "service": "Google Cloud Pub/Sub"
+    },
+    {
+      "id": "validate",
+      "service": "Dataflow (Apache Beam streaming)"
+    },
+    {
+      "id": "dlq",
+      "service": "Google Cloud Pub/Sub"
+    },
+    {
+      "id": "infer",
+      "service": "Vertex AI online prediction endpoint"
+    },
+    {
+      "id": "results",
+      "service": "BigQuery"
+    },
+    {
+      "id": "alert",
+      "service": "Cloud Monitoring alerting policy"
+    },
+    {
+      "id": "operator"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

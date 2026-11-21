@@ -1,0 +1,649 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "services",
+      "address": "block_7365727669636573",
+      "label": "Synthetic services",
+      "provider": "tools",
+      "service": "Storage or existing data connector",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "collector",
+      "address": "block_636f6c6c6563746f72",
+      "label": "ADOT Collector",
+      "provider": "aws",
+      "service": "AWS Distro for OpenTelemetry",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "services"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "xray",
+      "address": "block_78726179",
+      "label": "Trace store",
+      "provider": "aws",
+      "service": "AWS X-Ray",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "collector",
+        "analyzer"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "firehose",
+      "address": "block_66697265686f7365",
+      "label": "Log delivery stream",
+      "provider": "aws",
+      "service": "Amazon Data Firehose",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "collector"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "redact",
+      "address": "block_726564616374",
+      "label": "Redaction transform",
+      "provider": "aws",
+      "service": "AWS Lambda",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_lambda_function",
+        "aws_iam_role"
+      ],
+      "costDrivers": "Requests, duration, memory and logs",
+      "dependencies": [
+        "firehose"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "evidence",
+      "address": "block_65766964656e6365",
+      "label": "Redacted evidence archive",
+      "provider": "aws",
+      "service": "Amazon S3",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_s3_bucket",
+        "aws_s3_bucket_public_access_block",
+        "aws_s3_bucket_server_side_encryption_configuration",
+        "aws_s3_bucket_versioning",
+        "aws_s3_bucket_ownership_controls",
+        "aws_s3_bucket_policy"
+      ],
+      "costDrivers": "Storage, requests, retrieval and transfer",
+      "dependencies": [
+        "firehose"
+      ],
+      "terraform": "S3 foundation generated",
+      "foundation": true,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": true
+    },
+    {
+      "id": "search",
+      "address": "block_736561726368",
+      "label": "Log search index",
+      "provider": "aws",
+      "service": "Amazon OpenSearch",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Deployment mode, indexing/search capacity and storage",
+      "dependencies": [
+        "firehose",
+        "analyzer"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "analyzer",
+      "address": "block_616e616c797a6572",
+      "label": "Incident analysis runtime",
+      "provider": "aws",
+      "service": "AWS Lambda",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_lambda_function",
+        "aws_iam_role"
+      ],
+      "costDrivers": "Requests, duration, memory and logs",
+      "dependencies": [
+        "api"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "guardrails",
+      "address": "block_67756172647261696c73",
+      "label": "Prompt/answer guardrail",
+      "provider": "aws",
+      "service": "Amazon Bedrock Guardrails",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_bedrock_guardrail"
+      ],
+      "costDrivers": "Enabled policy checks and text units; confirm each policy's charge",
+      "dependencies": [
+        "analyzer"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "bedrock",
+      "address": "block_626564726f636b",
+      "label": "Foundation model",
+      "provider": "aws",
+      "service": "Amazon Bedrock",
+      "selection": "Explicit service field; deployment review required",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Model-specific input/output tokens; guardrails, embeddings and knowledge bases separately",
+      "dependencies": [
+        "analyzer"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "api",
+      "address": "block_617069",
+      "label": "Operator API",
+      "provider": "aws",
+      "service": "Amazon API Gateway",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_apigatewayv2_api"
+      ],
+      "costDrivers": "API requests, transfer and access logs",
+      "dependencies": [
+        "operator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "operator",
+      "address": "block_6f70657261746f72",
+      "label": "On-call operator",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "source": "services",
+      "target": "collector",
+      "data": "OTLP logs + traces",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e2",
+      "source": "collector",
+      "target": "xray",
+      "data": "redacted spans",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e3",
+      "source": "collector",
+      "target": "firehose",
+      "data": "log records",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e4",
+      "source": "firehose",
+      "target": "redact",
+      "data": "transform invoke",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e5",
+      "source": "firehose",
+      "target": "evidence",
+      "data": "redacted batches",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e6",
+      "source": "firehose",
+      "target": "search",
+      "data": "redacted index docs",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e7",
+      "source": "operator",
+      "target": "api",
+      "data": "ask about incident (SigV4)",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e8",
+      "source": "api",
+      "target": "analyzer",
+      "data": "invoke; returns cited explanation",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e9",
+      "source": "analyzer",
+      "target": "xray",
+      "data": "get traces by window",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e10",
+      "source": "analyzer",
+      "target": "search",
+      "data": "query by trace ID",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e11",
+      "source": "analyzer",
+      "target": "guardrails",
+      "data": "apply guardrail",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e12",
+      "source": "analyzer",
+      "target": "bedrock",
+      "data": "Converse (evidence as data)",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Redacted evidence archive: explicit caller access contract is missing.",
+    "Synthetic services: Existing — reference/import plan needed.",
+    "ADOT Collector: Implementation needed.",
+    "Trace store: Implementation needed.",
+    "Log delivery stream: Implementation needed.",
+    "Redaction transform: Implementation needed.",
+    "Log search index: Implementation needed.",
+    "Incident analysis runtime: Implementation needed.",
+    "Prompt/answer guardrail: Implementation needed.",
+    "Foundation model: Existing — reference/import plan needed.",
+    "Operator API: Implementation needed.",
+    "On-call operator: Existing — reference/import plan needed.",
+    "Wire services → collector: implement data flow, access policy and acceptance test.",
+    "Wire collector → xray: implement data flow, access policy and acceptance test.",
+    "Wire collector → firehose: implement data flow, access policy and acceptance test.",
+    "Wire firehose → redact: implement data flow, access policy and acceptance test.",
+    "Wire firehose → evidence: implement data flow, access policy and acceptance test.",
+    "Wire firehose → search: implement data flow, access policy and acceptance test.",
+    "Wire operator → api: implement data flow, access policy and acceptance test.",
+    "Wire api → analyzer: implement data flow, access policy and acceptance test.",
+    "Wire analyzer → xray: implement data flow, access policy and acceptance test.",
+    "Wire analyzer → search: implement data flow, access policy and acceptance test.",
+    "Wire analyzer → guardrails: implement data flow, access policy and acceptance test.",
+    "Wire analyzer → bedrock: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "access-block_65766964656e6365",
+      "componentIds": [
+        "evidence"
+      ],
+      "taskId": "TASK-RESOURCE-65766964656e6365",
+      "message": "Redacted evidence archive: explicit caller access contract is missing."
+    },
+    {
+      "id": "resource-block_7365727669636573",
+      "componentIds": [
+        "services"
+      ],
+      "taskId": "TASK-RESOURCE-7365727669636573",
+      "message": "Synthetic services: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_636f6c6c6563746f72",
+      "componentIds": [
+        "collector"
+      ],
+      "taskId": "TASK-RESOURCE-636f6c6c6563746f72",
+      "message": "ADOT Collector: Implementation needed."
+    },
+    {
+      "id": "resource-block_78726179",
+      "componentIds": [
+        "xray"
+      ],
+      "taskId": "TASK-RESOURCE-78726179",
+      "message": "Trace store: Implementation needed."
+    },
+    {
+      "id": "resource-block_66697265686f7365",
+      "componentIds": [
+        "firehose"
+      ],
+      "taskId": "TASK-RESOURCE-66697265686f7365",
+      "message": "Log delivery stream: Implementation needed."
+    },
+    {
+      "id": "resource-block_726564616374",
+      "componentIds": [
+        "redact"
+      ],
+      "taskId": "TASK-RESOURCE-726564616374",
+      "message": "Redaction transform: Implementation needed."
+    },
+    {
+      "id": "resource-block_736561726368",
+      "componentIds": [
+        "search"
+      ],
+      "taskId": "TASK-RESOURCE-736561726368",
+      "message": "Log search index: Implementation needed."
+    },
+    {
+      "id": "resource-block_616e616c797a6572",
+      "componentIds": [
+        "analyzer"
+      ],
+      "taskId": "TASK-RESOURCE-616e616c797a6572",
+      "message": "Incident analysis runtime: Implementation needed."
+    },
+    {
+      "id": "resource-block_67756172647261696c73",
+      "componentIds": [
+        "guardrails"
+      ],
+      "taskId": "TASK-RESOURCE-67756172647261696c73",
+      "message": "Prompt/answer guardrail: Implementation needed."
+    },
+    {
+      "id": "resource-block_626564726f636b",
+      "componentIds": [
+        "bedrock"
+      ],
+      "taskId": "TASK-RESOURCE-626564726f636b",
+      "message": "Foundation model: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_617069",
+      "componentIds": [
+        "api"
+      ],
+      "taskId": "TASK-RESOURCE-617069",
+      "message": "Operator API: Implementation needed."
+    },
+    {
+      "id": "resource-block_6f70657261746f72",
+      "componentIds": [
+        "operator"
+      ],
+      "taskId": "TASK-RESOURCE-6f70657261746f72",
+      "message": "On-call operator: Existing — reference/import plan needed."
+    },
+    {
+      "id": "connection-6531",
+      "edgeIds": [
+        "e1"
+      ],
+      "taskId": "TASK-INTEGRATION-6531",
+      "message": "Wire services → collector: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6532",
+      "edgeIds": [
+        "e2"
+      ],
+      "taskId": "TASK-INTEGRATION-6532",
+      "message": "Wire collector → xray: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6533",
+      "edgeIds": [
+        "e3"
+      ],
+      "taskId": "TASK-INTEGRATION-6533",
+      "message": "Wire collector → firehose: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6534",
+      "edgeIds": [
+        "e4"
+      ],
+      "taskId": "TASK-INTEGRATION-6534",
+      "message": "Wire firehose → redact: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6535",
+      "edgeIds": [
+        "e5"
+      ],
+      "taskId": "TASK-INTEGRATION-6535",
+      "message": "Wire firehose → evidence: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6536",
+      "edgeIds": [
+        "e6"
+      ],
+      "taskId": "TASK-INTEGRATION-6536",
+      "message": "Wire firehose → search: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6537",
+      "edgeIds": [
+        "e7"
+      ],
+      "taskId": "TASK-INTEGRATION-6537",
+      "message": "Wire operator → api: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6538",
+      "edgeIds": [
+        "e8"
+      ],
+      "taskId": "TASK-INTEGRATION-6538",
+      "message": "Wire api → analyzer: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6539",
+      "edgeIds": [
+        "e9"
+      ],
+      "taskId": "TASK-INTEGRATION-6539",
+      "message": "Wire analyzer → xray: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-653130",
+      "edgeIds": [
+        "e10"
+      ],
+      "taskId": "TASK-INTEGRATION-653130",
+      "message": "Wire analyzer → search: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-653131",
+      "edgeIds": [
+        "e11"
+      ],
+      "taskId": "TASK-INTEGRATION-653131",
+      "message": "Wire analyzer → guardrails: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-653132",
+      "edgeIds": [
+        "e12"
+      ],
+      "taskId": "TASK-INTEGRATION-653132",
+      "message": "Wire analyzer → bedrock: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

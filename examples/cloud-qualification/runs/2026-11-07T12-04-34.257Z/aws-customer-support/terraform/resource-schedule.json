@@ -1,0 +1,599 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "staff",
+      "address": "block_7374616666",
+      "label": "Support staff browser",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "web",
+      "address": "block_776562",
+      "label": "Staff web app",
+      "provider": "aws",
+      "service": "Amazon CloudFront",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_cloudfront_distribution"
+      ],
+      "costDrivers": "Requests, transfer and private static assets",
+      "dependencies": [
+        "staff"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "auth",
+      "address": "block_61757468",
+      "label": "Staff sign-in",
+      "provider": "aws",
+      "service": "Amazon Cognito",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_cognito_user_pool"
+      ],
+      "costDrivers": "Active users and authentication features",
+      "dependencies": [
+        "web"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "api",
+      "address": "block_617069",
+      "label": "Assistant API",
+      "provider": "aws",
+      "service": "Amazon API Gateway",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_apigatewayv2_api"
+      ],
+      "costDrivers": "API requests, transfer and access logs",
+      "dependencies": [
+        "auth",
+        "web"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "assistant",
+      "address": "block_617373697374616e74",
+      "label": "Draft orchestrator",
+      "provider": "aws",
+      "service": "AWS Lambda",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_lambda_function",
+        "aws_iam_role"
+      ],
+      "costDrivers": "Requests, duration, memory and logs",
+      "dependencies": [
+        "api"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "knowledge",
+      "address": "block_6b6e6f776c65646765",
+      "label": "Approved knowledge catalog",
+      "provider": "aws",
+      "service": "Amazon DynamoDB",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_dynamodb_table"
+      ],
+      "costDrivers": "Read/write requests, storage and backup",
+      "dependencies": [
+        "assistant"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "tickets",
+      "address": "block_7469636b657473",
+      "label": "Synthetic ticket queue",
+      "provider": "tools",
+      "service": "Storage or existing data connector",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "assistant"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "crm",
+      "address": "block_63726d",
+      "label": "Existing CRM",
+      "provider": "tools",
+      "service": "Storage or existing data connector",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "assistant"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "model",
+      "address": "block_6d6f64656c",
+      "label": "Foundation model",
+      "provider": "aws",
+      "service": "Amazon Bedrock",
+      "selection": "Explicit service field; deployment review required",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Model-specific input/output tokens; guardrails, embeddings and knowledge bases separately",
+      "dependencies": [
+        "assistant"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "escalation",
+      "address": "block_657363616c6174696f6e",
+      "label": "Human escalation queue",
+      "provider": "aws",
+      "service": "Amazon SQS",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_sqs_queue"
+      ],
+      "costDrivers": "Requests, payload size and transfer",
+      "dependencies": [
+        "assistant"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "audit",
+      "address": "block_6175646974",
+      "label": "Audit logs",
+      "provider": "aws",
+      "service": "Amazon CloudWatch",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_cloudwatch_log_group"
+      ],
+      "costDrivers": "Logs, metrics, alarms and retention",
+      "dependencies": [
+        "assistant"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e-staff-web",
+      "source": "staff",
+      "target": "web",
+      "data": "HTTPS",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-web-auth",
+      "source": "web",
+      "target": "auth",
+      "data": "sign-in (PKCE)",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-auth-api",
+      "source": "auth",
+      "target": "api",
+      "data": "JWT authorizer",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-web-api",
+      "source": "web",
+      "target": "api",
+      "data": "draft request / cited draft",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-api-assistant",
+      "source": "api",
+      "target": "assistant",
+      "data": "invoke",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-assistant-knowledge",
+      "source": "assistant",
+      "target": "knowledge",
+      "data": "authorized retrieval",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-assistant-tickets",
+      "source": "assistant",
+      "target": "tickets",
+      "data": "read ticket",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-assistant-crm",
+      "source": "assistant",
+      "target": "crm",
+      "data": "read-only customer lookup",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-assistant-model",
+      "source": "assistant",
+      "target": "model",
+      "data": "grounded drafting (Converse)",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-assistant-escalation",
+      "source": "assistant",
+      "target": "escalation",
+      "data": "escalate to human",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-assistant-audit",
+      "source": "assistant",
+      "target": "audit",
+      "data": "audit events",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Support staff browser: Existing — reference/import plan needed.",
+    "Staff web app: Implementation needed.",
+    "Staff sign-in: Implementation needed.",
+    "Assistant API: Implementation needed.",
+    "Draft orchestrator: Implementation needed.",
+    "Approved knowledge catalog: Implementation needed.",
+    "Synthetic ticket queue: Existing — reference/import plan needed.",
+    "Existing CRM: Existing — reference/import plan needed.",
+    "Foundation model: Existing — reference/import plan needed.",
+    "Human escalation queue: Implementation needed.",
+    "Audit logs: Implementation needed.",
+    "Wire staff → web: implement data flow, access policy and acceptance test.",
+    "Wire web → auth: implement data flow, access policy and acceptance test.",
+    "Wire auth → api: implement data flow, access policy and acceptance test.",
+    "Wire web → api: implement data flow, access policy and acceptance test.",
+    "Wire api → assistant: implement data flow, access policy and acceptance test.",
+    "Wire assistant → knowledge: implement data flow, access policy and acceptance test.",
+    "Wire assistant → tickets: implement data flow, access policy and acceptance test.",
+    "Wire assistant → crm: implement data flow, access policy and acceptance test.",
+    "Wire assistant → model: implement data flow, access policy and acceptance test.",
+    "Wire assistant → escalation: implement data flow, access policy and acceptance test.",
+    "Wire assistant → audit: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "resource-block_7374616666",
+      "componentIds": [
+        "staff"
+      ],
+      "taskId": "TASK-RESOURCE-7374616666",
+      "message": "Support staff browser: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_776562",
+      "componentIds": [
+        "web"
+      ],
+      "taskId": "TASK-RESOURCE-776562",
+      "message": "Staff web app: Implementation needed."
+    },
+    {
+      "id": "resource-block_61757468",
+      "componentIds": [
+        "auth"
+      ],
+      "taskId": "TASK-RESOURCE-61757468",
+      "message": "Staff sign-in: Implementation needed."
+    },
+    {
+      "id": "resource-block_617069",
+      "componentIds": [
+        "api"
+      ],
+      "taskId": "TASK-RESOURCE-617069",
+      "message": "Assistant API: Implementation needed."
+    },
+    {
+      "id": "resource-block_617373697374616e74",
+      "componentIds": [
+        "assistant"
+      ],
+      "taskId": "TASK-RESOURCE-617373697374616e74",
+      "message": "Draft orchestrator: Implementation needed."
+    },
+    {
+      "id": "resource-block_6b6e6f776c65646765",
+      "componentIds": [
+        "knowledge"
+      ],
+      "taskId": "TASK-RESOURCE-6b6e6f776c65646765",
+      "message": "Approved knowledge catalog: Implementation needed."
+    },
+    {
+      "id": "resource-block_7469636b657473",
+      "componentIds": [
+        "tickets"
+      ],
+      "taskId": "TASK-RESOURCE-7469636b657473",
+      "message": "Synthetic ticket queue: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_63726d",
+      "componentIds": [
+        "crm"
+      ],
+      "taskId": "TASK-RESOURCE-63726d",
+      "message": "Existing CRM: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_6d6f64656c",
+      "componentIds": [
+        "model"
+      ],
+      "taskId": "TASK-RESOURCE-6d6f64656c",
+      "message": "Foundation model: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_657363616c6174696f6e",
+      "componentIds": [
+        "escalation"
+      ],
+      "taskId": "TASK-RESOURCE-657363616c6174696f6e",
+      "message": "Human escalation queue: Implementation needed."
+    },
+    {
+      "id": "resource-block_6175646974",
+      "componentIds": [
+        "audit"
+      ],
+      "taskId": "TASK-RESOURCE-6175646974",
+      "message": "Audit logs: Implementation needed."
+    },
+    {
+      "id": "connection-652d73746166662d776562",
+      "edgeIds": [
+        "e-staff-web"
+      ],
+      "taskId": "TASK-INTEGRATION-652d73746166662d776562",
+      "message": "Wire staff → web: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d7765622d61757468",
+      "edgeIds": [
+        "e-web-auth"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7765622d61757468",
+      "message": "Wire web → auth: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d617574682d617069",
+      "edgeIds": [
+        "e-auth-api"
+      ],
+      "taskId": "TASK-INTEGRATION-652d617574682d617069",
+      "message": "Wire auth → api: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d7765622d617069",
+      "edgeIds": [
+        "e-web-api"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7765622d617069",
+      "message": "Wire web → api: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6170692d617373697374616e74",
+      "edgeIds": [
+        "e-api-assistant"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6170692d617373697374616e74",
+      "message": "Wire api → assistant: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d617373697374616e742d6b6e6f776c65646765",
+      "edgeIds": [
+        "e-assistant-knowledge"
+      ],
+      "taskId": "TASK-INTEGRATION-652d617373697374616e742d6b6e6f776c65646765",
+      "message": "Wire assistant → knowledge: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d617373697374616e742d7469636b657473",
+      "edgeIds": [
+        "e-assistant-tickets"
+      ],
+      "taskId": "TASK-INTEGRATION-652d617373697374616e742d7469636b657473",
+      "message": "Wire assistant → tickets: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d617373697374616e742d63726d",
+      "edgeIds": [
+        "e-assistant-crm"
+      ],
+      "taskId": "TASK-INTEGRATION-652d617373697374616e742d63726d",
+      "message": "Wire assistant → crm: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d617373697374616e742d6d6f64656c",
+      "edgeIds": [
+        "e-assistant-model"
+      ],
+      "taskId": "TASK-INTEGRATION-652d617373697374616e742d6d6f64656c",
+      "message": "Wire assistant → model: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d617373697374616e742d657363616c6174696f6e",
+      "edgeIds": [
+        "e-assistant-escalation"
+      ],
+      "taskId": "TASK-INTEGRATION-652d617373697374616e742d657363616c6174696f6e",
+      "message": "Wire assistant → escalation: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d617373697374616e742d6175646974",
+      "edgeIds": [
+        "e-assistant-audit"
+      ],
+      "taskId": "TASK-INTEGRATION-652d617373697374616e742d6175646974",
+      "message": "Wire assistant → audit: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

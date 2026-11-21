@@ -1,0 +1,332 @@
+{
+  "version": 1,
+  "revision": 2,
+  "name": "Async word-count qualification pipeline",
+  "provider": "aws",
+  "requirements": "",
+  "nodes": [
+    {
+      "id": "uploader",
+      "type": "resource",
+      "position": {
+        "x": 50,
+        "y": 190
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Existing uploader (IAM principal)",
+        "provider": "tools",
+        "kind": "source",
+        "description": "Existing IAM caller that stores and reads synthetic text files. It is outside the provisioning scope, and its identity is not verified.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "binding": "aws-iam-principal"
+      }
+    },
+    {
+      "id": "bucket",
+      "type": "resource",
+      "position": {
+        "x": 470,
+        "y": 190
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Private source bucket",
+        "provider": "aws",
+        "kind": "resource",
+        "description": "Private, versioned bucket. When an object is created, it notifies the queue with the exact versionId.",
+        "config": {
+          "region": "ap-southeast-2 (candidate)",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "Amazon S3"
+      }
+    },
+    {
+      "id": "queue",
+      "type": "resource",
+      "position": {
+        "x": 890,
+        "y": 60
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Work queue",
+        "provider": "aws",
+        "kind": "stream",
+        "description": "Standard queue. Retries failed messages by redelivering them after the visibility timeout, which is at least six times the function timeout.",
+        "config": {
+          "region": "ap-southeast-2 (candidate)",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "implementation": "sqs-standard",
+        "service": "Amazon SQS"
+      }
+    },
+    {
+      "id": "dlq",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 50
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Dead-letter queue",
+        "provider": "aws",
+        "kind": "resource",
+        "description": "Holds poison messages after the maximum number of receives. Its generated alarm needs an existing SNS topic in production.",
+        "config": {
+          "region": "ap-southeast-2 (candidate)",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "implementation": "sqs-dead-letter",
+        "service": "Amazon SQS"
+      }
+    },
+    {
+      "id": "worker",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Word-count worker",
+        "provider": "aws",
+        "kind": "tool",
+        "description": "Reads the exact object version and counts words. Reports partial batch failures. Owns its execution role, logs, version, alias and event mapping.",
+        "config": {
+          "memoryMb": 256,
+          "functionTimeoutSeconds": 30,
+          "concurrency": 2,
+          "maxInputBytes": 1000000,
+          "logRetentionDays": 30,
+          "region": "ap-southeast-2 (candidate)",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "implementation": "async-word-count",
+        "service": "AWS Lambda"
+      }
+    },
+    {
+      "id": "results",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Word-count results",
+        "provider": "aws",
+        "kind": "output",
+        "description": "Uses a conditional write for each object version, so duplicate deliveries succeed without overwriting results.",
+        "config": {
+          "region": "ap-southeast-2 (candidate)",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "implementation": "word-count-results",
+        "service": "Amazon DynamoDB"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-up-bucket",
+      "source": "uploader",
+      "target": "bucket",
+      "type": "smoothstep",
+      "label": "store/read files",
+      "access": "s3-read-write"
+    },
+    {
+      "id": "e-bucket-queue",
+      "source": "bucket",
+      "target": "queue",
+      "type": "smoothstep",
+      "label": "ObjectCreated event",
+      "integration": "s3-object-created"
+    },
+    {
+      "id": "e-queue-worker",
+      "source": "queue",
+      "target": "worker",
+      "type": "smoothstep",
+      "label": "event source mapping",
+      "integration": "sqs-lambda"
+    },
+    {
+      "id": "e-worker-bucket",
+      "source": "worker",
+      "target": "bucket",
+      "type": "smoothstep",
+      "label": "GetObjectVersion",
+      "integration": "lambda-s3-read"
+    },
+    {
+      "id": "e-worker-results",
+      "source": "worker",
+      "target": "results",
+      "type": "smoothstep",
+      "label": "conditional put count",
+      "integration": "lambda-dynamodb-write"
+    },
+    {
+      "id": "e-queue-dlq",
+      "source": "queue",
+      "target": "dlq",
+      "type": "smoothstep",
+      "label": "redrive after max receives",
+      "integration": "sqs-redrive"
+    }
+  ],
+  "id": "c0595035-ab94-4b84-819f-6667002ee4ee",
+  "brief": {
+    "application": "On AWS, when a synthetic text file arrives in private object storage, queue it and process it with a serverless worker. Save its word count as a result. Duplicate deliveries must be safe, failures must retry, and poison messages must go to a dead-letter queue. Use AWS for this synthetic qualification design. Propose Sydney as a candidate region, but do not record that as an approved deployment region. Draw the architecture and identify the next missing decision. This is a test design, not an instruction to deploy.",
+    "cloud": "AWS"
+  },
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use AWS for this synthetic qualification design.",
+      "options": "",
+      "decision": "aws",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.async-s3-sqs-lambda-word-count-pipeline-synthetic-test-design",
+      "title": "Async S3 → SQS → Lambda word-count pipeline (synthetic test design)",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: synthetic UTF-8 text files only, word counts saved per exact object version. Assumptions: AWS; Sydney (ap-southeast-2) is a candidate region, not an approved one; default limits are 256 MiB, 30 s timeout, concurrency 2, 1 MB input and 30-day logs. The SQS visibility timeout must be at least six times the function timeout. The generated resources include the execution role, logs, version, alias, event mapping and DLQ alarm. Production needs an existing, reviewed SNS alarm topic. This is a design, not a deployment.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "needs": [
+    {
+      "id": "ai-idempotent-count",
+      "kind": "functional",
+      "category": "reliability",
+      "statement": "Proposed: each object version produces exactly one stored word count, and a duplicate delivery succeeds without overwriting it.",
+      "rationale": "Without this, SQS's at-least-once delivery could produce inconsistent or overwritten results.",
+      "basis": "User: \"Duplicate deliveries must be safe\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "worker",
+        "results"
+      ]
+    },
+    {
+      "id": "ai-retry-dlq",
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "statement": "Proposed: failed messages are retried, then moved to a dead-letter queue after the maximum number of receives, with an alarm sent to an operator.",
+      "rationale": "Poison messages would otherwise loop forever or be silently lost.",
+      "basis": "User: \"failures must retry, and poison messages must go to a dead-letter queue\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "queue",
+        "dlq"
+      ]
+    },
+    {
+      "id": "ai-region",
+      "kind": "nonfunctional",
+      "category": "compliance",
+      "statement": "Proposed: the deployment region stays open; Sydney (ap-southeast-2) is a candidate only.",
+      "rationale": "This avoids recording an unapproved region as a decision.",
+      "basis": "User: \"Propose Sydney as a candidate region, but do not record that as an approved deployment region.\"",
+      "priority": "should",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "bucket",
+        "queue",
+        "worker",
+        "results",
+        "dlq"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "extensions": {
+    "requirementNumbers": {
+      "drv-data-access": 1,
+      "drv-data-location": 2,
+      "ai-idempotent-count": 3,
+      "ai-retry-dlq": 4,
+      "ai-region": 5
+    }
+  },
+  "facts": [
+    {
+      "id": "fact-2f429e61",
+      "name": "cloud.preference",
+      "value": "aws",
+      "unit": "provider",
+      "text": "On AWS, when a synthetic text file arrives in private object storage, queue it and process it with a serverless worker. Save its word count as a result. Duplicate deliveries must be safe, failures must retry, and poison messages must go to a dead-letter queue. Use AWS for this synthetic qualificatio",
+      "madeAt": "2026-11-07"
+    }
+  ],
+  "workflow": "predictive",
+  "asked": [],
+  "lastAsked": {
+    "id": "predictive:0",
+    "topic": "data",
+    "question": "How much history do you have for what you want to predict?",
+    "beginner": "For example “three years of sales by store” or “failure records since 2020”.",
+    "why": "It shapes the Predictive ML design."
+  },
+  "choices": {},
+  "conceptSig": null
+}

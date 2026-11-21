@@ -1,0 +1,570 @@
+{
+  "version": 1,
+  "revision": 2,
+  "name": "Synthetic sensor anomaly detection on AWS",
+  "provider": "aws",
+  "requirements": "",
+  "nodes": [
+    {
+      "id": "sim",
+      "type": "resource",
+      "position": {
+        "x": 50,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Synthetic device simulator",
+        "provider": "tools",
+        "kind": "source",
+        "description": "External synthetic telemetry generator outside the provisioning scope. Emits {deviceId, eventId, timestamp, metric, value, unit} over MQTT/TLS with per-device X.509 certificates, and buffers events locally while disconnected.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "poc": true
+      }
+    },
+    {
+      "id": "iot",
+      "type": "resource",
+      "position": {
+        "x": 470,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Device ingestion",
+        "provider": "aws",
+        "kind": "stream",
+        "description": "Authenticates devices by certificate and routes telemetry through an IoT rule to Kinesis, unchanged. Preserves deviceId, timestamps and units, and adds the ingest time.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "AWS IoT Core"
+      }
+    },
+    {
+      "id": "kds-raw",
+      "type": "resource",
+      "position": {
+        "x": 890,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Raw telemetry buffer",
+        "provider": "aws",
+        "kind": "stream",
+        "description": "Durable, ordered buffer partitioned by deviceId. Its retention window supports replay after disconnects or failures; the retention period is to be decided.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "Amazon Kinesis Data Streams"
+      }
+    },
+    {
+      "id": "validator",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Event validator",
+        "provider": "aws",
+        "kind": "guard",
+        "description": "Uses a Kinesis event source mapping with partial batch failure reporting. Rejects events from unknown devices and events whose units are invalid for the registered metric, plus malformed timestamps. Forwards valid events unchanged.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "AWS Lambda"
+      }
+    },
+    {
+      "id": "registry",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 50
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Device registry",
+        "provider": "aws",
+        "kind": "resource",
+        "description": "The authoritative list of known devices, with the allowed metrics and units for each.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "Amazon DynamoDB"
+      }
+    },
+    {
+      "id": "rejects",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Rejected events",
+        "provider": "aws",
+        "kind": "resource",
+        "description": "Holds rejected events with a rejection reason for operator inspection; nothing is silently dropped.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "Amazon SQS"
+      }
+    },
+    {
+      "id": "kds-valid",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 610
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Validated telemetry",
+        "provider": "aws",
+        "kind": "stream",
+        "description": "Validated events, partitioned by deviceId so each device's events stay in order for scoring.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "Amazon Kinesis Data Streams"
+      }
+    },
+    {
+      "id": "scorer",
+      "type": "resource",
+      "position": {
+        "x": 2150,
+        "y": 610
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Anomaly scorer",
+        "provider": "aws",
+        "kind": "predict",
+        "description": "Deduplicates on deviceId+eventId with a conditional write, so duplicates produce one result. Applies the explicit late/out-of-order policy (window to be decided) and invokes the model endpoint. The response it writes includes the anomaly score, evidence features and the model version.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "AWS Lambda"
+      }
+    },
+    {
+      "id": "model",
+      "type": "resource",
+      "position": {
+        "x": 2570,
+        "y": 190
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Anomaly model endpoint",
+        "provider": "aws",
+        "kind": "predict",
+        "description": "Hosted anomaly model that returns a score and the model version. Supervised vs unsupervised is undecided. Local tests use a scripted mock, which proves nothing about detection quality.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "service": "Amazon SageMaker AI"
+      }
+    },
+    {
+      "id": "results",
+      "type": "resource",
+      "position": {
+        "x": 2570,
+        "y": 470
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Anomaly results",
+        "provider": "aws",
+        "kind": "output",
+        "description": "One result per deviceId+eventId: original timestamp and unit, score, evidence, model version and late-event flag.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "measures": [
+          {
+            "label": "Duplicate events yield one result",
+            "path": "duplicates.extra_results",
+            "op": "==",
+            "target": 0
+          },
+          {
+            "label": "Results name model version",
+            "path": "results.with_model_version_ratio",
+            "op": ">=",
+            "target": 1
+          }
+        ],
+        "service": "Amazon DynamoDB"
+      }
+    },
+    {
+      "id": "alerts",
+      "type": "resource",
+      "position": {
+        "x": 2570,
+        "y": 750
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Operator alert",
+        "provider": "aws",
+        "kind": "output",
+        "description": "Publishes one alert per anomalous result, including the device, time, evidence and model version.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "Amazon SNS"
+      }
+    },
+    {
+      "id": "operator",
+      "type": "resource",
+      "position": {
+        "x": 2990,
+        "y": 750
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Operator",
+        "provider": "tools",
+        "kind": "tool",
+        "description": "The person who receives and triages anomaly alerts; outside the provisioning scope.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "role": "human"
+      }
+    },
+    {
+      "id": "monitor",
+      "type": "resource",
+      "position": {
+        "x": 2570,
+        "y": 1030
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Pipeline monitoring",
+        "provider": "aws",
+        "kind": "monitor",
+        "description": "Tracks iterator age, rejection rate, scorer errors and alert volume to detect backlog and failures.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "service": "Amazon CloudWatch"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-sim-iot",
+      "source": "sim",
+      "target": "iot",
+      "type": "smoothstep",
+      "label": "MQTT/TLS telemetry"
+    },
+    {
+      "id": "e-iot-kds",
+      "source": "iot",
+      "target": "kds-raw",
+      "type": "smoothstep",
+      "label": "IoT rule → PutRecord"
+    },
+    {
+      "id": "e-kds-val",
+      "source": "kds-raw",
+      "target": "validator",
+      "type": "smoothstep",
+      "label": "event source mapping"
+    },
+    {
+      "id": "e-val-reg",
+      "source": "validator",
+      "target": "registry",
+      "type": "smoothstep",
+      "label": "lookup device/units"
+    },
+    {
+      "id": "e-val-rej",
+      "source": "validator",
+      "target": "rejects",
+      "type": "smoothstep",
+      "label": "rejected + reason"
+    },
+    {
+      "id": "e-val-kds2",
+      "source": "validator",
+      "target": "kds-valid",
+      "type": "smoothstep",
+      "label": "valid events"
+    },
+    {
+      "id": "e-kds2-score",
+      "source": "kds-valid",
+      "target": "scorer",
+      "type": "smoothstep",
+      "label": "event source mapping"
+    },
+    {
+      "id": "e-score-model",
+      "source": "scorer",
+      "target": "model",
+      "type": "smoothstep",
+      "label": "InvokeEndpoint"
+    },
+    {
+      "id": "e-score-res",
+      "source": "scorer",
+      "target": "results",
+      "type": "smoothstep",
+      "label": "conditional write"
+    },
+    {
+      "id": "e-score-sns",
+      "source": "scorer",
+      "target": "alerts",
+      "type": "smoothstep",
+      "label": "publish anomaly"
+    },
+    {
+      "id": "e-sns-op",
+      "source": "alerts",
+      "target": "operator",
+      "type": "smoothstep",
+      "label": "alert notification"
+    },
+    {
+      "id": "e-score-mon",
+      "source": "scorer",
+      "target": "monitor",
+      "type": "smoothstep",
+      "label": "metrics/logs"
+    }
+  ],
+  "id": "67e36e82-55e4-4aa4-841e-2f1423b5f988",
+  "brief": {
+    "application": "Use AWS for this synthetic architecture qualification. Analyze synthetic sensor events for anomalous device behavior. Preserve device identity, timestamps and units. Include ingestion, durable buffering, validation, inference, results and an operator alert. Acceptance criteria: Reject unknown device and invalid units; Duplicate events produce one result; Late and out-of-order telemetry follows an explicit policy; Disconnected input recovers by replay; Anomaly output names evidence and model version. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+    "cloud": "AWS"
+  },
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use AWS for this synthetic architecture qualification",
+      "options": "",
+      "decision": "aws",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.aws-sensor-anomaly-detection-pipeline-first-sketch",
+      "title": "AWS sensor anomaly detection pipeline (first sketch)",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: synthetic sensor events → IoT Core ingestion → Kinesis durable, replayable buffer → Lambda validation against a DynamoDB device registry (rejects to SQS) → validated Kinesis stream → Lambda scorer (idempotent dedup, late/out-of-order policy) → SageMaker AI anomaly endpoint → DynamoDB results with evidence and model version → SNS operator alert. Assumptions: region not selected; model type (supervised vs unsupervised) undecided; late-event window undecided; Kinesis retention period undecided. IoT Core, Kinesis, SageMaker and the scoring code have no native generator coverage and require engineering. Nothing is deployed or verified.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "needs": [
+    {
+      "id": "ai-reject-invalid",
+      "kind": "functional",
+      "category": "reliability",
+      "statement": "Events from unregistered devices or with units not allowed for the metric are rejected with a reason and never scored.",
+      "rationale": "Bad events would otherwise create false anomalies.",
+      "basis": "User: \"Reject unknown device and invalid units\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "validator",
+        "registry",
+        "rejects"
+      ]
+    },
+    {
+      "id": "ai-idempotent-results",
+      "kind": "functional",
+      "category": "reliability",
+      "statement": "Each deviceId+eventId produces exactly one result, even when the event is delivered more than once.",
+      "rationale": "Kinesis and MQTT can deliver an event more than once, and duplicates would trigger duplicate alerts.",
+      "basis": "User: \"Duplicate events produce one result\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "scorer",
+        "results"
+      ]
+    },
+    {
+      "id": "ai-late-policy",
+      "kind": "functional",
+      "category": "reliability",
+      "statement": "Late and out-of-order events are handled by an explicit, documented policy (acceptance window to be decided) and flagged in the result.",
+      "rationale": "Without an explicit policy, scoring is not reproducible.",
+      "basis": "User: \"Late and out-of-order telemetry follows an explicit policy\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "scorer",
+        "results"
+      ]
+    },
+    {
+      "id": "ai-replay-recovery",
+      "kind": "nonfunctional",
+      "category": "availability",
+      "statement": "After a disconnection, buffered and retained telemetry can be replayed to produce the missing results without duplicating any.",
+      "rationale": "Data must not be lost during an outage; the retention period still needs to be decided.",
+      "basis": "User: \"Disconnected input recovers by replay\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "sim",
+        "kds-raw",
+        "scorer"
+      ]
+    },
+    {
+      "id": "ai-explainable-output",
+      "kind": "functional",
+      "category": "maintainability",
+      "statement": "Every anomaly result and alert names its evidence (metrics and values) and the model version.",
+      "rationale": "Operators need evidence to triage alerts and auditors need the model version.",
+      "basis": "User: \"Anomaly output names evidence and model version\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "scorer",
+        "results",
+        "alerts"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "extensions": {
+    "requirementNumbers": {
+      "drv-data-access": 1,
+      "drv-data-location": 2,
+      "ai-reject-invalid": 3,
+      "ai-idempotent-results": 4,
+      "ai-late-policy": 5,
+      "ai-replay-recovery": 6,
+      "ai-explainable-output": 7
+    }
+  },
+  "facts": [
+    {
+      "id": "fact-559bce66",
+      "name": "cloud.preference",
+      "value": "aws",
+      "unit": "provider",
+      "text": "Use AWS for this synthetic architecture qualification. Analyze synthetic sensor events for anomalous device behavior. Preserve device identity, timestamps and units. Include ingestion, durable buffering, validation, inference, results and an operator alert. Acceptance criteria: Reject unknown device",
+      "madeAt": "2026-11-07"
+    }
+  ],
+  "workflow": "predictive",
+  "asked": [],
+  "lastAsked": {
+    "id": "predictive:0",
+    "topic": "data",
+    "question": "How much history do you have for what you want to predict?",
+    "beginner": "For example “three years of sales by store” or “failure records since 2020”.",
+    "why": "It shapes the Predictive ML design."
+  },
+  "choices": {},
+  "conceptSig": null
+}

@@ -1,0 +1,419 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "sensors",
+      "address": "block_73656e736f7273",
+      "label": "Synthetic sensor producer",
+      "provider": "tools",
+      "service": "Storage or existing data connector",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "event-streams",
+      "address": "block_6576656e742d73747265616d73",
+      "label": "Raw events topic",
+      "provider": "ibm",
+      "service": "IBM Event Streams",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "sensors"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "validator",
+      "address": "block_76616c696461746f72",
+      "label": "Event validator",
+      "provider": "ibm",
+      "service": "IBM Code Engine",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "event-streams"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "dlq",
+      "address": "block_646c71",
+      "label": "Rejected events topic",
+      "provider": "ibm",
+      "service": "IBM Event Streams",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "validator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "inference",
+      "address": "block_696e666572656e6365",
+      "label": "Anomaly scoring",
+      "provider": "ibm",
+      "service": "IBM watsonx.ai Runtime deployment",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "validator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "results",
+      "address": "block_726573756c7473",
+      "label": "Anomaly results",
+      "provider": "ibm",
+      "service": "IBM Cloudant",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "inference"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "alerts",
+      "address": "block_616c65727473",
+      "label": "Operator alert",
+      "provider": "ibm",
+      "service": "IBM Cloud Event Notifications",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "inference"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "operator",
+      "address": "block_6f70657261746f72",
+      "label": "Operator",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "alerts"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "source": "sensors",
+      "target": "event-streams",
+      "data": "produce events (Kafka)",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e2",
+      "source": "event-streams",
+      "target": "validator",
+      "data": "consume sensor-raw",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e3",
+      "source": "validator",
+      "target": "dlq",
+      "data": "rejected + reason",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e4",
+      "source": "validator",
+      "target": "inference",
+      "data": "score valid event",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e5",
+      "source": "inference",
+      "target": "results",
+      "data": "write score",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e6",
+      "source": "inference",
+      "target": "alerts",
+      "data": "anomaly flagged",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e7",
+      "source": "alerts",
+      "target": "operator",
+      "data": "notify",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Synthetic sensor producer: Existing — reference/import plan needed.",
+    "Raw events topic: Implementation needed.",
+    "Event validator: Implementation needed.",
+    "Rejected events topic: Implementation needed.",
+    "Anomaly scoring: Implementation needed.",
+    "Anomaly results: Implementation needed.",
+    "Operator alert: Implementation needed.",
+    "Operator: Existing — reference/import plan needed.",
+    "Wire sensors → event-streams: implement data flow, access policy and acceptance test.",
+    "Wire event-streams → validator: implement data flow, access policy and acceptance test.",
+    "Wire validator → dlq: implement data flow, access policy and acceptance test.",
+    "Wire validator → inference: implement data flow, access policy and acceptance test.",
+    "Wire inference → results: implement data flow, access policy and acceptance test.",
+    "Wire inference → alerts: implement data flow, access policy and acceptance test.",
+    "Wire alerts → operator: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "resource-block_73656e736f7273",
+      "componentIds": [
+        "sensors"
+      ],
+      "taskId": "TASK-RESOURCE-73656e736f7273",
+      "message": "Synthetic sensor producer: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_6576656e742d73747265616d73",
+      "componentIds": [
+        "event-streams"
+      ],
+      "taskId": "TASK-RESOURCE-6576656e742d73747265616d73",
+      "message": "Raw events topic: Implementation needed."
+    },
+    {
+      "id": "resource-block_76616c696461746f72",
+      "componentIds": [
+        "validator"
+      ],
+      "taskId": "TASK-RESOURCE-76616c696461746f72",
+      "message": "Event validator: Implementation needed."
+    },
+    {
+      "id": "resource-block_646c71",
+      "componentIds": [
+        "dlq"
+      ],
+      "taskId": "TASK-RESOURCE-646c71",
+      "message": "Rejected events topic: Implementation needed."
+    },
+    {
+      "id": "resource-block_696e666572656e6365",
+      "componentIds": [
+        "inference"
+      ],
+      "taskId": "TASK-RESOURCE-696e666572656e6365",
+      "message": "Anomaly scoring: Implementation needed."
+    },
+    {
+      "id": "resource-block_726573756c7473",
+      "componentIds": [
+        "results"
+      ],
+      "taskId": "TASK-RESOURCE-726573756c7473",
+      "message": "Anomaly results: Implementation needed."
+    },
+    {
+      "id": "resource-block_616c65727473",
+      "componentIds": [
+        "alerts"
+      ],
+      "taskId": "TASK-RESOURCE-616c65727473",
+      "message": "Operator alert: Implementation needed."
+    },
+    {
+      "id": "resource-block_6f70657261746f72",
+      "componentIds": [
+        "operator"
+      ],
+      "taskId": "TASK-RESOURCE-6f70657261746f72",
+      "message": "Operator: Existing — reference/import plan needed."
+    },
+    {
+      "id": "connection-6531",
+      "edgeIds": [
+        "e1"
+      ],
+      "taskId": "TASK-INTEGRATION-6531",
+      "message": "Wire sensors → event-streams: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6532",
+      "edgeIds": [
+        "e2"
+      ],
+      "taskId": "TASK-INTEGRATION-6532",
+      "message": "Wire event-streams → validator: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6533",
+      "edgeIds": [
+        "e3"
+      ],
+      "taskId": "TASK-INTEGRATION-6533",
+      "message": "Wire validator → dlq: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6534",
+      "edgeIds": [
+        "e4"
+      ],
+      "taskId": "TASK-INTEGRATION-6534",
+      "message": "Wire validator → inference: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6535",
+      "edgeIds": [
+        "e5"
+      ],
+      "taskId": "TASK-INTEGRATION-6535",
+      "message": "Wire inference → results: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6536",
+      "edgeIds": [
+        "e6"
+      ],
+      "taskId": "TASK-INTEGRATION-6536",
+      "message": "Wire inference → alerts: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6537",
+      "edgeIds": [
+        "e7"
+      ],
+      "taskId": "TASK-INTEGRATION-6537",
+      "message": "Wire alerts → operator: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

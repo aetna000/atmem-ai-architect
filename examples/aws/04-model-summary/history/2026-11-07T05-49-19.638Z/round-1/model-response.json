@@ -1,0 +1,255 @@
+{
+  "message": "We'll build an IAM-authenticated summary Lambda (bedrock-summary) that calls an existing Amazon Bedrock model through Converse. The proposed limits are 16,000-byte input, 512 output tokens, 2 SDK attempts, concurrency 1 and 30-day logs, with Sydney (ap-southeast-2) only as a candidate region and nothing about the model or region checked yet. Which direct Bedrock foundation model ID should we target, or should I leave it as an open decision for you to check in Sydney?",
+  "phase": "Architecture",
+  "proposal": {
+    "baseRevision": 1,
+    "title": "Authenticated Bedrock summary service (synthetic qualification sketch)",
+    "body": "Scope: an existing IAM caller invokes a bedrock-summary Lambda directly. The Lambda calls an existing Amazon Bedrock foundation model via Converse. The Lambda owns its execution role (InvokeModel only on the selected model ARN), CloudWatch log group, published version and alias. Assumptions: synthetic text only; Sydney (ap-southeast-2) is a candidate region, not approved; model ID, model access, Converse support and quotas are unverified; the bounds are proposed defaults. There is no anonymous endpoint and no deployment.",
+    "next": {
+      "version": 1,
+      "revision": 1,
+      "name": "Authenticated Bedrock text summarizer",
+      "provider": "aws",
+      "requirements": "",
+      "nodes": [
+        {
+          "id": "caller",
+          "type": "resource",
+          "position": {
+            "x": 0,
+            "y": 0
+          },
+          "data": {
+            "label": "Existing IAM caller",
+            "kind": "tool",
+            "provider": "tools",
+            "description": "Existing IAM principal (test harness), outside the provisioning scope. It invokes the summary function's live alias with SigV4 and sends {text}. Its identity is not verified.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Internal",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "poc": false,
+            "binding": "aws-iam-principal"
+          }
+        },
+        {
+          "id": "summary-fn",
+          "type": "resource",
+          "position": {
+            "x": 400,
+            "y": 0
+          },
+          "data": {
+            "label": "Summary function",
+            "kind": "agent",
+            "provider": "aws",
+            "description": "Validates the input size, calls Bedrock Converse with bounded output and retries, and returns the summary to the caller. It owns its execution role (bedrock:InvokeModel on the selected model ARN only), a scoped CloudWatch Logs group, a published version and a live alias. Candidate region: ap-southeast-2 (Sydney), not approved.",
+            "config": {
+              "region": "ap-southeast-2 (candidate, unapproved)",
+              "classification": "Internal",
+              "timeout": 5000,
+              "concurrency": 1,
+              "maxInputBytes": 16000,
+              "maxOutputTokens": 512,
+              "logRetentionDays": 30
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "poc": true,
+            "role": "app",
+            "service": "AWS Lambda",
+            "implementation": "bedrock-summary"
+          }
+        },
+        {
+          "id": "bedrock",
+          "type": "resource",
+          "position": {
+            "x": 800,
+            "y": 0
+          },
+          "data": {
+            "label": "Amazon Bedrock model",
+            "kind": "predict",
+            "provider": "aws",
+            "description": "A direct foundation model selected through a required Terraform model-ID input. No cross-region inference profile is used. Model access, Converse support, quotas and Sydney availability have not been checked yet.",
+            "config": {
+              "region": "ap-southeast-2 (candidate, unapproved)",
+              "classification": "Internal",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "poc": false,
+            "role": "llm",
+            "service": "Amazon Bedrock",
+            "binding": "aws-bedrock-model"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "e-caller-fn",
+          "source": "caller",
+          "target": "summary-fn",
+          "type": "smoothstep",
+          "label": "IAM invoke {text} → summary",
+          "access": "lambda-invoke"
+        },
+        {
+          "id": "e-fn-bedrock",
+          "source": "summary-fn",
+          "target": "bedrock",
+          "type": "smoothstep",
+          "label": "Converse (≤512 tokens, 2 attempts)",
+          "integration": "bedrock-converse"
+        }
+      ]
+    }
+  },
+  "requirementDrafts": [
+    {
+      "rationale": "Proposed: an open endpoint could expose model spend and misuse.",
+      "basis": "User: \"Build an authenticated AWS service\"",
+      "id": "ai-summary-auth",
+      "statement": "Only authenticated IAM principals that have been explicitly granted access can invoke the summary function. Anonymous access is denied.",
+      "kind": "nonfunctional",
+      "category": "security",
+      "priority": "must",
+      "links": [
+        "caller",
+        "summary-fn"
+      ]
+    },
+    {
+      "rationale": "Bounds cap token cost and quota pressure. The values are proposed defaults that still need confirmation.",
+      "basis": "User: \"Bound request size, output tokens, retries and invocation concurrency.\"",
+      "id": "ai-summary-bounds",
+      "statement": "Proposed bounds: input of at most 16,000 bytes, at most 512 output tokens, at most 2 SDK attempts and concurrency of 1. Inputs that exceed these limits are rejected.",
+      "kind": "nonfunctional",
+      "category": "cost",
+      "priority": "must",
+      "links": [
+        "summary-fn",
+        "bedrock"
+      ]
+    },
+    {
+      "rationale": "An unavailable model or region would block deployment.",
+      "basis": "User: \"Model selection and region availability must be verified before deployment.\"",
+      "id": "ai-model-region-verify",
+      "statement": "Before deployment, verify the selected model ID, model access, Converse support and quotas in the chosen region (candidate: Sydney).",
+      "kind": "nonfunctional",
+      "category": "compliance",
+      "priority": "must",
+      "links": [
+        "bedrock"
+      ]
+    }
+  ],
+  "decisionUpdates": [
+    {
+      "subject": "platform.cloud",
+      "value": "aws",
+      "sourceText": "Use AWS for this synthetic qualification design."
+    }
+  ],
+  "contextUsed": {
+    "status": "unavailable",
+    "enabled": true,
+    "engine": "AtMem 2.3.10 core SDK",
+    "recordsUsed": [],
+    "knowledgeRecordIds": [],
+    "skills": [
+      {
+        "id": "architecture",
+        "name": "AI architecture and discovery",
+        "provider": "all",
+        "stages": [
+          "discover",
+          "design",
+          "review"
+        ],
+        "version": "1.0.0",
+        "digest": "9ad2d605f02a4b5ecbc5310b2472f347a8c4301ece89714a0857d8405e075c90",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "devops",
+        "name": "Infrastructure and DevOps handoff",
+        "provider": "all",
+        "stages": [
+          "deploy",
+          "review"
+        ],
+        "version": "1.1.0",
+        "digest": "cd5a428597fbf388a12a863721d93e551c200f4ed30be3469fd8eae78262884c",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "aws",
+        "name": "AWS architecture guidance",
+        "provider": "aws",
+        "stages": [
+          "design",
+          "review",
+          "estimate",
+          "deploy"
+        ],
+        "version": "1.4.0",
+        "digest": "82147cbfe99396d8e659bc7c8d62ce57b0868983bc88c1ace0aaa860ecb9ba29",
+        "source": "https://raw.githubusercontent.com/aws/agent-toolkit-for-aws/fb298e0b6bf2b308a3d2c212b2a09b9bace8e090/plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+        "reference": {
+          "id": "aws",
+          "repository": "aws/agent-toolkit-for-aws",
+          "commit": "fb298e0b6bf2b308a3d2c212b2a09b9bace8e090",
+          "sourcePath": "plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+          "url": "https://raw.githubusercontent.com/aws/agent-toolkit-for-aws/fb298e0b6bf2b308a3d2c212b2a09b9bace8e090/plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+          "sha256": "aa8fef39ef6d64365e48827d9acc90b2b8755023f5c177341cf1c954c1057811",
+          "file": "agent-skills/upstream/aws/SKILL.md",
+          "status": "reference-only",
+          "note": "Imported source reference, not an enabled script/tool package. AtMem AI Architect specialist guidance is reviewed separately; referenced upstream companion files are not bundled.",
+          "integrity": true
+        },
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup",
+          "pricing.lookup"
+        ],
+        "enabled": true
+      }
+    ],
+    "tools": [],
+    "boundary": "AtMem AI Architect → native client",
+    "contextDigest": "ab0e506e4485d361880e54a50fd4c66df2a6177b072138cf8460839d16fc893c",
+    "projectId": "a68438c9-97d6-499c-bc4c-aea29e42fe31"
+  },
+  "priceQuotes": []
+}

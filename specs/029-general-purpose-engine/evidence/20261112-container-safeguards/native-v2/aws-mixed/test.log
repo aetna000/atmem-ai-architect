@@ -1,0 +1,41 @@
+tests/container.tftest.hcl... in progress
+  run "block_696e737472756d656e742dc2b5_reject_foreign_aws_subnet"... pass
+  run "block_696e737472756d656e742dc2b5_reject_foreign_aws_security_group"... pass
+  run "block_696e737472756d656e742dc2b5_security"... pass
+  run "block_696e737472756d656e742dc2b5_reject_mutable_image"... pass
+  run "block_696e737472756d656e742dc2b5_footprint"... pass
+  run "invalid_region_blocked"... pass
+  run "changed_accepted_region_blocked"... pass
+  run "unapproved_blocked"... pass
+tests/container.tftest.hcl... tearing down
+tests/container.tftest.hcl... pass
+tests/independent-placement.tftest.hcl... in progress
+  run "independent_accepted_placement"... pass
+tests/independent-placement.tftest.hcl... tearing down
+tests/independent-placement.tftest.hcl... pass
+tests/independent-safeguards.tftest.hcl... in progress
+  run "independent_native_execution_scope"... fail
+
+Error: Unknown condition value
+
+  on tests/independent-safeguards.tftest.hcl line 20, in run "independent_native_execution_scope":
+  20:  condition = length(jsondecode(aws_iam_role_policy.block_696e737472756d656e742dc2b5.policy).Statement[0].Action) == 1 && jsondecode(aws_iam_role_policy.block_696e737472756d656e742dc2b5.policy).Statement[0].Action[0] == "ecr:GetAuthorizationToken" && jsondecode(aws_iam_role_policy.block_696e737472756d656e742dc2b5.policy).Statement[1].Resource == var.block_696e737472756d656e742dc2b5_repository_arn && length(jsondecode(aws_iam_role_policy.block_696e737472756d656e742dc2b5.policy).Statement) == 3
+    ├────────────────
+    │ aws_iam_role_policy.block_696e737472756d656e742dc2b5.policy is a string
+    │ var.block_696e737472756d656e742dc2b5_repository_arn is "arn:aws:ecr:eu-west-1:123456789012:repository/architect"
+
+Condition expression could not be evaluated at this time. This means you have
+executed a `run` block with `command = plan` and one of the values your
+condition depended on is not known until after the plan has been applied.
+Either remove this value from your condition, or execute an `apply` command
+from this `run` block. Alternatively, if there is an override for this value,
+you can make it available during the plan phase by setting `override_during =
+plan` in the `override_` block.
+  run "independent_native_trust_scope"... skip
+  run "independent_wildcard_repository_denied"... skip
+  run "independent_foreign_aws_subnet_vpc_denied"... skip
+  run "independent_foreign_aws_security_group_vpc_denied"... skip
+tests/independent-safeguards.tftest.hcl... tearing down
+tests/independent-safeguards.tftest.hcl... fail
+
+Failure! 9 passed, 1 failed, 4 skipped.

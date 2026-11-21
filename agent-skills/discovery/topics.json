@@ -1,0 +1,139 @@
+{
+  "version": "1.1.0",
+  "topics": [
+    {
+      "id": "application",
+      "label": "What you want to build",
+      "order": 1,
+      "after": [],
+      "essential": true,
+      "question": "What should this system help someone do?",
+      "beginner": "For example: help support staff find answers in company documents, or warn engineers before equipment fails.",
+      "why": "It decides which kind of AI system fits and what to sketch first.",
+      "ifUnsure": null,
+      "feeds": [
+        "workflow detection",
+        "first sketch"
+      ],
+      "short": "What"
+    },
+    {
+      "id": "users",
+      "label": "Who uses it, and how much",
+      "order": 3,
+      "after": [
+        "application"
+      ],
+      "essential": true,
+      "question": "Who will use this system?",
+      "beginner": "For example: 50 support staff, your engineering team, or customers on your website. An approximate number helps us choose capacity.",
+      "why": "Usage drives cost and how much the system must scale.",
+      "ifUnsure": "About 100 users making 10 requests a day, for a first estimate.",
+      "feeds": [
+        "cost: requests per month",
+        "review: scalability"
+      ],
+      "short": "Who"
+    },
+    {
+      "id": "data",
+      "label": "Information it uses",
+      "order": 2,
+      "after": [
+        "application"
+      ],
+      "essential": true,
+      "question": "Which information should the system use?",
+      "beginner": "For example: policy PDFs in SharePoint, customer records, application logs or sensor readings. Tell me where that information is stored today if you know.",
+      "why": "Data location and sensitivity shape security, storage and where it can run.",
+      "ifUnsure": "Internal business documents, no personal data, stored with the current provider.",
+      "feeds": [
+        "review: security, data residency",
+        "cost: storage"
+      ],
+      "short": "Data"
+    },
+    {
+      "id": "cloud",
+      "label": "Cloud preference",
+      "order": 6,
+      "after": [
+        "application"
+      ],
+      "essential": false,
+      "question": "Do you already use a cloud provider, or have a preference?",
+      "beginner": "AWS, Azure, Google Cloud or IBM — or “no idea”, and I'll suggest one based on what you already use.",
+      "why": "It sets which services we design with and which prices apply.",
+      "ifUnsure": "No preference yet; the design stays provider-neutral until we compare options.",
+      "feeds": [
+        "design: services",
+        "cost: price book"
+      ],
+      "short": "Cloud"
+    },
+    {
+      "id": "systems",
+      "label": "Systems it connects to",
+      "order": 4,
+      "after": [
+        "application"
+      ],
+      "essential": false,
+      "question": "Which existing tool should this system connect to first?",
+      "beginner": "For example: your website, Salesforce, Microsoft Teams or a ticketing system. You can say “none for the first version”.",
+      "why": "Integrations add components, permissions and failure points.",
+      "ifUnsure": "Standalone at first, with no integrations.",
+      "feeds": [
+        "design: integration blocks",
+        "review: reliability"
+      ],
+      "short": "Systems"
+    },
+    {
+      "id": "quality",
+      "label": "How good, fast and safe",
+      "order": 5,
+      "after": [
+        "application"
+      ],
+      "essential": false,
+      "question": "What is the most important rule this system must meet?",
+      "beginner": "For example: “answers within 5 seconds”, “data stays in Australia”, or “a person approves replies before customers receive them”. We can add more rules afterwards.",
+      "why": "These become measurable requirements the review checks the design against.",
+      "ifUnsure": "Answers within 10 seconds, available in business hours, a person reviews anything sent outside the organisation.",
+      "feeds": [
+        "requirements",
+        "review: performance, availability, security"
+      ],
+      "short": "Quality"
+    },
+    {
+      "id": "budget",
+      "label": "Budget and timeline",
+      "order": 7,
+      "after": [
+        "application"
+      ],
+      "essential": false,
+      "question": "How much could you spend each month to run this system in the cloud?",
+      "beginner": "Include the currency if you have a limit—for example, “AUD 100–300 per month”. This covers cloud services and AI usage, not the one-off cost of building it. If you do not know yet, say “estimate it for me”. We can discuss the target launch date separately.",
+      "why": "It tells us when an option is too expensive and what to build first.",
+      "ifUnsure": "No fixed budget; we'll estimate and you decide.",
+      "feeds": [
+        "cost: budget check",
+        "review: cost"
+      ],
+      "short": "Budget"
+    }
+  ],
+  "unsure": "not sure|don'?t know|no idea|unsure|tbd|not yet decided|you (tell|suggest|decide)|whatever you",
+  "legacy": {
+    "strategicIntent": "application",
+    "client": "application",
+    "economicValue": "budget",
+    "riskPosture": "quality",
+    "currentState": "systems",
+    "stakeholders": "users",
+    "constraints": "quality"
+  }
+}

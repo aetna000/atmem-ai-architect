@@ -1,0 +1,436 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "operator",
+      "address": "block_6f70657261746f72",
+      "label": "Platform operator",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "inventory",
+      "address": "block_696e76656e746f7279",
+      "label": "Synthetic inventory snapshots",
+      "provider": "aws",
+      "service": "Amazon S3",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_s3_bucket",
+        "aws_s3_bucket_public_access_block",
+        "aws_s3_bucket_server_side_encryption_configuration",
+        "aws_s3_bucket_versioning",
+        "aws_s3_bucket_ownership_controls",
+        "aws_s3_bucket_policy"
+      ],
+      "costDrivers": "Storage, requests, retrieval and transfer",
+      "dependencies": [
+        "orchestrator"
+      ],
+      "terraform": "S3 foundation generated",
+      "foundation": true,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": true
+    },
+    {
+      "id": "orchestrator",
+      "address": "block_6f7263686573747261746f72",
+      "label": "Analysis workflow",
+      "provider": "aws",
+      "service": "AWS Step Functions",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "operator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "checks",
+      "address": "block_636865636b73",
+      "label": "Policy and drift checks",
+      "provider": "aws",
+      "service": "AWS Lambda",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_lambda_function",
+        "aws_iam_role"
+      ],
+      "costDrivers": "Requests, duration, memory and logs",
+      "dependencies": [
+        "orchestrator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "planner",
+      "address": "block_706c616e6e6572",
+      "label": "Correction plan drafter",
+      "provider": "aws",
+      "service": "AWS Lambda",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_lambda_function",
+        "aws_iam_role"
+      ],
+      "costDrivers": "Requests, duration, memory and logs",
+      "dependencies": [
+        "checks"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "model",
+      "address": "block_6d6f64656c",
+      "label": "Foundation model",
+      "provider": "aws",
+      "service": "Amazon Bedrock",
+      "selection": "Explicit service field; deployment review required",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Model-specific input/output tokens; guardrails, embeddings and knowledge bases separately",
+      "dependencies": [
+        "planner"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "artifacts",
+      "address": "block_617274696661637473",
+      "label": "Plans, diffs and approvals",
+      "provider": "aws",
+      "service": "Amazon DynamoDB",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_dynamodb_table"
+      ],
+      "costDrivers": "Read/write requests, storage and backup",
+      "dependencies": [
+        "planner"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "audit",
+      "address": "block_6175646974",
+      "label": "API audit trail",
+      "provider": "aws",
+      "service": "AWS CloudTrail",
+      "selection": "Explicit service field; deployment review required",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [
+        "aws_cloudtrail"
+      ],
+      "costDrivers": "Management/data events, delivery, retention and query costs",
+      "dependencies": [
+        "orchestrator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e-op-orch",
+      "source": "operator",
+      "target": "orchestrator",
+      "data": "start analysis / approve or reject",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-orch-inv",
+      "source": "orchestrator",
+      "target": "inventory",
+      "data": "read snapshot (read-only)",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-orch-checks",
+      "source": "orchestrator",
+      "target": "checks",
+      "data": "run checks",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-checks-planner",
+      "source": "checks",
+      "target": "planner",
+      "data": "drift findings",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-planner-model",
+      "source": "planner",
+      "target": "model",
+      "data": "draft plan",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-planner-art",
+      "source": "planner",
+      "target": "artifacts",
+      "data": "store diff for review",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-orch-audit",
+      "source": "orchestrator",
+      "target": "audit",
+      "data": "API activity logged",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Synthetic inventory snapshots: explicit caller access contract is missing.",
+    "Platform operator: Existing — reference/import plan needed.",
+    "Analysis workflow: Implementation needed.",
+    "Policy and drift checks: Implementation needed.",
+    "Correction plan drafter: Implementation needed.",
+    "Foundation model: Existing — reference/import plan needed.",
+    "Plans, diffs and approvals: Implementation needed.",
+    "API audit trail: Implementation needed.",
+    "Wire operator → orchestrator: implement data flow, access policy and acceptance test.",
+    "Wire orchestrator → inventory: implement data flow, access policy and acceptance test.",
+    "Wire orchestrator → checks: implement data flow, access policy and acceptance test.",
+    "Wire checks → planner: implement data flow, access policy and acceptance test.",
+    "Wire planner → model: implement data flow, access policy and acceptance test.",
+    "Wire planner → artifacts: implement data flow, access policy and acceptance test.",
+    "Wire orchestrator → audit: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "access-block_696e76656e746f7279",
+      "componentIds": [
+        "inventory"
+      ],
+      "taskId": "TASK-RESOURCE-696e76656e746f7279",
+      "message": "Synthetic inventory snapshots: explicit caller access contract is missing."
+    },
+    {
+      "id": "resource-block_6f70657261746f72",
+      "componentIds": [
+        "operator"
+      ],
+      "taskId": "TASK-RESOURCE-6f70657261746f72",
+      "message": "Platform operator: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_6f7263686573747261746f72",
+      "componentIds": [
+        "orchestrator"
+      ],
+      "taskId": "TASK-RESOURCE-6f7263686573747261746f72",
+      "message": "Analysis workflow: Implementation needed."
+    },
+    {
+      "id": "resource-block_636865636b73",
+      "componentIds": [
+        "checks"
+      ],
+      "taskId": "TASK-RESOURCE-636865636b73",
+      "message": "Policy and drift checks: Implementation needed."
+    },
+    {
+      "id": "resource-block_706c616e6e6572",
+      "componentIds": [
+        "planner"
+      ],
+      "taskId": "TASK-RESOURCE-706c616e6e6572",
+      "message": "Correction plan drafter: Implementation needed."
+    },
+    {
+      "id": "resource-block_6d6f64656c",
+      "componentIds": [
+        "model"
+      ],
+      "taskId": "TASK-RESOURCE-6d6f64656c",
+      "message": "Foundation model: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_617274696661637473",
+      "componentIds": [
+        "artifacts"
+      ],
+      "taskId": "TASK-RESOURCE-617274696661637473",
+      "message": "Plans, diffs and approvals: Implementation needed."
+    },
+    {
+      "id": "resource-block_6175646974",
+      "componentIds": [
+        "audit"
+      ],
+      "taskId": "TASK-RESOURCE-6175646974",
+      "message": "API audit trail: Implementation needed."
+    },
+    {
+      "id": "connection-652d6f702d6f726368",
+      "edgeIds": [
+        "e-op-orch"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6f702d6f726368",
+      "message": "Wire operator → orchestrator: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6f7263682d696e76",
+      "edgeIds": [
+        "e-orch-inv"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6f7263682d696e76",
+      "message": "Wire orchestrator → inventory: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6f7263682d636865636b73",
+      "edgeIds": [
+        "e-orch-checks"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6f7263682d636865636b73",
+      "message": "Wire orchestrator → checks: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d636865636b732d706c616e6e6572",
+      "edgeIds": [
+        "e-checks-planner"
+      ],
+      "taskId": "TASK-INTEGRATION-652d636865636b732d706c616e6e6572",
+      "message": "Wire checks → planner: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d706c616e6e65722d6d6f64656c",
+      "edgeIds": [
+        "e-planner-model"
+      ],
+      "taskId": "TASK-INTEGRATION-652d706c616e6e65722d6d6f64656c",
+      "message": "Wire planner → model: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d706c616e6e65722d617274",
+      "edgeIds": [
+        "e-planner-art"
+      ],
+      "taskId": "TASK-INTEGRATION-652d706c616e6e65722d617274",
+      "message": "Wire planner → artifacts: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6f7263682d6175646974",
+      "edgeIds": [
+        "e-orch-audit"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6f7263682d6175646974",
+      "message": "Wire orchestrator → audit: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

@@ -1,0 +1,71 @@
+test_bounded_repair_uses_same_session_selection_and_retains_failed_package (server.tests.test_engineering_finalization.FinalizationTests.test_bounded_repair_uses_same_session_selection_and_retains_failed_package) ... FAIL
+test_capture_failure_does_not_hide_completed_turn_or_expose_host_error (server.tests.test_engineering_finalization.FinalizationTests.test_capture_failure_does_not_hide_completed_turn_or_expose_host_error) ... ok
+test_changed_operator_contract_during_check_keeps_pass_historical (server.tests.test_engineering_finalization.FinalizationTests.test_changed_operator_contract_during_check_keeps_pass_historical) ... ok
+test_completed_turn_captures_before_next_intent_and_checks_exact_bytes_once (server.tests.test_engineering_finalization.FinalizationTests.test_completed_turn_captures_before_next_intent_and_checks_exact_bytes_once) ... ok
+test_failed_check_retains_report_and_needs_attention (server.tests.test_engineering_finalization.FinalizationTests.test_failed_check_retains_report_and_needs_attention) ... ok
+test_failed_incomplete_and_empty_selection_are_never_promoted (server.tests.test_engineering_finalization.FinalizationTests.test_failed_incomplete_and_empty_selection_are_never_promoted) ... ok
+test_interrupted_or_failed_turn_does_not_trigger_capture_or_checks (server.tests.test_engineering_finalization.FinalizationTests.test_interrupted_or_failed_turn_does_not_trigger_capture_or_checks) ... ok
+test_lost_repair_acceptance_keeps_exact_reserved_uuid_without_replay (server.tests.test_engineering_finalization.FinalizationTests.test_lost_repair_acceptance_keeps_exact_reserved_uuid_without_replay) ... ok
+test_lost_terminal_event_recovery_captures_verified_existing_run_once (server.tests.test_engineering_finalization.FinalizationTests.test_lost_terminal_event_recovery_captures_verified_existing_run_once) ... ok
+test_new_user_turn_supersedes_older_running_check_without_reusing_its_evidence (server.tests.test_engineering_finalization.FinalizationTests.test_new_user_turn_supersedes_older_running_check_without_reusing_its_evidence) ... ok
+test_repeated_failure_stops_at_durable_attempt_limit_without_scope_deletion (server.tests.test_engineering_finalization.FinalizationTests.test_repeated_failure_stops_at_durable_attempt_limit_without_scope_deletion) ... FAIL
+test_restart_retains_original_check_debt_and_does_not_replay_or_recapture (server.tests.test_engineering_finalization.FinalizationTests.test_restart_retains_original_check_debt_and_does_not_replay_or_recapture) ... ok
+test_uncertain_worker_cleanup_failure_never_starts_model_repair (server.tests.test_engineering_finalization.FinalizationTests.test_uncertain_worker_cleanup_failure_never_starts_model_repair) ... ok
+test_user_request_queued_first_wins_over_automatic_repair (server.tests.test_engineering_finalization.FinalizationTests.test_user_request_queued_first_wins_over_automatic_repair) ... ok
+
+======================================================================
+FAIL: test_bounded_repair_uses_same_session_selection_and_retains_failed_package (server.tests.test_engineering_finalization.FinalizationTests.test_bounded_repair_uses_same_session_selection_and_retains_failed_package)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py", line 128, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py", line 719, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/server/tests/test_engineering_finalization.py", line 161, in test_bounded_repair_uses_same_session_selection_and_retains_failed_package
+    self.assertEqual([row['state'] for row in results],['repair_finished','local_checks_passed'])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: ['repair_submitted', 'local_checks_passed'] != ['repair_finished', 'local_checks_passed']
+
+First differing element 0:
+'repair_submitted'
+'repair_finished'
+
+- ['repair_submitted', 'local_checks_passed']
+?           ^^^^^^
+
++ ['repair_finished', 'local_checks_passed']
+?          ++++ ^
+
+
+======================================================================
+FAIL: test_repeated_failure_stops_at_durable_attempt_limit_without_scope_deletion (server.tests.test_engineering_finalization.FinalizationTests.test_repeated_failure_stops_at_durable_attempt_limit_without_scope_deletion)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/runners.py", line 128, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.6/Frameworks/Python.framework/Versions/3.14/lib/python3.14/asyncio/base_events.py", line 719, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/server/tests/test_engineering_finalization.py", line 177, in test_repeated_failure_stops_at_durable_attempt_limit_without_scope_deletion
+    self.assertEqual([row['state'] for row in results],['repair_finished','needs_attention'])
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Lists differ: ['repair_submitted', 'needs_attention'] != ['repair_finished', 'needs_attention']
+
+First differing element 0:
+'repair_submitted'
+'repair_finished'
+
+- ['repair_submitted', 'needs_attention']
+?           ^^^^^^
+
++ ['repair_finished', 'needs_attention']
+?          ++++ ^
+
+
+----------------------------------------------------------------------
+Ran 14 tests in 1.023s
+
+FAILED (failures=2)

@@ -1,0 +1,172 @@
+{
+  "format": "atmem.evaluation.client-requirement-map",
+  "version": 1,
+  "frozenAt": "2026-11-11T05:34:50.449441+00:00",
+  "briefSha256": "8ad50e744b283558d66bf0a54dd2241d84cb483f6b32cd3c9113d67405f7ec58",
+  "updatesSha256": "0ce48e3e81acbb0e9ae3fb436988c37988f44c2750682cd1681857db2275e69c",
+  "protocol": "benchmarks/engine/evaluation-contract.json",
+  "scope": "Original exposed corpus ticket-triage workload on Azure. The same22 provider-neutral criteria and three natural follow-ups are frozen before generation; only the explicitly requested target provider changes from the earlier AWS map. No SDK, architecture, resource addresses or expected answer is prescribed. Evaluator-authored, not blinded holdout.",
+  "clarifications": [
+    "Ten staff and daily usage are planning inputs, not invented hard licensing/concurrency/customer quotas.",
+    "Synthetic/redacted input is supplied by the client; automatic redaction was not requested.",
+    "20 KB has a unit convention ambiguity: assess documented convention, support for 20,000 UTF-8 bytes and a finite upper bound, rather than silently inventing a new business decision.",
+    "Local/cloud-vendor emulation is permitted by the owner. Actual cloud deployment and authenticated cloud-account calls are not required or authorized.",
+    "A missing, skipped or unexecuted critical check is not a pass; no complete-project count is awarded for component or generated-test coverage."
+  ],
+  "checks": [
+    {
+      "id": "S01",
+      "dimension": "scope",
+      "requirement": "Microsoft Azure is retained as the target provider; the model backend is not confused with the target cloud.",
+      "critical": true,
+      "requiredEvidence": "provider-schema + independent-static"
+    },
+    {
+      "id": "S02",
+      "dimension": "scope",
+      "requirement": "Implement an internal staff-facing pasted-ticket review tool, including usable browser/API/application artifacts.",
+      "critical": true,
+      "requiredEvidence": "independent-review + local-runtime"
+    },
+    {
+      "id": "S03",
+      "dimension": "scope",
+      "requirement": "Return summary, topic, suggested urgency and uncertainty through a documented validated JSON contract.",
+      "critical": true,
+      "requiredEvidence": "independent-static + local-runtime"
+    },
+    {
+      "id": "S04",
+      "dimension": "ownership",
+      "requirement": "Suggestions remain subject to human review, with a visible review-only notice and no automatic customer action.",
+      "critical": true,
+      "requiredEvidence": "independent-static + browser-runtime"
+    },
+    {
+      "id": "S05",
+      "dimension": "ownership",
+      "requirement": "Do not connect to or modify the existing help desk or customer records; preserve its ownership boundary.",
+      "critical": true,
+      "requiredEvidence": "independent-static + independent-review"
+    },
+    {
+      "id": "S06",
+      "dimension": "access",
+      "requirement": "Only authorized signed-in staff may submit tickets; denied and malformed identities fail closed.",
+      "critical": true,
+      "requiredEvidence": "provider-schema + local-runtime"
+    },
+    {
+      "id": "S07",
+      "dimension": "scope",
+      "requirement": "The design and operating/cost assumptions account for ten staff and about 200 tickets per working day without inventing a customer quota or SLA.",
+      "critical": true,
+      "requiredEvidence": "independent-review"
+    },
+    {
+      "id": "S08",
+      "dimension": "connections",
+      "requirement": "Five simultaneous valid requests complete safely without cross-request data or identity leakage.",
+      "critical": true,
+      "requiredEvidence": "local-runtime"
+    },
+    {
+      "id": "S09",
+      "dimension": "scope",
+      "requirement": "Support synthetic/redacted pasted ticket text up to the stated 20 KB, with a declared Unicode byte/character/unit convention and an enforced bound.",
+      "critical": true,
+      "requiredEvidence": "independent-static + local-runtime"
+    },
+    {
+      "id": "S10",
+      "dimension": "failure_recovery",
+      "requirement": "Reject missing, malformed, wrong-type and oversized input without returning a fabricated suggestion or unsafe diagnostic.",
+      "critical": true,
+      "requiredEvidence": "local-runtime"
+    },
+    {
+      "id": "S11",
+      "dimension": "secrets",
+      "requirement": "Raw ticket text is not written to persistent browser/server/object/database/log storage after processing; retention limits are explained precisely.",
+      "critical": true,
+      "requiredEvidence": "independent-static + browser-runtime + local-runtime"
+    },
+    {
+      "id": "S12",
+      "dimension": "scope",
+      "requirement": "Processing uses an Australian region supported by selected services; any global/foreign/unknown paths are explicitly flagged and no silent regional fallback occurs.",
+      "critical": true,
+      "requiredEvidence": "independent-review + primary-provider-documents + local-runtime"
+    },
+    {
+      "id": "S13",
+      "dimension": "runbook",
+      "requirement": "Provide a modest justified starting footprint and sourced costs or explicit unknown rates; do not invent prices, currency, monthly workdays or model usage as facts.",
+      "critical": false,
+      "requiredEvidence": "independent-review"
+    },
+    {
+      "id": "S14",
+      "dimension": "failure_recovery",
+      "requirement": "Model timeout, refusal, malformed/truncated output and provider denial produce safe failure and allow subsequent recovery without hidden retries or customer writes.",
+      "critical": true,
+      "requiredEvidence": "local-runtime"
+    },
+    {
+      "id": "S15",
+      "dimension": "scope",
+      "requirement": "The reviewer can clear a displayed suggestion and sees uncertainty explicitly; stale concurrent/cancelled responses do not restore cleared content.",
+      "critical": true,
+      "requiredEvidence": "browser-runtime"
+    },
+    {
+      "id": "S16",
+      "dimension": "terraform",
+      "requirement": "Emitted infrastructure initializes offline, formats and validates against its real pinned provider schema; connections and identities are concrete.",
+      "critical": true,
+      "requiredEvidence": "provider-schema + independent-static"
+    },
+    {
+      "id": "S17",
+      "dimension": "provider",
+      "requirement": "Application configuration, identity/scopes, resources/permissions, model endpoint and browser/API interfaces agree; mock tests do not substitute for independent connection checks.",
+      "critical": true,
+      "requiredEvidence": "independent-static + local-runtime"
+    },
+    {
+      "id": "S18",
+      "dimension": "build",
+      "requirement": "A clean unpack builds/tests the actual implementation using documented/pinned dependencies and target runtime; generated test success is independently checked.",
+      "critical": true,
+      "requiredEvidence": "local-runtime"
+    },
+    {
+      "id": "S19",
+      "dimension": "runbook",
+      "requirement": "Simple build/run/maintenance/failure/recovery/rollback instructions identify required operator inputs and account/model unknowns.",
+      "critical": false,
+      "requiredEvidence": "independent-static + independent-review"
+    },
+    {
+      "id": "S20",
+      "dimension": "secrets",
+      "requirement": "No real credentials or private keys are embedded or requested by the local evaluation; only explicit synthetic fixtures are used.",
+      "critical": true,
+      "requiredEvidence": "independent-static"
+    },
+    {
+      "id": "S21",
+      "dimension": "interaction",
+      "requirement": "Retain all ordered client follow-ups and exact model/effort; material questions are distinguished from routine technical choices.",
+      "critical": false,
+      "requiredEvidence": "observed-interaction"
+    },
+    {
+      "id": "S22",
+      "dimension": "journey",
+      "requirement": "Exercise an independent browser-to-application success/denial/input/model-failure/recovery/clear journey against local service/identity/model contracts, labeling emulated vendor behavior.",
+      "critical": true,
+      "requiredEvidence": "browser-runtime + local-runtime"
+    }
+  ]
+}

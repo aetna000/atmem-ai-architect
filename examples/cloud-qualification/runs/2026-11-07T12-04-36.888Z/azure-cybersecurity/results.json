@@ -1,0 +1,65 @@
+{
+  "provider": "azure-cybersecurity",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Payloads and log instructions are treated as untrusted data",
+    "Restricted security evidence stays within analyst permissions",
+    "Severity claims cite observed evidence and uncertainty",
+    "Duplicate alerts preserve the investigation audit trail",
+    "Containment requires explicit approval and reversible action planning"
+  ],
+  "components": [
+    {
+      "id": "alert-source"
+    },
+    {
+      "id": "asset-context"
+    },
+    {
+      "id": "ingest",
+      "service": "Azure Event Hubs"
+    },
+    {
+      "id": "redact",
+      "service": "Azure Functions + Azure AI Language (PII detection)"
+    },
+    {
+      "id": "evidence-store",
+      "service": "Azure Blob Storage (private, versioned)"
+    },
+    {
+      "id": "evidence-search",
+      "service": "Azure AI Search"
+    },
+    {
+      "id": "triage",
+      "service": "Azure Functions (Durable)"
+    },
+    {
+      "id": "model",
+      "service": "Azure OpenAI Service"
+    },
+    {
+      "id": "analyst-queue",
+      "service": "Azure Service Bus (queue + dead-letter)"
+    },
+    {
+      "id": "analyst-console",
+      "service": "Azure App Service + Microsoft Entra ID sign-in"
+    },
+    {
+      "id": "analyst"
+    },
+    {
+      "id": "audit",
+      "service": "Azure Monitor Log Analytics + immutable Blob archive"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

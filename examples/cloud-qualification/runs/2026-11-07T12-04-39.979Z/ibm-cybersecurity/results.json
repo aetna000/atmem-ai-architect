@@ -1,0 +1,61 @@
+{
+  "provider": "ibm-cybersecurity",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": true,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "Payloads and log instructions are treated as untrusted data",
+    "Restricted security evidence stays within analyst permissions",
+    "Severity claims cite observed evidence and uncertainty",
+    "Duplicate alerts preserve the investigation audit trail",
+    "Containment requires explicit approval and reversible action planning"
+  ],
+  "components": [
+    {
+      "id": "logs"
+    },
+    {
+      "id": "assets"
+    },
+    {
+      "id": "ingest",
+      "service": "IBM Event Streams"
+    },
+    {
+      "id": "redact",
+      "service": "IBM Code Engine"
+    },
+    {
+      "id": "evidence",
+      "service": "IBM Cloud Object Storage"
+    },
+    {
+      "id": "index",
+      "service": "IBM Cloud Databases for OpenSearch"
+    },
+    {
+      "id": "triage",
+      "service": "IBM Code Engine"
+    },
+    {
+      "id": "model",
+      "service": "IBM watsonx.ai"
+    },
+    {
+      "id": "queue",
+      "service": "IBM Cloud Databases for PostgreSQL"
+    },
+    {
+      "id": "analyst"
+    },
+    {
+      "id": "audit",
+      "service": "IBM Cloud Logs + Activity Tracker"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": true,
+  "errors": []
+}

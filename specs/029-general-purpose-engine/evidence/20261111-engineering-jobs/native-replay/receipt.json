@@ -1,0 +1,91 @@
+{
+  "sourceHashes": {
+    "README.md": "1eae9861f846041a729cb0e1f10c6f95fab80a341c9ed2bd7fbbf30950970fa2",
+    ".gitignore": "db9383c7b8f04eba6a4cd2e77d7c0e01efd60a62f4bd0c7aeb2370c7ad3c2289",
+    "infra/outputs.tf": "060331205af90ced4222a5f43d32a563e068a70b5e0b4d21608c81eb69caf1bf",
+    "infra/main.tf": "1085ec36a803399dab45577901cd95416e1f52f370ab672e6b0b118a37c37b22",
+    "infra/versions.tf": "1c87b89edb23ddef3240efdfd30678acf0cced64a59d8401a0fd3a62348818d7",
+    "infra/variables.tf": "52f84a2a698a2e32ab2553a13a1df2cb26b3ba943b81d624b1909e7d0c1292fb",
+    "infra/terraform.tfvars.example": "77a3ac211a01f10ab785d7f4d43944d2c0ba263a2f6d00ec9ed890adebe7fa04",
+    "infra/.terraform.lock.hcl": "0131173b0d06818e4bff97bb161005fd542725e9f5560ac6c8a879261efe83c5",
+    "app/handler.py": "130d07004d77bd9acb0a15a2c21ed5c77b161d1f9739ca2d55556ecebe09bcaa",
+    "app/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "app/model.py": "5d15a7a9b6918e46bbf5aed0f9da23add81c23f04fd378a212b0fe10db916273",
+    "app/schema.py": "3265e36bb8e9d224289c638028ce19f6e6c66a1465dbf101b281027b94d6aa99",
+    "tests/synthetic_transport.py": "31f63cbef111a0b5e61d192c98d422f6088be6a9e8d15aa858953c3d5b59a869",
+    "tests/test_http_adapter.py": "ed9b06473a8e362a7c691d34871a38ed7e66e3c14887a402df008c34785ad04e",
+    "tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "tests/frontend.test.cjs": "408a97c5640cde9e6825f98c6c002a80ee675adc473965aabf72f74ce0070d50",
+    "tests/test_app.py": "70bcf34c6b37bc47e42a59e38c50227ce28eb330490cc557e18f667011e549e8",
+    "docs/costs.md": "792ade86e758d237a9076ef521fb474cae1dbced41bcfc2531606aa555d26338",
+    "docs/runbook.md": "b7779561ad605f8b7b4c022483c2eab920aae433820d51cce1800d52c85a3788",
+    "docs/verification.md": "770a4c79338b0726e4eeeb966fc7407b394807fde1a4e13c4199e381cb03c83c",
+    "docs/design.md": "b35a8f76dee1fafbd94fbf7f7014c0e66a5d5b05a4a06f3c60944966ebe71404",
+    "scripts/build.py": "cf573a718c5fa5eb8cd8baf00dbac267c556a2614069233a9425653e4420c92e",
+    "scripts/check.py": "cce7259fcb9314b2e1e171a40ada59a2a527edb7d14e65ac5c34ea450aa89df2",
+    "scripts/tf_offline.py": "a7f98c892e67d6ecc09fa671e803e87d0fb4a492598b57bb592ebcafc738f00c",
+    "scripts/local_server.py": "549cb679d4e3079fd2ec68f68ffe2fd6cc82dd94e1c7b1437fb9dacb63d569fd",
+    "scripts/smoke_local.py": "ccbe19b02bf20ff6bf428b22e0fc0e745609a13b399b0a2bcafe9ae3813f8818",
+    "build/triage.zip": "e5ead3991385cf04798a84768865936ee32230e3c28ad9f1bb310beec821182b",
+    "app/static/index.html": "da13635c9fdbeee952f33556f7d9a15751ffc2acbd2c7409cd146b5c189106fc",
+    "app/static/style.css": "796ac061e6ec8ff5bcbec90f01bcc895275ef9fb8acc96860b15b61af6357620",
+    "app/static/app.js": "10d6a9c712a43810824afd07b46861c0f92c95594310c6960a8f9405efefbf87",
+    "infra/tests/footprint.tftest.hcl": "83129160b1cc298ad14bbfad17a6cdc2827e6e2d025539da7bfe2c1348bcaecf"
+  },
+  "checks": [
+    {
+      "name": "python-generated-unit-tests",
+      "level": "generated_local_checks",
+      "passed": true,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "test_multiple_tools_and_wrong_tool_rejected (test_app.ContractTests.test_multiple_tools_and_wrong_tool_rejected) ... ok\ntest_regional_client_and_bounded_sdk_attempts (test_app.ContractTests.test_regional_client_and_bounded_sdk_attempts) ... ok\ntest_validation_rejects_wrong_shapes (test_app.ContractTests.test_validation_rejects_wrong_shapes) ... ok\ntest_bad_input_never_reaches_model (test_app.HandlerTests.test_bad_input_never_reaches_model) ... ok\ntest_client_initialization_failure (test_app.HandlerTests.test_client_initialization_failure) ... ok\ntest_content_type_and_encoding (test_app.HandlerTests.test_content_type_and_encoding) ... ok\ntest_denied_before_input_or_model (test_app.HandlerTests.test_denied_before_input_or_model) ... ok\ntest_five_parallel_synthetic_requests (test_app.HandlerTests.test_five_parallel_synthetic_requests) ... ok\ntest_gateway_group_formats (test_app.HandlerTests.test_gateway_group_formats) ... ok\ntest_model_failures_are_safe_and_never_retried (test_app.HandlerTests.test_model_failures_are_safe_and_never_retried) ... ok\ntest_prompt_injection_is_transmitted_as_data (test_app.HandlerTests.test_prompt_injection_is_transmitted_as_data) ... ok\ntest_spoofed_headers_have_no_authority (test_app.HandlerTests.test_spoofed_headers_have_no_authority) ... ok\ntest_static_routes_and_unknown_path (test_app.HandlerTests.test_static_routes_and_unknown_path) ... ok\ntest_utf8_boundary_and_base64 (test_app.HandlerTests.test_utf8_boundary_and_base64) ... ok\ntest_valid_response_contract_and_transport (test_app.HandlerTests.test_valid_response_contract_and_transport) ... ok\ntest_invalid_length_rejected (test_http_adapter.AdapterTests.test_invalid_length_rejected) ... ok\ntest_static_http (test_http_adapter.AdapterTests.test_static_http) ... ok\ntest_synthetic_inference_and_denial (test_http_adapter.AdapterTests.test_synthetic_inference_and_denial) ... ok\n\n----------------------------------------------------------------------\nRan 18 tests in 0.009s\n\nOK\n",
+      "commandPassed": true,
+      "skipped": 0
+    },
+    {
+      "name": "node-generated-unit-tests",
+      "level": "generated_local_checks",
+      "passed": true,
+      "exitCode": 0,
+      "stdout": "\u2714 sign-in uses PKCE S256, state and the same-origin callback (3.846292ms)\n\u2714 OAuth callback removes code from URL and keeps token out of storage (0.697875ms)\n\u2714 bad or stale OAuth state never exchanges a code (1.074625ms)\n\u2714 ticket clears on submission and model text is rendered as text only (0.962833ms)\n\u2714 UTF-8 size is enforced before network call (0.536375ms)\n\u2714 invalid model output is hidden (0.540834ms)\n\u2714 safe denied, throttled, model and network failures clear old suggestions (2.594084ms)\n\u2714 clearing during an in-flight request prevents late result display (0.518333ms)\n\u2139 tests 8\n\u2139 suites 0\n\u2139 pass 8\n\u2139 fail 0\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 66.276291\n",
+      "stderr": "",
+      "commandPassed": true,
+      "skipped": 0
+    },
+    {
+      "name": "terraform-format",
+      "level": "generated_local_checks",
+      "passed": true,
+      "exitCode": 0,
+      "stdout": "",
+      "stderr": "",
+      "commandPassed": true,
+      "skipped": 0
+    },
+    {
+      "name": "terraform-offline-init",
+      "level": "generated_local_checks",
+      "passed": true,
+      "exitCode": 0,
+      "stdout": "Initializing provider plugins...\n- Reusing version 6.72.0 of hashicorp/aws from the dependency lock file\n- Installing hashicorp/aws v6.72.0...\n- Installed hashicorp/aws v6.72.0 (unauthenticated)\n\nTerraform has been successfully initialized!\n",
+      "stderr": "",
+      "commandPassed": true,
+      "skipped": 0
+    },
+    {
+      "name": "terraform-provider-schema",
+      "level": "generated_local_checks",
+      "passed": true,
+      "exitCode": 0,
+      "stdout": "Success! The configuration is valid.\n\n",
+      "stderr": "",
+      "commandPassed": true,
+      "skipped": 0
+    }
+  ],
+  "inferenceTurns": 0,
+  "cloudOperations": false,
+  "boundary": "Offline sandbox replay of generated Python/Node tests, Terraform format/init/provider-schema. No independent semantic acceptance, HTTP listener/browser/system test, mock plan, cloud plan or deployment.",
+  "interpretation": "Command exit codes retained. Any reported skipped unittest class/test makes that check incomplete, not passed. No check is whole-system acceptance."
+}

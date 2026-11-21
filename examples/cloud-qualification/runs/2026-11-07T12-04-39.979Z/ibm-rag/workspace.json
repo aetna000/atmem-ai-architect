@@ -1,0 +1,428 @@
+{
+  "version": 1,
+  "revision": 2,
+  "name": "IBM cited Q&A assistant (synthetic qualification)",
+  "provider": "ibm",
+  "requirements": "",
+  "nodes": [
+    {
+      "id": "user",
+      "type": "resource",
+      "position": {
+        "x": 50,
+        "y": 340
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Synthetic test user (browser)",
+        "provider": "tools",
+        "kind": "tool",
+        "description": "Synthetic test person using a browser. This is a client reference and is not provisioned.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "binding": "web-browser",
+        "role": "human"
+      }
+    },
+    {
+      "id": "webapp",
+      "type": "resource",
+      "position": {
+        "x": 470,
+        "y": 340
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Q&A web app",
+        "provider": "ibm",
+        "kind": "output",
+        "description": "Authenticated web app. Sends the user to App ID to sign in, calls the RAG API with the user's token, and shows each answer with its citations.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "app",
+        "service": "IBM Cloud Code Engine (application)"
+      }
+    },
+    {
+      "id": "appid",
+      "type": "resource",
+      "position": {
+        "x": 890,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Sign-in & identity",
+        "provider": "ibm",
+        "kind": "guard",
+        "description": "Handles user sign-in for synthetic users through OIDC with PKCE. Issues tokens that the RAG API validates, and the user identity and groups are used for ACL filtering.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "guard",
+        "service": "IBM Cloud App ID"
+      }
+    },
+    {
+      "id": "rag-api",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 340
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "RAG API (keyword retrieval)",
+        "provider": "ibm",
+        "kind": "agent",
+        "description": "Validates the App ID token, runs bounded keyword search on the catalog, removes passages the user isn't allowed to see (fails closed), prompts watsonx.ai using only permitted passages, and returns a cited answer or declines.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "app",
+        "service": "IBM Cloud Code Engine (application)"
+      }
+    },
+    {
+      "id": "catalog",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 50
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Keyword catalog + ACLs",
+        "provider": "ibm",
+        "kind": "resource",
+        "description": "Stores document chunks, keyword terms, source revisions and the explicit ACLs for each document. Only the ingestion job writes to it; the RAG API reads from it.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "index",
+        "service": "IBM Cloudant"
+      }
+    },
+    {
+      "id": "docs",
+      "type": "resource",
+      "position": {
+        "x": 890,
+        "y": 50
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Synthetic document store",
+        "provider": "ibm",
+        "kind": "source",
+        "description": "Private bucket holding the small synthetic document collection and an ACL manifest for each document.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "data",
+        "service": "IBM Cloud Object Storage"
+      }
+    },
+    {
+      "id": "ingest",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 50
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Ingestion job",
+        "provider": "ibm",
+        "kind": "tool",
+        "description": "Reads the documents and their ACLs, splits documents into chunks, extracts keywords and writes them to the catalog with conditional writes, keeping each source's permissions.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "ingest",
+        "service": "IBM Cloud Code Engine (job)"
+      }
+    },
+    {
+      "id": "watsonx",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 340
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Model runtime",
+        "provider": "ibm",
+        "kind": "predict",
+        "description": "Generates grounded answers from the permitted passages. In local tests the model is mocked; the real model ID, access, quota and region still need verification.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "llm",
+        "service": "IBM watsonx.ai"
+      }
+    },
+    {
+      "id": "logs",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 620
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Audit & logs",
+        "provider": "ibm",
+        "kind": "monitor",
+        "description": "Logs requests, access denials and citations for audit. Does not log document text or tokens.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "role": "monitor",
+        "service": "IBM Cloud Logs"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-user-web",
+      "source": "user",
+      "target": "webapp",
+      "type": "smoothstep",
+      "label": "HTTPS",
+      "integration": "browser-https"
+    },
+    {
+      "id": "e-web-appid",
+      "source": "webapp",
+      "target": "appid",
+      "type": "smoothstep",
+      "label": "OIDC sign-in (PKCE)"
+    },
+    {
+      "id": "e-appid-api",
+      "source": "appid",
+      "target": "rag-api",
+      "type": "smoothstep",
+      "label": "token validation (JWT)"
+    },
+    {
+      "id": "e-web-api",
+      "source": "webapp",
+      "target": "rag-api",
+      "type": "smoothstep",
+      "label": "question + token → cited answer"
+    },
+    {
+      "id": "e-api-catalog",
+      "source": "rag-api",
+      "target": "catalog",
+      "type": "smoothstep",
+      "label": "keyword search, ACL-filtered"
+    },
+    {
+      "id": "e-api-model",
+      "source": "rag-api",
+      "target": "watsonx",
+      "type": "smoothstep",
+      "label": "prompt with permitted passages"
+    },
+    {
+      "id": "e-docs-ingest",
+      "source": "docs",
+      "target": "ingest",
+      "type": "smoothstep",
+      "label": "read documents + ACLs"
+    },
+    {
+      "id": "e-ingest-catalog",
+      "source": "ingest",
+      "target": "catalog",
+      "type": "smoothstep",
+      "label": "write chunks, keywords, ACLs"
+    },
+    {
+      "id": "e-api-logs",
+      "source": "rag-api",
+      "target": "logs",
+      "type": "smoothstep",
+      "label": "audit events"
+    }
+  ],
+  "id": "627683e6-013d-4782-963d-d021653765c4",
+  "brief": {
+    "application": "Use IBM Cloud for this synthetic architecture qualification. Answer questions over a small synthetic document collection with citations. Include ingestion, retrieval, model runtime, identity enforcement and an authenticated application. Use bounded keyword retrieval for this first test and keep all source permissions. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+    "cloud": "IBM"
+  },
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use IBM Cloud for this synthetic architecture qualification",
+      "options": "",
+      "decision": "ibm",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.ibm-cloud-cited-q-a-assistant-first-end-to-end-sketch",
+      "title": "IBM Cloud cited Q&A assistant: first end-to-end sketch",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: a synthetic qualification of a cited Q&A assistant on IBM Cloud, covering ingestion, permission-aware keyword retrieval, watsonx.ai model runtime, App ID sign-in and an authenticated web app. Assumptions: the region is not selected yet; the services are design-only, with no typed IBM generator except storage; model access, region support and interoperability have not been verified; nothing has been deployed.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "needs": [
+    {
+      "id": "req-f9a99d2b",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Every answer shows its sources",
+      "priority": "should",
+      "status": "open",
+      "source": "user",
+      "links": []
+    },
+    {
+      "id": "ai-permission-filter",
+      "kind": "functional",
+      "category": "security",
+      "statement": "Proposed: retrieval returns only passages from documents the signed-in user may open, using the ACLs stored with each document at ingestion; unknown users or documents fail closed.",
+      "rationale": "Without this, the model could quote restricted content to unauthorised users.",
+      "basis": "User: \"keep all source permissions\" and \"identity enforcement\".",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "rag-api",
+        "catalog",
+        "ingest",
+        "appid"
+      ]
+    },
+    {
+      "id": "ai-cited-answers",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Proposed: every answer cites the source documents it used, and the assistant declines to answer when no permitted passage matches.",
+      "rationale": "Citations make answers checkable; declining avoids unsupported answers.",
+      "basis": "User: \"Answer questions over a small synthetic document collection with citations\".",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "rag-api",
+        "webapp"
+      ]
+    },
+    {
+      "id": "ai-model-validation",
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "statement": "Proposed: treat local tests with a mocked model as proof of the pipeline only; validate watsonx.ai model access, region and answer quality separately on a real account.",
+      "rationale": "Mocked responses can't show real model quality, quotas or entitlement.",
+      "basis": "User: \"distinguish mocked model behavior from actual model validation\".",
+      "priority": "should",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "watsonx"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "extensions": {
+    "requirementNumbers": {
+      "req-f9a99d2b": 1,
+      "drv-data-access": 2,
+      "drv-data-location": 3,
+      "ai-permission-filter": 4,
+      "ai-cited-answers": 5,
+      "ai-model-validation": 6
+    }
+  },
+  "facts": [
+    {
+      "id": "fact-a2626d05",
+      "name": "cloud.preference",
+      "value": "ibm",
+      "unit": "provider",
+      "text": "Use IBM Cloud for this synthetic architecture qualification. Answer questions over a small synthetic document collection with citations. Include ingestion, retrieval, model runtime, identity enforcement and an authenticated application. Use bounded keyword retrieval for this first test and keep all ",
+      "madeAt": "2026-11-07"
+    }
+  ],
+  "workflow": "knowledge-assistant",
+  "asked": [],
+  "lastAsked": {
+    "id": "knowledge-assistant:0",
+    "topic": "data",
+    "question": "Where do the files live, and roughly how many are there?",
+    "beginner": "For example “SharePoint and a shared drive, about 20,000 files”.",
+    "why": "It shapes the RAG design."
+  },
+  "choices": {},
+  "conceptSig": null
+}

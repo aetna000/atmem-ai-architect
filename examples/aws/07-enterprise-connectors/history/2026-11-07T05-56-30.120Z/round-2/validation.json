@@ -1,0 +1,175 @@
+{
+  "id": "07-enterprise-connectors",
+  "round": 2,
+  "evidenceDirectory": "07-enterprise-connectors/round-2",
+  "provider": "claude-code",
+  "model": "default",
+  "evidenceKind": "real-model-browser-run",
+  "stages": {
+    "prompt": "passed",
+    "architecture": "passed",
+    "export": "passed",
+    "localValidation": "passed",
+    "cloudPlan": "not_run",
+    "deployment": "not_run",
+    "applicationTests": "passed",
+    "cleanup": "not_run"
+  },
+  "checks": [
+    "Approved source connection synchronizes documents",
+    "Source deletes and ACL changes propagate",
+    "Source outage retries and recovers",
+    "Authenticated channel preserves identity and citations"
+  ],
+  "blockers": [
+    "Product qualification loop: close implementation gaps and validate this artifact before any account plan or deployment"
+  ],
+  "components": [
+    {
+      "id": "user",
+      "label": "Staff browser",
+      "origin": "existing"
+    },
+    {
+      "id": "web",
+      "label": "Web app",
+      "service": "Amazon CloudFront",
+      "origin": "proposed"
+    },
+    {
+      "id": "cognito",
+      "label": "User sign-in",
+      "service": "Amazon Cognito",
+      "origin": "proposed"
+    },
+    {
+      "id": "api",
+      "label": "RAG API",
+      "service": "Amazon API Gateway",
+      "origin": "proposed"
+    },
+    {
+      "id": "rag-fn",
+      "label": "Keyword RAG function",
+      "service": "AWS Lambda",
+      "origin": "proposed"
+    },
+    {
+      "id": "catalog",
+      "label": "Document catalog",
+      "service": "Amazon DynamoDB",
+      "origin": "proposed"
+    },
+    {
+      "id": "model",
+      "label": "Foundation model",
+      "service": "Amazon Bedrock",
+      "origin": "existing"
+    },
+    {
+      "id": "sp-src",
+      "label": "SharePoint (test server)",
+      "origin": "existing"
+    },
+    {
+      "id": "cf-src",
+      "label": "Confluence (test server)",
+      "origin": "existing"
+    }
+  ],
+  "architectureAssessment": {
+    "passed": true,
+    "checks": [
+      {
+        "id": "nonempty",
+        "passed": true
+      },
+      {
+        "id": "unique-component-ids",
+        "passed": true
+      },
+      {
+        "id": "valid-edge-endpoints",
+        "passed": true
+      },
+      {
+        "id": "connected-graph",
+        "passed": true
+      },
+      {
+        "id": "aws-proposed-components",
+        "passed": true
+      },
+      {
+        "id": "service-bedrock",
+        "passed": true
+      },
+      {
+        "id": "connected-components",
+        "passed": true
+      },
+      {
+        "id": "retrieval-component",
+        "passed": true
+      },
+      {
+        "id": "web-application-component",
+        "passed": true
+      },
+      {
+        "id": "existing-sharepoint",
+        "passed": true
+      },
+      {
+        "id": "existing-confluence",
+        "passed": true
+      }
+    ],
+    "limitations": "Structural checks only. Application correctness, security, service availability and deployment require independent evidence."
+  },
+  "artifactSha256": "5d3189f25aa29de65cd44b250e3d34874919c2f1f8a05a624b5cf1db08f4bf1c",
+  "resourceTypes": [
+    "aws_iam_role",
+    "aws_cloudwatch_log_group",
+    "aws_iam_role_policy",
+    "aws_lambda_function",
+    "aws_lambda_alias",
+    "aws_dynamodb_table",
+    "aws_apigatewayv2_api",
+    "aws_apigatewayv2_integration",
+    "aws_apigatewayv2_route",
+    "aws_apigatewayv2_stage",
+    "aws_lambda_permission",
+    "aws_s3_bucket",
+    "aws_s3_bucket_public_access_block",
+    "aws_s3_bucket_server_side_encryption_configuration",
+    "aws_s3_bucket_versioning",
+    "aws_s3_bucket_ownership_controls",
+    "aws_cloudfront_origin_access_control",
+    "aws_cognito_user_pool",
+    "aws_cognito_user_pool_domain",
+    "aws_cognito_resource_server",
+    "aws_cognito_user_pool_client",
+    "aws_apigatewayv2_authorizer",
+    "aws_cloudfront_response_headers_policy",
+    "aws_cloudfront_distribution",
+    "aws_s3_bucket_policy",
+    "aws_s3_object"
+  ],
+  "unfinishedWork": [],
+  "deploymentAssessment": {
+    "status": "blocked",
+    "awsResourceCount": 32,
+    "blockers": [
+      {
+        "id": "requirements-review-unverified",
+        "owner": "review",
+        "message": "Review requirements against emitted configuration, including identity, limits, region, costs and cleanup."
+      }
+    ],
+    "cloudPlan": "not_run",
+    "deployment": "not_run",
+    "limitations": "No numerical success probability is justified. Schema validity does not prove complete coverage, runtime behavior or deployability. A ready-for-plan result is not permission to deploy."
+  },
+  "localValidationEvidence": "07-enterprise-connectors/round-2/artifact-validation.json"
+}

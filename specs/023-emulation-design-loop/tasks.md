@@ -1,0 +1,5 @@
+- [x] Shared central emulation view and smart correction/query flow
+- [x] Minimal correction guards and bounded opt-in retest
+- [x] Azure/GCP/IBM storage generator contracts and examples
+- [x] Stateful provider emulators and real Terraform provider validation
+- [x] Regression/browser tests, evidence archive, documentation and milestone

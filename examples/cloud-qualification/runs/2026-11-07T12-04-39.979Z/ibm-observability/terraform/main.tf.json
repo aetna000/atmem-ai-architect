@@ -1,0 +1,91 @@
+{
+  "terraform": {
+    "required_version": ">= 1.5.0, < 2.0.0",
+    "required_providers": {
+      "aws": {
+        "source": "hashicorp/aws",
+        "version": "~> 6.0"
+      }
+    }
+  },
+  "variable": {
+    "aws_region": {
+      "type": "string",
+      "description": "Explicitly choose the reviewed deployment region; no region is assumed."
+    },
+    "aws_account_id": {
+      "type": "string",
+      "description": "Expected AWS account ID; provider refuses a different account.",
+      "validation": {
+        "condition": "${can(regex(\"^[0-9]{12}$\", var.aws_account_id))}",
+        "error_message": "Use a twelve digit AWS account ID."
+      }
+    },
+    "review_approved": {
+      "type": "bool",
+      "default": false,
+      "description": "Set only after reviewing the design, cost, security and generated Terraform."
+    }
+  },
+  "provider": {
+    "aws": {
+      "region": "${var.aws_region}",
+      "allowed_account_ids": [
+        "${var.aws_account_id}"
+      ]
+    }
+  },
+  "locals": {
+    "unfinished_work": [
+      "resource-block_73796e7468657469632d7365727669636573",
+      "resource-block_636f6c6c6563746f72",
+      "resource-block_726564616374696f6e",
+      "resource-block_7365617263682d73746f7265",
+      "resource-block_61726368697665",
+      "resource-block_616e616c797369732d72756e74696d65",
+      "resource-block_776174736f6e78",
+      "resource-block_6f70657261746f72",
+      "resource-block_6f62736572766162696c697479",
+      "connection-652d7372632d636f6c",
+      "connection-652d636f6c2d726564",
+      "connection-652d7265642d736561726368",
+      "connection-652d7265642d61726368",
+      "connection-652d6f702d72756e",
+      "connection-652d72756e2d736561726368",
+      "connection-652d72756e2d6d6f64656c",
+      "connection-652d72756e2d6d6f6e"
+    ]
+  },
+  "resource": {
+    "terraform_data": {
+      "review_gate": {
+        "input": {
+          "design_revision": 2,
+          "environment": "staging"
+        },
+        "lifecycle": {
+          "precondition": [
+            {
+              "condition": "${var.review_approved && length(local.unfinished_work) == 0}",
+              "error_message": "Review this sketch and finish the work listed in resource-schedule.json before a deployment plan can succeed."
+            }
+          ]
+        }
+      }
+    }
+  },
+  "output": {
+    "design_revision": {
+      "value": 2
+    },
+    "environment": {
+      "value": "staging"
+    },
+    "implemented_foundations": {
+      "value": 0
+    },
+    "buckets": {
+      "value": {}
+    }
+  }
+}

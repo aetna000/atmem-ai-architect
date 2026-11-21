@@ -1,0 +1,485 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "svc",
+      "address": "block_737663",
+      "label": "Synthetic services (OTel)",
+      "provider": "tools",
+      "service": "Storage or existing data connector",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "eh",
+      "address": "block_6568",
+      "label": "Telemetry collection",
+      "provider": "azure",
+      "service": "Azure Event Hubs",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "svc"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "redact",
+      "address": "block_726564616374",
+      "label": "Redaction & normalisation",
+      "provider": "azure",
+      "service": "Azure Functions",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "eh"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "adx",
+      "address": "block_616478",
+      "label": "Telemetry store & search",
+      "provider": "azure",
+      "service": "Azure Data Explorer",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "redact",
+        "runtime"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "runtime",
+      "address": "block_72756e74696d65",
+      "label": "AI analysis runtime",
+      "provider": "azure",
+      "service": "Azure Container Apps",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "entra",
+        "operator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "aoai",
+      "address": "block_616f6169",
+      "label": "Incident reasoning model",
+      "provider": "azure",
+      "service": "Azure OpenAI Service",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "runtime"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "operator",
+      "address": "block_6f70657261746f72",
+      "label": "Operator",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "entra",
+      "address": "block_656e747261",
+      "label": "Operator sign-in",
+      "provider": "azure",
+      "service": "Microsoft Entra ID",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "operator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "mon",
+      "address": "block_6d6f6e",
+      "label": "Runtime observability",
+      "provider": "azure",
+      "service": "Azure Monitor Application Insights",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "runtime"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e1",
+      "source": "svc",
+      "target": "eh",
+      "data": "OTLP logs + spans",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e2",
+      "source": "eh",
+      "target": "redact",
+      "data": "Event Hubs trigger",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e3",
+      "source": "redact",
+      "target": "adx",
+      "data": "redacted, keyed ingest",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e4",
+      "source": "runtime",
+      "target": "adx",
+      "data": "allowlisted KQL evidence query",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e5",
+      "source": "runtime",
+      "target": "aoai",
+      "data": "redacted evidence prompt",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e6",
+      "source": "operator",
+      "target": "entra",
+      "data": "sign-in",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e7",
+      "source": "entra",
+      "target": "runtime",
+      "data": "token validation",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e8",
+      "source": "operator",
+      "target": "runtime",
+      "data": "question / cited answer",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e9",
+      "source": "runtime",
+      "target": "mon",
+      "data": "audit + telemetry",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Synthetic services (OTel): Existing — reference/import plan needed.",
+    "Telemetry collection: Implementation needed.",
+    "Redaction & normalisation: Implementation needed.",
+    "Telemetry store & search: Implementation needed.",
+    "AI analysis runtime: Implementation needed.",
+    "Incident reasoning model: Implementation needed.",
+    "Operator: Existing — reference/import plan needed.",
+    "Operator sign-in: Implementation needed.",
+    "Runtime observability: Implementation needed.",
+    "Wire svc → eh: implement data flow, access policy and acceptance test.",
+    "Wire eh → redact: implement data flow, access policy and acceptance test.",
+    "Wire redact → adx: implement data flow, access policy and acceptance test.",
+    "Wire runtime → adx: implement data flow, access policy and acceptance test.",
+    "Wire runtime → aoai: implement data flow, access policy and acceptance test.",
+    "Wire operator → entra: implement data flow, access policy and acceptance test.",
+    "Wire entra → runtime: implement data flow, access policy and acceptance test.",
+    "Wire operator → runtime: implement data flow, access policy and acceptance test.",
+    "Wire runtime → mon: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "resource-block_737663",
+      "componentIds": [
+        "svc"
+      ],
+      "taskId": "TASK-RESOURCE-737663",
+      "message": "Synthetic services (OTel): Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_6568",
+      "componentIds": [
+        "eh"
+      ],
+      "taskId": "TASK-RESOURCE-6568",
+      "message": "Telemetry collection: Implementation needed."
+    },
+    {
+      "id": "resource-block_726564616374",
+      "componentIds": [
+        "redact"
+      ],
+      "taskId": "TASK-RESOURCE-726564616374",
+      "message": "Redaction & normalisation: Implementation needed."
+    },
+    {
+      "id": "resource-block_616478",
+      "componentIds": [
+        "adx"
+      ],
+      "taskId": "TASK-RESOURCE-616478",
+      "message": "Telemetry store & search: Implementation needed."
+    },
+    {
+      "id": "resource-block_72756e74696d65",
+      "componentIds": [
+        "runtime"
+      ],
+      "taskId": "TASK-RESOURCE-72756e74696d65",
+      "message": "AI analysis runtime: Implementation needed."
+    },
+    {
+      "id": "resource-block_616f6169",
+      "componentIds": [
+        "aoai"
+      ],
+      "taskId": "TASK-RESOURCE-616f6169",
+      "message": "Incident reasoning model: Implementation needed."
+    },
+    {
+      "id": "resource-block_6f70657261746f72",
+      "componentIds": [
+        "operator"
+      ],
+      "taskId": "TASK-RESOURCE-6f70657261746f72",
+      "message": "Operator: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_656e747261",
+      "componentIds": [
+        "entra"
+      ],
+      "taskId": "TASK-RESOURCE-656e747261",
+      "message": "Operator sign-in: Implementation needed."
+    },
+    {
+      "id": "resource-block_6d6f6e",
+      "componentIds": [
+        "mon"
+      ],
+      "taskId": "TASK-RESOURCE-6d6f6e",
+      "message": "Runtime observability: Implementation needed."
+    },
+    {
+      "id": "connection-6531",
+      "edgeIds": [
+        "e1"
+      ],
+      "taskId": "TASK-INTEGRATION-6531",
+      "message": "Wire svc → eh: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6532",
+      "edgeIds": [
+        "e2"
+      ],
+      "taskId": "TASK-INTEGRATION-6532",
+      "message": "Wire eh → redact: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6533",
+      "edgeIds": [
+        "e3"
+      ],
+      "taskId": "TASK-INTEGRATION-6533",
+      "message": "Wire redact → adx: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6534",
+      "edgeIds": [
+        "e4"
+      ],
+      "taskId": "TASK-INTEGRATION-6534",
+      "message": "Wire runtime → adx: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6535",
+      "edgeIds": [
+        "e5"
+      ],
+      "taskId": "TASK-INTEGRATION-6535",
+      "message": "Wire runtime → aoai: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6536",
+      "edgeIds": [
+        "e6"
+      ],
+      "taskId": "TASK-INTEGRATION-6536",
+      "message": "Wire operator → entra: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6537",
+      "edgeIds": [
+        "e7"
+      ],
+      "taskId": "TASK-INTEGRATION-6537",
+      "message": "Wire entra → runtime: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6538",
+      "edgeIds": [
+        "e8"
+      ],
+      "taskId": "TASK-INTEGRATION-6538",
+      "message": "Wire operator → runtime: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-6539",
+      "edgeIds": [
+        "e9"
+      ],
+      "taskId": "TASK-INTEGRATION-6539",
+      "message": "Wire runtime → mon: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

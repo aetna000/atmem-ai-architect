@@ -1,0 +1,35 @@
+test_workload_token_uses_exact_parser_scope_and_explicit_worker_identity (__main__.AzureParserIdentityTests.test_workload_token_uses_exact_parser_scope_and_explicit_worker_identity) ... ERROR
+test_metadata_identity_is_requested_only_for_the_owned_service_audience (__main__.GoogleParserIdentityTests.test_metadata_identity_is_requested_only_for_the_owned_service_audience) ... ok
+test_parser_secret_uses_an_owned_private_file_and_refuses_missing_broadened_or_invalid_inputs (__main__.IbmParserIdentityTests.test_parser_secret_uses_an_owned_private_file_and_refuses_missing_broadened_or_invalid_inputs) ... ok
+test_actual_composition_validates_model_quotes_and_retains_human_approval (__main__.PrivateParserRpcTests.test_actual_composition_validates_model_quotes_and_retains_human_approval) ... ok
+test_actual_https_pdf_round_trip_and_exact_original_digest (__main__.PrivateParserRpcTests.test_actual_https_pdf_round_trip_and_exact_original_digest) ... ok
+test_ambiguous_or_oversize_request_framing_is_rejected_before_parsing (__main__.PrivateParserRpcTests.test_ambiguous_or_oversize_request_framing_is_rejected_before_parsing) ... ok
+test_arbitrary_parser_locations_and_caller_selected_auth_are_not_admitted (__main__.PrivateParserRpcTests.test_arbitrary_parser_locations_and_caller_selected_auth_are_not_admitted) ... ok
+test_busy_parser_backpressure_does_not_start_a_second_extraction (__main__.PrivateParserRpcTests.test_busy_parser_backpressure_does_not_start_a_second_extraction) ... ok
+test_expired_or_undated_invoices_never_read_objects_parse_or_call_models (__main__.PrivateParserRpcTests.test_expired_or_undated_invoices_never_read_objects_parse_or_call_models) ... ok
+test_rejected_pdf_changed_digest_and_oversize_output_never_reach_a_model (__main__.PrivateParserRpcTests.test_rejected_pdf_changed_digest_and_oversize_output_never_reach_a_model) ... ok
+
+======================================================================
+ERROR: test_workload_token_uses_exact_parser_scope_and_explicit_worker_identity (__main__.AzureParserIdentityTests.test_workload_token_uses_exact_parser_scope_and_explicit_worker_identity)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/app/tests/invoice_parser_rpc_acceptance.py", line 106, in test_workload_token_uses_exact_parser_scope_and_explicit_worker_identity
+    with unittest.mock.patch('azure.identity.ManagedIdentityCredential')as factory:azure_parser_authorization(audience,worker)
+         ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.13/unittest/mock.py", line 1487, in __enter__
+    self.target = self.getter()
+                  ~~~~~~~~~~~^^
+  File "/usr/local/lib/python3.13/pkgutil.py", line 513, in resolve_name
+    mod = importlib.import_module(modname)
+  File "/usr/local/lib/python3.13/importlib/__init__.py", line 88, in import_module
+    return _bootstrap._gcd_import(name[level:], package, level)
+           ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<frozen importlib._bootstrap>", line 1404, in _gcd_import
+  File "<frozen importlib._bootstrap>", line 1369, in _find_and_load
+  File "<frozen importlib._bootstrap>", line 1333, in _find_and_load_unlocked
+ModuleNotFoundError: No module named 'azure'
+
+----------------------------------------------------------------------
+Ran 10 tests in 8.465s
+
+FAILED (errors=1)

@@ -1,0 +1,192 @@
+{
+  "projectId": "9222d5c5-8a90-45fe-8c89-97201cc86ae2",
+  "sessionId": "3081bdec-d573-4577-998f-f7976d5fb084",
+  "sourceCommit": "e6781178901fe84c6eff82fb9df04af3d51c2132",
+  "startedAt": "2026-11-11T04:19:50.729Z",
+  "status": "settled_evidence_captured",
+  "observationSeconds": 900,
+  "cloudOperations": false,
+  "before": {
+    "id": "3081bdec-d573-4577-998f-f7976d5fb084",
+    "model": "gpt-6.1-sol",
+    "effort": "high",
+    "state": "idle",
+    "run": "ce6b5f3c-0a5f-475c-bf7f-a9468a5a3530",
+    "last_status": "completed"
+  },
+  "job": {
+    "id": "3081bdec-d573-4577-998f-f7976d5fb084",
+    "model": "gpt-6.1-sol",
+    "effort": "high",
+    "state": "idle",
+    "run": "2ff2db47-efac-4238-9ff7-87a86493e6f8",
+    "last_status": "completed"
+  },
+  "finalizations": [
+    {
+      "id": "95a49698-b5d5-435a-ae0c-fc5c402af3e4",
+      "sessionId": "3081bdec-d573-4577-998f-f7976d5fb084",
+      "runId": "ce6b5f3c-0a5f-475c-bf7f-a9468a5a3530",
+      "state": "repair_finished",
+      "artifact": {
+        "id": "5efc3d46-d16b-4924-a603-0f3f3a44930c",
+        "sha256": "e52bf0c7f33c9067ce55d29f701632d05cd90eef6e2376bd48f63407b74cd7ac"
+      },
+      "plan": {
+        "artifactId": "5efc3d46-d16b-4924-a603-0f3f3a44930c",
+        "artifactSha256": "e52bf0c7f33c9067ce55d29f701632d05cd90eef6e2376bd48f63407b74cd7ac",
+        "decisions": [
+          {
+            "validatorId": "python-tests",
+            "label": "Local Python tests",
+            "state": "manual_only",
+            "contractSha256": "043eed0a328aeab4b0ab3967fbfac34190f55c780d0ed3353a1272b7d9095fd5",
+            "applicability": null,
+            "assessment": null
+          },
+          {
+            "validatorId": "lambda-python312-tests",
+            "label": "Lambda Python 3.12 ARM64 tests",
+            "state": "manual_only",
+            "contractSha256": "bdc72982e14614743d0f61714ac7650ae7025b731e2461ab8d97522ff06c102c",
+            "applicability": null,
+            "assessment": null
+          },
+          {
+            "validatorId": "python-tests-folder",
+            "label": "Python unittest tests-folder discovery",
+            "state": "manual_only",
+            "contractSha256": "eff77e56d4739e3a53083b668c85a9b2fd9d8247c27ead96eb6d355a1a0143cc",
+            "applicability": null,
+            "assessment": null
+          },
+          {
+            "validatorId": "node-browser-tests",
+            "label": "Node and Chromium tests (Playwright 1.64.1)",
+            "state": "manual_only",
+            "contractSha256": "7bd721ce44a40f09e99f282970bf7fd36c7336f495038f2f201beb0a6603a21e",
+            "applicability": null,
+            "assessment": null
+          },
+          {
+            "validatorId": "web-startup-prerequisite",
+            "label": "Independent delayed configuration and immediate UI action",
+            "state": "selected",
+            "contractSha256": "b3916cf68e86d729a78dfa3d510c4f9ed47ac4b4e4974fd55a1e4064f5b61409",
+            "applicability": {
+              "anyOf": [
+                "app/web/app.js"
+              ],
+              "allOf": [
+                "dist/function.zip"
+              ],
+              "noneOf": []
+            },
+            "assessment": {
+              "applies": true,
+              "matchedAnyOf": [
+                "app/web/app.js"
+              ],
+              "missingAllOf": [],
+              "matchedNoneOf": []
+            }
+          }
+        ],
+        "selectionStatus": "checks_selected",
+        "acceptance": "not_established_by_file_applicability"
+      },
+      "checks": [
+        "0b170321-7c89-4425-bc89-8185e2a48869"
+      ],
+      "repair": {
+        "runId": "2ff2db47-efac-4238-9ff7-87a86493e6f8",
+        "rootRunId": "ce6b5f3c-0a5f-475c-bf7f-a9468a5a3530",
+        "attempt": 1,
+        "maximumAttempts": 1,
+        "terminalStatus": "completed"
+      },
+      "acceptance": "not_established_by_local_checks"
+    },
+    {
+      "id": "52481727-abdd-450b-bbfe-bc97e5de440b",
+      "sessionId": "3081bdec-d573-4577-998f-f7976d5fb084",
+      "runId": "2ff2db47-efac-4238-9ff7-87a86493e6f8",
+      "state": "needs_attention",
+      "artifact": {
+        "id": "03bef61f-a025-4c16-9461-124666964df8",
+        "sha256": "4b352878fd8555d87f28f6c06a642ebf4752c95575fa9f3abdfcb1ca875aa0e3"
+      },
+      "plan": {
+        "artifactId": "03bef61f-a025-4c16-9461-124666964df8",
+        "artifactSha256": "4b352878fd8555d87f28f6c06a642ebf4752c95575fa9f3abdfcb1ca875aa0e3",
+        "decisions": [
+          {
+            "validatorId": "python-tests",
+            "label": "Local Python tests",
+            "state": "manual_only",
+            "contractSha256": "043eed0a328aeab4b0ab3967fbfac34190f55c780d0ed3353a1272b7d9095fd5",
+            "applicability": null,
+            "assessment": null
+          },
+          {
+            "validatorId": "lambda-python312-tests",
+            "label": "Lambda Python 3.12 ARM64 tests",
+            "state": "manual_only",
+            "contractSha256": "bdc72982e14614743d0f61714ac7650ae7025b731e2461ab8d97522ff06c102c",
+            "applicability": null,
+            "assessment": null
+          },
+          {
+            "validatorId": "python-tests-folder",
+            "label": "Python unittest tests-folder discovery",
+            "state": "manual_only",
+            "contractSha256": "eff77e56d4739e3a53083b668c85a9b2fd9d8247c27ead96eb6d355a1a0143cc",
+            "applicability": null,
+            "assessment": null
+          },
+          {
+            "validatorId": "node-browser-tests",
+            "label": "Node and Chromium tests (Playwright 1.64.1)",
+            "state": "manual_only",
+            "contractSha256": "7bd721ce44a40f09e99f282970bf7fd36c7336f495038f2f201beb0a6603a21e",
+            "applicability": null,
+            "assessment": null
+          },
+          {
+            "validatorId": "web-startup-prerequisite",
+            "label": "Independent delayed configuration and immediate UI action",
+            "state": "selected",
+            "contractSha256": "b3916cf68e86d729a78dfa3d510c4f9ed47ac4b4e4974fd55a1e4064f5b61409",
+            "applicability": {
+              "anyOf": [
+                "app/web/app.js"
+              ],
+              "allOf": [
+                "dist/function.zip"
+              ],
+              "noneOf": []
+            },
+            "assessment": {
+              "applies": true,
+              "matchedAnyOf": [
+                "app/web/app.js"
+              ],
+              "missingAllOf": [],
+              "matchedNoneOf": []
+            }
+          }
+        ],
+        "selectionStatus": "checks_selected",
+        "acceptance": "not_established_by_file_applicability"
+      },
+      "checks": [
+        "25c73223-ba17-4f33-b1c6-e85e8dabd765"
+      ],
+      "acceptance": "not_established_by_local_checks"
+    }
+  ],
+  "automaticRepairs": 1,
+  "sourceChangedDuringRun": [],
+  "artifactSha256": "4b352878fd8555d87f28f6c06a642ebf4752c95575fa9f3abdfcb1ca875aa0e3",
+  "independentAcceptance": "not_established"
+}

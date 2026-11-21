@@ -1,0 +1,30 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from enterprise-document.Dockerfile
+#1 transferring dockerfile: 1.26kB done
+#1 WARN: InvalidDefaultArgInFrom: Default value for ARG ${PDF_PARSER_IMAGE} results in empty or invalid base image name (line 8)
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/eclipse-temurin@sha256:f1309980e092cb762e6cbf78cf91b7fa0e7d3f3c5fc47a60a582f880b799aa48
+#2 ...
+
+#3 [internal] load metadata for docker.io/library/sha256:b8f350f799ab93706dce4ef814040e0884a83fe9308ff83d2a834d8379c1fd99
+#3 ERROR: pull access denied, repository does not exist or may require authorization: server message: insufficient_scope: authorization failed
+
+#2 [internal] load metadata for docker.io/library/eclipse-temurin@sha256:f1309980e092cb762e6cbf78cf91b7fa0e7d3f3c5fc47a60a582f880b799aa48
+#2 CANCELED
+------
+ > [internal] load metadata for docker.io/library/sha256:b8f350f799ab93706dce4ef814040e0884a83fe9308ff83d2a834d8379c1fd99:
+------
+
+ [33m1 warning found (use docker --debug to expand):
+[0m - InvalidDefaultArgInFrom: Default value for ARG ${PDF_PARSER_IMAGE} results in empty or invalid base image name (line 8)
+enterprise-document.Dockerfile:8
+--------------------
+   6 |     COPY EnterpriseDocument.java /build/EnterpriseDocument.java
+   7 |     RUN javac --release 17 -cp /build/tika-app.jar -d /build/classes /build/EnterpriseDocument.java && jlink --add-modules java.se,jdk.unsupported,jdk.crypto.ec --strip-debug --no-header-files --no-man-pages --output /build/java
+   8 | >>> FROM ${PDF_PARSER_IMAGE}
+   9 |     USER root
+  10 |     COPY --from=document-build /build/java /opt/java
+--------------------
+ERROR: failed to build: failed to solve: sha256:b8f350f799ab93706dce4ef814040e0884a83fe9308ff83d2a834d8379c1fd99: failed to resolve source metadata for docker.io/library/sha256:b8f350f799ab93706dce4ef814040e0884a83fe9308ff83d2a834d8379c1fd99: pull access denied, repository does not exist or may require authorization: server message: insufficient_scope: authorization failed

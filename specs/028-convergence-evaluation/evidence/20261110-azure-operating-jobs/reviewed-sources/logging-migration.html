@@ -1,0 +1,2004 @@
+ <!DOCTYPE html>
+		<html
+			class="layout layout-holy-grail   show-table-of-contents conceptual show-breadcrumb default-focus"
+			lang="en-us"
+			dir="ltr"
+			data-authenticated="false"
+			data-auth-status-determined="false"
+			data-target="docs"
+			x-ms-format-detection="none"
+		>
+			
+		<head>
+			<title>Change Container Apps logging from Log Analytics to Azure Monitor | Microsoft Learn</title>
+			<meta charset="utf-8" />
+			<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+			<meta name="color-scheme" content="light dark" />
+
+			<meta name="description" content="Learn how to switch an Azure Container Apps environment from the Log Analytics logging destination to Azure Monitor without moving historical logs." />
+			<link rel="canonical" href="https://learn.microsoft.com/en-us/azure/container-apps/migrate-logs-azure-monitor" /> 
+
+			<!-- Non-customizable open graph and sharing-related metadata -->
+			<meta name="twitter:card" content="summary_large_image" />
+			<meta name="twitter:site" content="@MicrosoftLearn" />
+			<meta property="og:type" content="website" />
+			<meta property="og:image:alt" content="Microsoft Learn" />
+			<meta property="og:image" content="https://learn.microsoft.com/en-us/media/open-graph-image.png" />
+			<!-- Page specific open graph and sharing-related metadata -->
+			<meta property="og:title" content="Change Container Apps logging from Log Analytics to Azure Monitor" />
+			<meta property="og:url" content="https://learn.microsoft.com/en-us/azure/container-apps/migrate-logs-azure-monitor" />
+			<meta property="og:description" content="Learn how to switch an Azure Container Apps environment from the Log Analytics logging destination to Azure Monitor without moving historical logs." />
+			<meta name="platform_id" content="ecdc25ba-900c-fa1e-0fe6-1767cf1489cc" /> <meta name="scope" content="Azure" />
+			<meta name="locale" content="en-us" />
+			 
+			<meta name="uhfHeaderId" content="azure" />
+
+			<meta name="page_type" content="conceptual" />
+
+			<!--page specific meta tags-->
+			
+
+			<!-- custom meta tags -->
+			
+		<meta name="breadcrumb_path" content="/azure/bread/toc.json" />
+	
+		<meta name="feedback_help_link_url" content="https://learn.microsoft.com/answers/tags/418/azure-container-apps/" />
+	
+		<meta name="feedback_help_link_type" content="get-help-at-qna" />
+	
+		<meta name="feedback_product_url" content="https://feedback.azure.com/d365community/forum/79b1327d-d925-ec11-b6e6-000d3a4f06a4" />
+	
+		<meta name="feedback_system" content="Standard" />
+	
+		<meta name="permissioned-type" content="public" />
+	
+		<meta name="recommendations" content="true" />
+	
+		<meta name="recommendation_types" content="Training" />
+	
+		<meta name="recommendation_types" content="Certification" />
+	
+		<meta name="ms.suite" content="office" />
+	
+		<meta name="adobe-target" content="true" />
+	
+		<meta name="zone_pivot_group_filename" content="zone-pivot-groups.json" />
+	
+		<meta name="learn_banner_products" content="azure" />
+	
+		<meta name="author" content="jefmarti" />
+	
+		<meta name="ms.author" content="jefmarti" />
+	
+		<meta name="ms.service" content="azure-container-apps" />
+	
+		<meta name="ms.topic" content="how-to" />
+	
+		<meta name="ms.date" content="2026-08-12T00:00:00Z" />
+	
+		<meta name="zone_pivot_groups" content="azure-cli-or-portal" />
+	
+		<meta name="document_id" content="c8648031-3231-a3b5-59f8-ebc544ff5b5d" />
+	
+		<meta name="document_version_independent_id" content="d8102a51-5f83-3b89-352f-ea4a9b5e154c" />
+	
+		<meta name="updated_at" content="2026-08-14T22:12:00Z" />
+	
+		<meta name="original_content_git_url" content="https://github.com/MicrosoftDocs/azure-docs-pr/blob/live/articles/container-apps/migrate-logs-azure-monitor.md" />
+	
+		<meta name="gitcommit" content="https://github.com/MicrosoftDocs/azure-docs-pr/blob/d2d30f0b1022f435edf64c9c8cd0f6a468333903/articles/container-apps/migrate-logs-azure-monitor.md" />
+	
+		<meta name="git_commit_id" content="d2d30f0b1022f435edf64c9c8cd0f6a468333903" />
+	
+		<meta name="site_name" content="Docs" />
+	
+		<meta name="depot_name" content="Azure.azure-documents" />
+	
+		<meta name="schema" content="Conceptual" />
+	
+		<meta name="toc_rel" content="toc.json" />
+	
+		<meta name="pdf_url_template" content="https://learn.microsoft.com/pdfstore/en-us/Azure.azure-documents/{branchName}{pdfName}" />
+	
+		<meta name="word_count" content="3217" />
+	
+		<meta name="asset_id" content="container-apps/migrate-logs-azure-monitor" />
+	
+		<meta name="moniker_range_name" content="" />
+	
+		<meta name="item_type" content="Content" />
+	
+		<meta name="source_path" content="articles/container-apps/migrate-logs-azure-monitor.md" />
+	
+		<meta name="previous_tlsh_hash" content="30974182850DD620FFC35E0A357BEB9077F180458DF0BFE88D3B91AA918CAC934B5E99A6EB273B44233573933178D54E63DA9B34916E3211AA7564FDC88861A0370837B5E4" />
+	
+		<meta name="github_feedback_content_git_url" content="https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/container-apps/migrate-logs-azure-monitor.md" />
+	
+		<meta name="markdown_url" content="https://learn.microsoft.com/en-us/azure/container-apps/migrate-logs-azure-monitor?accept=text/markdown" />
+	 
+		<meta name="cmProducts" content="https://authoring-docs-microsoft.poolparty.biz/devrel/07bb3e10-d135-43ff-bc8b-360497cb39fa" data-source="generated" />
+	
+		<meta name="cmProducts" content="https://microsoft-devrel.poolparty.biz/DevRelOfferingOntology/32e8f006-5597-4144-9ccc-778e20833eca" data-source="generated" />
+	
+		<meta name="spProducts" content="https://authoring-docs-microsoft.poolparty.biz/devrel/12e559b9-eaf6-4aee-9af7-62334e15f863" data-source="generated" />
+	
+		<meta name="spProducts" content="https://microsoft-devrel.poolparty.biz/DevRelOfferingOntology/bfbda2e5-bc4e-4e83-8c2a-41b7c4914a07" data-source="generated" />
+	
+
+			<!-- Apply persisted/system theme before first paint to prevent wrong-theme flash when scripts are deferred. -->
+			<script id="theme-preference">
+				(function () {
+			try {
+				var stored = localStorage.getItem('theme');
+				var theme = /^(light|dark|high-contrast)$/.test(stored)
+					? stored
+					: matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+				document.documentElement.classList.add('theme-' + theme);
+			} catch (e) {}
+		})();;
+			</script>
+
+			<script id="atlas-layout-preferences">
+				(function () {
+			try {
+				var state = JSON.parse(localStorage.getItem('atlas-layout-preferences') || '{}');
+				var view = state["docs-layout-persistence"] || {};
+				var excludesKey = "";
+				var blocked = {};
+				if (excludesKey) {
+					var exclusions = JSON.parse(localStorage.getItem('atlas-layout-exclusions') || '{}');
+					if (Object.prototype.hasOwnProperty.call(exclusions, excludesKey)) {
+						var scoped = exclusions[excludesKey];
+						if (scoped) {
+							if (typeof scoped === 'object') blocked = scoped;
+						}
+					}
+				}
+				var html = document.documentElement;
+				for (var c in view) {
+					if (Object.prototype.hasOwnProperty.call(blocked, c)) continue;
+					if (view[c]) html.classList.add(c);
+					else html.classList.remove(c);
+				}
+			} catch (e) {}
+		})();;
+			</script>
+
+			<!-- assets and js globals -->
+			
+			<link rel="stylesheet" href="/static/assets/0.4.03599.8368-c2fd945c/styles/site.css" />
+			
+			<script src="https://wcpstatic.microsoft.com/mscc/lib/v2/wcp-consent.js"></script>
+			<!-- Keep this URL in sync with oneDSScriptSelector in instrumentation/one-ds.ts. -->
+			<script async src="https://js.monitor.azure.com/scripts/c/ms.jsll-4.min.js"></script>
+			
+
+			<!-- msdocs global object -->
+			<script id="msdocs-script">
+		var msDocs = {
+  "environment": {
+    "accessLevel": "online",
+    "azurePortalHostname": "portal.azure.com",
+    "reviewFeatures": false,
+    "supportLevel": "production",
+    "systemContent": true,
+    "siteName": "learn",
+    "legacyHosting": false
+  },
+  "data": {
+    "contentLocale": "en-us",
+    "contentDir": "ltr",
+    "userLocale": "en-us",
+    "userDir": "ltr",
+    "pageTemplate": "Conceptual",
+    "layoutStateStorageKey": "docs-layout-persistence",
+    "brand": "azure",
+    "context": {},
+    "standardFeedback": true,
+    "showFeedbackReport": false,
+    "feedbackHelpLinkType": "get-help-at-qna",
+    "feedbackHelpLinkUrl": "https://learn.microsoft.com/answers/tags/418/azure-container-apps/",
+    "feedbackSystem": "Standard",
+    "feedbackGitHubRepo": "MicrosoftDocs/azure-docs",
+    "feedbackProductUrl": "https://feedback.azure.com/d365community/forum/79b1327d-d925-ec11-b6e6-000d3a4f06a4",
+    "extendBreadcrumb": false,
+    "isEditDisplayable": true,
+    "isPrivateUnauthorized": false,
+    "hideViewSource": false,
+    "isPermissioned": false,
+    "hasRecommendations": true
+  },
+  "functions": {}
+};;
+	</script>
+
+			<!-- base scripts, msdocs global should be before this -->
+			<script
+				src="/static/assets/0.4.03599.8368-c2fd945c/scripts/en-us/index-docs.js"
+				async
+			></script>
+			
+
+			<!-- json-ld -->
+			
+		<script >bazadebezolkohpepadr="1030137535"</script><script type="text/javascript" src="https://learn.microsoft.com/akam/13/3d66a5cd"  defer></script></head>
+	
+			<body
+				id="body"
+				data-bi-name="body"
+				class="layout-body "
+				lang="en-us"
+				dir="ltr"
+			>
+				<header class="layout-body-header background-color-body-medium">
+		<div class="header-holder has-default-focus">
+			
+		<a
+			href="#main"
+			
+			style="z-index: 1070"
+			class="outline-color-text visually-hidden-until-focused position-fixed inner-focus focus-visible top-0 left-0 right-0 padding-xs text-align-center background-color-body"
+			
+		>
+			Skip to main content
+		</a>
+	
+		<a
+			href="#"
+			data-skip-to-ask-learn
+			style="z-index: 1070"
+			class="outline-color-text visually-hidden-until-focused position-fixed inner-focus focus-visible top-0 left-0 right-0 padding-xs text-align-center background-color-body"
+			hidden
+		>
+			Skip to Ask Learn chat experience
+		</a>
+	
+
+			<div hidden id="cookie-consent-holder" data-test-id="cookie-consent-container"></div>
+			<!-- Unsupported browser warning -->
+			<div
+				id="unsupported-browser"
+				style="background-color: white; color: black; padding: 16px; border-bottom: 1px solid grey;"
+				hidden
+			>
+				<div style="max-width: 800px; margin: 0 auto;">
+					<p style="font-size: 24px">This browser is no longer supported.</p>
+					<p style="font-size: 16px; margin-top: 16px;">
+						Upgrade to Microsoft Edge to take advantage of the latest features, security updates, and technical support.
+					</p>
+					<div style="margin-top: 12px;">
+						<a
+							href="https://go.microsoft.com/fwlink/p/?LinkID=2092881 "
+							style="background-color: #0078d4; border: 1px solid #0078d4; color: white; padding: 6px 12px; border-radius: 2px; display: inline-block;"
+						>
+							Download Microsoft Edge
+						</a>
+						<a
+							href="https://learn.microsoft.com/en-us/lifecycle/faq/internet-explorer-microsoft-edge"
+							style="background-color: white; padding: 6px 12px; border: 1px solid #505050; color: #171717; border-radius: 2px; display: inline-block;"
+						>
+							More info about Internet Explorer and Microsoft Edge
+						</a>
+					</div>
+				</div>
+			</div>
+			<!-- site header -->
+			<div
+				id="ms--site-header"
+				data-test-id="site-header-wrapper"
+				itemscope="itemscope"
+				itemtype="http://schema.org/Organization"
+			>
+				<div
+					id="ms--mobile-nav"
+					class="site-header display-none-tablet padding-inline-none gap-none"
+					data-bi-name="mobile-header"
+					data-test-id="mobile-header"
+				></div>
+				<div
+					id="ms--primary-nav"
+					class="site-header display-none display-flex-tablet"
+					data-bi-name="L1-header"
+					data-test-id="primary-header"
+				></div>
+				<div
+					id="ms--secondary-nav"
+					class="site-header display-none display-flex-tablet"
+					data-bi-name="L2-header"
+					data-test-id="secondary-header"
+					
+				></div>
+			</div>
+			
+		<!-- banner -->
+		<div data-banner>
+			<div id="disclaimer-holder"></div>
+			
+		</div>
+		<!-- banner end -->
+	
+		</div>
+	</header>
+				 <section
+					id="layout-body-menu"
+					class="layout-body-menu border-right display-flex background-color-body-medium"
+					data-bi-name="menu"
+			  >
+					
+		<div
+			id="left-container"
+			class="left-container display-none padding-none display-block-tablet width-full display-none-until-layout-restored"
+			data-toc-container="true"
+		>
+			<div
+				id="ms--toc-content"
+				class="padding-left-sm padding-right-none padding-bottom-sm height-full"
+			>
+				<nav
+					id="affixed-left-container"
+					class="margin-top-xxs-tablet position-sticky display-flex flex-direction-column width-full"
+					aria-label="Primary"
+					data-bi-name="left-toc"
+					role="navigation"
+				>
+					<div
+						id="ms--collapsible-toc-header"
+						class="display-flex flex-direction-row-reverse justify-content-center align-items-center margin-bottom-xxs margin-right-xxs"
+					>
+						<button
+							type="button"
+							class="button button-clear button-sm inner-focus"
+							data-collapsible-toc-toggle
+							aria-expanded="true"
+							hidden
+							aria-controls="ms--toc-content"
+							aria-label="Table of contents"
+						>
+							<span class="icon icon-mirrored-rtl" aria-hidden="true">
+								<span
+									class="docon docon-panel-left-contract display-none-layout-menu-collapsed"
+								></span>
+								<span
+									class="docon docon-panel-left-expand display-none display-inline-layout-menu-collapsed"
+								></span>
+							</span>
+						</button>
+						<div
+							id="ms--collapsible-toc-moniker-slot"
+							class="flex-grow-1 display-none-layout-menu-collapsed"
+						></div>
+					</div>
+				</nav>
+			</div>
+		</div>
+	
+			  </section>
+
+				<main
+					id="main"
+					role="main"
+					class="layout-body-main "
+					data-bi-name="content"
+					lang="en-us"
+					dir="ltr"
+				>
+					
+			<div
+		id="ms--content-header"
+		class="content-header default-focus border-bottom-none"
+		data-bi-name="content-header"
+	>
+		<div class="content-header-controls margin-xxs margin-inline-sm-tablet">
+			<button
+				type="button"
+				class="contents-button button button-sm margin-right-xxs"
+				data-bi-name="contents-expand"
+				aria-haspopup="true"
+				data-contents-button
+			>
+				<span class="icon" aria-hidden="true"><span class="docon docon-menu"></span></span>
+				<span class="contents-expand-title"> Table of contents </span>
+			</button>
+			<button
+				type="button"
+				class="ap-collapse-behavior ap-expanded button button-sm"
+				data-bi-name="ap-collapse"
+				aria-controls="action-panel"
+			>
+				<span class="icon" aria-hidden="true"><span class="docon docon-exit-mode"></span></span>
+				<span>Exit editor mode</span>
+			</button>
+		</div>
+	</div> 
+		<div
+			id="action-panel"
+			role="region"
+			aria-label="Action Panel"
+			class="action-panel"
+			tabindex="-1"
+		></div>
+	
+			<div
+				data-main-column
+				class="reading-width margin-inline-auto layout-padding padding-top-none padding-top-sm-tablet padding-bottom-sm"
+			>
+				<div>
+					
+		<div id="article-header" class="background-color-body margin-bottom-xs display-none-print">
+			<div class="display-flex align-items-center justify-content-space-between">
+				
+		<details
+			id="article-header-breadcrumbs-overflow-popover"
+			class="popover popover-left"
+			data-for="article-header-breadcrumbs"
+		>
+			<summary
+				class="button button-clear button-primary button-sm inner-focus"
+				aria-label="All breadcrumbs"
+			>
+				<span class="icon" aria-hidden="true">
+					<span class="docon docon-more"></span>
+				</span>
+			</summary>
+			<div id="article-header-breadcrumbs-overflow" class="popover-content"></div>
+		</details>
+
+		<bread-crumbs
+			id="article-header-breadcrumbs"
+			role="group"
+			aria-label="Breadcrumbs"
+			data-test-id="article-header-breadcrumbs"
+			class="overflow-hidden flex-grow-1 margin-right-sm margin-right-md-tablet margin-right-lg-desktop margin-left-negative-xxs padding-left-xxs"
+		></bread-crumbs>
+	 
+		<div
+			id="article-header-page-actions"
+			class="opacity-none margin-left-auto display-flex flex-wrap-no-wrap align-items-stretch"
+		>
+			
+		<button
+			class="button button-sm border-none inner-focus display-none-tablet flex-shrink-0 "
+			data-bi-name="ask-learn-assistant-entry"
+			data-test-id="ask-learn-assistant-modal-entry-mobile"
+			data-ask-learn-modal-entry
+			
+			type="button"
+			style="min-width: max-content;"
+			aria-expanded="false"
+			aria-label="Ask Learn"
+			hidden
+		>
+			<span class="icon" aria-hidden="true">
+				<span class="docon docon-chat-sparkle-fill gradient-ask-learn-logo"></span>
+			</span>
+		</button>
+		<button
+			class="button button-sm display-none display-inline-flex-tablet display-none-desktop flex-shrink-0 margin-right-xxs border-color-ask-learn "
+			data-bi-name="ask-learn-assistant-entry"
+			
+			data-test-id="ask-learn-assistant-modal-entry-tablet"
+			data-ask-learn-modal-entry
+			type="button"
+			style="min-width: max-content;"
+			aria-expanded="false"
+			hidden
+		>
+			<span class="icon font-size-lg" aria-hidden="true">
+				<span class="docon docon-chat-sparkle-fill gradient-ask-learn-logo"></span>
+			</span>
+			<span>Ask Learn</span>
+		</button>
+		<button
+			class="button button-sm display-none flex-shrink-0 display-inline-flex-desktop margin-right-xxs border-color-ask-learn "
+			data-bi-name="ask-learn-assistant-entry"
+			
+			data-test-id="ask-learn-assistant-flyout-entry"
+			data-ask-learn-flyout-entry
+			data-flyout-button="toggle"
+			type="button"
+			style="min-width: max-content;"
+			aria-expanded="false"
+			aria-controls="ask-learn-flyout"
+			hidden
+		>
+			<span class="icon font-size-lg" aria-hidden="true">
+				<span class="docon docon-chat-sparkle-fill gradient-ask-learn-logo"></span>
+			</span>
+			<span>Ask Learn</span>
+		</button>
+	 
+
+			<details class="popover popover-right" id="article-header-page-actions-overflow">
+				<summary
+					class="justify-content-flex-start button button-clear button-sm button-primary inner-focus"
+					aria-label="More actions"
+					aria-expanded="false"
+					title="More actions"
+				>
+					<span class="icon" aria-hidden="true">
+						<span class="docon docon-more-vertical"></span>
+					</span>
+				</summary>
+				<div class="popover-content">
+					
+		<button
+			type="button"
+			id="ms--focus-mode-button"
+			data-focus-mode
+			data-bi-name="focus-mode-entry"
+			data-page-action-item="overflow-all"
+			data-popover-close
+			class="button button-clear button-sm button-block justify-content-flex-start text-align-left inner-focus display-none display-inline-flex-tablet"
+		>
+			<span class="icon" aria-hidden="true">
+				<span class="docon docon-glasses"></span>
+			</span>
+			<span>Reading mode</span>
+		</button>
+	 
+		<button
+			data-page-action-item="overflow-mobile"
+			type="button"
+			class="display-block-layout-menu-collapsed button-block button-sm inner-focus button button-clear display-none-tablet justify-content-flex-start text-align-left"
+			data-bi-name="contents-expand"
+			data-contents-button
+			data-popover-close
+		>
+			<span class="icon" aria-hidden="true"
+				><span class="docon docon-editor-list-bullet"></span
+			></span>
+			<span class="contents-expand-title">Table of contents</span>
+		</button>
+	 
+		<a
+			id="lang-link-overflow"
+			class="button-sm inner-focus button button-clear button-block justify-content-flex-start text-align-left"
+			data-bi-name="language-toggle"
+			data-page-action-item="overflow-all"
+			data-check-hidden="true"
+			data-read-in-link
+			href="#"
+			hidden
+		>
+			<span class="icon" aria-hidden="true" data-read-in-link-icon>
+				<span class="docon docon-locale-globe"></span>
+			</span>
+			<span data-read-in-link-text>Read in English</span>
+		</a>
+	
+					
+		<button
+			type="button"
+			class="collection button button-clear button-sm button-block justify-content-flex-start text-align-left inner-focus"
+			data-list-type="collection"
+			data-bi-name="collection"
+			data-page-action-item="overflow-all"
+			data-check-hidden="true"
+			data-popover-close
+		>
+			<span class="icon" aria-hidden="true">
+				<span class="docon docon-circle-addition"></span>
+			</span>
+			<span class="collection-status">Add</span>
+		</button>
+	 
+		<button
+			type="button"
+			class="collection button button-block button-clear button-sm justify-content-flex-start text-align-left inner-focus"
+			data-list-type="plan"
+			data-bi-name="plan"
+			data-page-action-item="overflow-all"
+			data-check-hidden="true"
+			data-popover-close
+			hidden
+		>
+			<span class="icon" aria-hidden="true">
+				<span class="docon docon-circle-addition"></span>
+			</span>
+			<span class="plan-status">Add to Plans</span>
+		</button>
+	 
+					
+		<a
+			data-contenteditbtn
+			class="button button-clear button-block button-sm inner-focus justify-content-flex-start text-align-left text-decoration-none"
+			data-bi-name="edit"
+			data-page-action-item="overflow-all"
+			data-check-hidden="true"
+			
+			href="https://github.com/MicrosoftDocs/azure-docs/blob/main/articles/container-apps/migrate-logs-azure-monitor.md"
+			data-original_content_git_url="https://github.com/MicrosoftDocs/azure-docs-pr/blob/live/articles/container-apps/migrate-logs-azure-monitor.md"
+			data-original_content_git_url_template="{repo}/blob/{branch}/articles/container-apps/migrate-logs-azure-monitor.md"
+			data-pr_repo=""
+			data-pr_branch=""
+		>
+			<span class="icon" aria-hidden="true">
+				<span class="docon docon-edit-outline"></span>
+			</span>
+			<span>Edit</span>
+		</a>
+	  
+		<hr class="margin-block-xxs" />
+		
+				<button
+					class="button button-block button-clear button-sm justify-content-flex-start text-align-left inner-focus"
+					type="button"
+					data-bi-name="copy-markdown"
+					data-page-action-item="overflow-all"
+					data-copy-markdown
+					data-copy-state="idle"
+					data-check-hidden="true"
+				>
+					<span class="icon color-primary" aria-hidden="true">
+						<span data-show-when="idle" class="docon docon-code-lang"></span>
+						<span data-show-when="loading" class="loader" hidden></span>
+						<span data-show-when="success" class="docon docon-check-mark" hidden></span>
+					</span>
+					<span>Copy Markdown</span>
+				</button>
+		   
+				<button
+					class="button button-block button-clear button-sm justify-content-flex-start text-align-left inner-focus"
+					type="button"
+					data-bi-name="print"
+					data-page-action-item="overflow-all"
+					data-popover-close
+					data-print-page
+					data-check-hidden="true"
+				>
+					<span class="icon color-primary" aria-hidden="true">
+						<span class="docon docon-print"></span>
+					</span>
+					<span>Print</span>
+				</button>
+		  
+	
+				</div>
+			</details>
+		</div>
+	
+			</div>
+		</div>
+	  
+		<!-- privateUnauthorizedTemplate is hidden by default -->
+		<div unauthorized-private-section data-bi-name="permission-content-unauthorized-private" hidden>
+			<hr class="hr margin-top-xs margin-bottom-sm" />
+			<div class="notification notification-info">
+				<div class="notification-content">
+					<p class="margin-top-none notification-title">
+						<span class="icon" aria-hidden="true"
+							><span class="docon docon-exclamation-circle-solid"></span
+						></span>
+						<span>Note</span>
+					</p>
+					<p class="margin-top-none authentication-determined not-authenticated">
+						Access to this page requires authorization. You can try <a class="docs-sign-in" href="#" data-bi-name="permission-content-sign-in">signing in</a> or <a  class="docs-change-directory" data-bi-name="permisson-content-change-directory">changing directories</a>.
+					</p>
+					<p class="margin-top-none authentication-determined authenticated">
+						Access to this page requires authorization. You can try <a class="docs-change-directory" data-bi-name="permisson-content-change-directory">changing directories</a>.
+					</p>
+				</div>
+			</div>
+		</div>
+	
+					<div class="content"><h1 id="change-azure-container-apps-logging-from-log-analytics-to-azure-monitor">Change Azure Container Apps logging from Log Analytics to Azure Monitor</h1></div>
+					
+		<div
+			id="article-metadata"
+			data-bi-name="article-metadata"
+			data-test-id="article-metadata"
+			class="page-metadata-container display-flex gap-xxs justify-content-space-between align-items-center flex-wrap-wrap"
+		>
+			 
+				<div
+					id="user-feedback"
+					class="margin-block-xxs display-none display-none-print"
+					hidden
+					data-hide-on-archived
+				>
+					
+		<button
+			id="user-feedback-button"
+			data-test-id="conceptual-feedback-button"
+			class="button button-sm button-clear button-primary display-none"
+			type="button"
+			data-bi-name="user-feedback-button"
+			data-user-feedback-button
+			hidden
+		>
+			<span class="icon" aria-hidden="true">
+				<span class="docon docon-like"></span>
+			</span>
+			<span>Feedback</span>
+		</button>
+	
+				</div>
+		  
+		</div>
+	 
+		<div data-id="ai-summary" class="display-none-print">
+			<div id="ms--ai-summary-cta" class="margin-top-xs display-flex align-items-center">
+				<span class="icon" aria-hidden="true">
+					<span class="docon docon-sparkle-fill gradient-text-vivid"></span>
+				</span>
+				<button
+					id="ms--ai-summary"
+					type="button"
+					class="tag tag-sm tag-suggestion margin-left-xxs"
+					data-test-id="ai-summary-cta"
+					data-bi-name="ai-summary-cta"
+					data-an="ai-summary"
+				>
+					<span class="ai-summary-cta-text">
+						Summarize this article for me
+					</span>
+				</button>
+			</div>
+			<!-- Slot where the client will render the summary card after the user clicks the CTA -->
+			<div id="ms--ai-summary-header" class="margin-top-xs"></div>
+		</div>
+	 
+		<nav
+			id="center-doc-outline"
+			class="doc-outline display-none-desktop display-none-print margin-bottom-sm"
+			data-bi-name="intopic toc"
+			aria-label="In this article"
+		>
+			<h2 id="ms--in-this-article" class="title is-6 margin-block-xs">
+				In this article
+			</h2>
+		</nav>
+	 <div class="content"><p>The legacy <strong>Log Analytics</strong> logging destination for Azure Container Apps uses the <a href="/en-us/previous-versions/azure/azure-monitor/logs/data-collector-api?tabs=powershell" data-linktype="absolute-path">Azure Monitor HTTP Data Collector API</a> and writes application console and system logs to the custom <code>ContainerAppConsoleLogs_CL</code> and <code>ContainerAppSystemLogs_CL</code> tables. The <a href="/en-us/azure/azure-monitor/logs/custom-logs-migrate?tabs=cli" data-linktype="absolute-path">HTTP Data Collector API is on the deprecation path</a>, and support ends on September 14, 2026.</p>
+<p>Existing ingestion continues for TLS-compliant clients, but the API receives only critical security fixes after that date. To avoid disruption, change the environment's logging destination to Azure Monitor.</p>
+<p>If your application calls the HTTP Data Collector API directly, follow <a href="/en-us/azure/azure-monitor/logs/custom-logs-migrate?tabs=cli" data-linktype="absolute-path">Migrate from the HTTP Data Collector API to the Logs Ingestion API</a>. If you use both ingestion paths, complete both migrations.</p>
+<p>Applications that write logs to <code>stdout</code> or <code>stderr</code> and use Azure Container Apps platform logging don't typically require code changes.</p>
+<div class="IMPORTANT">
+<p>Important</p>
+<p>Azure Monitor is currently unavailable as a logging destination for Express environments. This migration doesn't apply to Container Apps environments that use the Express environment mode.</p>
+</div>
+<h2 id="prerequisites">Prerequisites</h2>
+<p>Before you change the logging destination, you need:</p>
+<ul>
+<li><p>An existing Container Apps environment that uses the <strong>Log Analytics</strong> logging destination.</p>
+</li>
+<li><p>The Log Analytics workspace that currently contains <code>ContainerAppConsoleLogs_CL</code> and <code>ContainerAppSystemLogs_CL</code>.</p>
+</li>
+<li><p>Permission to update the Container Apps environment.</p>
+</li>
+<li><p>The <code>Microsoft.Insights</code> resource provider registered in the subscription that contains the environment, or permission to register it.</p>
+</li>
+<li><p>Permission to create or update diagnostic settings at the environment scope and permission to use the selected destination. If the environment and destination are in different subscriptions, you need the required permissions in both subscriptions.</p>
+</li>
+<li><p>Access to the existing Log Analytics workspace and permission to retrieve its customer ID and shared key if you need to roll back.</p>
+</li>
+<li><p>If you use Azure CLI, the <a href="/en-us/cli/azure/install-azure-cli" data-linktype="absolute-path">latest Azure CLI</a> and Container Apps extension. Sign in with <a href="/en-us/cli/azure/authenticate-azure-cli-interactively" data-linktype="absolute-path"><code>az login</code></a>, and then update the extension:</p>
+<pre><code class="lang-azurecli">az extension add --name containerapp --upgrade
+</code></pre>
+</li>
+</ul>
+<p>If you later create a Log Analytics workspace function to combine historical and new records, you also need permission to save functions in that workspace.</p>
+<h2 id="plan-for-the-monitoring-transition">Plan for the monitoring transition</h2>
+<p>You can continue to use the same Log Analytics workspace, but you must select it in the diagnostic setting. Azure Monitor doesn't infer or preserve the workspace association from the Log Analytics logging destination.</p>
+<table>
+<thead>
+<tr>
+<th>Before the change</th>
+<th>After the change</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Workspace: your existing Log Analytics workspace</td>
+<td>Workspace: the workspace you select in the diagnostic setting</td>
+</tr>
+<tr>
+<td>Console logs: <code>ContainerAppConsoleLogs_CL</code></td>
+<td>Console logs: <code>ContainerAppConsoleLogs</code></td>
+</tr>
+<tr>
+<td>System logs: <code>ContainerAppSystemLogs_CL</code></td>
+<td>System logs: <code>ContainerAppSystemLogs</code></td>
+</tr>
+</tbody>
+</table>
+<p>Changing the logging destination switches routing immediately. Resource logs aren't sent until a diagnostic setting routes them. Plan accordingly because the setting can take up to 90 minutes to activate. If you create it immediately after switching, console logs generated before its creation are buffered and backfilled. Also, alerts that query the <code>_CL</code> tables stop receiving new data as soon as the environment switches destinations.</p>
+<p>To manage this monitoring gap, follow these steps:</p>
+<ol>
+<li>Schedule a maintenance window and notify the teams that respond to log alerts.</li>
+<li>Inventory every query, alert, workbook, dashboard, and automation dependency that uses an <code>_CL</code> table.</li>
+<li>Prepare replacement queries and alert definitions for the resource-specific tables before the maintenance window.</li>
+<li>Start canary traffic that writes a unique, timestamped marker to <code>stdout</code> every five minutes. Start the canary before the change so you can distinguish prechange and postchange records.</li>
+<li>Verify that you can create a diagnostic setting with a unique name, or prepare a complete update that preserves every property of an existing setting.</li>
+<li>Switch the logging destination, and then immediately apply the prepared diagnostic setting.</li>
+<li>Query for fresh canary markers every five minutes after you apply the setting. While you validate routing, use <a href="log-streaming" data-linktype="relative-path">log streaming</a>, <a href="metrics" data-linktype="relative-path">Container Apps metrics</a>, your existing health checks, and the <a href="/en-us/azure/azure-monitor/essentials/activity-log" data-linktype="absolute-path">Azure Activity Log</a>.</li>
+<li>Continue only after at least two postchange canary markers arrive with increasing timestamps and the newest marker is no more than 10 minutes old. Then enable and test replacement alerts before retiring the old alerts.</li>
+<li>If no fresh canary marker arrives after the 90-minute maximum activation time, don't proceed with the alert cutover. Keep the maintenance window open while you diagnose the route, or use the rollback procedure.</li>
+</ol>
+<h2 id="change-the-logging-destination">Change the logging destination</h2>
+<h3 id="1-inventory-dependencies">1. Inventory dependencies</h3>
+<p>Search your monitoring resources and automation for these table names:</p>
+<ul>
+<li><code>ContainerAppConsoleLogs_CL</code></li>
+<li><code>ContainerAppSystemLogs_CL</code></li>
+</ul>
+<p>Record each dependency so you can update and test it after records reach the resource-specific tables. Don't change the existing alerts yet. First, prepare their replacements and plan how you'll monitor the workload during the transition.</p>
+<p>A text search alone isn't sufficient. Review workspace functions and aliases, generated queries, infrastructure-as-code templates, deployment pipelines, SIEM rules, and external monitoring integrations that might hide or construct the table names.</p>
+<h3 id="2-switch-to-azure-monitor-and-configure-routing">2. Switch to Azure Monitor and configure routing</h3>
+<p>Change the environment's logging destination, and then create or update an Azure Monitor diagnostic setting. You need to perform both actions. Changing the logging destination alone doesn't route logs to a Log Analytics workspace.</p>
+<div class="zone has-pivot" data-pivot="azure-portal">
+<ol>
+<li>Sign in to the <a href="https://portal.azure.com" data-linktype="external">Azure portal</a>.</li>
+<li>In the search box, enter <strong>Container Apps Environments</strong>, and then select <strong>Container Apps Environments</strong>.</li>
+<li>Select the environment that you want to change.</li>
+<li>Select <strong>Monitoring</strong> &gt; <strong>Logging options</strong>.</li>
+<li>Under <strong>Logs Destination</strong>, select <strong>Azure Monitor</strong>.</li>
+<li>Select <strong>Save</strong>.</li>
+<li>Wait for the update to finish, and then refresh the environment page. <strong>Diagnostic settings</strong> should then appear in the left menu.</li>
+<li>Select <strong>Monitoring</strong> &gt; <strong>Diagnostic settings</strong>.</li>
+<li>Complete one of the following actions:
+<ul>
+<li>To create a setting, select <strong>Add diagnostic setting</strong> and enter a name.</li>
+<li>To change an existing setting, select <strong>Edit setting</strong>.</li>
+</ul>
+</li>
+<li>Under <strong>Logs</strong>, select at least <strong>Container App console logs</strong> and <strong>Container App system logs</strong>. Alternatively, under <strong>Category groups</strong>, select <strong>allLogs</strong> to route every available log category.</li>
+<li>Under <strong>Destination details</strong>, select <strong>Send to Log Analytics workspace</strong>.</li>
+<li>Select the subscription and existing Log Analytics workspace that contain <code>ContainerAppConsoleLogs_CL</code> and <code>ContainerAppSystemLogs_CL</code>.</li>
+<li>Optionally, select additional destinations.</li>
+<li>Select <strong>Save</strong>.</li>
+<li>Return to <strong>Diagnostic settings</strong> and verify that the setting lists the expected categories and destination.</li>
+</ol>
+</div>
+<div class="zone has-pivot" data-pivot="azure-cli">
+<p>Select the subscription that contains the Container Apps environment:</p>
+<pre><code class="lang-azurecli">az account set --subscription &lt;ENVIRONMENT_SUBSCRIPTION_ID&gt;
+</code></pre>
+<p>Register the <code>Microsoft.Insights</code> resource provider and wait for registration to finish:</p>
+<pre><code class="lang-azurecli">az provider register --namespace Microsoft.Insights --wait
+</code></pre>
+<p>Get the environment resource ID before you change the logging destination:</p>
+<pre><code class="lang-azurecli">az containerapp env show \
+  --name &lt;ENVIRONMENT_NAME&gt; \
+  --resource-group &lt;RESOURCE_GROUP_NAME&gt; \
+  --query id \
+  --output tsv
+</code></pre>
+<p>Inspect the existing diagnostic settings in full JSON:</p>
+<pre><code class="lang-azurecli">az monitor diagnostic-settings list \
+  --resource &lt;ENVIRONMENT_RESOURCE_ID&gt; \
+  --output json
+</code></pre>
+<p>Count the existing settings to confirm that the environment has capacity for a new one:</p>
+<pre><code class="lang-azurecli">az monitor diagnostic-settings list \
+  --resource &lt;ENVIRONMENT_RESOURCE_ID&gt; \
+  --query "length(@)" \
+  --output tsv
+</code></pre>
+<p>Verify the supported diagnostic categories:</p>
+<pre><code class="lang-azurecli">az monitor diagnostic-settings categories list \
+  --resource &lt;ENVIRONMENT_RESOURCE_ID&gt; \
+  --output json
+</code></pre>
+<p>Get the ARM resource ID of the destination workspace. Specify the workspace subscription explicitly, even when it matches the environment subscription:</p>
+<pre><code class="lang-azurecli">az monitor log-analytics workspace show \
+  --subscription &lt;WORKSPACE_SUBSCRIPTION_ID&gt; \
+  --resource-group &lt;WORKSPACE_RESOURCE_GROUP_NAME&gt; \
+  --workspace-name &lt;WORKSPACE_NAME&gt; \
+  --query id \
+  --output tsv
+</code></pre>
+<p>Before the change over, confirm that:</p>
+<ul>
+<li>The account can update the environment and create diagnostic settings at the environment scope.</li>
+<li>The account can use the destination workspace, including when it is in another subscription.</li>
+<li>The environment has fewer than five diagnostic settings if you plan to create a new setting.</li>
+<li><code>ContainerAppConsoleLogs</code> and <code>ContainerAppSystemLogs</code> appear in the category output.</li>
+<li>You have chosen a unique setting name and prepared the command that you'll run immediately after the cutover.</li>
+</ul>
+<p>If you must edit an existing setting, preserve all its log categories, metric categories, destinations, and destination-specific options. Export and review the full setting first, and prepare a complete <a href="/en-us/rest/api/monitor/diagnostic-settings/create-or-update" data-linktype="absolute-path">ARM or REST update</a>. Don't use the partial CLI example that follows to overwrite an existing setting.</p>
+<p>Switch the environment to Azure Monitor:</p>
+<pre><code class="lang-azurecli">az containerapp env update \
+  --name &lt;ENVIRONMENT_NAME&gt; \
+  --resource-group &lt;RESOURCE_GROUP_NAME&gt; \
+  --logs-destination azure-monitor
+</code></pre>
+<p>Immediately create the prepared setting with a new, unique name. Select the same Log Analytics workspace that contains the custom tables.</p>
+<pre><code class="lang-azurecli">az monitor diagnostic-settings create \
+  --name &lt;NEW_UNIQUE_DIAGNOSTIC_SETTING_NAME&gt; \
+  --resource &lt;ENVIRONMENT_RESOURCE_ID&gt; \
+  --logs '[{"category":"ContainerAppConsoleLogs","enabled":true},{"category":"ContainerAppSystemLogs","enabled":true}]' \
+  --workspace &lt;LOG_ANALYTICS_WORKSPACE_RESOURCE_ID&gt;
+</code></pre>
+<p>To route every available log category, replace the <code>--logs</code> value with <code>'[{"categoryGroup":"allLogs","enabled":true}]'</code>.</p>
+</div>
+<p>A resource can have up to five diagnostic settings. To change an existing setting, or if the environment already has five settings, edit the setting in the Azure portal or submit a complete ARM or REST update. In either case, preserve every existing log and metric category and every destination, including Log Analytics workspaces, storage accounts, and event hubs. Storage accounts and event hubs have extra regional, network, and authorization requirements. Review <a href="/en-us/azure/azure-monitor/essentials/diagnostic-settings" data-linktype="absolute-path">Diagnostic settings in Azure Monitor</a> before you add these destinations.</p>
+<div class="TIP">
+<p>Tip</p>
+<p>Log ingestion and destination charges can apply. Select only the categories and destinations that you need. Choose <strong>allLogs</strong> only when you intend to route every available log category.</p>
+</div>
+<h3 id="3-validate-log-collection">3. Validate log collection</h3>
+<p>Diagnostic-setting changes can take up to 90 minutes to begin sending data. Generate application traffic that writes a recognizable console message. In the workspace selected in the diagnostic setting, run the following query. Replace <code>&lt;ENVIRONMENT_NAME&gt;</code> with the environment name.</p>
+<pre><code class="lang-kusto">ContainerAppConsoleLogs
+| where TimeGenerated &gt; ago(2h)
+| where _ResourceId contains "&lt;ENVIRONMENT_NAME&gt;"
+| where Log contains "&lt;CANARY_MARKER_PREFIX&gt;"
+| project TimeGenerated, ContainerAppName, RevisionName, ContainerName, Stream, Log
+| order by TimeGenerated desc
+| take 20
+</code></pre>
+<p>Keep the canary running and repeat the query every five minutes. Continue when at least two markers generated after the change appear with increasing timestamps and the newest marker is no more than 10 minutes old.</p>
+<p>Run the system-log query separately:</p>
+<pre><code class="lang-kusto">ContainerAppSystemLogs
+| where TimeGenerated &gt; ago(2h)
+| where _ResourceId contains "&lt;ENVIRONMENT_NAME&gt;"
+| project TimeGenerated, ContainerAppName, RevisionName, ReplicaName, Reason, Log
+| order by TimeGenerated desc
+| take 20
+</code></pre>
+<p>System logs appear only when Container Apps produces a platform event. An empty result doesn't establish that routing failed if no system event occurred. Don't make a disruptive production change only to generate a system event. For the go decision, use console-canary arrival and backfill plus configuration evidence: the environment uses the <strong>Azure Monitor</strong> logging destination, the diagnostic setting is enabled for the expected categories, and the setting points to the intended workspace. Confirm the system-log category when the next natural platform event occurs. System-log backfill isn't guaranteed.</p>
+<p>If console records don't appear after 90 minutes:</p>
+<ol>
+<li>Confirm that the environment uses the <strong>Azure Monitor</strong> logging destination.</li>
+<li>Confirm that the diagnostic setting is enabled for <code>ContainerAppConsoleLogs</code>.</li>
+<li>Confirm that the setting points to the intended workspace.</li>
+<li>Check Azure activity logs for diagnostic-setting or authorization errors.</li>
+</ol>
+<p>Console logs generated in a short window before you created the diagnostic setting, are backfilled when you create the setting immediately after the switch. Azure doesn't guarantee backfill for records outside that window or for records generated during a longer diagnostic-setting activation delay.</p>
+<h3 id="4-update-queries-and-alerts">4. Update queries and alerts</h3>
+<p>After new records appear, update saved queries, alerts, workbooks, dashboards, and automation to use the resource-specific tables.</p>
+<table>
+<thead>
+<tr>
+<th>Custom table</th>
+<th>Resource-specific table</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ContainerAppConsoleLogs_CL</code></td>
+<td><code>ContainerAppConsoleLogs</code></td>
+</tr>
+<tr>
+<td><code>ContainerAppSystemLogs_CL</code></td>
+<td><code>ContainerAppSystemLogs</code></td>
+</tr>
+</tbody>
+</table>
+<p>Column names also change from typed suffixes, such as <code>_s</code> and <code>_g</code>, to standard Azure Monitor column names.</p>
+<table>
+<thead>
+<tr>
+<th>Custom-table column</th>
+<th>Resource-specific column</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ContainerAppName_s</code></td>
+<td><code>ContainerAppName</code></td>
+</tr>
+<tr>
+<td><code>RevisionName_s</code></td>
+<td><code>RevisionName</code></td>
+</tr>
+<tr>
+<td><code>ContainerName_s</code></td>
+<td><code>ContainerName</code></td>
+</tr>
+<tr>
+<td><code>Stream_s</code></td>
+<td><code>Stream</code></td>
+</tr>
+<tr>
+<td><code>Log_s</code></td>
+<td><code>Log</code></td>
+</tr>
+</tbody>
+</table>
+<p>For complete schemas, see the Azure Monitor table references for <a href="/en-us/azure/azure-monitor/reference/tables/containerappconsolelogs" data-linktype="absolute-path"><code>ContainerAppConsoleLogs</code></a> and <a href="/en-us/azure/azure-monitor/reference/tables/containerappsystemlogs" data-linktype="absolute-path"><code>ContainerAppSystemLogs</code></a>.</p>
+<p>For example, change this query:</p>
+<pre><code class="lang-kusto">ContainerAppConsoleLogs_CL
+| where ContainerAppName_s == "my-app"
+| where Log_s contains "error"
+| project TimeGenerated, Log_s, RevisionName_s
+</code></pre>
+<p>To use the resource-specific table and columns:</p>
+<pre><code class="lang-kusto">ContainerAppConsoleLogs
+| where ContainerAppName == "my-app"
+| where Log contains "error"
+| project TimeGenerated, Log, RevisionName
+</code></pre>
+<p>Enable and test the replacement alerts before you close the maintenance window. Confirm that action groups receive a test notification and that dashboards and workbooks display current data.</p>
+<h2 id="prepare-queries-for-historical-and-new-records">Prepare queries for historical and new records</h2>
+<p>Changing the logging destination doesn't move historical data. Records in <code>ContainerAppConsoleLogs_CL</code> and <code>ContainerAppSystemLogs_CL</code> remain available for the workspace retention period. New records go to <code>ContainerAppConsoleLogs</code> and <code>ContainerAppSystemLogs</code> in the workspace selected in the diagnostic setting.</p>
+<p>Don't treat a sample projection as a complete compatibility schema. Custom and resource-specific tables can have different columns and data types. Inspect the schemas in your workspace before you write a <a href="/en-us/kusto/query/union-operator" data-linktype="absolute-path"><code>union</code></a> or save a workspace function:</p>
+<pre><code class="lang-kusto">ContainerAppConsoleLogs_CL
+| getschema
+</code></pre>
+<pre><code class="lang-kusto">ContainerAppConsoleLogs
+| getschema
+</code></pre>
+<p>Repeat the schema check for <code>ContainerAppSystemLogs_CL</code> and <code>ContainerAppSystemLogs</code>. Compare the columns used by each dependent query. Project only the columns that dependency needs, assign the same output names on both sides, and normalize each differing type explicitly with conversion functions such as <a href="/en-us/kusto/query/tostring-function" data-linktype="absolute-path"><code>tostring()</code></a> or <a href="/en-us/kusto/query/todatetime-function" data-linktype="absolute-path"><code>todatetime()</code></a>.</p>
+<p>Test the combined query across representative historical and new records before you use it in an alert, workbook, dashboard, or automation. If you save the tested query for reuse, follow <a href="/en-us/azure/azure-monitor/logs/functions" data-linktype="absolute-path">Create a function in Azure Monitor log queries</a> and enter the function alias when you save it.</p>
+<h3 id="structured-json-logs">Structured JSON logs</h3>
+<p>The Azure Monitor logging destination doesn't support <code>dynamicJsonColumns</code>, so the migration disables it. If your queries depend on dynamically created JSON columns, update them to parse the JSON payload explicitly.</p>
+<p>Rolling back to the Log Analytics destination restores only the workspace customer ID and shared key. It doesn't re-enable <code>dynamicJsonColumns</code>. If you need dynamic JSON columns on the Log Analytics destination, reconfigure that behavior separately. Validate the log shape and every dependent query after rollback.</p>
+<p>If your application writes structured JSON to <code>stdout</code>, parse the <code>Log</code> column:</p>
+<pre><code class="lang-kusto">ContainerAppConsoleLogs
+| extend Parsed = parse_json(Log)
+| where tostring(Parsed.level) == "Error"
+</code></pre>
+<p>Validate rewritten structured-log queries before you update alerts, workbooks, and dashboards.</p>
+<h2 id="optional-query-historical-and-new-logs-together">Optional: Query historical and new logs together</h2>
+<p>Use this section only if a query must return both historical records from the custom tables and new records from the Azure Monitor resource-specific tables.</p>
+<p>During migration, historical logs stay in <code>ContainerAppConsoleLogs_CL</code> and <code>ContainerAppSystemLogs_CL</code>, while new logs go to <code>ContainerAppConsoleLogs</code> and <code>ContainerAppSystemLogs</code>. You can query both sets of data by creating reusable Log Analytics workspace functions.</p>
+<p>Two compatibility approaches are available:</p>
+<ol>
+<li><p><strong>Preserve the custom-table schema</strong> by projecting Azure Monitor columns to the column names used by <code>ContainerAppConsoleLogs_CL</code> and <code>ContainerAppSystemLogs_CL</code>. Use this approach to minimize changes to existing queries, alerts, workbooks, and dashboards.</p>
+</li>
+<li><p><strong>Adopt the Azure Monitor schema</strong> by projecting columns from <code>ContainerAppConsoleLogs_CL</code> and <code>ContainerAppSystemLogs_CL</code> to the Azure Monitor column names. This approach is recommended for long-term use.</p>
+</li>
+</ol>
+<div class="NOTE">
+<p>Note</p>
+<p>These functions provide a unified query result only. They don't move or copy data. Logs routed through Azure Monitor remain in <code>ContainerAppConsoleLogs</code> and <code>ContainerAppSystemLogs</code>; they aren't written to <code>ContainerAppConsoleLogs_CL</code> or <code>ContainerAppSystemLogs_CL</code>.</p>
+</div>
+<h3 id="option-1-preserve-the-custom-table-schema">Option 1: Preserve the custom-table schema</h3>
+<p>This option combines historical and new records while preserving the custom-table column names. Use this option to minimize immediate changes to existing queries and other monitoring dependencies.</p>
+<h4 id="create-the-console-log-compatibility-function">Create the console-log compatibility function</h4>
+<p>Run the following query and save it as a Log Analytics workspace function with the alias <code>ContainerAppConsoleLogsLegacyCompat</code>.</p>
+<pre><code class="lang-kusto">union
+(
+    ContainerAppConsoleLogs_CL
+    | project
+        TimeGenerated,
+        ContainerAppName_s,
+        EnvironmentName_s,
+        RevisionName_s,
+        ContainerName_s,
+        ContainerGroupName_s,
+        ContainerImage_s,
+        ContainerGroupId_g = tostring(ContainerGroupId_g),
+        ContainerId_g = tostring(ContainerId_g),
+        Stream_s,
+        Log_s,
+        _ResourceId,
+        SourceTable = "ContainerAppConsoleLogs_CL"
+),
+(
+    ContainerAppConsoleLogs
+    | project
+        TimeGenerated,
+        ContainerAppName_s = ContainerAppName,
+        EnvironmentName_s = EnvironmentName,
+        RevisionName_s = RevisionName,
+        ContainerName_s = ContainerName,
+        ContainerGroupName_s = ContainerGroupName,
+        ContainerImage_s = ContainerImage,
+        ContainerGroupId_g = ContainerGroupId,
+        ContainerId_g = ContainerId,
+        Stream_s = Stream,
+        Log_s = Log,
+        _ResourceId,
+        SourceTable = "ContainerAppConsoleLogs"
+)
+</code></pre>
+<p>After you save the function, existing filters for <code>ContainerAppConsoleLogs_CL</code> can continue to use the <code>_s</code> and <code>_g</code> column names:</p>
+<pre><code class="lang-kusto">ContainerAppConsoleLogsLegacyCompat()
+| where TimeGenerated &gt; ago(30m)
+| where ContainerAppName_s == "my-app"
+| where Log_s contains "error"
+| project
+    TimeGenerated,
+    ContainerAppName_s,
+    RevisionName_s,
+    ContainerName_s,
+    Stream_s,
+    Log_s,
+    SourceTable
+| order by TimeGenerated desc
+</code></pre>
+<h4 id="create-the-system-log-compatibility-function">Create the system-log compatibility function</h4>
+<p>Run the following query and save it as a workspace function with the alias <code>ContainerAppSystemLogsLegacyCompat</code>.</p>
+<pre><code class="lang-kusto">union
+(
+    ContainerAppSystemLogs_CL
+    | project
+        TimeGenerated,
+        EnvironmentName_s,
+        ContainerAppName_s,
+        RevisionName_s,
+        ReplicaName_s,
+        JobName_s,
+        Log_s,
+        Reason_s,
+        EventSource_s,
+        Count_d,
+        _ResourceId,
+        SourceTable = "ContainerAppSystemLogs_CL"
+),
+(
+    ContainerAppSystemLogs
+    | project
+        TimeGenerated,
+        EnvironmentName_s = EnvironmentName,
+        ContainerAppName_s = ContainerAppName,
+        RevisionName_s = RevisionName,
+        ReplicaName_s = ReplicaName,
+        JobName_s = JobName,
+        Log_s = Log,
+        Reason_s = Reason,
+        EventSource_s = EventSource,
+        Count_d = todouble(Count),
+        _ResourceId,
+        SourceTable = "ContainerAppSystemLogs"
+)
+</code></pre>
+<p>After you save the function, use it with the <code>ContainerAppSystemLogs_CL</code> column names:</p>
+<pre><code class="lang-kusto">ContainerAppSystemLogsLegacyCompat()
+| where TimeGenerated &gt; ago(30m)
+| where ContainerAppName_s == "my-app"
+| where Log_s contains "error"
+| project
+    TimeGenerated,
+    ContainerAppName_s,
+    RevisionName_s,
+    ReplicaName_s,
+    Reason_s,
+    EventSource_s,
+    Count_d,
+    Log_s,
+    SourceTable
+| order by TimeGenerated desc
+</code></pre>
+<h3 id="option-2-adopt-the-azure-monitor-schema">Option 2: Adopt the Azure Monitor schema</h3>
+<p>This option exposes records from the custom and resource-specific tables through the Azure Monitor resource-specific schema. Use it to migrate queries to column names without type suffixes.</p>
+<h4 id="create-the-console-log-compatibility-function-1">Create the console-log compatibility function</h4>
+<p>Run the following query and save it as a workspace function with the alias <code>ContainerAppConsoleLogsStandardCompat</code>.</p>
+<pre><code class="lang-kusto">union
+(
+    ContainerAppConsoleLogs_CL
+    | project
+        TimeGenerated,
+        ContainerAppName = ContainerAppName_s,
+        EnvironmentName = EnvironmentName_s,
+        RevisionName = RevisionName_s,
+        ContainerName = ContainerName_s,
+        ContainerGroupName = ContainerGroupName_s,
+        ContainerImage = ContainerImage_s,
+        ContainerGroupId = tostring(ContainerGroupId_g),
+        ContainerId = tostring(ContainerId_g),
+        Stream = Stream_s,
+        Log = Log_s,
+        _ResourceId,
+        SourceTable = "ContainerAppConsoleLogs_CL"
+),
+(
+    ContainerAppConsoleLogs
+    | project
+        TimeGenerated,
+        ContainerAppName,
+        EnvironmentName,
+        RevisionName,
+        ContainerName,
+        ContainerGroupName,
+        ContainerImage,
+        ContainerGroupId,
+        ContainerId,
+        Stream,
+        Log,
+        _ResourceId,
+        SourceTable = "ContainerAppConsoleLogs"
+)
+</code></pre>
+<p>After you save the function, query both tables by using the Azure Monitor column names:</p>
+<pre><code class="lang-kusto">ContainerAppConsoleLogsStandardCompat()
+| where TimeGenerated &gt; ago(30m)
+| where ContainerAppName == "my-app"
+| where Log contains "error"
+| project
+    TimeGenerated,
+    ContainerAppName,
+    RevisionName,
+    ContainerName,
+    Stream,
+    Log,
+    SourceTable
+| order by TimeGenerated desc
+</code></pre>
+<h4 id="create-the-system-log-compatibility-function-1">Create the system-log compatibility function</h4>
+<p>Run the following query and save it as a workspace function with the alias <code>ContainerAppSystemLogsStandardCompat</code>.</p>
+<pre><code class="lang-kusto">union
+(
+    ContainerAppSystemLogs_CL
+    | project
+        TimeGenerated,
+        EnvironmentName = EnvironmentName_s,
+        ContainerAppName = ContainerAppName_s,
+        RevisionName = RevisionName_s,
+        ReplicaName = ReplicaName_s,
+        JobName = JobName_s,
+        Log = Log_s,
+        Reason = Reason_s,
+        EventSource = EventSource_s,
+        Count = toint(Count_d),
+        _ResourceId,
+        SourceTable = "ContainerAppSystemLogs_CL"
+),
+(
+    ContainerAppSystemLogs
+    | project
+        TimeGenerated,
+        EnvironmentName,
+        ContainerAppName,
+        RevisionName,
+        ReplicaName,
+        JobName,
+        Log,
+        Reason,
+        EventSource,
+        Count = toint(Count),
+        _ResourceId,
+        SourceTable = "ContainerAppSystemLogs"
+)
+</code></pre>
+<p>After you save the function, query both tables by using the Azure Monitor column names:</p>
+<pre><code class="lang-kusto">ContainerAppSystemLogsStandardCompat()
+| where TimeGenerated &gt; ago(30m)
+| where ContainerAppName == "my-app"
+| where Log contains "error"
+| project
+    TimeGenerated,
+    ContainerAppName,
+    RevisionName,
+    ReplicaName,
+    Reason,
+    EventSource,
+    Count,
+    Log,
+    SourceTable
+| order by TimeGenerated desc
+</code></pre>
+<h2 id="roll-back-to-log-analytics">Roll back to Log Analytics</h2>
+<p>Roll back only if you can't restore required monitoring through Azure Monitor. Treat rollback as a short-term contingency while the Log Analytics destination remains available, not as a long-term alternative to completing the change before the HTTP Data Collector API retirement date.</p>
+<p>A rollback starts writing new records to the custom tables again. It doesn't copy or backfill records from the resource-specific tables. Rolling back restores only the workspace customer ID and shared key. It doesn't re-enable <code>dynamicJsonColumns</code>. If you need dynamic JSON columns on the Log Analytics destination, reconfigure that behavior separately. Validate the log shape and every dependent query after rollback.</p>
+<div class="zone has-pivot" data-pivot="azure-portal">
+<ol>
+<li>Open the Container Apps environment.</li>
+<li>Select <strong>Monitoring</strong> &gt; <strong>Logging options</strong>.</li>
+<li>Under <strong>Logs Destination</strong>, select <strong>Log Analytics</strong>.</li>
+<li>Select the original Log Analytics workspace.</li>
+<li>Select <strong>Save</strong>.</li>
+<li>Verify that new records appear in <code>ContainerAppConsoleLogs_CL</code> and <code>ContainerAppSystemLogs_CL</code>.</li>
+<li>Validate the log shape and every dependent query before you re-enable the corresponding alerts.</li>
+</ol>
+</div>
+<div class="zone has-pivot" data-pivot="azure-cli">
+<p>The <code>--logs-workspace-id</code> parameter requires the Log Analytics workspace customer ID GUID, not the workspace ARM resource ID.</p>
+<p>Select the workspace subscription and retrieve the customer ID:</p>
+<pre><code class="lang-azurecli">az account set --subscription &lt;WORKSPACE_SUBSCRIPTION_ID&gt;
+
+az monitor log-analytics workspace show \
+  --resource-group &lt;WORKSPACE_RESOURCE_GROUP_NAME&gt; \
+  --workspace-name &lt;WORKSPACE_NAME&gt; \
+  --query customerId \
+  --output tsv
+</code></pre>
+<p>Retrieve the primary shared key. Protect this value as a secret:</p>
+<pre><code class="lang-azurecli">az monitor log-analytics workspace get-shared-keys \
+  --resource-group &lt;WORKSPACE_RESOURCE_GROUP_NAME&gt; \
+  --workspace-name &lt;WORKSPACE_NAME&gt; \
+  --query primarySharedKey \
+  --output tsv
+</code></pre>
+<p>Select the environment subscription:</p>
+<pre><code class="lang-azurecli">az account set --subscription &lt;ENVIRONMENT_SUBSCRIPTION_ID&gt;
+</code></pre>
+<p>Change the logging destination:</p>
+<pre><code class="lang-azurecli">az containerapp env update \
+  --name &lt;ENVIRONMENT_NAME&gt; \
+  --resource-group &lt;RESOURCE_GROUP_NAME&gt; \
+  --logs-destination log-analytics \
+  --logs-workspace-id &lt;LOG_ANALYTICS_WORKSPACE_CUSTOMER_ID&gt; \
+  --logs-workspace-key &lt;LOG_ANALYTICS_WORKSPACE_KEY&gt;
+</code></pre>
+<p>Verify that new records appear in <code>ContainerAppConsoleLogs_CL</code> and <code>ContainerAppSystemLogs_CL</code>. Validate the log shape and every dependent query before you re-enable the corresponding alerts.</p>
+</div>
+<h2 id="related-content">Related content</h2>
+<ul>
+<li><a href="logging" data-linktype="relative-path">Application logging in Azure Container Apps</a></li>
+<li><a href="log-options" data-linktype="relative-path">Log storage and monitoring options in Azure Container Apps</a></li>
+<li><a href="/en-us/azure/azure-monitor/logs/custom-logs-migrate" data-linktype="absolute-path">Migrate from the HTTP Data Collector API to the Logs Ingestion API</a></li>
+<li><a href="/en-us/azure/azure-monitor/essentials/diagnostic-settings" data-linktype="absolute-path">Diagnostic settings in Azure Monitor</a></li>
+</ul>
+</div>
+					
+		<div
+			id="ms--inline-notifications"
+			class="margin-block-xs"
+			data-bi-name="inline-notification"
+		></div>
+	 
+		<div
+			id="assertive-live-region"
+			role="alert"
+			aria-live="assertive"
+			class="visually-hidden"
+			aria-relevant="additions"
+			aria-atomic="true"
+		></div>
+		<div
+			id="polite-live-region"
+			role="status"
+			aria-live="polite"
+			class="visually-hidden"
+			aria-relevant="additions"
+			aria-atomic="true"
+		></div>
+	
+					
+		<!-- feedback section -->
+		<section
+			id="site-user-feedback-footer"
+			class="font-size-sm margin-top-md display-none-print display-none-desktop"
+			data-test-id="site-user-feedback-footer"
+			data-bi-name="site-feedback-section"
+		>
+			<hr class="hr" />
+			<h2 id="ms--feedback" class="title is-3">Feedback</h2>
+			<div class="display-flex flex-wrap-wrap align-items-center">
+				<p class="font-weight-semibold margin-xxs margin-left-none">
+					Was this page helpful?
+				</p>
+				<div class="buttons">
+					<button
+						class="thumb-rating-button like button button-primary button-sm"
+						data-test-id="footer-rating-yes"
+						data-binary-rating-response="rating-yes"
+						type="button"
+						title="This article is helpful"
+						data-bi-name="button-rating-yes"
+						aria-pressed="false"
+					>
+						<span class="icon" aria-hidden="true">
+							<span class="docon docon-like"></span>
+						</span>
+						<span>Yes</span>
+					</button>
+					<button
+						class="thumb-rating-button dislike button button-primary button-sm"
+						id="standard-rating-no-button"
+						hidden
+						data-test-id="footer-rating-no"
+						data-binary-rating-response="rating-no"
+						type="button"
+						title="This article is not helpful"
+						data-bi-name="button-rating-no"
+						aria-pressed="false"
+					>
+						<span class="icon" aria-hidden="true">
+							<span class="docon docon-dislike"></span>
+						</span>
+						<span>No</span>
+					</button>
+					<details
+						class="popover popover-top"
+						id="mobile-help-popover"
+						data-test-id="footer-feedback-popover"
+					>
+						<summary
+							class="thumb-rating-button dislike button button-primary button-sm"
+							data-test-id="details-footer-rating-no"
+							data-binary-rating-response="rating-no"
+							title="This article is not helpful"
+							data-bi-name="button-rating-no"
+							aria-pressed="false"
+							data-bi-an="feedback-unhelpful-popover"
+						>
+							<span class="icon" aria-hidden="true">
+								<span class="docon docon-dislike"></span>
+							</span>
+							<span>No</span>
+						</summary>
+						<div
+							class="popover-content width-200 width-300-tablet"
+							role="dialog"
+							aria-labelledby="popover-heading"
+							aria-describedby="popover-description"
+						>
+							<p id="popover-heading" class="font-size-lg margin-bottom-xxs font-weight-semibold">
+								Need help with this topic?
+							</p>
+							<p id="popover-description" class="font-size-sm margin-bottom-xs">
+								Want to try using Ask Learn to clarify or guide you through this topic?
+							</p>
+							
+		<div class="buttons flex-direction-row flex-wrap justify-content-center gap-xxs">
+			<div>
+		<button
+			class="button button-sm border inner-focus display-none margin-right-xxs"
+			data-bi-name="ask-learn-assistant-entry-troubleshoot"
+			data-test-id="ask-learn-assistant-modal-entry-mobile-feedback"
+			data-ask-learn-modal-entry-feedback
+			data-bi-an=feedback-unhelpful-popover
+			type="button"
+			style="min-width: max-content;"
+			aria-expanded="false"
+			aria-label="Ask Learn"
+			hidden
+		>
+			<span class="icon" aria-hidden="true">
+				<span class="docon docon-chat-sparkle-fill gradient-ask-learn-logo"></span>
+			</span>
+		</button>
+		<button
+			class="button button-sm display-inline-flex display-none-desktop flex-shrink-0 margin-right-xxs border-color-ask-learn margin-right-xxs"
+			data-bi-name="ask-learn-assistant-entry-troubleshoot"
+			data-bi-an=feedback-unhelpful-popover
+			data-test-id="ask-learn-assistant-modal-entry-tablet-feedback"
+			data-ask-learn-modal-entry-feedback
+			type="button"
+			style="min-width: max-content;"
+			aria-expanded="false"
+			hidden
+		>
+			<span class="icon font-size-lg" aria-hidden="true">
+				<span class="docon docon-chat-sparkle-fill gradient-ask-learn-logo"></span>
+			</span>
+			<span>Ask Learn</span>
+		</button>
+		<button
+			class="button button-sm display-none flex-shrink-0 display-inline-flex-desktop margin-right-xxs border-color-ask-learn margin-right-xxs"
+			data-bi-name="ask-learn-assistant-entry-troubleshoot"
+			data-bi-an=feedback-unhelpful-popover
+			data-test-id="ask-learn-assistant-flyout-entry-feedback"
+			data-ask-learn-flyout-entry-show-only
+			data-flyout-button="toggle"
+			type="button"
+			style="min-width: max-content;"
+			aria-expanded="false"
+			aria-controls="ask-learn-flyout"
+			hidden
+		>
+			<span class="icon font-size-lg" aria-hidden="true">
+				<span class="docon docon-chat-sparkle-fill gradient-ask-learn-logo"></span>
+			</span>
+			<span>Ask Learn</span>
+		</button>
+	</div>
+			<button
+				type="button"
+				class="button button-sm margin-right-xxs"
+				data-help-option="suggest-fix"
+				data-bi-name="feedback-suggest"
+				data-bi-an="feedback-unhelpful-popover"
+				data-test-id="suggest-fix"
+			>
+				<span class="icon" aria-hidden="true">
+					<span class="docon docon-feedback"></span>
+				</span>
+				<span> Suggest a fix? </span>
+			</button>
+		</div>
+	
+						</div>
+					</details>
+				</div>
+			</div>
+		</section>
+		<!-- end feedback section -->
+	
+				</div>
+				
+		<div id="ms--additional-resources-mobile" class="display-none-print">
+			<hr class="hr" hidden />
+			<h2 id="ms--additional-resources-mobile-heading" class="title is-3" hidden>
+				Additional resources
+			</h2>
+			
+		<section
+			id="right-rail-recommendations-mobile"
+			class=""
+			data-bi-name="recommendations"
+			hidden
+		></section>
+	 
+		<section
+			id="right-rail-training-mobile"
+			class=""
+			data-bi-name="learning-resource-card"
+			hidden
+		></section>
+	 
+		<section
+			id="right-rail-events-mobile"
+			class=""
+			data-bi-name="events-card"
+			hidden
+		></section>
+	
+		</div>
+	 
+		<div
+			id="article-metadata-footer"
+			data-bi-name="article-metadata-footer"
+			data-test-id="article-metadata-footer"
+			class="page-metadata-container"
+		>
+			<hr class="hr" />
+			<ul class="metadata page-metadata" data-bi-name="page info" lang="en-us" dir="ltr">
+				<li class="visibility-hidden-visual-diff">
+			<span class="badge badge-sm text-wrap-pretty">
+				<span>Last updated on <local-time format="twoDigitNumeric"
+		datetime="2026-08-14T22:12:00.000Z"
+		data-article-date-source="calculated"
+		class="is-invisible"
+	>
+		2026-08-14
+	</local-time></span>
+			</span>
+		</li>
+			</ul>
+		</div>
+	
+			</div>
+		
+				</main>
+				<aside
+					id="layout-body-aside"
+					class="layout-body-aside  "
+					data-bi-name="aside"
+					aria-label="Additional resources"
+			  >
+					
+		<div
+			id="ms--additional-resources"
+			class="right-container padding-sm display-none display-block-desktop height-full"
+			data-bi-name="pageactions"
+		>
+			<div id="affixed-right-container" data-bi-name="right-column">
+				
+		<nav
+			id="side-doc-outline"
+			class="doc-outline border-bottom padding-bottom-xs margin-bottom-xs scrollbar-width-thin"
+			data-bi-name="intopic toc"
+			aria-label="In this article"
+		>
+			<h3>In this article</h3>
+		</nav>
+	
+				<!-- Feedback -->
+				
+		<section
+			id="ms--site-user-feedback-right-rail"
+			class="font-size-sm display-none-print"
+			data-test-id="site-user-feedback-right-rail"
+			data-bi-name="site-feedback-right-rail"
+		>
+			<div class="display-flex flex-wrap-wrap align-items-center">
+				<p class="font-weight-semibold margin-xxs margin-left-none">
+					Was this page helpful?
+				</p>
+				<div class="display-flex flex-wrap-nowrap">
+					<button
+						class="thumb-rating-button like inner-focus"
+						data-test-id="right-rail-rating-yes"
+						data-binary-rating-response="rating-yes"
+						type="button"
+						title="This article is helpful"
+						aria-label="This article is helpful"
+						data-bi-name="button-rating-yes"
+						aria-pressed="false"
+					>
+						<span class="icon" aria-hidden="true">
+							<span class="docon docon-like"></span>
+						</span>
+					</button>
+					<button
+						class="thumb-rating-button dislike inner-focus"
+						id="right-rail-no-button"
+						hidden
+						data-test-id="right-rail-rating-no"
+						data-binary-rating-response="rating-no"
+						type="button"
+						title="This article is not helpful"
+						aria-label="This article is not helpful"
+						data-bi-name="button-rating-no"
+						aria-pressed="false"
+					>
+						<span class="icon" aria-hidden="true">
+							<span class="docon docon-dislike"></span>
+						</span>
+					</button>
+					<details class="popover popover-right" id="help-popover" data-test-id="feedback-popover">
+						<summary
+							tabindex="0"
+							class="thumb-rating-button dislike inner-focus"
+							data-test-id="details-right-rail-rating-no"
+							data-binary-rating-response="rating-no"
+							title="This article is not helpful"
+							aria-label="This article is not helpful"
+							data-bi-name="button-rating-no"
+							aria-pressed="false"
+							data-bi-an="feedback-unhelpful-popover"
+						>
+							<span class="icon" aria-hidden="true">
+								<span class="docon docon-dislike"></span>
+							</span>
+						</summary>
+						<div
+							class="popover-content width-200 width-300-tablet"
+							role="dialog"
+							aria-labelledby="popover-heading-right-rail"
+							aria-describedby="popover-description-right-rail"
+						>
+							<p
+								id="popover-heading-right-rail"
+								class="font-size-lg margin-bottom-xxs font-weight-semibold"
+							>
+								Need help with this topic?
+							</p>
+							<p id="popover-description-right-rail" class="font-size-sm margin-bottom-xs">
+								Want to try using Ask Learn to clarify or guide you through this topic?
+							</p>
+							
+		<div class="buttons flex-direction-row flex-wrap justify-content-center gap-xxs">
+			<div>
+		<button
+			class="button button-sm border inner-focus display-none margin-right-xxs"
+			data-bi-name="ask-learn-assistant-entry-troubleshoot"
+			data-test-id="ask-learn-assistant-modal-entry-mobile-feedback"
+			data-ask-learn-modal-entry-feedback
+			data-bi-an=feedback-unhelpful-popover
+			type="button"
+			style="min-width: max-content;"
+			aria-expanded="false"
+			aria-label="Ask Learn"
+			hidden
+		>
+			<span class="icon" aria-hidden="true">
+				<span class="docon docon-chat-sparkle-fill gradient-ask-learn-logo"></span>
+			</span>
+		</button>
+		<button
+			class="button button-sm display-inline-flex display-none-desktop flex-shrink-0 margin-right-xxs border-color-ask-learn margin-right-xxs"
+			data-bi-name="ask-learn-assistant-entry-troubleshoot"
+			data-bi-an=feedback-unhelpful-popover
+			data-test-id="ask-learn-assistant-modal-entry-tablet-feedback"
+			data-ask-learn-modal-entry-feedback
+			type="button"
+			style="min-width: max-content;"
+			aria-expanded="false"
+			hidden
+		>
+			<span class="icon font-size-lg" aria-hidden="true">
+				<span class="docon docon-chat-sparkle-fill gradient-ask-learn-logo"></span>
+			</span>
+			<span>Ask Learn</span>
+		</button>
+		<button
+			class="button button-sm display-none flex-shrink-0 display-inline-flex-desktop margin-right-xxs border-color-ask-learn margin-right-xxs"
+			data-bi-name="ask-learn-assistant-entry-troubleshoot"
+			data-bi-an=feedback-unhelpful-popover
+			data-test-id="ask-learn-assistant-flyout-entry-feedback"
+			data-ask-learn-flyout-entry-show-only
+			data-flyout-button="toggle"
+			type="button"
+			style="min-width: max-content;"
+			aria-expanded="false"
+			aria-controls="ask-learn-flyout"
+			hidden
+		>
+			<span class="icon font-size-lg" aria-hidden="true">
+				<span class="docon docon-chat-sparkle-fill gradient-ask-learn-logo"></span>
+			</span>
+			<span>Ask Learn</span>
+		</button>
+	</div>
+			<button
+				type="button"
+				class="button button-sm margin-right-xxs"
+				data-help-option="suggest-fix"
+				data-bi-name="feedback-suggest"
+				data-bi-an="feedback-unhelpful-popover"
+				data-test-id="suggest-fix"
+			>
+				<span class="icon" aria-hidden="true">
+					<span class="docon docon-feedback"></span>
+				</span>
+				<span> Suggest a fix? </span>
+			</button>
+		</div>
+	
+						</div>
+					</details>
+				</div>
+			</div>
+		</section>
+	
+			</div>
+		</div>
+	
+			  </aside> <section
+					id="layout-body-flyout"
+					class="layout-body-flyout "
+					data-bi-name="flyout"
+			  >
+					 <div
+	class="height-full border-left background-color-body-medium"
+	id="ask-learn-flyout"
+></div>
+			  </section> <div class="layout-body-footer " data-bi-name="layout-footer">
+		<footer
+			id="footer"
+			data-test-id="footer"
+			data-bi-name="footer"
+			class="footer-layout padding-xs padding-sm-desktop has-default-focus border-top"
+			role="contentinfo"
+		>
+			<div class="display-flex gap-xs flex-wrap-wrap is-full-height padding-right-lg-desktop">
+				
+		<a
+			data-mscc-ic="false"
+			href="#"
+			data-bi-name="select-locale"
+			class="locale-selector-link flex-shrink-0 button button-sm button-clear external-link-indicator"
+			id=""
+			title=""
+			><span class="icon" aria-hidden="true"
+				><span class="docon docon-world"></span></span
+			><span class="local-selector-link-text">en-us</span></a
+		>
+	 <div class="ccpa-privacy-link" data-ccpa-privacy-link hidden>
+		
+		<a
+			data-mscc-ic="false"
+			href="https://aka.ms/yourcaliforniaprivacychoices"
+			data-bi-name="your-privacy-choices"
+			class="button button-sm button-clear flex-shrink-0 external-link-indicator"
+			id=""
+			title=""
+			>
+		<svg
+			xmlns="http://www.w3.org/2000/svg"
+			viewBox="0 0 30 14"
+			xml:space="preserve"
+			height="16"
+			width="43"
+			aria-hidden="true"
+			focusable="false"
+		>
+			<path
+				d="M7.4 12.8h6.8l3.1-11.6H7.4C4.2 1.2 1.6 3.8 1.6 7s2.6 5.8 5.8 5.8z"
+				style="fill-rule:evenodd;clip-rule:evenodd;fill:#fff"
+			></path>
+			<path
+				d="M22.6 0H7.4c-3.9 0-7 3.1-7 7s3.1 7 7 7h15.2c3.9 0 7-3.1 7-7s-3.2-7-7-7zm-21 7c0-3.2 2.6-5.8 5.8-5.8h9.9l-3.1 11.6H7.4c-3.2 0-5.8-2.6-5.8-5.8z"
+				style="fill-rule:evenodd;clip-rule:evenodd;fill:#06f"
+			></path>
+			<path
+				d="M24.6 4c.2.2.2.6 0 .8L22.5 7l2.2 2.2c.2.2.2.6 0 .8-.2.2-.6.2-.8 0l-2.2-2.2-2.2 2.2c-.2.2-.6.2-.8 0-.2-.2-.2-.6 0-.8L20.8 7l-2.2-2.2c-.2-.2-.2-.6 0-.8.2-.2.6-.2.8 0l2.2 2.2L23.8 4c.2-.2.6-.2.8 0z"
+				style="fill:#fff"
+			></path>
+			<path
+				d="M12.7 4.1c.2.2.3.6.1.8L8.6 9.8c-.1.1-.2.2-.3.2-.2.1-.5.1-.7-.1L5.4 7.7c-.2-.2-.2-.6 0-.8.2-.2.6-.2.8 0L8 8.6l3.8-4.5c.2-.2.6-.2.9 0z"
+				style="fill:#06f"
+			></path>
+		</svg>
+	
+			<span>Your Privacy Choices</span></a
+		>
+	
+	</div>
+				<div class="flex-shrink-0">
+		<div class="dropdown has-caret-up">
+			<button
+				data-test-id="theme-selector-button"
+				class="dropdown-trigger button button-clear button-sm inner-focus theme-dropdown-trigger"
+				aria-controls="{{ themeMenuId }}"
+				aria-haspopup="true"
+				aria-expanded="false"
+				data-bi-name="theme"
+			>
+				<span class="icon" aria-hidden="true"><span class="docon docon-sun"></span></span>
+				<span>Theme</span>
+				<span class="icon expanded-indicator" aria-hidden="true">
+					<span class="docon docon-chevron-down-light"></span>
+				</span>
+			</button>
+			<div class="dropdown-menu" id="{{ themeMenuId }}" role="menu">
+				<ul class="theme-selector padding-xxs" data-test-id="theme-dropdown-menu" role="none">
+					<li class="theme display-block" role="none">
+						<button
+							class="button button-clear button-sm theme-control button-block justify-content-flex-start text-align-left"
+							role="menuitemradio"
+							aria-checked="false"
+							data-theme-to="light"
+							tabindex="-1"
+						>
+							<span class="theme-light margin-right-xxs">
+								<span
+									class="theme-selector-icon border display-inline-block has-body-background"
+									aria-hidden="true"
+								>
+									<svg class="svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 14">
+										<rect width="22" height="14" class="has-fill-body-background" />
+										<rect x="5" y="5" width="12" height="4" class="has-fill-secondary" />
+										<rect x="5" y="2" width="2" height="1" class="has-fill-secondary" />
+										<rect x="8" y="2" width="2" height="1" class="has-fill-secondary" />
+										<rect x="11" y="2" width="3" height="1" class="has-fill-secondary" />
+										<rect x="1" y="1" width="2" height="2" class="has-fill-secondary" />
+										<rect x="5" y="10" width="7" height="2" rx="0.3" class="has-fill-primary" />
+										<rect x="19" y="1" width="2" height="2" rx="1" class="has-fill-secondary" />
+									</svg>
+								</span>
+							</span>
+							<span> Light </span>
+						</button>
+					</li>
+					<li class="theme display-block" role="none">
+						<button
+							class="button button-clear button-sm theme-control button-block justify-content-flex-start text-align-left"
+							role="menuitemradio"
+							aria-checked="false"
+							data-theme-to="dark"
+							tabindex="-1"
+						>
+							<span class="theme-dark margin-right-xxs">
+								<span
+									class="border theme-selector-icon display-inline-block has-body-background"
+									aria-hidden="true"
+								>
+									<svg class="svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 14">
+										<rect width="22" height="14" class="has-fill-body-background" />
+										<rect x="5" y="5" width="12" height="4" class="has-fill-secondary" />
+										<rect x="5" y="2" width="2" height="1" class="has-fill-secondary" />
+										<rect x="8" y="2" width="2" height="1" class="has-fill-secondary" />
+										<rect x="11" y="2" width="3" height="1" class="has-fill-secondary" />
+										<rect x="1" y="1" width="2" height="2" class="has-fill-secondary" />
+										<rect x="5" y="10" width="7" height="2" rx="0.3" class="has-fill-primary" />
+										<rect x="19" y="1" width="2" height="2" rx="1" class="has-fill-secondary" />
+									</svg>
+								</span>
+							</span>
+							<span> Dark </span>
+						</button>
+					</li>
+					<li class="theme display-block" role="none">
+						<button
+							class="button button-clear button-sm theme-control button-block justify-content-flex-start text-align-left"
+							role="menuitemradio"
+							aria-checked="false"
+							data-theme-to="high-contrast"
+							tabindex="-1"
+						>
+							<span class="theme-high-contrast margin-right-xxs">
+								<span
+									class="border theme-selector-icon display-inline-block has-body-background"
+									aria-hidden="true"
+								>
+									<svg class="svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 22 14">
+										<rect width="22" height="14" class="has-fill-body-background" />
+										<rect x="5" y="5" width="12" height="4" class="has-fill-secondary" />
+										<rect x="5" y="2" width="2" height="1" class="has-fill-secondary" />
+										<rect x="8" y="2" width="2" height="1" class="has-fill-secondary" />
+										<rect x="11" y="2" width="3" height="1" class="has-fill-secondary" />
+										<rect x="1" y="1" width="2" height="2" class="has-fill-secondary" />
+										<rect x="5" y="10" width="7" height="2" rx="0.3" class="has-fill-primary" />
+										<rect x="19" y="1" width="2" height="2" rx="1" class="has-fill-secondary" />
+									</svg>
+								</span>
+							</span>
+							<span> High contrast </span>
+						</button>
+					</li>
+				</ul>
+			</div>
+		</div>
+	</div>
+			</div>
+			<ul class="links" data-bi-name="footerlinks">
+				<li class="manage-cookies-holder" hidden=""></li>
+				<li>
+		
+		<a
+			data-mscc-ic="false"
+			href="https://learn.microsoft.com/en-us/principles-for-ai-generated-content"
+			data-bi-name="aiDisclaimer"
+			class=" external-link-indicator"
+			id=""
+			title=""
+			>AI Disclaimer</a
+		>
+	
+	</li><li>
+		
+		<a
+			data-mscc-ic="false"
+			href="https://learn.microsoft.com/en-us/previous-versions/"
+			data-bi-name="archivelink"
+			class=" external-link-indicator"
+			id=""
+			title=""
+			>Previous Versions</a
+		>
+	
+	</li> <li>
+		
+		<a
+			data-mscc-ic="false"
+			href="https://techcommunity.microsoft.com/t5/microsoft-learn-blog/bg-p/MicrosoftLearnBlog"
+			data-bi-name="bloglink"
+			class=" external-link-indicator"
+			id=""
+			title=""
+			>Blog</a
+		>
+	
+	</li> <li>
+		
+		<a
+			data-mscc-ic="false"
+			href="https://learn.microsoft.com/en-us/contribute"
+			data-bi-name="contributorGuide"
+			class=" external-link-indicator"
+			id=""
+			title=""
+			>Contribute</a
+		>
+	
+	</li><li>
+		
+		<a
+			data-mscc-ic="false"
+			href="https://go.microsoft.com/fwlink/?LinkId=521839"
+			data-bi-name="privacy"
+			class=" external-link-indicator"
+			id=""
+			title=""
+			>Privacy</a
+		>
+	
+	</li><li>
+		
+		<a
+			data-mscc-ic="false"
+			href="https://go.microsoft.com/fwlink/?linkid=2259814"
+			data-bi-name="consumer-health-privacy"
+			class=" external-link-indicator"
+			id=""
+			title=""
+			>Consumer Health Privacy</a
+		>
+	
+	</li><li>
+		
+		<a
+			data-mscc-ic="false"
+			href="https://learn.microsoft.com/en-us/legal/termsofuse"
+			data-bi-name="termsofuse"
+			class=" external-link-indicator"
+			id=""
+			title=""
+			>Terms of Use</a
+		>
+	
+	</li><li>
+		
+		<a
+			data-mscc-ic="false"
+			href="https://www.microsoft.com/legal/intellectualproperty/Trademarks/"
+			data-bi-name="trademarks"
+			class=" external-link-indicator"
+			id=""
+			title=""
+			>Trademarks</a
+		>
+	
+	</li>
+				<li>&copy; Microsoft 2026</li>
+			</ul>
+		</footer>
+	</footer>
+			<noscript><img src="https://learn.microsoft.com/akam/13/pixel_3d66a5cd?a=dD1hYmJkNjY2MmUyYTYxOGNjMGYxM2E3OGRlYzVkOTI2YzlmZWM1MWQxJmpzPW9mZg==" style="visibility: hidden; position: absolute; left: -999px; top: -999px;" /></noscript></body>
+		</html>

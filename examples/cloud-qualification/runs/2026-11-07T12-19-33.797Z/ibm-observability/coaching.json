@@ -1,0 +1,106 @@
+{
+  "message": "No runtime checks have run yet (0 checks, status \"blocked\"), so nothing has passed and the design isn't validated yet. The 8 blockers aren't design mistakes. The exporter has no native IBM implementation for the collector, redaction, archive, search, analysis runtime, watsonx.ai or App ID. Its only IBM contract is plain private object storage. Narrowing the design to that would drop the work you asked for, so I'm not proposing a graph change. Closing these gaps is product engineering work: typed IBM Code Engine, OpenSearch, watsonx.ai and App ID implementations, with this artifact (digest 97ac7030…) as the reproducer. The synthetic services also need a reference plan for an existing system.\n\nMeanwhile, we can firm up the design. Should the analysis runtime only reason over evidence it has already fetched, with no tool calls? Or should it be allowed to run extra read-only searches from a fixed allowlist? Your answer changes how we enforce and test REQ-006, the prompt-injection requirement.",
+  "phase": "Architecture Review",
+  "contextUsed": {
+    "status": "unavailable",
+    "enabled": true,
+    "engine": "AtMem 2.3.10 core SDK",
+    "recordsUsed": [],
+    "knowledgeRecordIds": [],
+    "skills": [
+      {
+        "id": "architecture",
+        "name": "AI architecture and discovery",
+        "provider": "all",
+        "stages": [
+          "discover",
+          "design",
+          "review"
+        ],
+        "version": "1.2.0",
+        "digest": "91b2f386ad4b94a02191901c9ba0b3c8d82f6189a50bf8b9a23a5c02f2f4a841",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "security",
+        "name": "Security and reliability",
+        "provider": "all",
+        "stages": [
+          "design",
+          "review",
+          "deploy"
+        ],
+        "version": "1.0.0",
+        "digest": "c75cf46b29eb786b27d88d36604f521d6d287182d47df7d5c03845585d64f914",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "devops",
+        "name": "Infrastructure and DevOps handoff",
+        "provider": "all",
+        "stages": [
+          "deploy",
+          "review"
+        ],
+        "version": "1.1.0",
+        "digest": "cd5a428597fbf388a12a863721d93e551c200f4ed30be3469fd8eae78262884c",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "ibm",
+        "name": "IBM Cloud architecture guidance",
+        "provider": "ibm",
+        "stages": [
+          "design",
+          "review",
+          "estimate",
+          "deploy"
+        ],
+        "version": "1.0.0",
+        "digest": "658048ca51abcef3583e00a3b707691237ba956258ea0151d3f9062cd1cebcb9",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      }
+    ],
+    "tools": [],
+    "boundary": "AtMem AI Architect → native client",
+    "contextDigest": "7008b3fe0382a8ba7b5e74f16e7b0e4167a8a728ebc7cb7d0326a8d58c66b5df",
+    "projectId": "ef9b7dfd-944d-40e1-afc6-52fb73648ef1"
+  },
+  "priceQuotes": []
+}

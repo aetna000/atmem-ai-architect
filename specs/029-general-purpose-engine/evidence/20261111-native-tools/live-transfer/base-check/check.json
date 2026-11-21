@@ -1,0 +1,34 @@
+{
+  "id": "c5d96c03-5c6f-4a89-9499-6955f2abb346",
+  "sessionId": "4c7a7b03-0e38-48a2-bad7-9db1e7b799c3",
+  "artifactId": "51173b36-d21d-446f-a2c8-75ed081fea96",
+  "artifactSha256": "1d22b8dc84627dfef988f96e960947d4135842845edce63abb97391e0fb53e77",
+  "validatorId": "distance-base",
+  "label": "Independent distance base contract",
+  "contractSha256": "f43be08fc625a6d3b7b03e91b37b133cb972700545a185198164a167bba5f586",
+  "state": "finished",
+  "result": {
+    "validator": "distance-base",
+    "artifactSha256": "1d22b8dc84627dfef988f96e960947d4135842845edce63abb97391e0fb53e77",
+    "imageId": "sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20",
+    "runtimeConfigImageId": "sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20",
+    "platform": "linux/amd64",
+    "command": [
+      "/usr/local/bin/python3",
+      "-c",
+      "import math\nimport distance\nassert math.isclose(distance.convert(1,\"ft\",\"m\"),0.3048)\nassert math.isclose(distance.convert(0.3048,\"m\",\"ft\"),1)\nassert distance.convert(0,\"m\",\"m\")==0\nfor value in [True,False,-1,float(\"nan\"),float(\"inf\"),\"1\",None]:\n try:distance.convert(value,\"m\",\"ft\")\n except (ValueError,TypeError):pass\n else:raise AssertionError(\"Expected validation denial\")\nprint(\"INDEPENDENT_DISTANCE_BASE_PASSED\")\n"
+    ],
+    "status": "passed",
+    "exitCode": 0,
+    "skipped": 0,
+    "testsReported": null,
+    "reason": null,
+    "output": "INDEPENDENT_DISTANCE_BASE_PASSED\n",
+    "outputTruncated": false,
+    "durationSeconds": 0.696,
+    "evidenceLevel": "local_container_check",
+    "cloudOperations": false,
+    "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+  },
+  "acceptance": "not_established_by_local_check"
+}

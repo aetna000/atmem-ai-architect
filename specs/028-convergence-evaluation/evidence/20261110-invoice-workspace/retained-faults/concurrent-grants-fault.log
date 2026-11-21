@@ -1,0 +1,21 @@
+file:///Users/javadtaghia/gitlab/ai-architect-workbench/scripts/invoice-auth-browser-check.mjs:14
+ await until(()=>stdout.includes('\n')||child.exitCode!==null,'Fixture did not start');if(child.exitCode!==null)throw Error(stderr);const origin=JSON.parse(stdout.split('\n')[0]).origin;
+                                                                                                                      ^
+
+Error: Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/scripts/invoice-browser-fixture.py", line 28, in <module>
+    owner,_,_,api_dsn,worker_dsn=create_runtime_roles();account=str(uuid.uuid4());namespace='q'+uuid.uuid4().hex[:12]
+                                 ~~~~~~~~~~~~~~~~~~~~^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/durable_privileges_acceptance.py", line 22, in create_runtime_roles
+    grant_runtime_roles(conn,api_role,worker_role)
+    ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/workflow_database.py", line 56, in grant_runtime_roles
+    conn.execute(sql.SQL('REVOKE ALL ON SCHEMA workflow FROM {}').format(name))
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/durable-runtime/lib/python3.13/site-packages/psycopg/connection.py", line 304, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.InternalError_: tuple concurrently updated
+
+    at file:///Users/javadtaghia/gitlab/ai-architect-workbench/scripts/invoice-auth-browser-check.mjs:14:119
+
+Node.js v26.5.0

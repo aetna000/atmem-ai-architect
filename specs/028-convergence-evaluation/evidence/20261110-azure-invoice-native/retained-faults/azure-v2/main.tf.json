@@ -1,0 +1,1494 @@
+{
+  "terraform": {
+    "required_version": ">= 1.17.1, < 2.0.0",
+    "required_providers": {
+      "azurerm": {
+        "source": "hashicorp/azurerm",
+        "version": "4.81.0"
+      },
+      "azuread": {
+        "source": "hashicorp/azuread",
+        "version": "3.10.0"
+      },
+      "azapi": {
+        "source": "Azure/azapi",
+        "version": "2.13.0"
+      }
+    }
+  },
+  "provider": {
+    "azurerm": {
+      "features": {},
+      "subscription_id": "${var.subscription_id}",
+      "tenant_id": "${var.tenant_id}",
+      "resource_provider_registrations": "none",
+      "storage_use_azuread": true
+    },
+    "azuread": {
+      "tenant_id": "${var.tenant_id}"
+    },
+    "azapi": {
+      "subscription_id": "${var.subscription_id}",
+      "tenant_id": "${var.tenant_id}",
+      "skip_provider_registration": true,
+      "enable_preflight": false
+    }
+  },
+  "variable": {
+    "review_approved": {
+      "type": "bool",
+      "default": false
+    },
+    "applications_enabled": {
+      "type": "bool",
+      "default": false,
+      "description": "Enable only after native SQL identity/schema/membership bootstrap, secret population and immutable image publication are reviewed."
+    },
+    "region": {
+      "type": "string",
+      "nullable": false,
+      "description": "Reviewed single deployment/data region; verify current service/model availability and quotas.",
+      "validation": {
+        "condition": "${var.region == \"australiaeast\"}",
+        "error_message": "Placement is bound to this design. Update and regenerate the design before changing region."
+      },
+      "default": "australiaeast"
+    },
+    "subscription_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Expected reviewed Azure subscription.",
+      "validation": {
+        "condition": "${can(regex(\"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$\",var.subscription_id))}",
+        "error_message": "Supply the reviewed subscription_id input."
+      }
+    },
+    "tenant_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Expected company Entra tenant, bound in both control-plane and application identities.",
+      "validation": {
+        "condition": "${can(regex(\"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$\",var.tenant_id))}",
+        "error_message": "Supply the reviewed tenant_id input."
+      }
+    },
+    "accounting_endpoint": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing reviewed accounting HTTPS adapter; never recreated.",
+      "validation": {
+        "condition": "${can(regex(\"^https://[A-Za-z0-9.-]+(:[0-9]{1,5})?(/[^?#@ ]*)?$\",var.accounting_endpoint))}",
+        "error_message": "Supply the reviewed accounting_endpoint input."
+      }
+    },
+    "accounting_scope": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing accounting scope bound into approvals.",
+      "validation": {
+        "condition": "${can(regex(\"^[A-Za-z0-9_.:/-]{1,200}$\",var.accounting_scope))}",
+        "error_message": "Supply the reviewed accounting_scope input."
+      }
+    },
+    "model_name": {
+      "type": "string",
+      "nullable": false,
+      "description": "Reviewed regional Azure OpenAI structured-output model; confirm current availability and terms.",
+      "validation": {
+        "condition": "${length(trimspace(var.model_name)) > 0}",
+        "error_message": "Supply the reviewed model_name input."
+      }
+    },
+    "model_version": {
+      "type": "string",
+      "nullable": false,
+      "description": "Explicit supported regional model version; no silent upgrade.",
+      "validation": {
+        "condition": "${length(trimspace(var.model_version)) > 0}",
+        "error_message": "Supply the reviewed model_version input."
+      }
+    },
+    "runtime_image": {
+      "type": "string",
+      "nullable": false,
+      "description": "Reviewed immutable image published in the emitted private ACR. Empty during foundation.",
+      "validation": {
+        "condition": "${!var.applications_enabled || can(regex(\"@sha256:[0-9a-f]{64}$\",var.runtime_image))}",
+        "error_message": "Application release requires an immutable reviewed image digest."
+      },
+      "default": ""
+    },
+    "parser_image": {
+      "type": "string",
+      "nullable": false,
+      "description": "Reviewed immutable image published in the emitted private ACR. Empty during foundation.",
+      "validation": {
+        "condition": "${!var.applications_enabled || can(regex(\"@sha256:[0-9a-f]{64}$\",var.parser_image))}",
+        "error_message": "Application release requires an immutable reviewed image digest."
+      },
+      "default": ""
+    },
+    "staff_subjects": {
+      "type": "set(string)",
+      "default": [],
+      "validation": {
+        "condition": "${alltrue([for subject in var.staff_subjects : can(regex(\"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$\",subject))])}",
+        "error_message": "Supply verified native employee object IDs."
+      },
+      "description": "Explicit existing staff object IDs assigned application access. SQL memberships independently assign reviewer/user authority."
+    },
+    "replay_review_base64": {
+      "type": "string",
+      "default": "",
+      "description": "Scoped expiring accounting idempotency review; empty disables uncertain replay."
+    }
+  },
+  "locals": {
+    "name": "${format(\"invoice-%s\",substr(sha256(\"https://atmem.ai/workspaces/11111111-1111-4111-8111-111111111111/block_696e766f696365\"),0,12))}",
+    "account_uuid": "11111111-1111-4111-8111-111111111111",
+    "api_db_user": "${format(\"invoice_api_%s\",substr(sha256(\"https://atmem.ai/workspaces/11111111-1111-4111-8111-111111111111/block_696e766f696365\"),0,12))}",
+    "worker_db_user": "${format(\"invoice_worker_%s\",substr(sha256(\"https://atmem.ai/workspaces/11111111-1111-4111-8111-111111111111/block_696e766f696365\"),0,12))}",
+    "storage_name": "${format(\"%sdocs\",replace(local.name,\"-\",\"\"))}",
+    "registry_name": "${format(\"%sacr\",replace(local.name,\"-\",\"\"))}",
+    "public_origin": "${format(\"https://%s-api.%s\",local.name,azurerm_container_app_environment.block_696e766f696365.default_domain)}",
+    "parser_endpoint": "${format(\"https://%s-parser.internal.%s/extract\",local.name,azurerm_container_app_environment.block_696e766f696365.default_domain)}",
+    "destination_contract": {
+      "id": "normalized-action-v1",
+      "endpointSha256": "${sha256(var.accounting_endpoint)}",
+      "scope": "${var.accounting_scope}",
+      "mappingVersion": 1
+    },
+    "destination_contract_base64": "${base64encode(jsonencode(local.destination_contract))}"
+  },
+  "data": {
+    "azurerm_client_config": {
+      "operator": {}
+    }
+  },
+  "resource": {
+    "terraform_data": {
+      "review_gate": {
+        "input": {
+          "design_revision": 1,
+          "environment": "staging",
+          "provider": "azure"
+        },
+        "lifecycle": {
+          "precondition": [
+            {
+              "condition": "${var.review_approved}",
+              "error_message": "Review the actual source, placement, identities, existing accounting contract, costs, operations and destination account before any apply."
+            },
+            {
+              "condition": "${data.azurerm_client_config.operator.subscription_id == var.subscription_id && data.azurerm_client_config.operator.tenant_id == var.tenant_id && (!var.applications_enabled || length(var.staff_subjects)>0)}",
+              "error_message": "Use the reviewed subscription/tenant and explicitly admitted staff identities."
+            },
+            {
+              "condition": "${!var.applications_enabled || startswith(var.runtime_image,format(\"%s.azurecr.io/invoice/runtime@sha256:\",local.registry_name))}",
+              "error_message": "Use the package-owned private regional registry and immutable image."
+            },
+            {
+              "condition": "${!var.applications_enabled || startswith(var.runtime_image,format(\"%s.azurecr.io/invoice/runtime@sha256:\",local.registry_name))}",
+              "error_message": "Use the package-owned private regional registry and immutable image."
+            },
+            {
+              "condition": "${!var.applications_enabled || startswith(var.parser_image,format(\"%s.azurecr.io/invoice/parser@sha256:\",local.registry_name))}",
+              "error_message": "Use the package-owned private regional registry and immutable image."
+            }
+          ]
+        }
+      }
+    },
+    "azurerm_resource_group": {
+      "block_696e766f696365": {
+        "name": "${local.name}",
+        "location": "${var.region}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_virtual_network": {
+      "block_696e766f696365": {
+        "name": "${local.name}",
+        "resource_group_name": "${azurerm_resource_group.block_696e766f696365.name}",
+        "location": "${var.region}",
+        "address_space": [
+          "10.85.0.0/16"
+        ],
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_subnet": {
+      "block_696e766f696365_apps": {
+        "name": "apps",
+        "resource_group_name": "${azurerm_resource_group.block_696e766f696365.name}",
+        "virtual_network_name": "${azurerm_virtual_network.block_696e766f696365.name}",
+        "address_prefixes": [
+          "10.85.0.0/23"
+        ],
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_database": {
+        "name": "database",
+        "resource_group_name": "${azurerm_resource_group.block_696e766f696365.name}",
+        "virtual_network_name": "${azurerm_virtual_network.block_696e766f696365.name}",
+        "address_prefixes": [
+          "10.85.4.0/24"
+        ],
+        "delegation": {
+          "name": "postgres",
+          "service_delegation": {
+            "name": "Microsoft.DBforPostgreSQL/flexibleServers",
+            "actions": [
+              "Microsoft.Network/virtualNetworks/subnets/join/action"
+            ]
+          }
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_endpoints": {
+        "name": "endpoints",
+        "resource_group_name": "${azurerm_resource_group.block_696e766f696365.name}",
+        "virtual_network_name": "${azurerm_virtual_network.block_696e766f696365.name}",
+        "address_prefixes": [
+          "10.85.5.0/24"
+        ],
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_public_ip": {
+      "block_696e766f696365": {
+        "name": "${local.name}-egress",
+        "resource_group_name": "${azurerm_resource_group.block_696e766f696365.name}",
+        "location": "${var.region}",
+        "allocation_method": "Static",
+        "sku": "Standard",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_nat_gateway": {
+      "block_696e766f696365": {
+        "name": "${local.name}",
+        "resource_group_name": "${azurerm_resource_group.block_696e766f696365.name}",
+        "location": "${var.region}",
+        "sku_name": "Standard",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_nat_gateway_public_ip_association": {
+      "block_696e766f696365": {
+        "nat_gateway_id": "${azurerm_nat_gateway.block_696e766f696365.id}",
+        "public_ip_address_id": "${azurerm_public_ip.block_696e766f696365.id}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_subnet_nat_gateway_association": {
+      "block_696e766f696365": {
+        "subnet_id": "${azurerm_subnet.block_696e766f696365_apps.id}",
+        "nat_gateway_id": "${azurerm_nat_gateway.block_696e766f696365.id}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_private_dns_zone": {
+      "block_696e766f696365_database": {
+        "name": "private.postgres.database.azure.com",
+        "resource_group_name": "${azurerm_resource_group.block_696e766f696365.name}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_blob": {
+        "name": "privatelink.blob.core.windows.net",
+        "resource_group_name": "${azurerm_resource_group.block_696e766f696365.name}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_model": {
+        "name": "privatelink.openai.azure.com",
+        "resource_group_name": "${azurerm_resource_group.block_696e766f696365.name}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_vault": {
+        "name": "privatelink.vaultcore.azure.net",
+        "resource_group_name": "${azurerm_resource_group.block_696e766f696365.name}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_private_dns_zone_virtual_network_link": {
+      "block_696e766f696365_database": {
+        "name": "database",
+        "resource_group_name": "${azurerm_resource_group.block_696e766f696365.name}",
+        "private_dns_zone_name": "${azurerm_private_dns_zone.block_696e766f696365_database.name}",
+        "virtual_network_id": "${azurerm_virtual_network.block_696e766f696365.id}",
+        "registration_enabled": false,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_blob": {
+        "name": "blob",
+        "resource_group_name": "${azurerm_resource_group.block_696e766f696365.name}",
+        "private_dns_zone_name": "${azurerm_private_dns_zone.block_696e766f696365_blob.name}",
+        "virtual_network_id": "${azurerm_virtual_network.block_696e766f696365.id}",
+        "registration_enabled": false,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_model": {
+        "name": "model",
+        "resource_group_name": "${azurerm_resource_group.block_696e766f696365.name}",
+        "private_dns_zone_name": "${azurerm_private_dns_zone.block_696e766f696365_model.name}",
+        "virtual_network_id": "${azurerm_virtual_network.block_696e766f696365.id}",
+        "registration_enabled": false,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_vault": {
+        "name": "vault",
+        "resource_group_name": "${azurerm_resource_group.block_696e766f696365.name}",
+        "private_dns_zone_name": "${azurerm_private_dns_zone.block_696e766f696365_vault.name}",
+        "virtual_network_id": "${azurerm_virtual_network.block_696e766f696365.id}",
+        "registration_enabled": false,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_user_assigned_identity": {
+      "block_696e766f696365_api": {
+        "name": "${local.name}-api",
+        "resource_group_name": "${azurerm_resource_group.block_696e766f696365.name}",
+        "location": "${var.region}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_worker": {
+        "name": "${local.name}-worker",
+        "resource_group_name": "${azurerm_resource_group.block_696e766f696365.name}",
+        "location": "${var.region}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_pull": {
+        "name": "${local.name}-pull",
+        "resource_group_name": "${azurerm_resource_group.block_696e766f696365.name}",
+        "location": "${var.region}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_operator": {
+        "name": "${local.name}-operator",
+        "resource_group_name": "${azurerm_resource_group.block_696e766f696365.name}",
+        "location": "${var.region}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_postgresql_flexible_server": {
+      "block_696e766f696365": {
+        "name": "${local.name}",
+        "resource_group_name": "${azurerm_resource_group.block_696e766f696365.name}",
+        "location": "${var.region}",
+        "version": "17",
+        "sku_name": "GP_Standard_D2ds_v5",
+        "storage_mb": 32768,
+        "auto_grow_enabled": true,
+        "backup_retention_days": 7,
+        "geo_redundant_backup_enabled": false,
+        "delegated_subnet_id": "${azurerm_subnet.block_696e766f696365_database.id}",
+        "private_dns_zone_id": "${azurerm_private_dns_zone.block_696e766f696365_database.id}",
+        "public_network_access_enabled": false,
+        "authentication": {
+          "active_directory_auth_enabled": true,
+          "password_auth_enabled": false,
+          "tenant_id": "${var.tenant_id}"
+        },
+        "high_availability": {
+          "mode": "ZoneRedundant"
+        },
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.review_gate",
+          "azurerm_private_dns_zone_virtual_network_link.block_696e766f696365_database"
+        ]
+      }
+    },
+    "azurerm_postgresql_flexible_server_database": {
+      "block_696e766f696365": {
+        "name": "invoice",
+        "server_id": "${azurerm_postgresql_flexible_server.block_696e766f696365.id}",
+        "charset": "UTF8",
+        "collation": "en_US.utf8",
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_postgresql_flexible_server_active_directory_administrator": {
+      "block_696e766f696365": {
+        "server_name": "${azurerm_postgresql_flexible_server.block_696e766f696365.name}",
+        "resource_group_name": "${azurerm_resource_group.block_696e766f696365.name}",
+        "tenant_id": "${var.tenant_id}",
+        "object_id": "${azurerm_user_assigned_identity.block_696e766f696365_operator.principal_id}",
+        "principal_name": "${local.name}-operator",
+        "principal_type": "ServicePrincipal",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_postgresql_flexible_server_configuration": {
+      "block_696e766f696365_require_secure_transport": {
+        "name": "require_secure_transport",
+        "server_id": "${azurerm_postgresql_flexible_server.block_696e766f696365.id}",
+        "value": "ON",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_log_statement": {
+        "name": "log_statement",
+        "server_id": "${azurerm_postgresql_flexible_server.block_696e766f696365.id}",
+        "value": "none",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_log_min_error_statement": {
+        "name": "log_min_error_statement",
+        "server_id": "${azurerm_postgresql_flexible_server.block_696e766f696365.id}",
+        "value": "panic",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_log_parameter_max_length_on_error": {
+        "name": "log_parameter_max_length_on_error",
+        "server_id": "${azurerm_postgresql_flexible_server.block_696e766f696365.id}",
+        "value": "0",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_storage_account": {
+      "block_696e766f696365": {
+        "name": "${local.storage_name}",
+        "resource_group_name": "${azurerm_resource_group.block_696e766f696365.name}",
+        "location": "${var.region}",
+        "account_tier": "Standard",
+        "account_replication_type": "ZRS",
+        "min_tls_version": "TLS1_2",
+        "shared_access_key_enabled": false,
+        "allow_nested_items_to_be_public": false,
+        "public_network_access_enabled": false,
+        "default_to_oauth_authentication": true,
+        "blob_properties": {
+          "versioning_enabled": true
+        },
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_storage_container": {
+      "block_696e766f696365": {
+        "name": "invoices",
+        "storage_account_id": "${azurerm_storage_account.block_696e766f696365.id}",
+        "container_access_type": "private",
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_storage_management_policy": {
+      "block_696e766f696365": {
+        "storage_account_id": "${azurerm_storage_account.block_696e766f696365.id}",
+        "rule": [
+          {
+            "name": "invoice-retention",
+            "enabled": true,
+            "filters": {
+              "prefix_match": [
+                "invoices/accounts/"
+              ],
+              "blob_types": [
+                "blockBlob"
+              ]
+            },
+            "actions": {
+              "base_blob": {
+                "delete_after_days_since_modification_greater_than": 90
+              },
+              "version": {
+                "delete_after_days_since_creation_greater_than": 1
+              }
+            }
+          }
+        ],
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_container_registry": {
+      "block_696e766f696365": {
+        "name": "${local.registry_name}",
+        "resource_group_name": "${azurerm_resource_group.block_696e766f696365.name}",
+        "location": "${var.region}",
+        "sku": "Standard",
+        "admin_enabled": false,
+        "anonymous_pull_enabled": false,
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_key_vault": {
+      "block_696e766f696365": {
+        "name": "${local.name}",
+        "resource_group_name": "${azurerm_resource_group.block_696e766f696365.name}",
+        "location": "${var.region}",
+        "tenant_id": "${var.tenant_id}",
+        "sku_name": "standard",
+        "rbac_authorization_enabled": true,
+        "purge_protection_enabled": true,
+        "soft_delete_retention_days": 90,
+        "public_network_access_enabled": false,
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_cognitive_account": {
+      "block_696e766f696365": {
+        "name": "${local.name}-model",
+        "resource_group_name": "${azurerm_resource_group.block_696e766f696365.name}",
+        "location": "${var.region}",
+        "kind": "OpenAI",
+        "sku_name": "S0",
+        "custom_subdomain_name": "${local.name}-model",
+        "local_auth_enabled": false,
+        "public_network_access_enabled": false,
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_cognitive_deployment": {
+      "block_696e766f696365": {
+        "name": "invoice-extraction",
+        "cognitive_account_id": "${azurerm_cognitive_account.block_696e766f696365.id}",
+        "version_upgrade_option": "NoAutoUpgrade",
+        "model": {
+          "format": "OpenAI",
+          "name": "${var.model_name}",
+          "version": "${var.model_version}"
+        },
+        "sku": {
+          "name": "Standard",
+          "capacity": 1
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_private_endpoint": {
+      "block_696e766f696365_blob": {
+        "name": "${local.name}-blob",
+        "resource_group_name": "${azurerm_resource_group.block_696e766f696365.name}",
+        "location": "${var.region}",
+        "subnet_id": "${azurerm_subnet.block_696e766f696365_endpoints.id}",
+        "private_service_connection": {
+          "name": "blob",
+          "private_connection_resource_id": "${azurerm_storage_account.block_696e766f696365.id}",
+          "subresource_names": [
+            "blob"
+          ],
+          "is_manual_connection": false
+        },
+        "private_dns_zone_group": {
+          "name": "owned",
+          "private_dns_zone_ids": [
+            "${azurerm_private_dns_zone.block_696e766f696365_blob.id}"
+          ]
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_model": {
+        "name": "${local.name}-model",
+        "resource_group_name": "${azurerm_resource_group.block_696e766f696365.name}",
+        "location": "${var.region}",
+        "subnet_id": "${azurerm_subnet.block_696e766f696365_endpoints.id}",
+        "private_service_connection": {
+          "name": "model",
+          "private_connection_resource_id": "${azurerm_cognitive_account.block_696e766f696365.id}",
+          "subresource_names": [
+            "account"
+          ],
+          "is_manual_connection": false
+        },
+        "private_dns_zone_group": {
+          "name": "owned",
+          "private_dns_zone_ids": [
+            "${azurerm_private_dns_zone.block_696e766f696365_model.id}"
+          ]
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_vault": {
+        "name": "${local.name}-vault",
+        "resource_group_name": "${azurerm_resource_group.block_696e766f696365.name}",
+        "location": "${var.region}",
+        "subnet_id": "${azurerm_subnet.block_696e766f696365_endpoints.id}",
+        "private_service_connection": {
+          "name": "vault",
+          "private_connection_resource_id": "${azurerm_key_vault.block_696e766f696365.id}",
+          "subresource_names": [
+            "vault"
+          ],
+          "is_manual_connection": false
+        },
+        "private_dns_zone_group": {
+          "name": "owned",
+          "private_dns_zone_ids": [
+            "${azurerm_private_dns_zone.block_696e766f696365_vault.id}"
+          ]
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_role_assignment": {
+      "block_696e766f696365_pull": {
+        "scope": "${azurerm_container_registry.block_696e766f696365.id}",
+        "role_definition_name": "AcrPull",
+        "principal_id": "${azurerm_user_assigned_identity.block_696e766f696365_pull.principal_id}",
+        "skip_service_principal_aad_check": true,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_model": {
+        "scope": "${azurerm_cognitive_account.block_696e766f696365.id}",
+        "role_definition_name": "Cognitive Services OpenAI User",
+        "principal_id": "${azurerm_user_assigned_identity.block_696e766f696365_worker.principal_id}",
+        "skip_service_principal_aad_check": true,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_model_policy": {
+        "scope": "${azurerm_cognitive_account.block_696e766f696365.id}",
+        "role_definition_name": "Reader",
+        "principal_id": "${azurerm_user_assigned_identity.block_696e766f696365_worker.principal_id}",
+        "skip_service_principal_aad_check": true,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_destination": {
+        "scope": "${azurerm_key_vault.block_696e766f696365.id}/secrets/accounting-token",
+        "role_definition_name": "Key Vault Secrets User",
+        "principal_id": "${azurerm_user_assigned_identity.block_696e766f696365_worker.principal_id}",
+        "skip_service_principal_aad_check": true,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_operator_secrets": {
+        "scope": "${azurerm_key_vault.block_696e766f696365.id}",
+        "role_definition_name": "Key Vault Secrets Officer",
+        "principal_id": "${data.azurerm_client_config.operator.object_id}",
+        "skip_service_principal_aad_check": true,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_upload": {
+        "scope": "${azurerm_storage_container.block_696e766f696365.resource_manager_id}",
+        "role_definition_id": "${azurerm_role_definition.block_696e766f696365_documents.role_definition_resource_id}",
+        "principal_id": "${azurerm_user_assigned_identity.block_696e766f696365_api.principal_id}",
+        "skip_service_principal_aad_check": true,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_read_documents": {
+        "scope": "${azurerm_storage_container.block_696e766f696365.resource_manager_id}",
+        "role_definition_name": "Storage Blob Data Reader",
+        "principal_id": "${azurerm_user_assigned_identity.block_696e766f696365_worker.principal_id}",
+        "skip_service_principal_aad_check": true,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_role_definition": {
+      "block_696e766f696365_documents": {
+        "name": "${local.name}-upload-read",
+        "scope": "${azurerm_resource_group.block_696e766f696365.id}",
+        "assignable_scopes": [
+          "${azurerm_resource_group.block_696e766f696365.id}"
+        ],
+        "description": "Private invoice upload/read without object deletion or administrative account access.",
+        "permissions": {
+          "actions": [],
+          "not_actions": [],
+          "data_actions": [
+            "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/read",
+            "Microsoft.Storage/storageAccounts/blobServices/containers/blobs/write"
+          ],
+          "not_data_actions": []
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azurerm_container_app_environment": {
+      "block_696e766f696365": {
+        "name": "${local.name}",
+        "resource_group_name": "${azurerm_resource_group.block_696e766f696365.name}",
+        "location": "${var.region}",
+        "infrastructure_subnet_id": "${azurerm_subnet.block_696e766f696365_apps.id}",
+        "internal_load_balancer_enabled": false,
+        "workload_profile": {
+          "name": "Consumption",
+          "workload_profile_type": "Consumption"
+        },
+        "depends_on": [
+          "terraform_data.review_gate",
+          "azurerm_subnet_nat_gateway_association.block_696e766f696365",
+          "azurerm_nat_gateway_public_ip_association.block_696e766f696365"
+        ]
+      }
+    },
+    "azuread_application_registration": {
+      "block_696e766f696365": {
+        "display_name": "${local.name}-api",
+        "sign_in_audience": "AzureADMyOrg",
+        "requested_access_token_version": 2,
+        "implicit_access_token_issuance_enabled": false,
+        "implicit_id_token_issuance_enabled": false,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_spa": {
+        "display_name": "${local.name}_spa",
+        "sign_in_audience": "AzureADMyOrg",
+        "requested_access_token_version": 2,
+        "implicit_access_token_issuance_enabled": false,
+        "implicit_id_token_issuance_enabled": false,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_parser": {
+        "display_name": "${local.name}_parser",
+        "sign_in_audience": "AzureADMyOrg",
+        "requested_access_token_version": 2,
+        "implicit_access_token_issuance_enabled": false,
+        "implicit_id_token_issuance_enabled": false,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azuread_application_identifier_uri": {
+      "block_696e766f696365": {
+        "application_id": "${azuread_application_registration.block_696e766f696365.id}",
+        "identifier_uri": "api://${azuread_application_registration.block_696e766f696365.client_id}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_parser": {
+        "application_id": "${azuread_application_registration.block_696e766f696365_parser.id}",
+        "identifier_uri": "api://${azuread_application_registration.block_696e766f696365_parser.client_id}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azuread_application_permission_scope": {
+      "block_696e766f696365": {
+        "application_id": "${azuread_application_registration.block_696e766f696365.id}",
+        "scope_id": "${uuidv5(\"url\",format(\"%s:%s:user-scope\",var.tenant_id,local.name))}",
+        "value": "access_as_user",
+        "type": "Admin",
+        "admin_consent_display_name": "Use the invoice workspace",
+        "admin_consent_description": "Submit and review invoices under independently managed staff membership.",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azuread_application_app_role": {
+      "block_696e766f696365": {
+        "application_id": "${azuread_application_registration.block_696e766f696365.id}",
+        "role_id": "${uuidv5(\"url\",format(\"%s:%s:workspace-role\",var.tenant_id,local.name))}",
+        "allowed_member_types": [
+          "User"
+        ],
+        "display_name": "Invoice staff",
+        "description": "Use the invoice application; SQL authorizes individual actions.",
+        "value": "WorkspaceUser",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_parser": {
+        "application_id": "${azuread_application_registration.block_696e766f696365_parser.id}",
+        "role_id": "${uuidv5(\"url\",format(\"%s:%s:parser-role\",var.tenant_id,local.name))}",
+        "allowed_member_types": [
+          "Application"
+        ],
+        "display_name": "Parser worker",
+        "description": "Invoke the private PDF parser as the exact owned worker.",
+        "value": "Parser.Invoke",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azuread_service_principal": {
+      "block_696e766f696365": {
+        "client_id": "${azuread_application_registration.block_696e766f696365.client_id}",
+        "app_role_assignment_required": true,
+        "depends_on": [
+          "terraform_data.review_gate",
+          "azuread_application_app_role.block_696e766f696365"
+        ]
+      },
+      "block_696e766f696365_spa": {
+        "client_id": "${azuread_application_registration.block_696e766f696365_spa.client_id}",
+        "app_role_assignment_required": false,
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_parser": {
+        "client_id": "${azuread_application_registration.block_696e766f696365_parser.client_id}",
+        "app_role_assignment_required": true,
+        "depends_on": [
+          "terraform_data.review_gate",
+          "azuread_application_app_role.block_696e766f696365_parser"
+        ]
+      }
+    },
+    "azuread_app_role_assignment": {
+      "block_696e766f696365_staff": {
+        "for_each": "${var.staff_subjects}",
+        "app_role_id": "${uuidv5(\"url\",format(\"%s:%s:workspace-role\",var.tenant_id,local.name))}",
+        "principal_object_id": "${each.value}",
+        "resource_object_id": "${azuread_service_principal.block_696e766f696365.object_id}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_696e766f696365_parser": {
+        "app_role_id": "${uuidv5(\"url\",format(\"%s:%s:parser-role\",var.tenant_id,local.name))}",
+        "principal_object_id": "${azurerm_user_assigned_identity.block_696e766f696365_worker.principal_id}",
+        "resource_object_id": "${azuread_service_principal.block_696e766f696365_parser.object_id}",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azuread_application_api_access": {
+      "block_696e766f696365": {
+        "application_id": "${azuread_application_registration.block_696e766f696365_spa.id}",
+        "api_client_id": "${azuread_application_registration.block_696e766f696365.client_id}",
+        "scope_ids": [
+          "${uuidv5(\"url\",format(\"%s:%s:user-scope\",var.tenant_id,local.name))}"
+        ],
+        "depends_on": [
+          "terraform_data.review_gate",
+          "azuread_application_permission_scope.block_696e766f696365"
+        ]
+      }
+    },
+    "azuread_application_pre_authorized": {
+      "block_696e766f696365": {
+        "application_id": "${azuread_application_registration.block_696e766f696365.id}",
+        "authorized_client_id": "${azuread_application_registration.block_696e766f696365_spa.client_id}",
+        "permission_ids": [
+          "${uuidv5(\"url\",format(\"%s:%s:user-scope\",var.tenant_id,local.name))}"
+        ],
+        "depends_on": [
+          "terraform_data.review_gate",
+          "azuread_application_permission_scope.block_696e766f696365"
+        ]
+      }
+    },
+    "azuread_application_redirect_uris": {
+      "block_696e766f696365": {
+        "application_id": "${azuread_application_registration.block_696e766f696365_spa.id}",
+        "type": "SPA",
+        "redirect_uris": [
+          "${local.public_origin}/"
+        ],
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "azapi_resource": {
+      "block_696e766f696365_api": {
+        "count": "${var.applications_enabled ? 1 : 0}",
+        "type": "Microsoft.App/containerApps@2025-07-01",
+        "name": "${local.name}-api",
+        "parent_id": "${azurerm_resource_group.block_696e766f696365.id}",
+        "location": "${var.region}",
+        "identity": {
+          "type": "UserAssigned",
+          "identity_ids": [
+            "${azurerm_user_assigned_identity.block_696e766f696365_pull.id}",
+            "${azurerm_user_assigned_identity.block_696e766f696365_api.id}"
+          ]
+        },
+        "body": {
+          "properties": {
+            "environmentId": "${azurerm_container_app_environment.block_696e766f696365.id}",
+            "workloadProfileName": "Consumption",
+            "configuration": {
+              "activeRevisionsMode": "Single",
+              "registries": [
+                {
+                  "server": "${azurerm_container_registry.block_696e766f696365.login_server}",
+                  "identity": "${azurerm_user_assigned_identity.block_696e766f696365_pull.id}"
+                }
+              ],
+              "identitySettings": [
+                {
+                  "identity": "${azurerm_user_assigned_identity.block_696e766f696365_pull.id}",
+                  "lifecycle": "None"
+                },
+                {
+                  "identity": "${azurerm_user_assigned_identity.block_696e766f696365_api.id}",
+                  "lifecycle": "Main"
+                }
+              ],
+              "ingress": {
+                "external": true,
+                "targetPort": 8080,
+                "transport": "http",
+                "allowInsecure": false,
+                "traffic": [
+                  {
+                    "latestRevision": true,
+                    "weight": 100
+                  }
+                ]
+              }
+            },
+            "template": {
+              "scale": {
+                "minReplicas": 1,
+                "maxReplicas": 1
+              },
+              "containers": [
+                {
+                  "name": "api",
+                  "image": "${var.runtime_image}",
+                  "resources": {
+                    "cpu": 0.5,
+                    "memory": "1Gi"
+                  },
+                  "env": [
+                    {
+                      "name": "REGION",
+                      "value": "${var.region}"
+                    },
+                    {
+                      "name": "ACCOUNT_ID",
+                      "value": "${local.account_uuid}"
+                    },
+                    {
+                      "name": "WORKFLOW_NAMESPACE",
+                      "value": "invoice"
+                    },
+                    {
+                      "name": "DATABASE_NAME",
+                      "value": "invoice"
+                    },
+                    {
+                      "name": "DATABASE_HOST",
+                      "value": "${azurerm_postgresql_flexible_server.block_696e766f696365.fqdn}"
+                    },
+                    {
+                      "name": "DATABASE_CA_FILE",
+                      "value": "/usr/local/lib/python3.13/site-packages/certifi/cacert.pem"
+                    },
+                    {
+                      "name": "DOCUMENT_ACCOUNT",
+                      "value": "${local.storage_name}"
+                    },
+                    {
+                      "name": "DOCUMENT_BUCKET",
+                      "value": "invoices"
+                    },
+                    {
+                      "name": "DESTINATION_CONTRACT_BASE64",
+                      "value": "${local.destination_contract_base64}"
+                    },
+                    {
+                      "name": "DATABASE_USER",
+                      "value": "${local.api_db_user}"
+                    },
+                    {
+                      "name": "WORKLOAD_IDENTITY_CLIENT_ID",
+                      "value": "${azurerm_user_assigned_identity.block_696e766f696365_api.client_id}"
+                    },
+                    {
+                      "name": "TENANT_ID",
+                      "value": "${var.tenant_id}"
+                    },
+                    {
+                      "name": "API_CLIENT_ID",
+                      "value": "${azuread_application_registration.block_696e766f696365.client_id}"
+                    },
+                    {
+                      "name": "SPA_CLIENT_ID",
+                      "value": "${azuread_application_registration.block_696e766f696365_spa.client_id}"
+                    },
+                    {
+                      "name": "PUBLIC_ORIGIN",
+                      "value": "${local.public_origin}"
+                    }
+                  ],
+                  "probes": [
+                    {
+                      "type": "Liveness",
+                      "httpGet": {
+                        "path": "/healthz",
+                        "port": 8080,
+                        "scheme": "HTTP"
+                      },
+                      "initialDelaySeconds": 15,
+                      "periodSeconds": 30,
+                      "failureThreshold": 3
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "response_export_values": [
+          "properties.configuration.ingress.fqdn"
+        ],
+        "schema_validation_enabled": true,
+        "depends_on": [
+          "terraform_data.review_gate",
+          "azurerm_role_assignment.block_696e766f696365_pull",
+          "azurerm_role_assignment.block_696e766f696365_model",
+          "azurerm_role_assignment.block_696e766f696365_model_policy",
+          "azurerm_role_assignment.block_696e766f696365_destination",
+          "azuread_app_role_assignment.block_696e766f696365_parser",
+          "azurerm_private_endpoint.block_696e766f696365_blob",
+          "azurerm_private_endpoint.block_696e766f696365_model",
+          "azurerm_private_endpoint.block_696e766f696365_vault"
+        ]
+      },
+      "block_696e766f696365_worker": {
+        "count": "${var.applications_enabled ? 1 : 0}",
+        "type": "Microsoft.App/containerApps@2025-07-01",
+        "name": "${local.name}-worker",
+        "parent_id": "${azurerm_resource_group.block_696e766f696365.id}",
+        "location": "${var.region}",
+        "identity": {
+          "type": "UserAssigned",
+          "identity_ids": [
+            "${azurerm_user_assigned_identity.block_696e766f696365_pull.id}",
+            "${azurerm_user_assigned_identity.block_696e766f696365_worker.id}"
+          ]
+        },
+        "body": {
+          "properties": {
+            "environmentId": "${azurerm_container_app_environment.block_696e766f696365.id}",
+            "workloadProfileName": "Consumption",
+            "configuration": {
+              "activeRevisionsMode": "Single",
+              "registries": [
+                {
+                  "server": "${azurerm_container_registry.block_696e766f696365.login_server}",
+                  "identity": "${azurerm_user_assigned_identity.block_696e766f696365_pull.id}"
+                }
+              ],
+              "identitySettings": [
+                {
+                  "identity": "${azurerm_user_assigned_identity.block_696e766f696365_pull.id}",
+                  "lifecycle": "None"
+                },
+                {
+                  "identity": "${azurerm_user_assigned_identity.block_696e766f696365_worker.id}",
+                  "lifecycle": "Main"
+                }
+              ],
+              "secrets": [
+                {
+                  "name": "accounting-token",
+                  "keyVaultUrl": "${azurerm_key_vault.block_696e766f696365.vault_uri}secrets/accounting-token",
+                  "identity": "${azurerm_user_assigned_identity.block_696e766f696365_worker.id}"
+                }
+              ]
+            },
+            "template": {
+              "scale": {
+                "minReplicas": 1,
+                "maxReplicas": 1
+              },
+              "containers": [
+                {
+                  "name": "worker",
+                  "image": "${var.runtime_image}",
+                  "resources": {
+                    "cpu": 0.5,
+                    "memory": "1Gi"
+                  },
+                  "command": [
+                    "python",
+                    "-I",
+                    "/app/invoice_worker.py"
+                  ],
+                  "env": [
+                    {
+                      "name": "REGION",
+                      "value": "${var.region}"
+                    },
+                    {
+                      "name": "ACCOUNT_ID",
+                      "value": "${local.account_uuid}"
+                    },
+                    {
+                      "name": "WORKFLOW_NAMESPACE",
+                      "value": "invoice"
+                    },
+                    {
+                      "name": "DATABASE_NAME",
+                      "value": "invoice"
+                    },
+                    {
+                      "name": "DATABASE_HOST",
+                      "value": "${azurerm_postgresql_flexible_server.block_696e766f696365.fqdn}"
+                    },
+                    {
+                      "name": "DATABASE_CA_FILE",
+                      "value": "/usr/local/lib/python3.13/site-packages/certifi/cacert.pem"
+                    },
+                    {
+                      "name": "DOCUMENT_ACCOUNT",
+                      "value": "${local.storage_name}"
+                    },
+                    {
+                      "name": "DOCUMENT_BUCKET",
+                      "value": "invoices"
+                    },
+                    {
+                      "name": "DESTINATION_CONTRACT_BASE64",
+                      "value": "${local.destination_contract_base64}"
+                    },
+                    {
+                      "name": "DATABASE_USER",
+                      "value": "${local.worker_db_user}"
+                    },
+                    {
+                      "name": "WORKLOAD_IDENTITY_CLIENT_ID",
+                      "value": "${azurerm_user_assigned_identity.block_696e766f696365_worker.client_id}"
+                    },
+                    {
+                      "name": "MANAGED_IDENTITY_CLIENT_ID",
+                      "value": "${azurerm_user_assigned_identity.block_696e766f696365_worker.client_id}"
+                    },
+                    {
+                      "name": "PARSER_ENDPOINT",
+                      "value": "${local.parser_endpoint}"
+                    },
+                    {
+                      "name": "PARSER_AUDIENCE",
+                      "value": "${azuread_application_registration.block_696e766f696365_parser.client_id}"
+                    },
+                    {
+                      "name": "MODEL_RESOURCE_ID",
+                      "value": "${azurerm_cognitive_account.block_696e766f696365.id}"
+                    },
+                    {
+                      "name": "MODEL_ENDPOINT",
+                      "value": "${azurerm_cognitive_account.block_696e766f696365.endpoint}"
+                    },
+                    {
+                      "name": "MODEL_DEPLOYMENT",
+                      "value": "${azurerm_cognitive_deployment.block_696e766f696365.name}"
+                    },
+                    {
+                      "name": "MAX_OUTPUT_TOKENS",
+                      "value": "2048"
+                    },
+                    {
+                      "name": "DESTINATION_ENDPOINT",
+                      "value": "${var.accounting_endpoint}"
+                    },
+                    {
+                      "name": "DESTINATION_SCOPE",
+                      "value": "${var.accounting_scope}"
+                    },
+                    {
+                      "name": "DESTINATION_REPLAY_REVIEW_BASE64",
+                      "value": "${var.replay_review_base64}"
+                    },
+                    {
+                      "name": "DESTINATION_TOKEN",
+                      "secretRef": "accounting-token"
+                    }
+                  ],
+                  "probes": [
+                    {
+                      "type": "Liveness",
+                      "httpGet": {
+                        "path": "/healthz",
+                        "port": 8080,
+                        "scheme": "HTTP"
+                      },
+                      "initialDelaySeconds": 15,
+                      "periodSeconds": 30,
+                      "failureThreshold": 3
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "response_export_values": [
+          "properties.configuration.ingress.fqdn"
+        ],
+        "schema_validation_enabled": true,
+        "depends_on": [
+          "terraform_data.review_gate",
+          "azurerm_role_assignment.block_696e766f696365_pull",
+          "azurerm_role_assignment.block_696e766f696365_model",
+          "azurerm_role_assignment.block_696e766f696365_model_policy",
+          "azurerm_role_assignment.block_696e766f696365_destination",
+          "azuread_app_role_assignment.block_696e766f696365_parser",
+          "azurerm_private_endpoint.block_696e766f696365_blob",
+          "azurerm_private_endpoint.block_696e766f696365_model",
+          "azurerm_private_endpoint.block_696e766f696365_vault"
+        ]
+      },
+      "block_696e766f696365_parser": {
+        "count": "${var.applications_enabled ? 1 : 0}",
+        "type": "Microsoft.App/containerApps@2025-07-01",
+        "name": "${local.name}-parser",
+        "parent_id": "${azurerm_resource_group.block_696e766f696365.id}",
+        "location": "${var.region}",
+        "identity": {
+          "type": "UserAssigned",
+          "identity_ids": [
+            "${azurerm_user_assigned_identity.block_696e766f696365_pull.id}"
+          ]
+        },
+        "body": {
+          "properties": {
+            "environmentId": "${azurerm_container_app_environment.block_696e766f696365.id}",
+            "workloadProfileName": "Consumption",
+            "configuration": {
+              "activeRevisionsMode": "Single",
+              "registries": [
+                {
+                  "server": "${azurerm_container_registry.block_696e766f696365.login_server}",
+                  "identity": "${azurerm_user_assigned_identity.block_696e766f696365_pull.id}"
+                }
+              ],
+              "identitySettings": [
+                {
+                  "identity": "${azurerm_user_assigned_identity.block_696e766f696365_pull.id}",
+                  "lifecycle": "None"
+                }
+              ],
+              "ingress": {
+                "external": false,
+                "targetPort": 8080,
+                "transport": "http",
+                "allowInsecure": false,
+                "traffic": [
+                  {
+                    "latestRevision": true,
+                    "weight": 100
+                  }
+                ]
+              }
+            },
+            "template": {
+              "scale": {
+                "minReplicas": 1,
+                "maxReplicas": 1
+              },
+              "containers": [
+                {
+                  "name": "parser",
+                  "image": "${var.parser_image}",
+                  "resources": {
+                    "cpu": 1,
+                    "memory": "2Gi"
+                  },
+                  "command": [
+                    "python",
+                    "-I",
+                    "/app/invoice_parser_service.py"
+                  ],
+                  "env": [
+                    {
+                      "name": "PORT",
+                      "value": "8080"
+                    },
+                    {
+                      "name": "PARSER_AUTH_MODE",
+                      "value": "entra-workload"
+                    },
+                    {
+                      "name": "PARSER_TENANT_ID",
+                      "value": "${var.tenant_id}"
+                    },
+                    {
+                      "name": "PARSER_AUDIENCE",
+                      "value": "${azuread_application_registration.block_696e766f696365_parser.client_id}"
+                    },
+                    {
+                      "name": "PARSER_WORKER_CLIENT_ID",
+                      "value": "${azurerm_user_assigned_identity.block_696e766f696365_worker.client_id}"
+                    },
+                    {
+                      "name": "PARSER_WORKER_PRINCIPAL_ID",
+                      "value": "${azurerm_user_assigned_identity.block_696e766f696365_worker.principal_id}"
+                    }
+                  ],
+                  "probes": [
+                    {
+                      "type": "Liveness",
+                      "httpGet": {
+                        "path": "/healthz",
+                        "port": 8080,
+                        "scheme": "HTTP"
+                      },
+                      "initialDelaySeconds": 15,
+                      "periodSeconds": 30,
+                      "failureThreshold": 3
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "response_export_values": [
+          "properties.configuration.ingress.fqdn"
+        ],
+        "schema_validation_enabled": true,
+        "depends_on": [
+          "terraform_data.review_gate",
+          "azurerm_role_assignment.block_696e766f696365_pull",
+          "azurerm_role_assignment.block_696e766f696365_model",
+          "azurerm_role_assignment.block_696e766f696365_model_policy",
+          "azurerm_role_assignment.block_696e766f696365_destination",
+          "azuread_app_role_assignment.block_696e766f696365_parser",
+          "azurerm_private_endpoint.block_696e766f696365_blob",
+          "azurerm_private_endpoint.block_696e766f696365_model",
+          "azurerm_private_endpoint.block_696e766f696365_vault"
+        ]
+      }
+    }
+  },
+  "output": {
+    "application_url": {
+      "value": "${local.public_origin}"
+    },
+    "runtime_registry": {
+      "value": "${azurerm_container_registry.block_696e766f696365.login_server}"
+    },
+    "operator_deployment": {
+      "value": {
+        "provider": "azure",
+        "deploymentId": "${local.account_uuid}",
+        "accountId": "${local.account_uuid}",
+        "namespace": "invoice",
+        "tenantId": "${var.tenant_id}",
+        "bindings": {
+          "api": {
+            "name": "${local.api_db_user}",
+            "principal": "${azurerm_user_assigned_identity.block_696e766f696365_api.principal_id}"
+          },
+          "worker": {
+            "name": "${local.worker_db_user}",
+            "principal": "${azurerm_user_assigned_identity.block_696e766f696365_worker.principal_id}"
+          }
+        }
+      }
+    },
+    "database_bootstrap": {
+      "value": {
+        "host": "${azurerm_postgresql_flexible_server.block_696e766f696365.fqdn}",
+        "database": "invoice",
+        "operatorClientId": "${azurerm_user_assigned_identity.block_696e766f696365_operator.client_id}",
+        "operatorLogin": "${local.name}-operator",
+        "nativeRoleMappingDatabase": "postgres"
+      }
+    }
+  }
+}

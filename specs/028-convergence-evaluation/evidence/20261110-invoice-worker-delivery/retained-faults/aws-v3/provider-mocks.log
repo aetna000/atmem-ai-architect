@@ -1,0 +1,28 @@
+tests/invoice.tftest.hcl... in progress
+  run "private_database_and_parser"... fail
+  run "foundation_only"... skip
+  run "review_required"... skip
+tests/invoice.tftest.hcl... tearing down
+tests/invoice.tftest.hcl... fail
+
+Failure! 0 passed, 1 failed, 2 skipped.
+
+
+Error: Invalid for_each argument
+
+  on main.tf.json line 919, in resource.aws_route53_record.block_696e766f696365_certificate:
+ 919:         "for_each": "${{ for dvo in aws_acm_certificate.block_696e766f696365.domain_validation_options : dvo.domain_name => {name=dvo.resource_record_name,type=dvo.resource_record_type,value=dvo.resource_record_value} }}",
+    ├────────────────
+    │ aws_acm_certificate.block_696e766f696365.domain_validation_options is a set of object, known only after apply
+
+The "for_each" map includes keys derived from resource attributes that cannot
+be determined until apply, and so Terraform cannot determine the full set of
+keys that will identify the instances of this resource.
+
+When working with unknown values in for_each, it's better to define the map
+keys statically in your configuration and place apply-time results only in
+the map values.
+
+Alternatively, you could use the -target planning option to first apply only
+the resources that the for_each value depends on, and then apply a second
+time to fully converge.

@@ -1,0 +1,81 @@
+{
+  "format": "atmem.runtime-observation",
+  "version": 2,
+  "passed": true,
+  "observedAt": "2026-11-12T06:40:28.962381+00:00",
+  "runtime": {
+    "imageId": "sha256:699a15842ef78354c5d5894d3fcdfc80da91552eb4a9445554712e861d3aa9b9",
+    "platform": "linux/amd64",
+    "executable": "/usr/local/bin/python3",
+    "bootstrapPython": "/usr/local/bin/python3",
+    "isolationProfile": "standard-v1",
+    "environment": {}
+  },
+  "runtimeSha256": "7a21aee0214157fd6814b5c9e3f3ab61c1105793489728dfb8ce4726f281f75e",
+  "workerPolicySha256": "f0ef6725d4a7c36acbdd7d46c01f75a3163d7fce1cdfd73c69b24c54b1e069af",
+  "workerIdentitySha256": "ef3120888454651e683d4bea780cddb1e0663f40b6c3704a5770162fe2e9a004",
+  "observerSha256": "7f63ad760d40b6e1ff871d5bb346431e0f68ab8d79601a1d0bc41e232457be46",
+  "probe": {
+    "validator": "runtime-observation",
+    "artifactSha256": "8739c76e681f900923b900c9df0ef75cf421d39cabb54650c4b9ad19b6a76d85",
+    "imageId": "sha256:699a15842ef78354c5d5894d3fcdfc80da91552eb4a9445554712e861d3aa9b9",
+    "runtimeConfigImageId": "sha256:699a15842ef78354c5d5894d3fcdfc80da91552eb4a9445554712e861d3aa9b9",
+    "platform": "linux/amd64",
+    "isolationProfile": "standard-v1",
+    "runtimeEnvironment": {},
+    "command": [
+      "/usr/local/bin/python3",
+      "-I",
+      "-c",
+      "\nimport importlib.metadata,json,os,sys\npackages,services=json.loads(sys.argv[1]);versions={}\nfor name in packages:\n try:versions[name]=importlib.metadata.version(name)\n except importlib.metadata.PackageNotFoundError:versions[name]=None\noperations={}\nif services:\n try:\n  import botocore.session\n except ModuleNotFoundError:\n  operations={name:None for name in services}\n else:\n  session=botocore.session.get_session()\n  for name in services:operations[name]=sorted(session.get_service_model(name).operation_names)\nif 'ATMEM_TEST_POSTGRES_DSN' in os.environ:\n import psycopg\n with psycopg.connect(os.environ['ATMEM_TEST_POSTGRES_DSN']) as connection:\n  versions['postgresql-server']=connection.execute('SHOW server_version').fetchone()[0].split()[0]\nresult={'kind':'python','executableVersion':sys.version.split()[0],'packages':versions,'serviceOperations':operations}\n\nimport ctypes,hashlib,platform,uuid\nfrom pathlib import Path\nclass Filter(ctypes.Structure):\n _fields_=[('code',ctypes.c_ushort),('jt',ctypes.c_ubyte),('jf',ctypes.c_ubyte),('k',ctypes.c_uint32)]\nclass Program(ctypes.Structure):\n _fields_=[('len',ctypes.c_ushort),('filter',ctypes.POINTER(Filter))]\nlibc=ctypes.CDLL(None,use_errno=True)\nlibc.prctl.argtypes=[ctypes.c_int,ctypes.c_ulong,ctypes.c_ulong,ctypes.c_ulong,ctypes.c_ulong]\nlibc.prctl.restype=ctypes.c_int\ndef observe_prctl(option,value):\n ctypes.set_errno(0);code=libc.prctl(option,value,0,0,0);error=ctypes.get_errno()\n return {'supported':code==0 and error==0,'returnCode':code,'errno':error}\ncontrols={'noNewPrivileges':observe_prctl(38,1)}\nfilters=(Filter*1)(Filter(6,0,0,0x7fff0000));program=Program(1,filters)\n# Do not try the dependent operation without its prerequisite. Null is unknown.\ncontrols['seccompFilter']=None\nif controls['noNewPrivileges']['supported']:\n ctypes.set_errno(0);code=libc.prctl(22,2,ctypes.addressof(program),0,0);error=ctypes.get_errno()\n controls['seccompFilter']={'supported':code==0 and error==0,'returnCode':code,'errno':error}\nboot=Path('/proc/sys/kernel/random/boot_id').read_text().strip()\nif str(uuid.UUID(boot))!=boot:raise ValueError('Unrecognized kernel boot identity')\nresult['processControls']=controls\nresult['executionContext']={'processMachine':platform.machine(),'kernelRelease':platform.release(),\n 'kernelBootSha256':hashlib.sha256(boot.encode()).hexdigest(),'uid':os.getuid()}\n\nprint(json.dumps(result))\n",
+      "[[\"ibm-cloud-sdk-core\", \"fastapi\", \"PyJWT\", \"cryptography\", \"psycopg\", \"procrastinate\"], []]"
+    ],
+    "status": "passed",
+    "exitCode": 0,
+    "executableScratch": false,
+    "skipped": 0,
+    "testsReported": null,
+    "reason": null,
+    "output": "{\"kind\": \"python\", \"executableVersion\": \"3.13.18\", \"packages\": {\"ibm-cloud-sdk-core\": \"3.28.2\", \"fastapi\": \"0.162.0\", \"PyJWT\": \"2.15.1\", \"cryptography\": \"50.0.2\", \"psycopg\": \"3.3.8\", \"procrastinate\": \"3.10.0\"}, \"serviceOperations\": {}, \"processControls\": {\"noNewPrivileges\": {\"supported\": true, \"returnCode\": 0, \"errno\": 0}, \"seccompFilter\": {\"supported\": true, \"returnCode\": 0, \"errno\": 0}}, \"executionContext\": {\"processMachine\": \"x86_64\", \"kernelRelease\": \"6.8.0-117-generic\", \"kernelBootSha256\": \"1d5aaedd83a706f6c83576209a739a6ac3d363f21b8923d61bc5de2a82b0e844\", \"uid\": 65532}}\n",
+    "outputTruncated": false,
+    "durationSeconds": 7.578,
+    "evidenceLevel": "local_container_check",
+    "cloudOperations": false,
+    "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+  },
+  "cloudOperations": false,
+  "scope": "Empty source archive in the registered immutable local image/profile. No application code, cloud client, account or network dependency is used. Null package versions mean distribution metadata unavailable; not proof that importing a module is impossible. Service operations describe the installed botocore model only, not account/API availability.",
+  "observed": {
+    "kind": "python",
+    "executableVersion": "3.13.18",
+    "packages": {
+      "ibm-cloud-sdk-core": "3.28.2",
+      "fastapi": "0.162.0",
+      "PyJWT": "2.15.1",
+      "cryptography": "50.0.2",
+      "psycopg": "3.3.8",
+      "procrastinate": "3.10.0"
+    },
+    "serviceOperations": {},
+    "processControls": {
+      "noNewPrivileges": {
+        "supported": true,
+        "returnCode": 0,
+        "errno": 0
+      },
+      "seccompFilter": {
+        "supported": true,
+        "returnCode": 0,
+        "errno": 0
+      }
+    },
+    "executionContext": {
+      "processMachine": "x86_64",
+      "kernelRelease": "6.8.0-117-generic",
+      "kernelBootSha256": "1d5aaedd83a706f6c83576209a739a6ac3d363f21b8923d61bc5de2a82b0e844",
+      "uid": 65532
+    }
+  },
+  "processControlProbeSha256": "e92bcebad2fbbe84c50f27b17905f0084a75b52d63c94139a52e357880b9675d",
+  "executionContextSha256": "115d23ac3035a10188b4cef76b3f77403cdbce0ef6a4ecefc91dba0b3e1f5deb"
+}

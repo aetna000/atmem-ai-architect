@@ -1,0 +1,20 @@
+Traceback (most recent call last):
+  File "<string>", line 9, in <module>
+    try:case.test_real_office_text_reaches_context_and_exact_citation()
+        ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "/tmp/qualification/tests/runtime/enterprise_document_composition_linux.py", line 88, in test_real_office_text_reaches_context_and_exact_citation
+    value = self.engine.answer('How much paid leave do staff receive?', 'alice')
+  File "/tmp/qualification/src/runtime/enterprise_knowledge.py", line 77, in answer
+    raise SourceUnavailable('knowledge_answer_withheld')from None
+enterprise_sources.SourceUnavailable: knowledge_answer_withheld
+Traceback (most recent call last):
+  File "/tmp/qualification/src/runtime/enterprise_knowledge.py", line 64, in answer
+    raw=self.generate(payload,answer_schema(),INSTRUCTION)
+                              ~~~~~~~~~~~~~^^
+  File "/tmp/qualification/src/runtime/public_faq.py", line 102, in answer_schema
+    with path.open('rb') as stream:raw=stream.read(8193)
+         ~~~~~~~~~^^^^^^
+  File "/usr/local/lib/python3.13/pathlib/_local.py", line 537, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/tmp/qualification/src/runtime/output-contract.json'

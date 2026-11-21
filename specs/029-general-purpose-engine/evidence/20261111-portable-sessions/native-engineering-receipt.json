@@ -1,0 +1,1045 @@
+{
+  "passed": true,
+  "model": "gpt-6.1-sol",
+  "effort": "high",
+  "restartedWorkerAndStore": true,
+  "reconciledLostTerminalNotification": true,
+  "nativeHandleSha256": "302571248fdc2e38e77b4c67abb7bfed88eeda7e21b60e98e13bde595fc6a690",
+  "engineeringTurns": 2,
+  "cloudOperations": false,
+  "independentOracle": "Independent reservation oracle passed\n",
+  "artifacts": {
+    "test_reservations.py": {
+      "sha256": "ee541d089d117daa5f644fd218db97479268718b63ac8de494b935f1f93d3b1a",
+      "text": "\"\"\"Tests for capacity reservations.\"\"\"\n\nimport unittest\n\nfrom reservations import release, reserve\n\n\nclass ReserveTests(unittest.TestCase):\n    def test_success(self):\n        self.assertEqual(reserve(10, 3, 4), 7)\n        self.assertEqual(reserve(10, 0, 3), 3)\n        self.assertEqual(reserve(10, 3, 0), 3)\n\n    def test_full_capacity(self):\n        self.assertEqual(reserve(10, 3, 7), 10)\n        self.assertEqual(reserve(10, 10, 0), 10)\n        self.assertEqual(reserve(0, 0, 0), 0)\n\n    def test_invalid_input(self):\n        invalid_values = (-1, True, False, 1.0, \"1\", None, [], {}, 1j)\n        for position in range(3):\n            for value in invalid_values:\n                arguments = [10, 2, 3]\n                arguments[position] = value\n                with self.subTest(position=position, value=value):\n                    with self.assertRaises(ValueError):\n                        reserve(*arguments)\n\n    def test_over_capacity(self):\n        for arguments in ((10, 7, 4), (10, 11, 0), (0, 0, 1)):\n            with self.subTest(arguments=arguments):\n                with self.assertRaises(ValueError):\n                    reserve(*arguments)\n\n\nclass ReleaseTests(unittest.TestCase):\n    def test_success(self):\n        self.assertEqual(release(10, 3), 7)\n\n    def test_zero_release(self):\n        self.assertEqual(release(10, 0), 10)\n        self.assertEqual(release(0, 0), 0)\n\n    def test_release_all(self):\n        self.assertEqual(release(10, 10), 0)\n\n    def test_invalid_input(self):\n        invalid_values = (-1, True, False, 1.0, \"1\", None, [], {}, 1j)\n        for position in range(2):\n            for value in invalid_values:\n                arguments = [10, 3]\n                arguments[position] = value\n                with self.subTest(position=position, value=value):\n                    with self.assertRaises(ValueError):\n                        release(*arguments)\n\n    def test_release_exceeds_booked(self):\n        for arguments in ((10, 11), (0, 1)):\n            with self.subTest(arguments=arguments):\n                with self.assertRaises(ValueError):\n                    release(*arguments)\n\n\nif __name__ == \"__main__\":\n    unittest.main()\n"
+    },
+    "reservations.py": {
+      "sha256": "27550ecdda7c292cd48ce4375fdc2e45001e5bae16d300c9eecf7841b789880b",
+      "text": "\"\"\"Validate and reserve capacity.\"\"\"\n\n\ndef reserve(capacity, booked, requested):\n    \"\"\"Return the new booked count, or raise ValueError for invalid input.\"\"\"\n    for value in (capacity, booked, requested):\n        if isinstance(value, bool) or not isinstance(value, int) or value < 0:\n            raise ValueError(\"Arguments must be nonnegative integers\")\n\n    total = booked + requested\n    if total > capacity:\n        raise ValueError(\"Reservation exceeds capacity\")\n    return total\n\n\ndef release(booked, count):\n    \"\"\"Return the remaining booked count, or raise ValueError for invalid input.\"\"\"\n    for value in (booked, count):\n        if isinstance(value, bool) or not isinstance(value, int) or value < 0:\n            raise ValueError(\"Arguments must be nonnegative integers\")\n\n    if count > booked:\n        raise ValueError(\"Release exceeds booked count\")\n    return booked - count\n"
+    }
+  },
+  "events": [
+    {
+      "kind": "progress",
+      "text": "userMessage",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "progress",
+      "text": "userMessage",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "progress",
+      "text": "agentMessage",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": "I",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": "\u2019ll",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " create",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " the",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " function",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " and",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " tests",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " using",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " the",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " standard",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " library",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": ",",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " then",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " run",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " `",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": "python",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": "3",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " -",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": "m",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " unittest",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " -",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": "v",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": "`.",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "progress",
+      "text": "agentMessage",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "progress",
+      "text": "commandExecution",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "progress",
+      "text": "commandExecution",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "progress",
+      "text": "fileChange",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "progress",
+      "text": "fileChange",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "progress",
+      "text": "commandExecution",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "progress",
+      "text": "commandExecution",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "progress",
+      "text": "agentMessage",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": "Created",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " `",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": "reserv",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": "ations",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": ".py",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": "`",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " and",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " `",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": "test",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": "_res",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": "erv",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": "ations",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": ".py",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": "`",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " using",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " only",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " the",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " standard",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " library",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": ".\n\n",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": "`",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": "python",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": "3",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " -",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": "m",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " unittest",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " -",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": "v",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": "`",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " passed",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " all",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " ",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": "4",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " tests",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": ":",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " success",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": ",",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " full",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " capacity",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": ",",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " invalid",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " inputs",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " (",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": "including",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " bo",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": "ole",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": "ans",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": "),",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " and",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " over",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": " capacity",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "message",
+      "text": ".",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "progress",
+      "text": "agentMessage",
+      "withheldFromCoordinator": true
+    },
+    {
+      "kind": "completed",
+      "text": "",
+      "withheldFromCoordinator": true
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "progress",
+      "text": "userMessage",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "progress",
+      "text": "userMessage",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "progress",
+      "text": "agentMessage",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": "I",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": "\u2019ll",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " add",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " `",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": "release",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": "`",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " and",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " its",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " tests",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": ",",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " preserve",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " the",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " existing",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " `",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": "reserve",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": "`",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " code",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " and",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " tests",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": ",",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " then",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " run",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " the",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " full",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " unit",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " suite",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": ".",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "progress",
+      "text": "agentMessage",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "progress",
+      "text": "commandExecution",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "progress",
+      "text": "commandExecution",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "progress",
+      "text": "commandExecution",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "progress",
+      "text": "commandExecution",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "progress",
+      "text": "fileChange",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "progress",
+      "text": "fileChange",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "progress",
+      "text": "commandExecution",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "progress",
+      "text": "commandExecution",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "progress",
+      "text": "agentMessage",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": "Added",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " `",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": "release",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": "(book",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": "ed",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": ",",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " count",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": ")`",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " with",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " the",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " required",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " validation",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " and",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " five",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " tests",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": ".",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " Pres",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": "erved",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " `",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": "reserve",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": "`",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " and",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " its",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " existing",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " tests",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": ".\n\n",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": "`",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": "python",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": "3",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " -",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": "m",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " unittest",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " -",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": "v",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": "`",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " passed",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " all",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " ",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": "9",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": " tests",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "message",
+      "text": ".",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "progress",
+      "text": "agentMessage",
+      "validation": "not_established_by_agent_turn"
+    },
+    {
+      "sessionId": "ca0c75fc-85c1-4812-b108-bb8bb882310b",
+      "runId": "d26e5bf7-bf65-4ae0-9c1f-de04b1086e92",
+      "kind": "completed",
+      "text": "",
+      "validation": "not_established_by_agent_turn"
+    }
+  ],
+  "boundary": "Real native model file/tool turns, withheld coordinator completion and history reconciliation after worker/store restart; local generated Python checks and independent oracle. No Terraform quality, UI integration or hosted isolation claim."
+}

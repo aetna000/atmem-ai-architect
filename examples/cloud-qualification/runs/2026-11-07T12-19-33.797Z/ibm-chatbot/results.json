@@ -1,0 +1,90 @@
+{
+  "provider": "ibm-chatbot",
+  "evidenceKind": "real-model-browser-run",
+  "cloudOperations": false,
+  "emulation": "blocked",
+  "mentorResponded": false,
+  "architecturePresent": true,
+  "acceptanceRequirements": [
+    "One user cannot read another conversation",
+    "Context and response sizes are bounded",
+    "Model outage produces a recoverable response",
+    "Deleting a conversation removes its stored context",
+    "Escalation retains the approved conversation context"
+  ],
+  "staticAssessment": {
+    "kind": "static-graph-checks",
+    "checks": [
+      {
+        "name": "Application contains at least three required components",
+        "passed": true
+      },
+      {
+        "name": "Required components form one connected graph",
+        "passed": true
+      },
+      {
+        "name": "Proposed cloud resources retain the requested provider",
+        "passed": true
+      },
+      {
+        "name": "Proposed cloud components name concrete services",
+        "passed": true
+      },
+      {
+        "name": "AI application has not collapsed into only object storage",
+        "passed": true
+      }
+    ],
+    "passed": true,
+    "limitations": [
+      "Connectivity and service labels do not prove a complete design, implemented integrations, model quality or deployability."
+    ],
+    "acceptanceRequirements": [
+      "One user cannot read another conversation",
+      "Context and response sizes are bounded",
+      "Model outage produces a recoverable response",
+      "Deleting a conversation removes its stored context",
+      "Escalation retains the approved conversation context"
+    ]
+  },
+  "components": [
+    {
+      "id": "user"
+    },
+    {
+      "id": "appid",
+      "service": "IBM Cloud App ID"
+    },
+    {
+      "id": "app",
+      "service": "IBM Cloud Code Engine"
+    },
+    {
+      "id": "store",
+      "service": "IBM Cloudant"
+    },
+    {
+      "id": "model",
+      "service": "IBM watsonx.ai"
+    },
+    {
+      "id": "escalation",
+      "service": "IBM Event Streams"
+    },
+    {
+      "id": "agent"
+    },
+    {
+      "id": "secrets",
+      "service": "IBM Cloud Secrets Manager"
+    },
+    {
+      "id": "logs",
+      "service": "IBM Cloud Logs"
+    }
+  ],
+  "passed": false,
+  "mentorJourneyPassed": false,
+  "errors": []
+}

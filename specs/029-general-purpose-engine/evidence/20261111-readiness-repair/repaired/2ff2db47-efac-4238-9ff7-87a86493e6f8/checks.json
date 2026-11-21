@@ -1,0 +1,43 @@
+{
+  "checks": [
+    {
+      "id": "25c73223-ba17-4f33-b1c6-e85e8dabd765",
+      "sessionId": "3081bdec-d573-4577-998f-f7976d5fb084",
+      "artifactId": "03bef61f-a025-4c16-9461-124666964df8",
+      "artifactSha256": "4b352878fd8555d87f28f6c06a642ebf4752c95575fa9f3abdfcb1ca875aa0e3",
+      "validatorId": "web-startup-prerequisite",
+      "label": "Independent delayed configuration and immediate UI action",
+      "contractSha256": "b3916cf68e86d729a78dfa3d510c4f9ed47ac4b4e4974fd55a1e4064f5b61409",
+      "state": "finished",
+      "result": {
+        "validator": "web-startup-prerequisite",
+        "artifactSha256": "4b352878fd8555d87f28f6c06a642ebf4752c95575fa9f3abdfcb1ca875aa0e3",
+        "imageId": "sha256:df7f71a8588253403dfa833c5c4aacc95ca340204a88d5483edd58131c7f1128",
+        "runtimeConfigImageId": "sha256:df7f71a8588253403dfa833c5c4aacc95ca340204a88d5483edd58131c7f1128",
+        "platform": "linux/arm64",
+        "isolationProfile": "chromium-userns-v1",
+        "runtimeEnvironment": {
+          "ATMEM_PLAYWRIGHT_MODULE": "/opt/atmem/playwright-core/index.mjs"
+        },
+        "command": [
+          "/usr/bin/node",
+          "--input-type=module",
+          "-e",
+          "// Evaluation adapter: unchanged packaged UI, deliberately stalled configuration.\nimport assert from 'node:assert/strict';\nimport fs from 'node:fs';\nimport http from 'node:http';\nimport path from 'node:path';\nimport {execFileSync} from 'node:child_process';\nconst {chromium}=await import(process.env.ATMEM_PLAYWRIGHT_MODULE);\nconst extracted=fs.mkdtempSync('/tmp/atmem-startup-oracle-');\nexecFileSync('/usr/bin/python3',['-c',`import pathlib,sys,zipfile\nwith zipfile.ZipFile('/work/source/dist/function.zip') as z:\n assert all(not pathlib.PurePosixPath(i.filename).is_absolute() and '..' not in pathlib.PurePosixPath(i.filename).parts for i in z.infolist())\n z.extractall(sys.argv[1])`,extracted]);\nlet release,configurationRequested,authorizationReached=false;\nconst pending=new Promise(resolve=>release=resolve),requested=new Promise(resolve=>configurationRequested=resolve);\nconst server=http.createServer(async(req,res)=>{\n const pathname=new URL(req.url,'http://fixture').pathname;\n if(pathname==='/config.json'){\n  configurationRequested();await pending;res.setHeader('Content-Type','application/json');res.end(JSON.stringify({clientId:'startupclient',authOrigin:'https://independent.auth.ap-southeast-2.amazoncognito.com'}));return;\n }\n const file={'/':'index.html','/app.js':'app.js','/style.css':'style.css'}[pathname];\n if(!file){res.writeHead(404);res.end();return;}\n res.setHeader('Content-Type',pathname.endsWith('.js')?'text/javascript':pathname.endsWith('.css')?'text/css':'text/html');\n res.end(fs.readFileSync(path.join(extracted,'app/web',file)));\n});\nawait new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));\nconst browser=await chromium.launch({headless:true,chromiumSandbox:true}),page=await browser.newPage();\ntry{\n await page.route('https://independent.auth.ap-southeast-2.amazoncognito.com/**',async route=>{\n  const url=new URL(route.request().url());assert.equal(url.pathname,'/oauth2/authorize');assert.equal(url.searchParams.get('code_challenge_method'),'S256');assert.equal(url.searchParams.get('client_id'),'startupclient');authorizationReached=true;await route.fulfill({body:'Synthetic OAuth endpoint reached'});\n });\n await page.goto(`http://127.0.0.1:${server.address().port}/`,{waitUntil:'domcontentloaded'});await requested;\n const login=page.locator('#login');await login.waitFor({state:'visible'});\n const initiallyDisabled=await login.isDisabled();\n if(!initiallyDisabled)await login.click();\n release();\n if(initiallyDisabled){await login.waitFor({state:'visible'});await page.waitForFunction(()=>!document.querySelector('#login').disabled);await login.click();}\n await page.waitForFunction(()=>location.hostname==='independent.auth.ap-southeast-2.amazoncognito.com',null,{timeout:5000}).catch(()=>{});\n const status=await page.locator('#status').textContent().catch(()=>null);\n assert(authorizationReached,JSON.stringify({failure:'Action ran before asynchronous configuration was ready; immediate user intent did not reach sign-in after configuration resolved',initiallyDisabled,status}));\n console.log('INDEPENDENT_STARTUP_PREREQUISITE_PASSED');\n}finally{\n release();await browser.close();await new Promise(resolve=>server.close(resolve));fs.rmSync(extracted,{recursive:true,force:true});\n}\n"
+        ],
+        "status": "failed",
+        "exitCode": 137,
+        "skipped": 0,
+        "testsReported": null,
+        "reason": "timeout",
+        "output": "",
+        "outputTruncated": false,
+        "durationSeconds": 30.137,
+        "evidenceLevel": "local_container_check",
+        "cloudOperations": false,
+        "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+      },
+      "acceptance": "not_established_by_local_check"
+    }
+  ]
+}

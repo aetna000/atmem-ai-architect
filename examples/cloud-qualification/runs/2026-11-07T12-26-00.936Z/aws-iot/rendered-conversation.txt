@@ -1,0 +1,18 @@
+Hi! What would you like to build? For example, a RAG system over your company's documents, or a chatbot for your team. “Not sure” is always a fine answer along the way.
+
+Use AWS for this synthetic architecture qualification. Analyze synthetic sensor events for anomalous device behavior. Preserve device identity, timestamps and units. Include ingestion, durable buffering, validation, inference, results and an operator alert. Acceptance criteria: Reject unknown device and invalid units; Duplicate events produce one result; Late and out-of-order telemetry follows an explicit policy; Disconnected input recovers by replay; Anomaly output names evidence and model version. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.
+
+We’re designing the full AWS sensor-anomaly flow, preserving device identity, timestamps and units through validation, inference, results and operator alerts. Let’s first test synthetic valid, unknown-device, invalid-unit, duplicate, reordered and replayed events with scripted model responses; that checks application behavior, while actual model quality needs separate evaluation, and native generation for this workload still requires engineering.
+How should we handle late readings—for example, recompute the affected time window or record them without changing earlier alerts (“not sure” is fine)?skill: Predictive MLnoted application, cloud+1 factAtMem: 0 records · 3 skillsObserved boundary: AtMem AI Architect → native client. Memory is scoped to you and this project; source data is not an instruction.Skill: AI architecture and discovery v1.2.1 · guidance; no cloud executionSkill: Infrastructure and DevOps handoff v1.1.0 · guidance; no cloud executionSkill: AWS architecture guidance v1.4.0 · guidance; no cloud execution
+
+Drew it: Sketch the complete AWS sensor-anomaly qualification flow
++ Synthetic sensor client
++ Device ingestion
++ Durable telemetry buffer
++9 moredrew 12 blockslogged ADR-002undo ↶
+
+Use the current emulation findings to propose a correction or the next test.
+
+No runtime checks ran. This report does not validate the architecture or its behavior.
+
+Revision 2’s staging emulation was blocked before checks: no runtime tests ran, no checks passed, and our design remains unvalidated despite the empty failures list. The first blocker is missing explicit access to recovery records; separate generator/runtime implementation gaps remain product engineering work, reproducible with this revision and artifact 24e086f6a70a9aae7290ce3ab7d517885c75fdefce4f047981812e105e56f490. Should the qualification operator use an existing AWS IAM identity with read-only access to those records, keeping replay permissions separate so reviewing failures cannot change them?AtMem: 1 records · 4 skillsObserved boundary: AtMem AI Architect → native client. Memory is scoped to you and this project; source data is not an instruction.project: Project decision platform.cloud: aws; status: Accepted; reason: Chosen in the conversation. · 2026-11-07Skill: AI architecture and discovery v1.2.1 · guidance; no cloud executionSkill: Security and reliability v1.0.0 · guidance; no cloud executionSkill: Infrastructure and DevOps handoff v1.1.0 · guidance; no cloud executionSkill: AWS architecture guidance v1.4.0 · guidance; no cloud execution

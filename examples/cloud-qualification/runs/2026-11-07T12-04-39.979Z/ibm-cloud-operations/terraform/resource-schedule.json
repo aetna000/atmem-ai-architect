@@ -1,0 +1,637 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "reviewer",
+      "address": "block_7265766965776572",
+      "label": "Platform reviewer",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "review-portal"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "synthetic-inventory",
+      "address": "block_73796e7468657469632d696e76656e746f7279",
+      "label": "Synthetic cloud inventory",
+      "provider": "tools",
+      "service": "Storage or existing data connector",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "secrets",
+      "address": "block_73656372657473",
+      "label": "Read-only credentials",
+      "provider": "ibm",
+      "service": "IBM Cloud Secrets Manager",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "collector",
+      "address": "block_636f6c6c6563746f72",
+      "label": "Inventory collector",
+      "provider": "ibm",
+      "service": "IBM Cloud Code Engine (job)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "synthetic-inventory",
+        "secrets"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "snapshot-store",
+      "address": "block_736e617073686f742d73746f7265",
+      "label": "Snapshot & baseline store",
+      "provider": "ibm",
+      "service": "IBM Cloud Object Storage",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "collector"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "drift-detector",
+      "address": "block_64726966742d6465746563746f72",
+      "label": "Drift detector",
+      "provider": "ibm",
+      "service": "IBM Cloud Code Engine (job)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "snapshot-store"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "policy-checks",
+      "address": "block_706f6c6963792d636865636b73",
+      "label": "Policy checks",
+      "provider": "ibm",
+      "service": "IBM Cloud Code Engine (OPA policy-as-code); IBM Cloud Security and Compliance Center for real accounts",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "snapshot-store"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "correction-planner",
+      "address": "block_636f7272656374696f6e2d706c616e6e6572",
+      "label": "Correction planner",
+      "provider": "ibm",
+      "service": "IBM watsonx.ai",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "drift-detector",
+        "policy-checks"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "plan-generator",
+      "address": "block_706c616e2d67656e657261746f72",
+      "label": "Plan generator (plan only)",
+      "provider": "ibm",
+      "service": "IBM Cloud Schematics (plan action only)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "correction-planner"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "review-portal",
+      "address": "block_7265766965772d706f7274616c",
+      "label": "Diff review & approval",
+      "provider": "ibm",
+      "service": "IBM Cloud Code Engine (app) + IBM Cloud App ID sign-in",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "plan-generator",
+        "reviewer"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "audit",
+      "address": "block_6175646974",
+      "label": "Audit trail",
+      "provider": "ibm",
+      "service": "IBM Cloud Activity Tracker Event Routing + IBM Cloud Logs",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "review-portal",
+        "plan-generator",
+        "correction-planner"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e-inv-col",
+      "source": "synthetic-inventory",
+      "target": "collector",
+      "data": "read-only inventory",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-sec-col",
+      "source": "secrets",
+      "target": "collector",
+      "data": "read-only API key",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-col-store",
+      "source": "collector",
+      "target": "snapshot-store",
+      "data": "write versioned snapshot",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-store-drift",
+      "source": "snapshot-store",
+      "target": "drift-detector",
+      "data": "snapshot + baseline",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-store-pol",
+      "source": "snapshot-store",
+      "target": "policy-checks",
+      "data": "snapshot",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-drift-plan",
+      "source": "drift-detector",
+      "target": "correction-planner",
+      "data": "drift findings",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-pol-plan",
+      "source": "policy-checks",
+      "target": "correction-planner",
+      "data": "policy violations",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-cp-pg",
+      "source": "correction-planner",
+      "target": "plan-generator",
+      "data": "proposed Terraform change",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-pg-rev",
+      "source": "plan-generator",
+      "target": "review-portal",
+      "data": "plan diff",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-rev-user",
+      "source": "review-portal",
+      "target": "reviewer",
+      "data": "diff for review",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-user-rev",
+      "source": "reviewer",
+      "target": "review-portal",
+      "data": "approve / reject",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-rev-audit",
+      "source": "review-portal",
+      "target": "audit",
+      "data": "approval decision",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-pg-audit",
+      "source": "plan-generator",
+      "target": "audit",
+      "data": "plan events",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-cp-audit",
+      "source": "correction-planner",
+      "target": "audit",
+      "data": "model call log",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Platform reviewer: Existing — reference/import plan needed.",
+    "Synthetic cloud inventory: Existing — reference/import plan needed.",
+    "Read-only credentials: Implementation needed.",
+    "Inventory collector: Implementation needed.",
+    "Snapshot & baseline store: Implementation needed.",
+    "Drift detector: Implementation needed.",
+    "Policy checks: Implementation needed.",
+    "Correction planner: Implementation needed.",
+    "Plan generator (plan only): Implementation needed.",
+    "Diff review & approval: Implementation needed.",
+    "Audit trail: Implementation needed.",
+    "Wire synthetic-inventory → collector: implement data flow, access policy and acceptance test.",
+    "Wire secrets → collector: implement data flow, access policy and acceptance test.",
+    "Wire collector → snapshot-store: implement data flow, access policy and acceptance test.",
+    "Wire snapshot-store → drift-detector: implement data flow, access policy and acceptance test.",
+    "Wire snapshot-store → policy-checks: implement data flow, access policy and acceptance test.",
+    "Wire drift-detector → correction-planner: implement data flow, access policy and acceptance test.",
+    "Wire policy-checks → correction-planner: implement data flow, access policy and acceptance test.",
+    "Wire correction-planner → plan-generator: implement data flow, access policy and acceptance test.",
+    "Wire plan-generator → review-portal: implement data flow, access policy and acceptance test.",
+    "Wire review-portal → reviewer: implement data flow, access policy and acceptance test.",
+    "Wire reviewer → review-portal: implement data flow, access policy and acceptance test.",
+    "Wire review-portal → audit: implement data flow, access policy and acceptance test.",
+    "Wire plan-generator → audit: implement data flow, access policy and acceptance test.",
+    "Wire correction-planner → audit: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "resource-block_7265766965776572",
+      "componentIds": [
+        "reviewer"
+      ],
+      "taskId": "TASK-RESOURCE-7265766965776572",
+      "message": "Platform reviewer: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_73796e7468657469632d696e76656e746f7279",
+      "componentIds": [
+        "synthetic-inventory"
+      ],
+      "taskId": "TASK-RESOURCE-73796e7468657469632d696e76656e746f7279",
+      "message": "Synthetic cloud inventory: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_73656372657473",
+      "componentIds": [
+        "secrets"
+      ],
+      "taskId": "TASK-RESOURCE-73656372657473",
+      "message": "Read-only credentials: Implementation needed."
+    },
+    {
+      "id": "resource-block_636f6c6c6563746f72",
+      "componentIds": [
+        "collector"
+      ],
+      "taskId": "TASK-RESOURCE-636f6c6c6563746f72",
+      "message": "Inventory collector: Implementation needed."
+    },
+    {
+      "id": "resource-block_736e617073686f742d73746f7265",
+      "componentIds": [
+        "snapshot-store"
+      ],
+      "taskId": "TASK-RESOURCE-736e617073686f742d73746f7265",
+      "message": "Snapshot & baseline store: Implementation needed."
+    },
+    {
+      "id": "resource-block_64726966742d6465746563746f72",
+      "componentIds": [
+        "drift-detector"
+      ],
+      "taskId": "TASK-RESOURCE-64726966742d6465746563746f72",
+      "message": "Drift detector: Implementation needed."
+    },
+    {
+      "id": "resource-block_706f6c6963792d636865636b73",
+      "componentIds": [
+        "policy-checks"
+      ],
+      "taskId": "TASK-RESOURCE-706f6c6963792d636865636b73",
+      "message": "Policy checks: Implementation needed."
+    },
+    {
+      "id": "resource-block_636f7272656374696f6e2d706c616e6e6572",
+      "componentIds": [
+        "correction-planner"
+      ],
+      "taskId": "TASK-RESOURCE-636f7272656374696f6e2d706c616e6e6572",
+      "message": "Correction planner: Implementation needed."
+    },
+    {
+      "id": "resource-block_706c616e2d67656e657261746f72",
+      "componentIds": [
+        "plan-generator"
+      ],
+      "taskId": "TASK-RESOURCE-706c616e2d67656e657261746f72",
+      "message": "Plan generator (plan only): Implementation needed."
+    },
+    {
+      "id": "resource-block_7265766965772d706f7274616c",
+      "componentIds": [
+        "review-portal"
+      ],
+      "taskId": "TASK-RESOURCE-7265766965772d706f7274616c",
+      "message": "Diff review & approval: Implementation needed."
+    },
+    {
+      "id": "resource-block_6175646974",
+      "componentIds": [
+        "audit"
+      ],
+      "taskId": "TASK-RESOURCE-6175646974",
+      "message": "Audit trail: Implementation needed."
+    },
+    {
+      "id": "connection-652d696e762d636f6c",
+      "edgeIds": [
+        "e-inv-col"
+      ],
+      "taskId": "TASK-INTEGRATION-652d696e762d636f6c",
+      "message": "Wire synthetic-inventory → collector: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d7365632d636f6c",
+      "edgeIds": [
+        "e-sec-col"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7365632d636f6c",
+      "message": "Wire secrets → collector: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d636f6c2d73746f7265",
+      "edgeIds": [
+        "e-col-store"
+      ],
+      "taskId": "TASK-INTEGRATION-652d636f6c2d73746f7265",
+      "message": "Wire collector → snapshot-store: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d73746f72652d6472696674",
+      "edgeIds": [
+        "e-store-drift"
+      ],
+      "taskId": "TASK-INTEGRATION-652d73746f72652d6472696674",
+      "message": "Wire snapshot-store → drift-detector: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d73746f72652d706f6c",
+      "edgeIds": [
+        "e-store-pol"
+      ],
+      "taskId": "TASK-INTEGRATION-652d73746f72652d706f6c",
+      "message": "Wire snapshot-store → policy-checks: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d64726966742d706c616e",
+      "edgeIds": [
+        "e-drift-plan"
+      ],
+      "taskId": "TASK-INTEGRATION-652d64726966742d706c616e",
+      "message": "Wire drift-detector → correction-planner: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d706f6c2d706c616e",
+      "edgeIds": [
+        "e-pol-plan"
+      ],
+      "taskId": "TASK-INTEGRATION-652d706f6c2d706c616e",
+      "message": "Wire policy-checks → correction-planner: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d63702d7067",
+      "edgeIds": [
+        "e-cp-pg"
+      ],
+      "taskId": "TASK-INTEGRATION-652d63702d7067",
+      "message": "Wire correction-planner → plan-generator: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d70672d726576",
+      "edgeIds": [
+        "e-pg-rev"
+      ],
+      "taskId": "TASK-INTEGRATION-652d70672d726576",
+      "message": "Wire plan-generator → review-portal: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d7265762d75736572",
+      "edgeIds": [
+        "e-rev-user"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7265762d75736572",
+      "message": "Wire review-portal → reviewer: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d757365722d726576",
+      "edgeIds": [
+        "e-user-rev"
+      ],
+      "taskId": "TASK-INTEGRATION-652d757365722d726576",
+      "message": "Wire reviewer → review-portal: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d7265762d6175646974",
+      "edgeIds": [
+        "e-rev-audit"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7265762d6175646974",
+      "message": "Wire review-portal → audit: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d70672d6175646974",
+      "edgeIds": [
+        "e-pg-audit"
+      ],
+      "taskId": "TASK-INTEGRATION-652d70672d6175646974",
+      "message": "Wire plan-generator → audit: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d63702d6175646974",
+      "edgeIds": [
+        "e-cp-audit"
+      ],
+      "taskId": "TASK-INTEGRATION-652d63702d6175646974",
+      "message": "Wire correction-planner → audit: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

@@ -1,0 +1,18 @@
+Hi! What would you like to build? For example, a RAG system over your company's documents, or a chatbot for your team. “Not sure” is always a fine answer along the way.
+
+Use Azure for this synthetic architecture qualification. Predict equipment maintenance needs from synthetic sensor histories and maintenance records. Include ingestion, feature preparation, a versioned prediction model, held-out evaluation, drift monitoring and an operator work-order draft. No automatic equipment control. Acceptance criteria: Time-based split prevents future-label leakage; Missing sensors produce an explicit degraded result; Prediction records include feature and model versions; Evaluate false alarms and missed faults on held-out data; Work orders require approval and are idempotent. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.
+
+We’ll design the full Azure maintenance workflow, with versioned predictions and approval-only work-order drafts. Let’s first replay synthetic histories locally to check time splits, missing-sensor results, version records and duplicate approvals; mocked predictions test workflow behavior, while predictive quality needs a trained model evaluated on untouched held-out data, and Azure implementation remains engineering work.
+Which country should hold the data and model artifacts—“not sure” is fine?skill: Predictive MLnoted application, cloud+1 factAtMem: 0 records · 3 skillsObserved boundary: AtMem AI Architect → native client. Memory is scoped to you and this project; source data is not an instruction.Skill: AI architecture and discovery v1.2.1 · guidance; no cloud executionSkill: Infrastructure and DevOps handoff v1.1.0 · guidance; no cloud executionSkill: Azure architecture guidance v1.0.0 · guidance; no cloud execution
+
+Drew it: Sketch the complete Azure maintenance qualification workflow
++ Synthetic sensor histories
++ Synthetic maintenance records
++ Batch ingestion
++6 moredrew 9 blockslogged ADR-002undo ↶
+
+Use the current emulation findings to propose a correction or the next test.
+
+No runtime checks ran. This report does not validate the architecture or its behavior.
+
+Revision 2 is blocked before execution: no runtime tests ran, no checks passed, and the empty failures list does not validate our Azure maintenance design. The first finding is a missing import plan for synthetic sensor histories; the full workflow also lacks supported Azure application implementations, requiring product engineering using revision 2 and artifact 651007de3e4f… as the reproducer, so a diagram edit cannot resolve these blockers. Do we already have synthetic sensor and maintenance files, or should we specify sample fixtures first so we can define a repeatable test input?AtMem: 1 records · 4 skillsObserved boundary: AtMem AI Architect → native client. Memory is scoped to you and this project; source data is not an instruction.project: Project decision platform.cloud: azure; status: Accepted; reason: Chosen in the conversation. · 2026-11-07Skill: AI architecture and discovery v1.2.1 · guidance; no cloud executionSkill: Security and reliability v1.0.0 · guidance; no cloud executionSkill: Infrastructure and DevOps handoff v1.1.0 · guidance; no cloud executionSkill: Azure architecture guidance v1.0.0 · guidance; no cloud execution

@@ -1,0 +1,57 @@
+#0 building with "default" instance using docker driver
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 1.44kB done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for docker.io/library/python:3.13-slim-trixie@sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20
+#2 DONE 0.0s
+
+#3 [internal] load .dockerignore
+#3 transferring context: 1.77kB done
+#3 DONE 0.0s
+
+#4 [stage-1 3/7] ADD --checksum=sha256:8c27c342230503b73dfde629642c3b352e87b554e06d60cf58772f236a305ceb https://deb.debian.org/debian-security/pool/updates/main/z/zlib/zlib1g_1.3.dfsg%2breally1.3.1-1%2bdeb13u1_amd64.deb /tmp/zlib1g.deb
+#4 DONE 0.0s
+
+#5 [wheels 1/3] FROM docker.io/library/python:3.13-slim-trixie@sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20
+#5 resolve docker.io/library/python:3.13-slim-trixie@sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20 0.0s done
+#5 DONE 0.0s
+
+#6 [internal] load build context
+#6 transferring context: 483.48kB 0.0s done
+#6 DONE 0.0s
+
+#7 [stage-1 2/7] WORKDIR /app
+#7 CACHED
+
+#8 [stage-1 5/7] COPY requirements.lock /app/requirements.lock
+#8 CACHED
+
+#9 [stage-1 3/7] ADD --checksum=sha256:8c27c342230503b73dfde629642c3b352e87b554e06d60cf58772f236a305ceb https://deb.debian.org/debian-security/pool/updates/main/z/zlib/zlib1g_1.3.dfsg%2breally1.3.1-1%2bdeb13u1_amd64.deb /tmp/zlib1g.deb
+#9 CACHED
+
+#10 [stage-1 4/7] RUN dpkg -i /tmp/zlib1g.deb && rm /tmp/zlib1g.deb
+#10 CACHED
+
+#11 [stage-1 6/7] RUN --mount=type=bind,from=wheels,source=/wheels,target=/wheels,readonly python -I -m pip --isolated install --no-index --find-links=/wheels --only-binary=:all: --no-cache-dir --require-hashes -r /app/requirements.lock && python -I -m pip --isolated check && python -I -m pip --isolated uninstall --yes pip && rm -rf /usr/local/lib/python3.13/ensurepip
+#11 CACHED
+
+#12 [wheels 3/3] RUN python -I -m pip --isolated download --only-binary=:all: --require-hashes --dest /wheels -r /build/requirements.lock
+#12 CACHED
+
+#13 [wheels 2/3] COPY requirements.lock /build/requirements.lock
+#13 CACHED
+
+#14 [stage-1 7/7] COPY runtime/ /app/
+#14 CACHED
+
+#15 exporting to image
+#15 exporting layers done
+#15 exporting manifest sha256:c6b3bc474c25046d6b689ebe0532d55b6e547349c190842c3b4f2ea2af581e6e done
+#15 exporting config sha256:0f629be3568a433f76fd222cba942f6a4b2df68aaedef121749ae76dd9fa8acc done
+#15 exporting attestation manifest sha256:f62afef1466145efe7dcbead9eada16ce811002346be5cd9372efaa684de5845 0.0s done
+#15 exporting manifest list sha256:550bb78f2b0286963f812a14977f9b8f6f53809d78b20aae58c9ad155d198f41
+#15 exporting manifest list sha256:550bb78f2b0286963f812a14977f9b8f6f53809d78b20aae58c9ad155d198f41 done
+#15 naming to docker.io/library/atmem-private-package-ibm:qualification-2fdc165c7c974c22942f5f243eeeeb1c done
+#15 DONE 0.1s

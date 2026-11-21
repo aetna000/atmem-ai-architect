@@ -1,0 +1,110 @@
+{
+  "terraform": {
+    "required_version": ">= 1.5.0, < 2.0.0",
+    "required_providers": {
+      "aws": {
+        "source": "hashicorp/aws",
+        "version": "~> 6.0"
+      }
+    }
+  },
+  "variable": {
+    "aws_region": {
+      "type": "string",
+      "description": "Explicitly choose the reviewed deployment region; no region is assumed."
+    },
+    "aws_account_id": {
+      "type": "string",
+      "description": "Expected AWS account ID; provider refuses a different account.",
+      "validation": {
+        "condition": "${can(regex(\"^[0-9]{12}$\", var.aws_account_id))}",
+        "error_message": "Use a twelve digit AWS account ID."
+      }
+    },
+    "review_approved": {
+      "type": "bool",
+      "default": false,
+      "description": "Set only after reviewing the design, cost, security and generated Terraform."
+    }
+  },
+  "provider": {
+    "aws": {
+      "region": "${var.aws_region}",
+      "allowed_account_ids": [
+        "${var.aws_account_id}"
+      ]
+    }
+  },
+  "locals": {
+    "unfinished_work": [
+      "resource-block_63616c6c6572",
+      "resource-block_74656c6570686f6e79",
+      "resource-block_636f6e73656e74",
+      "resource-block_696e67657374",
+      "resource-block_617564696f2d73746f7265",
+      "resource-block_737474",
+      "resource-block_726564616374",
+      "resource-block_617373697374",
+      "resource-block_6c6c6d",
+      "resource-block_6b62",
+      "resource-block_736561726368",
+      "resource-block_6462",
+      "resource-block_7569",
+      "resource-block_6170706964",
+      "resource-block_6167656e74",
+      "resource-block_63726d",
+      "resource-block_6c6f6773",
+      "connection-652d63616c6c65722d74656c",
+      "connection-652d74656c2d636f6e73656e74",
+      "connection-652d636f6e73656e742d6462",
+      "connection-652d636f6e73656e742d696e67657374",
+      "connection-652d74656c2d696e67657374",
+      "connection-652d696e676573742d636f73",
+      "connection-652d696e676573742d737474",
+      "connection-652d7374742d726564616374",
+      "connection-652d7265646163742d636f73",
+      "connection-652d7265646163742d617373697374",
+      "connection-652d6b622d736561726368",
+      "connection-652d6173736973742d736561726368",
+      "connection-652d6173736973742d6c6c6d",
+      "connection-652d6173736973742d7569",
+      "connection-652d61707069642d7569",
+      "connection-652d75692d6167656e74",
+      "connection-652d75692d6462",
+      "connection-652d6167656e742d63726d",
+      "connection-652d6173736973742d6c6f6773"
+    ]
+  },
+  "resource": {
+    "terraform_data": {
+      "review_gate": {
+        "input": {
+          "design_revision": 2,
+          "environment": "staging"
+        },
+        "lifecycle": {
+          "precondition": [
+            {
+              "condition": "${var.review_approved && length(local.unfinished_work) == 0}",
+              "error_message": "Review this sketch and finish the work listed in resource-schedule.json before a deployment plan can succeed."
+            }
+          ]
+        }
+      }
+    }
+  },
+  "output": {
+    "design_revision": {
+      "value": 2
+    },
+    "environment": {
+      "value": "staging"
+    },
+    "implemented_foundations": {
+      "value": 0
+    },
+    "buckets": {
+      "value": {}
+    }
+  }
+}

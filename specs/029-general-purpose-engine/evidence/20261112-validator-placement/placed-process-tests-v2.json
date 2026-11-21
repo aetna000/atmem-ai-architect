@@ -1,0 +1,46 @@
+{
+  "id": "fa0fac70-3bb3-48ce-947a-ee276b60cee2",
+  "sessionId": "c9625eed-335f-4d4b-9133-62d88a1f9b77",
+  "artifactId": "4dffe295-64fe-4408-a77e-78f3c3f6471d",
+  "artifactSha256": "ad0bd37c6a3a06663e7154f76e152c6e43450f0459af4353c219f62754b5cb2a",
+  "validatorId": "placed-process-tests",
+  "label": "Full AMD64 process controls and SQL",
+  "contractSha256": "d3ae7029f129d9d7f752df2e1e89a0fefc40598da8de29e6437f10c0ff0b8e45",
+  "state": "finished",
+  "result": {
+    "validator": "placed-process-tests",
+    "artifactSha256": "ad0bd37c6a3a06663e7154f76e152c6e43450f0459af4353c219f62754b5cb2a",
+    "imageId": "sha256:bafc5723ac59b025d42337e4c965e6d7b89a07da3d18b49a9384cfa70274f8e2",
+    "runtimeConfigImageId": "sha256:bafc5723ac59b025d42337e4c965e6d7b89a07da3d18b49a9384cfa70274f8e2",
+    "platform": "linux/amd64",
+    "isolationProfile": "postgresql-local-v1",
+    "runtimeEnvironment": {},
+    "command": [
+      "/usr/local/bin/python3",
+      "-I",
+      "/opt/atmem/sql_validation.py",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "checks",
+      "-v"
+    ],
+    "status": "passed",
+    "exitCode": 0,
+    "executableScratch": true,
+    "skipped": 0,
+    "testsReported": 3,
+    "reason": null,
+    "output": "test_actual_postgresql17_fixture (test_amd64.ActualRuntime.test_actual_postgresql17_fixture) ... ok\ntest_requested_machine_and_same_observed_boot (test_amd64.ActualRuntime.test_requested_machine_and_same_observed_boot) ... ok\ntest_required_real_process_controls (test_amd64.ActualRuntime.test_required_real_process_controls) ... ok\n\n----------------------------------------------------------------------\nRan 3 tests in 0.121s\n\nOK\n",
+    "outputTruncated": false,
+    "durationSeconds": 19.163,
+    "evidenceLevel": "local_container_check",
+    "cloudOperations": false,
+    "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+  },
+  "placement": {
+    "workerId": "full-amd64"
+  },
+  "acceptance": "not_established_by_local_check"
+}

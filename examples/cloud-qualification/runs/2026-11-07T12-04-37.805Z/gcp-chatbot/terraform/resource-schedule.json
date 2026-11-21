@@ -1,0 +1,486 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "user",
+      "address": "block_75736572",
+      "label": "Synthetic user (browser)",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "idp",
+      "address": "block_696470",
+      "label": "Sign-in",
+      "provider": "gcp",
+      "service": "Identity Platform",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "user"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "app",
+      "address": "block_617070",
+      "label": "Chat application",
+      "provider": "gcp",
+      "service": "Cloud Run",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "user",
+        "idp"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "context",
+      "address": "block_636f6e74657874",
+      "label": "Bounded context policy",
+      "provider": "gcp",
+      "service": "Cloud Run (in-app module)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "app"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "state",
+      "address": "block_7374617465",
+      "label": "Conversation state",
+      "provider": "gcp",
+      "service": "Firestore (Native mode)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "app"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "model",
+      "address": "block_6d6f64656c",
+      "label": "Model runtime",
+      "provider": "gcp",
+      "service": "Vertex AI (Gemini)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "app"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "escalate",
+      "address": "block_657363616c617465",
+      "label": "Escalation queue",
+      "provider": "gcp",
+      "service": "Pub/Sub",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "app"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "human",
+      "address": "block_68756d616e",
+      "label": "Human support reviewer",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "escalate"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "ops",
+      "address": "block_6f7073",
+      "label": "Logs & monitoring",
+      "provider": "gcp",
+      "service": "Cloud Logging & Cloud Monitoring",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "app"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e-user-idp",
+      "source": "user",
+      "target": "idp",
+      "data": "sign in",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-user-app",
+      "source": "user",
+      "target": "app",
+      "data": "HTTPS chat with ID token",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-idp-app",
+      "source": "idp",
+      "target": "app",
+      "data": "token verification",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-app-state",
+      "source": "app",
+      "target": "state",
+      "data": "read/write own conversation",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-app-context",
+      "source": "app",
+      "target": "context",
+      "data": "trim to bounded context",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-app-model",
+      "source": "app",
+      "target": "model",
+      "data": "generateContent (bounded prompt)",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-app-esc",
+      "source": "app",
+      "target": "escalate",
+      "data": "publish escalation",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-esc-human",
+      "source": "escalate",
+      "target": "human",
+      "data": "review handoff",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-app-ops",
+      "source": "app",
+      "target": "ops",
+      "data": "logs & metrics",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Synthetic user (browser): Existing — reference/import plan needed.",
+    "Sign-in: Implementation needed.",
+    "Chat application: Implementation needed.",
+    "Bounded context policy: Implementation needed.",
+    "Conversation state: Implementation needed.",
+    "Model runtime: Implementation needed.",
+    "Escalation queue: Implementation needed.",
+    "Human support reviewer: Existing — reference/import plan needed.",
+    "Logs & monitoring: Implementation needed.",
+    "Wire user → idp: implement data flow, access policy and acceptance test.",
+    "Wire user → app: implement data flow, access policy and acceptance test.",
+    "Wire idp → app: implement data flow, access policy and acceptance test.",
+    "Wire app → state: implement data flow, access policy and acceptance test.",
+    "Wire app → context: implement data flow, access policy and acceptance test.",
+    "Wire app → model: implement data flow, access policy and acceptance test.",
+    "Wire app → escalate: implement data flow, access policy and acceptance test.",
+    "Wire escalate → human: implement data flow, access policy and acceptance test.",
+    "Wire app → ops: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "resource-block_75736572",
+      "componentIds": [
+        "user"
+      ],
+      "taskId": "TASK-RESOURCE-75736572",
+      "message": "Synthetic user (browser): Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_696470",
+      "componentIds": [
+        "idp"
+      ],
+      "taskId": "TASK-RESOURCE-696470",
+      "message": "Sign-in: Implementation needed."
+    },
+    {
+      "id": "resource-block_617070",
+      "componentIds": [
+        "app"
+      ],
+      "taskId": "TASK-RESOURCE-617070",
+      "message": "Chat application: Implementation needed."
+    },
+    {
+      "id": "resource-block_636f6e74657874",
+      "componentIds": [
+        "context"
+      ],
+      "taskId": "TASK-RESOURCE-636f6e74657874",
+      "message": "Bounded context policy: Implementation needed."
+    },
+    {
+      "id": "resource-block_7374617465",
+      "componentIds": [
+        "state"
+      ],
+      "taskId": "TASK-RESOURCE-7374617465",
+      "message": "Conversation state: Implementation needed."
+    },
+    {
+      "id": "resource-block_6d6f64656c",
+      "componentIds": [
+        "model"
+      ],
+      "taskId": "TASK-RESOURCE-6d6f64656c",
+      "message": "Model runtime: Implementation needed."
+    },
+    {
+      "id": "resource-block_657363616c617465",
+      "componentIds": [
+        "escalate"
+      ],
+      "taskId": "TASK-RESOURCE-657363616c617465",
+      "message": "Escalation queue: Implementation needed."
+    },
+    {
+      "id": "resource-block_68756d616e",
+      "componentIds": [
+        "human"
+      ],
+      "taskId": "TASK-RESOURCE-68756d616e",
+      "message": "Human support reviewer: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_6f7073",
+      "componentIds": [
+        "ops"
+      ],
+      "taskId": "TASK-RESOURCE-6f7073",
+      "message": "Logs & monitoring: Implementation needed."
+    },
+    {
+      "id": "connection-652d757365722d696470",
+      "edgeIds": [
+        "e-user-idp"
+      ],
+      "taskId": "TASK-INTEGRATION-652d757365722d696470",
+      "message": "Wire user → idp: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d757365722d617070",
+      "edgeIds": [
+        "e-user-app"
+      ],
+      "taskId": "TASK-INTEGRATION-652d757365722d617070",
+      "message": "Wire user → app: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6964702d617070",
+      "edgeIds": [
+        "e-idp-app"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6964702d617070",
+      "message": "Wire idp → app: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6170702d7374617465",
+      "edgeIds": [
+        "e-app-state"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6170702d7374617465",
+      "message": "Wire app → state: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6170702d636f6e74657874",
+      "edgeIds": [
+        "e-app-context"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6170702d636f6e74657874",
+      "message": "Wire app → context: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6170702d6d6f64656c",
+      "edgeIds": [
+        "e-app-model"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6170702d6d6f64656c",
+      "message": "Wire app → model: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6170702d657363",
+      "edgeIds": [
+        "e-app-esc"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6170702d657363",
+      "message": "Wire app → escalate: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6573632d68756d616e",
+      "edgeIds": [
+        "e-esc-human"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6573632d68756d616e",
+      "message": "Wire escalate → human: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6170702d6f7073",
+      "edgeIds": [
+        "e-app-ops"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6170702d6f7073",
+      "message": "Wire app → ops: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

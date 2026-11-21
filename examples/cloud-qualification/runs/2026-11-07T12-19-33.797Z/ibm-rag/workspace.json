@@ -1,0 +1,457 @@
+{
+  "version": 1,
+  "revision": 2,
+  "name": "IBM Cloud synthetic RAG qualification",
+  "provider": "ibm",
+  "requirements": "",
+  "nodes": [
+    {
+      "id": "operator",
+      "type": "resource",
+      "position": {
+        "x": 470,
+        "y": 50
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Content operator",
+        "provider": "tools",
+        "kind": "tool",
+        "description": "Loads synthetic documents with explicit ACLs. Outside provisioning scope.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "role": "human"
+      }
+    },
+    {
+      "id": "cos",
+      "type": "resource",
+      "position": {
+        "x": 890,
+        "y": 50
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Source documents",
+        "provider": "ibm",
+        "kind": "source",
+        "description": "Private bucket for synthetic UTF-8 documents and ACL manifests. Versioning lets updates and deletions be detected.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "data",
+        "service": "IBM Cloud Object Storage"
+      }
+    },
+    {
+      "id": "ingest",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 50
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Ingestion job",
+        "provider": "ibm",
+        "kind": "tool",
+        "description": "Reads changed objects, then writes document text, keyword terms, ACLs and revision IDs to the catalog using conditional writes. Applies deletions as tombstones.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "ingest",
+        "service": "IBM Cloud Code Engine (job)"
+      }
+    },
+    {
+      "id": "catalog",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 60
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "RAG catalog",
+        "provider": "ibm",
+        "kind": "resource",
+        "description": "Bounded catalog of 100 documents or fewer: content, keyword index, explicit ACLs and current revisions. It is the source of truth for permission and revision rechecks.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "index",
+        "service": "IBM Cloudant"
+      }
+    },
+    {
+      "id": "user",
+      "type": "resource",
+      "position": {
+        "x": 50,
+        "y": 340
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Employee browser",
+        "provider": "tools",
+        "kind": "tool",
+        "description": "A signed-in user asking questions. Client reference, not provisioned.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "role": "human"
+      }
+    },
+    {
+      "id": "webapp",
+      "type": "resource",
+      "position": {
+        "x": 470,
+        "y": 340
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Web application",
+        "provider": "ibm",
+        "kind": "output",
+        "description": "Authenticated chat UI. Shows the cited answer or an abstention. Signs in through App ID with authorization code + PKCE.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "app",
+        "service": "IBM Cloud Code Engine (app)"
+      }
+    },
+    {
+      "id": "appid",
+      "type": "resource",
+      "position": {
+        "x": 890,
+        "y": 490
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Identity",
+        "provider": "ibm",
+        "kind": "guard",
+        "description": "User sign-in with MFA. Issues the tokens that the RAG API validates. Unknown identities fail closed.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "guard",
+        "service": "IBM Cloud App ID"
+      }
+    },
+    {
+      "id": "ragapi",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 340
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "RAG API",
+        "provider": "ibm",
+        "kind": "agent",
+        "description": "Validates the token, filters by ACL before retrieval, runs bounded keyword search and sends only permitted passages to the model. Abstains when support is insufficient, rechecks ACLs/revisions after generation and suppresses the answer if access was revoked. Returns citations with revision IDs.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "app",
+        "service": "IBM Cloud Code Engine (app)"
+      }
+    },
+    {
+      "id": "llm",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 340
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Model runtime",
+        "provider": "ibm",
+        "kind": "predict",
+        "description": "Foundation-model inference for grounded answers. The model ID, regional availability and entitlement are not yet verified. Local tests use mocked responses.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "llm",
+        "service": "IBM watsonx.ai"
+      }
+    },
+    {
+      "id": "logs",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 620
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Audit & logs",
+        "provider": "ibm",
+        "kind": "monitor",
+        "description": "Request, denial, abstention and revocation-suppression events, with no document text.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "role": "monitor",
+        "service": "IBM Cloud Logs"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-op-cos",
+      "source": "operator",
+      "target": "cos",
+      "type": "smoothstep",
+      "label": "upload docs + ACLs"
+    },
+    {
+      "id": "e-cos-ingest",
+      "source": "cos",
+      "target": "ingest",
+      "type": "smoothstep",
+      "label": "changed objects"
+    },
+    {
+      "id": "e-ingest-cat",
+      "source": "ingest",
+      "target": "catalog",
+      "type": "smoothstep",
+      "label": "conditional upsert/delete"
+    },
+    {
+      "id": "e-user-web",
+      "source": "user",
+      "target": "webapp",
+      "type": "smoothstep",
+      "label": "HTTPS"
+    },
+    {
+      "id": "e-web-appid",
+      "source": "webapp",
+      "target": "appid",
+      "type": "smoothstep",
+      "label": "OIDC sign-in (PKCE)"
+    },
+    {
+      "id": "e-web-api",
+      "source": "webapp",
+      "target": "ragapi",
+      "type": "smoothstep",
+      "label": "question + bearer token"
+    },
+    {
+      "id": "e-appid-api",
+      "source": "appid",
+      "target": "ragapi",
+      "type": "smoothstep",
+      "label": "token validation keys"
+    },
+    {
+      "id": "e-api-cat",
+      "source": "ragapi",
+      "target": "catalog",
+      "type": "smoothstep",
+      "label": "ACL-filtered keyword search + recheck"
+    },
+    {
+      "id": "e-api-llm",
+      "source": "ragapi",
+      "target": "llm",
+      "type": "smoothstep",
+      "label": "permitted passages only"
+    },
+    {
+      "id": "e-api-logs",
+      "source": "ragapi",
+      "target": "logs",
+      "type": "smoothstep",
+      "label": "audit events"
+    }
+  ],
+  "id": "519d909f-175d-4b33-91c3-f297f3f91aa3",
+  "brief": {
+    "application": "Use IBM Cloud for this synthetic architecture qualification. Answer questions over a small synthetic document collection with citations. Include ingestion, retrieval, model runtime, identity enforcement and an authenticated application. Use bounded keyword retrieval for this first test and keep all source permissions. Acceptance criteria: Denied documents never reach the model; Known questions cite current source revisions; Unsupported questions abstain; Updates and deletions change retrieval; Revocation during generation suppresses the answer. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+    "cloud": "IBM"
+  },
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use IBM Cloud for this synthetic architecture qualification.",
+      "options": "",
+      "decision": "ibm",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.ibm-cloud-bounded-keyword-rag-end-to-end-sketch",
+      "title": "IBM Cloud bounded keyword RAG – end-to-end sketch",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Full path: operator ingestion → COS → Code Engine ingestion job → Cloudant catalog (docs, ACLs, revisions); user → web app → App ID sign-in → RAG API (ACL filter, keyword retrieval, revision recheck, abstention, revocation check) → watsonx.ai. Assumptions: region, account, model access and plans are unverified. There is no native IBM generator for these components, so they are design-only with engineering gaps. Local tests use mocked model responses.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "needs": [
+    {
+      "id": "req-af17ec3d",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Every answer shows its sources",
+      "priority": "should",
+      "status": "open",
+      "source": "user",
+      "links": []
+    },
+    {
+      "id": "ai-deny-before-model",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Documents the user is not allowed to see must never be retrieved or sent to the model.",
+      "rationale": "A leak through the prompt exposes protected content even if it is not cited.",
+      "basis": "\"Denied documents never reach the model\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "ragapi",
+        "catalog",
+        "llm"
+      ]
+    },
+    {
+      "id": "ai-cite-current",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Answers to known questions must cite the current source revisions, and unsupported questions must abstain.",
+      "rationale": "Stale or uncited answers cannot be trusted or audited.",
+      "basis": "\"Known questions cite current source revisions; Unsupported questions abstain\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "ragapi",
+        "catalog"
+      ]
+    },
+    {
+      "id": "ai-freshness-revocation",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Updates and deletions must change retrieval results, and access revoked during generation must suppress the answer.",
+      "rationale": "Without freshness and post-generation rechecks, removed or revoked content still reaches users.",
+      "basis": "\"Updates and deletions change retrieval; Revocation during generation suppresses the answer\"",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "ingest",
+        "catalog",
+        "ragapi"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "extensions": {
+    "requirementNumbers": {
+      "req-af17ec3d": 1,
+      "drv-data-access": 2,
+      "drv-data-location": 3,
+      "ai-deny-before-model": 4,
+      "ai-cite-current": 5,
+      "ai-freshness-revocation": 6
+    }
+  },
+  "facts": [
+    {
+      "id": "fact-9d7f21fc",
+      "name": "cloud.preference",
+      "value": "ibm",
+      "unit": "provider",
+      "text": "Use IBM Cloud for this synthetic architecture qualification. Answer questions over a small synthetic document collection with citations. Include ingestion, retrieval, model runtime, identity enforcement and an authenticated application. Use bounded keyword retrieval for this first test and keep all ",
+      "madeAt": "2026-11-07"
+    }
+  ],
+  "workflow": "knowledge-assistant",
+  "asked": [],
+  "lastAsked": {
+    "id": "knowledge-assistant:0",
+    "topic": "data",
+    "question": "Where do the files live, and roughly how many are there?",
+    "beginner": "For example “SharePoint and a shared drive, about 20,000 files”.",
+    "why": "It shapes the RAG design."
+  },
+  "choices": {},
+  "conceptSig": null
+}

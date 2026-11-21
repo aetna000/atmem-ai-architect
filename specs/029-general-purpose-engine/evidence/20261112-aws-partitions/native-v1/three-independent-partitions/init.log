@@ -1,0 +1,42 @@
+Initializing modules...
+- unit_696e646570656e64656e742d706172746974696f6e2d32 in units/unit_696e646570656e64656e742d706172746974696f6e2d32
+- unit_696e646570656e64656e742d706172746974696f6e2d31 in units/unit_696e646570656e64656e742d706172746974696f6e2d31
+- unit_696e646570656e64656e742d706172746974696f6e2d30 in units/unit_696e646570656e64656e742d706172746974696f6e2d30
+
+
+Error: Terraform encountered problems during initialisation, including problems
+with the configuration, described below.
+
+The Terraform configuration must be valid before initialization so that
+Terraform can determine which modules and providers need to be installed.
+
+
+Error: Invalid single-argument block definition
+
+  on tests/independent-partition.tftest.hcl line 7, in mock_provider "aws":
+   7: mock_resource "aws_cloudwatch_log_group" {override_during = plan
+   8:  defaults = {arn = "arn:aws:logs:eu-west-1:123456789012:log-group:/fixture/owned"}
+
+An argument definition on the same line as its containing block creates a
+single-line block definition, which must also be closed on the same line.
+Place the block's closing brace immediately after the argument definition.
+
+Error: Invalid single-argument block definition
+
+  on tests/independent-partition.tftest.hcl line 17, in mock_provider "aws":
+  17: mock_resource "aws_cloudwatch_log_group" {override_during = plan
+  18:  defaults = {arn = "arn:aws-cn:logs:cn-north-1:123456789012:log-group:/fixture/owned"}
+
+An argument definition on the same line as its containing block creates a
+single-line block definition, which must also be closed on the same line.
+Place the block's closing brace immediately after the argument definition.
+
+Error: Invalid single-argument block definition
+
+  on tests/independent-partition.tftest.hcl line 27, in mock_provider "aws":
+  27: mock_resource "aws_cloudwatch_log_group" {override_during = plan
+  28:  defaults = {arn = "arn:aws-us-gov:logs:us-gov-west-1:123456789012:log-group:/fixture/owned"}
+
+An argument definition on the same line as its containing block creates a
+single-line block definition, which must also be closed on the same line.
+Place the block's closing brace immediately after the argument definition.

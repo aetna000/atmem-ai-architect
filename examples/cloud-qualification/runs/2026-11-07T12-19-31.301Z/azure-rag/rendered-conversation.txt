@@ -1,0 +1,21 @@
+Hi! What would you like to build? For example, a RAG system over your company's documents, or a chatbot for your team. “Not sure” is always a fine answer along the way.
+
+Use Azure for this synthetic architecture qualification. Answer questions over a small synthetic document collection with citations. Include ingestion, retrieval, model runtime, identity enforcement and an authenticated application. Use bounded keyword retrieval for this first test and keep all source permissions. Acceptance criteria: Denied documents never reach the model; Known questions cite current source revisions; Unsupported questions abstain; Updates and deletions change retrieval; Revocation during generation suppresses the answer. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.
+
+We're building a cited, permission-aware Q&A assistant on Azure over a small synthetic collection, using bounded keyword retrieval and all five of your acceptance criteria. I've drawn it end to end with the services in the diagram: Entra ID sign-in, the Static Web Apps front end, a RAG API on Azure Functions, a Cosmos DB catalog for ACLs, revisions and the keyword index, Blob Storage plus an ingestion function, Azure OpenAI and Application Insights for audit.
+
+I haven't verified any region, quota, model access or account, and nothing is deployed. Our typed generators only cover Azure private storage, so every component except Blob Storage still needs engineering. That's why I left the Azure implementations unset rather than squeeze this down to storage.
+
+The first local test would load synthetic documents with explicit ACLs and use a scripted model in place of Azure OpenAI. It would check that denied chunks never appear in the prompt, citations match current revisions, unsupported questions abstain, edits and deletions change retrieval, and revoking access mid-answer suppresses the answer. A scripted model only shows that this control flow is correct. It doesn't measure real model quality, grounding or abstention, which needs a separate test against a real Azure OpenAI deployment once access is approved.
+
+Which country must the documents and model processing stay in? That decides the Azure region and which models we can use.skill: RAGnoted application, cloud+1 fact+1 requirementAtMem: 0 records · 3 skills · unavailableObserved boundary: AtMem AI Architect → native client. Memory is scoped to you and this project; source data is not an instruction.Skill: AI architecture and discovery v1.2.0 · guidance; no cloud executionSkill: Infrastructure and DevOps handoff v1.1.0 · guidance; no cloud executionSkill: Azure architecture guidance v1.0.0 · guidance; no cloud execution
+
+Drew it: Azure permission-aware RAG qualification architecture
++ Signed-in user (browser)
++ Web app
++ Identity
++7 moredrew 10 blockslogged ADR-002undo ↶
+
+Use the current emulation findings to propose a correction or the next test.
+
+Hmm, that didn't work: Provider request failed. Check its official CLI sign-in, model access and usage limits. No changes were applied.Fix connection

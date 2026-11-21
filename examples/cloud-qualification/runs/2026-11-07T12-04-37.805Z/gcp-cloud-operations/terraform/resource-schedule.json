@@ -1,0 +1,490 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "operator",
+      "address": "block_6f70657261746f72",
+      "label": "Platform engineer (reviewer)",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "inventory",
+      "address": "block_696e76656e746f7279",
+      "label": "Synthetic inventory snapshot",
+      "provider": "gcp",
+      "service": "Cloud Storage",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "analyzer",
+      "address": "block_616e616c797a6572",
+      "label": "Inventory & drift analyzer",
+      "provider": "gcp",
+      "service": "Cloud Run jobs",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "inventory",
+        "operator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "policy",
+      "address": "block_706f6c696379",
+      "label": "Policy checks",
+      "provider": "gcp",
+      "service": "Cloud Run (Open Policy Agent rules)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "analyzer",
+        "planner"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "planner",
+      "address": "block_706c616e6e6572",
+      "label": "Correction plan generator",
+      "provider": "gcp",
+      "service": "Vertex AI (Gemini)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "policy"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "diff",
+      "address": "block_64696666",
+      "label": "Reviewable diff & plan artifacts",
+      "provider": "gcp",
+      "service": "Cloud Storage (versioned)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "planner"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "approval",
+      "address": "block_617070726f76616c",
+      "label": "Approval gate",
+      "provider": "gcp",
+      "service": "Cloud Run service + Firestore (approval records)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "diff",
+        "operator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "audit",
+      "address": "block_6175646974",
+      "label": "Audit trail",
+      "provider": "gcp",
+      "service": "Cloud Logging + BigQuery log sink",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "approval",
+        "policy",
+        "analyzer"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e-inv-an",
+      "source": "inventory",
+      "target": "analyzer",
+      "data": "read-only snapshot read",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-an-pol",
+      "source": "analyzer",
+      "target": "policy",
+      "data": "drift findings",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-pol-plan",
+      "source": "policy",
+      "target": "planner",
+      "data": "confirmed violations",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-plan-pol",
+      "source": "planner",
+      "target": "policy",
+      "data": "proposed plan for re-check",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-plan-diff",
+      "source": "planner",
+      "target": "diff",
+      "data": "plan + diff (policy-passed)",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-diff-appr",
+      "source": "diff",
+      "target": "approval",
+      "data": "diff hash for review",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-op-appr",
+      "source": "operator",
+      "target": "approval",
+      "data": "approve / reject",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-op-an",
+      "source": "operator",
+      "target": "analyzer",
+      "data": "start analysis run",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-appr-audit",
+      "source": "approval",
+      "target": "audit",
+      "data": "decision record",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-pol-audit",
+      "source": "policy",
+      "target": "audit",
+      "data": "policy verdicts",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-an-audit",
+      "source": "analyzer",
+      "target": "audit",
+      "data": "run log",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Platform engineer (reviewer): Existing — reference/import plan needed.",
+    "Synthetic inventory snapshot: Implementation needed.",
+    "Inventory & drift analyzer: Implementation needed.",
+    "Policy checks: Implementation needed.",
+    "Correction plan generator: Implementation needed.",
+    "Reviewable diff & plan artifacts: Implementation needed.",
+    "Approval gate: Implementation needed.",
+    "Audit trail: Implementation needed.",
+    "Wire inventory → analyzer: implement data flow, access policy and acceptance test.",
+    "Wire analyzer → policy: implement data flow, access policy and acceptance test.",
+    "Wire policy → planner: implement data flow, access policy and acceptance test.",
+    "Wire planner → policy: implement data flow, access policy and acceptance test.",
+    "Wire planner → diff: implement data flow, access policy and acceptance test.",
+    "Wire diff → approval: implement data flow, access policy and acceptance test.",
+    "Wire operator → approval: implement data flow, access policy and acceptance test.",
+    "Wire operator → analyzer: implement data flow, access policy and acceptance test.",
+    "Wire approval → audit: implement data flow, access policy and acceptance test.",
+    "Wire policy → audit: implement data flow, access policy and acceptance test.",
+    "Wire analyzer → audit: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "resource-block_6f70657261746f72",
+      "componentIds": [
+        "operator"
+      ],
+      "taskId": "TASK-RESOURCE-6f70657261746f72",
+      "message": "Platform engineer (reviewer): Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_696e76656e746f7279",
+      "componentIds": [
+        "inventory"
+      ],
+      "taskId": "TASK-RESOURCE-696e76656e746f7279",
+      "message": "Synthetic inventory snapshot: Implementation needed."
+    },
+    {
+      "id": "resource-block_616e616c797a6572",
+      "componentIds": [
+        "analyzer"
+      ],
+      "taskId": "TASK-RESOURCE-616e616c797a6572",
+      "message": "Inventory & drift analyzer: Implementation needed."
+    },
+    {
+      "id": "resource-block_706f6c696379",
+      "componentIds": [
+        "policy"
+      ],
+      "taskId": "TASK-RESOURCE-706f6c696379",
+      "message": "Policy checks: Implementation needed."
+    },
+    {
+      "id": "resource-block_706c616e6e6572",
+      "componentIds": [
+        "planner"
+      ],
+      "taskId": "TASK-RESOURCE-706c616e6e6572",
+      "message": "Correction plan generator: Implementation needed."
+    },
+    {
+      "id": "resource-block_64696666",
+      "componentIds": [
+        "diff"
+      ],
+      "taskId": "TASK-RESOURCE-64696666",
+      "message": "Reviewable diff & plan artifacts: Implementation needed."
+    },
+    {
+      "id": "resource-block_617070726f76616c",
+      "componentIds": [
+        "approval"
+      ],
+      "taskId": "TASK-RESOURCE-617070726f76616c",
+      "message": "Approval gate: Implementation needed."
+    },
+    {
+      "id": "resource-block_6175646974",
+      "componentIds": [
+        "audit"
+      ],
+      "taskId": "TASK-RESOURCE-6175646974",
+      "message": "Audit trail: Implementation needed."
+    },
+    {
+      "id": "connection-652d696e762d616e",
+      "edgeIds": [
+        "e-inv-an"
+      ],
+      "taskId": "TASK-INTEGRATION-652d696e762d616e",
+      "message": "Wire inventory → analyzer: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d616e2d706f6c",
+      "edgeIds": [
+        "e-an-pol"
+      ],
+      "taskId": "TASK-INTEGRATION-652d616e2d706f6c",
+      "message": "Wire analyzer → policy: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d706f6c2d706c616e",
+      "edgeIds": [
+        "e-pol-plan"
+      ],
+      "taskId": "TASK-INTEGRATION-652d706f6c2d706c616e",
+      "message": "Wire policy → planner: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d706c616e2d706f6c",
+      "edgeIds": [
+        "e-plan-pol"
+      ],
+      "taskId": "TASK-INTEGRATION-652d706c616e2d706f6c",
+      "message": "Wire planner → policy: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d706c616e2d64696666",
+      "edgeIds": [
+        "e-plan-diff"
+      ],
+      "taskId": "TASK-INTEGRATION-652d706c616e2d64696666",
+      "message": "Wire planner → diff: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d646966662d61707072",
+      "edgeIds": [
+        "e-diff-appr"
+      ],
+      "taskId": "TASK-INTEGRATION-652d646966662d61707072",
+      "message": "Wire diff → approval: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6f702d61707072",
+      "edgeIds": [
+        "e-op-appr"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6f702d61707072",
+      "message": "Wire operator → approval: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6f702d616e",
+      "edgeIds": [
+        "e-op-an"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6f702d616e",
+      "message": "Wire operator → analyzer: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d617070722d6175646974",
+      "edgeIds": [
+        "e-appr-audit"
+      ],
+      "taskId": "TASK-INTEGRATION-652d617070722d6175646974",
+      "message": "Wire approval → audit: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d706f6c2d6175646974",
+      "edgeIds": [
+        "e-pol-audit"
+      ],
+      "taskId": "TASK-INTEGRATION-652d706f6c2d6175646974",
+      "message": "Wire policy → audit: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d616e2d6175646974",
+      "edgeIds": [
+        "e-an-audit"
+      ],
+      "taskId": "TASK-INTEGRATION-652d616e2d6175646974",
+      "message": "Wire analyzer → audit: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

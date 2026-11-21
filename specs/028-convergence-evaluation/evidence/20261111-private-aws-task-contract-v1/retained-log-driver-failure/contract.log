@@ -1,0 +1,40 @@
+test_configuration_and_metadata_are_not_mutated_or_aliased (__main__.AwsDocumentTaskContract.test_configuration_and_metadata_are_not_mutated_or_aliased) ... ok
+test_cross_account_region_mutable_artifacts_and_shared_roles_are_rejected (__main__.AwsDocumentTaskContract.test_cross_account_region_mutable_artifacts_and_shared_roles_are_rejected) ... ok
+test_generated_definition_passes_official_native_structure_and_enums (__main__.AwsDocumentTaskContract.test_generated_definition_passes_official_native_structure_and_enums) ... ERROR
+test_mounts_are_fresh_task_local_and_parser_cannot_write_raw_input (__main__.AwsDocumentTaskContract.test_mounts_are_fresh_task_local_and_parser_cannot_write_raw_input) ... ok
+test_only_bounded_exact_byte_metadata_enters_definition (__main__.AwsDocumentTaskContract.test_only_bounded_exact_byte_metadata_enters_definition) ... ok
+test_only_parser_network_is_disabled_and_no_credentials_or_exec_are_supplied (__main__.AwsDocumentTaskContract.test_only_parser_network_is_disabled_and_no_credentials_or_exec_are_supplied) ... ok
+test_shape_checker_rejects_unknown_field_and_invalid_enum (__main__.AwsDocumentTaskContract.test_shape_checker_rejects_unknown_field_and_invalid_enum) ... ok
+test_success_dependencies_do_not_stop_task_before_upload (__main__.AwsDocumentTaskContract.test_success_dependencies_do_not_stop_task_before_upload) ... ok
+
+======================================================================
+ERROR: test_generated_definition_passes_official_native_structure_and_enums (__main__.AwsDocumentTaskContract.test_generated_definition_passes_official_native_structure_and_enums)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_aws_jobs_contract.py", line 51, in test_generated_definition_passes_official_native_structure_and_enums
+    native_check(self.plan,self.model.operation_model('RegisterTaskDefinition').input_shape)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_aws_jobs_contract.py", line 37, in native_check
+    enums(value,shape)
+    ~~~~~^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_aws_jobs_contract.py", line 31, in enums
+    for key,item in value.items():enums(item,shape.members[key])
+                                  ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_aws_jobs_contract.py", line 33, in enums
+    for item in value:enums(item,shape.member)
+                      ~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_aws_jobs_contract.py", line 31, in enums
+    for key,item in value.items():enums(item,shape.members[key])
+                                  ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_aws_jobs_contract.py", line 31, in enums
+    for key,item in value.items():enums(item,shape.members[key])
+                                  ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_aws_jobs_contract.py", line 36, in enums
+    elif shape.type_name=='string'and shape.enum and value not in shape.enum:raise ValueError('Unsupported native enum: '+shape.name)
+                                                                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ValueError: Unsupported native enum: LogDriver
+
+----------------------------------------------------------------------
+Ran 8 tests in 0.008s
+
+FAILED (errors=1)

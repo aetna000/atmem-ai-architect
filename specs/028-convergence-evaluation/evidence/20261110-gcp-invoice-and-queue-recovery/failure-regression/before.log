@@ -1,0 +1,71 @@
+test_worker_supervisor_reopens_native_pool_after_interrupted_queue_transaction (durable_credentials_acceptance.RefreshedDatabaseCredentialTests.test_worker_supervisor_reopens_native_pool_after_interrupted_queue_transaction) ... Executing <Task finished name='Task-1' coro=<RefreshedDatabaseCredentialTests.asyncSetUp() done, defined at /Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/durable_credentials_acceptance.py:21> result=None created at /opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py:101> took 0.146 seconds
+discarding closed connection: <psycopg.AsyncConnection [BAD] at 0x10beac2f0>
+ERROR
+test_worker_supervisor_reopens_native_pool_after_interrupted_queue_transaction (durable_credentials_acceptance.RefreshedDatabaseCredentialTests.test_worker_supervisor_reopens_native_pool_after_interrupted_queue_transaction) ... ERROR
+
+======================================================================
+ERROR: test_worker_supervisor_reopens_native_pool_after_interrupted_queue_transaction (durable_credentials_acceptance.RefreshedDatabaseCredentialTests.test_worker_supervisor_reopens_native_pool_after_interrupted_queue_transaction)
+----------------------------------------------------------------------
+  + Exception Group Traceback (most recent call last):
+  |   File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 119, in run
+  |     return self._loop.run_until_complete(task)
+  |            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  |   File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+  |     return future.result()
+  |            ~~~~~~~~~~~~~^^
+  |   File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/durable_credentials_acceptance.py", line 48, in test_worker_supervisor_reopens_native_pool_after_interrupted_queue_transaction
+  |     if task.done():task.result();raise AssertionError('Worker stopped before recovery')
+  |                    ~~~~~~~~~~~^^
+  |   File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/queue-reconnect-regression-20261110/workflow_worker.before.py", line 99, in run
+  |     async with asyncio.TaskGroup()as group:
+  |                ~~~~~~~~~~~~~~~~~^^
+  |   File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/taskgroups.py", line 71, in __aexit__
+  |     return await self._aexit(et, exc)
+  |            ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  |   File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/taskgroups.py", line 173, in _aexit
+  |     raise BaseExceptionGroup(
+  |     ...<2 lines>...
+  |     ) from None
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 2338, in _execute_mock_call
+    |     result = await effect(*args, **kwargs)
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/durable_credentials_acceptance.py", line 41, in interrupted
+    |     await conn.execute('SELECT pg_terminate_backend(pg_backend_pid())')
+    |   File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/durable-runtime/lib/python3.13/site-packages/psycopg/connection_async.py", line 333, in execute
+    |     raise ex.with_traceback(None)
+    | psycopg.errors.AdminShutdown: terminating connection due to administrator command
+    +------------------------------------
+
+======================================================================
+ERROR: test_worker_supervisor_reopens_native_pool_after_interrupted_queue_transaction (durable_credentials_acceptance.RefreshedDatabaseCredentialTests.test_worker_supervisor_reopens_native_pool_after_interrupted_queue_transaction)
+----------------------------------------------------------------------
+  + Exception Group Traceback (most recent call last):
+  |   File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/runners.py", line 119, in run
+  |     return self._loop.run_until_complete(task)
+  |            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  |   File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/asyncio/base_events.py", line 725, in run_until_complete
+  |     return future.result()
+  |            ~~~~~~~~~~~~~^^
+  |   File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/durable_credentials_acceptance.py", line 28, in asyncTearDown
+  |     try:await task
+  |         ^^^^^^^^^^
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Traceback (most recent call last):
+    |   File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/unittest/mock.py", line 2338, in _execute_mock_call
+    |     result = await effect(*args, **kwargs)
+    |              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/durable_credentials_acceptance.py", line 41, in interrupted
+    |     await conn.execute('SELECT pg_terminate_backend(pg_backend_pid())')
+    |   File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/durable-runtime/lib/python3.13/site-packages/psycopg/connection_async.py", line 333, in execute
+    |     raise ex.with_traceback(None)
+    | psycopg.errors.AdminShutdown: terminating connection due to administrator command
+    +------------------------------------
+
+----------------------------------------------------------------------
+Ran 1 test in 0.233s
+
+FAILED (errors=2)

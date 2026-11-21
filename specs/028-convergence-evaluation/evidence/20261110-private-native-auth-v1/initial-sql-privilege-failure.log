@@ -1,0 +1,227 @@
+test_company_revocation_during_refresh_withholds_access_and_clears_material (__main__.EnterpriseCredentialTransactions.test_company_revocation_during_refresh_withholds_access_and_clears_material) ... ERROR
+test_concurrent_flow_limit_does_not_race_past_five (__main__.EnterpriseCredentialTransactions.test_concurrent_flow_limit_does_not_race_past_five) ... ERROR
+test_concurrent_refresh_is_fenced_and_rotated_cache_is_next_input (__main__.EnterpriseCredentialTransactions.test_concurrent_refresh_is_fenced_and_rotated_cache_is_next_input) ... ERROR
+test_cross_account_access_and_source_refresh_identity_mismatch_deny (__main__.EnterpriseCredentialTransactions.test_cross_account_access_and_source_refresh_identity_mismatch_deny) ... ERROR
+test_disconnect_during_refresh_cannot_be_undone_by_late_response (__main__.EnterpriseCredentialTransactions.test_disconnect_during_refresh_cannot_be_undone_by_late_response) ... ERROR
+test_encrypted_credentials_survive_new_store_but_not_cross_person_copy (__main__.EnterpriseCredentialTransactions.test_encrypted_credentials_survive_new_store_but_not_cross_person_copy) ... ERROR
+test_membership_and_mapping_changes_reject_pending_state (__main__.EnterpriseCredentialTransactions.test_membership_and_mapping_changes_reject_pending_state) ... ERROR
+test_process_crash_leaves_durable_fence_and_stale_refresh_requires_reconnect (__main__.EnterpriseCredentialTransactions.test_process_crash_leaves_durable_fence_and_stale_refresh_requires_reconnect) ... ERROR
+test_refresh_uncertainty_discards_secret_and_never_replays_old_token (__main__.EnterpriseCredentialTransactions.test_refresh_uncertainty_discards_secret_and_never_replays_old_token) ... ERROR
+test_restricted_runtime_cannot_modify_membership_or_source_identity (__main__.EnterpriseCredentialTransactions.test_restricted_runtime_cannot_modify_membership_or_source_identity) ... ok
+test_state_is_single_use_under_eight_concurrent_callbacks (__main__.EnterpriseCredentialTransactions.test_state_is_single_use_under_eight_concurrent_callbacks) ... ERROR
+test_state_rejects_other_browser_person_source_and_expired_attempt (__main__.EnterpriseCredentialTransactions.test_state_rejects_other_browser_person_source_and_expired_attempt) ... ERROR
+
+======================================================================
+ERROR: test_company_revocation_during_refresh_withholds_access_and_clears_material (__main__.EnterpriseCredentialTransactions.test_company_revocation_during_refresh_withholds_access_and_clears_material)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_auth_postgres.py", line 132, in test_company_revocation_during_refresh_withholds_access_and_clears_material
+    self.connected()
+    ~~~~~~~~~~~~~~^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_auth_postgres.py", line 42, in connected
+    principal=principal or self.principal;state=self.store.begin(principal,'sharepoint:drive','browser-nonce',{'verifier':'SYNTHETIC-PKCE-SECRET'});mapping,flow=self.store.consume(principal,'sharepoint:drive','browser-nonce',state);self.store.save(principal,mapping,{'refresh_token':'SYNTHETIC-INITIAL-REFRESH'});return mapping
+                                                ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/enterprise_auth_store.py", line 79, in begin
+    mapping=self._authorize(cur,principal,source_id)
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/enterprise_auth_store.py", line 60, in _authorize
+    membership=cur.execute('SELECT issuer,subject,active FROM enterprise_auth.memberships WHERE account_id=%s AND principal_key=%s FOR SHARE',(principal.account_id,principal.key)).fetchone()
+               ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/durable-runtime/lib/python3.13/site-packages/psycopg/cursor.py", line 117, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.InsufficientPrivilege: permission denied for table memberships
+
+======================================================================
+ERROR: test_concurrent_flow_limit_does_not_race_past_five (__main__.EnterpriseCredentialTransactions.test_concurrent_flow_limit_does_not_race_past_five)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_auth_postgres.py", line 77, in test_concurrent_flow_limit_does_not_race_past_five
+    with ThreadPoolExecutor(max_workers=8)as pool:results=list(pool.map(begin,range(8)))
+                                                          ~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/concurrent/futures/_base.py", line 625, in result_iterator
+    yield _result_or_cancel(fs.pop())
+          ~~~~~~~~~~~~~~~~~^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/concurrent/futures/_base.py", line 318, in _result_or_cancel
+    return fut.result(timeout)
+           ~~~~~~~~~~^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/concurrent/futures/_base.py", line 460, in result
+    return self.__get_result()
+           ~~~~~~~~~~~~~~~~~^^
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/concurrent/futures/_base.py", line 402, in __get_result
+    raise self._exception
+  File "/opt/homebrew/Cellar/python@3.13/3.13.14_1/Frameworks/Python.framework/Versions/3.13/lib/python3.13/concurrent/futures/thread.py", line 59, in run
+    result = self.fn(*self.args, **self.kwargs)
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_auth_postgres.py", line 75, in begin
+    try:return self.store.begin(self.principal,'sharepoint:drive','browser-nonce',{})
+               ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/enterprise_auth_store.py", line 79, in begin
+    mapping=self._authorize(cur,principal,source_id)
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/enterprise_auth_store.py", line 60, in _authorize
+    membership=cur.execute('SELECT issuer,subject,active FROM enterprise_auth.memberships WHERE account_id=%s AND principal_key=%s FOR SHARE',(principal.account_id,principal.key)).fetchone()
+               ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/durable-runtime/lib/python3.13/site-packages/psycopg/cursor.py", line 117, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.InsufficientPrivilege: permission denied for table memberships
+
+======================================================================
+ERROR: test_concurrent_refresh_is_fenced_and_rotated_cache_is_next_input (__main__.EnterpriseCredentialTransactions.test_concurrent_refresh_is_fenced_and_rotated_cache_is_next_input)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_auth_postgres.py", line 97, in test_concurrent_refresh_is_fenced_and_rotated_cache_is_next_input
+    self.connected();entered=threading.Event();release=threading.Event();seen=[]
+    ~~~~~~~~~~~~~~^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_auth_postgres.py", line 42, in connected
+    principal=principal or self.principal;state=self.store.begin(principal,'sharepoint:drive','browser-nonce',{'verifier':'SYNTHETIC-PKCE-SECRET'});mapping,flow=self.store.consume(principal,'sharepoint:drive','browser-nonce',state);self.store.save(principal,mapping,{'refresh_token':'SYNTHETIC-INITIAL-REFRESH'});return mapping
+                                                ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/enterprise_auth_store.py", line 79, in begin
+    mapping=self._authorize(cur,principal,source_id)
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/enterprise_auth_store.py", line 60, in _authorize
+    membership=cur.execute('SELECT issuer,subject,active FROM enterprise_auth.memberships WHERE account_id=%s AND principal_key=%s FOR SHARE',(principal.account_id,principal.key)).fetchone()
+               ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/durable-runtime/lib/python3.13/site-packages/psycopg/cursor.py", line 117, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.InsufficientPrivilege: permission denied for table memberships
+
+======================================================================
+ERROR: test_cross_account_access_and_source_refresh_identity_mismatch_deny (__main__.EnterpriseCredentialTransactions.test_cross_account_access_and_source_refresh_identity_mismatch_deny)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_auth_postgres.py", line 140, in test_cross_account_access_and_source_refresh_identity_mismatch_deny
+    self.connected();other=CompanyPrincipal('other-company',self.principal.issuer,self.principal.subject,self.principal.expires_at)
+    ~~~~~~~~~~~~~~^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_auth_postgres.py", line 42, in connected
+    principal=principal or self.principal;state=self.store.begin(principal,'sharepoint:drive','browser-nonce',{'verifier':'SYNTHETIC-PKCE-SECRET'});mapping,flow=self.store.consume(principal,'sharepoint:drive','browser-nonce',state);self.store.save(principal,mapping,{'refresh_token':'SYNTHETIC-INITIAL-REFRESH'});return mapping
+                                                ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/enterprise_auth_store.py", line 79, in begin
+    mapping=self._authorize(cur,principal,source_id)
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/enterprise_auth_store.py", line 60, in _authorize
+    membership=cur.execute('SELECT issuer,subject,active FROM enterprise_auth.memberships WHERE account_id=%s AND principal_key=%s FOR SHARE',(principal.account_id,principal.key)).fetchone()
+               ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/durable-runtime/lib/python3.13/site-packages/psycopg/cursor.py", line 117, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.InsufficientPrivilege: permission denied for table memberships
+
+======================================================================
+ERROR: test_disconnect_during_refresh_cannot_be_undone_by_late_response (__main__.EnterpriseCredentialTransactions.test_disconnect_during_refresh_cannot_be_undone_by_late_response)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_auth_postgres.py", line 126, in test_disconnect_during_refresh_cannot_be_undone_by_late_response
+    self.connected()
+    ~~~~~~~~~~~~~~^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_auth_postgres.py", line 42, in connected
+    principal=principal or self.principal;state=self.store.begin(principal,'sharepoint:drive','browser-nonce',{'verifier':'SYNTHETIC-PKCE-SECRET'});mapping,flow=self.store.consume(principal,'sharepoint:drive','browser-nonce',state);self.store.save(principal,mapping,{'refresh_token':'SYNTHETIC-INITIAL-REFRESH'});return mapping
+                                                ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/enterprise_auth_store.py", line 79, in begin
+    mapping=self._authorize(cur,principal,source_id)
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/enterprise_auth_store.py", line 60, in _authorize
+    membership=cur.execute('SELECT issuer,subject,active FROM enterprise_auth.memberships WHERE account_id=%s AND principal_key=%s FOR SHARE',(principal.account_id,principal.key)).fetchone()
+               ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/durable-runtime/lib/python3.13/site-packages/psycopg/cursor.py", line 117, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.InsufficientPrivilege: permission denied for table memberships
+
+======================================================================
+ERROR: test_encrypted_credentials_survive_new_store_but_not_cross_person_copy (__main__.EnterpriseCredentialTransactions.test_encrypted_credentials_survive_new_store_but_not_cross_person_copy)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_auth_postgres.py", line 88, in test_encrypted_credentials_survive_new_store_but_not_cross_person_copy
+    self.connected();row=self.state();self.assertNotIn('SYNTHETIC-INITIAL-REFRESH',row[1])
+    ~~~~~~~~~~~~~~^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_auth_postgres.py", line 42, in connected
+    principal=principal or self.principal;state=self.store.begin(principal,'sharepoint:drive','browser-nonce',{'verifier':'SYNTHETIC-PKCE-SECRET'});mapping,flow=self.store.consume(principal,'sharepoint:drive','browser-nonce',state);self.store.save(principal,mapping,{'refresh_token':'SYNTHETIC-INITIAL-REFRESH'});return mapping
+                                                ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/enterprise_auth_store.py", line 79, in begin
+    mapping=self._authorize(cur,principal,source_id)
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/enterprise_auth_store.py", line 60, in _authorize
+    membership=cur.execute('SELECT issuer,subject,active FROM enterprise_auth.memberships WHERE account_id=%s AND principal_key=%s FOR SHARE',(principal.account_id,principal.key)).fetchone()
+               ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/durable-runtime/lib/python3.13/site-packages/psycopg/cursor.py", line 117, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.InsufficientPrivilege: permission denied for table memberships
+
+======================================================================
+ERROR: test_membership_and_mapping_changes_reject_pending_state (__main__.EnterpriseCredentialTransactions.test_membership_and_mapping_changes_reject_pending_state)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_auth_postgres.py", line 81, in test_membership_and_mapping_changes_reject_pending_state
+    state=self.store.begin(self.principal,'sharepoint:drive','browser-nonce',{})
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/enterprise_auth_store.py", line 79, in begin
+    mapping=self._authorize(cur,principal,source_id)
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/enterprise_auth_store.py", line 60, in _authorize
+    membership=cur.execute('SELECT issuer,subject,active FROM enterprise_auth.memberships WHERE account_id=%s AND principal_key=%s FOR SHARE',(principal.account_id,principal.key)).fetchone()
+               ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/durable-runtime/lib/python3.13/site-packages/psycopg/cursor.py", line 117, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.InsufficientPrivilege: permission denied for table memberships
+
+======================================================================
+ERROR: test_process_crash_leaves_durable_fence_and_stale_refresh_requires_reconnect (__main__.EnterpriseCredentialTransactions.test_process_crash_leaves_durable_fence_and_stale_refresh_requires_reconnect)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_auth_postgres.py", line 106, in test_process_crash_leaves_durable_fence_and_stale_refresh_requires_reconnect
+    self.connected();called=[]
+    ~~~~~~~~~~~~~~^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_auth_postgres.py", line 42, in connected
+    principal=principal or self.principal;state=self.store.begin(principal,'sharepoint:drive','browser-nonce',{'verifier':'SYNTHETIC-PKCE-SECRET'});mapping,flow=self.store.consume(principal,'sharepoint:drive','browser-nonce',state);self.store.save(principal,mapping,{'refresh_token':'SYNTHETIC-INITIAL-REFRESH'});return mapping
+                                                ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/enterprise_auth_store.py", line 79, in begin
+    mapping=self._authorize(cur,principal,source_id)
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/enterprise_auth_store.py", line 60, in _authorize
+    membership=cur.execute('SELECT issuer,subject,active FROM enterprise_auth.memberships WHERE account_id=%s AND principal_key=%s FOR SHARE',(principal.account_id,principal.key)).fetchone()
+               ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/durable-runtime/lib/python3.13/site-packages/psycopg/cursor.py", line 117, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.InsufficientPrivilege: permission denied for table memberships
+
+======================================================================
+ERROR: test_refresh_uncertainty_discards_secret_and_never_replays_old_token (__main__.EnterpriseCredentialTransactions.test_refresh_uncertainty_discards_secret_and_never_replays_old_token)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_auth_postgres.py", line 118, in test_refresh_uncertainty_discards_secret_and_never_replays_old_token
+    self.connected();called=[]
+    ~~~~~~~~~~~~~~^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_auth_postgres.py", line 42, in connected
+    principal=principal or self.principal;state=self.store.begin(principal,'sharepoint:drive','browser-nonce',{'verifier':'SYNTHETIC-PKCE-SECRET'});mapping,flow=self.store.consume(principal,'sharepoint:drive','browser-nonce',state);self.store.save(principal,mapping,{'refresh_token':'SYNTHETIC-INITIAL-REFRESH'});return mapping
+                                                ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/enterprise_auth_store.py", line 79, in begin
+    mapping=self._authorize(cur,principal,source_id)
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/enterprise_auth_store.py", line 60, in _authorize
+    membership=cur.execute('SELECT issuer,subject,active FROM enterprise_auth.memberships WHERE account_id=%s AND principal_key=%s FOR SHARE',(principal.account_id,principal.key)).fetchone()
+               ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/durable-runtime/lib/python3.13/site-packages/psycopg/cursor.py", line 117, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.InsufficientPrivilege: permission denied for table memberships
+
+======================================================================
+ERROR: test_state_is_single_use_under_eight_concurrent_callbacks (__main__.EnterpriseCredentialTransactions.test_state_is_single_use_under_eight_concurrent_callbacks)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_auth_postgres.py", line 56, in test_state_is_single_use_under_eight_concurrent_callbacks
+    state=self.store.begin(self.principal,'sharepoint:drive','browser-nonce',{'verifier':'SYNTHETIC-PKCE-SECRET'})
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/enterprise_auth_store.py", line 79, in begin
+    mapping=self._authorize(cur,principal,source_id)
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/enterprise_auth_store.py", line 60, in _authorize
+    membership=cur.execute('SELECT issuer,subject,active FROM enterprise_auth.memberships WHERE account_id=%s AND principal_key=%s FOR SHARE',(principal.account_id,principal.key)).fetchone()
+               ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/durable-runtime/lib/python3.13/site-packages/psycopg/cursor.py", line 117, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.InsufficientPrivilege: permission denied for table memberships
+
+======================================================================
+ERROR: test_state_rejects_other_browser_person_source_and_expired_attempt (__main__.EnterpriseCredentialTransactions.test_state_rejects_other_browser_person_source_and_expired_attempt)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/tests/runtime/enterprise_auth_postgres.py", line 67, in test_state_rejects_other_browser_person_source_and_expired_attempt
+    state=self.store.begin(self.principal,'sharepoint:drive','browser-nonce',{'flow':'data'})
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/enterprise_auth_store.py", line 79, in begin
+    mapping=self._authorize(cur,principal,source_id)
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/src/runtime/enterprise_auth_store.py", line 60, in _authorize
+    membership=cur.execute('SELECT issuer,subject,active FROM enterprise_auth.memberships WHERE account_id=%s AND principal_key=%s FOR SHARE',(principal.account_id,principal.key)).fetchone()
+               ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/javadtaghia/gitlab/ai-architect-workbench/.local/durable-runtime/lib/python3.13/site-packages/psycopg/cursor.py", line 117, in execute
+    raise ex.with_traceback(None)
+psycopg.errors.InsufficientPrivilege: permission denied for table memberships
+
+----------------------------------------------------------------------
+Ran 12 tests in 0.287s
+
+FAILED (errors=11)

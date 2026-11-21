@@ -1,0 +1,30 @@
+{
+  "validator": "azure-final-receiving",
+  "artifactSha256": "22d35c9d11612c91094b4b1e89b1a429000e5ae0be9dc3a6697758ab8843f7ab",
+  "imageId": "sha256:63164e32f99523d8b2f108ee05095d51de7a951934cdc6bd3c99ee78993e8f5f",
+  "runtimeConfigImageId": "sha256:63164e32f99523d8b2f108ee05095d51de7a951934cdc6bd3c99ee78993e8f5f",
+  "platform": "linux/amd64",
+  "isolationProfile": "postgresql-local-v1",
+  "runtimeEnvironment": {},
+  "command": [
+    "/usr/local/bin/python3",
+    "-I",
+    "/opt/atmem/sql_validation.py",
+    "-m",
+    "unittest",
+    "discover",
+    "-v"
+  ],
+  "status": "passed",
+  "exitCode": 0,
+  "executableScratch": true,
+  "skipped": 0,
+  "testsReported": 16,
+  "reason": null,
+  "output": "LOCAL FIXTURES: real PostgreSQL 170011 Python 3.13.18 platform linux supervisor uid 65532 ; synthetic Entra RSA/TLS catalogue/SQL passwords\ntest_child_cannot_read_supervisor_environment_and_bad_tls_no_effect (tests.test_integration.Integration.test_child_cannot_read_supervisor_environment_and_bad_tls_no_effect) ... ok\ntest_child_credentials_deadlines_and_bad_tls_receipt (tests.test_integration.Integration.test_child_credentials_deadlines_and_bad_tls_receipt) ... ok\ntest_clean_offline_vendored_dependencies_in_target_runtime (tests.test_integration.Integration.test_clean_offline_vendored_dependencies_in_target_runtime) ... VENDORED TARGET IMPORTS: Clean receiving imports, restricted SQL and synthetic RSA round trip passed\n{'psycopg': '3.3.8', 'azure-identity': '1.27.0', 'PyJWT': '2.15.1', 'fastapi': '0.162.0', 'procrastinate': '3.10.0'}\nok\ntest_closed_request_types_and_no_caller_authority (tests.test_integration.Integration.test_closed_request_types_and_no_caller_authority) ... ok\ntest_concurrent_idempotency_atomic_queue_and_owner_conflict (tests.test_integration.Integration.test_concurrent_idempotency_atomic_queue_and_owner_conflict) ... ok\ntest_database_runtime_roles_cannot_administer_or_erase_history (tests.test_integration.Integration.test_database_runtime_roles_cannot_administer_or_erase_history) ... ok\ntest_full_async_queue_journey_and_exact_https_payload (tests.test_integration.Integration.test_full_async_queue_journey_and_exact_https_payload) ... ok\ntest_identity_live_revocation_and_account_isolation (tests.test_integration.Integration.test_identity_live_revocation_and_account_isolation) ... ok\ntest_lease_fencing_processing_and_ambiguous_dispatch_recovery (tests.test_integration.Integration.test_lease_fencing_processing_and_ambiguous_dispatch_recovery) ... ok\ntest_payload_tamper_and_contract_changes_block_send (tests.test_integration.Integration.test_payload_tamper_and_contract_changes_block_send) ... ok\ntest_real_database_restart_and_worker_reconnect (tests.test_integration.Integration.test_real_database_restart_and_worker_reconnect) ... ok\ntest_review_revision_inspection_hash_and_curator_policy (tests.test_integration.Integration.test_review_revision_inspection_hash_and_curator_policy) ... ok\ntest_revoked_reviewer_before_dispatch_cannot_publish (tests.test_integration.Integration.test_revoked_reviewer_before_dispatch_cannot_publish) ... ok\ntest_unicode_byte_boundaries_escaped_and_raw (tests.test_integration.Integration.test_unicode_byte_boundaries_escaped_and_raw) ... ok\ntest_unknown_no_replay_after_restart_and_reapproval (tests.test_integration.Integration.test_unknown_no_replay_after_restart_and_reapproval) ... ok\ntest_worker_restart_preserves_pending_and_reconciles_lost_notification (tests.test_integration.Integration.test_worker_restart_preserves_pending_and_reconciles_lost_notification) ... ok\n\n----------------------------------------------------------------------\nRan 16 tests in 92.653s\n\nOK\n",
+  "outputTruncated": false,
+  "durationSeconds": 96.46,
+  "evidenceLevel": "local_container_check",
+  "cloudOperations": false,
+  "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance."
+}

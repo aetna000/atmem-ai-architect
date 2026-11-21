@@ -1,0 +1,40 @@
+{
+  "passed": true,
+  "nativeMockTests": 7,
+  "existingWorkerArnVerified": true,
+  "runtimeDocumentMatchesNativePlan": true,
+  "probeSourceSha256": "65729a50acab48083ac0fffa4aef02e0da08a3c236750e477ea500c9ffae24e4",
+  "nativeLogSha256": "6fc535500209c3573f8fa1fad89b73a334a673b136fc13a13f1e4d8c4a2b33d8",
+  "verifierSha256": "8f4b20f4a39b6beb3f4a44bd328ed7f63a6b6f61d9396920ffb52b181d9ddf3a",
+  "hostPolicySha256": "1cb28c2e0fe4acd097cb933ccf7e8a23a59f1f1508b0cef600b97de609845538",
+  "calls": [
+    [
+      "ecs",
+      "list_container_instances"
+    ],
+    [
+      "ecs",
+      "describe_container_instances"
+    ],
+    [
+      "ssm",
+      "get_document"
+    ],
+    [
+      "ssm",
+      "send_command"
+    ],
+    [
+      "ssm",
+      "get_command_invocation"
+    ]
+  ],
+  "placement": [
+    {
+      "type": "memberOf",
+      "expression": "ec2InstanceId in ['i-aaaaaaaaaaaaaaaaa']"
+    }
+  ],
+  "cloudOperations": false,
+  "scope": "Positive native Terraform output consumed by runtime, exact probe/argument binding and native ECS/SSM input schemas. Service responses are fixtures; no actual host/account or full-project acceptance."
+}

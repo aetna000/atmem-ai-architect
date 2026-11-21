@@ -1,0 +1,51 @@
+[
+  {
+    "id": "placed-browser-tests",
+    "label": "Sandboxed ARM browser tests",
+    "workerId": "arm-browser",
+    "image": "sha256:df7f71a8588253403dfa833c5c4aacc95ca340204a88d5483edd58131c7f1128",
+    "platform": "linux/arm64",
+    "bootstrapPython": "/usr/bin/python3",
+    "isolationProfile": "chromium-userns-v1",
+    "runtimeEnvironment": {
+      "ATMEM_PLAYWRIGHT_MODULE": "/opt/atmem/playwright-core/index.mjs"
+    },
+    "command": [
+      "/usr/bin/node",
+      "--test",
+      "tests/browser.test.mjs"
+    ],
+    "timeoutSeconds": 60,
+    "applicability": {
+      "anyOf": [
+        "tests/browser.test.mjs"
+      ]
+    }
+  },
+  {
+    "id": "placed-process-tests",
+    "label": "Full AMD64 process controls and SQL",
+    "workerId": "full-amd64",
+    "image": "sha256:bafc5723ac59b025d42337e4c965e6d7b89a07da3d18b49a9384cfa70274f8e2",
+    "platform": "linux/amd64",
+    "isolationProfile": "postgresql-local-v1",
+    "executableScratch": true,
+    "command": [
+      "/usr/local/bin/python3",
+      "-I",
+      "/opt/atmem/sql_validation.py",
+      "-m",
+      "unittest",
+      "discover",
+      "-s",
+      "checks",
+      "-v"
+    ],
+    "timeoutSeconds": 120,
+    "applicability": {
+      "anyOf": [
+        "checks/test_amd64.py"
+      ]
+    }
+  }
+]

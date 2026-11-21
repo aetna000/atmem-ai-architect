@@ -1,0 +1,90 @@
+{
+  "revision": 2,
+  "provider": "azure",
+  "rows": [
+    {
+      "id": "caller",
+      "address": "block_63616c6c6572",
+      "label": "Existing service identity",
+      "provider": "tools",
+      "service": "Existing service identity",
+      "existing": true,
+      "foundation": false,
+      "compute": false,
+      "reference": true,
+      "implemented": true,
+      "resources": [],
+      "settings": {},
+      "region": "To be selected",
+      "dependencies": [],
+      "terraform": "Existing principal reference; permissions require review"
+    },
+    {
+      "id": "blob-store",
+      "address": "block_626c6f622d73746f7265",
+      "label": "Private document storage",
+      "provider": "azure",
+      "service": "Azure Blob Storage",
+      "existing": false,
+      "foundation": true,
+      "compute": false,
+      "reference": false,
+      "implemented": true,
+      "resources": [
+        "azurerm_storage_account",
+        "azurerm_storage_container",
+        "azurerm_role_definition",
+        "azurerm_role_assignment"
+      ],
+      "settings": {},
+      "region": "australiaeast (candidate)",
+      "dependencies": [],
+      "terraform": "Typed native storage and scoped object permissions generated; cloud verification required"
+    }
+  ],
+  "connections": [
+    {
+      "id": "caller-blob",
+      "source": "caller",
+      "target": "blob-store",
+      "type": "smoothstep",
+      "label": "upload / read / delete objects (scoped role)",
+      "access": "storage-object-admin",
+      "generated": true
+    }
+  ],
+  "storageContracts": [
+    {
+      "id": "blob-store",
+      "address": "block_626c6f622d73746f7265",
+      "callerId": "caller"
+    }
+  ],
+  "gapDetails": [],
+  "gaps": [],
+  "accessPlan": {
+    "bindings": [],
+    "connections": []
+  },
+  "asyncPlan": {
+    "pipelines": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": []
+  },
+  "scope": "Native storage foundation only; emulator does not validate IAM or control-plane deployment.",
+  "sources": []
+}

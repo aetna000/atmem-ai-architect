@@ -1,0 +1,486 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "sim",
+      "address": "block_73696d",
+      "label": "Synthetic device publisher",
+      "provider": "tools",
+      "service": "Storage or existing data connector",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "es",
+      "address": "block_6573",
+      "label": "Telemetry buffer",
+      "provider": "ibm",
+      "service": "IBM Event Streams",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "sim",
+        "validator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "validator",
+      "address": "block_76616c696461746f72",
+      "label": "Validator & scoring app",
+      "provider": "ibm",
+      "service": "IBM Cloud Code Engine",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "es"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "registry",
+      "address": "block_7265676973747279",
+      "label": "Device registry",
+      "provider": "ibm",
+      "service": "IBM Cloudant",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "validator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "model",
+      "address": "block_6d6f64656c",
+      "label": "Anomaly model",
+      "provider": "ibm",
+      "service": "IBM watsonx.ai Runtime",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "validator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "results",
+      "address": "block_726573756c7473",
+      "label": "Anomaly results",
+      "provider": "ibm",
+      "service": "IBM Cloud Databases for PostgreSQL",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "validator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "alerts",
+      "address": "block_616c65727473",
+      "label": "Operator alert",
+      "provider": "ibm",
+      "service": "IBM Cloud Event Notifications",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "validator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "operator",
+      "address": "block_6f70657261746f72",
+      "label": "Operator",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "alerts"
+      ],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "mon",
+      "address": "block_6d6f6e",
+      "label": "Pipeline monitoring",
+      "provider": "ibm",
+      "service": "IBM Cloud Monitoring",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "validator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e-sim-es",
+      "source": "sim",
+      "target": "es",
+      "data": "Kafka produce telemetry.raw",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-es-val",
+      "source": "es",
+      "target": "validator",
+      "data": "consume + replay from offset",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-val-reg",
+      "source": "validator",
+      "target": "registry",
+      "data": "lookup device & units",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-val-es",
+      "source": "validator",
+      "target": "es",
+      "data": "rejects to telemetry.rejected",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-val-model",
+      "source": "validator",
+      "target": "model",
+      "data": "score request",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-val-res",
+      "source": "validator",
+      "target": "results",
+      "data": "idempotent upsert result",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-val-alert",
+      "source": "validator",
+      "target": "alerts",
+      "data": "publish anomaly alert",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-alert-op",
+      "source": "alerts",
+      "target": "operator",
+      "data": "notify",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-val-mon",
+      "source": "validator",
+      "target": "mon",
+      "data": "metrics",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Synthetic device publisher: Existing — reference/import plan needed.",
+    "Telemetry buffer: Implementation needed.",
+    "Validator & scoring app: Implementation needed.",
+    "Device registry: Implementation needed.",
+    "Anomaly model: Implementation needed.",
+    "Anomaly results: Implementation needed.",
+    "Operator alert: Implementation needed.",
+    "Operator: Existing — reference/import plan needed.",
+    "Pipeline monitoring: Implementation needed.",
+    "Wire sim → es: implement data flow, access policy and acceptance test.",
+    "Wire es → validator: implement data flow, access policy and acceptance test.",
+    "Wire validator → registry: implement data flow, access policy and acceptance test.",
+    "Wire validator → es: implement data flow, access policy and acceptance test.",
+    "Wire validator → model: implement data flow, access policy and acceptance test.",
+    "Wire validator → results: implement data flow, access policy and acceptance test.",
+    "Wire validator → alerts: implement data flow, access policy and acceptance test.",
+    "Wire alerts → operator: implement data flow, access policy and acceptance test.",
+    "Wire validator → mon: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "resource-block_73696d",
+      "componentIds": [
+        "sim"
+      ],
+      "taskId": "TASK-RESOURCE-73696d",
+      "message": "Synthetic device publisher: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_6573",
+      "componentIds": [
+        "es"
+      ],
+      "taskId": "TASK-RESOURCE-6573",
+      "message": "Telemetry buffer: Implementation needed."
+    },
+    {
+      "id": "resource-block_76616c696461746f72",
+      "componentIds": [
+        "validator"
+      ],
+      "taskId": "TASK-RESOURCE-76616c696461746f72",
+      "message": "Validator & scoring app: Implementation needed."
+    },
+    {
+      "id": "resource-block_7265676973747279",
+      "componentIds": [
+        "registry"
+      ],
+      "taskId": "TASK-RESOURCE-7265676973747279",
+      "message": "Device registry: Implementation needed."
+    },
+    {
+      "id": "resource-block_6d6f64656c",
+      "componentIds": [
+        "model"
+      ],
+      "taskId": "TASK-RESOURCE-6d6f64656c",
+      "message": "Anomaly model: Implementation needed."
+    },
+    {
+      "id": "resource-block_726573756c7473",
+      "componentIds": [
+        "results"
+      ],
+      "taskId": "TASK-RESOURCE-726573756c7473",
+      "message": "Anomaly results: Implementation needed."
+    },
+    {
+      "id": "resource-block_616c65727473",
+      "componentIds": [
+        "alerts"
+      ],
+      "taskId": "TASK-RESOURCE-616c65727473",
+      "message": "Operator alert: Implementation needed."
+    },
+    {
+      "id": "resource-block_6f70657261746f72",
+      "componentIds": [
+        "operator"
+      ],
+      "taskId": "TASK-RESOURCE-6f70657261746f72",
+      "message": "Operator: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_6d6f6e",
+      "componentIds": [
+        "mon"
+      ],
+      "taskId": "TASK-RESOURCE-6d6f6e",
+      "message": "Pipeline monitoring: Implementation needed."
+    },
+    {
+      "id": "connection-652d73696d2d6573",
+      "edgeIds": [
+        "e-sim-es"
+      ],
+      "taskId": "TASK-INTEGRATION-652d73696d2d6573",
+      "message": "Wire sim → es: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d65732d76616c",
+      "edgeIds": [
+        "e-es-val"
+      ],
+      "taskId": "TASK-INTEGRATION-652d65732d76616c",
+      "message": "Wire es → validator: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d76616c2d726567",
+      "edgeIds": [
+        "e-val-reg"
+      ],
+      "taskId": "TASK-INTEGRATION-652d76616c2d726567",
+      "message": "Wire validator → registry: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d76616c2d6573",
+      "edgeIds": [
+        "e-val-es"
+      ],
+      "taskId": "TASK-INTEGRATION-652d76616c2d6573",
+      "message": "Wire validator → es: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d76616c2d6d6f64656c",
+      "edgeIds": [
+        "e-val-model"
+      ],
+      "taskId": "TASK-INTEGRATION-652d76616c2d6d6f64656c",
+      "message": "Wire validator → model: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d76616c2d726573",
+      "edgeIds": [
+        "e-val-res"
+      ],
+      "taskId": "TASK-INTEGRATION-652d76616c2d726573",
+      "message": "Wire validator → results: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d76616c2d616c657274",
+      "edgeIds": [
+        "e-val-alert"
+      ],
+      "taskId": "TASK-INTEGRATION-652d76616c2d616c657274",
+      "message": "Wire validator → alerts: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d616c6572742d6f70",
+      "edgeIds": [
+        "e-alert-op"
+      ],
+      "taskId": "TASK-INTEGRATION-652d616c6572742d6f70",
+      "message": "Wire alerts → operator: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d76616c2d6d6f6e",
+      "edgeIds": [
+        "e-val-mon"
+      ],
+      "taskId": "TASK-INTEGRATION-652d76616c2d6d6f6e",
+      "message": "Wire validator → mon: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

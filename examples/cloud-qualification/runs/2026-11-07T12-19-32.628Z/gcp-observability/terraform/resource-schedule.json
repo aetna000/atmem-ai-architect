@@ -1,0 +1,516 @@
+{
+  "revision": 2,
+  "rows": [
+    {
+      "id": "src-synthetic",
+      "address": "block_7372632d73796e746865746963",
+      "label": "Synthetic services",
+      "provider": "tools",
+      "service": "Storage or existing data connector",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "otel-collector",
+      "address": "block_6f74656c2d636f6c6c6563746f72",
+      "label": "OpenTelemetry Collector",
+      "provider": "gcp",
+      "service": "Cloud Run",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "src-synthetic"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "pubsub-raw",
+      "address": "block_7075627375622d726177",
+      "label": "Raw telemetry topic",
+      "provider": "gcp",
+      "service": "Pub/Sub",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "otel-collector"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "ingest-worker",
+      "address": "block_696e676573742d776f726b6572",
+      "label": "Redaction and ingestion worker",
+      "provider": "gcp",
+      "service": "Cloud Run",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "pubsub-raw"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "dlp",
+      "address": "block_646c70",
+      "label": "Secret redaction",
+      "provider": "gcp",
+      "service": "Sensitive Data Protection (Cloud DLP)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "ingest-worker"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "bq-telemetry",
+      "address": "block_62712d74656c656d65747279",
+      "label": "Redacted telemetry store",
+      "provider": "gcp",
+      "service": "BigQuery",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "ingest-worker"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "analysis-runtime",
+      "address": "block_616e616c797369732d72756e74696d65",
+      "label": "Incident analysis service",
+      "provider": "gcp",
+      "service": "Cloud Run",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "bq-telemetry",
+        "iap"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "vertex-gemini",
+      "address": "block_7665727465782d67656d696e69",
+      "label": "Gemini model",
+      "provider": "gcp",
+      "service": "Vertex AI (Gemini)",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "analysis-runtime"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "iap",
+      "address": "block_696170",
+      "label": "Operator access",
+      "provider": "gcp",
+      "service": "Identity-Aware Proxy",
+      "selection": "Needs service confirmation",
+      "existing": false,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [
+        "operator"
+      ],
+      "terraform": "Implementation needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    },
+    {
+      "id": "operator",
+      "address": "block_6f70657261746f72",
+      "label": "Incident operator",
+      "provider": "tools",
+      "service": "Approval workflow",
+      "selection": "Needs service confirmation",
+      "existing": true,
+      "region": "To be selected",
+      "resources": [],
+      "costDrivers": "Confirm service, capacity and billable dimensions",
+      "dependencies": [],
+      "terraform": "Existing — reference/import plan needed",
+      "foundation": false,
+      "compute": false,
+      "api": false,
+      "summary": false,
+      "settings": {},
+      "reference": false,
+      "implemented": false
+    }
+  ],
+  "connections": [
+    {
+      "id": "e-src-otel",
+      "source": "src-synthetic",
+      "target": "otel-collector",
+      "data": "OTLP logs and traces",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-otel-pubsub",
+      "source": "otel-collector",
+      "target": "pubsub-raw",
+      "data": "publish batches",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-pubsub-worker",
+      "source": "pubsub-raw",
+      "target": "ingest-worker",
+      "data": "push subscription",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-worker-dlp",
+      "source": "ingest-worker",
+      "target": "dlp",
+      "data": "de-identify content",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-worker-bq",
+      "source": "ingest-worker",
+      "target": "bq-telemetry",
+      "data": "idempotent upsert of redacted records",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-bq-runtime",
+      "source": "bq-telemetry",
+      "target": "analysis-runtime",
+      "data": "timeline and evidence query",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-runtime-vertex",
+      "source": "analysis-runtime",
+      "target": "vertex-gemini",
+      "data": "generateContent (no tools)",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-operator-iap",
+      "source": "operator",
+      "target": "iap",
+      "data": "HTTPS sign-in",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    },
+    {
+      "id": "e-iap-runtime",
+      "source": "iap",
+      "target": "analysis-runtime",
+      "data": "authenticated request; returns cited answer",
+      "generated": false,
+      "status": "Application integration and permissions not implemented"
+    }
+  ],
+  "accessPlan": {
+    "connections": [],
+    "bindings": []
+  },
+  "asyncPlan": {
+    "pipelines": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "summaryPlan": {
+    "entries": [],
+    "modelIds": [],
+    "edgeIds": []
+  },
+  "ragPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "sourceContractPlan": {
+    "sources": [],
+    "connections": []
+  },
+  "webPlan": {
+    "entries": [],
+    "componentIds": [],
+    "edgeIds": []
+  },
+  "gaps": [
+    "Synthetic services: Existing — reference/import plan needed.",
+    "OpenTelemetry Collector: Implementation needed.",
+    "Raw telemetry topic: Implementation needed.",
+    "Redaction and ingestion worker: Implementation needed.",
+    "Secret redaction: Implementation needed.",
+    "Redacted telemetry store: Implementation needed.",
+    "Incident analysis service: Implementation needed.",
+    "Gemini model: Implementation needed.",
+    "Operator access: Implementation needed.",
+    "Incident operator: Existing — reference/import plan needed.",
+    "Wire src-synthetic → otel-collector: implement data flow, access policy and acceptance test.",
+    "Wire otel-collector → pubsub-raw: implement data flow, access policy and acceptance test.",
+    "Wire pubsub-raw → ingest-worker: implement data flow, access policy and acceptance test.",
+    "Wire ingest-worker → dlp: implement data flow, access policy and acceptance test.",
+    "Wire ingest-worker → bq-telemetry: implement data flow, access policy and acceptance test.",
+    "Wire bq-telemetry → analysis-runtime: implement data flow, access policy and acceptance test.",
+    "Wire analysis-runtime → vertex-gemini: implement data flow, access policy and acceptance test.",
+    "Wire operator → iap: implement data flow, access policy and acceptance test.",
+    "Wire iap → analysis-runtime: implement data flow, access policy and acceptance test."
+  ],
+  "gapDetails": [
+    {
+      "id": "resource-block_7372632d73796e746865746963",
+      "componentIds": [
+        "src-synthetic"
+      ],
+      "taskId": "TASK-RESOURCE-7372632d73796e746865746963",
+      "message": "Synthetic services: Existing — reference/import plan needed."
+    },
+    {
+      "id": "resource-block_6f74656c2d636f6c6c6563746f72",
+      "componentIds": [
+        "otel-collector"
+      ],
+      "taskId": "TASK-RESOURCE-6f74656c2d636f6c6c6563746f72",
+      "message": "OpenTelemetry Collector: Implementation needed."
+    },
+    {
+      "id": "resource-block_7075627375622d726177",
+      "componentIds": [
+        "pubsub-raw"
+      ],
+      "taskId": "TASK-RESOURCE-7075627375622d726177",
+      "message": "Raw telemetry topic: Implementation needed."
+    },
+    {
+      "id": "resource-block_696e676573742d776f726b6572",
+      "componentIds": [
+        "ingest-worker"
+      ],
+      "taskId": "TASK-RESOURCE-696e676573742d776f726b6572",
+      "message": "Redaction and ingestion worker: Implementation needed."
+    },
+    {
+      "id": "resource-block_646c70",
+      "componentIds": [
+        "dlp"
+      ],
+      "taskId": "TASK-RESOURCE-646c70",
+      "message": "Secret redaction: Implementation needed."
+    },
+    {
+      "id": "resource-block_62712d74656c656d65747279",
+      "componentIds": [
+        "bq-telemetry"
+      ],
+      "taskId": "TASK-RESOURCE-62712d74656c656d65747279",
+      "message": "Redacted telemetry store: Implementation needed."
+    },
+    {
+      "id": "resource-block_616e616c797369732d72756e74696d65",
+      "componentIds": [
+        "analysis-runtime"
+      ],
+      "taskId": "TASK-RESOURCE-616e616c797369732d72756e74696d65",
+      "message": "Incident analysis service: Implementation needed."
+    },
+    {
+      "id": "resource-block_7665727465782d67656d696e69",
+      "componentIds": [
+        "vertex-gemini"
+      ],
+      "taskId": "TASK-RESOURCE-7665727465782d67656d696e69",
+      "message": "Gemini model: Implementation needed."
+    },
+    {
+      "id": "resource-block_696170",
+      "componentIds": [
+        "iap"
+      ],
+      "taskId": "TASK-RESOURCE-696170",
+      "message": "Operator access: Implementation needed."
+    },
+    {
+      "id": "resource-block_6f70657261746f72",
+      "componentIds": [
+        "operator"
+      ],
+      "taskId": "TASK-RESOURCE-6f70657261746f72",
+      "message": "Incident operator: Existing — reference/import plan needed."
+    },
+    {
+      "id": "connection-652d7372632d6f74656c",
+      "edgeIds": [
+        "e-src-otel"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7372632d6f74656c",
+      "message": "Wire src-synthetic → otel-collector: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6f74656c2d707562737562",
+      "edgeIds": [
+        "e-otel-pubsub"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6f74656c2d707562737562",
+      "message": "Wire otel-collector → pubsub-raw: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d7075627375622d776f726b6572",
+      "edgeIds": [
+        "e-pubsub-worker"
+      ],
+      "taskId": "TASK-INTEGRATION-652d7075627375622d776f726b6572",
+      "message": "Wire pubsub-raw → ingest-worker: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d776f726b65722d646c70",
+      "edgeIds": [
+        "e-worker-dlp"
+      ],
+      "taskId": "TASK-INTEGRATION-652d776f726b65722d646c70",
+      "message": "Wire ingest-worker → dlp: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d776f726b65722d6271",
+      "edgeIds": [
+        "e-worker-bq"
+      ],
+      "taskId": "TASK-INTEGRATION-652d776f726b65722d6271",
+      "message": "Wire ingest-worker → bq-telemetry: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d62712d72756e74696d65",
+      "edgeIds": [
+        "e-bq-runtime"
+      ],
+      "taskId": "TASK-INTEGRATION-652d62712d72756e74696d65",
+      "message": "Wire bq-telemetry → analysis-runtime: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d72756e74696d652d766572746578",
+      "edgeIds": [
+        "e-runtime-vertex"
+      ],
+      "taskId": "TASK-INTEGRATION-652d72756e74696d652d766572746578",
+      "message": "Wire analysis-runtime → vertex-gemini: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6f70657261746f722d696170",
+      "edgeIds": [
+        "e-operator-iap"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6f70657261746f722d696170",
+      "message": "Wire operator → iap: implement data flow, access policy and acceptance test."
+    },
+    {
+      "id": "connection-652d6961702d72756e74696d65",
+      "edgeIds": [
+        "e-iap-runtime"
+      ],
+      "taskId": "TASK-INTEGRATION-652d6961702d72756e74696d65",
+      "message": "Wire iap → analysis-runtime: implement data flow, access policy and acceptance test."
+    }
+  ],
+  "scope": "Diagram-derived resource schedule; service choices and resource types require engineering review.",
+  "sources": [
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/s3_bucket",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrock_guardrail",
+    "https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/bedrockagent_knowledge_base",
+    "https://aws.amazon.com/bedrock/pricing/"
+  ]
+}

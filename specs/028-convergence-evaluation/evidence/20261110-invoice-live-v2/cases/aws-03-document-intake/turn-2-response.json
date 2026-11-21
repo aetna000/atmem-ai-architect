@@ -1,0 +1,321 @@
+{
+  "message": "We\u2019ll design for around 500 invoices a day, PDFs up to 10 MB, personal data and 90-day retention, with documents and extracted data staying in Australia. Let\u2019s propose AWS Sydney (ap-southeast-2), pending your agreement; service/model availability and processing geography remain unverified.\n\n**Can your existing accounting API keep invoice data in Australia too?** This determines whether approved delivery meets the residency rule; for example, \u201cyes\u201d, \u201chosted overseas\u201d or \u201cnot sure\u201d.",
+  "followUp": {
+    "question": "Can your existing accounting API keep invoice data in Australia too?",
+    "why": "Approved delivery must satisfy the Australian data boundary as well as storage and extraction.",
+    "example": "Yes; hosted overseas; or not sure.",
+    "topic": "systems"
+  },
+  "phase": "Architecture",
+  "proposal": {
+    "baseRevision": 2,
+    "title": "Record Australian residency, invoice limits and retention",
+    "body": "Preserves the complete invoice workflow, existing systems, IDs, positions and connections. Proposes Sydney placement without recording regional approval. Records 10 MB PDFs and 90-day original/audit retention; retains the proposed 100-page safeguard. Capacity planning assumes 30 intake days per month, approximately 15,000 invoices, not a measured monthly total. Regional availability, model processing policy, accounting location and backup deletion behavior require evidence.",
+    "next": {
+      "version": 1,
+      "revision": 2,
+      "name": "Asynchronous document intake",
+      "provider": "aws",
+      "requirements": "Users upload PDF invoices. Extract the supplier, invoice date, total and currency into a review queue. Delivery can repeat; retries must not create duplicate invoices. A reviewer approves a result before it is sent to our existing accounting API. Use AWS. Recommend a coherent system and the engineering choices. Ask only a small material business question when needed; do not make me configure the system.",
+      "nodes": [
+        {
+          "id": "staff-browser",
+          "type": "resource",
+          "position": {
+            "x": 0.0,
+            "y": 0.0
+          },
+          "data": {
+            "label": "Invoice upload and review",
+            "kind": "source",
+            "provider": "tools",
+            "description": "Existing staff browser outside provisioning scope. Staff upload PDF invoices, inspect extracted fields alongside source evidence and approve a specific result revision. Propose authenticated staff access with separately authorized reviewer membership.",
+            "config": {
+              "region": "To be selected",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "deploymentMode": "reference",
+            "poc": true,
+            "role": "human",
+            "topologyGroup": "Staff access",
+            "service": "Web browser",
+            "binding": "web-browser"
+          }
+        },
+        {
+          "id": "invoice-workflow",
+          "type": "resource",
+          "position": {
+            "x": 480.0,
+            "y": 0.0
+          },
+          "data": {
+            "label": "Invoice processing and approval",
+            "kind": "resource",
+            "provider": "aws",
+            "description": "Composed invoice-workflow deployment unit on Amazon ECS. Owns browser/API, background worker, isolated PDF/OCR parser, private versioned Amazon S3 originals, durable PostgreSQL queue/outbox on Amazon RDS, staff sign-in, SQL user/reviewer membership, regional model integration, separate workload identities and operating tasks/monitoring. Accepts PDFs up to 10,000,000 bytes; the proposed 100-page safeguard remains reviewable. Plans for approximately 500 invoices/day; 15,000/month assumes 30 intake days and is not measured usage. Invoices may contain personal data. Extracts supplier, invoice date, total and currency with source evidence into a durable review queue. Approval binds the exact result revision, source and destination contract; model output cannot authorize delivery. Transactional job creation, fenced worker leases and bounded retries preserve processing across failures. Accounting sends use stable operation and payload identity; uncertain outcomes are fenced for reconciliation rather than blindly resent. Destination must independently pass normalized-action-v1 and idempotency acceptance. Retain originals and extraction audit history for 90 days. Implement scheduled cleanup and review versions, backups and restore behavior against that requirement; retention eligibility alone does not prove erasure. Propose Sydney ap-southeast-2, not yet user-approved, with documents, extracted data, model processing, logs containing invoice data, backups and state restricted to Australia. No silent overseas inference or recovery fallback. Propose encryption, authorized staff/reviewer access and exclusion of invoice content from operational logs. Accounting residency is unresolved. Service/model availability, quotas, model data-retention policy, destination connectivity, build/scan evidence, restore and alert delivery remain unverified.",
+            "config": {
+              "maxPdfBytes": 10000000,
+              "retentionDays": 90,
+              "region": "ap-southeast-2",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "proposed",
+            "deploymentMode": "create",
+            "poc": true,
+            "role": "app",
+            "topologyGroup": "Invoice workflow",
+            "service": "Amazon ECS",
+            "implementation": "invoice-workflow"
+          }
+        },
+        {
+          "id": "accounting-api",
+          "type": "resource",
+          "position": {
+            "x": 960.0,
+            "y": 0.0
+          },
+          "data": {
+            "label": "Existing accounting API",
+            "kind": "tool",
+            "provider": "tools",
+            "description": "Client-owned existing accounting service, referenced without recreation or modification. Receives only approved invoice results. Vendor, hosting and processing locations, authentication and retention behavior are unknown; Australian residency must be established before sending invoice data. Its adapter must pass normalized-action-v1 acceptance, including durable idempotency for repeated operation IDs and reconciliation after ambiguous responses. Compatibility and residency are not established by this diagram.",
+            "config": {
+              "region": "Existing location \u2014 unconfirmed",
+              "classification": "Confidential",
+              "timeout": 5000
+            },
+            "inputPosition": "left",
+            "outputPosition": "right",
+            "origin": "existing",
+            "deploymentMode": "reference",
+            "poc": true,
+            "role": "app",
+            "topologyGroup": "Existing accounting",
+            "service": "Existing accounting API",
+            "binding": "existing-service"
+          }
+        }
+      ],
+      "edges": [
+        {
+          "id": "staff-to-invoice-workflow",
+          "source": "staff-browser",
+          "target": "invoice-workflow",
+          "type": "smoothstep",
+          "label": "HTTPS: upload PDFs, review evidence, approve; receive status",
+          "integration": "browser-https"
+        },
+        {
+          "id": "approved-invoice-to-accounting",
+          "source": "invoice-workflow",
+          "target": "accounting-api",
+          "type": "smoothstep",
+          "label": "Approved invoice API: stable operation ID, receipt and reconciliation",
+          "integration": "approved-accounting-api"
+        }
+      ]
+    }
+  },
+  "usageUpdates": [],
+  "requirementDrafts": [
+    {
+      "rationale": "Personal data could leave the required country through inference, backups, logs or accounting delivery even when primary storage is Australian. Regional placement alone is insufficient.",
+      "basis": "\u201cthey may contain personal data\u201d and \u201cKeep documents and extracted data in Australia; flag unverified service availability.\u201d",
+      "id": "ai-invoice-residency",
+      "statement": "Keep invoice documents and extracted data in Australia across storage, processing, inference, backups, recovery and accounting delivery. Proposed controls restrict personal-data access to authorized staff/workloads and exclude invoice content from operational logs. Verify service/model availability and processing geography before use; keep unresolved destinations blocked from receiving invoice data.",
+      "kind": "nonfunctional",
+      "category": "compliance",
+      "priority": "must",
+      "links": [
+        "invoice-workflow",
+        "accounting-api"
+      ]
+    },
+    {
+      "rationale": "Retention must cover originals and extraction evidence consistently; object versions or restored backups could otherwise retain or reintroduce expired personal data.",
+      "basis": "\u201cKeep originals and extraction audit history for 90 days.\u201d",
+      "id": "ai-invoice-retention",
+      "statement": "Retain invoice originals and extraction audit history for 90 days. Implement and verify cleanup across application records and object versions, with documented backup expiry and restoration handling; an exact deletion deadline and retention start event remain to be resolved.",
+      "kind": "nonfunctional",
+      "category": "compliance",
+      "priority": "must",
+      "links": [
+        "invoice-workflow"
+      ],
+      "measure": {
+        "metric": "Original and extraction audit retention",
+        "op": "==",
+        "target": 90.0,
+        "unit": "days"
+      }
+    },
+    {
+      "rationale": "The intake volume establishes a capacity baseline while durable queuing prevents transient processing failures from losing accepted invoices. Peak rates and completion deadlines are not yet specified.",
+      "basis": "\u201caround 500 per day\u201d and the existing durable invoice review workflow.",
+      "id": "ai-invoice-capacity",
+      "statement": "Support approximately 500 PDF invoices per day through durable intake, extraction and review without losing accepted work. Validate this baseline with representative PDFs and failure recovery; daily volume does not establish peak capacity or processing latency.",
+      "kind": "nonfunctional",
+      "category": "scalability",
+      "priority": "must",
+      "links": [
+        "invoice-workflow"
+      ]
+    }
+  ],
+  "requirementUpdates": [
+    {
+      "rationale": "Adds the stated upload limit while preserving the four-field extraction and review outcome; 10 MB is interpreted as 10,000,000 bytes.",
+      "id": "ai-invoice-extraction",
+      "statement": "Accept PDF invoice uploads up to 10 MB and durably present supplier, invoice date, total and currency in a review queue. Proposed safeguards show supporting source evidence, reject oversized uploads explicitly and keep failed or uncertain extraction visible for review rather than automatically delivering it.",
+      "sourceText": "PDF invoices up to 10 MB"
+    }
+  ],
+  "decisionUpdates": [
+    {
+      "subject": "data.country",
+      "value": "Australia",
+      "sourceText": "Keep documents and extracted data in Australia"
+    }
+  ],
+  "contextUsed": {
+    "status": "ready",
+    "enabled": true,
+    "engine": "AtMem 2.3.10 core SDK",
+    "recordsUsed": [],
+    "knowledgeRecordIds": [
+      "rec_4b6eebe375ca4f65b20a0f96e5cb6b48",
+      "rec_646317615895417a8b59e704b491681f",
+      "rec_059f62c23648461b922c52d529ab0564",
+      "rec_aa826b5fbd514988af8aaf13e5030b6f",
+      "rec_5d0326d5db5a4247ae4c9798a2d7077f",
+      "rec_4977498a0f0e42f6b5f236ec24898508"
+    ],
+    "skills": [
+      {
+        "id": "composition",
+        "name": "Architecture composition and engineering judgment",
+        "provider": "all",
+        "stages": [
+          "discover",
+          "design",
+          "review",
+          "deploy"
+        ],
+        "version": "1.0.0",
+        "digest": "df2291a4e0d48a979d4f7c6e99da046bdedfc0e54d41e0b5379b2bc8086b5be6",
+        "summary": "Choose and compose blocks through responsibility, contracts, state, identity, failure modes and trade-offs; verify the complete system.",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "architecture",
+        "name": "AI architecture and discovery",
+        "provider": "all",
+        "stages": [
+          "discover",
+          "design",
+          "review"
+        ],
+        "version": "1.3.0",
+        "digest": "c5cc1056e3ed9a00799882f3a7f4ff2e957e4941fe10e4fd865f5c02ceb01058",
+        "summary": "Clarify outcome, users, existing systems, data ownership and constraints. Evolve the diagram incrementally. Derive functional requirements and propose measurable quality targets as assumptions needing confirmation. Compare clouds against the actual requirements; do not assume an enterprise identity provider or a vendor. Keep proposed and accepted decisions distinct.",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "security",
+        "name": "Security and reliability",
+        "provider": "all",
+        "stages": [
+          "design",
+          "review",
+          "deploy"
+        ],
+        "version": "1.0.0",
+        "digest": "c75cf46b29eb786b27d88d36604f521d6d287182d47df7d5c03845585d64f914",
+        "summary": "Check data classification, residency, access boundaries, encryption choices, approval of automated actions, reliability and recovery. A drawn control is not enforcement evidence. Explain missing controls and tests. Propose requirements from the components and paths; mark default targets as suggestions, never existing company policy.",
+        "source": "AtMem AI Architect reviewed specialist guidance",
+        "reference": null,
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup"
+        ],
+        "enabled": true
+      },
+      {
+        "id": "aws",
+        "name": "AWS architecture guidance",
+        "provider": "aws",
+        "stages": [
+          "design",
+          "review",
+          "estimate",
+          "deploy"
+        ],
+        "version": "1.4.0",
+        "digest": "82147cbfe99396d8e659bc7c8d62ce57b0868983bc88c1ace0aaa860ecb9ba29",
+        "summary": "Apply AWS Well-Architected concerns to the drawn workload with evidence. Distinguish Bedrock on-demand model access, knowledge-base/vector storage, guardrails and IAM; they are separate concerns. S3 storage, requests and transfer are separate cost dimensions. A diagram is not a complete Well-Architected review. Native generation currently covers only S3 foundations.",
+        "source": "https://raw.githubusercontent.com/aws/agent-toolkit-for-aws/fb298e0b6bf2b308a3d2c212b2a09b9bace8e090/plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+        "reference": {
+          "id": "aws",
+          "repository": "aws/agent-toolkit-for-aws",
+          "commit": "fb298e0b6bf2b308a3d2c212b2a09b9bace8e090",
+          "sourcePath": "plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+          "url": "https://raw.githubusercontent.com/aws/agent-toolkit-for-aws/fb298e0b6bf2b308a3d2c212b2a09b9bace8e090/plugins/aws-core/skills/aws-well-architected-review/SKILL.md",
+          "sha256": "aa8fef39ef6d64365e48827d9acc90b2b8755023f5c177341cf1c954c1057811",
+          "file": "agent-skills/upstream/aws/SKILL.md",
+          "status": "reference-only",
+          "note": "Imported source reference, not an enabled script/tool package. AtMem AI Architect specialist guidance is reviewed separately; referenced upstream companion files are not bundled.",
+          "integrity": true
+        },
+        "integrity": true,
+        "coverage": "guidance; no cloud execution",
+        "tools": [
+          "memory.lookup",
+          "project.read",
+          "skills.lookup",
+          "pricing.lookup"
+        ],
+        "enabled": true
+      }
+    ],
+    "tools": [],
+    "boundary": "AtMem AI Architect \u2192 native client",
+    "contextDigest": "4bb241a5ac16f200c89cc5befeac5c01eab07266161953beff5ea53149669f2a",
+    "projectId": "evaluation-aws-03-document-intake",
+    "responseRepairAttempts": 0,
+    "modelResponseEncodings": [
+      "compact_patch"
+    ],
+    "modelResponseJsonBytes": 7546
+  },
+  "priceQuotes": []
+}

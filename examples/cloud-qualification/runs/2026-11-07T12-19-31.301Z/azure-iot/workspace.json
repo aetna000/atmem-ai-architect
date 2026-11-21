@@ -1,0 +1,496 @@
+{
+  "version": 1,
+  "revision": 2,
+  "name": "Azure synthetic sensor anomaly detection",
+  "provider": "azure",
+  "requirements": "",
+  "nodes": [
+    {
+      "id": "sim",
+      "type": "resource",
+      "position": {
+        "x": 50,
+        "y": 200
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Synthetic device simulator",
+        "provider": "tools",
+        "kind": "source",
+        "description": "Existing test harness. It sends synthetic telemetry with deviceId, an event ID, the device timestamp, a value and its unit. It also produces duplicate, late, out-of-order and disconnect/reconnect cases.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "poc": true,
+        "role": "data"
+      }
+    },
+    {
+      "id": "iothub",
+      "type": "resource",
+      "position": {
+        "x": 470,
+        "y": 200
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Azure IoT Hub",
+        "provider": "azure",
+        "kind": "stream",
+        "description": "Device ingestion with an identity registry for each device. Unknown devices cannot authenticate. Message routing forwards telemetry to Event Hubs while keeping deviceId, the timestamp and the unit unchanged.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "ingest",
+        "service": "Azure IoT Hub"
+      }
+    },
+    {
+      "id": "eventhubs",
+      "type": "resource",
+      "position": {
+        "x": 890,
+        "y": 200
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Azure Event Hubs (durable buffer)",
+        "provider": "azure",
+        "kind": "stream",
+        "description": "Durable, partitioned buffer keyed by deviceId. Retention and consumer checkpoints let processing resume after a disconnect. Capture to Blob storage keeps the raw archive for longer-range replay.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "ingest",
+        "service": "Azure Event Hubs"
+      }
+    },
+    {
+      "id": "validator",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 545
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Azure Functions validator & scorer",
+        "provider": "azure",
+        "kind": "guard",
+        "description": "Event Hubs-triggered function. It rejects unknown devices and invalid units, checks the device's event ID against Cosmos DB to drop duplicates, and applies the late/out-of-order policy (not decided yet). It then calls the model and writes one result per event, including evidence and the model version.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "guard",
+        "service": "Azure Functions"
+      }
+    },
+    {
+      "id": "quarantine",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 50
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Azure Blob Storage (raw archive & quarantine)",
+        "provider": "azure",
+        "kind": "resource",
+        "description": "Private containers for the Event Hubs Capture raw archive (used for replay) and for rejected events with a reason code.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "data",
+        "service": "Azure Blob Storage"
+      }
+    },
+    {
+      "id": "registry",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 200
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Azure ML model registry",
+        "provider": "azure",
+        "kind": "registry",
+        "description": "Versioned anomaly models. The deployed version is stamped on every result. The training method is still open: unsupervised versus labelled.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "role": "model",
+        "service": "Azure Machine Learning"
+      }
+    },
+    {
+      "id": "aml",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 350
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Azure ML online endpoint",
+        "provider": "azure",
+        "kind": "predict",
+        "description": "Returns an anomaly score, the contributing evidence fields and the model version. In local tests it is replaced by a scripted mock, which proves contracts only, not detection quality.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "model",
+        "service": "Azure Machine Learning managed online endpoint"
+      }
+    },
+    {
+      "id": "cosmos",
+      "type": "resource",
+      "position": {
+        "x": 1730,
+        "y": 630
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Azure Cosmos DB (results & idempotency)",
+        "provider": "azure",
+        "kind": "output",
+        "description": "Results container with a unique key on deviceId plus eventId, so one event produces one result. Each result stores the score, evidence, model version and lateness flag. A device catalog container holds the allowed units.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "output",
+        "measures": [
+          {
+            "label": "Duplicate events yield one result",
+            "path": "duplicates.extraResults",
+            "op": "==",
+            "target": 0
+          },
+          {
+            "label": "Results name model version",
+            "path": "results.missingModelVersion",
+            "op": "==",
+            "target": 0
+          }
+        ],
+        "service": "Azure Cosmos DB"
+      }
+    },
+    {
+      "id": "monitor",
+      "type": "resource",
+      "position": {
+        "x": 2150,
+        "y": 630
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Azure Monitor alerts",
+        "provider": "azure",
+        "kind": "monitor",
+        "description": "Alert rules on anomaly results and pipeline health (Event Hubs lag, rejections, function errors). An action group notifies the operator.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "role": "monitor",
+        "service": "Azure Monitor"
+      }
+    },
+    {
+      "id": "operator",
+      "type": "resource",
+      "position": {
+        "x": 2570,
+        "y": 630
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Operator",
+        "provider": "tools",
+        "kind": "tool",
+        "description": "Person who receives anomaly alerts naming the device, the evidence and the model version.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "poc": true,
+        "role": "human"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e-sim-iot",
+      "source": "sim",
+      "target": "iothub",
+      "type": "smoothstep",
+      "label": "device telemetry (MQTT/HTTPS, per-device identity)"
+    },
+    {
+      "id": "e-iot-eh",
+      "source": "iothub",
+      "target": "eventhubs",
+      "type": "smoothstep",
+      "label": "message routing"
+    },
+    {
+      "id": "e-eh-blob",
+      "source": "eventhubs",
+      "target": "quarantine",
+      "type": "smoothstep",
+      "label": "Capture raw archive"
+    },
+    {
+      "id": "e-eh-val",
+      "source": "eventhubs",
+      "target": "validator",
+      "type": "smoothstep",
+      "label": "Event Hubs trigger (checkpointed)"
+    },
+    {
+      "id": "e-val-blob",
+      "source": "validator",
+      "target": "quarantine",
+      "type": "smoothstep",
+      "label": "rejected event + reason"
+    },
+    {
+      "id": "e-reg-aml",
+      "source": "registry",
+      "target": "aml",
+      "type": "smoothstep",
+      "label": "deploy model version"
+    },
+    {
+      "id": "e-val-aml",
+      "source": "validator",
+      "target": "aml",
+      "type": "smoothstep",
+      "label": "score request"
+    },
+    {
+      "id": "e-val-cosmos",
+      "source": "validator",
+      "target": "cosmos",
+      "type": "smoothstep",
+      "label": "idempotent result write"
+    },
+    {
+      "id": "e-cosmos-mon",
+      "source": "cosmos",
+      "target": "monitor",
+      "type": "smoothstep",
+      "label": "anomaly results / metrics"
+    },
+    {
+      "id": "e-mon-op",
+      "source": "monitor",
+      "target": "operator",
+      "type": "smoothstep",
+      "label": "action group alert"
+    }
+  ],
+  "id": "12cd5418-44be-4c27-b1c1-495c44279368",
+  "brief": {
+    "application": "Use Azure for this synthetic architecture qualification. Analyze synthetic sensor events for anomalous device behavior. Preserve device identity, timestamps and units. Include ingestion, durable buffering, validation, inference, results and an operator alert. Acceptance criteria: Reject unknown device and invalid units; Duplicate events produce one result; Late and out-of-order telemetry follows an explicit policy; Disconnected input recovers by replay; Anomaly output names evidence and model version. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+    "cloud": "Azure"
+  },
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use Azure for this synthetic architecture qualification",
+      "options": "",
+      "decision": "azure",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.azure-sensor-anomaly-pipeline-first-sketch",
+      "title": "Azure sensor anomaly pipeline (first sketch)",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: synthetic device events → IoT Hub → Event Hubs buffer → Functions validator/scorer → Azure ML endpoint → Cosmos DB results → Azure Monitor alert to operator. Rejected events go to Blob quarantine. Assumptions: region not selected; model type (unsupervised vs supervised) not decided; late-data window not decided; no deployment or access verified. No native Terraform generator covers this workload yet; the implementation still needs engineering work.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "needs": [
+    {
+      "id": "ai-reject-invalid",
+      "kind": "functional",
+      "category": "security",
+      "statement": "Reject events from unknown devices or with invalid units, and record each rejection with a reason without producing a result.",
+      "rationale": "If bad data gets through, it creates false anomalies and lets devices that shouldn't be sending data in.",
+      "basis": "User acceptance criterion: \"Reject unknown device and invalid units\".",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "iothub",
+        "validator",
+        "quarantine"
+      ]
+    },
+    {
+      "id": "ai-idempotent",
+      "kind": "functional",
+      "category": "reliability",
+      "statement": "Duplicate deliveries of the same device event produce exactly one result.",
+      "rationale": "Retries and replay will redeliver events, and duplicate alerts would wear down operator trust.",
+      "basis": "User acceptance criterion: \"Duplicate events produce one result\".",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "validator",
+        "cosmos"
+      ]
+    },
+    {
+      "id": "ai-late-policy",
+      "kind": "functional",
+      "category": "reliability",
+      "statement": "Late and out-of-order telemetry follows an explicit, documented policy based on the device timestamp (window not decided yet).",
+      "rationale": "Without a policy, results depend on arrival order and can't be reproduced.",
+      "basis": "User acceptance criterion: \"Late and out-of-order telemetry follows an explicit policy\".",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "validator",
+        "cosmos"
+      ]
+    },
+    {
+      "id": "ai-replay",
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "statement": "After a disconnect, processing resumes from the last checkpoint, and missed events are recovered by replay without losing data or duplicating results.",
+      "rationale": "The durable buffer is only useful if recovery is tested.",
+      "basis": "User acceptance criterion: \"Disconnected input recovers by replay\".",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "eventhubs",
+        "quarantine",
+        "validator"
+      ]
+    },
+    {
+      "id": "ai-explainable",
+      "kind": "functional",
+      "category": "maintainability",
+      "statement": "Each anomaly output names the device, the evidence (contributing readings with their timestamps and units) and the model version.",
+      "rationale": "Operators need to be able to act on an alert, and its result needs to be traceable to a model version.",
+      "basis": "User acceptance criterion: \"Anomaly output names evidence and model version\"; \"Preserve device identity, timestamps and units\".",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "aml",
+        "registry",
+        "cosmos",
+        "monitor"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "extensions": {
+    "requirementNumbers": {
+      "drv-data-access": 1,
+      "drv-data-location": 2,
+      "ai-reject-invalid": 3,
+      "ai-idempotent": 4,
+      "ai-late-policy": 5,
+      "ai-replay": 6,
+      "ai-explainable": 7
+    }
+  },
+  "facts": [
+    {
+      "id": "fact-d4e0b17a",
+      "name": "cloud.preference",
+      "value": "azure",
+      "unit": "provider",
+      "text": "Use Azure for this synthetic architecture qualification. Analyze synthetic sensor events for anomalous device behavior. Preserve device identity, timestamps and units. Include ingestion, durable buffering, validation, inference, results and an operator alert. Acceptance criteria: Reject unknown devi",
+      "madeAt": "2026-11-07"
+    }
+  ],
+  "workflow": "predictive",
+  "asked": [],
+  "lastAsked": {
+    "id": "predictive:0",
+    "topic": "data",
+    "question": "How much history do you have for what you want to predict?",
+    "beginner": "For example “three years of sales by store” or “failure records since 2020”.",
+    "why": "It shapes the Predictive ML design."
+  },
+  "choices": {},
+  "conceptSig": null
+}

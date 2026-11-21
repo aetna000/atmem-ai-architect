@@ -1,0 +1,81 @@
+test_actual_native_and_scanned_pdf (enterprise_document_linux.CompanyDocuments.test_actual_native_and_scanned_pdf) ... ok
+test_actual_office_and_text_content (enterprise_document_linux.CompanyDocuments.test_actual_office_and_text_content) ... 
+  test_actual_office_and_text_content (enterprise_document_linux.CompanyDocuments.test_actual_office_and_text_content) (case='policy.docx') ... ERROR
+  test_actual_office_and_text_content (enterprise_document_linux.CompanyDocuments.test_actual_office_and_text_content) (case='recovery.pptx') ... ERROR
+test_archive_not_recursively_admitted (enterprise_document_linux.CompanyDocuments.test_archive_not_recursively_admitted) ... ok
+test_declared_mime_cannot_mislabel_content (enterprise_document_linux.CompanyDocuments.test_declared_mime_cannot_mislabel_content) ... FAIL
+test_encrypted_empty_malformed_oversized_inputs_rejected (enterprise_document_linux.CompanyDocuments.test_encrypted_empty_malformed_oversized_inputs_rejected) ... ok
+test_large_text_rejected_without_partial_result (enterprise_document_linux.CompanyDocuments.test_large_text_rejected_without_partial_result) ... ok
+test_response_bound_to_bytes_mime_and_schema (enterprise_document_linux.CompanyDocuments.test_response_bound_to_bytes_mime_and_schema) ... ok
+test_busy_parser_returns_retryable_status (enterprise_parser_rpc_linux.NativeDocumentRpc.test_busy_parser_returns_retryable_status) ... ok
+test_duplicate_type_and_ambiguous_framing_denied (enterprise_parser_rpc_linux.NativeDocumentRpc.test_duplicate_type_and_ambiguous_framing_denied) ... ok
+test_mime_mismatch_never_returns_partial_text (enterprise_parser_rpc_linux.NativeDocumentRpc.test_mime_mismatch_never_returns_partial_text) ... FAIL
+test_missing_wrong_and_duplicate_credentials_denied (enterprise_parser_rpc_linux.NativeDocumentRpc.test_missing_wrong_and_duplicate_credentials_denied) ... ok
+test_owned_caller_gets_actual_docx (enterprise_parser_rpc_linux.NativeDocumentRpc.test_owned_caller_gets_actual_docx) ... FAIL
+
+======================================================================
+ERROR: test_actual_office_and_text_content (enterprise_document_linux.CompanyDocuments.test_actual_office_and_text_content) (case='policy.docx')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/qualification/tests/runtime/enterprise_document_linux.py", line 30, in test_actual_office_and_text_content
+    value = self.parser.extract(raw, case['mediaType'])
+  File "/app/enterprise_document.py", line 102, in extract
+    detected, text = self._tika(raw)
+                     ~~~~~~~~~~^^^^^
+  File "/app/enterprise_document.py", line 147, in _tika
+    raise ExtractionError('extraction_failed')
+enterprise_document.ExtractionError: extraction_failed
+
+======================================================================
+ERROR: test_actual_office_and_text_content (enterprise_document_linux.CompanyDocuments.test_actual_office_and_text_content) (case='recovery.pptx')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/qualification/tests/runtime/enterprise_document_linux.py", line 30, in test_actual_office_and_text_content
+    value = self.parser.extract(raw, case['mediaType'])
+  File "/app/enterprise_document.py", line 102, in extract
+    detected, text = self._tika(raw)
+                     ~~~~~~~~~~^^^^^
+  File "/app/enterprise_document.py", line 147, in _tika
+    raise ExtractionError('extraction_failed')
+enterprise_document.ExtractionError: extraction_failed
+
+======================================================================
+FAIL: test_declared_mime_cannot_mislabel_content (enterprise_document_linux.CompanyDocuments.test_declared_mime_cannot_mislabel_content)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/qualification/tests/runtime/enterprise_document_linux.py", line 54, in test_declared_mime_cannot_mislabel_content
+    self.assertEqual(error.exception.code, 'mime_mismatch')
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: 'extraction_failed' != 'mime_mismatch'
+- extraction_failed
++ mime_mismatch
+
+
+======================================================================
+FAIL: test_mime_mismatch_never_returns_partial_text (enterprise_parser_rpc_linux.NativeDocumentRpc.test_mime_mismatch_never_returns_partial_text)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/qualification/tests/runtime/enterprise_parser_rpc_linux.py", line 78, in test_mime_mismatch_never_returns_partial_text
+    self.assertEqual(value, {'status': 'rejected', 'reason': 'mime_mismatch'})
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: {'status': 'rejected', 'reason': 'extraction_failed'} != {'status': 'rejected', 'reason': 'mime_mismatch'}
+- {'reason': 'extraction_failed', 'status': 'rejected'}
+?              ^ -- ^^^^^^^^^^^
+
++ {'reason': 'mime_mismatch', 'status': 'rejected'}
+?             +++ ^^^^^^  ^
+
+
+======================================================================
+FAIL: test_owned_caller_gets_actual_docx (enterprise_parser_rpc_linux.NativeDocumentRpc.test_owned_caller_gets_actual_docx)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/qualification/tests/runtime/enterprise_parser_rpc_linux.py", line 55, in test_owned_caller_gets_actual_docx
+    self.assertEqual(status, 200)
+    ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+AssertionError: 422 != 200
+
+----------------------------------------------------------------------
+Ran 12 tests in 31.398s
+
+FAILED (failures=3, errors=2)

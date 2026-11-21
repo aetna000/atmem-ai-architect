@@ -1,0 +1,448 @@
+{
+  "version": 1,
+  "revision": 2,
+  "name": "Azure incident explainer (logs + traces)",
+  "provider": "azure",
+  "requirements": "",
+  "nodes": [
+    {
+      "id": "svc",
+      "type": "resource",
+      "position": {
+        "x": 50,
+        "y": 50
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Synthetic services (OTel)",
+        "provider": "tools",
+        "kind": "source",
+        "description": "Existing synthetic services that emit OpenTelemetry logs and spans with trace, span and log IDs. They sit outside the provisioning scope.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "poc": true
+      }
+    },
+    {
+      "id": "eh",
+      "type": "resource",
+      "position": {
+        "x": 470,
+        "y": 50
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Telemetry collection",
+        "provider": "azure",
+        "kind": "stream",
+        "description": "Takes in OTLP-exported log and trace batches. Partitioned by trace ID to keep ordering within each trace.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "Azure Event Hubs"
+      }
+    },
+    {
+      "id": "redact",
+      "type": "resource",
+      "position": {
+        "x": 890,
+        "y": 50
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Redaction & normalisation",
+        "provider": "azure",
+        "kind": "guard",
+        "description": "Event Hubs trigger. Masks secrets and tokens before storage or model input, normalises timestamps and writes records with deterministic keys (trace, span, log ID) so a replay is idempotent and the timeline stays consistent.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "Azure Functions"
+      }
+    },
+    {
+      "id": "adx",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 60
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Telemetry store & search",
+        "provider": "azure",
+        "kind": "history",
+        "description": "Holds the redacted logs and spans. Answers KQL queries for the incident timeline, trace trees and gap detection (missing spans). Ingestion deduplicates on record keys.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "Azure Data Explorer"
+      }
+    },
+    {
+      "id": "runtime",
+      "type": "resource",
+      "position": {
+        "x": 890,
+        "y": 340
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "AI analysis runtime",
+        "provider": "azure",
+        "kind": "agent",
+        "description": "Gets the evidence through a fixed, allowlisted KQL query tool and passes log text to the model as quoted data only, so model output cannot trigger tool calls. Checks that every conclusion cites existing trace or log IDs, and reports uncertainty when spans are missing. Returns the cited answer to the operator.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "Azure Container Apps"
+      }
+    },
+    {
+      "id": "aoai",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 340
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Incident reasoning model",
+        "provider": "azure",
+        "kind": "predict",
+        "description": "Chat model deployment that receives only redacted evidence. The model, quota and regional availability are not yet verified.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Confidential",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "poc": true,
+        "service": "Azure OpenAI Service"
+      }
+    },
+    {
+      "id": "operator",
+      "type": "resource",
+      "position": {
+        "x": 50,
+        "y": 340
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Operator",
+        "provider": "tools",
+        "kind": "tool",
+        "description": "Engineer who asks why the incident happened and reviews the cited answer.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "existing",
+        "role": "human"
+      }
+    },
+    {
+      "id": "entra",
+      "type": "resource",
+      "position": {
+        "x": 470,
+        "y": 330
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Operator sign-in",
+        "provider": "azure",
+        "kind": "resource",
+        "description": "Authenticates operators and issues the tokens that the runtime validates.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "service": "Microsoft Entra ID"
+      }
+    },
+    {
+      "id": "mon",
+      "type": "resource",
+      "position": {
+        "x": 1310,
+        "y": 620
+      },
+      "data": {
+        "inputPosition": "left",
+        "outputPosition": "right",
+        "label": "Runtime observability",
+        "provider": "azure",
+        "kind": "monitor",
+        "description": "Audit of questions, evidence IDs used, refusals, guard failures and latency. This is separate from the analysed synthetic telemetry.",
+        "config": {
+          "region": "To be selected",
+          "classification": "Internal",
+          "timeout": 5000
+        },
+        "origin": "proposed",
+        "service": "Azure Monitor Application Insights"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "e1",
+      "source": "svc",
+      "target": "eh",
+      "type": "smoothstep",
+      "label": "OTLP logs + spans"
+    },
+    {
+      "id": "e2",
+      "source": "eh",
+      "target": "redact",
+      "type": "smoothstep",
+      "label": "Event Hubs trigger"
+    },
+    {
+      "id": "e3",
+      "source": "redact",
+      "target": "adx",
+      "type": "smoothstep",
+      "label": "redacted, keyed ingest"
+    },
+    {
+      "id": "e4",
+      "source": "runtime",
+      "target": "adx",
+      "type": "smoothstep",
+      "label": "allowlisted KQL evidence query"
+    },
+    {
+      "id": "e5",
+      "source": "runtime",
+      "target": "aoai",
+      "type": "smoothstep",
+      "label": "redacted evidence prompt"
+    },
+    {
+      "id": "e6",
+      "source": "operator",
+      "target": "entra",
+      "type": "smoothstep",
+      "label": "sign-in"
+    },
+    {
+      "id": "e7",
+      "source": "entra",
+      "target": "runtime",
+      "type": "smoothstep",
+      "label": "token validation"
+    },
+    {
+      "id": "e8",
+      "source": "operator",
+      "target": "runtime",
+      "type": "smoothstep",
+      "label": "question / cited answer"
+    },
+    {
+      "id": "e9",
+      "source": "runtime",
+      "target": "mon",
+      "type": "smoothstep",
+      "label": "audit + telemetry"
+    }
+  ],
+  "id": "15542ff5-e0ef-4654-aba0-bdc817c11ffd",
+  "brief": {
+    "application": "Use Azure for this synthetic architecture qualification. Correlate synthetic logs and distributed traces to explain a service incident. Include collection, redaction, storage/search, an AI analysis runtime and an operator-facing answer with source evidence. Treat log text as untrusted. Acceptance criteria: Redact secrets before model input; Link conclusions to exact trace or log IDs; Prompt injection in a log cannot issue tool calls; Missing spans yield uncertainty rather than invented causes; Repeated ingestion preserves a consistent incident timeline. Draw the complete end-to-end architecture with concrete service choices and connected flows. Explain the first local test, distinguish mocked model behavior from actual model validation, and ask one useful missing-decision question. Do not reduce this application to storage to satisfy generator coverage. Do not invent successful deployment or approved region/account access.",
+    "cloud": "Azure"
+  },
+  "decisions": [
+    {
+      "id": "adr-001",
+      "subject": "platform.cloud",
+      "title": "platform.cloud",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "User statement: Use Azure for this synthetic architecture qualification",
+      "options": "",
+      "decision": "azure",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": "Chosen in the conversation"
+    },
+    {
+      "id": "adr-002",
+      "subject": "design.azure-log-trace-incident-explainer-first-end-to-end-sketch",
+      "title": "Azure log/trace incident explainer – first end-to-end sketch",
+      "owner": "",
+      "status": "Accepted",
+      "date": "2026-11-07",
+      "context": "Scope: collect synthetic OpenTelemetry logs and traces, redact secrets, store them with idempotent keys, retrieve the evidence and analyse it with Azure OpenAI, then return a cited answer to an Entra-authenticated operator. Assumptions: the data is synthetic, the region is still to be selected, and no account or model access has been verified. All Azure blocks are design-only: there are no native generators yet, so engineering is required. Log text is treated as untrusted data and is never used as instructions.",
+      "options": "",
+      "decision": "Drawn while talking as design revision 2.",
+      "consequences": "",
+      "revision": 1,
+      "supersedes": null,
+      "supersededBy": null,
+      "reason": ""
+    }
+  ],
+  "needs": [
+    {
+      "id": "req-a376ad93",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Every answer shows its sources",
+      "priority": "should",
+      "status": "open",
+      "source": "user",
+      "links": []
+    },
+    {
+      "id": "ai-redact-before-model",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Secrets and credentials are redacted before any log or span text is stored for analysis or sent to the model.",
+      "rationale": "If secrets leak into the prompt or the store, credentials are exposed.",
+      "basis": "User acceptance criterion: Redact secrets before model input.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "redact",
+        "aoai"
+      ]
+    },
+    {
+      "id": "ai-cite-ids",
+      "kind": "functional",
+      "category": "other",
+      "statement": "Every conclusion references exact trace, span or log IDs that exist in the store.",
+      "rationale": "Operators must be able to verify each claim, and uncited claims are untrustworthy.",
+      "basis": "User acceptance criterion: Link conclusions to exact trace or log IDs.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "runtime",
+        "adx"
+      ]
+    },
+    {
+      "id": "ai-injection-no-tools",
+      "kind": "nonfunctional",
+      "category": "security",
+      "statement": "Log content is treated as untrusted data; instructions embedded in logs cannot trigger tool calls or queries outside the allowlist.",
+      "rationale": "Without this, an attacker who can write a log line could steer the system.",
+      "basis": "User acceptance criterion: Prompt injection in a log cannot issue tool calls.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "runtime",
+        "redact"
+      ]
+    },
+    {
+      "id": "ai-missing-span-uncertainty",
+      "kind": "functional",
+      "category": "reliability",
+      "statement": "When spans are missing, the answer states the uncertainty instead of asserting a cause.",
+      "rationale": "Invented root causes mislead incident response.",
+      "basis": "User acceptance criterion: Missing spans yield uncertainty rather than invented causes.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "runtime",
+        "adx"
+      ]
+    },
+    {
+      "id": "ai-idempotent-timeline",
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "statement": "Re-ingesting the same telemetry produces an identical incident timeline, with no duplicates or reordering.",
+      "rationale": "Duplicates or reordering would corrupt the causal analysis.",
+      "basis": "User acceptance criterion: Repeated ingestion preserves a consistent incident timeline.",
+      "priority": "must",
+      "status": "open",
+      "source": "agent",
+      "links": [
+        "eh",
+        "redact",
+        "adx"
+      ]
+    }
+  ],
+  "assumptions": [],
+  "openQuestions": [],
+  "extensions": {
+    "requirementNumbers": {
+      "req-a376ad93": 1,
+      "drv-data-access": 2,
+      "drv-data-location": 3,
+      "ai-redact-before-model": 4,
+      "ai-cite-ids": 5,
+      "ai-injection-no-tools": 6,
+      "ai-missing-span-uncertainty": 7,
+      "ai-idempotent-timeline": 8
+    }
+  },
+  "facts": [
+    {
+      "id": "fact-fb820e8e",
+      "name": "cloud.preference",
+      "value": "azure",
+      "unit": "provider",
+      "text": "Use Azure for this synthetic architecture qualification. Correlate synthetic logs and distributed traces to explain a service incident. Include collection, redaction, storage/search, an AI analysis runtime and an operator-facing answer with source evidence. Treat log text as untrusted. Acceptance cr",
+      "madeAt": "2026-11-07"
+    }
+  ],
+  "workflow": "knowledge-assistant",
+  "asked": [],
+  "lastAsked": {
+    "id": "knowledge-assistant:0",
+    "topic": "data",
+    "question": "Where do the files live, and roughly how many are there?",
+    "beginner": "For example “SharePoint and a shared drive, about 20,000 files”.",
+    "why": "It shapes the RAG design."
+  },
+  "choices": {},
+  "conceptSig": null
+}

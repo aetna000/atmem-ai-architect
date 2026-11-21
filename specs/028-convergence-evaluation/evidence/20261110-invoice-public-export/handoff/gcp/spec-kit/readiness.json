@@ -1,0 +1,181 @@
+{
+  "format": "atmem.handoff-assessment",
+  "version": 1,
+  "designRevision": 1,
+  "status": "engineering_required",
+  "stages": {
+    "design": "decisions_required",
+    "infrastructure": "generated_implementation_unverified",
+    "localValidation": "not_attached",
+    "cloudPlan": "not_run",
+    "staging": "not_verified",
+    "production": "approval_not_attached"
+  },
+  "counts": {
+    "components": 3,
+    "generatedFoundations": 0,
+    "connections": 2,
+    "priorityDecisions": 5
+  },
+  "nextAction": "Record included and excluded use cases before sizing or implementation.",
+  "findings": [
+    {
+      "id": "scope-boundary",
+      "priority": 1,
+      "area": "scope",
+      "message": "No explicit scope boundary is recorded.",
+      "action": "Record included and excluded use cases before sizing or implementation.",
+      "taskIds": [
+        "TASK-SCOPE"
+      ],
+      "componentIds": [],
+      "requirementIds": [],
+      "status": "open"
+    },
+    {
+      "id": "scope-outcome",
+      "priority": 1,
+      "area": "scope",
+      "message": "No structured application outcome is recorded.",
+      "action": "Confirm a concise outcome, intended users and exclusions; raw conversation fragments are not an implementation brief.",
+      "taskIds": [
+        "TASK-SCOPE"
+      ],
+      "componentIds": [],
+      "requirementIds": [],
+      "status": "open"
+    },
+    {
+      "id": "decision-cloud.region",
+      "priority": 1,
+      "area": "placement",
+      "message": "The deployment region is not independently confirmed.",
+      "action": "Record an explicit cloud.region decision. Proposed diagram placement is not approval.",
+      "taskIds": [
+        "TASK-SCOPE"
+      ],
+      "componentIds": [],
+      "requirementIds": [],
+      "status": "open"
+    },
+    {
+      "id": "decision-data.country",
+      "priority": 1,
+      "area": "placement",
+      "message": "The data country and processing boundary is not independently confirmed.",
+      "action": "Record an explicit data.country decision. Proposed diagram placement is not approval.",
+      "taskIds": [
+        "TASK-SCOPE"
+      ],
+      "componentIds": [],
+      "requirementIds": [],
+      "status": "open"
+    },
+    {
+      "id": "decision-platform.cloud",
+      "priority": 1,
+      "area": "placement",
+      "message": "The cloud provider is not independently confirmed.",
+      "action": "Record an explicit platform.cloud decision. Proposed diagram placement is not approval.",
+      "taskIds": [
+        "TASK-SCOPE"
+      ],
+      "componentIds": [],
+      "requirementIds": [],
+      "status": "open"
+    },
+    {
+      "id": "review-5345432d3030323a696e766f696365",
+      "priority": 2,
+      "area": "security",
+      "message": "Sensitive data is involved but where it must be stored is not stated.",
+      "action": "Add a compliance requirement such as “data stays in the EU”, and set regions on data blocks.",
+      "taskIds": [
+        "TASK-SECURITY-DESIGN",
+        "TASK-SECURITY"
+      ],
+      "componentIds": [
+        "invoice"
+      ],
+      "requirementIds": [],
+      "status": "open"
+    },
+    {
+      "id": "budget-target",
+      "priority": 2,
+      "area": "cost",
+      "message": "No budget constraint is recorded.",
+      "action": "Agree a budget or explicitly document that no budget limit was specified; do not invent a price target.",
+      "taskIds": [
+        "TASK-COST-BASELINE"
+      ],
+      "componentIds": [],
+      "requirementIds": [],
+      "status": "open"
+    },
+    {
+      "id": "cost-coverage",
+      "priority": 2,
+      "area": "cost",
+      "message": "3 cost worksheet gaps remain; unpriced resources are not free.",
+      "action": "Complete usage assumptions and dated regional price sources; reconcile all billable dimensions with the reviewed plan.",
+      "taskIds": [
+        "TASK-COST-BASELINE",
+        "TASK-COST"
+      ],
+      "componentIds": [],
+      "requirementIds": [],
+      "status": "open"
+    },
+    {
+      "id": "acceptance-696e766f6963652d617070726f76616c",
+      "priority": 2,
+      "area": "acceptance",
+      "message": "Requirement: executable acceptance evidence is not supplied.",
+      "action": "Agree an observable pass/fail criterion, fixtures and evidence location.",
+      "taskIds": [
+        "TASK-ACCEPTANCE-696e766f6963652d617070726f76616c"
+      ],
+      "componentIds": [
+        "invoice",
+        "accounting"
+      ],
+      "requirementIds": [
+        "invoice-approval"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "existing-6163636f756e74696e67",
+      "priority": 2,
+      "area": "integration",
+      "message": "Existing accounting service: existing-system contract and access are unverified.",
+      "action": "Preserve this externally managed service without creating or importing it.",
+      "taskIds": [
+        "TASK-RESOURCE-6163636f756e74696e67"
+      ],
+      "componentIds": [
+        "accounting"
+      ],
+      "requirementIds": [],
+      "status": "open"
+    },
+    {
+      "id": "existing-62726f77736572",
+      "priority": 2,
+      "area": "integration",
+      "message": "Staff browser: existing-system contract and access are unverified.",
+      "action": "Preserve the external browser; no resource or import is required.",
+      "taskIds": [
+        "TASK-RESOURCE-62726f77736572"
+      ],
+      "componentIds": [
+        "browser"
+      ],
+      "requirementIds": [],
+      "status": "open"
+    }
+  ],
+  "evidencePolicy": "Generated documents and asserted decisions are design evidence only. Schema validation, mock tests, account plans and deployed-system tests require separate receipts tied to the exact configuration. This export does not ingest implementation evidence.",
+  "snapshotId": "b3d76c90-d37f-4688-87e4-0ae74d9ffd3c"
+}

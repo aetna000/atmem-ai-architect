@@ -1,0 +1,390 @@
+{
+  "terraform": {
+    "required_version": ">= 1.17.1, < 2.0.0",
+    "required_providers": {
+      "ibm": {
+        "source": "IBM-Cloud/ibm",
+        "version": "1.89.0"
+      }
+    }
+  },
+  "provider": {
+    "ibm": {
+      "region": "${var.region}"
+    }
+  },
+  "variable": {
+    "review_approved": {
+      "type": "bool",
+      "default": false
+    },
+    "account_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing destination IBM account; no account is created.",
+      "validation": {
+        "condition": "${can(regex(\"^[0-9a-f]{32}$\", var.account_id))}",
+        "error_message": "Supply the reviewed account_id value."
+      }
+    },
+    "region": {
+      "type": "string",
+      "nullable": false,
+      "description": "Reviewed regional Code Engine, COS and watsonx model destination.",
+      "validation": {
+        "condition": "${contains([\"au-syd\",\"br-sao\",\"ca-mon\",\"ca-tor\",\"eu-de\",\"eu-es\",\"eu-gb\",\"in-che\",\"in-mum\",\"jp-osa\",\"jp-tok\",\"us-south\"],var.region)}",
+        "error_message": "Use a reviewed regional Container Registry location; an invented region hostname or implicit global fallback is not supported."
+      },
+      "default": "au-syd"
+    },
+    "code_engine_project_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing reviewed Code Engine project; never recreate or import it.",
+      "validation": {
+        "condition": "${can(regex(\"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$\", var.code_engine_project_id))}",
+        "error_message": "Supply the reviewed code_engine_project_id value."
+      }
+    },
+    "registry_namespace": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing regional IBM Container Registry namespace.",
+      "validation": {
+        "condition": "${can(regex(\"^[a-z0-9]+(?:[-_][a-z0-9]+)*$\", var.registry_namespace))}",
+        "error_message": "Supply the reviewed registry_namespace value."
+      }
+    },
+    "registry_pull_secret": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing registry-pull secret NAME in that project; no credential value is exported.",
+      "validation": {
+        "condition": "${can(regex(\"^[a-z][a-z0-9-]{1,61}[a-z0-9]$\", var.registry_pull_secret))}",
+        "error_message": "Supply the reviewed registry_pull_secret value."
+      }
+    },
+    "block_666171_name": {
+      "type": "string",
+      "nullable": false,
+      "description": "Unique application and trusted-profile name.",
+      "validation": {
+        "condition": "${can(regex(\"^[a-z][a-z0-9-]{2,38}[a-z0-9]$\", var.block_666171_name))}",
+        "error_message": "Supply the reviewed block_666171_name value."
+      }
+    },
+    "block_666171_image_repository": {
+      "type": "string",
+      "nullable": false,
+      "description": "Path for this emitted image in the existing namespace.",
+      "validation": {
+        "condition": "${can(regex(\"^[a-z0-9]+(?:[._/-][a-z0-9]+)*$\", var.block_666171_image_repository))}",
+        "error_message": "Supply the reviewed block_666171_image_repository value."
+      }
+    },
+    "block_666171_image_digest": {
+      "type": "string",
+      "nullable": false,
+      "description": "Built, scanned, tested and authorized-published image digest.",
+      "validation": {
+        "condition": "${can(regex(\"^sha256:[0-9a-f]{64}$\", var.block_666171_image_digest))}",
+        "error_message": "Supply the reviewed block_666171_image_digest value."
+      }
+    },
+    "block_666171_watsonx_project_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing watsonx data-platform project. Add the trusted profile as an authorized collaborator and associate the runtime instance.",
+      "validation": {
+        "condition": "${can(regex(\"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$\", var.block_666171_watsonx_project_id))}",
+        "error_message": "Supply the reviewed block_666171_watsonx_project_id value."
+      }
+    },
+    "block_666171_runtime_instance_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing associated watsonx Runtime instance GUID.",
+      "validation": {
+        "condition": "${can(regex(\"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$\", var.block_666171_runtime_instance_id))}",
+        "error_message": "Supply the reviewed block_666171_runtime_instance_id value."
+      }
+    },
+    "block_666171_model_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Reviewed regional Text Chat JSON-object model; verify lifecycle, quotas and geography.",
+      "validation": {
+        "condition": "${can(regex(\"^[a-z0-9][a-z0-9_.-]{0,79}/[a-z0-9][a-z0-9_.-]{0,99}$\", var.block_666171_model_id))}",
+        "error_message": "Supply the reviewed block_666171_model_id value."
+      }
+    },
+    "block_666171_editor_access_group_id": {
+      "type": "string",
+      "nullable": false,
+      "description": "Existing authorized company editor access-group ID. No group or user is created.",
+      "validation": {
+        "condition": "${can(regex(\"^AccessGroup-[0-9a-fA-F-]{36}$\", var.block_666171_editor_access_group_id))}",
+        "error_message": "Supply the reviewed block_666171_editor_access_group_id value."
+      }
+    },
+    "block_666171_catalog_bucket": {
+      "type": "string",
+      "nullable": false,
+      "description": "Globally unique regional bucket dedicated to genuinely public article content; the bucket itself remains private.",
+      "validation": {
+        "condition": "${can(regex(\"^[a-z][a-z0-9-]{1,61}[a-z0-9]$\", var.block_666171_catalog_bucket))}",
+        "error_message": "Supply the reviewed block_666171_catalog_bucket value."
+      }
+    },
+    "block_666171_policy_review": {
+      "type": "object({ accountId = string, projectId = string, runtimeInstanceId = string, region = string, model = string, retentionReview = string, approvedBy = string, evidenceSha256 = string, expiresAt = string })",
+      "nullable": false,
+      "description": "Scoped expiring destination-owner review of actual model/provider retention and processing terms. Operator-attested evidence, not a provider approval API."
+    }
+  },
+  "data": {
+    "ibm_code_engine_project": {
+      "destination": {
+        "project_id": "${var.code_engine_project_id}"
+      }
+    }
+  },
+  "locals": {
+    "unfinished_work": []
+  },
+  "resource": {
+    "terraform_data": {
+      "review_gate": {
+        "input": {
+          "design_revision": 1,
+          "environment": "staging"
+        },
+        "lifecycle": {
+          "precondition": [
+            {
+              "condition": "${var.review_approved && length(local.unfinished_work) == 0}",
+              "error_message": "Review the source, public-only publication boundary, destination, native roles, model policy, costs and unresolved scope before deployment."
+            },
+            {
+              "condition": "${data.ibm_code_engine_project.destination.account_id == var.account_id && data.ibm_code_engine_project.destination.region == var.region}",
+              "error_message": "Existing Code Engine project must match the reviewed account and region."
+            }
+          ]
+        }
+      }
+    },
+    "ibm_resource_instance": {
+      "block_666171_catalog": {
+        "name": "${var.block_666171_name}-public-catalog",
+        "service": "cloud-object-storage",
+        "plan": "standard",
+        "location": "global",
+        "resource_group_id": "${data.ibm_code_engine_project.destination.resource_group_id}",
+        "lifecycle": {
+          "prevent_destroy": true,
+          "postcondition": [
+            {
+              "condition": "${self.account_id == var.account_id}",
+              "error_message": "Catalog instance must belong to the reviewed account."
+            }
+          ]
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_cos_bucket": {
+      "block_666171": {
+        "bucket_name": "${var.block_666171_catalog_bucket}",
+        "resource_instance_id": "${ibm_resource_instance.block_666171_catalog.id}",
+        "region_location": "${var.region}",
+        "storage_class": "standard",
+        "endpoint_type": "public",
+        "force_delete": false,
+        "object_versioning": {
+          "enable": true
+        },
+        "noncurrent_version_expiration": {
+          "enable": true,
+          "noncurrent_days": 7,
+          "prefix": "",
+          "rule_id": "expire-old-catalog-versions"
+        },
+        "lifecycle": {
+          "prevent_destroy": true
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_iam_trusted_profile": {
+      "block_666171": {
+        "name": "${var.block_666171_name}",
+        "description": "Public FAQ compute identity; no catalog write or end-user authority",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_iam_trusted_profile_link": {
+      "block_666171": {
+        "profile_id": "${ibm_iam_trusted_profile.block_666171.profile_id}",
+        "cr_type": "CE",
+        "link": {
+          "crn": "${data.ibm_code_engine_project.destination.crn}",
+          "component_name": "${ibm_code_engine_app.block_666171.name}",
+          "component_type": "app"
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_iam_trusted_profile_policy": {
+      "block_666171": {
+        "iam_id": "${ibm_iam_trusted_profile.block_666171.iam_id}",
+        "roles": [
+          "Writer"
+        ],
+        "resources": {
+          "service": "pm-20",
+          "resource_instance_id": "${var.block_666171_runtime_instance_id}",
+          "region": "${var.region}"
+        },
+        "description": "Existing watsonx runtime-instance scope. Writer is broader than prediction-only; project membership remains separate.",
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      },
+      "block_666171_catalog": {
+        "iam_id": "${ibm_iam_trusted_profile.block_666171.iam_id}",
+        "roles": [
+          "Object Reader"
+        ],
+        "resources": {
+          "service": "cloud-object-storage",
+          "resource_instance_id": "${ibm_resource_instance.block_666171_catalog.guid}",
+          "resource_type": "bucket",
+          "resource": "${ibm_cos_bucket.block_666171.bucket_name}"
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_iam_access_group_policy": {
+      "block_666171_editor": {
+        "access_group_id": "${var.block_666171_editor_access_group_id}",
+        "roles": [
+          "Object Reader",
+          "Object Writer"
+        ],
+        "resources": {
+          "service": "cloud-object-storage",
+          "resource_instance_id": "${ibm_resource_instance.block_666171_catalog.guid}",
+          "resource_type": "bucket",
+          "resource": "${ibm_cos_bucket.block_666171.bucket_name}"
+        },
+        "depends_on": [
+          "terraform_data.review_gate"
+        ]
+      }
+    },
+    "ibm_code_engine_app": {
+      "block_666171": {
+        "project_id": "${var.code_engine_project_id}",
+        "name": "${var.block_666171_name}",
+        "image_reference": "${lookup({\"au-syd\":\"au.icr.io\",\"br-sao\":\"br.icr.io\",\"ca-mon\":\"ca2.icr.io\",\"ca-tor\":\"ca.icr.io\",\"eu-de\":\"de.icr.io\",\"eu-es\":\"es.icr.io\",\"eu-gb\":\"uk.icr.io\",\"in-che\":\"in.icr.io\",\"in-mum\":\"in2.icr.io\",\"jp-osa\":\"jp2.icr.io\",\"jp-tok\":\"jp.icr.io\",\"us-south\":\"us.icr.io\"},var.region)}/${var.registry_namespace}/${var.block_666171_image_repository}@${var.block_666171_image_digest}",
+        "image_secret": "${var.registry_pull_secret}",
+        "image_port": 8080,
+        "managed_domain_mappings": "local_public",
+        "run_as_user": 10001,
+        "run_compute_resource_token_enabled": true,
+        "scale_cpu_limit": "0.5",
+        "scale_memory_limit": "1G",
+        "scale_min_instances": 0,
+        "scale_max_instances": 2,
+        "scale_concurrency": 5,
+        "scale_concurrency_target": 5,
+        "scale_request_timeout": 30,
+        "run_env_variables": [
+          {
+            "name": "ACCOUNT_ID",
+            "value": "${var.account_id}",
+            "type": "literal"
+          },
+          {
+            "name": "WATSONX_PROJECT_ID",
+            "value": "${var.block_666171_watsonx_project_id}",
+            "type": "literal"
+          },
+          {
+            "name": "RUNTIME_INSTANCE_ID",
+            "value": "${var.block_666171_runtime_instance_id}",
+            "type": "literal"
+          },
+          {
+            "name": "MODEL_REGION",
+            "value": "${var.region}",
+            "type": "literal"
+          },
+          {
+            "name": "MODEL_ID",
+            "value": "${var.block_666171_model_id}",
+            "type": "literal"
+          },
+          {
+            "name": "IAM_PROFILE_ID",
+            "value": "${ibm_iam_trusted_profile.block_666171.profile_id}",
+            "type": "literal"
+          },
+          {
+            "name": "MAX_OUTPUT_TOKENS",
+            "value": "1024",
+            "type": "literal"
+          },
+          {
+            "name": "CATALOG_BUCKET",
+            "value": "${ibm_cos_bucket.block_666171.bucket_name}",
+            "type": "literal"
+          },
+          {
+            "name": "POLICY_REVIEW_BASE64",
+            "value": "${base64encode(jsonencode(var.block_666171_policy_review))}",
+            "type": "literal"
+          }
+        ],
+        "probe_readiness": {
+          "type": "http",
+          "path": "/healthz",
+          "port": 8080,
+          "initial_delay": 2,
+          "interval": 5,
+          "timeout": 2,
+          "failure_threshold": 12
+        },
+        "depends_on": [
+          "terraform_data.review_gate",
+          "ibm_iam_trusted_profile_policy.block_666171",
+          "ibm_iam_trusted_profile_policy.block_666171_catalog"
+        ]
+      }
+    }
+  },
+  "output": {
+    "block_666171_url": {
+      "value": "${ibm_code_engine_app.block_666171.endpoint}"
+    },
+    "block_666171_catalog": {
+      "value": {
+        "bucket": "${var.block_666171_catalog_bucket}",
+        "region": "${var.region}"
+      }
+    },
+    "block_666171_trusted_profile_iam_id": {
+      "value": "${ibm_iam_trusted_profile.block_666171.iam_id}"
+    }
+  }
+}

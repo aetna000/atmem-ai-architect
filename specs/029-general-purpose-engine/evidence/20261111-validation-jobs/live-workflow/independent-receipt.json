@@ -1,0 +1,24 @@
+{
+  "validator": "independent-library",
+  "artifactSha256": "3d0b0abc17b1603b9f35a5e8150cb12da24d6ef770a27fc484e7f9bc09ef248b",
+  "imageId": "sha256:48d884813cf44e927cf64c5529dd630dd3b18338c6dc727991eef9b71e934a20",
+  "platform": "linux/amd64",
+  "command": [
+    "/usr/local/bin/python3",
+    "-c",
+    "from line_summary import summarize\nchecks=0\ndef expect(lines,count,total,nonempty):\n global checks\n before=list(lines)\n assert summarize(lines)=={'count':count,'total_characters':total,'nonempty_count':nonempty}\n assert lines==before\n checks+=1\nexpect([],0,0,0)\nexpect(['','  ','a','\u00e9'],4,4,2)\nexpect(['x'*4096],1,4096,1)\nexpect(['a']*1000,1000,1000,1000)\nfor invalid in [None,'abc',('a',),[1],[True],[None]]:\n try:summarize(invalid)\n except TypeError:checks+=1\n else:raise AssertionError('Invalid input type accepted')\nfor invalid in [['x'*4097],['']*1001]:\n try:summarize(invalid)\n except ValueError:checks+=1\n else:raise AssertionError('Oversized input accepted')\noriginal=['one','two'];summarize(original);assert original==['one','two'];checks+=1\nexpect(['\\t','\\n',' a '],3,5,1)\nexpect(['\ud83d\ude00'],1,1,1)\nprint('INDEPENDENT_LINE_SUMMARY_ORACLE_PASSED',checks)\n"
+  ],
+  "status": "passed",
+  "exitCode": 0,
+  "skipped": 0,
+  "testsReported": null,
+  "reason": null,
+  "output": "INDEPENDENT_LINE_SUMMARY_ORACLE_PASSED 15\n",
+  "outputTruncated": false,
+  "durationSeconds": 0.498,
+  "evidenceLevel": "local_container_check",
+  "cloudOperations": false,
+  "boundary": "Exact immutable source in a cached Linux image, root-owned read-only inputs and nonroot check process, isolated loopback/network-none with no host mounts/socket/credentials. Check execution is not independent semantic or whole-system acceptance.",
+  "oracleSha256": "252f6d19c16051ef5a3fb6ecb23fd6a001421971f21396a3b6f59b9ba20d177f",
+  "scope": "15 independently authored input/output/boundary/Unicode/type/size/nonmutation checks on the actual downloaded UI-generated module; not whole-system or original 28-project acceptance."
+}

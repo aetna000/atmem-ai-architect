@@ -1,0 +1,82 @@
+{
+  "format": "atmem.exposed-transfer-assessment",
+  "version": 1,
+  "latestArtifactSha256": "5073b4db47d505392722d71b5980fee3da57bbcdd7de2d5bac75073e6a805c65",
+  "originalCompletedTurns": 1,
+  "automaticBoundedRepairTurns": 1,
+  "model": "gpt-6.1-sol",
+  "effort": "high",
+  "criteria": [
+    {
+      "criterion": 1,
+      "status": "proved",
+      "evidence": [
+        "native-input-binding-v1.json",
+        "native-history-v2.json",
+        "native-repair-delta-v2.json"
+      ],
+      "scope": "Exact selection, pinned SDK and actual materialization; two completed native turns."
+    },
+    {
+      "criterion": 2,
+      "status": "proved",
+      "evidence": [
+        "equipment-journey-v5.receipt.json",
+        "generated-tests-v3.receipt.json"
+      ],
+      "scope": "Actual deterministic domain source and typed bounds, including all requested day/fragile combinations in generated tests."
+    },
+    {
+      "criterion": 3,
+      "status": "partially_proved",
+      "evidence": [
+        "image-arm64-v1.receipt.json",
+        "equipment-journey-v5.receipt.json"
+      ],
+      "scope": "Exact API/worker factories, bounded child commands and real source queue run; clean ARM64 image/factories. Full container API/worker/SQL/TLS journey remains unexecuted."
+    },
+    {
+      "criterion": 4,
+      "status": "proved_at_source_runtime_scope",
+      "evidence": [
+        "equipment-journey-v5.receipt.json",
+        "generated-tests-v3.receipt.json"
+      ],
+      "scope": "Real local PostgreSQL17/restricted roles/queue/TLS with synthetic Cognito keys and reviewed fixture outputs."
+    },
+    {
+      "criterion": 5,
+      "status": "proved_at_source_runtime_scope",
+      "evidence": [
+        "equipment-journey-v5.receipt.json",
+        "generated-tests-v3.receipt.json"
+      ],
+      "scope": "Independent replay/account/own-read/revocation/review/changed-profile/stale-revision/uncertainty checks; generated concurrency and further role/lease checks."
+    },
+    {
+      "criterion": 6,
+      "status": "partially_proved",
+      "evidence": [
+        "terraform-v2.receipt.json",
+        "image-arm64-v1.receipt.json"
+      ],
+      "scope": "Exact native provider schema and five independent mock plans for role/image/secret/configuration boundaries. Existing network/resource ownership, native provider behavior and full resource acceptance remain separate."
+    },
+    {
+      "criterion": 7,
+      "status": "partially_proved",
+      "evidence": [
+        "image-arm64-v1.receipt.json",
+        "sdk-mirror-arm64-v1.receipt.json",
+        "generated-tests-v3.receipt.json"
+      ],
+      "scope": "Declared receiving dependencies/bundle/CA supplied to untouched source; offline image built for ARM64. Canonical test TMPDIR and local SQL/TLS opt-ins disclosed. Whole isolated receiving test/runtime remains next."
+    }
+  ],
+  "acceptance": "qualified_source_journey_and_build_components_only",
+  "wholeSystemAccepted": false,
+  "newRelease": false,
+  "newOriginal28Acceptance": false,
+  "heldOutOrComparativeClaim": false,
+  "cloudOperations": false
+}
