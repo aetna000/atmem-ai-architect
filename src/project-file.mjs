@@ -1,3 +1,5 @@
+import {validateDrawingLayouts} from './drawing-layout.mjs';
+import {validateDiagramModel} from './architecture-diagrams.mjs';
 import {validateRequirementsDocument} from './requirements-document.mjs';
 import {validateBlockSpecs,validateInterfaceSpec} from './block-spec.mjs';
 import {validateEngineeringModel} from './engineering-model.mjs';
@@ -27,11 +29,11 @@ const KNOWN = {
 };
 
 const SECRET_VALUE = [
-  /AKIA[0-9A-Z]{16}/,
-  /sk-ant-[A-Za-z0-9_-]{20,}/,
-  /sk-[A-Za-z0-9_-]{20,}/,
-  /AIza[0-9A-Za-z_-]{35}/,
-  /ghp_[A-Za-z0-9]{36}/,
+  /(?<![A-Za-z0-9_-])AKIA[0-9A-Z]{16}/,
+  /(?<![A-Za-z0-9_-])sk-ant-[A-Za-z0-9_-]{20,}/,
+  /(?<![A-Za-z0-9_-])sk-[A-Za-z0-9_-]{20,}/,
+  /(?<![A-Za-z0-9_-])AIza[0-9A-Za-z_-]{35}/,
+  /(?<![A-Za-z0-9_-])ghp_[A-Za-z0-9]{36}/,
   /-----BEGIN [A-Z ]*PRIVATE KEY-----/,
 ];
 const SECRET_KEY = /^(password|secret|apiKey|api_key|accessKey|access_key|token|clientSecret|client_secret)$/i;
@@ -62,6 +64,8 @@ function unknown(section, allowed) {
 // Persist intact model records even when an edit leaves their board bindings unresolved.
 // Architecture checks report those bindings. Generated proposals validate them strictly.
 export function toProjectFile(project, now = new Date()) {
+  validateDrawingLayouts(project.extensions?.drawingLayouts);
+  if(project.extensions?.architectureDiagrams!==undefined)validateDiagramModel(project.extensions.architectureDiagrams);
   if(project.extensions?.systemModel!==undefined)validateSystemModel(project.extensions.systemModel);
   if(project.extensions?.engineeringModel!=null)validateEngineeringModel(project.extensions.engineeringModel);
   designDocumentFiles(project.extensions?.architectureDocuments);

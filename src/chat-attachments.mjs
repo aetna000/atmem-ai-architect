@@ -5,7 +5,7 @@ export async function readAttachments(files,existing=[],{fileLimit=8*1024*1024}=
  if([...existing,...files].reduce((n,f)=>n+f.size,0)>8*1024*1024)throw Error('Keep all attachments together below 8 MB.');
  return Promise.all([...files].map(async file=>{
   const mime=types[file.name.split('.').pop().toLowerCase()]||(['image/png','image/jpeg','image/webp'].includes(file.type)?file.type:null);
-  if(!mime)throw Error(`${file.name}: use PNG, JPEG, WebP, PDF, DOCX, TXT, Markdown, CSV, JSON or draw.io.`);
+  if(!mime)throw Error(`${file.name}: use PNG, JPEG, WebP, PDF, DOCX, TXT, Markdown, CSV, JSON or an editable diagram file.`);
   if(!file.size||file.size>fileLimit)throw Error(`${file.name}: each file must be between 1 byte and ${fileLimit/(1024*1024)} MB.`);
   const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(Error(`Could not read ${file.name}.`));reader.readAsDataURL(file);});
   return {id:crypto.randomUUID(),name:file.name.replace(/[\/\\\x00-\x1f]/g,'_').slice(0,180),mime,data,size:file.size};

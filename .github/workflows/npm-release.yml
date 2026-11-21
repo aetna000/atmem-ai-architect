@@ -37,8 +37,26 @@ jobs:
           python scripts/setup-terraform-emulator.py
           .local/terraform-emulator-runtime/bin/python -m unittest server.tests.test_terraform_emulator_engines server.tests.test_terraform_emulator_continuation server.tests.test_terraform_emulator_coverage -v
       - run: npm ci --ignore-scripts
+      - name: Check source privacy
+        env:
+          ATMEM_RELEASE_PRIVACY_POLICY: ${{ secrets.ATMEM_RELEASE_PRIVACY_POLICY }}
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            python scripts/release-privacy-check.py --tracked
+          else
+            python scripts/release-privacy-check.py --tracked --require-policy
+          fi
       - run: npm test
       - run: npm run package:npm
+      - name: Check the exact distributable and nested examples
+        env:
+          ATMEM_RELEASE_PRIVACY_POLICY: ${{ secrets.ATMEM_RELEASE_PRIVACY_POLICY }}
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            python scripts/release-privacy-check.py --package .local/npm-release/*.tgz
+          else
+            python scripts/release-privacy-check.py --package --require-policy .local/npm-release/*.tgz
+          fi
       - uses: actions/upload-artifact@v4
         with:
           name: architect-npm-candidate
@@ -92,6 +110,7 @@ jobs:
         with:
           sparse-checkout: |
             /scripts/verify-npm-release.mjs
+            /scripts/release-privacy-check.py
           sparse-checkout-cone-mode: false
       - uses: actions/setup-node@v4
         with:
@@ -101,6 +120,10 @@ jobs:
         with:
           name: architect-npm-candidate
           path: candidate
+      - name: Recheck publication privacy
+        env:
+          ATMEM_RELEASE_PRIVACY_POLICY: ${{ secrets.ATMEM_RELEASE_PRIVACY_POLICY }}
+        run: python3 scripts/release-privacy-check.py --package --require-policy candidate/*.tgz
       - run: npm install --global npm@11.17.0
       - run: npm publish ./candidate/*.tgz --access public --tag latest --provenance
       - name: Verify public npm version, latest tag and artifact integrity

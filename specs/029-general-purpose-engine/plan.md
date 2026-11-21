@@ -635,3 +635,24 @@ owner writes. No backend restart or programme resumption. Evidence:029/evidence/
 ## Owner-directed Orca and maintenance follow-up — 2026-11-13
 
 See `specs/030-orca-maintenance/plan.md` for the separate Orca plugin, regional pricing/navigation fixes, stable AtMem runtime update and GitHub-star invitation. These changes do not establish broader engine quality, model generation acceptance or deployment evidence.
+
+## 2026-11-21 — Diagram authoring and quality feedback
+
+A source specification can be projected into 28 diagram types using one shared
+model. The versioned skills and independent checks are domain-neutral. A synthetic
+clinic referral regression exercises rendering transfer across all 28 notations.
+The implementation is a local candidate for authoring and verification. The
+[qualification record](evidence/20261121-architecture-diagrams/README.md) states the
+evidence and outstanding limits.
+
+The native drawing workspace now shares its page navigator and block properties with Spec Kit and editable handoff. The local knowledge publisher mirrors the 28 reviewed diagram skills. See the diagram qualification record above.
+
+## Drawing readability follow-up — 22 November 2026
+
+Shared rendering and manual interaction contracts are recorded in the [diagram verification record](../029-general-purpose-engine/evidence/20261121-architecture-diagrams/README.md). Private client audits remain restricted; architecture and deployment qualification remain separate.
+
+
+## Stable public release 0.2.6
+
+The owner authorized publication on main with client documents and history kept private.
+Follow [the release privacy plan](../032-public-release-privacy/plan.md) and exact installed/registry checks.

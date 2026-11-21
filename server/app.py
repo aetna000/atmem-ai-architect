@@ -1,8 +1,8 @@
 from .settings import setting, home as product_home
 """Loopback-only AtMem AI Architect sidecar. No cloud discovery or deployment endpoints."""
-import asyncio, os, secrets, shutil, hashlib
+import asyncio, os, secrets, shutil, hashlib, json
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import JSONResponse, Response
+from fastapi.responses import JSONResponse, Response, StreamingResponse
 from .architect import AtMemArchitect
 from .contracts import Attachment, ChatRequest
 from .local_providers import capabilities, models, start_login
@@ -76,7 +76,7 @@ async def local_boundary(request:Request,call_next):
             return JSONResponse({'detail':'Missing local session token'},status_code=401)
         path=request.url.path
         if path!='/api/projects/save':
-            limit=43_000_000 if path=='/api/engineering/orca/open' else 12_000_000 if path in {'/api/architect','/api/design-sources'} else 2_100_000 if path in {'/api/memory/sync','/api/voice/transcribe'} else 250000
+            limit=43_000_000 if path=='/api/engineering/orca/open' else 12_000_000 if path in {'/api/architect','/api/design-sources','/api/diagram-authoring'} else 2_100_000 if path in {'/api/memory/sync','/api/voice/transcribe'} else 250000
             if len(await request.body())>limit:
                 return JSONResponse({'detail':'Request too large'},status_code=413)
     response=await call_next(request)
@@ -93,7 +93,7 @@ async def session():
         'gemini-api':{'available':bool(ARCHITECT.keys.get('gemini-api') or os.getenv('GEMINI_API_KEY')),'description':'Ephemeral API key or GEMINI_API_KEY'},
         'xai':{'available':bool(ARCHITECT.keys.get('xai') or os.getenv('XAI_API_KEY')),'description':'xAI API key for Grok'},
         'bedrock':{'available':bool(setting('ENABLE_BEDROCK')),'description':'Explicit opt-in plus AWS SDK credential chain; credentials not probed'},
-    },'cloudExecution':False,'mcpEnabled':False,'architectureActivityEnabled':True,'engineeringEnabled':setting('ENABLE_ENGINEERING')=='1','sdkTimeoutNote':'Stopping a submitted remote model request may not stop provider-side computation or billing.'}
+    },'cloudExecution':False,'mcpEnabled':False,'architectureActivityEnabled':True,'diagramAuthoringEnabled':True,'engineeringEnabled':setting('ENABLE_ENGINEERING')=='1','sdkTimeoutNote':'Stopping a submitted remote model request may not stop provider-side computation or billing.'}
 
 class DesignSourceRequest(BaseModel):
     model_config = ConfigDict(extra='forbid')
@@ -249,6 +249,52 @@ async def architect(payload:ChatRequest,request:Request):
                 if state=='failed':observe({'kind':'failed','text':'The architecture request did not return a usable response.'})
                 try:trace.finish(payload.projectId,payload.activityId,state if activity_ok else 'details_unavailable')
                 except Exception:pass
+
+from .diagram_authoring import DiagramRequest, draft as draft_diagrams
+
+@app.post('/api/diagram-authoring')
+async def diagram_authoring(payload: DiagramRequest, request: Request):
+    if payload.provider=='bedrock' and not setting('ENABLE_BEDROCK'):
+        raise HTTPException(409, 'Bedrock is disabled.')
+    if TURN_LOCK.locked():
+        raise HTTPException(409, 'AtMem is working on another request.')
+    queue = asyncio.Queue()
+
+    async def work():
+        await TURN_LOCK.acquire()
+        try:
+            model = await draft_diagrams(ARCHITECT, payload, lambda: asyncio.sleep(0, result=False),
+                                         lambda event: queue.put({'progress': event}))
+            await queue.put({'model': model})
+        except (RuntimeError, ValueError) as error:
+            await queue.put({'error': str(error)})
+        except TimeoutError:
+            await queue.put({'error': 'The model took too long. Try again or choose a faster model.'})
+        except Exception:
+            await queue.put({'error': 'AtMem could not draft the set. Check the connection and try again.'})
+        finally:
+            TURN_LOCK.release()
+            await queue.put(None)
+
+    async def events():
+        task = asyncio.create_task(work())
+        try:
+            while True:
+                try:
+                    event = await asyncio.wait_for(queue.get(), 15)
+                except TimeoutError:
+                    yield '{}\n'
+                    continue
+                if event is None:
+                    break
+                yield json.dumps(event) + '\n'
+        finally:
+            if not task.done():
+                task.cancel()
+                await asyncio.gather(task, return_exceptions=True)
+
+    return StreamingResponse(events(), media_type='application/x-ndjson')
+
 
 @app.post('/api/credentials')
 async def credentials(request:Request):

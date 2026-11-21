@@ -3,6 +3,7 @@ import hashlib
 import io
 import json
 import re
+import uuid
 from pathlib import PurePosixPath
 import zipfile
 from .engineering_contexts import validate_context
@@ -31,6 +32,16 @@ def design_value(content, project):
                 del estimate[field]
     extensions=value.get('extensions')
     if isinstance(extensions,dict):
+        pending=extensions.get('pendingArchitecture')
+        # This field schedules only the already specified source-design action;
+        # it carries no new instructions. Exact submitted bytes remain retained.
+        # Never ignore unknown fields, other scopes, block orders or new intent.
+        if isinstance(pending,dict) and set(pending)=={'id','projectId','intent','createdAt'} and pending.get('projectId')==project and pending.get('intent')=='design':
+            try:
+                valid_id=str(uuid.UUID(pending['id']))==pending['id']
+            except (ValueError,TypeError,AttributeError):valid_id=False
+            if valid_id and isinstance(pending.get('createdAt'),str) and re.fullmatch(r'\d{4}-\d{2}-\d{2}T[0-9:.]+Z',pending['createdAt']):
+                del extensions['pendingArchitecture']
         journey=extensions.get('journey')
         if (isinstance(journey,dict) and set(journey)<={'scope','architecture','review','estimate','delivery'}
                 and all(isinstance(item,str) and re.fullmatch(r'[0-9]{1,8}-[a-f0-9]{1,8}-[a-f0-9]{1,8}',item) for item in journey.values())):

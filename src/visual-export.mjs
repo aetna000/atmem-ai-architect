@@ -75,7 +75,7 @@ export function diagramSvg(project){
   const boxes=nodes.map(n=>`<g><rect x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}" rx="10" fill="${n.data.kind==='note'?'#fff5bd':'#edf4fb'}" stroke="#7290ad"/><text x="${n.x+16}" y="${n.y+26}" font-size="14">${n.lines.map((l,i)=>`<tspan x="${n.x+16}" dy="${i?20:0}">${esc(l)}</tspan>`).join('')}</text></g>`).join('');
   return {width,height,svg:`<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="${minX} ${minY} ${width} ${height}"><rect x="${minX}" y="${minY}" width="${width}" height="${height}" fill="white"/><defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#63758b"/></marker></defs><g font-family="sans-serif" fill="#1c3045"><text x="${minX+30}" y="${minY+35}" font-size="18">${titleLines.map((l,i)=>`<tspan x="${minX+30}" dy="${i?24:0}">${esc(l)}</tspan>`).join('')}</text>${edges}${boxes}${nodes.length?'':`<text x="0" y="80">No components drawn yet.</text>`}</g></svg>`};
 }
-async function pngOf({svg,width,height}){
+export async function pngOf({svg,width,height}){
   const url=URL.createObjectURL(new Blob([svg],{type:'image/svg+xml'}));
   try{const img=new Image();img.src=url;await img.decode();const canvas=document.createElement('canvas');
     const scale=Math.min(2,8192/width,8192/height,Math.sqrt(24_000_000/(width*height)));
@@ -84,7 +84,10 @@ async function pngOf({svg,width,height}){
   }finally{URL.revokeObjectURL(url);}
 }
 export async function visualFiles(project,markdown,implementationMarkdown){
-  const data=await font(),diagram=diagramSvg(project),png=await pngOf(diagram);
+  const [{renderDiagramSvg},{boardGraph}]=await Promise.all([import('./drawio-render.mjs'),import('./drawio-model.mjs')]);
+  const data=await font(),diagram=await renderDiagramSvg(boardGraph(project.nodes,project.edges),{
+    name:project.name,revision:project.revision,
+  }),png=await pngOf(diagram);
   const doc=pdf(data,{orientation:diagram.width>=diagram.height?'landscape':'portrait',unit:'mm',format:'a3'});
   const width=doc.internal.pageSize.getWidth()-20,height=doc.internal.pageSize.getHeight()-20,scale=Math.min(width/diagram.width,height/diagram.height);
   doc.addImage(png,'PNG',10+(width-diagram.width*scale)/2,10,diagram.width*scale,diagram.height*scale);

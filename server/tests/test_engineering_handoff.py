@@ -235,3 +235,15 @@ const result=applyArtifactWork(p,p.id,{id:x.receipt.id,receiptSha256:x.receipt.s
                         self.assertEqual(receiving.read('design/submitted-project.json'), self.saved)
                         self.assertEqual(digest(receiving.read('evidence/original-implementation.zip')), artifact['sha256'])
             asyncio.run(exercise())
+
+class QueueMetadataTests(unittest.TestCase):
+    def test_acknowledging_a_pure_source_design_queue_is_not_a_design_change(self):
+        original={'format':'atmem.ai-architect.project','meta':{'id':'queue-project','revision':1},'design':{'nodes':[],'edges':[]},'extensions':{'pendingArchitecture':{'id':str(uuid.uuid4()),'projectId':'queue-project','intent':'design','createdAt':'2026-11-21T15:00:00.000Z'}}}
+        current=json.loads(json.dumps(original));del current['extensions']['pendingArchitecture'];current.pop('extensions')
+        encode=lambda x:json.dumps(x).encode()
+        before=design_digest(encode(original),'queue-project');self.assertEqual(before,design_digest(encode(current),'queue-project'))
+        for change in ({'projectId':'foreign'},{'intent':'build'},{'text':'New business intent'},{'id':'not-a-uuid'}):
+            changed=json.loads(json.dumps(original));changed['extensions']['pendingArchitecture'].update(change)
+            self.assertNotEqual(design_digest(encode(changed),'queue-project'),design_digest(encode(current),'queue-project'))
+        current['requirements']=[{'id':'new','statement':'New scope'}]
+        self.assertNotEqual(before,design_digest(encode(current),'queue-project'))

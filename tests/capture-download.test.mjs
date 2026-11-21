@@ -1,10 +1,10 @@
 import test from 'node:test';import assert from 'node:assert/strict';import {zipSync,strToU8} from 'fflate';
 import {handoffDigest as sha} from '../src/block-handoff.mjs';import {attachCapturedEvidenceFiles,boundedEvidenceZip} from '../src/capture-download.mjs';
 const b=strToU8,serialize=files=>zipSync(Object.fromEntries(Object.entries(files).map(([name,body])=>[name,typeof body==='string'?b(body):body])));
-function fixture(projectId='library-case',path='code/loans.rb'){
+function fixture(projectId='library-case',path='code/loans.rb',contextText=''){
  const canvas=b('{"version":1}'),review='Draft SHA-256: '+sha(canvas)+'\n',readme='# Original native design\n',doc='[Source](../'+path+') [Historical input](../project-context.json)\n';
  const source={artifactId:'11111111-1111-4111-8111-111111111111',draftSha256:sha(canvas),files:[{path:'README.md',sha256:sha(readme),content:readme},{path:'specs/flow.md',sha256:sha(doc),content:doc},{path:'architecture.review.md',sha256:sha(review),content:review}]};
- const submitted=b(JSON.stringify({meta:{id:projectId}})),initial=b(JSON.stringify({meta:{id:projectId},requirements:['Original input']}));source.contextSha256=sha(submitted);
+ const submitted=b(JSON.stringify({meta:{id:projectId},notes:contextText})),initial=b(JSON.stringify({meta:{id:projectId},requirements:['Original input'],notes:contextText}));source.contextSha256=sha(submitted);
  const captureFiles={'README.md':readme,'architecture.canvas.json':canvas,'architecture.review.md':review,'specs/flow.md':doc,[path]:'Unexecuted code','AGENTS.md':'Untrusted controls','manifest.json':'Old captured manifest','captured-evidence.json':'Old captured receipt','.GitHub/Workflows/run.yml':'Never activate'};
  const capture=serialize(captureFiles),manifest={id:source.artifactId,sessionId:'session-one',runId:'run-one',kind:'delivery',turnStatus:'completed',sha256:sha(capture),bytes:capture.length,files:Object.entries(captureFiles).map(([path,value])=>({path,kind:'file',sha256:sha(value),bytes:typeof value==='string'?b(value).length:value.length}))};
  const initialReceipt={projectId,sessionId:manifest.sessionId,sha256:sha(initial),bytes:initial.length};
@@ -19,6 +19,18 @@ test('shared browser capture download transfers library/Ruby and sensor/Go evide
   const f=fixture(id,path),result=await attachCapturedEvidenceFiles(f.project,f.files,{...options(f),sourceFile:'project.atmem-ai-architect.json'});
   assert.equal(new TextDecoder().decode(result.files[path]),'Unexecuted code');assert.equal(result.files['AGENTS.md'],'Receiving controls');assert.equal(result.files['manifest.json'],'Receiving manifest');assert.equal(result.files['README.md'],'Generated receiving overview');assert.equal(result.files['.GitHub/Workflows/run.yml'],undefined);assert.deepEqual(result.files['project-context.json'],f.initial);assert.equal(sha(result.files['evidence/original-native-capture.zip']),f.manifest.sha256);assert.equal(result.receipt.status,'verified');assert.equal(result.receipt.archiveOnly.length,5);assert.match(result.files['START_HERE.md'],/current design is project.atmem-ai-architect.json/);assert.equal(JSON.parse(result.files['handoff-readiness.json']).capturedEvidence.status,'verified');assert.equal(f.files['project-context.json'],undefined);
  }
+});
+test('large clinic contexts above two megabytes pass every receiving layer with exact historical bytes',async()=>{
+ const f=fixture('clinic-case','workers/referral.py','患者記録 '.repeat(180000));
+ assert.ok(f.initial.byteLength>2_000_000&&f.initial.byteLength<4_000_000);
+ const result=await attachCapturedEvidenceFiles(f.project,f.files,options(f));
+ assert.equal(result.receipt.status,'verified');assert.deepEqual(result.files['project-context.json'],f.initial);
+ assert.equal(result.receipt.submittedContextSha256,f.project.extensions.architectureDocuments.contextSha256);
+});
+test('an over-bound capture context is rejected without replacing receiver files',async()=>{
+ const f=fixture('library-case','code/loans.rb','x'.repeat(4_000_001)),before=structuredClone(f.files);
+ await assert.rejects(()=>attachCapturedEvidenceFiles(f.project,f.files,options(f)),/context exceeds its byte bound/);
+ assert.deepEqual(f.files,before);
 });
 test('capture unavailability is explicit and does not claim documented readiness or replace original files',async()=>{
  const f=fixture();for(const option of [{},{session:{token:'owned'},fetcher:async()=>new Response('',{status:409})},{session:{token:'owned'},fetcher:async()=>{throw Error('offline');}}]){

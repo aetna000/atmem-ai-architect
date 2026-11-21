@@ -9,11 +9,11 @@ import {
 } from "./integrations.ts";
 import { importPulumiSnapshot, snapshotToProject } from "./pulumi.mjs";
 const PROVIDER_OPTIONS = [
-  ["claude-code", "Claude", "account"],
-  ["codex", "ChatGPT", "account"],
+  ["claude-code", "Claude Code", "account"],
+  ["codex", "ChatGPT (Codex)", "account"],
   ["copilot", "GitHub Copilot", "account"],
   ["gemini-cli", "Gemini", "account"],
-  ["anthropic", "Claude", "key"],
+  ["anthropic", "Claude API", "key"],
   ["openai", "OpenAI", "key"],
   ["gemini-api", "Gemini", "key"],
   ["xai", "Grok", "key"],
@@ -42,9 +42,9 @@ function badgeInk(hex){
 }
 
 // Check your connection: pick a provider, sign in from here if needed, check, continue.
-export function Connections({ session, connection, onCheck, onSave, onRetry, welcome = false }) {
-  const [choice, setChoice] = useState(connection?.provider || "claude-code"),
-    [model, setModel] = useState(connection?.model || "claude-opus-5-5"),
+export function Connections({ session, connection, onCheck, onSave, onRetry, welcome = false, purpose = null }) {
+  const [choice, setChoice] = useState(purpose==='architecture'?'codex':connection?.provider || "claude-code"),
+    [model, setModel] = useState(purpose==='architecture'&&connection?.provider!=='codex'?'':connection?.model || "claude-opus-5-5"),
     [key, setKey] = useState(""),
     [state, setState] = useState("idle"),
     [error, setError] = useState(""),
@@ -141,6 +141,7 @@ export function Connections({ session, connection, onCheck, onSave, onRetry, wel
       if (kind === "key" && key.trim()) await storeKey();
       await onCheck(choiceNow);
       setState("ok");
+      if(purpose==='architecture')onSave(choiceNow);
     } catch (e) {
       setState("idle");
       setError(e.message);
@@ -149,12 +150,14 @@ export function Connections({ session, connection, onCheck, onSave, onRetry, wel
   const blocked =
     !ready ||
     !model ||
+    (purpose==='architecture'&&!effort) ||
     (kind === "account" && !capability?.installed) ||
     (kind === "key" && !capability?.available && !key.trim()) ||
     (kind === "aws" && !capability?.available);
   return (
     <div className="connect">
-      <h2>{welcome ? "AI providers" : "AI providers"}</h2>
+      <h2>{purpose==='architecture'?'Connect to generate architecture':'AI providers'}</h2>
+      {purpose==='architecture'&&<p>Specifications use ChatGPT (Codex). Your files and pending request are retained.</p>}
       {!session && (
         <p className="error-box">
           Looks like AtMem AI Architect's helper isn't running. Start it with <code>npm run local</code>, then{" "}
@@ -164,8 +167,9 @@ export function Connections({ session, connection, onCheck, onSave, onRetry, wel
           .
         </p>
       )}
+      {purpose==='architecture'&&ready&&model&&!effort&&<p role="alert">This model has no supported reasoning level. Choose a model with a reasoning level.</p>}
       <div className="provider-grid" role="radiogroup" aria-label="Provider">
-        {PROVIDER_OPTIONS.map(([id, label, how]) => {
+        {PROVIDER_OPTIONS.filter(([id])=>purpose!=='architecture'||id==='codex').map(([id, label, how]) => {
           const cap = session?.providers?.[id];
           return (
             <button
@@ -279,7 +283,7 @@ export function Connections({ session, connection, onCheck, onSave, onRetry, wel
           {error}
         </p>
       )}
-      {state === "ok" ? (
+      {state === "ok" && purpose!=='architecture' ? (
         <>
           <p className="ok-text">
             ✓ Works — {name} · {listed?.name || model}
@@ -291,7 +295,7 @@ export function Connections({ session, connection, onCheck, onSave, onRetry, wel
         </>
       ) : (
         <button className="button run-button full" disabled={blocked || state !== "idle"} onClick={check}>
-          {state === "checking" ? <><BrainActivity/> Checking…</> : "Check"}
+          {state === "checking" ? <><BrainActivity/> Checking…</> : purpose==='architecture'?'Connect and start':'Check'}
         </button>
       )}
     </div>

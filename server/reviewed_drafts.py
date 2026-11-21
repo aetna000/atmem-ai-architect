@@ -18,6 +18,7 @@ from .engineering_sessions import ProjectScope, SessionError
 from .engineering_contexts import MAX_CONTEXT_BYTES, validate_context
 
 MAX_ARCHIVE_BYTES=64_000_000
+MAX_CANVAS_BYTES=2_000_000
 MAX_REVIEW_BYTES=250_000
 SHA=re.compile(r'[a-f0-9]{64}')
 
@@ -66,7 +67,7 @@ class LocalReviewedDrafts:
                     content=package.read(entry)
                     if len(content)!=entry.file_size or hashlib.sha256(content).hexdigest()!=record.get('sha256'):raise SessionError('Reviewed draft file integrity check failed.')
                     return content
-                content=member('architecture.canvas.json',MAX_CONTEXT_BYTES)
+                content=member('architecture.canvas.json',MAX_CANVAS_BYTES)
                 review=member('architecture.review.md',MAX_REVIEW_BYTES)
             if hashlib.sha256(content).hexdigest()!=draft_sha256:raise SessionError('Reviewed draft digest does not match the captured bytes.')
             value=json.loads(content.decode('utf-8'),parse_constant=lambda _:(_ for _ in ()).throw(ValueError('Non-finite JSON')))

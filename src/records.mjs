@@ -19,6 +19,12 @@ export const REQUIREMENT_STATUSES = ["open", "met", "at-risk", "not-met"];
 export const SOURCES = ["user", "agent", "import"];
 export const OPS = [">=", "<=", "=="];
 
+// Legacy diagram application receipts share the ADR store. Preserve them as
+// history without treating them as business/architecture choices. A meaningful
+// design.* ADR with rationale or a real decision remains an architectural record.
+export const isDiagramRevision = row => Boolean(row?.subject?.startsWith('design.')
+  && /^Applied as design revision \d+\.$/.test(row.decision||'')&&!row.options?.trim()&&!row.consequences?.trim());
+
 const text = (value, max = 2000) => {const result=String(value??"");if(result.length>max)throw Error(`A project record exceeds ${max.toLocaleString('en')} characters; split it into linked records. No content was truncated.`);return result;};
 const pick = (value, allowed, fallback) => (allowed.includes(value) ? value : fallback);
 const links = (value) => {if(Array.isArray(value)&&value.length>50)throw Error("A record links more than 50 components; no links were truncated.");return Array.isArray(value)?value.map(id=>text(id,100)).filter(Boolean):[];};
@@ -81,6 +87,10 @@ export function cleanQuestion(q) {
   return {
     id: text(q?.id || uid("q"), 60),
     question: text(q?.question, 1000),
+    ...(q?.requirementIds?.length?{requirementIds:links(q.requirementIds)}:{}),
+    ...(q?.interfaceIds?.length?{interfaceIds:links(q.interfaceIds)}:{}),
+    ...(q?.decisionBy?{decisionBy:text(q.decisionBy,200)}:{}),
+    ...(q?.interim?{interim:text(q.interim,1000)}:{}),
     owner: text(q?.owner, 120),
     status: q?.status === "answered" ? "answered" : "open",
     answer: text(q?.answer, 2000),
@@ -88,7 +98,7 @@ export function cleanQuestion(q) {
   };
 }
 
-export const newRequirement = (fields = {}) => cleanRequirement({ kind: "nonfunctional", category: "performance", ...fields });
+export const newRequirement = (fields = {}) => cleanRequirement({ kind: "nonfunctional", category: fields.kind === "functional" ? "other" : "performance", ...fields });
 export const newAssumption = (fields = {}) => cleanAssumption(fields);
 export const newQuestion = (fields = {}) => cleanQuestion(fields);
 

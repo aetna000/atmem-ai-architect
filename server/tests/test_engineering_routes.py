@@ -32,6 +32,18 @@ class EngineeringRouteTests(unittest.TestCase):
                          'artifacts','reconciliation','finalizations','recheck','work-orders/block','validators','validation/start','validation/list','validation/plan','validation/get','validation/recover']:
             self.assertEqual(self.client.post('/api/engineering/'+endpoint,json={}).status_code,401)
 
+    def test_oversize_delivery_names_bound_without_reading_or_pruning_the_project(self):
+        from server.engineering_contexts import MAX_CONTEXT_BYTES
+        path=self.root/'projects'/f'{self.project}.atforma.json'
+        content=b' '* (MAX_CONTEXT_BYTES+1);path.write_bytes(content)
+        with patch.object(routes,'service') as service:
+            response=self.client.post('/api/engineering/delivery',json={'projectId':self.project},headers=self.headers)
+            self.assertEqual(response.status_code,409)
+            self.assertIn(f'{MAX_CONTEXT_BYTES:,}-byte',response.json()['detail'])
+            self.assertIn('complete file is retained',response.json()['detail'])
+            service.assert_not_called()
+        self.assertEqual(path.read_bytes(),content)
+
     def test_block_order_uses_typed_owned_scope_and_rejects_browser_prose(self):
         body={**self.payload,'requestId':'00000000-0000-0000-0000-000000000021','blockId':'award-review','contextSha256':'b'*64}
         with patch.object(routes,'service') as service:

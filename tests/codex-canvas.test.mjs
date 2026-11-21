@@ -124,3 +124,25 @@ test('captured behavior operation references use the proposed model when evaluat
  const valid=canvasProposal(base,pack(value),'bound');assert.equal(valid.quality.behaviorConsistency.errors.length,0);
  value.addNodes[1].data.buildSpec.scenarios[0].steps[0].operationId='invented';const invalid=canvasProposal(base,pack(value),'unbound');assert.equal(invalid.quality.ready,false);assert.ok(invalid.quality.behaviorConsistency.errors.some(r=>r.code==='operation_missing'));
 });
+
+test('source requirement classification preserves explicit quality targets and never defaults ordinary behavior to performance',()=>{
+ const ordinary=canvasProposal(base,pack(draft),'artifact').sourceRequirements[0];
+ assert.equal(ordinary.category,'other');
+ const value={...draft,requirements:[{...draft.requirements[0],kind:'nonfunctional',category:'performance',measure:{metric:'Hold latency p95',op:'<=',target:250,unit:'ms'}}]};
+ const measured=canvasProposal(base,pack(value),'artifact').sourceRequirements[0];
+ assert.equal(measured.category,'performance');assert.equal(measured.measure.target,250);
+});
+
+test('owner decisions retain explicit blocked requirements, contracts and safe milestone holds',()=>{
+ const value={...draft,questions:[{...draft.questions[0],requirementIds:['hold-once'],decisionBy:'Before enabling checkout expiry',interim:'Keep an ambiguous hold unavailable until reviewed.'}]};
+ const question=canvasProposal(base,pack(value),'artifact').sourceQuestions[0];
+ assert.deepEqual(question.requirementIds,['hold-once']);assert.match(question.interim,/unavailable/);
+ assert.throws(()=>canvasProposal(base,pack({...value,questions:[{...value.questions[0],requirementIds:['invented']}]}),'artifact'),/unknown requirement/);
+ assert.throws(()=>canvasProposal(base,pack({...value,questions:[{...value.questions[0],interfaceIds:['invented']}]}),'artifact'),/unknown interface/);
+});
+
+test('accepted source architecture replaces its provisional filename title but preserves an owner title',()=>{
+ const uploaded={...base,name:'Theatre brief',extensions:{...base.extensions,sourceProvisionalTitle:'Theatre brief'}};
+ assert.equal(canvasProposal(uploaded,pack(draft),'artifact').next.name,'Seat inventory');
+ assert.equal(canvasProposal({...uploaded,name:'Owner project name'},pack(draft),'artifact').next.name,'Owner project name');
+});

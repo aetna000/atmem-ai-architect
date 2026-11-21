@@ -1,0 +1,626 @@
+[
+  {
+    "id": "context",
+    "title": "System context",
+    "group": "Scope & function",
+    "layout": "graph",
+    "elements": [
+      "system",
+      "actor",
+      "external-system"
+    ],
+    "relations": [
+      "interaction"
+    ],
+    "question": "Who uses the system and what connects to it?",
+    "rule": "Show one focal system and label interactions with people and external systems.",
+    "starter": [
+      "system",
+      "actor"
+    ]
+  },
+  {
+    "id": "use-case",
+    "title": "Use case",
+    "group": "Scope & function",
+    "layout": "groups",
+    "elements": [
+      "actor",
+      "use-case",
+      "system"
+    ],
+    "relations": [
+      "association",
+      "include",
+      "extend",
+      "generalization"
+    ],
+    "question": "What can each role do?",
+    "rule": "Group goals inside the system. Keep actor associations undirected and label include or extend dependencies.",
+    "starter": [
+      "actor",
+      "use-case"
+    ]
+  },
+  {
+    "id": "functional",
+    "title": "Functional decomposition",
+    "group": "Scope & function",
+    "layout": "tree",
+    "elements": [
+      "function"
+    ],
+    "relations": [
+      "decomposition"
+    ],
+    "question": "How is the work broken down?",
+    "rule": "Use verb phrases and parent-child decomposition. Link ownership and requirements by reference.",
+    "starter": [
+      "function",
+      "function"
+    ]
+  },
+  {
+    "id": "capability",
+    "title": "Capability map",
+    "group": "Scope & function",
+    "layout": "tiles",
+    "elements": [
+      "capability"
+    ],
+    "relations": [
+      "decomposition"
+    ],
+    "question": "What can the organisation do?",
+    "rule": "Nest business capabilities. Keep ownership and maturity in the details.",
+    "starter": [
+      "capability",
+      "capability"
+    ]
+  },
+  {
+    "id": "container",
+    "title": "Container",
+    "group": "System & code",
+    "layout": "groups",
+    "elements": [
+      "system",
+      "actor",
+      "external-system",
+      "container",
+      "store",
+      "topic"
+    ],
+    "relations": [
+      "dependency",
+      "integration"
+    ],
+    "question": "What runs independently?",
+    "rule": "Group runtime units under the system. Show technology and protocol; keep code-level components out.",
+    "starter": [
+      "container",
+      "store"
+    ]
+  },
+  {
+    "id": "component",
+    "title": "Component",
+    "group": "System & code",
+    "layout": "groups",
+    "elements": [
+      "container",
+      "component",
+      "port",
+      "external-system",
+      "store",
+      "topic"
+    ],
+    "relations": [
+      "dependency",
+      "implements"
+    ],
+    "question": "What lives inside a runtime unit?",
+    "rule": "Group modules inside their container. Point dependencies from caller to dependency and name ports where known.",
+    "starter": [
+      "component",
+      "component"
+    ]
+  },
+  {
+    "id": "layer",
+    "title": "Layers",
+    "group": "System & code",
+    "layout": "bands",
+    "elements": [
+      "layer",
+      "component",
+      "package",
+      "port"
+    ],
+    "relations": [
+      "dependency",
+      "implements"
+    ],
+    "question": "Which layers can depend on each other?",
+    "rule": "Order layer bands. Show actual dependency direction and flag edges that violate an explicit layer policy.",
+    "starter": [
+      "component",
+      "port"
+    ]
+  },
+  {
+    "id": "package",
+    "title": "Package dependencies",
+    "group": "System & code",
+    "layout": "graph",
+    "elements": [
+      "package"
+    ],
+    "relations": [
+      "dependency"
+    ],
+    "question": "Which packages depend on each other?",
+    "rule": "Use qualified names, import or manifest evidence, and report dependency cycles.",
+    "starter": [
+      "package",
+      "package"
+    ]
+  },
+  {
+    "id": "class",
+    "title": "Class",
+    "group": "System & code",
+    "layout": "compartments",
+    "elements": [
+      "class",
+      "interface"
+    ],
+    "relations": [
+      "association",
+      "inheritance",
+      "composition",
+      "implements"
+    ],
+    "question": "What types and methods make up the code?",
+    "rule": "Use separate field and method compartments. Show inheritance, composition and endpoint multiplicities.",
+    "starter": [
+      "class",
+      "class"
+    ]
+  },
+  {
+    "id": "domain",
+    "title": "Domain model",
+    "group": "System & code",
+    "layout": "compartments",
+    "elements": [
+      "concept",
+      "rule"
+    ],
+    "relations": [
+      "association",
+      "governs"
+    ],
+    "question": "How do business concepts relate?",
+    "rule": "Use business vocabulary, named associations, cardinalities and linked business rules.",
+    "starter": [
+      "concept",
+      "concept"
+    ]
+  },
+  {
+    "id": "sequence",
+    "title": "Sequence",
+    "group": "Runtime & behaviour",
+    "layout": "timeline",
+    "elements": [
+      "actor",
+      "external-system",
+      "container",
+      "component",
+      "store",
+      "topic",
+      "operation"
+    ],
+    "relations": [
+      "call",
+      "return",
+      "async"
+    ],
+    "question": "Who sends what, in what order?",
+    "rule": "Order messages explicitly. Include return messages and use labelled fragments for alternatives, loops and concurrency.",
+    "starter": [
+      "actor",
+      "component"
+    ]
+  },
+  {
+    "id": "event-flow",
+    "title": "Event flow",
+    "group": "Runtime & behaviour",
+    "layout": "graph",
+    "elements": [
+      "event",
+      "producer",
+      "topic",
+      "consumer",
+      "component",
+      "container"
+    ],
+    "relations": [
+      "publishes",
+      "subscribes",
+      "delivers"
+    ],
+    "question": "Where do events go after publication?",
+    "rule": "Show versioned event names through topics to consumers and attach subscription filters and delivery policies.",
+    "starter": [
+      "producer",
+      "topic"
+    ]
+  },
+  {
+    "id": "workflow",
+    "title": "Activity / workflow",
+    "group": "Runtime & behaviour",
+    "layout": "bands",
+    "elements": [
+      "lane",
+      "start",
+      "activity",
+      "decision",
+      "fork",
+      "join",
+      "end"
+    ],
+    "relations": [
+      "control-flow"
+    ],
+    "question": "How does work move through decisions?",
+    "rule": "Place actions in owner lanes, with explicit start, end, branch guards, and fork/join when applicable.",
+    "starter": [
+      "activity",
+      "decision"
+    ]
+  },
+  {
+    "id": "state",
+    "title": "State machine",
+    "group": "Runtime & behaviour",
+    "layout": "graph",
+    "elements": [
+      "start",
+      "state",
+      "end"
+    ],
+    "relations": [
+      "transition"
+    ],
+    "question": "What changes state, and what allows it?",
+    "rule": "Show initial and final markers and cycles. Label transitions with the event, guard and action.",
+    "starter": [
+      "state",
+      "state"
+    ]
+  },
+  {
+    "id": "journey",
+    "title": "User journey",
+    "group": "Runtime & behaviour",
+    "layout": "stages",
+    "elements": [
+      "persona",
+      "stage",
+      "touchpoint"
+    ],
+    "relations": [
+      "progression"
+    ],
+    "question": "What does someone experience from start to finish?",
+    "rule": "Order stage cards and attach touchpoints, goals and observed pain points to stable stage IDs.",
+    "starter": [
+      "stage",
+      "stage"
+    ]
+  },
+  {
+    "id": "data-flow",
+    "title": "Data flow",
+    "group": "Data & integration",
+    "layout": "graph",
+    "elements": [
+      "external-system",
+      "actor",
+      "process",
+      "store"
+    ],
+    "relations": [
+      "data-flow"
+    ],
+    "question": "Where does data enter, move and persist?",
+    "rule": "Label flows with data payloads and route data-store flows through a process.",
+    "starter": [
+      "process",
+      "store"
+    ]
+  },
+  {
+    "id": "erd",
+    "title": "Entity relationships",
+    "group": "Data & integration",
+    "layout": "compartments",
+    "elements": [
+      "table"
+    ],
+    "relations": [
+      "foreign-key"
+    ],
+    "question": "How do database tables link?",
+    "rule": "Show typed columns, keys and nullability. Attach foreign keys to named columns and show cardinality.",
+    "starter": [
+      "table",
+      "table"
+    ]
+  },
+  {
+    "id": "lineage",
+    "title": "Data lineage",
+    "group": "Data & integration",
+    "layout": "graph",
+    "elements": [
+      "dataset",
+      "transform"
+    ],
+    "relations": [
+      "mapping"
+    ],
+    "question": "Which source fields produce each result?",
+    "rule": "Name datasets, transformation steps and field mappings. Trace result fields back to their origins.",
+    "starter": [
+      "dataset",
+      "transform"
+    ]
+  },
+  {
+    "id": "integration",
+    "title": "Integration",
+    "group": "Data & integration",
+    "layout": "graph",
+    "elements": [
+      "system",
+      "external-system",
+      "container",
+      "component"
+    ],
+    "relations": [
+      "integration"
+    ],
+    "question": "What crosses a system boundary?",
+    "rule": "Identify transfer direction, contract, transport and version for each integration.",
+    "starter": [
+      "external-system",
+      "system"
+    ]
+  },
+  {
+    "id": "api",
+    "title": "API interaction",
+    "group": "Data & integration",
+    "layout": "graph",
+    "elements": [
+      "actor",
+      "external-system",
+      "route",
+      "operation",
+      "component",
+      "container"
+    ],
+    "relations": [
+      "request",
+      "routes-to",
+      "response"
+    ],
+    "question": "How does a request reach an operation?",
+    "rule": "Show caller, gateway route and operation. Compare method and path and expose request and response schemas.",
+    "starter": [
+      "route",
+      "operation"
+    ]
+  },
+  {
+    "id": "deployment",
+    "title": "Deployment",
+    "group": "Infrastructure & security",
+    "layout": "groups",
+    "elements": [
+      "environment",
+      "host",
+      "artifact",
+      "container",
+      "store"
+    ],
+    "relations": [
+      "placement",
+      "connection"
+    ],
+    "question": "Where does each runtime unit execute?",
+    "rule": "Group execution nodes by environment. Show artifact placement and distinguish replicas by count.",
+    "starter": [
+      "host",
+      "artifact"
+    ]
+  },
+  {
+    "id": "network",
+    "title": "Network topology",
+    "group": "Infrastructure & security",
+    "layout": "groups",
+    "elements": [
+      "environment",
+      "segment",
+      "device",
+      "endpoint",
+      "external-system",
+      "container",
+      "store"
+    ],
+    "relations": [
+      "traffic"
+    ],
+    "question": "Which network paths carry traffic?",
+    "rule": "Group endpoints by network segment. Label directed traffic with protocol and destination port.",
+    "starter": [
+      "device",
+      "endpoint"
+    ]
+  },
+  {
+    "id": "trust",
+    "title": "Trust boundaries",
+    "group": "Infrastructure & security",
+    "layout": "groups",
+    "elements": [
+      "zone",
+      "actor",
+      "component",
+      "container",
+      "store",
+      "endpoint",
+      "external-system"
+    ],
+    "relations": [
+      "crossing",
+      "data-flow"
+    ],
+    "question": "Where does data cross a trust boundary?",
+    "rule": "Group nodes by trust zone and attach data classification and named security controls to crossings.",
+    "starter": [
+      "actor",
+      "container"
+    ]
+  },
+  {
+    "id": "auth",
+    "title": "Authentication & authorisation",
+    "group": "Infrastructure & security",
+    "layout": "graph",
+    "elements": [
+      "actor",
+      "identity-provider",
+      "operation",
+      "policy",
+      "decision",
+      "outcome"
+    ],
+    "relations": [
+      "sign-in",
+      "validates",
+      "authorizes",
+      "control-flow"
+    ],
+    "question": "How are requests allowed or denied?",
+    "rule": "Separate sign-in, token validation and authorization and show distinct denial outcomes.",
+    "starter": [
+      "operation",
+      "policy"
+    ]
+  },
+  {
+    "id": "observability",
+    "title": "Observability",
+    "group": "Operations & delivery",
+    "layout": "graph",
+    "elements": [
+      "component",
+      "container",
+      "source",
+      "collector",
+      "telemetry-store",
+      "dashboard",
+      "alert"
+    ],
+    "relations": [
+      "signal",
+      "query",
+      "alerts"
+    ],
+    "question": "How do we detect and investigate problems?",
+    "rule": "Route logs, metrics and traces distinctly. Bind alert conditions, evaluation windows and owners to the metric source.",
+    "starter": [
+      "source",
+      "collector"
+    ]
+  },
+  {
+    "id": "recovery",
+    "title": "Failover & recovery",
+    "group": "Operations & delivery",
+    "layout": "graph",
+    "elements": [
+      "trigger",
+      "decision",
+      "activity",
+      "component",
+      "container",
+      "outcome"
+    ],
+    "relations": [
+      "control-flow",
+      "failover",
+      "verification"
+    ],
+    "question": "How is service restored after a failure?",
+    "rule": "Show detection, failover, verification and escalation. Reference recovery objectives and runbooks.",
+    "starter": [
+      "trigger",
+      "decision"
+    ]
+  },
+  {
+    "id": "pipeline",
+    "title": "CI/CD pipeline",
+    "group": "Operations & delivery",
+    "layout": "graph",
+    "elements": [
+      "job",
+      "gate",
+      "artifact",
+      "environment"
+    ],
+    "relations": [
+      "prerequisite",
+      "produces",
+      "deploys"
+    ],
+    "question": "What has to pass before release?",
+    "rule": "Model job prerequisites, parallel checks, approval gates and artifact identity. Reject prerequisite cycles.",
+    "starter": [
+      "job",
+      "job"
+    ]
+  },
+  {
+    "id": "migration",
+    "title": "Migration & transition",
+    "group": "Operations & delivery",
+    "layout": "stages",
+    "elements": [
+      "phase",
+      "system",
+      "container",
+      "component",
+      "dataset"
+    ],
+    "relations": [
+      "progression",
+      "cutover",
+      "rollback"
+    ],
+    "question": "How does the solution change safely?",
+    "rule": "Order phases, reuse shared IDs and record changes, cutover checks and rollback targets.",
+    "starter": [
+      "phase",
+      "phase"
+    ]
+  }
+]

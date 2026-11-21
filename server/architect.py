@@ -76,24 +76,24 @@ class AtMemArchitect:
         from .local_providers import call_cli
         return await call_cli('claude-code',request.model,self.context(request,runtime),SYSTEM_PROMPT,self.output_schema(runtime),is_disconnected,request.effort,images,timeout=response_budget_seconds(request))
 
-    def _strands(self,request,runtime=None,images=None):
+    def _strands(self,request,runtime=None,images=None,*,prompt=None,system=SYSTEM_PROMPT,max_tokens=6000):
         from strands import Agent
         from .upstream.agent.aws_architect import AWSArchitectAgent
         from .upstream.agent.rate_limiter import RateLimiter
         if request.provider=='anthropic':
             if not (self.keys.get('anthropic') or os.getenv('ANTHROPIC_API_KEY')):raise RuntimeError('Set ANTHROPIC_API_KEY in the sidecar environment.')
             from strands.models.anthropic import AnthropicModel
-            model=AnthropicModel(client_args={'api_key':self.keys.get('anthropic') or os.environ['ANTHROPIC_API_KEY']},model_id=request.model,max_tokens=6000)
+            model=AnthropicModel(client_args={'api_key':self.keys.get('anthropic') or os.environ['ANTHROPIC_API_KEY']},model_id=request.model,max_tokens=max_tokens)
         elif request.provider=='openai':
             if not (self.keys.get('openai') or os.getenv('OPENAI_API_KEY')):raise RuntimeError('Set OPENAI_API_KEY in the sidecar environment.')
             from strands.models.openai import OpenAIModel
-            model=OpenAIModel(client_args={'api_key':self.keys.get('openai') or os.environ['OPENAI_API_KEY']},model_id=request.model,params={'max_tokens':6000})
+            model=OpenAIModel(client_args={'api_key':self.keys.get('openai') or os.environ['OPENAI_API_KEY']},model_id=request.model,params={'max_tokens':max_tokens})
         elif request.provider=='xai':
             key=self.keys.get('xai') or os.getenv('XAI_API_KEY')
             if not key:raise RuntimeError('Add an xAI API key in Connections.')
             from strands.models.openai import OpenAIModel
             # Grok's API is OpenAI-compatible.
-            model=OpenAIModel(client_args={'api_key':key,'base_url':'https://api.x.ai/v1'},model_id=request.model,params={'max_tokens':6000})
+            model=OpenAIModel(client_args={'api_key':key,'base_url':'https://api.x.ai/v1'},model_id=request.model,params={'max_tokens':max_tokens})
         elif request.provider=='gemini-api':
             key=self.keys.get('gemini-api') or os.getenv('GEMINI_API_KEY')
             if not key:raise RuntimeError('Add a Gemini API key in Connections.')
@@ -101,16 +101,17 @@ class AtMemArchitect:
             model=GeminiModel(client_args={'api_key':key},model_id=request.model)
         else:
             from strands.models import BedrockModel
-            model=BedrockModel(model_id=request.model,region_name=os.getenv('AWS_REGION','us-east-1'),max_tokens=6000)
+            model=BedrockModel(model_id=request.model,region_name=os.getenv('AWS_REGION','us-east-1'),max_tokens=max_tokens)
         # Preserve the sample's composition, retry/backoff and sliding-window limiter.
         # Do not call initialize(): it auto-starts MCP servers and uses an AWS-only prompt.
         composed=AWSArchitectAgent()
         if self._limiter is None:self._limiter=RateLimiter(max_requests=5,time_window=60)
         composed.rate_limiter=self._limiter
-        composed.agent=Agent(name='atforma-architect',system_prompt=SYSTEM_PROMPT,model=model,tools=[],callback_handler=None)
+        composed.agent=Agent(name='atforma-architect',system_prompt=system,model=model,tools=[],callback_handler=None)
         composed.initialized=True
-        content=[{'text':self.context(request,runtime)}]+[{'image':{'format':i['mime'].split('/')[1],'source':{'bytes':base64.b64decode(i['data'])}}} for i in images or []]
-        result=composed._call_agent_with_retry(content if images else self.context(request,runtime))
+        prompt = prompt if prompt is not None else self.context(request,runtime)
+        content=[{'text':prompt}]+[{'image':{'format':i['mime'].split('/')[1],'source':{'bytes':base64.b64decode(i['data'])}}} for i in images or []]
+        result=composed._call_agent_with_retry(content if images else prompt)
         text=''.join(c.get('text','') for c in result.message.get('content',[])).strip()
         if text.startswith('```'):text='\n'.join(text.splitlines()[1:-1])
         return json.loads(text)

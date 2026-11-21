@@ -69,7 +69,15 @@ class MemoryTests(unittest.TestCase):
   with self.memory.db() as db:self.assertEqual(db.execute('SELECT count(*) FROM queue').fetchone()[0],0)
  def test_skills_are_in_real_atmem_and_hash_checked_before_selection(self):
   m=self.memory;skills.publish(m,PROJECT)
-  knowledge=m.inspect(PROJECT)['knowledge']
+  # The expanded catalogue exceeds the legacy50-row inspection preview.
+  # Verify the actual paginated store, including every one of the28cards.
+  knowledge=[];cursor=None
+  for _ in range(10):
+   page=m.browse(PROJECT,'knowledge',status='all',limit=32,**({'cursor':cursor}if cursor else{}));knowledge.extend(page['records'])
+   if not page['hasMore']:break
+   self.assertTrue(page['nextCursor']);cursor=page['nextCursor']
+  self.assertEqual(len(knowledge),page['total'])
+  self.assertEqual(len({r['fact_key']for r in knowledge if r['fact_key'].startswith('skill.diagram.')}),28)
   keys={r.get('fact_key') for r in knowledge}
   self.assertTrue({'skill.'+r['id'] for r in skills.registry()}.issubset(keys))
   self.assertTrue({'practice.'+p+'-container-boundaries' for p in ['aws','azure','gcp','ibm']}.issubset(keys))

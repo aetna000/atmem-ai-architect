@@ -94,6 +94,8 @@ def publish(memory, project):
         if not skill['integrity']: continue
         text = publication_text(skill)
         memory.enqueue(project,'knowledge','skill.'+skill['id'],text,event_id='skill-'+skill['digest'],source=skill['source'])
+    from .diagram_skills import publish_diagram_skills
+    publish_diagram_skills(memory, project)
     from .engineering_knowledge import publish as publish_practices
     publish_practices(memory,project)
     memory.flush()

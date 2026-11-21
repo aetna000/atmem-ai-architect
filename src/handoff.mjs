@@ -1,3 +1,4 @@
+import {sourceDerivedRequirement} from './source-scope.mjs';
 // Derived engineering evidence. Presence of prose is not implementation or approval.
 import {resourcePlan} from './resources.mjs';
 import {estimate} from './estimate.mjs';
@@ -96,8 +97,8 @@ export function handoffAssessment(project, now = new Date()) {
  const regionDecisions=decisions.filter(d=>d.subject==='cloud.region').map(d=>String(d.decision||'').trim());
  if(new Set(regionDecisions).size>1)add('region-decisions-conflict',1,'placement','Multiple accepted deployment-region decisions disagree.','Resolve or supersede conflicting decisions explicitly; do not choose the most convenient value.');
  const agreed=subject=>decisions.some(d=>d.subject===subject&&String(d.decision||'').trim());
- if(!project.brief?.application?.trim())add('scope-outcome',1,'scope','No structured application outcome is recorded.','Confirm a concise outcome, intended users and exclusions; raw conversation fragments are not an implementation brief.');
- if(!(project.useCases||[]).length)add('scope-boundary',1,'scope','No explicit scope boundary is recorded.','Record included and excluded use cases before sizing or implementation.');
+ if(!project.brief?.application?.trim()&&!(typeof project.extensions?.systemSpec?.decomposition==='string'&&project.extensions.systemSpec.decomposition.trim()))add('scope-outcome',1,'scope','No structured application outcome is recorded.','Confirm a concise outcome, intended users and exclusions; raw conversation fragments are not an implementation brief.');
+ if(!(project.useCases||[]).length&&!project.extensions?.systemSpec?.journeys?.length)add('scope-boundary',1,'scope','No explicit scope boundary is recorded.','Record included and excluded use cases before sizing or implementation.');
  if(!resources.rows.length)add('architecture-empty',1,'architecture','No deployable or existing components are described.','Define the components and interactions; an empty Terraform configuration is not a deployment.');
  if(resources.rows.some(r=>r.provider!=='tools'))for(const [subject,label]of [['platform.cloud','cloud provider'],['data.country','data country and processing boundary'],['cloud.region','deployment region']])if(!agreed(subject))add(`decision-${subject}`,1,'placement',`The ${label} is not independently confirmed.`,`Record an explicit ${subject} decision. Proposed diagram placement is not approval.`);
  for(const row of resources.rows){
@@ -117,13 +118,13 @@ export function handoffAssessment(project, now = new Date()) {
  if(!needs.length)add('requirements-empty',1,'acceptance','No acceptance requirements are recorded.','Agree observable behavior and success criteria before declaring the handoff implementation-ready.');
  for(const r of needs){
   const number=requirementNumber(project,r.id),task=[`TASK-ACCEPTANCE-${handoffKey(r.id)}`],key=handoffKey(r.id);
-  if(r.source!=='user')add(`requirement-proposed-${key}`,1,'acceptance',`${number} remains proposed.`,'Confirm, revise or explicitly defer this requirement; do not promote it through generation.',task,[],[r.id]);
+  if(r.source!=='user')add(`requirement-proposed-${key}`,sourceDerivedRequirement(project,r)?2:1,'acceptance',`${number} remains proposed.`,sourceDerivedRequirement(project,r)?'Validate this interpretation against its cited source and linked cases. Source derivation does not establish agreement or execution.':'Confirm, revise or explicitly defer this requirement; do not promote it through generation.',task,[],[r.id]);
   const missing=(r.links||[]).filter(id=>!resources.rows.some(row=>row.id===id));
   if(!r.links?.length||missing.length)add(`traceability-${key}`,2,'traceability',`${number} has ${missing.length?'references to missing components':'no component links'}.`,'Map the requirement to relevant components or record why it is project-wide; do not guess the mapping.',task,[],[r.id]);
   // A scalar measure omits workload/window/negative cases, so never marks acceptance ready.
   add(`acceptance-${key}`,2,'acceptance',`${number}: executable acceptance evidence is not supplied.`,r.measure?'Define workload, measurement window, first-output versus completed-response boundary and repeatable positive/negative cases.':'Agree an observable pass/fail criterion, fixtures and evidence location.',task,r.links||[],[r.id]);
  }
- for(const q of (project.openQuestions||[]).filter(q=>q.status==='open'))add(`question-${handoffKey(q.id)}`,1,'decision',q.question,'Resolve or explicitly defer this question with an owner and affected tasks.');
+ for(const q of (project.openQuestions||[]).filter(q=>q.status==='open')){add(`question-${handoffKey(q.id)}`,1,'decision',q.question,'Resolve or explicitly defer this question with an owner and affected tasks.');findings.at(-1).questionId=q.id;}
  const order=['scope','architecture','placement','availability','security','decision','cost','acceptance','traceability','implementation','integration'];
  findings.sort((a,b)=>a.priority-b.priority||order.indexOf(a.area)-order.indexOf(b.area)||a.id.localeCompare(b.id));
  return {

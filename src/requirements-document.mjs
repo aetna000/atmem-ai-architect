@@ -1,3 +1,4 @@
+import {recordedOutcome} from './source-scope.mjs';
 import {cleanRichDocument, decodeRequirementBinding, documentText, mapDocumentNodes, numberRichHeadings, rasterData} from './requirements-rich-document.mjs';
 
 const extension = 'requirementsDocument';
@@ -26,7 +27,7 @@ export function validDocumentBlock(block, id) {
 export function documentValue(project, target) {
   if (target.kind === 'block') return documentState(project).blocks.find(block => block.id === target.id) || null;
   if (!Object.hasOwn(textFields, target.kind) || !textFields[target.kind].includes(target.field)) throw Error('This document field is unavailable.');
-  if (target.kind === 'scope') return project.brief?.application || project.requirements || '';
+  if (target.kind === 'scope') return recordedOutcome(project);
   const row = project.needs?.find(requirement => requirement.id === target.id);
   if (!row) throw Error('This requirement was removed.');
   return row[target.field] || '';

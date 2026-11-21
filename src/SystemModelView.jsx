@@ -1,5 +1,10 @@
-import React, {useEffect, useId, useMemo, useRef, useState} from 'react';
-import dagre from 'dagre';
+import {applyDrawingLayout} from './drawing-layout.mjs';
+import React, {useEffect, useMemo, useRef, useState} from 'react';
+import {DiagramPages,projectPages} from './DiagramPages.jsx';
+import {DrawioCanvas} from './DrawioCanvas.jsx';
+import {DiagramMermaid} from './DiagramMermaid.jsx';
+import {legacyGraph} from './model-page-geometry.mjs';
+import {graphMermaid} from './drawio-model.mjs';
 import {ArrowUpRight, ArrowLeft, Plus, Play, Pause, SkipForward, ZoomIn, ZoomOut} from 'lucide-react';
 import {interfaceFields} from './block-spec.mjs';
 import {diagramElements, removeModelRecord, systemDiagramKinds, systemModelIndex, systemModelOnBoard} from './system-model.mjs';
@@ -8,145 +13,6 @@ import './system-model.css';
 const labels = {actor:'Actor', component:'Logical component', function:'Logical function',
   componentPort:'Component port', functionPort:'Function port', componentExchange:'Component exchange',
   functionalExchange:'Functional exchange'};
-const box = {width:216, height:82};
-const shorten = (value, length = 29) => value.length > length ? value.slice(0,length-1)+'…' : value;
-
-function selectProps(id, name, selected, select) {
-  return {role:'button', tabIndex:0, 'aria-label':name, 'aria-pressed':selected===id,
-    onClick:()=>select(id), onKeyDown:event=>{
-      if (event.key==='Enter'||event.key===' ') {event.preventDefault();select(id);}
-    }};
-}
-
-function ModelNode({element,x,y,selected,select,index,onPointerDown,width=box.width}) {
-  return <g className="system-model-symbol" data-kind={element.kind} onPointerDown={onPointerDown} transform={`translate(${x},${y})`}
-      {...selectProps(element.id,element.name,selected,select)}>
-    <title>{element.name}</title>
-    <rect className="system-model-shape" width={width} height={box.height} rx={element.kind==='function'?19:2}/>
-    <text className="system-model-metaclass" x={14} y={22}>«{labels[element.kind]}»</text>
-    <text className="system-model-node-name" x={14} y={44}>{shorten(element.name)}</text>
-    {(element.parentId||element.allocatedTo)&&<text className="system-model-context" x={14} y={63}>
-      {shorten(index.elements.get(element.parentId||element.allocatedTo).name,32)}
-    </text>}
-    {element.kind==='component'&&<path className="system-model-glyph" d={`M${width-28} 13h15v16h-15z m-4 3h8v4h-8z m0 7h8v4h-8z`}/>}
-    {element.kind==='actor'&&<g className="system-model-actor" transform={`translate(${width-23},15)`}>
-      <circle r="3"/><path d="M0 4v8m-6-4h12m-6 4-4 6m4-6 4 6"/>
-    </g>}
-  </g>;
-}
-
-function GraphView({diagram,index,selected,select,marker,onMove,zoom}) {
-  const drag=useRef(null);
-  const [moving,setMoving]=useState(null);
-  const layout=useMemo(()=>{
-    const graph=new dagre.graphlib.Graph({multigraph:true}).setGraph({
-      rankdir:'LR', nodesep:58, ranksep:84, edgesep:36, marginx:34, marginy:38,
-    }).setDefaultEdgeLabel(()=>({}));
-    for(const id of diagram.elementIds) graph.setNode(id,{...box});
-    for(const id of diagram.exchangeIds){
-      const exchange=index.exchanges.get(id);
-      const [from,to]=index.participants(exchange);
-      graph.setEdge(from,to,{width:Math.min(220,shorten(exchange.name,32).length*7+14),height:22,labelpos:'c'},id);
-    }
-    dagre.layout(graph);
-    return graph;
-  },[diagram,index]);
-  const placement=id=>{
-    const node=layout.node(id);
-    return (moving?.id===id?moving:diagram.positions?.[id])||{x:node.x-box.width/2,y:node.y-box.height/2};
-  };
-  const pointsOnView=diagram.elementIds.map(placement);
-  const width=Math.max(layout.graph().width,...pointsOnView.map(point=>point.x+box.width+35));
-  const height=Math.max(layout.graph().height,...pointsOnView.map(point=>point.y+box.height+35));
-  const coordinate=event=>new DOMPoint(event.clientX,event.clientY).matrixTransform(event.currentTarget.getScreenCTM().inverse());
-  function move(event){
-    if(!drag.current)return;
-    const point=coordinate(event);
-    const {id,origin,start}=drag.current;
-    const x=point.x-start.x,y=point.y-start.y;
-    if(Math.hypot(x,y)<3&&!moving)return;
-    setMoving({id,x:Math.min(100000,Math.max(0,Math.round(origin.x+x))),y:Math.min(100000,Math.max(0,Math.round(origin.y+y)))});
-  }
-  function finish(event){
-    if(!drag.current)return;
-    drag.current=null;
-    if(moving&&event.type!=='pointercancel')onMove(moving.id,{x:moving.x,y:moving.y});
-    setMoving(null);
-  }
-  return <svg aria-label={diagram.name} width={width*zoom} height={height*zoom} viewBox={`0 0 ${width} ${height}`}
-    onPointerMove={move} onPointerUp={finish} onPointerCancel={finish}>
-    <ArrowMarker id={marker}/>
-    {diagram.elementIds.map(id=>{
-      const origin=placement(id);
-      return <ModelNode key={id} element={index.elements.get(id)} {...origin}
-        onPointerDown={onMove?event=>{
-          if(event.button!==0)return;
-          const svg=event.currentTarget.ownerSVGElement;
-          drag.current={id,origin,start:new DOMPoint(event.clientX,event.clientY).matrixTransform(svg.getScreenCTM().inverse())};
-          svg.setPointerCapture(event.pointerId);
-          select(id);
-        }:undefined}
-        selected={selected} select={select} index={index}/>;
-    })}
-    {layout.edges().map(key=>{
-      const exchange=index.exchanges.get(key.name);
-      let {x,y,points}=layout.edge(key);
-      if([key.v,key.w].some(id=>diagram.positions?.[id]||moving?.id===id)){
-        const a=placement(key.v),b=placement(key.w);
-        const source={x:a.x+box.width/2,y:a.y+box.height/2},target={x:b.x+box.width/2,y:b.y+box.height/2};
-        const dx=target.x-source.x,dy=target.y-source.y;
-        const magnitude=Math.max(Math.abs(dx)/(box.width/2),Math.abs(dy)/(box.height/2),1);
-        points=[{x:source.x+dx/magnitude,y:source.y+dy/magnitude},{x:target.x-dx/magnitude,y:target.y-dy/magnitude}];
-        x=(points[0].x+points[1].x)/2;
-        y=(points[0].y+points[1].y)/2;
-      }
-      const first=points[0],last=points.at(-1);
-      return <g className="system-model-wire" key={exchange.id} {...selectProps(exchange.id,exchange.name,selected,select)}>
-        <title>{exchange.name}</title>
-        <polyline className="system-model-wire-hit" points={points.map(p=>`${p.x},${p.y}`).join(' ')}/>
-        <polyline points={points.map(p=>`${p.x},${p.y}`).join(' ')} markerEnd={`url(#${marker})`}/>
-        {[first,last].map((p,i)=><rect key={i} x={p.x-3.5} y={p.y-3.5} width={7} height={7}/>)}
-        <text x={x} y={y-8} textAnchor="middle">{shorten(exchange.name,32)}</text>
-      </g>;
-    })}
-  </svg>;
-}
-
-function ArrowMarker({id}) {
-  return <defs><marker id={id} viewBox="0 0 10 10" refX="10" refY="5" markerWidth="8" markerHeight="8" orient="auto">
-    <path d="M0 1 9 5 0 9" className="system-model-arrow" fill="none" strokeWidth="1.4"/>
-  </marker></defs>;
-}
-
-function SequenceView({diagram,index,selected,select,marker,step,onStep,zoom}) {
-  const pitch=280,width=224,height=145+diagram.exchangeIds.length*57;
-  const column=new Map(diagram.elementIds.map((id,i)=>[id,28+i*pitch+width/2]));
-  const svg=useRef(null);
-  useEffect(()=>{
-    if(step>=0)svg.current?.querySelector('[data-playing="true"]')?.scrollIntoView({block:'nearest',inline:'nearest'});
-  },[step]);
-  return <svg ref={svg} aria-label={diagram.name} width={diagram.elementIds.length*pitch*zoom} height={height*zoom}
-    viewBox={`0 0 ${diagram.elementIds.length*pitch} ${height}`}>
-    <ArrowMarker id={marker}/>
-    {diagram.elementIds.map(id=><g key={id}>
-      <line className="system-model-lifeline" x1={column.get(id)} x2={column.get(id)} y1={box.height+22} y2={height-22}/>
-      <ModelNode element={index.elements.get(id)} x={column.get(id)-width/2} y={22} width={width}
-        selected={selected} select={select} index={index}/>
-    </g>)}
-    {diagram.exchangeIds.map((id,i)=>{
-      const exchange=index.exchanges.get(id);
-      const [from,to]=index.participants(exchange).map(id=>column.get(id));
-      const y=142+i*57;
-      return <g className="system-model-wire" data-playing={i===step} key={i} {...selectProps(id,`${i+1}. ${exchange.name}`,selected,value=>{select(value);onStep(i);})}>
-        <title>{exchange.name}</title>
-        <line className="system-model-wire-hit" x1={from} x2={to} y1={y} y2={y}/>
-        <line x1={from} x2={to} y1={y} y2={y} markerEnd={`url(#${marker})`}/>
-        <text x={(from+to)/2} y={y-9} textAnchor="middle">{i+1}. {shorten(exchange.name,34)}</text>
-      </g>;
-    })}
-  </svg>;
-}
-
 function Inspector({record,index,project,select,onOpenBlock}) {
   const {elements,exchanges,participants}=index;
   const block=project.nodes.find(node=>node.id===record.blockId);
@@ -194,15 +60,13 @@ const newId=()=>crypto.randomUUID();
 const blankModel=()=>({format:'atmem.system-model',version:1,id:newId(),authoring:'manual',elements:[],exchanges:[],diagrams:[]});
 const baseRecord=(kind,name,description)=>({id:newId(),kind,name,description,basis:'proposed',requirementIds:[]});
 
-export function SystemModelWorkspace({project,onBack,onOpenBlock,onGenerate,onSave,onSaveProject,renderComments,onUndo,onRedo,canUndo,canRedo}) {
+export function SystemModelWorkspace({project,onLayoutPage,onBack,onPage,initialPage=null,renderBlockProperties,onNewDiagram,onOpenBlock,onGenerate,onSave,onSaveProject,renderComments,onUndo,onRedo,canUndo,canRedo}) {
   const savedModel=project.extensions?.systemModel;
   const model=useMemo(()=>savedModel?systemModelOnBoard(savedModel,project):blankModel(),[savedModel,project.nodes,project.edges]);
   const index=useMemo(()=>systemModelIndex(model),[model]);
-  const marker=useId();
-  const [viewId,setView]=useState(null);
+  const graphApi=useRef(null);
+  const [viewId,setView]=useState(initialPage);
   const [selected,setSelected]=useState(null);
-  const [fit,setFit]=useState(true);
-  const [zoom,setZoom]=useState(1);
   const [editing,setEditing]=useState(null);
   const inspector=useRef(null);
   useEffect(()=>{
@@ -216,6 +80,7 @@ export function SystemModelWorkspace({project,onBack,onOpenBlock,onGenerate,onSa
   const diagram=model.diagrams.find(row=>row.id===viewId)||model.diagrams[0];
   const record=index.elements.get(selected)||index.exchanges.get(selected);
   const containing=record&&model.diagrams.filter(row=>row.elementIds.includes(record.id)||row.exchangeIds.includes(record.id));
+  const scene=useMemo(()=>diagram?legacyGraph(diagram,index,step):null,[diagram,index,step]);
   const count=diagram?.kind==='sequence'?diagram.exchangeIds.length:0;
   useEffect(()=>{
     if(!playing)return;
@@ -241,16 +106,11 @@ export function SystemModelWorkspace({project,onBack,onOpenBlock,onGenerate,onSa
   }
   function edit(action){setError('');setEditing(action);}
   function selectRecord(id){setSelected(id);edit(null);}
-  function zoomBy(delta){setFit(false);setZoom(value=>Math.min(2,Math.max(.25,value+delta)));}
+
   function submit(event){
     event.preventDefault();
     const data=new FormData(event.currentTarget);
     const value=key=>String(data.get(key)||'').trim();
-    if(editing==='new-view'){
-      const view={id:newId(),name:value('name'),kind:value('kind'),elementIds:[],exchangeIds:[]};
-      if(apply(model=>({...model,diagrams:[...model.diagrams,view]})))openView(view.id);
-      return;
-    }
     if(editing==='rename-view'){
       if(updateView(view=>({...view,name:value('name')})))setEditing(null);
       return;
@@ -331,11 +191,11 @@ export function SystemModelWorkspace({project,onBack,onOpenBlock,onGenerate,onSa
   return <section className="system-model-workspace" aria-labelledby="system-model-heading">
     <header className="system-model-header">
       <div className="system-model-heading"><button className="icon" aria-label="Back to Board" onClick={onBack}><ArrowLeft size={19}/></button>
-        <div><h2 id="system-model-heading">System diagrams</h2><span>{project.name}</span></div></div>
+        <div><h2 id="system-model-heading">System model views</h2><span>{project.name}</span></div></div>
       <div className="row">{renderComments&&<button className="btn" onClick={onSaveProject}>Save</button>}{onSave&&<>
         <button className="btn" disabled={!canUndo} onClick={()=>{onUndo();setEditing(null);setError('');}}>Undo</button>
         <button className="btn" disabled={!canRedo} onClick={()=>{onRedo();setEditing(null);setError('');}}>Redo</button>
-        <button className="btn primary" onClick={()=>edit('new-view')}><Plus size={16}/> New diagram</button>
+        {onNewDiagram&&<button className="btn primary" onClick={onNewDiagram}><Plus size={16}/> New diagram</button>}
       </>}</div>
     </header>
     <div className="system-model-layout">
@@ -348,10 +208,9 @@ export function SystemModelWorkspace({project,onBack,onOpenBlock,onGenerate,onSa
       <div className="system-model-main">
         {diagram?<><div className="system-model-caption"><div><strong>{diagram.name}</strong><span>{systemDiagramKinds[diagram.kind]}</span></div>
           <div className="row system-model-zoom">
-            <button type="button" className="icon" aria-label="Zoom out" onClick={()=>zoomBy(-.25)}><ZoomOut size={16}/></button>
-            <button type="button" className="btn" onClick={()=>{setZoom(1);setFit(!fit);}}>{fit?'Actual size':'Fit width'}</button>
-            <button type="button" className="icon" aria-label="Zoom in" onClick={()=>zoomBy(.25)}><ZoomIn size={16}/></button>
-            {!fit&&<span>{Math.round(zoom*100)}%</span>}
+            <button type="button" className="icon" aria-label="Zoom out" onClick={()=>graphApi.current?.zoom(-.15)}><ZoomOut size={16}/></button>
+            <button type="button" className="btn" onClick={()=>graphApi.current?.fit()}>Fit diagram</button>
+            <button type="button" className="icon" aria-label="Zoom in" onClick={()=>graphApi.current?.zoom(.15)}><ZoomIn size={16}/></button>
           </div>
         </div>
         {onSave&&<div className="system-model-tools" aria-label="Diagram tools">
@@ -388,12 +247,20 @@ export function SystemModelWorkspace({project,onBack,onOpenBlock,onGenerate,onSa
             }}>Remove step</button>
           </>}
         </div>}
-        <div className="system-model-drawing" data-fit={fit} tabIndex={0} aria-label="Scrollable diagram">
-          {!diagram.elementIds.length?<p className="system-model-empty">Add or place an element to start this diagram.</p>:diagram.kind==='sequence'?
-            <SequenceView {...{diagram,index,selected,marker,step,zoom}} onStep={i=>{setPlaying(false);setStep(i);}} select={selectRecord}/>:
-            <GraphView {...{diagram,index,selected,marker,zoom}} select={selectRecord}
-              onMove={onSave? (id,point)=>updateView(view=>({...view,positions:{...view.positions,[id]:point}})):undefined}/>}
-        </div></>:<div className="system-model-empty">
+        <div className="system-model-drawing system-model-native">
+          {diagram.elementIds.length?<DrawioCanvas key={diagram.id} graphRef={graphApi} label={diagram.name} scene={applyDrawingLayout(scene,project.extensions?.drawingLayouts?.pages?.['system/'+diagram.id])} onLayout={onSave?changes=>onLayoutPage?.('system/'+diagram.id,changes):null}
+            selected={selected} onSelect={id=>{
+              if(!id)return;
+              const position=diagram.exchangeIds.indexOf(id);
+              if(diagram.kind==='sequence'&&position>=0){setPlaying(false);setStep(position);}
+              selectRecord(id);
+            }}
+            onMove={onSave&&diagram.kind!=='sequence'?moves=>updateView(view=>({...view,positions:{...view.positions,
+              ...Object.fromEntries(moves.map(({id,x,y})=>[id,{x:Math.max(0,Math.min(100000,x)),y:Math.max(0,Math.min(100000,y))}]))}})):null}
+            />:<p className="system-model-empty">Add or place an element to start this diagram.</p>}
+        </div><DiagramPages pages={projectPages(project.extensions?.architectureDiagrams?.views,model.diagrams,project.extensions?.engineeringModel?.diagrams)} active={'system/'+diagram.id}
+          onSelect={key=>{if(key.startsWith('system/')){openView(key.slice(7));}else onPage(key);}}
+          onAdd={onSave?onNewDiagram:null}/></>:<div className="system-model-empty">
           <p>Create a diagram or generate one from a specification.</p>
           {onGenerate&&<button className="btn" onClick={onGenerate}>Generate from specification</button>}
         </div>}
@@ -415,6 +282,8 @@ export function SystemModelWorkspace({project,onBack,onOpenBlock,onGenerate,onSa
           <button className="btn" onClick={()=>setEditing(null)}>Cancel</button>
         </div>:editing?<ModelForm {...{editing,diagram,record,index,project,available,availableExchanges,portOptions,submit}} onCancel={()=>edit(null)}/>:
           record?<><Inspector {...{record,index,project,onOpenBlock}} select={selectRecord}/>
+          {record.blockId&&renderBlockProperties?.(record.blockId)}
+          <DiagramMermaid code={graphMermaid(scene,{selected,timeline:diagram.kind==='sequence'})}/>
           {onSave&&<div className="system-model-tools">
             <button className="btn" onClick={()=>edit('edit')}>Edit properties</button>
             {['actor','function','component'].includes(record.kind)&&<button className="btn" onClick={()=>edit('port')}>Add port</button>}
@@ -432,13 +301,12 @@ export function SystemModelWorkspace({project,onBack,onOpenBlock,onGenerate,onSa
 
 function ModelForm({editing,diagram,record,index,project,available,availableExchanges,portOptions,submit,onCancel}){
   const elements=[...index.elements.values()];
-  const titles={'new-view':'New diagram','rename-view':'Rename diagram',reuse:'Place existing element',message:diagram?.kind==='sequence'?'Add existing message':'Place existing exchange',
+  const titles={'rename-view':'Rename diagram',reuse:'Place existing element',message:diagram?.kind==='sequence'?'Add existing message':'Place existing exchange',
     edit:'Edit properties',exchange:'Connect ports',port:'Add port',element:'Add element'};
   const select=(label,name,options,current='',optional=false)=><label>{label}<select name={name} aria-label={label} defaultValue={current} required={!optional}>
     <option value="">{optional?'None':'Select…'}</option>{options.map(({id,name})=><option key={id} value={id}>{name}</option>)}
   </select></label>;
   const options=values=>values.map(id=>({id,name:labels[id]||id}));
-  const kinds=Object.entries(systemDiagramKinds).map(([id,name])=>({id,name}));
   const chosen=editing==='edit'?record:null;
   const hasItems=editing==='exchange'||(chosen&&index.exchanges.has(chosen.id));
   const exchangePorts=direction=>{
@@ -448,12 +316,11 @@ function ModelForm({editing,diagram,record,index,project,available,availableExch
   };
   const requirementIds=new Map((project.needs||[]).map(row=>[row.id,row.statement]));
   for(const id of chosen?.requirementIds||[])if(!requirementIds.has(id))requirementIds.set(id,id);
-  const textFields=['new-view','rename-view','element','port','exchange','edit'].includes(editing);
+  const textFields=['rename-view','element','port','exchange','edit'].includes(editing);
   return <form key={editing+(chosen?.id||'')} className="system-model-form" onSubmit={submit}>
     <h3>{titles[editing]}</h3>
     {textFields&&<label>Name<input name="name" maxLength={150} defaultValue={chosen?.name||(editing==='rename-view'?diagram.name:'')} required autoFocus/></label>}
-    {textFields&&!['new-view','rename-view'].includes(editing)&&<label>Description<textarea name="description" rows={4} maxLength={2000} defaultValue={chosen?.description} required/></label>}
-    {editing==='new-view'&&select('View type','kind',kinds)}
+    {textFields&&editing!=='rename-view'&&<label>Description<textarea name="description" rows={4} maxLength={2000} defaultValue={chosen?.description} required/></label>}
     {editing==='element'&&select('Element type','kind',options(diagramElements[diagram.kind]),diagramElements[diagram.kind][0])}
     {editing==='reuse'&&select('Element','element',available)}
     {editing==='message'&&select('Exchange','exchange',availableExchanges)}

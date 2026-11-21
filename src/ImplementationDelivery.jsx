@@ -79,12 +79,12 @@ export function ImplementationDelivery({project,session,workStatus,onBuild,onSav
   {captureNotice&&<p role="status">{captureNotice}</p>}
   {!report&&!error&&<p role="status">Preparing package…</p>}
   {report&&!report.artifact&&<p>Design package · implementation not generated.</p>}
-  {report&&!report.canPackage&&<button className="btn primary" disabled={busy||!designBundle||designBundle.project!==project||contextBusy} onClick={downloadDesign}>{busy?'Preparing ZIP…':'Download project ZIP'}</button>}
+  {report&&!report.canPackage&&<button className="btn primary" disabled={busy||!designBundle||designBundle.project!==project||contextBusy} onClick={downloadDesign}>{busy?'Preparing ZIP…' :'Download design snapshot'}</button>}
   {report?.artifact&&<>
-   <p className="delivery-state">{report.relation==='matches_saved_design'?'✓ Current design':report.relation==='design_changed'?'! Design changed since generation':'! Earlier or unverified capture'}</p>
+   <p className="delivery-state">{report.relation==='matches_saved_design'?'Captured against this revision':report.relation==='design_changed'?'! Design changed since generation':'! Earlier or unverified capture'}</p>
 
    <p>{report.artifact.files.filter(file=>file.kind==='file').length} files · {report.artifact.model} · {report.artifact.effort}</p>
-   {report.canPackage&&<button className="btn primary" disabled={busy||preparing||!prepared||contextBusy||!designBundle||designBundle.project!==project} onClick={()=>download()}>Download project ZIP</button>}
+   {report.canPackage&&<button className="btn primary" disabled={busy||preparing||!prepared||contextBusy||!designBundle||designBundle.project!==project} onClick={()=>download()}>Download captured workspace</button>}
 
 
 

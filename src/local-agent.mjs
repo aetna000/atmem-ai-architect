@@ -185,3 +185,35 @@ export async function projects(session, action, body = {}) {
   if (!response.ok) throw Error(typeof result.detail === "string" ? result.detail : "Couldn't reach your saved projects.");
   return result;
 }
+
+export async function requestDiagramSet({session,connection,specification,projectContext,files,resume,signal,onProgress}){
+  if(!session?.token||!connection)throw Error('Connect a model to generate diagrams.');
+  const response=await fetch('/api/diagram-authoring',{
+    method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.token}`},
+    body:JSON.stringify({provider:connection.provider,model:connection.model,effort:connection.effort,
+      specification,projectContext,...(resume?{resume}:{}),attachments:files.map(({name,mime,data})=>({name,mime,data}))}),signal,
+  });
+  if(!response.ok){const result=await response.json();throw Error(explain(response.status,result.detail));}
+  if(!response.body||!response.headers.get('content-type')?.includes('application/x-ndjson')){
+    throw Error('Start the current Architect service to generate diagrams.');
+  }
+  const reader=response.body.pipeThrough(new TextDecoderStream()).getReader();
+  let buffer='',result;
+  try{
+    while(true){
+      const {value,done}=await reader.read();
+      if(done)break;
+      buffer+=value;
+      const lines=buffer.split('\n');
+      buffer=lines.pop();
+      for(const line of lines){
+        const event=JSON.parse(line);
+        if(event.error)throw Error(event.error);
+        if(event.progress)onProgress(event.progress);
+        if(event.model)result=event.model;
+      }
+    }
+    if(!result)throw Error('AtMem stopped before returning the complete set.');
+    return result;
+  }finally{await reader.cancel().catch(()=>{});reader.releaseLock();}
+}

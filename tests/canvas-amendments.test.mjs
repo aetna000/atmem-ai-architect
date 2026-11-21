@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {zipSync,strToU8} from 'fflate';
 import {sha256} from '@noble/hashes/sha2.js';
 import {canvasProposal,canvasBasis,canvasProposalRecords} from '../src/codex-canvas.mjs';
-import {validateAmendmentHistory} from '../src/canvas-amendments.mjs';
+import {validateAmendmentHistory,appendAmendment,amendCanvasGraph} from '../src/canvas-amendments.mjs';
 import {toProjectFile,fromProjectFile} from '../src/project-file.mjs';
 import {deliveryPack} from '../src/delivery.mjs';
 import {appliedQualityBasis,systemSpecFiles} from '../src/canvas-quality.mjs';
@@ -116,4 +116,43 @@ test('subsequent updates retain prior authored document identities and reject no
  assert.throws(()=>validateAmendmentHistory([receipt,receipt]),/invalid/);
  assert.throws(()=>validateAmendmentHistory(Array(41).fill(receipt)),/receiving bound/);
  assert.throws(()=>toProjectFile({...current,extensions:{...current.extensions,architectureAmendments:[{...receipt,changes:['x'.repeat(500001)]}]}}),/receiving bound/);
+});
+
+test('source-backed gate allocations add blockers without rewriting questions or reusing an old answer',()=>{
+ const gate={id:'peer-qualification',question:'Approve scanner protocol and custody policy.',owner:'Laboratory owner',status:'open',links:['lab'],requirementIds:[],interim:'Keep scanner disabled.'};
+ const p={...project,openQuestions:[gate]},allocation={id:gate.id,sourceSlot:2,reference:'2. Recovery',requirementIds:['once'],interfaceIds:['register'],links:['ledger']};
+ const value={...draft,questionCoverage:[allocation]},proposal=propose(value,p),result=apply(p,proposal);
+ assert.deepEqual(result.openQuestions,[{...gate,links:['lab','ledger'],requirementIds:['once'],interfaceIds:['register']}]);
+ assert.deepEqual(p.openQuestions,[gate]);assert.equal(proposal.amendmentHistory.at(-1).changes.find(c=>c.kind==='questionCoverage').sourceSha256,second);
+ for(const bad of [{...allocation,owner:'Changed owner'},{...allocation,question:'Changed scope'},{...allocation,requirementIds:['foreign']},{...allocation,interfaceIds:['unknown']},{...allocation,sourceSlot:99}])assert.throws(()=>propose({...draft,questionCoverage:[bad]},p));
+ assert.throws(()=>propose(value,{...p,openQuestions:[{...gate,status:'answered',answer:'Approved for the original scope'}]}),/unanswered/);
+ assert.throws(()=>propose({...draft,questionCoverage:[allocation,allocation]},p),/one unanswered/);
+});
+test('a rejected case removal identifies the exact module and missing IDs for repair without discarding the original',()=>{
+ const p=structuredClone(project);p.nodes[1].data.buildSpec.verificationCases=[{id:'scanner-disconnect'}];
+ assert.throws(()=>amendCanvasGraph(p,{...draft,updateNodes:[{id:'ledger',data:{buildSpec:{verificationCases:[]}}}]}),e=>{
+  assert.deepEqual(JSON.parse(e.canvasDiagnostic),{code:'verification_case_removal',blockId:'ledger',caseIds:['scanner-disconnect']});return /cannot silently remove/.test(e.message);
+ });
+ assert.deepEqual(p.nodes[1].data.buildSpec.verificationCases,[{id:'scanner-disconnect'}]);
+});
+
+test('large laboratory and payment amendments retain verifiable before/after references without duplicating captured specifications',()=>{
+ const prior=propose().amendmentHistory;
+ for(const [kind,id,collection,updates] of [['block','ledger','nodes','updateNodes'],['interface','payment-contract','edges','updateEdges']]){
+  const before={id,specification:'Original evidence '.repeat(20_000)},after={...before,specification:'Refined evidence '.repeat(25_000)};
+  const receipt={...prior[0],baseRevision:5,artifactId:'new-artifact',changes:[{kind,id,before,after}]};
+  const p={...project,extensions:{...project.extensions,architectureAmendments:prior}};
+  const history=appendAmendment(p,receipt),change=history[1].changes[0];
+  assert.deepEqual(history[0],prior[0]);assert.deepEqual(p.extensions.architectureAmendments,prior);
+  assert.ok(JSON.stringify(history).length<10_000);
+  assert.equal(change.beforeRef.sha256,hash(strToU8(JSON.stringify(before))));
+  assert.equal(change.afterRef.sha256,hash(strToU8(JSON.stringify(after))));
+  assert.equal(change.beforeRef.collection,'design.'+collection);assert.equal(change.afterRef.collection,updates);
+  assert.equal(change.afterRef.mode,'merge-with-before');assert.equal(change.afterRef.artifactId,'new-artifact');
+  assert.equal(change.beforeRef.contextSha256,context);
+  for(const bad of [{beforeRef:{...change.beforeRef,contextSha256:'c'.repeat(64)}},{afterRef:{...change.afterRef,id:'another-record'}},{after}]){
+   assert.throws(()=>validateAmendmentHistory([history[0],{...history[1],changes:[{...change,...bad}]}]),/invalid/);
+  }
+  assert.throws(()=>appendAmendment(project,{...receipt,contextSha256:null}),e=>e.hostStorageBound===true&&/receiving bound/.test(e.message));
+ }
 });

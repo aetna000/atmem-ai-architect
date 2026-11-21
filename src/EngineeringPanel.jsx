@@ -8,7 +8,7 @@ import {verifyArtifactWork} from './artifact-work.mjs';
 import {hasArchitectureDesign,buildIntent,blockBuildIntent,BUILD_AND_TEST_REQUEST} from './design-build-flow.mjs';
 import {loadBlockOrder,saveBlockOrder,pendingBlockOrder,blockOrderPayload,verifyBlockOrderAcceptance} from './block-work-order-client.mjs';
 
-export function EngineeringPanel({projectId,session,connection,saveProject,onConnections,project,onWorkModelChange,onIntentContext,onDesign,onDelivery,onCanvas,onAssessCanvas,buildRequest,onBuildRequestHandled,onRequestArchitecture,contextBusy=false,onBusyChange}){
+export function EngineeringPanel({projectId,session,connection,saveProject,onConnections,project,onWorkModelChange,onIntentContext,onDesign,onDelivery,onCanvas,onAssessCanvas,buildRequest,onBuildRequestHandled,onRequestArchitecture,contextBusy=false,onBusyChange,onError,onActivity}){
   const draftKey=`atmem-engineering-draft-v1:${projectId}`;
   const [job,setJob]=useState(null),[events,setEvents]=useState([]),[draft,setDraft]=useState(()=>{try{return localStorage.getItem(draftKey)||'';}catch{return '';}}),
     [busy,setBusy]=useState(false),[error,setError]=useState(''),[loading,setLoading]=useState(true),[artifact,setArtifact]=useState(null);
@@ -33,7 +33,7 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
     const controller=new AbortController();let stopped=false;
     engineeringCall(session,'artifacts',{projectId,sessionId:job.id},{signal:controller.signal}).then(result=>{
       if(!stopped)setArtifact(result.artifacts.find(item=>item.runId===job.run)||result.artifacts[0]||null);
-    }).catch(e=>{if(!stopped&&e.name!=='AbortError')setError(e.message);});
+    }).catch(e=>{if(!stopped&&e.name!=='AbortError'){setError(e.message);onError?.(e.message);}});
     return()=>{stopped=true;controller.abort();};
   },[job?.id,job?.run,finalization?.artifactId,projectId,session.token]);
   useEffect(()=>{
@@ -48,7 +48,7 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
         const recovered=await engineeringCall(session,'recover',{projectId,sessionId:previous.id},{signal:controller.signal});
         if(!stopped)setJob(recovered);
       }
-    }catch(e){if(!stopped&&e.name!=='AbortError'&&(e.status!==404||restored)){setError(e.message);setRestoreBlocked(true);}}finally{if(!stopped)setLoading(false);}})();
+    }catch(e){if(!stopped&&e.name!=='AbortError'&&(e.status!==404||restored)){setError(e.message);onError?.(e.message);setRestoreBlocked(true);}}finally{if(!stopped)setLoading(false);}})();
     return()=>{stopped=true;controller.abort();};
   },[projectId,session.token,restoreAttempt]);
   useEffect(()=>{
@@ -64,14 +64,14 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
       }
       interval=result.events.length===200?25:1000;
       setJob(result.session);
-    }catch(e){if(!stopped&&e.name!=='AbortError')setError(e.message);}finally{if(!stopped)timer=setTimeout(poll,interval);}}
+    }catch(e){if(!stopped&&e.name!=='AbortError'){setError(e.message);onError?.(e.message);}}finally{if(!stopped)timer=setTimeout(poll,interval);}}
     void poll();return()=>{stopped=true;clearTimeout(timer);controller.abort();};
   },[job?.id,projectId,session.token]);
   useEffect(()=>{if(job&&onIntentContext){try{onIntentContext(projectId,job.id,events);}catch(e){setError(e.message);}}},[job?.id,events,onIntentContext]);
   async function act(operation,onFailure){
     if(actionLock.current)return;
-    actionLock.current=true;setBusy(true);setError('');
-    try{await operation();}catch(e){if(live.current){setError(e.message);onFailure?.();}}finally{actionLock.current=false;if(live.current)setBusy(false);}
+    actionLock.current=true;setBusy(true);setError('');onError?.(null);
+    try{await operation();}catch(e){if(live.current){setError(e.message);onError?.(e.message);onFailure?.();}}finally{actionLock.current=false;if(live.current)setBusy(false);}
   }
   useEffect(()=>{onBusyChange?.(busy||loading||['running','starting'].includes(job?.state));return()=>onBusyChange?.(false);},[busy,loading,job?.state,onBusyChange]);
   const exactSelection=engineeringSelectionSupported(session,connection);
@@ -87,7 +87,7 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
   const architectureText=running?draft:`${DESIGN_WITH_CODEX}${draft.trim()?'\n\nAdditional architecture instructions:\n'+draft:''}`;
   const canSubmit=(running?!!draft.trim():hasSources)&&architectureText.length<=80000;
   const consumedBuild=useRef(null);
-  function submitIntent(event,requestedText,designOnly=false,blockRequest=null){
+  function submitIntent(event,requestedText,designOnly=false,blockRequest=null,buildId=null){
     event?.preventDefault();
     const submitted=requestedText??architectureText;
     if(requestedText===undefined)designOnly=true;
@@ -110,17 +110,18 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
         retainOrder(order);await sendBlockOrder(order);return;
       }
       // The new session ID is explicit: React state may not have rendered yet.
-      const next=await call(current.state==='running'?'steer':'start',{sessionId:current.id,text:submitted,contextSha256:saved.sha256});
+      const next=await call(current.state==='running'?'steer':'start',{sessionId:current.id,text:submitted,contextSha256:saved.sha256,...(buildId&&current.state!=='running'?{requestId:buildId}:{})});
       if(live.current){setJob(next);setArtifact(null);setDraft(value=>value===sentDraft?'':value);}
-    },()=>{if(blockRequest)setFailedBuildRequest(blockRequest.id);});
+      if(buildId)onBuildRequestHandled?.(buildId);
+    },()=>{if(blockRequest||buildId)setFailedBuildRequest(blockRequest?.id||buildId);});
     return true;
   }
   useEffect(()=>{
     if(!buildRequest||buildRequest.projectId!==projectId||consumedBuild.current===buildRequest.id||failedBuildRequest===buildRequest.id||loading||restoreBlocked||contextBusy||uncertain||busy||(!job&&!exactSelection)||((buildRequest.blockId||buildRequest.intent==='design')&&running))return;
     const designOnly=buildRequest.intent==='design';
     const intent=designOnly?DESIGN_WITH_CODEX:buildRequest.blockId?blockBuildIntent(project,buildRequest.blockId):buildRequest.intent==='test'?BUILD_AND_TEST_REQUEST:buildIntent(project,'');
-    if(!intent||submitIntent(null,intent,designOnly,buildRequest.blockId?buildRequest:null)){
-      consumedBuild.current=buildRequest.id;if(!buildRequest.blockId)onBuildRequestHandled?.(buildRequest.id);
+    if(!intent||submitIntent(null,intent,designOnly,buildRequest.blockId?buildRequest:null,buildRequest.id)){
+      consumedBuild.current=buildRequest.id;
     }
   },[buildRequest,projectId,loading,restoreBlocked,contextBusy,uncertain,busy,exactSelection,job?.id,project,running,failedBuildRequest]);
   const acceptedEvents=useMemo(()=>events.filter(event=>event.kind==='accepted'),[events]);
@@ -154,6 +155,10 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
   },[assessable,artifact?.id,job?.id]);
   const currentAssessment=assessment?.key===artifact?.id?assessment:null;
   const nativeDiagramsMissing=currentAssessment?.quality?.systemModel?.status==='missing';
+  const reviewStopped=assessable&&currentAssessment&&(currentAssessment.error&&!currentAssessment.repairable||reviewCount>=3&&!currentAssessment.quality?.ready);
+  const activityPhase=reviewStopped?'review':assessable?'checking':reviewCount&&running?'refining':'drafting';
+  const activityText=reviewStopped?(currentAssessment.error||'Automatic reviews used · inspect remaining checks'):assessable?(currentAssessment?.quality?.ready?'Draft checked · preparing review':'Checking requirements, diagrams and source coverage'):reviewCount&&running?'Refining draft · pass '+reviewCount+' of 3':activity;
+  useEffect(()=>{onActivity?.({text:activityText,phase:activityPhase,runId:job?.run,receivedAt:lastReceived});},[activityText,activityPhase,job?.run,lastReceived,onActivity]);
   const eligibleForReview=currentAssessment&&(currentAssessment.repairable||
     currentAssessment.quality&&(!currentAssessment.quality.ready||nativeDiagramsMissing));
   useEffect(()=>{
@@ -164,7 +169,8 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
     const gates=Object.entries(currentAssessment.quality?.gates||{}).filter(([,passed])=>!passed).map(([gate])=>gate).join(', ');
     const referenceErrors=currentAssessment.quality?.behaviorConsistency?.errors||[];
     const behavior=referenceErrors.length?`Behavior reference conflicts: ${referenceErrors.length}. First ${Math.min(20,referenceErrors.length)}: ${JSON.stringify(referenceErrors.slice(0,20))}. Check all scenario references against the exact block, interface and requirement IDs.`:'';
-    const diagnostic=currentAssessment.diagnostic||currentAssessment.error||[gaps,gates&&`Required checks: ${gates}`,behavior,nativeDiagramsMissing&&'The native systemModel is missing. Add validated logical, functional and sequence views.'].filter(Boolean).join('. ');
+    const catalogue=currentAssessment.quality?.catalogue?.missing;
+    const diagnostic=currentAssessment.diagnostic||currentAssessment.error||[currentAssessment.quality?.caseSpecificityIssues?.length&&'Duplicated dedicated fixtures: '+JSON.stringify(currentAssessment.quality.caseSpecificityIssues),currentAssessment.quality?.unverifiedRequirements?.length&&'Requirements without dedicated module verification cases: '+currentAssessment.quality.unverifiedRequirements.join(', '),catalogue?.length&&'Missing populated catalogue views: '+catalogue.join(', '),currentAssessment.quality?.catalogue?.issues?.length&&'Repair required diagram fields: '+JSON.stringify(currentAssessment.quality.catalogue.issues),gaps,gates&&`Required checks: ${gates}`,behavior,nativeDiagramsMissing&&'The native systemModel is missing. Add validated logical, functional and sequence views.'].filter(Boolean).join('. ');
     if(submitIntent(null,`${REFINE_CODEX_CANVAS}\n\nHost structural check: ${diagnostic}`,true)){
       setAutomaticReview(artifact.id);
       try{localStorage.setItem(reviewKey,'started');}catch{}
@@ -204,8 +210,8 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
     </section>}
     {retainedOrder.error&&<div><p role="alert">{retainedOrder.error}</p><button disabled={busy||loading} onClick={()=>void act(async()=>retainOrder(null))}>Clear unreadable request record</button></div>}
 
-    {buildRequest?.projectId===projectId&&!retainedOrder.pending&&<p role="status">{failedBuildRequest===buildRequest.id?'Block request needs attention.':restoreBlocked?'Your request is waiting. Retry loading earlier work before starting.':uncertain?'Your request is waiting. Recover the existing request first to avoid duplicate work.':contextBusy?'Your request is waiting for the current design changes.':!job&&!exactSelection?'Your request is waiting here. Choose a model and reasoning level below; it will then start automatically.':'Your request is queued.'}
-      {failedBuildRequest===buildRequest.id&&<button disabled={busy||loading} onClick={()=>{consumedBuild.current=null;setFailedBuildRequest(null);}}>Retry block preparation</button>}
+    {buildRequest?.projectId===projectId&&!retainedOrder.pending&&<p role="status">{failedBuildRequest===buildRequest.id?(buildRequest.intent==='design'?'Architecture request needs attention.':'Block request needs attention.'):restoreBlocked?'Your request is waiting. Retry loading earlier work before starting.':uncertain?'Your request is waiting. Recover the existing request first to avoid duplicate work.':contextBusy?'Your request is waiting for the current design changes.':!job&&!exactSelection?'Your request is waiting here. Choose a model and reasoning level below; it will then start automatically.':'Your request is queued.'}
+      {failedBuildRequest===buildRequest.id&&<button disabled={busy||loading} onClick={()=>{consumedBuild.current=null;setFailedBuildRequest(null);}}>{buildRequest.intent==='design'?'Retry architecture start':'Retry block preparation'}</button>}
       <button disabled={busy} onClick={()=>onBuildRequestHandled?.(buildRequest.id)}>Cancel queued request</button></p>}
     {restoreBlocked&&<button disabled={loading||busy} onClick={()=>{setError('');setRestoreAttempt(value=>value+1);}}>Retry loading earlier work</button>}
     {loading?<p role="status">Finding your project’s work…</p>:<>
@@ -226,6 +232,7 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
         <button disabled={busy||restoreBlocked||uncertain||contextBusy||!!retainedOrder.pending||!!retainedOrder.error||!canSubmit||architectureText.length>80000||(!job&&!exactSelection)}>{busy?<><BrainActivity size={22}/> Sending…</>:running?'Send update':'Refine architecture'}</button>
       </form>}
       {job&&<>
+        {running&&lastReceived&&now-lastReceived>90000&&<button disabled={busy} onClick={()=>act(async()=>{const next=await call('recover');if(live.current)setJob(next);})}>Check live status</button>}
         {running&&<button disabled={busy} onClick={()=>act(async()=>{const next=await call('interrupt');if(live.current)setJob(next);})}>Stop generation</button>}
 
         <details className="engineering-actions"><summary>Connection and package details</summary>{finalization&&<p>{finalization.text}</p>}
@@ -243,7 +250,7 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
         {eligibleForReview&&reviewCount>=3&&<p role="status">Three review passes used. The remaining checks need review.</p>}
         {hasCanvas&&onCanvas&&running&&<p role="status">Reviewing the architecture against your specification.</p>}
         {hasCanvas&&onCanvas&&!running&&!uncertain&&artifact.runId===job?.run&&!hasReview&&<button disabled={busy||contextBusy} onClick={()=>submitIntent(null,REFINE_CODEX_CANVAS,true)}>Refine from source</button>}
-        {hasCanvas&&onCanvas&&artifact.runId===job?.run&&job.last_status==='completed'&&<button className="btn primary" disabled={busy||running||uncertain||contextBusy} onClick={()=>act(()=>onCanvas(artifact,job.id))}>Open architecture</button>}
+        {hasCanvas&&onCanvas&&artifact.runId===job?.run&&job.last_status==='completed'&&<button className="btn primary" disabled={busy||running||uncertain||contextBusy||!currentAssessment||!!(eligibleForReview&&reviewCount<3)} onClick={()=>act(()=>onCanvas(artifact,job.id))}>Open architecture</button>}
         {onDelivery&&<button disabled={busy} onClick={onDelivery}>Review and download handoff</button>}
 
         {onWorkModelChange&&!hasCanvas&&<p className="muted small" role="status">{running||uncertain?'File links update when generation finishes.':artifact.runId!==job?.run?'File links belong to the previous snapshot.':mappingStatus||'Connecting files to design blocks…'}</p>}
