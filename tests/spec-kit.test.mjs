@@ -45,3 +45,40 @@ test('empty project creates clarification work, not invented cloud components',(
  const files=deliveryPack(p,null),list=JSON.parse(files['spec-kit/tasks.json']).tasks;
  assert.equal(list.filter(t=>t.phase==='Components').length,0);assert.match(files['spec-kit/questions.md'],/Define the system components/);
 });
+
+test('explicit owner decision gates reach related work orders without blocking unrelated local work',()=>{
+ const p=project();p.openQuestions=[{id:'wire-approval',question:'Approve source contract',owner:'Source owner',status:'open',links:['files'],requirementIds:['need-1'],interfaceIds:['read'],decisionBy:'Before enabling the production connector',interim:'Use a local contract fixture; no live connector calls.'}];
+ const files=deliveryPack(p,null),list=JSON.parse(files['spec-kit/tasks.json']).tasks;
+ assert.ok(list.some(t=>t.edgeIds?.includes('read')&&t.decisionGates?.[0].questionId==='wire-approval'));
+ assert.equal(list.find(t=>t.id==='TASK-SETUP').decisionGates,undefined);
+ assert.match(files['spec-kit/questions.md'],/Before enabling the production connector/);
+ assert.match(files['AGENTS.md'],/decisionGates/);
+});
+
+test('source-linked interpretations keep their review status without creating one repetitive owner question per requirement',()=>{
+ const p=project(),sha='a'.repeat(64);p.extensions.designSources=[{name:'Approved operational brief.txt',sha256:sha,text:'Access is restricted.'}];p.needs[1]={...p.needs[1],basis:'Approved operational brief.txt · Access · SHA-256 '+sha,acceptance:'Denied access returns403'};
+ const files=deliveryPack(p,null),context=JSON.parse(files['spec-kit/context.json']);
+ assert.equal(context.questions.some(q=>q.id==='need-2'),false);
+ assert.match(context.requirements[1].agreement,/Source-derived interpretation/);
+ assert.equal(p.needs[1].source,'agent');assert.equal(p.needs[1].status,'open');
+ p.needs[1].basis='An unsupported suggestion';
+ assert.ok(JSON.parse(deliveryPack(p,null)['spec-kit/context.json']).questions.some(q=>q.id==='need-2'));
+});
+
+test('source interpretations remain review findings and material owner decisions are not duplicated',()=>{
+ const p=project(),sha='b'.repeat(64);p.extensions.designSources=[{name:'Brief.txt',sha256:sha}];p.needs[1].basis='Brief.txt · Timing · SHA-256 '+sha;p.openQuestions=[{id:'owner-contract',question:'Which contract applies?',owner:'Partner owner',status:'open'}];
+ const files=deliveryPack(p,null),context=JSON.parse(files['spec-kit/context.json']);
+ assert.equal(context.questions.filter(q=>q.text.includes('Which contract applies?')).length,1);
+ const finding=context.readiness.findings.find(f=>f.id.startsWith('requirement-proposed-')&&f.requirementIds.includes('need-2'));
+ assert.equal(finding.priority,2);assert.equal(p.needs[1].status,'open');
+ p.needs[1].basis='Unsupported interpretation';
+ const changed=JSON.parse(deliveryPack(p,null)['spec-kit/context.json']);assert.equal(changed.readiness.findings.find(f=>f.id===finding.id).priority,1);
+});
+
+test('native structured scope supplies the handoff outcome without promoting raw conversation into an agreed brief',()=>{
+ const p=project();p.brief={};p.requirements='';p.extensions.systemSpec={title:'Access service',decomposition:'Preserve the existing catalog and deny unknown identities.',infrastructure:'Proposed site runtime',operations:'Operator owned',testing:'Denied access cases',journeys:[{name:'Access check',steps:[{sender:'User',receiver:'Service',action:'Check access'}]}]};
+ const files=deliveryPack(p,null),context=JSON.parse(files['spec-kit/context.json']);
+ assert.match(context.goal,/Source-based architecture scope/);assert.match(context.goal,/deny unknown identities/);
+ assert.ok(!context.readiness.findings.some(f=>f.id==='scope-outcome'||f.id==='scope-boundary'));
+ assert.equal(p.brief.application,undefined);
+});

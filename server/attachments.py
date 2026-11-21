@@ -18,10 +18,10 @@ def diagram_text(data):
         if len(raw)>100000:raise ValueError('Diagram text exceeds 100,000 bytes. Use a smaller diagram.')
         if b'<!DOCTYPE' in raw.upper() or b'<!ENTITY' in raw.upper():raise ValueError('Unsupported diagram XML declarations.')
         try:return ElementTree.fromstring(raw)
-        except ElementTree.ParseError:raise ValueError('Cannot read diagram XML. Export a standard draw.io file or image.')
+        except ElementTree.ParseError:raise ValueError('Cannot read diagram XML. Choose an editable diagram file or export it as an image.')
     root=parse(data)
     if root.tag=='mxGraphModel':return ElementTree.tostring(root,encoding='unicode')
-    if root.tag!='mxfile':raise ValueError('Use a draw.io mxfile or mxGraphModel diagram.')
+    if root.tag!='mxfile':raise ValueError('Choose an editable diagram file containing an mxfile or mxGraphModel.')
     pages=root.findall('diagram')
     if not pages or len(pages)>20:raise ValueError('Use a diagram with between 1 and 20 pages.')
     result=[]
@@ -34,8 +34,8 @@ def diagram_text(data):
                 raw=decoder.decompress(encoded,100001)
                 if len(raw)>100000 or not decoder.eof or decoder.unused_data:raise ValueError('Diagram expansion exceeds the limit or is invalid.')
                 model=parse(unquote_to_bytes(raw.decode('utf-8')))
-            except (UnicodeError,zlib.error,ValueError) as exc:raise ValueError('Cannot decode this draw.io page within the supported text limit.') from exc
-        if model.tag!='mxGraphModel':raise ValueError('A draw.io page must contain an mxGraphModel.')
+            except (UnicodeError,zlib.error,ValueError) as exc:raise ValueError('Cannot decode this diagram page within the supported text limit.') from exc
+        if model.tag!='mxGraphModel':raise ValueError('An editable diagram page must contain an mxGraphModel.')
         result.append('[Diagram: '+page.get('name','Untitled')+']\n'+ElementTree.tostring(model,encoding='unicode'))
     text='\n\n'.join(result)
     if len(text)>100000:raise ValueError('Combined diagram text exceeds 100,000 characters.')

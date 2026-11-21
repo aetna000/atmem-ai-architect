@@ -1,3 +1,4 @@
+import {validateDiagramModel} from './architecture-diagrams.mjs';
 import {sha256} from '@noble/hashes/sha2.js';
 import {blockSpecSections, interfaceFields} from './block-spec.mjs';
 import {validateEngineeringModel} from './engineering-model.mjs';
@@ -79,7 +80,16 @@ export function commentTarget(project,target) {
     case 'diagram':
     case 'step': {
       const view=model?.diagrams.find(row=>row.id===target.id);
-      if(!view)return null;
+      if(!view){
+        const diagrams=project.extensions?.architectureDiagrams;
+        const architectureView=target.kind==='diagram'&&diagrams?.views.find(row=>row.id===target.id);
+        if(!architectureView)return null;
+        return {values:pick(architectureView,['name']),apply:patch=>{
+          const next={...diagrams,views:replace(diagrams.views,architectureView.id,{...architectureView,...patch})};
+          validateDiagramModel(next);
+          return {...project,extensions:{...project.extensions,architectureDiagrams:next}};
+        }};
+      }
       const apply=patch=>updateModel({...model,diagrams:replace(model.diagrams,view.id,{...view,...patch})});
       if(target.kind==='diagram')return {values:pick(view,['name','elementIds','exchangeIds']),apply};
       if(view.kind!=='sequence'||!view.exchangeIds[target.index]||target.exchangeId!==view.exchangeIds[target.index])return null;

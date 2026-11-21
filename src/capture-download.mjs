@@ -1,4 +1,5 @@
 import {unzipSync} from 'fflate';
+import {ENGINEERING_CONTEXT_BYTES} from './evidence-bounds.mjs';
 import {handoffDigest} from './block-handoff.mjs';
 import {mergeCapturedEvidence} from './captured-handoff.mjs';
 import {readBoundedEvidence} from './evidence-download.mjs';
@@ -46,7 +47,7 @@ export async function attachCapturedEvidenceFiles(project,original,{session,fetc
   if(handoffDigest(bundle)!==h.get('X-Evidence-Sha256'))throw Error('Capture evidence transport integrity check failed.');
   const contents=boundedEvidenceZip(bundle),expected=['capture.zip','capture-manifest.json','submitted-context.json','initial-context.json','initial-context-receipt.json'];
   if(Object.keys(contents).length!==expected.length||expected.some(name=>!Object.hasOwn(contents,name)))throw Error('Capture evidence bundle has missing or unexpected files.');
-  for(const name of ['submitted-context.json','initial-context.json'])if(contents[name].byteLength>2_000_000)throw Error('Capture context exceeds its byte bound.');
+  for(const name of ['submitted-context.json','initial-context.json'])if(contents[name].byteLength>ENGINEERING_CONTEXT_BYTES)throw Error('Capture context exceeds its byte bound.');
   const manifest=JSON.parse(decode(contents['capture-manifest.json'])),initialReceipt=JSON.parse(decode(contents['initial-context-receipt.json']));
   if(manifest.sha256!==h.get('X-Artifact-Sha256')||initialReceipt.sha256!==h.get('X-Initial-Context-Sha256'))throw Error('Capture bundle receipts differ from response provenance.');
   const captureFiles=boundedEvidenceZip(contents['capture.zip']),review=captureFiles['architecture.review.md'];

@@ -1,3 +1,6 @@
+import {buildReviewFiles} from './build-review-files.mjs';
+import {architectureDiagramHandoffFiles} from './architecture-diagram-handoff.mjs';
+import {drawioHandoffFiles} from './drawio-handoff.mjs';
 import {architectureWork} from './architecture-work.mjs';
 import {artifactWorkProjection} from './artifact-work.mjs';
 import {generationQuality} from './generation-quality.mjs';
@@ -38,7 +41,9 @@ export function deliveryPack(project, run, environment = "staging", now = new Da
     ...consulting.lines.filter((l) => !l.complete).map((l) => `${l.label}: effort, rate, ordered day range and basis needed.`),
     ...(project.openQuestions || []).filter((q) => q.status === "open").map((q) => q.question),
   ];
+  const views=project.extensions?.architectureDiagrams;
   const files = {
+    ...buildReviewFiles(project,views),
     ...specKit(project,{snapshotId,stamp,now,sourceFile,environment:environment === "production" ? "production" : "staging"}),
     [sourceFile]: sourceSnapshotContent??JSON.stringify(file),
     "architecture-work.json": json(architectureWork(project)),
@@ -46,6 +51,8 @@ export function deliveryPack(project, run, environment = "staging", now = new Da
     "specification.md": `${stamp}\n\n${solutionSpecification(project)}\n\n## Implementation specification and coding-agent handoff\n\nThe Spec Kit translates these requirements and the architecture into implementation work. Start with START_HERE.md and AGENTS.md; read spec-kit/implementation-spec.md (or PDF) for the implementation plan, contracts, detailed tasks and validation plan. Requirements remain the source of desired outcomes; the kit is the build plan derived from them.\n`,
     "architecture-and-deployment.md": `${stamp}\n\n${deploymentDocument(project, run, now)}`,
     "diagram.mmd": mermaid(project),
+    ...drawioHandoffFiles(project,views),
+    ...(views?.views.length?architectureDiagramHandoffFiles(project.name,project.revision,views):{}),
     "decisions.md": `${stamp}\n\n${adrMarkdown(project.decisions)}`,
     "resource-schedule.json": json(resources),
     "estimate.json": json({ snapshotId, revision: project.revision, generatedAt: now.toISOString(), disclaimer: DISCLAIMER, cloud, consulting }),

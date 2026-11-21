@@ -632,3 +632,25 @@ owner writes. No backend restart or programme resumption. Evidence:029/evidence/
 
 
 2026-11-12 npm preview packaging: owner authorized public @atmem/architect, with an isolated checksum-verified Python/AtMem bootstrap and one loopback API/UI process. Installer qualification proceeds separately from the paused original28/native programme. Mac clean installation, real AtMem and chat fixtures pass; cross-platform matrix and npm publication are tracked under029 PKG-001. No engine-quality or deployment promotion.
+
+## 2026-11-21 — Shared architecture diagrams and editable handoff
+
+The diagram workspace adds a versioned, project-owned shared model and 28 typed
+views. The existing logical system model and project files retain their contracts.
+A connected model applies diagram-specific skills to source evidence in six ordered
+groups. Independent checks can request a repair and preserve unresolved issues
+for review. Diagram authoring can run before infrastructure selection. The
+delivery package includes the shared model and a traceable diagram handoff.
+See [the local qualification record](../029-general-purpose-engine/evidence/20261121-architecture-diagrams/README.md).
+
+The native drawing workspace now shares its page navigator and block properties with Spec Kit and editable handoff. The local knowledge publisher mirrors the 28 reviewed diagram skills. See the diagram qualification record above.
+
+## Drawing readability follow-up — 22 November 2026
+
+Shared rendering and manual interaction contracts are recorded in the [diagram verification record](../029-general-purpose-engine/evidence/20261121-architecture-diagrams/README.md). Private client audits remain restricted; architecture and deployment qualification remain separate.
+
+
+## Stable public release 0.2.6
+
+The owner authorized publication on main with client documents and history kept private.
+Follow [the release privacy plan](../032-public-release-privacy/plan.md) and exact installed/registry checks.

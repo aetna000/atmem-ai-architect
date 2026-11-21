@@ -24,7 +24,7 @@ npm install -g @atmem/architect
 atmemai
 ```
 
-[Stable release notes](docs/releases/v0.2.5.md) · [Application test configuration](docs/architecture/configuring-application-tests.md) · [Installation and troubleshooting](docs/INSTALLATION.md) · [Package options](packaging/README.npm.md) · [npm package](https://www.npmjs.com/package/@atmem/architect)
+[Stable release notes](docs/releases/v0.2.6.md) · [Application test configuration](docs/architecture/configuring-application-tests.md) · [Installation and troubleshooting](docs/INSTALLATION.md) · [Package options](packaging/README.npm.md) · [npm package](https://www.npmjs.com/package/@atmem/architect)
 
 ## Workflow
 

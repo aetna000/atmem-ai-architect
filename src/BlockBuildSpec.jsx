@@ -91,9 +91,7 @@ export function BlockBuildSpec({ project, node, busy, onOpen, onDraft, onInterfa
         </div>
       </div>
       {editingSpec ? <SpecEditor node={node} busy={busy} onSave={onSaveSpec} onClose={()=>setEditingSpec(false)}/> :
-        <dl className="module-spec-grid">{sections.map(section => <div key={section.key} className="module-spec-card" data-empty={!section.content}>
-          <dt>{section.title}</dt><dd>{section.content || 'Not specified'}{renderComments?.({kind:'specification',id:node.id,field:section.key})}</dd>
-        </div>)}</dl>}
+        <BlockSpecProperties key={node.id} node={node} busy={busy} onSave={onSaveSpec} renderComments={renderComments}/>}
       {!!children.length && <section className="module-children" aria-label="Nested modules"><h4>Submodules</h4><NestedBlocks nodes={project.nodes} parent={node.id} onOpen={onOpen}/></section>}
       </section>
       <section hidden={tab!=='interfaces'} aria-label="Module interfaces">
@@ -172,6 +170,37 @@ function InterfaceEditor({edge, node, nodes, busy, onSave, onClose}) {
     {error && <p className="field-wide" role="alert">{error}</p>}
     <div className="row field-wide"><button className="btn primary" disabled={busy}>Save interface</button><button className="btn" type="button" onClick={onClose}>Cancel</button></div>
   </form>;
+}
+
+export function BlockSpecProperties({node,busy,onSave,renderComments,compact=false}){
+  const [editing,setEditing]=useState(null),[value,setValue]=useState(''),[error,setError]=useState('');
+  function save(event){
+    event.preventDefault();
+    try{
+      const current=node.data.buildSpec||{};
+      if((current[editing.key]||'')!==editing.original)throw Error('This property changed. Cancel and reopen it to edit the latest value.');
+      const next={...current},text=value.trim();
+      if(text)next[editing.key]=text;else delete next[editing.key];
+      onSave(Object.keys(next).length?next:undefined);
+      setEditing(null);setError('');
+    }catch(failure){setError(failure.message);}
+  }
+  return <div className="block-property-list" aria-label="Block specification properties">
+    {blockSpecSections(node.data.buildSpec).map(({key,title,content},index)=>{
+      const editButton=onSave&&editing?.key!==key&&<button className="link" aria-label={'Edit '+title} disabled={busy||Boolean(editing)}
+        onClick={()=>{setEditing({key,original:content||''});setValue(content||'');setError('');}}>Edit</button>;
+      const field=<>
+        {editing?.key===key?<form onSubmit={save}><textarea aria-label={title} value={value} onChange={event=>setValue(event.target.value)} maxLength={4000} rows={5} autoFocus/>
+          {error&&<p role="alert">{error}</p>}<div className="row"><button className="btn primary" disabled={busy}>Save property</button>
+          <button className="btn" type="button" onClick={()=>setEditing(null)}>Cancel</button></div></form>:<p>{content||'Not specified'}</p>}
+        {compact&&editButton}
+        {renderComments?.({kind:'specification',id:node.id,field:key})}
+      </>;
+      if(compact)return <details key={key} className="block-property" open={index===0?true:undefined}>
+        <summary>{title}</summary>{field}</details>;
+      return <section key={key} className="block-property"><div className="block-property-heading"><h4>{title}</h4>{editButton}</div>{field}</section>;
+    })}
+  </div>;
 }
 
 function SpecEditor({node, busy, onSave, onClose}) {

@@ -1,3 +1,6 @@
+import {validateDrawingLayouts} from './drawing-layout.mjs';
+import {drawioShapes} from './drawio-model.mjs';
+import {validateDiagramModel} from './architecture-diagrams.mjs';
 import {validateRequirementsDocument} from './requirements-document.mjs';
 import {BLOCK_SYMBOLS} from './block-symbols.mjs';
 import {validateEngineeringModel} from './engineering-model.mjs';
@@ -631,6 +634,8 @@ export function validateImport(p) {
     p.edges.length > 600
   )
     throw Error("Unsupported or oversized project file.");
+  validateDrawingLayouts(p?.extensions?.drawingLayouts);
+  if(p?.extensions?.architectureDiagrams!==undefined)validateDiagramModel(p.extensions.architectureDiagrams);
   if(p?.extensions?.systemModel!==undefined)validateSystemModel(p.extensions.systemModel);
   if(p?.extensions?.engineeringModel!=null)validateEngineeringModel(p.extensions.engineeringModel);
   if(String(p.requirements||"").length>64000)throw Error("Project requirements exceed 64,000 characters; no content was truncated.");
@@ -692,6 +697,9 @@ export function validateImport(p) {
           ? n.data.outputPosition
           : "right",
         label: n.data.label,
+        ...(/^#[0-9a-f]{6}$/i.test(n.data.drawingFill)?{drawingFill:n.data.drawingFill}:{}),
+        ...(/^#[0-9a-f]{6}$/i.test(n.data.drawingStroke)?{drawingStroke:n.data.drawingStroke}:{}),
+        ...(Object.hasOwn(drawioShapes,n.data.drawingShape)?{drawingShape:n.data.drawingShape}:{}),
         ...(Object.hasOwn(BLOCK_SYMBOLS, n.data.symbol) ? {symbol:n.data.symbol} : {}),
         provider: n.data.provider,
         kind: n.data.kind,

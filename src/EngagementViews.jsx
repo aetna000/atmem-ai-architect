@@ -1,3 +1,6 @@
+import {sourceDerivedRequirement,recordedOutcome} from './source-scope.mjs';
+import {isDiagramRevision} from './records.mjs';
+import {isReadyExample} from './ready-example.mjs';
 import {encodeRequirementBinding} from './requirements-rich-document.mjs';
 import {DocumentText, RequirementsDocument} from './RequirementsDocument.jsx';
 import {documentState, updateRequirementsDocument} from './requirements-document.mjs';
@@ -156,9 +159,9 @@ export function OptionsView({ project, onDiscuss, onPreview, onChoose, onContinu
 
 export function DecisionsView({ project, onDiscuss, embedded=false }) {
   const all = project.decisions || [];
-  const choices = all.filter(d => !d.subject?.startsWith('design.'));
+  const choices = all.filter(d => !isDiagramRevision(d));
   const current = choices.filter(d => d.status !== 'Superseded');
-  const sketches = all.filter(d => d.subject?.startsWith('design.'));
+  const sketches = all.filter(isDiagramRevision);
   const labels = {'platform.cloud':'Cloud provider','cloud.region':'Region','data.country':'Country / data residency','infrastructure.tool':'Infrastructure tool'};
   return <section className={embedded?undefined:"doc"} aria-label="Decisions">
     <header className="doc-head"><h2>Selected choices</h2></header>
@@ -166,9 +169,9 @@ export function DecisionsView({ project, onDiscuss, embedded=false }) {
     {!current.length && <p className="muted">No choices selected.</p>}
     {current.map(d => <article className="consultation-summary" key={d.id}>
       <h3>{labels[d.subject] || d.title}</h3><p>{OPTION_NAMES[d.decision] || d.decision || 'Still being discussed'}</p>
-      <small className="muted">{d.status === 'Accepted' ? 'Confirmed in our conversation' : 'Proposed — still to discuss'}</small>
+      <small className="muted">{d.status === 'Accepted' ? isReadyExample(project)?'Recorded in the bundled example':'Recorded project decision' : 'Proposed — still to discuss'}</small>
       {(d.context||d.consequences)&&<InlineNote label="Decision details"><p>{d.context}</p><p>{d.consequences}</p></InlineNote>}
-      <button className="link" onClick={() => onDiscuss(`Let’s revisit our choice about ${labels[d.subject] || d.title}: ${d.decision}. Explain the tradeoff and ask what I would like to change before updating it.`)}>Revisit in chat</button>
+      <button className="link" onClick={() => onDiscuss(`Let’s revisit our choice about ${labels[d.subject] || d.title}: ${d.decision}. Recorded context: ${d.context||'Not recorded'}. Recorded consequences: ${d.consequences||'Not recorded'}. Explain the tradeoff and ask what I would like to change before updating it.`)}>Revisit in chat</button>
       {choices.some(h => h.subject===d.subject && h.status==='Superseded') && <details className="extra"><summary>Earlier choices</summary>{choices.filter(h => h.subject===d.subject && h.status==='Superseded').map(h=><p key={h.id}>{h.decision} {h.reason && `— ${h.reason}`}</p>)}</details>}
     </article>)}
     {!!sketches.length && <details className="extra"><summary>Diagram change history</summary>{sketches.map(d=><p key={d.id}>{d.title} · {d.decision}</p>)}</details>}
@@ -341,12 +344,12 @@ export function RequirementsView({checks,onContinue, project, onDiscuss, onChang
   const titles = {suggested:'Suggestions still to discuss',functional:'Functional requirements',security:'Security and access',compliance:'Data governance and compliance',availability:'Availability and recovery',reliability:'Reliability',performance:'Performance',scalability:'Capacity and growth',maintainability:'Operations and maintainability',cost:'Cost constraints',other:'Quality requirements'};
   const groups = new Map();
   for (const r of needs) {
-    const key = r.source==='agent' ? 'suggested' : r.kind === 'functional' ? 'functional' : r.category || 'other';
+    const key = r.source==='agent'&&!sourceDerivedRequirement(project,r) ? 'suggested' : r.kind === 'functional' ? 'functional' : r.category || 'other';
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(r);
   }
   const questions = (project.openQuestions || []).filter(q=>q.status==='open');
-  const purpose = project.brief?.application || project.requirements;
+  const purpose = recordedOutcome(project);
   const system=systemDescription(project);
   const state=documentState(project);
   const change=onDocumentChange || (command => {
@@ -375,8 +378,6 @@ export function RequirementsView({checks,onContinue, project, onDiscuss, onChang
           {!purpose && <p className="document-controls">Describe the outcome or edit the scope to get started.</p>}
         </DocumentText>
       </section>
-      <section data-page="workflows" data-title="How the system works"><p>{system.overview}</p>{system.flows.map((f,i)=><div className="system-interaction" key={f.id}><h4>{i+1}. {f.title}</h4><p>{f.description}</p><p>{f.contract}</p><p className="document-meta">Proposed verification: {f.validation}</p></div>)}</section>
-      <section data-page="components" data-title="Component responsibilities and design rationale">{system.components.map(c=><section key={c.id} id={`component-spec-${c.id}`} className="system-component"><h4>{c.name}</h4><p className="document-meta">{c.service} · {c.placement}</p><p>{c.purpose}</p><p>{c.boundary}</p><h5>Inputs and outputs</h5><ul>{[...c.inputs,...c.outputs].map((v,i)=><li key={i}>{v}</li>)}</ul>{!c.inputs.length&&!c.outputs.length&&<p>No connections are drawn for this component.</p>}<h5>Contribution to requirements</h5>{c.requirements.length?<ul>{c.requirements.map(r=><li key={r}>{r}</li>)}</ul>:<p>No requirement is explicitly linked to this component yet.</p>}<h5>Implementation and verification</h5><p>{c.implementation}</p><p className="document-meta">Engineering considerations, to be confirmed during implementation:</p><ul>{c.engineering.map(v=><li key={v}>{v}</li>)}</ul></section>)}</section>
       {[...groups].sort(([a],[b])=>(a==='suggested')-(b==='suggested')).map(([key,rows])=><section key={key} data-page={`requirements-${key}`} data-title={titles[key] || 'Additional requirements'}
         data-related={rows.map(row => <div key={row.id}>
           <strong>{requirementNumber(project,row.id)}</strong>
@@ -384,7 +385,7 @@ export function RequirementsView({checks,onContinue, project, onDiscuss, onChang
         </div>)}>
         {key==='suggested'&&<p className="document-meta">These are early considerations, not agreed requirements. We’ll discuss the most relevant ones as the design develops.</p>}
         {rows.map(r=><div className="requirement-paragraph" key={r.id}>
-          <h4 className="requirement-number">{requirementNumber(project,r.id)}</h4>
+          <h4 className="requirement-number">{requirementNumber(project,r.id)} <small>· {r.id}</small></h4>
           <DocumentText target={{kind:'requirement',id:r.id,field:'statement'}} value={r.statement} label="Edit requirement" limit={1000}
             change={change} pending={editPending('requirement',r.id,'statement')}>
             <p className="requirement-text" data-requirement-binding={encodeRequirementBinding('requirement', r.id, 'statement')} onContextMenu={event=>textMenu(event,r)}>{r.statement}</p>
@@ -394,8 +395,8 @@ export function RequirementsView({checks,onContinue, project, onDiscuss, onChang
             <p className="acceptance-target" hidden={!r.acceptance} data-requirement-binding={encodeRequirementBinding('requirement', r.id, 'acceptance')}>{r.acceptance}</p>
           </DocumentText>
           {r.measure && <p className="acceptance-target">Acceptance target: {r.measure.metric} {r.measure.op} {r.measure.target} {r.measure.unit || ''}.</p>}
-          <p className="document-meta">{r.source === 'agent' ? 'Proposed for discussion' : 'Recorded from our discussion'}{r.links?.length ? ` · Related design: ${r.links.map(id=>names[id] || 'earlier component').join(', ')}` : ''}</p>
-          <div className="requirement-reason"><p><strong>{r.rationale?"Why this matters.":"Design explanation (guidance)."}</strong> {requirementExplanation(r)}</p>{r.basis&&<p className="document-meta">Basis: {r.basis}</p>}<button className="link document-discuss" onClick={()=>onDiscuss(`Explain why ${requirementNumber(project,r.id)} (${r.id}) is needed: ${r.statement}. Use the actual board and discussion as evidence, distinguish assumptions, explain the consequence of leaving it out, and ask whether it fits my needs.`)}>Explain why we need this</button></div>
+          <p className="document-meta">{r.source === 'agent' ? sourceDerivedRequirement(project,r)?'Derived from specification · source review required':'Proposed for discussion' : 'Recorded from our discussion'}{r.links?.length ? ` · Related design: ${r.links.map(id=>names[id] || 'earlier component').join(', ')}` : ''}</p>
+          <details className="requirement-reason"><summary>Rationale and source</summary><p><strong>{r.rationale?"Why this matters.":"Design explanation (guidance)."}</strong> {requirementExplanation(r)}</p>{r.basis&&<p className="document-meta">Basis: {r.basis}</p>}<button className="link document-discuss" onClick={()=>onDiscuss(`Explain why ${requirementNumber(project,r.id)} (${r.id}) is needed: ${r.statement}. Use the actual board and discussion as evidence, distinguish assumptions, explain the consequence of leaving it out, and ask whether it fits my needs.`)}>Explain why we need this</button></details>
           {renderComments?.({kind:'requirement',id:r.id},'Comment or request a change')}
           {(!renderComments||commentTarget?.id===r.id||comments.some(c=>c.requirementId===r.id))&&<RequirementComments onReview={onReview} reviewing={reviewing} onDiscuss={onDiscuss} onResolve={(id,accept)=>onChange(resolveCommentRevision(project,id,accept))} target={commentTarget} number={requirementNumber(project,r.id)} requirement={r} comments={comments.filter(c=>c.requirementId===r.id)} onSave={(text,selectedText,review)=>{if(onCommentSave){onCommentSave({kind:'requirement',id:r.id},text,review,selectedText);return;}const comment={id:crypto.randomUUID(),requirementId:r.id,text,selectedText,statement:r.statement,status:'open',createdAt:new Date().toISOString()};saveComments([...comments,comment]);if(review)onReview([comment]);}} onRemove={id=>saveComments(comments.filter(c=>c.id!==id))} />}
         </div>)}
@@ -404,6 +405,8 @@ export function RequirementsView({checks,onContinue, project, onDiscuss, onChang
       {!needs.length && <section data-page="requirements" data-title="Requirements to develop"><p>As we discuss the idea and shape the board, AtMem AI Architect will summarise the functional requirements, constraints and acceptance targets here.</p></section>}
       {!!project.assumptions?.length && <section data-page="assumptions" data-title="Assumptions to validate">{project.assumptions.map(a=><p key={a.id}>{a.statement}</p>)}</section>}
       {!!questions.length && <section data-page="questions" data-title="Open questions">{questions.map(q=><p key={q.id}>{q.question}</p>)}<button className="link document-discuss" onClick={()=>onDiscuss(`Help resolve the open questions in our requirements document, one at a time. Start with the question that most affects the design.`)}>Let’s work through these in chat</button></section>}
+      <section data-page="workflows" data-title="How the system works"><p>{system.overview}</p>{system.flows.map((f,i)=><div className="system-interaction" key={f.id}><h4>{i+1}. {f.title}</h4><p>{f.description}</p>{f.contract&&<p>{f.contract}</p>}{f.validation&&<p className="document-meta">Verification · {f.validation}</p>}</div>)}</section>
+      <section data-page="components" data-title="Component responsibilities and design rationale">{system.components.map(c=><section key={c.id} id={`component-spec-${c.id}`} className="system-component"><h4>{c.name}</h4><p className="document-meta">{c.service} · {c.placement}</p><p>{c.purpose}</p><p>{c.boundary}</p><h5>Inputs and outputs</h5><ul>{[...c.inputs,...c.outputs].map((v,i)=><li key={i}>{v}</li>)}</ul>{!c.inputs.length&&!c.outputs.length&&<p>No connections are drawn for this component.</p>}<h5>Implementation and verification</h5><p>{c.implementation}</p><details><summary>Implementation guidance</summary><ul>{c.engineering.map(v=><li key={v}>{v}</li>)}</ul></details></section>)}</section>
       {checks&&<section data-page="checks" data-title="Design checks and decisions">{checks}</section>}
     </RequirementsDocument>
       <footer className="document-footer requirements-continue">{onContinue&&<button className="btn primary" disabled={reviewing} onClick={onContinue}>Continue to Choices →</button>}</footer>

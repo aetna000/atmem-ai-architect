@@ -320,3 +320,15 @@ class CodexBackendTests(unittest.IsolatedAsyncioTestCase):
             self.clients[0].history = history
             with self.assertRaises(SessionError):
                 await self.backend.observe(self.scope, handle, 'owned-turn')
+
+    async def test_reopening_a_released_transport_obtains_capacity_and_resumes_exact_history(self):
+        handle=await self.create();original=self.clients[-1]
+        await self.backend.release_idle_transport(self.scope,handle)
+        self.assertTrue(original.closed)
+        calls=[]
+        async def capacity():calls.append('checked')
+        self.backend.before_open=capacity
+        await self.backend.resume(self.scope,handle,'workspace-one',self.selection)
+        self.assertEqual(calls,['checked'])
+        self.assertEqual(self.clients[-1].requests[0][0],'thread/resume')
+        self.assertEqual(self.clients[-1].requests[0][1]['threadId'],handle)

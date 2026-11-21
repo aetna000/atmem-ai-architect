@@ -57,3 +57,10 @@ Azurite 3.37.0 (Microsoft, MIT) and fake-gcs-server 1.56.1 (BSD-2-Clause) run as
 ## Chat attachment readers
 
 The local helper uses pypdf (BSD-3-Clause) for PDF text extraction and Pillow (MIT-CMU) for image validation. Their complete installed distribution notices, including bundled dependency notices where supplied, are included in `public/licenses/python-dependency-notices.txt`; versions are recorded in `docs/python-dependency-inventory.json`. DOCX extraction uses Python's standard library.
+
+### draw.io graph engine
+
+The browser includes the unmodified mxGraph bundle from draw.io v32.3.0 under
+the Apache License 2.0. See `public/drawio/LICENSE` and `public/drawio/NOTICE`.
+
+The Basic, Arrows, Flowchart and BPMN stencil data and previews come from the same revision. The additional terms are in public/drawio/STENCIL-LICENSE.

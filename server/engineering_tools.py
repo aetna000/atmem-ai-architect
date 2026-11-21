@@ -169,6 +169,25 @@ class EngineeringTools:
             self._fields(args,[])
             return {'references':catalog(),'boundary':'Fixed primary endpoints and engine-owned research resources; evidence levels are explicit. No caller URLs or paths.'}
         if tool=='atmem_reference_read':
+            if args.get('id')=='submitted-context':
+                self._fields(args,['id'],['offset','sha256'])
+                current=self.store.get(scope,session)
+                row=self.db.execute('''SELECT c.content,c.sha256 FROM engineering_contexts c
+                    JOIN engineering_context_submissions s ON s.context=c.id
+                    WHERE s.session=? AND s.request=?''',(session,current['run'])).fetchone()
+                if row is None:raise SessionError('No submitted context belongs to this run')
+                raw=bytes(row[0]) if not isinstance(row[0],str) else row[0].encode('utf-8')
+                sha=hashlib.sha256(raw).hexdigest()
+                if sha!=row[1] or args.get('sha256') not in (None,sha):raise SessionError('Context digest mismatch')
+                text=raw.decode('utf-8');offset=args.get('offset',0)
+                if type(offset) is not int or offset<0 or offset>len(text) or (offset>0 and args.get('sha256')!=sha):raise ValueError('Invalid context page')
+                chunk=text[offset:offset+24000]
+                while len(encoded({'text':chunk}).encode('utf-8'))>44000:
+                    chunk=chunk[:max(1,len(chunk)//2)]
+                end=offset+len(chunk)
+                return {'id':'submitted-context','sha256':sha,'text':chunk,
+                        'nextOffset':end if end<len(text) else None,'totalCharacters':len(text),
+                        'boundary':'Saved project evidence for this session and submission.'}
             self._fields(args,['id'],['offset','sha256'])
             return await asyncio.to_thread(read_reference,args['id'],args.get('offset',0),args.get('sha256'))
         if tool=='atmem_project_recall':

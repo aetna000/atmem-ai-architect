@@ -1,4 +1,5 @@
 import {handoffDigest} from './block-handoff.mjs';
+import {REVIEWED_CANVAS_BYTES} from './evidence-bounds.mjs';
 import {readBoundedEvidence} from './evidence-download.mjs';
 const SHA=/^[a-f0-9]{64}$/,UUID=/^[a-f0-9-]{36}$/;
 // Source hashes identify the captured proposal, not an approval of current edits.
@@ -26,7 +27,7 @@ export async function attachReviewedDraftFiles(project,original,{session,fetcher
   if(headers.get('content-type')?.split(';')[0]!=='application/json'||headers.get('X-Artifact-Id')!==source.artifactId||headers.get('X-Draft-Sha256')!==source.draftSha256||headers.get('X-Context-Sha256')!==source.contextSha256||!SHA.test(headers.get('X-Artifact-Sha256'))||!SHA.test(headers.get('X-Review-Sha256')))throw Error('Reviewed draft response does not match its requested provenance.');
   const review=source.files?.find(file=>file.path==='architecture.review.md');
   if(review&&review.sha256!==headers.get('X-Review-Sha256'))throw Error('Reviewed draft seal does not match the captured review document.');
-  const bytes=await readBoundedEvidence(response,2_000_000,'Reviewed draft');
+  const bytes=await readBoundedEvidence(response,REVIEWED_CANVAS_BYTES,'Reviewed draft');
   if(handoffDigest(bytes)!==source.draftSha256)throw Error('Reviewed draft byte integrity check failed.');
   const text=new TextDecoder('utf-8',{fatal:true,ignoreBOM:true}).decode(bytes),value=JSON.parse(text);
   if(!value||value.version!==1)throw Error('Reviewed draft is not a supported JSON proposal.');

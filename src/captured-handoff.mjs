@@ -1,4 +1,5 @@
 import {handoffDigest,blockHandoffExportFiles} from './block-handoff.mjs';
+import {ENGINEERING_CONTEXT_BYTES} from './evidence-bounds.mjs';
 const SHA=/^[a-f0-9]{64}$/;
 const EXPORT_RECEIPTS=new Set(['manifest.json','handoff-manifest.json','captured-evidence.json','design-evidence.json','design-documents-receipt.json','source-figures.json','handoff-readiness.json','evidence/initial-context-receipt.json','evidence/original-native-capture.zip','evidence/original-agent-handoff.zip']);
 const decode=value=>typeof value==='string'?value:new TextDecoder('utf-8',{fatal:true}).decode(value);
@@ -10,7 +11,7 @@ function matches(bytes,receipt,label){if(!receipt||!SHA.test(receipt.sha256)||ha
 // Pure, bounded assembly from operator-supplied immutable captures and receipts.
 // Custody is checked here; a hosted API must authenticate project scope separately.
 export function supplementCapturedHandoff({handoffFiles,handoffArchive,captureFiles,captureArchive,captureManifest,submittedContext,initialContext,initialReceipt}){
- if(Object.keys(handoffFiles).length>2000||!Array.isArray(captureManifest.files)||captureManifest.files.length>2000||length(handoffArchive)>64_000_000||length(captureArchive)>64_000_000||length(submittedContext)>2_000_000||length(initialContext)>2_000_000)throw Error('Captured evidence exceeds its input bound.');
+ if(Object.keys(handoffFiles).length>2000||!Array.isArray(captureManifest.files)||captureManifest.files.length>2000||length(handoffArchive)>64_000_000||length(captureArchive)>64_000_000||length(submittedContext)>ENGINEERING_CONTEXT_BYTES||length(initialContext)>ENGINEERING_CONTEXT_BYTES)throw Error('Captured evidence exceeds its input bound.');
  const original=json(handoffFiles,'handoff-manifest.json');
  if(original.format!=='atmem.external-agent-handoff'||original.version!==1||!original.files||!Array.isArray(original.blockIds))throw Error('Unsupported original handoff.');
  const source=json(handoffFiles,'source-context.json'),documents=source.extensions?.architectureDocuments;
@@ -23,7 +24,7 @@ export function supplementCapturedHandoff({handoffFiles,handoffArchive,captureFi
 
 // Shared merge for root and scoped exports. Authenticated retrieval is separate.
 export function mergeCapturedEvidence({projectId,documents,originalFiles,sourceFile='source-context.json',handoffArchive,captureFiles,captureArchive,captureManifest,submittedContext,initialContext,initialReceipt}){
- if(Object.keys(originalFiles).length>2000||!Array.isArray(captureManifest.files)||captureManifest.files.length>2000||length(captureArchive)>64_000_000||length(submittedContext)>2_000_000||length(initialContext)>2_000_000)throw Error('Captured evidence exceeds its input bound.');
+ if(Object.keys(originalFiles).length>2000||!Array.isArray(captureManifest.files)||captureManifest.files.length>2000||length(captureArchive)>64_000_000||length(submittedContext)>ENGINEERING_CONTEXT_BYTES||length(initialContext)>ENGINEERING_CONTEXT_BYTES)throw Error('Captured evidence exceeds its input bound.');
  if(captureManifest.id!==documents?.artifactId||!SHA.test(captureManifest.sha256)||handoffDigest(captureArchive)!==captureManifest.sha256||length(captureArchive)!==captureManifest.bytes||captureManifest.turnStatus!=='completed'||captureManifest.kind!=='delivery')throw Error('Captured artifact does not match the reviewed source.');
  if(handoffDigest(submittedContext)!==documents.contextSha256||JSON.parse(decode(submittedContext)).meta?.id!==projectId)throw Error('Submitted context identity mismatch.');
  if(handoffDigest(captureFiles['architecture.canvas.json'])!==documents.draftSha256||!decode(captureFiles['architecture.review.md']).replaceAll('\r\n','\n').split('\n').includes('Draft SHA-256: '+documents.draftSha256))throw Error('Captured draft/review seal mismatch.');

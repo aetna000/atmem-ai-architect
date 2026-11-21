@@ -4,6 +4,7 @@ Workspace registrations and scope originate from the worker's trusted control pl
 The native sandbox constrains writes/network, but this adapter alone is NOT a hosted
 multi-tenant isolation boundary. Hosted workers need separately qualified isolation.
 """
+import asyncio
 from pathlib import Path
 from .codex_app_server import CodexAppServer, ProtocolError
 from .engineering_sessions import BackendEvent, EmptySessionUnavailable, RecoveredStart, SessionError
@@ -26,6 +27,8 @@ class CodexEngineeringBackend:
             # restart, even though both implementations use the same model API.
             self.name=f'codex-app-server:{permission_profile}'
         self.clients={}
+        self.transport_lock=asyncio.Lock()
+        self.before_open=None
 
     def _workspace(self,scope,workspace):
         registered=self.workspaces.get((scope,workspace))
@@ -87,6 +90,11 @@ class CodexEngineeringBackend:
         client.dynamic_tool_handler=invoke
 
     async def create(self,scope,workspace,selection):
+        async with self.transport_lock:
+            if self.before_open is not None:await self.before_open()
+            return await self._create(scope,workspace,selection)
+
+    async def _create(self,scope,workspace,selection):
         root=self._workspace(scope,workspace)
         client=self.client_factory(root)
         try:
@@ -106,6 +114,10 @@ class CodexEngineeringBackend:
             await client.close();raise
 
     async def resume(self,scope,handle,workspace,selection):
+        async with self.transport_lock:
+            return await self._resume(scope,handle,workspace,selection)
+
+    async def _resume(self,scope,handle,workspace,selection):
         root=self._workspace(scope,workspace)
         if (scope,handle) in self.clients:
             row=self._owned(scope,handle,selection)
@@ -119,6 +131,7 @@ class CodexEngineeringBackend:
             # persisted native thread; never start a replacement for accepted work.
             self.clients.pop((scope,handle))
             await client.close()
+        if self.before_open is not None:await self.before_open()
         client=self.client_factory(root)
         try:
             if self.tools is not None:client.experimental=True
@@ -262,6 +275,11 @@ class CodexEngineeringBackend:
                 if params.get('turnId'):
                     # Tool summaries are progress, never successful validation.
                     return BackendEvent(params['turnId'],'progress',str(item.get('type','work')))
+
+    async def release_idle_transport(self,scope,handle):
+        """Coordinator must prove idle; retain workspace and native thread history."""
+        row=self.clients.pop((scope,handle),None)
+        if row is not None:await row[0].close()
 
     async def close(self):
         rows=list(self.clients.values());self.clients.clear()

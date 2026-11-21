@@ -204,7 +204,13 @@
       "dependsOn": [
         "GE-006"
       ],
-      "status": "todo"
+      "status": "todo",
+      "evidence": [
+        "evidence/20261121-architecture-diagrams/README.md",
+        "tests/drawio-workspace.test.mjs",
+        "scripts/canvas-zoom-check.mjs",
+        "server/tests/test_diagram_authoring.py"
+      ]
     },
     {
       "id": "GE-008",
@@ -387,6 +393,37 @@
       "evidence": [
         "../031-first-use-release/plan.md",
         "../031-first-use-release/validation.md"
+      ]
+    },
+    {
+      "id": "AUDIT-HANDOFF-20261122",
+      "title": "Repair upload, canonical handoff and shared 28-view authoring",
+      "dependsOn": [],
+      "status": "done",
+      "evidence": [
+        "../029-general-purpose-engine/evidence/20261121-architecture-diagrams/README.md"
+      ]
+    },
+    {
+      "id": "DRAWING-READABILITY-20261122",
+      "title": "Review every saved page and repair shared labels, routing, controls and manual geometry",
+      "dependsOn": [
+        "AUDIT-HANDOFF-20261122"
+      ],
+      "status": "done",
+      "evidence": [
+        "../029-general-purpose-engine/evidence/20261121-architecture-diagrams/README.md"
+      ],
+      "boundary": "Drawing review, shared rendering and mouse editing verified; semantic owner/contract/site qualification remains open."
+    },
+    {
+      "id": "RELEASE-0.2.6-PRIVACY",
+      "title": "Publish the generic drawing release from clean public main with private client boundaries",
+      "dependsOn": [],
+      "status": "in_progress",
+      "evidence": [
+        "../032-public-release-privacy/plan.md",
+        "../032-public-release-privacy/progress.json"
       ]
     }
   ]

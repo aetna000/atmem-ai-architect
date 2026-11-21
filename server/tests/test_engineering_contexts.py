@@ -7,7 +7,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 import uuid
-from server.engineering_contexts import EngineeringContexts, context_input, validate_context
+from server.engineering_contexts import EngineeringContexts, context_input, validate_context,MAX_CONTEXT_BYTES
 from server.engineering_sessions import EngineeringSessions, SqliteSessionStore, ProjectScope, ModelSelection, SessionError
 from server.engineering_jobs import EngineeringJobs
 from server.tests.test_engineering_sessions import Backend
@@ -85,10 +85,20 @@ class ContextTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(first['sha256'],hashlib.sha256(self.content).hexdigest())
 
     async def test_malformed_nonfinite_duplicate_oversize_and_invalid_unicode_refuse_atomically(self):
-        for content in [b'{}',b'{"meta":{},"meta":{}}',b'{"n":NaN}',b'{"n":1e999}',b'\xff',b'{"n":"\\ud800"}',self.content+b' '*2_000_000]:
+        for content in [b'{}',b'{"meta":{},"meta":{}}',b'{"n":NaN}',b'{"n":1e999}',b'\xff',b'{"n":"\\ud800"}',self.content+b' '*MAX_CONTEXT_BYTES]:
             with self.subTest(content=content[:50]):
                 with self.assertRaises((ValueError,SessionError)):self.attach(content)
         self.assertEqual(self.store.db.execute('SELECT COUNT(*) FROM engineering_contexts').fetchone()[0],0)
+
+    async def test_multiview_context_above_two_megabytes_retains_exact_bytes_and_uses_paging(self):
+        content=self.project('River custody and independent verification 🛰️. '*50000)
+        self.assertGreater(len(content),2_000_000)
+        self.assertLess(len(content),MAX_CONTEXT_BYTES)
+        receipt=self.attach(content)
+        self.assertEqual(self.contexts.get(self.scope,self.session,receipt['id'])['content'].encode(),content)
+        rendered=context_input(receipt)
+        self.assertLess(len(rendered['text']),2000)
+        self.assertIn('submitted-context',rendered['text'])
 
     async def test_history_bounds_preserve_old_bytes_and_reject_new_without_pruning(self):
         first = self.attach()

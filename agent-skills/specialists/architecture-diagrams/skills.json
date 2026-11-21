@@ -1,0 +1,482 @@
+[
+  {
+    "id": "context",
+    "version": "1.1.1",
+    "review": "Check that each connection crosses the selected system boundary and names its purpose.",
+    "expectedElementFields": {
+      "system": [
+        "Boundary"
+      ],
+      "external-system": [
+        "Owner"
+      ]
+    },
+    "buildCheck": "Identify who may initiate each external exchange and who owns its final outcome. Cite conflicting boundary descriptions separately.",
+    "expectedRelationFields": {
+      "interaction": [
+        "Purpose"
+      ]
+    }
+  },
+  {
+    "id": "use-case",
+    "version": "1.1.1",
+    "review": "Check that a role can only reach goals it is authorised to perform.",
+    "expectedElementFields": {
+      "use-case": [
+        "Outcome"
+      ]
+    },
+    "buildCheck": "For each material goal give its initiating role, observable success condition and at least one denied or exceptional outcome.",
+    "expectedRelationFields": {}
+  },
+  {
+    "id": "functional",
+    "version": "1.1.1",
+    "review": "Separate business functions from their implementation modules and verify the decomposition tree.",
+    "expectedElementFields": {
+      "function": [
+        "Responsibility",
+        "Inputs",
+        "Outputs",
+        "Acceptance"
+      ]
+    },
+    "buildCheck": "Map the function to its owner, inputs, outputs and an acceptance example that distinguishes success from partial completion.",
+    "expectedRelationFields": {}
+  },
+  {
+    "id": "capability",
+    "version": "1.1.1",
+    "review": "Keep business capabilities meaningful if technology and deployment change.",
+    "expectedElementFields": {
+      "capability": [
+        "Owner"
+      ]
+    },
+    "buildCheck": "Identify the accountable owner and use a measurable business outcome to distinguish a capability from a technology choice.",
+    "expectedRelationFields": {}
+  },
+  {
+    "id": "container",
+    "version": "1.1.1",
+    "review": "Give each runtime unit a deployment responsibility and explain its interfaces.",
+    "expectedElementFields": {
+      "container": [
+        "Technology",
+        "Runtime",
+        "Failure mode"
+      ]
+    },
+    "buildCheck": "Identify the executable or service, state ownership, dependency failure behaviour and environment assumptions.",
+    "expectedRelationFields": {}
+  },
+  {
+    "id": "component",
+    "version": "1.1.1",
+    "review": "Resolve dependency endpoints, ownership and contract responsibilities.",
+    "expectedElementFields": {
+      "component": [
+        "Responsibility",
+        "Inputs",
+        "Outputs",
+        "Verification"
+      ],
+      "port": [
+        "Contract",
+        "Direction"
+      ]
+    },
+    "buildCheck": "Show who owns each public contract. Specify observable outputs when a dependency times out or a duplicate request arrives.",
+    "expectedRelationFields": {}
+  },
+  {
+    "id": "layer",
+    "version": "1.1.1",
+    "review": "Check layer order and explicit permitted dependency directions.",
+    "expectedElementFields": {
+      "layer": [
+        "Order",
+        "Allowed layers"
+      ]
+    },
+    "buildCheck": "Identify the permitted direction of each dependency and an example of a forbidden dependency an implementation check can detect.",
+    "expectedRelationFields": {
+      "dependency": [
+        "Evidence"
+      ]
+    }
+  },
+  {
+    "id": "package",
+    "version": "1.1.1",
+    "review": "Trace actual or proposed package dependencies to the applicable repository or target design.",
+    "expectedElementFields": {
+      "package": [
+        "Qualified name"
+      ]
+    },
+    "buildCheck": "Identify package or module names and the revision used. Label intended dependencies as proposed until imports can be inspected.",
+    "expectedRelationFields": {
+      "dependency": [
+        "Evidence"
+      ]
+    }
+  },
+  {
+    "id": "class",
+    "version": "1.1.1",
+    "review": "Verify typed fields, methods and ownership. Use named endpoint multiplicity where material.",
+    "expectedElementFields": {
+      "class": [
+        "Fields",
+        "Methods",
+        "Invariants"
+      ]
+    },
+    "buildCheck": "Use typed members and signatures, explicit cardinality and an invariant that a negative test could violate.",
+    "expectedRelationFields": {}
+  },
+  {
+    "id": "domain",
+    "version": "1.1.1",
+    "review": "Check business vocabulary, cardinality and invariants against the workflows.",
+    "expectedElementFields": {
+      "concept": [
+        "Definition"
+      ],
+      "rule": [
+        "Rule"
+      ]
+    },
+    "buildCheck": "Define identity, units and governing invariants. Cite conflicting rules with both source references and the deciding owner.",
+    "expectedRelationFields": {}
+  },
+  {
+    "id": "sequence",
+    "version": "1.1.1",
+    "review": "Check that scenario messages are ordered and cover critical acknowledgements and failure handling.",
+    "expectedElementFields": {},
+    "buildCheck": "Trace a success and an exception. Distinguish receipt from completion. State how retries correlate with the original operation.",
+    "expectedRelationFields": {
+      "call": [
+        "Operation",
+        "Request"
+      ],
+      "return": [
+        "Response"
+      ],
+      "async": [
+        "Event"
+      ]
+    }
+  },
+  {
+    "id": "event-flow",
+    "version": "1.1.1",
+    "review": "Check event contracts, routing, delivery semantics and subscriber scope.",
+    "expectedElementFields": {
+      "event": [
+        "Version",
+        "Schema"
+      ]
+    },
+    "buildCheck": "Record schema version, ordering scope, deduplication key and consumer behaviour after replay or delivery failure.",
+    "expectedRelationFields": {
+      "publishes": [
+        "Event",
+        "Version"
+      ],
+      "subscribes": [
+        "Retry",
+        "Deduplication"
+      ]
+    }
+  },
+  {
+    "id": "workflow",
+    "version": "1.1.1",
+    "review": "Check that decisions cover distinct outcomes and that important paths reach a terminal state.",
+    "expectedElementFields": {
+      "activity": [
+        "Acceptance"
+      ]
+    },
+    "buildCheck": "Name guards and terminal outcomes. Cover compensation, intervention and the authority required to resume interrupted work.",
+    "expectedRelationFields": {}
+  },
+  {
+    "id": "state",
+    "version": "1.1.1",
+    "review": "Check initial state, guard semantics, idempotency and supported reversals.",
+    "expectedElementFields": {
+      "state": [
+        "Invariant"
+      ]
+    },
+    "buildCheck": "For material transitions record event, guard, action and expected resulting state. Check illegal transitions and late or repeated events.",
+    "expectedRelationFields": {
+      "transition": [
+        "Event",
+        "Guard",
+        "Action",
+        "Test"
+      ]
+    }
+  },
+  {
+    "id": "journey",
+    "version": "1.1.1",
+    "review": "Check ordered stage IDs, touchpoints and evidence for pain points.",
+    "expectedElementFields": {
+      "stage": [
+        "Goal",
+        "Touchpoints",
+        "Evidence"
+      ]
+    },
+    "buildCheck": "Associate each stage with its actor, evidence of completion, observable failure and recovery or escalation.",
+    "expectedRelationFields": {}
+  },
+  {
+    "id": "data-flow",
+    "version": "1.1.1",
+    "review": "Check every incoming and outgoing flow and its data ownership.",
+    "expectedElementFields": {},
+    "buildCheck": "Trace the authoritative writer, purpose and consumer of each material payload. Identify conflicting units or identity conventions.",
+    "expectedRelationFields": {
+      "data-flow": [
+        "Payload"
+      ]
+    }
+  },
+  {
+    "id": "erd",
+    "version": "1.1.1",
+    "review": "Check concrete typed columns, keys, nullability and foreign-key endpoints.",
+    "expectedElementFields": {
+      "table": [
+        "Columns",
+        "Primary key"
+      ]
+    },
+    "buildCheck": "List typed columns and nullability. Resolve every primary and foreign key to declared columns, including composite key order.",
+    "expectedRelationFields": {
+      "foreign-key": [
+        "From columns",
+        "To columns",
+        "Nullable",
+        "Unique",
+        "On delete"
+      ]
+    }
+  },
+  {
+    "id": "lineage",
+    "version": "1.1.1",
+    "review": "Verify target attributes can be traced to source fields and transformation logic.",
+    "expectedElementFields": {
+      "transform": [
+        "Transformation"
+      ]
+    },
+    "buildCheck": "Map typed source fields to target fields, conversions and selection rules. Identify who resolves incompatible units or versions.",
+    "expectedRelationFields": {
+      "mapping": [
+        "From fields",
+        "To fields",
+        "Transform"
+      ]
+    }
+  },
+  {
+    "id": "integration",
+    "version": "1.1.1",
+    "review": "Check interface direction and map contracts, transport and version evidence.",
+    "expectedElementFields": {},
+    "buildCheck": "Identify caller and receiver, version, acknowledgement versus completion, idempotency and the evidence needed from both peers.",
+    "expectedRelationFields": {
+      "integration": [
+        "Contract",
+        "Transport",
+        "Version",
+        "Request",
+        "Response",
+        "Authentication",
+        "Idempotency",
+        "Contract tests"
+      ]
+    }
+  },
+  {
+    "id": "api",
+    "version": "1.1.1",
+    "review": "Check method, path, request, response and material errors for each operation.",
+    "expectedElementFields": {
+      "operation": [
+        "Method",
+        "Path",
+        "Request schema",
+        "Response schema",
+        "Errors",
+        "Authentication",
+        "Idempotency"
+      ]
+    },
+    "buildCheck": "Require exact method and path, wire fields, status and error examples, authorization and duplicate handling. Identify provisional endpoints.",
+    "expectedRelationFields": {
+      "routes-to": [
+        "Target contract"
+      ]
+    }
+  },
+  {
+    "id": "deployment",
+    "version": "1.1.1",
+    "review": "Check environment ownership, deployment placement, sizing assumptions and version identity.",
+    "expectedElementFields": {
+      "artifact": [
+        "Version",
+        "Identity"
+      ],
+      "host": [
+        "Capacity"
+      ]
+    },
+    "buildCheck": "Identify artifact version, target environment, configuration and identity. Record capacity evidence and the rollback artifact or owner.",
+    "expectedRelationFields": {
+      "placement": [
+        "Environment",
+        "Version"
+      ]
+    }
+  },
+  {
+    "id": "network",
+    "version": "1.1.1",
+    "review": "Verify enforcing devices and the direction, protocol and destination port of traffic.",
+    "expectedElementFields": {},
+    "buildCheck": "Record traffic direction and destination protocol and port. Identify the enforcing device and the owner of site-specific approvals.",
+    "expectedRelationFields": {
+      "traffic": [
+        "Protocol",
+        "Port",
+        "Enforcing device",
+        "Direction"
+      ]
+    }
+  },
+  {
+    "id": "trust",
+    "version": "1.1.1",
+    "review": "Identify trust-zone ownership and trace controls for each crossing.",
+    "expectedElementFields": {},
+    "buildCheck": "Identify assets and classification crossing a boundary, enforcing identity or control, and observable denial evidence.",
+    "expectedRelationFields": {
+      "crossing": [
+        "Classification",
+        "Controls"
+      ]
+    }
+  },
+  {
+    "id": "auth",
+    "version": "1.1.1",
+    "review": "Check that token validation precedes permission evaluation and both deny outcomes are represented.",
+    "expectedElementFields": {
+      "policy": [
+        "Rule"
+      ],
+      "outcome": [
+        "Result"
+      ]
+    },
+    "buildCheck": "Trace identity validation, permission decision and explicit denied result. Identify who can grant exceptions and what is audited.",
+    "expectedRelationFields": {}
+  },
+  {
+    "id": "observability",
+    "version": "1.1.1",
+    "review": "Check signal paths, correlation, detection windows and alert ownership.",
+    "expectedElementFields": {
+      "alert": [
+        "Condition",
+        "Window",
+        "Owner"
+      ]
+    },
+    "buildCheck": "Name the correlated signal, its time window, alert owner and observable condition that clears the alert.",
+    "expectedRelationFields": {
+      "signal": [
+        "Signal type",
+        "Correlation",
+        "Destination"
+      ]
+    }
+  },
+  {
+    "id": "recovery",
+    "version": "1.1.1",
+    "review": "Identify detection, failover target, verification, escalation and recovery objective.",
+    "expectedElementFields": {
+      "activity": [
+        "Runbook",
+        "Recovery objective"
+      ]
+    },
+    "buildCheck": "Specify detection, recovery objective, restoration sequence, duplicate-effect prevention and independent readback before resuming.",
+    "expectedRelationFields": {
+      "failover": [
+        "Trigger"
+      ],
+      "verification": [
+        "Check",
+        "Runbook"
+      ]
+    }
+  },
+  {
+    "id": "pipeline",
+    "version": "1.1.1",
+    "review": "Check exact artifact identity, ordered prerequisites, parallel checks and release gates.",
+    "expectedElementFields": {
+      "gate": [
+        "Approval"
+      ],
+      "artifact": [
+        "Version"
+      ],
+      "job": [
+        "Inputs",
+        "Outputs"
+      ]
+    },
+    "buildCheck": "Identify immutable build output, validation environment, acceptance evidence and who can release or roll back that artifact.",
+    "expectedRelationFields": {
+      "prerequisite": [
+        "Condition"
+      ]
+    }
+  },
+  {
+    "id": "migration",
+    "version": "1.1.1",
+    "review": "Check version snapshots, change classification, cutover evidence and rollback criteria.",
+    "expectedElementFields": {
+      "phase": [
+        "Changes",
+        "Cutover criteria",
+        "Rollback criteria"
+      ]
+    },
+    "buildCheck": "State the preconditions, cutover owner, reconciliation criteria and rollback trigger for each migration phase.",
+    "expectedRelationFields": {
+      "cutover": [
+        "Criteria"
+      ],
+      "rollback": [
+        "Trigger"
+      ]
+    }
+  }
+]

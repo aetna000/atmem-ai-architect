@@ -32,6 +32,9 @@ from .validation_jobs import ValidationJobs,registered_validators
 from .validation_workers import registered_workers
 from .settings import home, setting
 
+class WorkerCapacityError(SessionError):
+    pass
+
 router = APIRouter(prefix='/api/engineering')
 
 
@@ -183,6 +186,7 @@ Visible progress must be one short sentence of at most 20 words. Final progress 
             source_catalog=self.source_catalog,source_figure=self.source_figure,handoff_read=self.handoff_capsules.read)
         self.backend.tools=self.native_tools
         self.create_lock = asyncio.Lock()
+        self.backend.before_open=self.ensure_worker_capacity
         self.finalization=EngineeringFinalization(self.jobs,self.capture_completed,self.validation_service,max_repairs=1,
             can_repair=self.can_repair)
         self.jobs.on_settled=self.finalization.observe
@@ -303,10 +307,22 @@ Visible progress must be one short sentence of at most 20 words. Final progress 
         return {'checkpoint':{key:manifest[key] for key in ['id','kind','runId','turnStatus','sha256','bytes']},'check':check,
             'scope':'Immutable working checkpoint only, not a delivery artifact or whole-system acceptance. Later edits require a new checkpoint/check.'}
 
+    async def ensure_worker_capacity(self):
+        # Cached transports are not active turns. Releasing an idle transport
+        # never deletes its opaque thread identity, workspace, journal or files.
+        if self.backend.session_count < 4:return
+        for (scope,handle) in list(self.backend.clients):
+            rows=self.store.db.execute("SELECT id,state FROM engineering_sessions WHERE tenant=? AND project=? AND handle=? AND backend=?",
+                (scope.tenant,scope.project,handle,self.backend.name)).fetchall()
+            if not rows or any(row['state']!='idle' for row in rows):continue
+            if any((task:=self.jobs.tasks.get((scope,row['id']))) is not None and not task.done() for row in rows):continue
+            if any(self.store.db.execute("SELECT 1 FROM engineering_finalizations WHERE session=? AND state IN ('checking','repair_requested')",(row['id'],)).fetchone() for row in rows):continue
+            await self.backend.release_idle_transport(scope,handle)
+            if self.backend.session_count < 4:return
+        raise WorkerCapacityError('All four local workers are busy or need recovery. Your sources and request are retained. Retry after work settles.')
+
     async def create(self, scope, project_path, selection):
         async with self.create_lock:
-            if self.backend.session_count >= 4:
-                raise SessionError('The local worker session limit has been reached; reuse an existing job.')
             current=inspect_mirror(self.toolchain['dependencyMirror']) if self.dependencies else None
             if current and current['sha256']!=self.dependencies['sha256']:raise SessionError('The operator dependency catalog changed; review/restart the worker configuration before creating work')
             import uuid
@@ -399,8 +415,12 @@ async def create(payload: CreateRequest):
     scope, path = local_scope(payload.projectId)
     try:
         return await service().create(scope,path,ModelSelection(payload.model,payload.effort))
+    except WorkerCapacityError as error:
+        raise HTTPException(429,str(error)) from None
     except ValueError:
         raise HTTPException(422,'Choose an explicit supported model and reasoning effort.') from None
+    except SessionError as error:
+        raise HTTPException(409,str(error)) from None
     except Exception:
         raise HTTPException(409,'The native worker could not confirm this session. Check the server configuration and sign-in.') from None
 
@@ -424,9 +444,14 @@ async def delivery_action(payload, download=False):
         # Read a bounded regular saved project, never a browser-supplied snapshot.
         import stat
         with path.open('rb') as source:
-            if not stat.S_ISREG(os.fstat(source.fileno()).st_mode):
+            info=os.fstat(source.fileno())
+            if not stat.S_ISREG(info.st_mode):
                 raise SessionError('Saved design is unavailable. Save your project and retry.')
+            if info.st_size>MAX_CONTEXT_BYTES:
+                raise SessionError(f'Saved design exceeds the {MAX_CONTEXT_BYTES:,}-byte engineering context bound. The complete file is retained; no content was discarded.')
             saved = source.read(MAX_CONTEXT_BYTES + 1)
+            if len(saved)>MAX_CONTEXT_BYTES:
+                raise SessionError('Saved design grew beyond the engineering context bound. The complete file is retained; retry after reviewing its size.')
         delivery = EngineeringHandoff(service())
         if not download:
             report = delivery.inspect(scope, saved)

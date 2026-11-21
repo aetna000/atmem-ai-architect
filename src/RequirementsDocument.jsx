@@ -264,7 +264,6 @@ export function RequirementsDocument({project, children, cover, change, nameRequ
   useEffect(() => {
     if (opened.current) return;
     opened.current = true;
-    openDocument();
   }, []);
 
   function showReadView(showReview = false) {
@@ -326,7 +325,7 @@ export function RequirementsDocument({project, children, cover, change, nameRequ
           <PageContent page={id} state={state} change={change}/>
         </>}
       </div>
-      {isCover && <nav className="requirements-contents" aria-label="Table of contents" tabIndex={-1} ref={contents}>
+      {isCover && <details className="requirements-contents-disclosure"><summary>Contents</summary><nav className="requirements-contents" aria-label="Table of contents" tabIndex={-1} ref={contents}>
         <h3>Table of contents</h3>
         <ol>{visible.filter(page => page.id !== 'cover').map(({id, title}) => {
           const authored = richPage(project, id);
@@ -342,7 +341,7 @@ export function RequirementsDocument({project, children, cover, change, nameRequ
             </li>)}</ol>}
           </li>;
         })}</ol>
-      </nav>}
+      </nav></details>}
       {authored && <>
         <DocumentThreads threads={state.threads} anchor={`page:${id}`} change={change}/>
         {related && <details className="requirements-threads document-controls"><summary>Requirement feedback</summary>{related}</details>}
@@ -361,10 +360,12 @@ export function RequirementsDocument({project, children, cover, change, nameRequ
       </button>
       <button type="button" className="btn" aria-expanded={workspace ? outline : undefined} onClick={() => {
         if (workspace) setOutline(!outline);
-        else {contents.current?.focus({preventScroll: true}); contents.current?.scrollIntoView({block: 'start'});}
+        else {const disclosure=contents.current?.closest('details');if(disclosure)disclosure.open=true;contents.current?.focus({preventScroll: true}); contents.current?.scrollIntoView({block: 'start'});}
       }}><List size={16}/> Contents</button>
+      <details className="requirements-change-tools"><summary>Change tracking</summary>
       <button type="button" className="btn" aria-pressed={state.tracking} onClick={() => change({type: 'tracking', enabled: !state.tracking})}>Track changes</button>
       <button type="button" className="btn" aria-expanded={review} onClick={() => showReadView(!review)}>Review changes ({state.changes.length})</button>
+      </details>
       <button type="button" className="btn" onClick={() => {
         try {
           if (dirty.current) throw Error('Save the document before printing.');

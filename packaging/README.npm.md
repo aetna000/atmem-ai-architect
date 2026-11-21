@@ -50,6 +50,12 @@ AtMem-owned code is Apache-2.0. Bundled third-party licences and notices are ret
 
 Contact: [hello@atmem.ai](mailto:hello@atmem.ai) · [atmem.ai](https://atmem.ai)
 
+## Version 0.2.6
+
+Create and edit 28 architecture diagram types in the native drawing workspace. Drag, resize and rotate shapes; pan the canvas and zoom with wheel or pinch. Compact labels link to complete properties and numbered connection descriptions. Editable pages and SVG exports share readability checks.
+
+Source documents and client handoffs remain private. Public examples use a synthetic AI knowledge assistant.
+
 ## Version 0.2.5
 
 Requirements opens directly in a document editor with page formatting, tables, images, comment threads and tracked edits. Use `atmemai` to launch Architect, `atmemai status` to find its data, and `atmemai login NAME` to connect a model.

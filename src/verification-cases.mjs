@@ -37,3 +37,14 @@ export function validateVerificationReferences(project){
 export function verificationCaseMarkdown(row){
  return `## ${row.id} · ${row.name}\n\nCategory: ${row.category} · Execution: not run\n\nRequirements: ${row.requirementIds.join(', ')}${row.interfaceId?'\n\nInterface: '+row.interfaceId:''}${row.operationId?'\n\nOperation: '+row.operationId:''}\n\n`+['environment','setup','input','action','expected','evidence'].map(key=>`### ${key[0].toUpperCase()+key.slice(1)}\n\n${row[key]}`).join('\n\n');
 }
+
+// Distinct requirement IDs alone cannot make the same fixture independent evidence.
+export function caseSpecificityIssues(cases){
+ const groups=new Map();
+ for(const row of cases){
+  if(row.requirementIds?.length!==1||!['setup','input','action','expected'].every(k=>typeof row[k]==='string'))continue;
+  const signature=JSON.stringify([row.blockId,...['setup','input','action','expected'].map(k=>row[k].trim().replace(/\s+/g,' '))]);
+  if(!groups.has(signature))groups.set(signature,[]);groups.get(signature).push(row);
+ }
+ return [...groups.values()].filter(rows=>new Set(rows.map(r=>r.requirementIds[0])).size>1).map(rows=>({blockId:rows[0].blockId,caseIds:rows.map(r=>r.id),requirementIds:[...new Set(rows.map(r=>r.requirementIds[0]))]}));
+}
