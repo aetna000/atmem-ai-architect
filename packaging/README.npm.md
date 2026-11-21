@@ -5,17 +5,17 @@ Design an application, review requirements, generate project files, run local ch
 [Watch the demo →](https://x.com/AtMemAi/status/2119386028108910659)
 
 ```sh
-npx --yes https://github.com/aetna000/atmem-ai-architect/releases/download/v0.2.6/atmem-architect-0.2.6.tgz
+npx @atmem/architect@0.2.6
 ```
 
-Version 0.2.6 is installable from the qualified GitHub release archive above. npm has accepted the same archive; public registry processing remains pending.
+Version 0.2.6 is public on npm. Its integrity matches the accepted CI archive and the qualified GitHub release.
 
 Requires Node.js 22+. First run installs checksum-verified Python, Terraform, and the pinned AtMem and emulator runtimes in your private application directory.
 
 For a persistent command:
 
 ```sh
-npm install -g https://github.com/aetna000/atmem-ai-architect/releases/download/v0.2.6/atmem-architect-0.2.6.tgz
+npm install -g @atmem/architect@0.2.6
 atmemai
 ```
 

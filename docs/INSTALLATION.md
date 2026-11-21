@@ -3,12 +3,12 @@
 AtMem AI Architect runs locally in your browser. The stable npm package includes the UI,
 local service and isolated AtMem memory runtime.
 
-## Qualified release archive
+## Stable npm package
 
-Version 0.2.6 is available from GitHub while npm completes processing the accepted archive. Install Node.js 22 or later, then run:
+Install Node.js 22 or later, then run:
 
 ```sh
-npx --yes https://github.com/aetna000/atmem-ai-architect/releases/download/v0.2.6/atmem-architect-0.2.6.tgz
+npx @atmem/architect@0.2.6
 ```
 
 First run downloads checksum-verified uv, managed Python 3.13 and hash-locked

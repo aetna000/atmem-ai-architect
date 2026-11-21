@@ -11,11 +11,10 @@ Design architecture, capture requirements, generate project files, run local che
 
 Requires Node.js 22 or newer.
 
-**0.2.6 is available from GitHub. npm has accepted publication and is processing the release.**
+**0.2.6 is available on npm and GitHub.**
 
 ```sh
-npm install -g https://github.com/aetna000/atmem-ai-architect/releases/download/v0.2.6/atmem-architect-0.2.6.tgz
-atmemai
+npx @atmem/architect@0.2.6
 ```
 
 First run installs isolated Python and AtMem runtimes. Open the printed address and choose your model under **AI providers**.
