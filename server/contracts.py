@@ -387,7 +387,7 @@ class ChatRequest(Strict):
     effort:Literal['none','minimal','low','medium','high','xhigh','max','ultra']|None=None
     project:Project
     stage:Literal['discover','design','review','estimate','deploy','build']='discover'
-    context:list[ContextItem]=Field(default_factory=list,max_length=300)
+    context:list[ContextItem]=Field(default_factory=list)
     history:list[Message]=Field(default_factory=list,max_length=16)
     @field_validator('message','model')
     @classmethod

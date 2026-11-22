@@ -1,3 +1,4 @@
+import {nestDrawingScene} from './drawing-containment.mjs';
 import {fitDiagramFrames} from './diagram-frames.mjs';
 import {routeDiagramWires} from './diagram-routing.mjs';
 import dagre from 'dagre';
@@ -115,5 +116,8 @@ export function architectureGraph(projection,view){
     }
     return wire;
   });
-  return routeDiagramWires(fitDiagramFrames(numberConnections({vertices,wires,timeline,direction:view.mermaidDirection||(type.layout==='tree'?'TB':'LR')})));
+  const base=fitDiagramFrames(numberConnections({vertices,wires,timeline,ordered:type.layout==='stages',direction:view.mermaidDirection||(type.layout==='tree'?'TB':'LR')}));
+  const parents=new Map(nodes.map(n=>[n.id,projection.parentOf(n)]));
+  const nested=!timeline&&type.layout!=='stages'&&nodes.some(n=>parents.has(parents.get(n.id)));
+  return routeDiagramWires(nested?nestDrawingScene({...base,vertices:base.vertices.filter(v=>!v.id.startsWith('@frame-'))},id=>parents.get(id)):base);
 }

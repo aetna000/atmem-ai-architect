@@ -134,3 +134,13 @@ memory off per project. Content entered while opted out is not replayed later.
 For a later session, reopen the saved project and continue from its working
 state. For installation issues, see [installation and troubleshooting](INSTALLATION.md).
 For hosting boundaries, see [self-hosting](SELF_HOSTING.md).
+
+## Drawing workspace
+
+Collapse the top row or left Properties rail for more canvas space. Select an element to inspect its linked details.
+
+Drag nested components directly. Use named groups to organize the view; presentation changes preserve architecture records and contracts.
+
+Choose **Arrange page** when layout conflicts appear. Undo restores the previous positions; unresolved conflicts remain listed for review.
+
+Waiting indicators appear during startup, model work, requests and longer local actions. Provider response times still vary.

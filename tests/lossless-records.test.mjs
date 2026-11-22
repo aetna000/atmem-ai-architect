@@ -19,3 +19,19 @@ test('long proposal titles generate bounded distinct subjects without losing dec
  const revised=reviseDecision(round,decisions[0].id,{decision:'Updated implementation'},'A new accepted requirement');
  assert.deepEqual(decisionHistory(revised.decisions,decisions[0].subject).map(d=>d.title),[titles[0],titles[0]]);
 });
+
+test('large project records and stable requirement numbers survive derivation, save and reload',async()=>{
+ const {withDerived,requirementNumber}=await import('../src/derive.mjs');
+ for(const domain of ['Museum archive','Equipment maintenance']){
+  const p={version:1,revision:1,name:domain,provider:'tools',nodes:[],edges:[],
+   needs:Array.from({length:1000},(_,i)=>({id:'req-'+i,statement:domain+' required behavior '+i,priority:'must',source:'user'})),
+   assumptions:Array.from({length:350},(_,i)=>({id:'assumption-'+i,statement:'Assumption '+i})),
+   openQuestions:Array.from({length:350},(_,i)=>({id:'question-'+i,question:'Who owns item '+i+'?',status:'open'})),
+   facts:Array.from({length:350},(_,i)=>({id:'fact-'+i,name:'throughput.'+i,value:i,text:'Recorded measurement '+i})),
+   decisions:Array.from({length:350},(_,i)=>({id:'decision-'+i,subject:'policy.'+i,title:'Policy '+i,decision:'Preserve item '+i,status:'Accepted'}))};
+  const prepared=withDerived(validateImport(p));
+  const round=withDerived(fromProjectFile(JSON.parse(JSON.stringify(toProjectFile(prepared)))).project);
+  for(const name of ['needs','assumptions','openQuestions','facts','decisions'])assert.deepEqual(round[name],prepared[name],domain+' '+name);
+  assert.equal(round.needs.length,1000);assert.equal(requirementNumber(round,'req-999'),'REQ-1000');
+ }
+});

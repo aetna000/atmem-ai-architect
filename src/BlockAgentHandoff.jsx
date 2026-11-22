@@ -1,9 +1,11 @@
+import {usePendingWork} from './PendingFeedback.jsx';
 import React,{useState} from 'react';
 import {zipSync,strToU8} from 'fflate';
 import {toProjectFile} from './project-file.mjs';
 
 export function BlockAgentHandoff({project,node,busy,session,onPrepareSources}){
  const [working,setWorking]=useState(false),[error,setError]=useState(''),[status,setStatus]=useState('');
+ usePendingWork('Preparing handoff…',working);
  async function prepare(withFigures=false){
   const snapshot=structuredClone(project),now=new Date();
   let sourceSession=session;

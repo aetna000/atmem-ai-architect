@@ -62,3 +62,13 @@ test('editable cells carry the named block properties without changing labels or
   assert.match(file,/source="atmem-referral" target="atmem-review"/);
   assert.doesNotMatch(file,/inputs="undefined"/);
 });
+
+test('selection and callback changes reuse geometry; content and position changes invalidate it',async()=>{
+ const {boardSceneKey}=await import('../src/drawio-model.mjs');
+ const nodes=[{id:'a',selected:false,position:{x:0,y:0},data:{label:'Intake',onOpen:()=>{}}}];
+ const key=boardSceneKey(nodes,[]);
+ assert.equal(boardSceneKey([{...nodes[0],selected:true,data:{...nodes[0].data,onOpen:()=>{}}}],[]),key);
+ assert.notEqual(boardSceneKey([{...nodes[0],data:{label:'Changed responsibility'}}],[]),key);
+ assert.notEqual(boardSceneKey([{...nodes[0],position:{x:100,y:0}}],[]),key);
+ assert.notEqual(boardSceneKey(nodes,[{id:'wire',source:'a',target:'b'}]),key);
+});

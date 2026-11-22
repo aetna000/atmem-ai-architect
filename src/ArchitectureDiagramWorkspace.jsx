@@ -1,3 +1,6 @@
+import {usePendingWork} from './PendingFeedback.jsx';
+import {withPendingWork} from './pending-work.mjs';
+import {drawingInterior,interiorInsertGeometry} from './drawing-parents.mjs';
 import {applyDrawingLayout} from './drawing-layout.mjs';
 import {buildReviewFiles} from './build-review-files.mjs';
 import {createPortal} from 'react-dom';
@@ -28,7 +31,7 @@ function download(name,blob){
 function Modal({title,onClose,children,error}){
   const dialog=useRef(null);
   useEffect(()=>{dialog.current.showModal();},[]);
-  return <dialog ref={dialog} className="architecture-dialog" onCancel={event=>{event.preventDefault();onClose();}}>
+  return <dialog ref={dialog} aria-label={title} className="architecture-dialog" onCancel={event=>{event.preventDefault();onClose();}}>
     <header><h3>{title}</h3><button type="button" className="icon" aria-label="Close" onClick={onClose}><X size={18}/></button></header>
     {error&&<p role="alert" className="architecture-error">{error}</p>}
     {children}
@@ -81,6 +84,7 @@ function SpecDialog({project,connected,onConnect,onDraft,onClose,initial}){
   const [files,setFiles]=useState(initial?.files||[]);
   const [reading,setReading]=useState(false);
   const [error,setError]=useState('');
+  usePendingWork('Reading specifications…',reading);
   return <Modal title="Generate 28 diagrams" onClose={onClose}>
     <form onSubmit={event=>{event.preventDefault();onDraft({specification:text,useProject,files});}}>
       <p>AtMem drafts six groups using shared records and marks open design questions for review.</p>
@@ -109,6 +113,7 @@ function MermaidEditor({initial,editing,onClose,onApply}){
   const [source,setSource]=useState(initial);
   const [error,setError]=useState('');
   const [parsing,setParsing]=useState(false);
+  usePendingWork('Parsing diagram…',parsing);
   return <Modal title={editing?'Edit Mermaid':'Insert Mermaid'} onClose={onClose} error={error}>
     <form onSubmit={async event=>{
       event.preventDefault();
@@ -125,7 +130,7 @@ function MermaidEditor({initial,editing,onClose,onApply}){
   </Modal>;
 }
 
-function RecordForm({action,record,view,projection,model,onSubmit,onClose,error,endpoints,preferredKind}){
+function RecordForm({action,record,view,projection,model,onSubmit,onClose,error,endpoints,preferredKind,preferredParent}){
   const type=projection.type;
   const relation=action==='connect'||model.relations.some(row=>row.id===record?.id);
   const [kind,setKind]=useState(record?.kind||(relation?type.relations[0]:preferredKind||type.elements[0]));
@@ -159,7 +164,7 @@ function RecordForm({action,record,view,projection,model,onSubmit,onClose,error,
         {relation?<div className="architecture-form-grid">
           <label>From<select value={from} onChange={event=>setFrom(event.target.value)}>{projection.nodes.map(row=><option key={row.id} value={row.id}>{row.name}</option>)}</select></label>
           <label>To<select value={to} onChange={event=>setTo(event.target.value)}>{projection.nodes.map(row=><option key={row.id} value={row.id}>{row.name}</option>)}</select></label>
-        </div>:<label>Parent or group<select name="parent" defaultValue={record?.parentId||''}>
+        </div>:<label>Nest under<select name="parent" defaultValue={preferredParent||record?.parentId||''}>
           <option value="">None</option>
           {model.elements.filter(row=>row.id!==record?.id&&(view.elementIds.includes(row.id)||row.id===record?.parentId)).map(row=><option key={row.id} value={row.id}>{row.name}</option>)}
         </select></label>}
@@ -174,7 +179,7 @@ function RecordForm({action,record,view,projection,model,onSubmit,onClose,error,
   </Modal>;
 }
 
-function Inspector({projection,record,view,mermaid,editable,onEdit,onRemove,onShift,onResetPin,onComments,onRename,onClose}){
+function Inspector({projection,record,view,mermaid,editable,onEdit,onRemove,onShift,onResetPin,onComments,onRename,onClose,onAddInside}){
   return <aside className="architecture-inspector" aria-label="Diagram inspector">
     <header><h3>{record?'Record details':'Diagram details'}</h3><button className="icon" aria-label="Close inspector" onClick={onClose}><X size={15}/></button></header>
     {record?<><span className="architecture-tag">{kindLabel(record.kind)} · {kindLabel(record.basis)}</span>
@@ -183,6 +188,7 @@ function Inspector({projection,record,view,mermaid,editable,onEdit,onRemove,onSh
       {record.details.length>0&&<dl>{record.details.map(row=><React.Fragment key={row.name}><dt>{row.name}</dt><dd>{row.value}</dd></React.Fragment>)}</dl>}
       {editable&&<div className="architecture-inspector-actions">
         <button className="btn" onClick={onEdit}>Edit shared record</button>
+        {onAddInside&&<button className="btn" onClick={onAddInside}><Plus size={15}/> Add inside</button>}
         {view.positions?.[record.id]&&<button className="btn" onClick={onResetPin}>Reset position</button>}
         {onShift&&<><button className="btn" onClick={()=>onShift(-1)}>Move earlier</button><button className="btn" onClick={()=>onShift(1)}>Move later</button></>}
         <button className="btn" onClick={onRemove}>Remove from view</button>
@@ -197,19 +203,22 @@ function Inspector({projection,record,view,mermaid,editable,onEdit,onRemove,onSh
   </aside>;
 }
 
-export function ArchitectureDiagramWorkspace({project,onLayoutPage,onBack,onSave,onSaveProject,onUndo,onRedo,canUndo,canRedo,
+export function ArchitectureDiagramWorkspace({project,onLayoutPage,onGroupsPage,onBack,onSave,onSaveProject,onUndo,onRedo,canUndo,canRedo,
   onDraft,connected,onConnect,onLegacy,onComments,locked,onPage,librarySlot,onNewPage,initialPage=null,initiallyGenerating=false,initiallyCreating=false,initialMermaid=false}){
   const saved=project.extensions?.architectureDiagrams;
   const empty=useMemo(emptyDiagramModel,[]);
   const model=saved||empty;
   const [active,setActive]=useState(initialPage);
-  const [selected,setSelected]=useState(null);
+  const [interiorTrail,setInteriorTrail]=useState([]);const interiorScope=interiorTrail.at(-1)||null;
+  const [selected,setSelected]=useState(null),[picked,setPicked]=useState([]);
   const [inspect,setInspect]=useState(false);
   const [dialog,setDialog]=useState(initiallyGenerating?'spec':initialMermaid?'mermaid-insert':initiallyCreating?'new':null);
   const [shapeDraft,setShapeDraft]=useState(null);
+  const [parentDraft,setParentDraft]=useState(null);
   const [endpoints,setEndpoints]=useState(null);
   const [query,setQuery]=useState('');
   const [progress,setProgress]=useState(null);
+  usePendingWork('Generating diagrams…',Boolean(progress));
   const [specInput,setSpecInput]=useState(null);
   const [proposal,setProposal]=useState(null);
   const [error,setError]=useState('');
@@ -219,12 +228,14 @@ export function ArchitectureDiagramWorkspace({project,onLayoutPage,onBack,onSave
   const view=visible.views.find(row=>row.id===active)||visible.views[0];
   const projection=useMemo(()=>view?diagramProjection(visible,view):null,[visible,view]);
   const scene=useMemo(()=>projection?architectureGraph(projection,view):null,[projection,view]);
+  const fullScene=useMemo(()=>scene?applyDrawingLayout(scene,project.extensions?.drawingLayouts?.pages?.['view/'+view.id],project.extensions?.drawingLayouts?.groups?.['view/'+view.id],project.extensions?.drawingLayouts?.parents?.['view/'+view.id]):null,[scene,project.extensions?.drawingLayouts,view?.id]);
+  const displayedScene=useMemo(()=>fullScene?drawingInterior(fullScene,interiorScope):null,[fullScene,interiorScope]);
   const timeline=projection?.type.layout==='timeline';
   const record=visible.elements.find(row=>row.id===selected)||visible.relations.find(row=>row.id===selected);
   const editable=Boolean(!locked&&!proposal&&!progress);
   const displayed=visible.views.filter(row=>row.name.toLowerCase().includes(query.toLowerCase())||diagramTypes.get(row.kind).title.toLowerCase().includes(query.toLowerCase()));
-  const setView=id=>{setActive(id);setSelected(null);};
-  const closeDialog=()=>{setDialog(null);setShapeDraft(null);setEndpoints(null);setError('');};
+  const setView=id=>{setActive(id);setSelected(null);setPicked([]);setInteriorTrail([]);};
+  const closeDialog=()=>{setParentDraft(null);setDialog(null);setShapeDraft(null);setEndpoints(null);setError('');};
   function addShape(tool,point){
     if(!editable||!view)return;
     const typed=tool.startsWith('element:');
@@ -280,6 +291,7 @@ export function ArchitectureDiagramWorkspace({project,onLayoutPage,onBack,onSave
     const existing=model[collection].some(value=>value.id===row.id);
     const next={...model,[collection]:existing?model[collection].map(value=>value.id===row.id?row:value):[...model[collection],row]};
     const key=relation?'relationIds':'elementIds';
+    if(!relation)next.views=next.views.map(v=>v.id===view.id&&v.groups?{...v,groups:v.groups.filter(g=>g.elementId!==row.id)}:v);
     const done=existing?commit(next):updateView(value=>{
       const added={...value,[key]:[...value[key],row.id]};
       if(!relation&&shapeDraft){
@@ -290,7 +302,9 @@ export function ArchitectureDiagramWorkspace({project,onLayoutPage,onBack,onSave
       }
       return added;
     },next);
-    if(done){closeDialog();select(row.id);}
+    if(done){if(!relation&&interiorScope)onLayoutPage?.('view/'+view.id,interiorInsertGeometry(fullScene,interiorScope,row.id,shapeDraft?.point,{width:280,height:100}),{parents:{[row.id]:interiorScope}});if(!relation&&(row.parentId||model.elements.find(e=>e.id===row.id)?.parentId))onLayoutPage?.('view/'+view.id,null);closeDialog();select(row.id);
+      if(!relation&&row.parentId)requestAnimationFrame(()=>requestAnimationFrame(()=>graphApi.current?.fit({nodes:[{id:row.parentId}],minZoom:.1,maxZoom:1})));
+    }
   }
   function removeRecord(){
     const ids=new Set(model.relations.filter(row=>row.from===selected||row.to===selected||row.id===selected).map(row=>row.id));
@@ -303,7 +317,7 @@ export function ArchitectureDiagramWorkspace({project,onLayoutPage,onBack,onSave
         elementIds:value.elementIds.filter(id=>id!==selected),relationIds:value.relationIds.filter(id=>!ids.has(id))};
     }))setSelected(null);
   }
-  async function exportView(format){
+  async function exportViewWork(format){
     if(!scene)return;
     try{
       const name=view.name.replace(/[^a-z0-9]+/gi,'-').replace(/^-|-$/g,'').toLowerCase()||'diagram';
@@ -313,7 +327,7 @@ export function ArchitectureDiagramWorkspace({project,onLayoutPage,onBack,onSave
         return;
       }
       const {renderDiagramSvg}=await import('./drawio-render.mjs');
-      const drawing=await renderDiagramSvg(scene,{name:view.name,revision:project.revision});
+      const drawing=await renderDiagramSvg(displayedScene,{name:view.name,revision:project.revision});
       if(format==='drawio'){download(name+'.drawio',new Blob([drawioFile([{id:view.id,name:view.name,...drawing.scene}])],{type:'application/xml'}));return;}
       if(format==='svg'){download(name+'.svg',new Blob([drawing.svg],{type:'image/svg+xml'}));return;}
       const {pngOf}=await import('./visual-export.mjs');
@@ -322,7 +336,8 @@ export function ArchitectureDiagramWorkspace({project,onLayoutPage,onBack,onSave
     }catch(failure){setError(failure.message);}
   }
 
-  async function exportSet(){
+  const exportView=(...args)=>withPendingWork('Exporting diagrams…',()=>exportViewWork(...args));
+  async function exportSetWork(){
     try{
       const [{projectSceneFiles},{zipSync,strToU8}]=await Promise.all([
         import('./architecture-scene-export.jsx'),import('fflate'),
@@ -340,7 +355,8 @@ export function ArchitectureDiagramWorkspace({project,onLayoutPage,onBack,onSave
     }catch(failure){setError(failure.message);}
   }
 
-  const newPage=onNewPage||(()=>setDialog('new'));
+  const newPage=onNewPage||(()=>setDialog('new'));  const exportSet=(...args)=>withPendingWork('Exporting diagrams…',()=>exportSetWork(...args));
+
   return <section className="architecture-workspace" aria-label="Architecture diagrams">
     <header className="architecture-header">
       <button className="icon" onClick={onBack} aria-label="Back to Board"><ArrowLeft size={21}/></button>
@@ -378,7 +394,7 @@ export function ArchitectureDiagramWorkspace({project,onLayoutPage,onBack,onSave
       </nav>
       <main className="architecture-editor">
         {view?<><div className="architecture-viewbar">
-          <div><h3>{view.name}</h3><p>{projection.type.title} · {projection.nodes.length} elements</p></div>
+          <div><nav className="drawing-breadcrumbs" aria-label="Drawing location"><button onClick={()=>setInteriorTrail([])}>{view.name}</button>{interiorTrail.map((id,i)=><React.Fragment key={id}><span>/</span><button onClick={()=>setInteriorTrail(t=>t.slice(0,i+1))}>{visible.elements.find(e=>e.id===id)?.name||'Group'}</button></React.Fragment>)}</nav><h3>{view.name}</h3><p>{projection.type.title} · {projection.nodes.length} elements</p></div>
           <div className="architecture-view-actions">
             {projection.diagnostics.length>0&&<button className="btn architecture-review-button" onClick={()=>{setSelected(null);setInspect(true);}}>
               <AlertCircle size={15}/> {projection.diagnostics.length} to review
@@ -397,12 +413,24 @@ export function ArchitectureDiagramWorkspace({project,onLayoutPage,onBack,onSave
             {!!projection.nodes.length&&<details className="architecture-menu"><summary className="btn"><Download size={15}/> Export</summary><div>
               <button onClick={()=>exportView('drawio')}>Download editable diagram</button><button onClick={()=>exportView('mmd')}>Download Mermaid</button><button onClick={()=>exportView('svg')}>Download SVG</button><button onClick={()=>exportView('png')}>Download PNG</button>
             </div></details>}
-            <button className="icon" aria-label="Toggle inspector" aria-expanded={inspect} onClick={()=>setInspect(value=>!value)}><PanelRight size={17}/></button>
+
           </div>
         </div>
         <div className="architecture-drawing drawio-diagram-page">
-          <DrawioCanvas key={view.id} graphRef={graphApi} scene={applyDrawingLayout(scene,project.extensions?.drawingLayouts?.pages?.['view/'+view.id])} label={view.name} onLayout={editable?changes=>onLayoutPage?.('view/'+view.id,changes):null}
-            selected={selected} onSelect={id=>{if(id)select(id);else setSelected(null);}}
+          <DrawioCanvas properties={view&&<Inspector projection={projection} record={record} view={view} mermaid={graphMermaid(scene,{selected:selected||undefined,timeline})} editable={editable}
+        onAddInside={editable&&!timeline&&projection.type.layout!=='stages'&&projection.nodes.some(n=>n.id===record?.id)?()=>{setShapeDraft(null);setParentDraft(record.id);setDialog('add');}:null}
+        onEdit={()=>setDialog('edit')} onRemove={removeRecord} onClose={()=>setInspect(false)}
+        onRename={()=>setDialog('rename')} onComments={proposal?null:onComments}
+        onResetPin={()=>updateView(row=>({...row,positions:Object.fromEntries(Object.entries(row.positions).filter(([key])=>key!==selected))}))}
+        onShift={projection.type.layout==='timeline'&&view.relationIds.includes(selected)?delta=>updateView(row=>{
+          const relationIds=[...row.relationIds],index=relationIds.indexOf(selected),target=index+delta;
+          if(target>=0&&target<relationIds.length)[relationIds[index],relationIds[target]]=[relationIds[target],relationIds[index]];
+          return {...row,relationIds};
+        }):null}/>} scopeId={interiorScope} onOpenInside={!timeline?id=>{graphApi.current?.fit({nodes:[{id}],minZoom:.2,maxZoom:1});setInteriorTrail(trail=>[...trail,id]);setSelected(null);setPicked([]);setInspect(false);requestAnimationFrame(()=>graphApi.current?.fit({minZoom:.2}));}:null} key={view.id} graphRef={graphApi} scene={displayedScene} label={view.name} onLayout={editable?(changes,options)=>onLayoutPage?.('view/'+view.id,changes,options):null}
+            groups={project.extensions?.drawingLayouts?.groups?.['view/'+view.id]||[]} onGroupsChange={editable&&onGroupsPage?(groups,options)=>onGroupsPage('view/'+view.id,groups,options):null}
+            selected={picked.length?picked:selected} onSelectMany={ids=>{setPicked(ids);setSelected(ids[0]||null);}} onSelect={(id,event)=>{if(event?.shiftKey||event?.metaKey||event?.ctrlKey)setPicked(current=>{const ids=new Set(current.length?current:selected?[selected]:[]);if(ids.has(id))ids.delete(id);else if(id)ids.add(id);return[...ids];});else setPicked([]);if(id)select(id);else setSelected(null);}}
+            onEditRecord={editable?id=>{select(id);setDialog('edit');}:null}
+            onDoubleClick={editable?id=>{select(id);setDialog('edit');}:null}
             onMove={editable&&!timeline?moveCells:null}
             onConnect={editable&&!timeline?(source,target)=>{setEndpoints({source,target});setDialog('connect');}:null}
             onDropShape={editable?addShape:null}/>
@@ -425,15 +453,7 @@ export function ArchitectureDiagramWorkspace({project,onLayoutPage,onBack,onSave
           </div>
         </div>}
       </main>
-      {inspect&&view&&<Inspector projection={projection} record={record} view={view} mermaid={graphMermaid(scene,{selected:selected||undefined,timeline})} editable={editable}
-        onEdit={()=>setDialog('edit')} onRemove={removeRecord} onClose={()=>setInspect(false)}
-        onRename={()=>setDialog('rename')} onComments={proposal?null:onComments}
-        onResetPin={()=>updateView(row=>({...row,positions:Object.fromEntries(Object.entries(row.positions).filter(([key])=>key!==selected))}))}
-        onShift={projection.type.layout==='timeline'&&view.relationIds.includes(selected)?delta=>updateView(row=>{
-          const relationIds=[...row.relationIds],index=relationIds.indexOf(selected),target=index+delta;
-          if(target>=0&&target<relationIds.length)[relationIds[index],relationIds[target]]=[relationIds[target],relationIds[index]];
-          return {...row,relationIds};
-        }):null}/>}
+
     </div>
     {['mermaid-insert','mermaid-edit'].includes(dialog)&&<MermaidEditor editing={dialog==='mermaid-edit'} onClose={closeDialog}
       initial={dialog==='mermaid-edit'?graphMermaid(scene,{timeline}):''} onApply={parsed=>{
@@ -450,7 +470,7 @@ export function ArchitectureDiagramWorkspace({project,onLayoutPage,onBack,onSave
     }}><label>Name<input name="name" defaultValue={view.name} autoFocus maxLength={180} required/></label>
       <footer><button className="btn primary">Save name</button></footer></form></Modal>}
     {['add','connect','edit','reuse','reuse-connection'].includes(dialog)&&<RecordForm action={dialog} record={dialog==='edit'?record:null}
-      model={model} view={view} projection={projection} error={error} onClose={closeDialog} endpoints={endpoints} preferredKind={shapeDraft?.kind}
+      model={model} view={view} projection={projection} error={error} onClose={closeDialog} endpoints={endpoints} preferredKind={shapeDraft?.kind||(parentDraft?model.elements.find(e=>e.id===parentDraft)?.kind:undefined)} preferredParent={dialog==='edit'&&record?projection.parentOf(record):parentDraft}
       onSubmit={(row,relation)=>{
         if(typeof row!=='string')return saveRecord(row,relation);
         const key=dialog==='reuse'?'elementIds':'relationIds';

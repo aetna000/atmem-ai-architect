@@ -5,17 +5,17 @@ Design an application, review requirements, generate project files, run local ch
 [Watch the demo →](https://x.com/AtMemAi/status/2119386028108910659)
 
 ```sh
-npx @atmem/architect@0.2.6
+npx @atmem/architect@0.2.7
 ```
 
-Version 0.2.6 is public on npm. Its integrity matches the accepted CI archive and the qualified GitHub release.
+Use the pinned version above for a repeatable install. Release archives and checksums are available on GitHub.
 
 Requires Node.js 22+. First run installs checksum-verified Python, Terraform, and the pinned AtMem and emulator runtimes in your private application directory.
 
 For a persistent command:
 
 ```sh
-npm install -g @atmem/architect@0.2.6
+npm install -g @atmem/architect@0.2.7
 atmemai
 ```
 
@@ -51,6 +51,10 @@ Available cost estimates include explicit exclusions where prices or usage are m
 AtMem-owned code is Apache-2.0. Bundled third-party licences and notices are retained.
 
 Contact: [hello@atmem.ai](mailto:hello@atmem.ai) · [atmem.ai](https://atmem.ai)
+
+## Version 0.2.7
+
+More canvas space: a collapsible, narrow top toolbar and left Properties rail. Faster routing and geometry checks keep dense diagrams responsive. Arrange page repairs layout without changing requirements; unresolved conflicts remain visible. Startup, requests and long actions show waiting indicators. Nested components and named groups support direct editing, undo and redo.
 
 ## Version 0.2.6
 

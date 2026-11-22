@@ -49,14 +49,13 @@ export function cleanMeasures(list) {
 }
 
 export function cleanEngagement(p) {
-  for(const name of ['needs','assumptions','openQuestions','facts'])if(Array.isArray(p[name])&&p[name].length>300)throw Error(`The project has more than 300 ${name}; no records were truncated.`);
   const out = {};
   if (["maintenance", "churn"].includes(p.domain)) out.domain = p.domain;
   if (typeof p.id === "string" && p.id) out.id = text(p.id, 100);
   if (typeof p.createdAt === "string" && !isNaN(Date.parse(p.createdAt))) out.createdAt = p.createdAt;
-  if (Array.isArray(p.needs)) out.needs = p.needs.slice(0, 300).map(cleanRequirement);
-  if (Array.isArray(p.assumptions)) out.assumptions = p.assumptions.slice(0, 300).map(cleanAssumption);
-  if (Array.isArray(p.openQuestions)) out.openQuestions = p.openQuestions.slice(0, 300).map(cleanQuestion);
+  if (Array.isArray(p.needs)) out.needs = p.needs.map(cleanRequirement);
+  if (Array.isArray(p.assumptions)) out.assumptions = p.assumptions.map(cleanAssumption);
+  if (Array.isArray(p.openQuestions)) out.openQuestions = p.openQuestions.map(cleanQuestion);
   if (p.extensions && typeof p.extensions === "object" && !Array.isArray(p.extensions)) out.extensions = p.extensions;
   if (p.brief && typeof p.brief === "object") {
     // Older briefs used consultant headings; fold them into the discovery topics.
@@ -68,7 +67,7 @@ export function cleanEngagement(p) {
     out.brief = brief;
   }
   if (Array.isArray(p.facts))
-    out.facts = p.facts.slice(0, 300).map((f) => ({
+    out.facts = p.facts.map((f) => ({
       id: text(f?.id, 60),
       name: text(f?.name, 60),
       value: typeof f?.value === "number" || typeof f?.value === "boolean" ? f.value : text(f?.value, 100),
@@ -153,7 +152,7 @@ export function cleanEngagement(p) {
     };
   }
   if (Array.isArray(p.decisions))
-    out.decisions = p.decisions.slice(0, 200).map((d, i) => ({
+    out.decisions = p.decisions.map((d, i) => ({
       id: text(d?.id || `adr-${i + 1}`, 60),
       subject: text(d?.subject || `general.${d?.id || i + 1}`, 120),
       title: text(d?.title, 200),

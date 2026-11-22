@@ -1,0 +1,13 @@
+.pending-feedback {position:fixed;right:16px;bottom:64px;z-index:3000;display:flex;align-items:center;gap:8px;max-width:calc(100vw - 32px);min-height:30px;padding:6px 10px;border:1px solid var(--accent);border-radius:8px;background:var(--paper);color:var(--ink);box-shadow:var(--shadow);font-size:12px;pointer-events:none;}
+.pending-spinner,button[data-waiting=true]::after,button[aria-busy=true]::after,[role=dialog][data-waiting=true]::after,dialog[data-waiting=true]::after {content:'';display:inline-block;flex:none;width:13px;height:13px;box-sizing:border-box;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:pending-turn .75s linear infinite;vertical-align:middle;}
+button[data-waiting=true]::after,button[aria-busy=true]::after {margin-left:6px;}
+button.icon:is([data-waiting=true],[aria-busy=true]) {position:relative;}
+button.icon:is([data-waiting=true],[aria-busy=true]):not(:has(.brain-activity,.layer-spinner,.spin,.pending-spinner))>svg {visibility:hidden;}
+button.icon:is([data-waiting=true],[aria-busy=true])::after {position:absolute;left:50%;top:50%;margin:-7px 0 0 -7px;}
+:is([role=dialog],dialog)[data-waiting=true]::after {position:absolute;right:48px;top:18px;color:var(--accent);}
+@keyframes pending-turn {to{transform:rotate(360deg);}}
+@media(prefers-reduced-motion:reduce){.pending-spinner,button[data-waiting=true]::after,button[aria-busy=true]::after,[role=dialog][data-waiting=true]::after,dialog[data-waiting=true]::after {animation:none;border-style:dotted;}}
+
+button:is([data-waiting=true],[aria-busy=true]):has(.brain-activity,.layer-spinner,.spin,.pending-spinner)::after {display:none;}
+
+.pending-feedback>span:last-child {min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}

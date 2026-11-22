@@ -1,3 +1,4 @@
+import {usePendingWork} from './PendingFeedback.jsx';
 import React,{useEffect,useMemo,useRef,useState,useId}from'react';
 import{postLargeJson}from'./large-request.mjs';
 import{BrainActivity}from'./BrainActivity.jsx';
@@ -7,6 +8,7 @@ import{verifiedReceipt}from'./validation-receipt.mjs';
 export function ProjectChecks({project,environment,session,onReceipt,onBusy,receipt,generationPending=false}){
  const [report,setReport]=useState(null),[catalogReady,setCatalogReady]=useState(false),[catalog,setCatalog]=useState([]),[checks,setChecks]=useState([]),[result,setResult]=useState(null),[working,setWorking]=useState(false),[error,setError]=useState('');
  const hintId=useId();
+ usePendingWork('Running checks…',working||checks.some(check=>['queued','running','starting'].includes(check.state)));
  const [uploadProgress,setUploadProgress]=useState(null);
  const active=useRef(null),locked=useRef(false),files=useMemo(()=>terraformSketch(project,environment),[project,environment]),key=JSON.stringify(files);
  useEffect(()=>{let stopped=false;setResult(null);active.current?.abort();let previous=receipt;try{previous=previous||JSON.parse(localStorage.getItem('atmem-tf-receipt:'+project.id)||'null');}catch{}void verifiedReceipt(files,previous).then(value=>{if(!stopped){setResult(value);onReceipt?.(value);}});return()=>{stopped=true;active.current?.abort();};},[key]);

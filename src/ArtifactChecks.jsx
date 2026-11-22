@@ -1,3 +1,4 @@
+import {usePendingWork} from './PendingFeedback.jsx';
 import {blockCheckStatus} from './block-check-status.mjs';
 import React,{useEffect,useRef,useState} from 'react';
 import {engineeringCall} from './engineering-client.mjs';
@@ -5,6 +6,7 @@ import {engineeringCall} from './engineering-client.mjs';
 export function ArtifactChecks({session,projectId,sessionId,artifact,readOnly=false,blockId=null}){
   const [catalog,setCatalog]=useState([]),[available,setAvailable]=useState(false),[checks,setChecks]=useState([]),
     [error,setError]=useState(''),[busy,setBusy]=useState(false);
+  usePendingWork('Running checks…',busy||checks.some(check=>['queued','running','starting'].includes(check.state)));
   const live=useRef(true),locked=useRef(false);
   const payload={projectId,sessionId,artifactId:artifact.id};
   useEffect(()=>{live.current=true;return()=>{live.current=false;};},[]);

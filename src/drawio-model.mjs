@@ -1,3 +1,4 @@
+import {nestDrawingScene} from './drawing-containment.mjs';
 import {routeDiagramWires} from './diagram-routing.mjs';
 import {wrapDiagramText,numberConnections} from './diagram-labels.mjs';
 import {blockSpecSections} from './block-spec.mjs';
@@ -61,6 +62,10 @@ function terminalSide(prefix,side){
   return point?prefix+'X='+point[0]+';'+prefix+'Y='+point[1]+';':'';
 }
 
+// Native selection is controlled separately; changing it must not reroute the diagram.
+export function boardSceneKey(nodes,edges){
+ return JSON.stringify({nodes:nodes.map(({selected,...node})=>node),edges});
+}
 export function boardGraph(nodes,edges){
   const records=new Map(nodes.map(row=>[row.id,row.data]));
   const positions=boardDisplayPositions(nodes);
@@ -92,7 +97,7 @@ export function boardGraph(nodes,edges){
       terminalSide('entry',records.get(edge.target)?.inputPosition)+(edge.animated?'dashed=1;':'')+
       (edge.className?.includes('wire-failed')?'strokeColor=#a62531;':edge.className?.includes('diagram-attention')?'strokeWidth=3;strokeColor=#873b50;':''),
   }));
-  return routeDiagramWires(numberConnections({vertices,wires}));
+  return routeDiagramWires(nestDrawingScene(numberConnections({vertices,wires}),id=>records.get(id)?.parentBlockId));
 }
 const idFor=id=>'atmem-'+encodeURIComponent(id);
 export function drawioFile(pages){
@@ -102,7 +107,8 @@ export function drawioFile(pages){
       const id=attr('id',idFor(row.id));
       const hasDetails=row.detailBody&&row.detailBody!==row.body;
       const value=fields.length||row.record||hasDetails?'':id+attr('value',row.body);
-      const cell=`<mxCell${value}${attr('style',row.style)} vertex="1" parent="1"><mxGeometry x="${row.x}" y="${row.y}" width="${row.width}" height="${row.height}" as="geometry"/></mxCell>`;
+      const parent=vertices.find(v=>v.id===row.containerParentId);
+      const cell=`<mxCell${value}${attr('style',row.style)} vertex="1" parent="${parent?idFor(parent.id):'1'}"><mxGeometry x="${row.x-(parent?.x||0)}" y="${row.y-(parent?.y||0)}" width="${row.width}" height="${row.height}" as="geometry"/></mxCell>`;
       if(!fields.length&&!row.record&&!hasDetails)return cell;
       return `<object${id}${attr('label',row.body)}${row.record?attr('atmemRecord',JSON.stringify(row.record)):''}${hasDetails?attr('atmemDescription',row.detailBody):''}${fields.map(field=>attr(field.key,field.content)).join('')}>${cell}</object>`;
     });
@@ -117,7 +123,7 @@ export function drawioFile(pages){
 
 const safeLabel=value=>String(value||'').replace(/[&"<>\x60#|;{}\[\]]/g,char=>`#${char.charCodeAt(0)};`).replace(/\s+/g,' ').trim();
 export function graphMermaid({vertices,wires,direction='LR'},{selected,timeline=false}={}){
-  const cells=new Map(vertices.filter(row=>row.selectable!==false).map(row=>[row.id,row]));
+  const cells=new Map(vertices.filter(row=>row.selectable!==false&&!row.visualGroup).map(row=>[row.id,row]));
   const aliases=new Map([...cells.keys()].map((id,index)=>[id,'n'+(index+1)]));
   const incident=wires.filter(row=>cells.has(row.source)&&cells.has(row.target)&&
     (!selected||[row.id,row.recordId,row.source,row.target].includes(selected)));

@@ -21,14 +21,15 @@ test('nested projection preserves every crossing contract and leaves source unto
   assert.deepEqual(project,original);
   assert.throws(()=>nestedCanvas({nodes:[node('broken','missing')],edges:[]}),/existing component/);
   assert.throws(()=>nestedCanvas({...project,edges:[{source:'missing',target:'partner'}]}),/endpoint does not exist/);
-  assert.equal(preferredNestedScope(project),null);
+  assert.equal(preferredNestedScope(project),'*');
 });
 
-test('a single context opens its subsystems without inventing parent interactions',()=>{
+test('nested components open visibly while explicit drill-down still preserves contracts',()=>{
   const project={nodes:[node('clinic'),node('triage','clinic'),node('appointments','clinic')],
     edges:[{id:'request-slot',source:'triage',target:'appointments'}]};
-  assert.equal(preferredNestedScope(project),'clinic');
-  const view=nestedCanvas(project,preferredNestedScope(project));
+  assert.equal(preferredNestedScope(project),'*');
+  assert.deepEqual(nestedCanvas(project,preferredNestedScope(project)).nodes,project.nodes);
+  const view=nestedCanvas(project,'clinic');
   assert.deepEqual(view.nodes.map(node=>node.id),['triage','appointments']);
   assert.deepEqual(view.edges[0].data.sourceEdgeIds,['request-slot']);
   assert.deepEqual(nestedCanvas(project,null).nodes.map(node=>node.id),['clinic']);

@@ -1,3 +1,8 @@
+import {PendingFeedback,usePendingWork} from './PendingFeedback.jsx';
+import {installPendingFeedback,withPendingWork} from './pending-work.mjs';
+import {updateDrawingPlacement,drawingInterior,interiorInsertGeometry} from './drawing-parents.mjs';
+import {EditableBlockName} from './EditableBlockName.jsx';
+import {updateDrawingGroups} from './drawing-groups.mjs';
 import {applyDrawingLayout,updateDrawingLayout} from './drawing-layout.mjs';
 import {ArchitectureStatus} from './ArchitectureStatus.jsx';
 import {ProjectOverview} from './ProjectOverview.jsx';
@@ -6,7 +11,7 @@ import {DrawioCanvas} from './DrawioCanvas.jsx';
 import {DrawioShapePalette} from './DrawioShapePalette.jsx';
 import {DiagramPages,projectPages} from './DiagramPages.jsx';
 import {DiagramMermaid} from './DiagramMermaid.jsx';
-import {boardGraph,graphMermaid,drawioFile,drawioShapes} from './drawio-model.mjs';
+import {boardSceneKey,boardGraph,graphMermaid,drawioFile,drawioShapes} from './drawio-model.mjs';
 import {EngineeringModelView} from './EngineeringModelView.jsx';
 import {ArchitectureDiagramWorkspace,DiagramPicker} from './ArchitectureDiagramWorkspace.jsx';
 import {validateDiagramModel,diagramFromSelection,emptyDiagramModel} from './architecture-diagrams.mjs';
@@ -21,7 +26,7 @@ import {copyBoardItems,pasteBoardItems} from './board-clipboard.mjs';
 import {appliedQualityBasis} from './canvas-quality.mjs';
 import {canvasProposal,canvasBasis,canvasProposalRecords} from './codex-canvas.mjs';
 import {engineeringCall,verifiedEngineeringDownload} from './engineering-client.mjs';
-import {BlockSpecProperties,BlockBuildSpec,BlockHierarchy,NestedBlocks} from './BlockBuildSpec.jsx';
+import {InterfaceEditor,BlockSpecProperties,BlockBuildSpec,BlockHierarchy,NestedBlocks} from './BlockBuildSpec.jsx';
 import {removeBlocks,interfaceFields} from './block-spec.mjs';
 import {nestedCanvas,preferredNestedScope} from './nested-canvas.mjs';
 import {validateCapturedDiagrams} from './captured-diagrams.mjs';
@@ -85,6 +90,7 @@ import {
   Check,
   ChevronRight,
   GitBranch,
+  Layers3,
   Maximize2,
   ChevronsLeftRight,
   ChevronsRightLeft,
@@ -199,6 +205,7 @@ const STORAGE = "atforma-workspace-v3";
 // A new project starts empty: the user describes what they want first.
 import './onboarding.css';
 import './chat-composer.css';
+import './drawing-workspace.css';
 const emptyProject = () => initializeProjectIdentity({version: 1, revision: 1, name: "New project", provider: "tools", requirements: "", nodes: [], edges: []});
 const MANUAL_BLOCK = {id:'manual-block',kind:'resource',provider:'tools',label:'New block',description:''};
 const ALL_CATALOG = [MANUAL_BLOCK, ...CATALOG, ...UPSTREAM_CATALOG];
@@ -331,7 +338,7 @@ function Palette({ onAdd, onClose, disabled, inline=false }) {
       <div className="palette-search">
         <Search size={14} />
         <input
-          autoFocus
+          autoFocus={!inline}
           aria-label="Search blocks"
           placeholder="Search blocks"
           value={query}
@@ -438,7 +445,7 @@ function BlockDetail({ project, node, run, probe, busy, reviewItems, onReviewCon
         {onSystemDiagrams&&<button type="button" className="btn" onClick={onSystemDiagrams}>System diagrams</button>}
       </div>
       {hasSpecKit && <BlockHierarchy nodes={project.nodes} node={node} busy={busy} onOpen={onOpen}
-        onReparent={parentBlockId => set({parentBlockId})}/>}
+        onRename={label=>set({label})} onReparent={parentBlockId => set({parentBlockId})}/>}
       <div className="block-detail-overview" role={hasSpecKit ? "tabpanel" : undefined} id="block-panel-overview"
         aria-labelledby={hasSpecKit ? "block-tab-overview" : undefined} hidden={activeTab !== "overview"}>
       <div className="detail-col">
@@ -464,7 +471,7 @@ function BlockDetail({ project, node, run, probe, busy, reviewItems, onReviewCon
         <div className="detail-title">
           <span className="blk-provider" />
           <input
-            aria-label="Block name"
+            aria-label="Overview block name"
             disabled={busy}
             value={node.data.label}
             maxLength={hasSpecKit ? 150 : 16000}
@@ -726,24 +733,42 @@ function App() {
   const hasDesign=hasArchitectureDesign(project);
   const modelLinkIssues=useMemo(()=>mode==='review'?architectureConsistency(project).issues.filter(issue=>issue.modelElementId||issue.caseId):[],[project,mode]);
 
+  const [topCollapsed,setTopCollapsed]=useState(()=>{try{return localStorage.getItem('atmem-drawing-top-collapsed')==='true';}catch{return false;}});
+  function toggleDrawingTop(){setTopCollapsed(value=>{try{localStorage.setItem('atmem-drawing-top-collapsed',String(!value));}catch{}return !value;});}
   const [libraryCollapsed,setLibraryCollapsed]=useState(()=>window.matchMedia('(max-width:700px)').matches);
   const [openDiagramPicker,setOpenDiagramPicker]=useState(false);
   const [openSpecOnEntry,setOpenSpecOnEntry]=useState(false);
   const [openMermaidOnEntry,setOpenMermaidOnEntry]=useState(false);
   const [entryPage,setEntryPage]=useState(null);
   const [studioTab,setStudioTab]=useState('Shapes');
+  const [openingLayer,setOpeningLayer]=useState(null);
+  const layerRequest=useRef(0);
   const [extraBoardTools,setExtraBoardTools]=useState(false);
   const [librarySlot,setLibrarySlot]=useState(null),[pageError,setPageError]=useState('');
   function showBlockLibrary(){
     if(drawingStudio){setStudioTab('Blocks');setPalette(false);}
     else setPalette(true);
   }
-  function selectStudioBlock(id){
+  async function selectStudioBlock(id){
+    const request=++layerRequest.current,owner=project.id;
+    setDrawingTrail([]);setOpeningLayer(id);setBoardRecord(id);
+    // Let the selected row and progress indicator paint before native scene work.
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    if(layerRequest.current!==request||projectRef.current.id!==owner)return;
     setMode('design');setDesignView('board');setLevel('flow');setNestedScope('*');setFocus(null);
-    setPicked(new Set());setSelected(id);setBoardRecord(id);
-    setTimeout(()=>fitView({nodes:[{id}],maxZoom:1.1,padding:.18}),100);
+    setPicked(new Set());setSelected(id);
+    const started=performance.now();
+    const focusLayer=()=>{
+      if(layerRequest.current!==request||projectRef.current.id!==owner)return;
+      if(!boardApi.current&&performance.now()-started<5000){requestAnimationFrame(focusLayer);return;}
+      fitView({nodes:[{id}],maxZoom:1.1,padding:.18});
+      requestAnimationFrame(()=>{if(layerRequest.current===request)setOpeningLayer(null);});
+    };
+    requestAnimationFrame(focusLayer);
   }
   function openDrawingPage(key){
+    setDrawingTrail([]);
+    layerRequest.current++;setOpeningLayer(null);
     if(key==='board'){setMode('design');setDesignView('board');setLevel('flow');return;}
     openSystemDiagrams();
     if(key.startsWith('system/'))setDesignView('system-model-legacy');
@@ -979,7 +1004,10 @@ function App() {
     } else void send();
   }
   const boardApi=useRef(null);
-  const [boardRecord,setBoardRecord]=useState(null),[boardPane,setBoardPane]=useState('Properties');
+  const [drawingTrail,setDrawingTrail]=useState([]);
+  const drawingScope=drawingTrail.at(-1)||null;
+  useEffect(()=>setDrawingTrail([]),[project.id]);
+  const [boardRecord,setBoardRecord]=useState(null),[boardPane,setBoardPane]=useState('Properties'),[editingConnection,setEditingConnection]=useState(null);
   useEffect(()=>setBoardPane('Properties'),[boardRecord]);
   const screenToFlowPosition=useCallback(point=>boardApi.current?.position({clientX:point.x,clientY:point.y})||point,[]);
   const fitView=useCallback(options=>boardApi.current?.fit(options),[]);
@@ -1184,6 +1212,7 @@ function App() {
     if (n && focus && layerOf(n).id !== focus) setFocus(layerOf(n).id);
   }
   function goUp() {
+    if(level!=='block'&&drawingScope){setDrawingTrail(t=>t.slice(0,-1));refit(undefined,.2);return;}
     const parent = projectRef.current.nodes.find(node => node.id === selected)?.data.parentBlockId;
     if (level === "block" && parent) openBlock(parent);
     else if (level === "block") goFlow(focus);
@@ -1275,7 +1304,8 @@ function App() {
       kind:'note',provider:'tools',drawingShape:tool,label:drawioShapes[tool],description:'',
       config:{region:'',classification:'Internal',timeout:5000},origin:'proposed',
     }};
-    commit({...current,nodes:[...current.nodes,node]});
+    const drawingLayouts=drawingScope?updateDrawingPlacement(updateDrawingLayout(current.extensions?.drawingLayouts,'board/full',interiorInsertGeometry(fullBoard,drawingScope,id,position)),'board/full',[],{parents:{[id]:drawingScope}}):current.extensions?.drawingLayouts;
+    commit({...current,nodes:[...current.nodes,node],extensions:{...current.extensions,...(drawingLayouts?{drawingLayouts}:{})}});
     if(nested.projected)setNestedScope('*');
     setLevel('flow');setFocus(null);setSelected(id);setPicked(new Set());setBoardRecord(id);
   }
@@ -1338,13 +1368,13 @@ function App() {
           config:{region:"To be selected", classification:"Internal", timeout:5000}, origin:"proposed"}}],
     };
     try { toProjectFile(next); } catch (error) { notify(error.message); return; }
+    if(drawingScope)next.extensions={...next.extensions,drawingLayouts:updateDrawingPlacement(updateDrawingLayout(current.extensions?.drawingLayouts,'board/full',interiorInsertGeometry(fullBoard,drawingScope,id,position)),'board/full',[],{parents:{[id]:drawingScope}})};
     commit(next);
     setPicked(new Set());
     setSelected(id);
     setPalette(false);
     paletteAt.current = null;
-    if (item === MANUAL_BLOCK) openBlock(id);
-    else if (level !== "flow") goFlow(null);
+    if (level !== "flow") goFlow(null);
     notify(`${item.label} added.`);
   }
 
@@ -1442,8 +1472,8 @@ function App() {
   }
   function undo() {
     if (!history.length || busy || agentBusy) return;
-    const previous = history.at(-1);
-    setFuture((f) => [...f.slice(-29), structuredClone(projectRef.current)]);
+    const previous = history.at(-1), current = structuredClone(projectRef.current);
+    setFuture((f) => [...f.slice(-29), current]);
     setHistory((h) => h.slice(0, -1));
     // Undo takes back the design, never what the user has told us since.
     restoreDesign(previous);
@@ -1453,8 +1483,8 @@ function App() {
   }
   function redo() {
     if (!future.length || busy || agentBusy) return;
-    const next = future.at(-1);
-    setHistory((h) => [...h.slice(-29), structuredClone(projectRef.current)]);
+    const next = future.at(-1), current = structuredClone(projectRef.current);
+    setHistory((h) => [...h.slice(-29), current]);
     setFuture((f) => f.slice(0, -1));
     restoreDesign(next);
     setSelected(null);
@@ -1474,7 +1504,7 @@ function App() {
     a.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
-  async function importProject(e) {
+  async function importProject(e) {return withPendingWork('Opening project…',async()=>{
     const file = e.target.files?.[0];
     if (!file) return;
     try {
@@ -1497,7 +1527,7 @@ function App() {
       notify(error.message);
     }
     e.target.value = "";
-  }
+  });}
   // A project file brings its own records; templates and imports keep the current ones.
   function loadDesign(next, { own = false } = {}) {
     stopVoice();
@@ -1888,10 +1918,27 @@ function App() {
         }));
   const boardLayoutKey=level==='system'?'board/system':nested.projected?'board/overview/'+(nested.scope||'root'):'board/full';
   const legacyBoardLayout=nested.projected||!shown.nodes.some(n=>n.data.parentBlockId)?project.extensions?.drawingLayouts?.pages?.board:null;
-  const nativeBoard=applyDrawingLayout(boardGraph(canvasNodes,canvasEdges),project.extensions?.drawingLayouts?.pages?.[boardLayoutKey]??legacyBoardLayout);
+  const nativeBoardKey=boardSceneKey(canvasNodes,canvasEdges);
+  const nativeBoardBase=useMemo(()=>boardGraph(canvasNodes,canvasEdges),[nativeBoardKey]);
+  const boardLayout=project.extensions?.drawingLayouts?.pages?.[boardLayoutKey]??legacyBoardLayout;
+  const boardGroups=project.extensions?.drawingLayouts?.groups?.[boardLayoutKey]||[];
+  const fullBoard=useMemo(()=>applyDrawingLayout(nativeBoardBase,boardLayout,boardGroups,project.extensions?.drawingLayouts?.parents?.[boardLayoutKey]),[nativeBoardBase,boardLayout,project.extensions?.drawingLayouts?.groups,project.extensions?.drawingLayouts?.parents,boardLayoutKey]);
+  const nativeBoard=useMemo(()=>drawingInterior(fullBoard,drawingScope),[fullBoard,drawingScope]);
+  useEffect(()=>{if(drawingScope&&!fullBoard.vertices.some(v=>v.id===drawingScope))setDrawingTrail(t=>t.filter(id=>fullBoard.vertices.some(v=>v.id===id)));},[fullBoard,drawingScope]);
   const boardEditable=!busy&&!previewing&&!nested.projected&&level==='flow';
   const boardItem=nativeBoard.vertices.find(row=>row.id===boardRecord)||nativeBoard.wires.find(row=>row.id===boardRecord);
   const recordNode=project.nodes.find(node=>node.id===boardRecord);
+  function renameBlock(id,label){
+    if(boardToolLocked)return;
+    const current=projectRef.current,name=label.trim();
+    if(!name||name.length>150)throw Error('Enter a name using 1–150 characters.');
+    const next={...current,nodes:current.nodes.map(n=>n.id===id?{...n,data:{...n.data,label:name}}:n)};
+    toProjectFile(next);commit(next);
+  }
+  function saveDrawingGroups(page,groups,options){
+    const current=projectRef.current,next={...current,extensions:{...current.extensions,drawingLayouts:updateDrawingGroups(current.extensions?.drawingLayouts,page,groups,options)}};
+    toProjectFile(next);commit(next);
+  }
   function saveBlockProperty(recordNode,buildSpec){
     const current=projectRef.current;
     if(!recordNode||current.nodes.find(node=>node.id===recordNode.id)?.data.buildSpec!==recordNode.data.buildSpec)throw Error('The selected block changed. Reopen its properties.');
@@ -1903,6 +1950,22 @@ function App() {
     if(!node||node.data.kind==='note')return null;
     return <BlockSpecProperties key={node.id} node={node} busy={boardToolLocked} compact
       onSave={buildSpec=>saveBlockProperty(node,buildSpec)} renderComments={renderDesignComments}/>;
+  }
+  function changeBoardNesting(id,parentBlockId){
+    if(boardToolLocked)return;
+    const current=projectRef.current;
+    const nodes=current.nodes.map(node=>{if(node.id!==id)return node;const {parentBlockId:old,...data}=node.data;return{...node,data:{...data,...(parentBlockId?{parentBlockId}:{})}};});
+    try{
+      const next={...current,nodes,extensions:{...current.extensions,drawingLayouts:updateDrawingLayout(current.extensions?.drawingLayouts,'board/full',null)}};
+      toProjectFile(next);commit(next);setNestedScope('*');refit([{id:parentBlockId||id}],.1);
+    }catch(error){notify(error.message);}
+  }
+  function addInsideBoard(parentId,label){
+    if(boardToolLocked)return;
+    const current=projectRef.current;if(!current.nodes.some(n=>n.id===parentId&&n.data.kind!=='note'))return;
+    const id=crypto.randomUUID();
+    const next={...current,nodes:[...current.nodes,{id,type:'resource',position:{x:0,y:0},data:{...MANUAL_BLOCK,label,parentBlockId:parentId,config:{region:'To be selected',classification:'Internal',timeout:5000},origin:'proposed'}}],extensions:{...current.extensions,drawingLayouts:updateDrawingLayout(current.extensions?.drawingLayouts,'board/full',null)}};
+    try{toProjectFile(next);commit(next);setNestedScope('*');setSelected(id);setBoardRecord(id);setBoardPane('Properties');setModal(null);refit([{id:parentId}],.1);}catch(error){notify(error.message);}
   }
   function styleBoardBlock(field,color){
     const current=projectRef.current;
@@ -1917,11 +1980,12 @@ function App() {
     commit({...current,edges:[...current.edges,{id,source,target,type:'smoothstep',label:'data'}]});
     setBoardRecord(id);
   }
-  function saveDrawingLayout(page,changes){
+  function saveDrawingLayout(page,changes,options){
     const current=projectRef.current;let layouts=current.extensions?.drawingLayouts;
     const legacy=page.startsWith('board/overview/')||page==='board/full'&&!current.nodes.some(n=>n.data.parentBlockId);
     if(legacy&&layouts?.pages?.board&&!layouts.pages[page])layouts={...layouts,pages:{...layouts.pages,[page]:layouts.pages.board}};
     let next=updateDrawingLayout(layouts,page,changes);
+    if(options?.parents)next=updateDrawingPlacement(next,page,changes,options);
     if(changes===null&&legacy&&layouts?.pages?.board)next={...next,pages:{...next.pages,[page]:{}}};
     commit({...current,extensions:{...current.extensions,drawingLayouts:next}});
   }
@@ -1938,6 +2002,13 @@ function App() {
       !selectedIds.has(row.id)&&!removedNodes.has(row.source)&&!removedNodes.has(row.target))});
     setBoardRecord(null);
     setSelected(null);
+  }
+  function editBoardConnection(id){
+    if(boardToolLocked)return;
+    const current=projectRef.current,wire=nativeBoard.wires.find(row=>row.id===id);
+    const ids=wire?.interfaceIds||[id],edges=current.edges.filter(edge=>ids.includes(edge.id));
+    if(!edges.length)return;
+    setBoardRecord(id);setEditingConnection({projectId:current.id,edges,edge:edges.length===1?edges[0]:null});setModal('edit-board-connection');
   }
   function openBoardRecord(id){
     const node=canvasNodes.find(row=>row.id===id),edge=canvasEdges.find(row=>row.id===id);
@@ -1956,20 +2027,20 @@ function App() {
   const exportFiles = (files, suffix) => {
     download(zipSync(Object.fromEntries(Object.entries(files).map(([name, content]) => [name, typeof content === "string" ? strToU8(content) : content]))), `${slug}-r${project.revision}-${suffix}.zip`, "application/zip");
   };
-  const downloadBundle = async bundle => {
+  const downloadBundle = async bundle => withPendingWork('Preparing download…',async()=>{
     bundle=await(bundle.prepare?.()||bundle);
     if(bundle.project!==projectRef.current)throw Error('Design changed while preparing files. Download again.');
     download(zipSync(Object.fromEntries(Object.entries(bundle.files).map(([name,content])=>[name,typeof content === "string"?strToU8(content):content]))),bundle.filename,"application/zip");
     if(bundle.project?.id===projectRef.current.id)updateEngagement(acknowledgeStage(projectRef.current,'delivery'));
     notify("ZIP downloaded.");setStarOffer(value=>value+1);
-  };
-  const exportPack = async () => {
+  });
+  const exportPack = async () => withPendingWork('Exporting project…',async()=>{
     try {
       notify("Preparing documents and diagram exports…");
       await downloadBundle(await outputBundle(project,run,environment,null,{session:sessionRef.current,prepareSources:prepareSourceEvidence}));
     } catch(e) { notify(e.message); }
-  };
-  const exportTerraform = async (validation = null) => {
+  });
+  const exportTerraform = async (validation = null) => withPendingWork('Exporting Terraform…',async()=>{
     try {
       toProjectFile(project); // Apply the same credential refusal as every project export.
       const files=terraformSketch(project,environment);
@@ -1977,7 +2048,7 @@ function App() {
       exportFiles({...files,...(receipt?{'validation-receipt.json':JSON.stringify(receipt,null,2)}:{})}, "terraform");
       notify("Terraform sketch exported with resource coverage and unfinished work.");
     } catch (e) { notify(e.message); }
-  };
+  });
   // One short real request proves the sign-in, model ID and local service all work.
   async function verifyConnection(choice) {
     let live = session;
@@ -2360,9 +2431,87 @@ function App() {
             }}
           />
   );
+  usePendingWork('Working…',busy);
+  usePendingWork('Waiting for Architect…',agentBusy);
+  usePendingWork('Generating project files…',generationPending||['starting','running'].includes(engineeringStatus?.state));
+  usePendingWork('Running checks…',checking||emulation.running);
+  usePendingWork('Emulating apply…',applyEmulation.running);
+  usePendingWork('Checking prices…',pricingState.busy);
+  usePendingWork('Reading files…',readingAttachments);
+  usePendingWork('Saving project…',savingProject);
+  usePendingWork('Reviewing comments…',Boolean(runningComment));
+  usePendingWork('Processing voice…',['starting','transcribing'].includes(voiceState));
+  const journeyControls=(
+<section className="journey-wizard unified-journey" aria-label="Architecture journey">
+        <nav className="stage-tabs" role="tablist" aria-label="Project stages">{DESIGN_SECTIONS.map((section,i)=><button key={section.id} role="tab" aria-label={section.label} aria-selected={activeSection.id===section.id} className={completedStages(project)[section.id]?'stage-complete':''} onClick={()=>visitJourney(section.id)} title={completedStages(project)[section.id]?'Working draft recorded; see Review for verification':'Not yet acknowledged'}><span>{i+1}</span>{section.label}</button>)}</nav>
+        {nextAction&&<div className="journey-current"><button className="btn primary" disabled={busy||agentBusy||!!pending} onClick={()=>nextAction.kind==='navigate'?visitJourney(nextAction.section):nextAction.kind==='continue'?continueJourney():followJourney()}>{nextAction.label} <span aria-hidden="true">→</span></button></div>}
+      </section>
+  );
+  const boardControls=(
+<div className="board-overlays">
+          <div className="board-top-controls">
+          <div className="board-top-actions">
+            {level!=='block'&&<div className="nested-view-control">
+            <nav className="drawing-breadcrumbs" aria-label="Drawing location"><button onClick={()=>{setDrawingTrail([]);refit(undefined,.2);}}>Board</button>{drawingTrail.map((id,i)=><React.Fragment key={id}><span>/</span><button onClick={()=>{setDrawingTrail(trail=>trail.slice(0,i+1));refit(undefined,.2);}}>{fullBoard.vertices.find(v=>v.id===id)?.name||'System'}</button></React.Fragment>)}</nav>
+          {!drawingScope&&shown.nodes.some(node=>node.data.parentBlockId)&&<label className="nested-scope-control">View
+            <select aria-label="Architecture level" value={nested.projected?nested.scope||'':'*'} onChange={event=>exploreSubsystem(event.target.value||null)}>
+              <option value="">Top level</option><option value="*">Nested components</option>
+              {shown.nodes.filter(node=>shown.nodes.some(child=>child.data.parentBlockId===node.id)).map(node=><option key={node.id} value={node.id}>{node.data.label}</option>)}
+            </select>
+          </label>}
+        </div>}
+            {nativeDesignEnabled&&hasDesign&&studioTab==='Layers'&&<div className="native-canvas-action"><button className="btn" disabled={busy||agentBusy||!!pending} onClick={()=>startArchitecture()}>Update architecture</button><button className="link" disabled={readingAttachments||agentBusy||!!pending} onClick={()=>requirementsInput.current.click()}>Add specification</button></div>}
+          </div>
+        </div>
+        <div className="board-controls">
+        <div className="toolbar" aria-label="Tools">
+          {level !== "block" && <>
+            <button className="btn" type="button" disabled={busy||agentBusy||!!pending} onClick={()=>{paletteAt.current=null;showBlockLibrary();}}><Plus size={16}/> Add block</button>
+            {(selected || picked.size>0) && <button className="btn" type="button" onClick={()=>copySelection()}>Copy</button>}
+            {boardClipboard?.projectId === project.id && <button className="btn" type="button" disabled={busy||agentBusy||!!pending} onClick={()=>pasteSelection()}>Paste</button>}
+          </>}
+          <button className="icon" title="Undo board change" aria-label="Undo" disabled={!history.length || busy || agentBusy} onClick={undo}>
+            <Undo2 size={17} />
+          </button>
+          <button className="icon" title="Redo board change" aria-label="Redo" disabled={!future.length || busy || agentBusy} onClick={redo}><Redo2 size={17} /></button>
+          <details className="board-actions-menu"><summary>Actions</summary><div>
+          {level!=='block'&&<><button className="btn" onClick={()=>setDesignView('overview')}>Overview</button><button className="btn board-secondary" type="button" onClick={openSystemDiagrams}>System diagrams</button></>}
+          {level!=='block'&&<span className="board-secondary">{renderDesignComments({kind:'project'})}</span>}
+          <button
+            className="icon board-secondary"
+            title="Auto-arrange"
+            aria-label="Auto-arrange"
+            disabled={busy || previewing || nested.projected || level==='block' || !project.nodes.length}
+            onClick={() => {
+              if(drawingBoard){void boardApi.current?.arrange();return;}
+              if(level==='system')setTopologyPositions(arrangeOverview(system,measured));
+              else commit(autoLayout(projectRef.current));
+              refit();
+            }}
+          >
+            <LayoutGrid size={17} /><span>Auto-arrange</span>
+          </button>
+          <button className="btn reset-board board-secondary" title="Reset board and context" aria-label="Reset board and context" disabled={busy||agentBusy||intake.length>0} onClick={newProject}>
+            <Trash2 size={17} /> Reset board
+          </button>
+          {onBoard&&level!=='block'&&!emulationOpen&&!applyDockOpen&&hasDesign&&<button type="button" className={`apply-launcher board-secondary ${applyEmulation.running?'working':''}`} onClick={()=>setApplyDockOpen(true)} aria-label="Open Terraform apply emulation"><Play size={16}/> {applyEmulation.running?'Emulating…':'Emulate apply'}</button>}
+            <button className="btn board-secondary" onClick={()=>download(drawioFile([{id:project.id,name:project.name,...nativeBoard}]),'board.drawio','application/xml')}>Export diagram</button>
+          </div></details>
+
+        </div>
+        {level !== "block" && (
+          <div className="zoom">
+            <button className="btn" disabled={busy||agentBusy||!!pending} onClick={insertMermaidDiagram}>Insert Mermaid</button>
+
+          </div>
+        )}
+        </div>
+          </div>
+  );
   return (
-    <div style={{"--chat-panel-width":`${chatWidth}px`}} className={`app ${idleChat?"idle-chat":""} ${chatOpen&&!buildView ? "" : "chat-closed"} ${buildView?"build-workspace":""}`}>
-      <header className="bar">
+    <div style={{"--chat-panel-width":`${chatWidth}px`}} className={`app ${idleChat?"idle-chat":""} ${chatOpen&&!buildView ? "" : "chat-closed"} ${buildView?"build-workspace":""} ${drawingStudio?"compact-drawing-workspace":""} ${drawingStudio&&topCollapsed?"drawing-top-collapsed":""}`}>
+      {drawingStudio&&<button type="button" className="drawing-top-toggle" aria-label={topCollapsed?'Show top toolbar':'Hide top toolbar'} aria-expanded={!topCollapsed} aria-controls="drawing-top-toolbar" title={topCollapsed?'Show top toolbar':'Hide top toolbar'} onClick={toggleDrawingTop}>{topCollapsed?'⌄':'⌃'}</button>}
+      <header id="drawing-top-toolbar" className="bar" hidden={drawingStudio&&topCollapsed}>
         <button aria-label="About AtMem AI Architect" className="brand" onClick={() => setModal("about")} title="About AtMem AI Architect">
           <Mark />
 
@@ -2379,6 +2528,11 @@ function App() {
             onChange={(e) => commit({ ...project, name: e.target.value })}
           /><PencilRuler size={14} aria-hidden="true"/></label>
         </nav>
+        {drawingStudio&&<>
+          <details className="drawing-journey-menu" onClick={event=>{if(event.target.closest('button'))event.currentTarget.open=false;}}><summary>{activeSection.label} <span aria-hidden="true">▾</span></summary>{journeyControls}</details>
+          <button type="button" className="compact-tools-toggle" aria-label={libraryCollapsed?'Show drawing tools':'Hide drawing tools'} aria-expanded={!libraryCollapsed} onClick={()=>setLibraryCollapsed(value=>!value)}><PencilRuler size={15}/><span>Tools</span></button>
+          {drawingBoard&&<div className="drawing-toolbar-scroll">{boardControls}</div>}
+        </>}
         <div className="bar-actions">
           {!chatOpen&&<button className="icon" title="Show chat" aria-label="Show chat" onClick={()=>setChatOpen(true)}><PanelRightOpen size={18}/></button>}
           {HOSTED&&<><button className="btn" onClick={newProject} disabled={busy||agentBusy}><Plus size={16}/>New project</button><button className="btn" onClick={()=>hostedCall('account')}>Account</button></>}
@@ -2436,10 +2590,7 @@ function App() {
         )}
       </header>
 
-      <section className="journey-wizard unified-journey" aria-label="Architecture journey">
-        <nav className="stage-tabs" role="tablist" aria-label="Project stages">{DESIGN_SECTIONS.map((section,i)=><button key={section.id} role="tab" aria-label={section.label} aria-selected={activeSection.id===section.id} className={completedStages(project)[section.id]?'stage-complete':''} onClick={()=>visitJourney(section.id)} title={completedStages(project)[section.id]?'Working draft recorded; see Review for verification':'Not yet acknowledged'}><span>{i+1}</span>{section.label}</button>)}</nav>
-        {nextAction&&<div className="journey-current"><button className="btn primary" disabled={busy||agentBusy||!!pending} onClick={()=>nextAction.kind==='navigate'?visitJourney(nextAction.section):nextAction.kind==='continue'?continueJourney():followJourney()}>{nextAction.label} <span aria-hidden="true">→</span></button></div>}
-      </section>
+      {!drawingStudio&&journeyControls}
       <main
         id="canvas"
         className={`canvas level-${level} ${drawingStudio?'drawing-studio'+(libraryCollapsed?' library-collapsed':''):''}`}
@@ -2454,26 +2605,34 @@ function App() {
           e.dataTransfer.dropEffect = "move";
         }}
       >
-        {drawingStudio&&<button className="studio-library-toggle" aria-label="Toggle drawing tools" aria-expanded={!libraryCollapsed} onClick={()=>setLibraryCollapsed(v=>!v)}><PencilRuler size={16}/> Tools</button>}
         {drawingStudio&&<aside hidden={libraryCollapsed} className="studio-library"  aria-label="Board library">
-          <div className="studio-tools" role="group" aria-label="Workspace library">
-            {['Shapes','Blocks','Layers','Pages'].map(tab=><button key={tab} type="button" aria-pressed={studioTab===tab} onClick={()=>setStudioTab(tab)}>{tab}</button>)}
-            <button type="button" aria-label="Hide drawing tools" onClick={()=>setLibraryCollapsed(true)}>‹</button>
+          <div className="studio-library-header">
+            <div className="studio-tools" role="tablist" aria-label="Workspace library">
+              {['Shapes','Blocks','Layers','Pages'].map(tab=><button key={tab} id={'studio-tab-'+tab} type="button" role="tab" aria-selected={studioTab===tab} aria-controls={'studio-panel-'+tab} tabIndex={studioTab===tab?0:-1}
+                onClick={()=>setStudioTab(tab)} onKeyDown={event=>{
+                  const tabs=['Shapes','Blocks','Layers','Pages'],at=tabs.indexOf(tab);
+                  const next=event.key==='Home'?0:event.key==='End'?3:event.key==='ArrowRight'?(at+1)%4:event.key==='ArrowLeft'?(at+3)%4:null;
+                  if(next===null)return;event.preventDefault();setStudioTab(tabs[next]);document.getElementById('studio-tab-'+tabs[next])?.focus();
+                }}>{tab==='Layers'&&<Layers3 size={18} aria-hidden="true"/>}{tab}</button>)}
+            </div>
+            <button className="studio-library-close" type="button" aria-label="Close drawing library" onClick={()=>setLibraryCollapsed(true)}>‹</button>
           </div>
-          <div className="studio-tool-content" hidden={studioTab!=='Shapes'}>
+          <p className="studio-tab-purpose">{{Shapes:'Add visual symbols to the current diagram.',Blocks:'Add components with specifications and interface contracts.',Layers:'Browse the drawing hierarchy. Select an element to find it.',Pages:'Switch diagrams or create another view of the same system.'}[studioTab]}</p>
+          {['Blocks','Layers','Pages'].filter(tab=>studioTab!==tab).map(tab=><div key={tab} role="tabpanel" id={'studio-panel-'+tab} aria-labelledby={'studio-tab-'+tab} hidden/>)}
+          <div className="studio-tool-content" role="tabpanel" id="studio-panel-Shapes" aria-labelledby="studio-tab-Shapes" hidden={studioTab!=='Shapes'}>
             <div ref={setLibrarySlot}/>
             {drawingBoard&&<DrawioShapePalette onAdd={addDrawingTool} disabled={boardToolLocked}/>}
             {designView==='system-diagrams'&&!project.extensions?.architectureDiagrams?.views.length&&<button className="btn" onClick={createArchitectureDiagram}>Create a page</button>}
             {['system-model-legacy','engineering-page'].includes(designView)&&<DrawioShapePalette onAdd={tool=>{openDrawingPage('board');addDrawingTool(tool);}} disabled={boardToolLocked} boardTarget/>}
           </div>
-          {studioTab==='Blocks'&&<div className="studio-tool-content"><Palette inline disabled={boardToolLocked} onAdd={item=>{openDrawingPage('board');addComponent(item,paletteAt.current||undefined);}}/></div>}
-          {studioTab==='Layers'&&<div className="studio-tool-content studio-layers" aria-label="Component tree">
-            <h3>Components &amp; layers</h3><button className="btn" disabled={!blockReviews.length} onClick={()=>reviewBlock((blockReviews.find(r=>r.status!=='reviewed')||blockReviews[0]).id)}>Review blocks · {blockReviews.filter(r=>r.status==='reviewed').length}/{blockReviews.length}</button>
-            <NestedBlocks nodes={project.nodes} selected={boardRecord} onOpen={selectStudioBlock}/>
-            {!blockReviews.length&&<p>No project blocks yet.</p>}
+          {studioTab==='Blocks'&&<div className="studio-tool-content" role="tabpanel" id="studio-panel-Blocks" aria-labelledby="studio-tab-Blocks"><Palette inline disabled={boardToolLocked} onAdd={item=>{openDrawingPage('board');addComponent(item,paletteAt.current||undefined);}}/></div>}
+          {studioTab==='Layers'&&<div className="studio-tool-content studio-layers" role="tabpanel" id="studio-panel-Layers" aria-labelledby="studio-tab-Layers" aria-label="Component tree" aria-busy={!!openingLayer}>
+            <h3>Drawing layers</h3><button className="btn" disabled={!blockReviews.length} onClick={()=>reviewBlock((blockReviews.find(r=>r.status!=='reviewed')||blockReviews[0]).id)}>Review blocks · {blockReviews.filter(r=>r.status==='reviewed').length}/{blockReviews.length}</button>
+            <NestedBlocks nodes={fullBoard.vertices.filter(v=>v.selectable!==false).map(v=>({id:v.id,data:{kind:'resource',label:v.name,parentBlockId:v.containerParentId}}))} selected={boardRecord} busyId={openingLayer} onOpen={selectStudioBlock}/>
+            {!fullBoard.vertices.length&&<p>No drawing elements yet.</p>}
             <button className="btn" onClick={showBlockLibrary}><Plus size={14}/> Add component</button>
           </div>}
-          {studioTab==='Pages'&&<div className="studio-tool-content"><PageExplorer project={project} onOpen={openDrawingPage} onCreate={()=>{setOpenDiagramPicker(true);openSystemDiagrams();setOpenDiagramPicker(true);}} onGenerate={()=>{openSystemDiagrams();setOpenSpecOnEntry(true);}}/><div hidden><DiagramPicker inline model={project.extensions?.architectureDiagrams||emptyDiagramModel()}
+          {studioTab==='Pages'&&<div className="studio-tool-content" role="tabpanel" id="studio-panel-Pages" aria-labelledby="studio-tab-Pages"><PageExplorer project={project} onOpen={openDrawingPage} onCreate={()=>{setOpenDiagramPicker(true);openSystemDiagrams();setOpenDiagramPicker(true);}} onGenerate={()=>{openSystemDiagrams();setOpenSpecOnEntry(true);}}/><div hidden><DiagramPicker inline model={project.extensions?.architectureDiagrams||emptyDiagramModel()}
             onClose={()=>setStudioTab('Shapes')} onCreate={createStudioPage} error={pageError}/></div></div>}
           {level!=='block'&&(sourceDocuments.length>0||currentSourceBatch)&&<aside className="board-source-dock" aria-label="Uploaded specifications">
             <details open={currentSourceBatch?true:undefined}>
@@ -2492,84 +2651,46 @@ function App() {
           </aside>}
         </aside>}
         <div className={`board-surface ${drawingBoard?"drawing-board":""} ${extraBoardTools?'show-extra-tools':''}`} hidden={!onBoard}>
-          <div className="board-overlays">
-          <div className="board-top-controls">
-          <div className="board-top-actions">
-            {level!=='block'&&<div className="nested-view-control">
-          {nested.projected&&<label className="nested-scope-control">Scope
-            <select aria-label="Architecture level" value={nested.scope||''} onChange={event=>exploreSubsystem(event.target.value||null)}>
-              <option value="">Top level</option><option value="*">All blocks</option>
-              {shown.nodes.filter(node=>shown.nodes.some(child=>child.data.parentBlockId===node.id)).map(node=><option key={node.id} value={node.id}>{node.data.label}</option>)}
-            </select>
-          </label>}
-          {!nested.projected&&shown.nodes.some(node=>node.data.parentBlockId)&&<button className="btn" onClick={()=>exploreSubsystem(null)}>Top level</button>}
-        </div>}
-            {nativeDesignEnabled&&hasDesign&&studioTab==='Layers'&&<div className="native-canvas-action"><button className="btn" disabled={busy||agentBusy||!!pending} onClick={()=>startArchitecture()}>Update architecture</button><button className="link" disabled={readingAttachments||agentBusy||!!pending} onClick={()=>requirementsInput.current.click()}>Add specification</button></div>}
-          </div>
-        </div>
-        <div className="board-controls">
-        <div className="toolbar" aria-label="Tools">
-          {level !== "block" && <>
-            <button className="btn" type="button" disabled={busy||agentBusy||!!pending} onClick={()=>{paletteAt.current=null;showBlockLibrary();}}><Plus size={16}/> Add block</button>
-            {(selected || picked.size>0) && <button className="btn" type="button" onClick={()=>copySelection()}>Copy</button>}
-            {boardClipboard?.projectId === project.id && <button className="btn" type="button" disabled={busy||agentBusy||!!pending} onClick={()=>pasteSelection()}>Paste</button>}
-          </>}
-          {level!=='block'&&<><button className="btn" onClick={()=>setDesignView('overview')}>Overview</button><button className="btn board-secondary" type="button" onClick={openSystemDiagrams}>System diagrams</button></>}
-          {level!=='block'&&<span className="board-secondary">{renderDesignComments({kind:'project'})}</span>}
-          <button
-            className="icon board-secondary"
-            title="Auto-arrange"
-            aria-label="Auto-arrange"
-            disabled={busy || previewing || nested.projected || level==='block' || !project.nodes.length}
-            onClick={() => {
-              if(level==='system')setTopologyPositions(arrangeOverview(system,measured));
-              else commit(autoLayout(projectRef.current));
-              refit();
-            }}
-          >
-            <LayoutGrid size={17} />
-          </button>
-          <button className="btn reset-board board-secondary" title="Reset board and context" aria-label="Reset board and context" disabled={busy||agentBusy||intake.length>0} onClick={newProject}>
-            <Trash2 size={17} /> Reset board
-          </button>
-          <button className="icon" title="Undo board change" aria-label="Undo" disabled={!history.length || busy || agentBusy} onClick={undo}>
-            <Undo2 size={17} />
-          </button>
-          <button className="icon" title="Redo board change" aria-label="Redo" disabled={!future.length || busy || agentBusy} onClick={redo}><Redo2 size={17} /></button>
-          <button className="btn board-more-tools" aria-expanded={extraBoardTools} onClick={()=>setExtraBoardTools(value=>!value)}>{extraBoardTools?'Fewer actions':'More actions'}</button>
-          {onBoard&&level!=='block'&&!emulationOpen&&!applyDockOpen&&hasDesign&&<button type="button" className={`apply-launcher board-secondary ${applyEmulation.running?'working':''}`} onClick={()=>setApplyDockOpen(true)} aria-label="Open Terraform apply emulation"><Play size={16}/> {applyEmulation.running?'Emulating…':'Emulate apply'}</button>}
-        </div>
-        {level !== "block" && (
-          <div className="zoom">
-            <button className="btn board-secondary" onClick={()=>download(drawioFile([{id:project.id,name:project.name,...nativeBoard}]),'board.drawio','application/xml')}>Export diagram</button>
-            <button className="btn" disabled={busy||agentBusy||!!pending} onClick={insertMermaidDiagram}>Insert Mermaid</button>
-            <button className="icon" aria-label="Zoom out" onClick={() => zoomOut()}><ZoomOut size={15} /></button>
-            <button className="icon" aria-label="Fit" title="Fit" onClick={() => refit(undefined,.1)}><Maximize2 size={14} /></button>
-            <button className="icon" aria-label="Zoom in" onClick={() => zoomIn()}><ZoomIn size={15} /></button>
-          </div>
-        )}
-        </div>
-          </div>
+          {!drawingBoard&&boardControls}
           <div className="board-paper">
           <ArchitectureStatus activity={engineeringActivity?.owner===project.id?engineeringActivity:null} error={engineeringError?.owner===project.id?engineeringError.message:null} connected={connection?.provider==='codex'&&!!connection?.effort} job={engineeringStatus} pending={buildRequest} sources={sourceDocuments} hasDesign={hasDesign} onReview={()=>setBoardProgress(true)} onConnect={showConnections} onRetry={()=>startArchitecture()}/>
-          {!shown.nodes.length&&!hasDesign&&!palette&&!dismissedStarts.includes(project.id)&&!['running','starting'].includes(engineeringStatus?.state)&&!buildRequest&&!['interrupted','failed','cancelled'].includes(engineeringStatus?.last_status)&&<section className="board-start" aria-label="Start your project"><button type="button" className="icon board-start-close" aria-label="Dismiss welcome card" title="Dismiss welcome card" onClick={dismissStart}><X size={16}/></button><h2>What would you like to create?</h2><div className="row"><button className="btn" onClick={openReadyExample}>Explore runnable AI example</button><button className="btn" onClick={()=>{dismissStart();setChatOpen(true);document.querySelector('.composer textarea, .chat textarea')?.focus();}}>Start chatting</button><button className="btn primary" onClick={()=>requirementsInput.current.click()}>Upload specification</button><button className="btn" onClick={openSystemDiagrams}>Browse diagrams</button><button className="btn" onClick={()=>setModal("project-file")}>Open project</button></div><InlineNote label="Supported starting files">Word, PDF, text, Markdown, diagrams, images and Architect project JSON.</InlineNote></section>}
+          {!drawingScope&&!shown.nodes.length&&!hasDesign&&!palette&&!dismissedStarts.includes(project.id)&&!['running','starting'].includes(engineeringStatus?.state)&&!buildRequest&&!['interrupted','failed','cancelled'].includes(engineeringStatus?.last_status)&&<section className="board-start" aria-label="Start your project"><button type="button" className="icon board-start-close" aria-label="Dismiss welcome card" title="Dismiss welcome card" onClick={dismissStart}><X size={16}/></button><h2>What would you like to create?</h2><div className="row"><button className="btn" onClick={openReadyExample}>Explore runnable AI example</button><button className="btn" onClick={()=>{dismissStart();setChatOpen(true);document.querySelector('.composer textarea, .chat textarea')?.focus();}}>Start chatting</button><button className="btn primary" onClick={()=>requirementsInput.current.click()}>Upload specification</button><button className="btn" onClick={openSystemDiagrams}>Browse diagrams</button><button className="btn" onClick={()=>setModal("project-file")}>Open project</button></div><InlineNote label="Supported starting files">Word, PDF, text, Markdown, diagrams, images and Architect project JSON.</InlineNote></section>}
 
-        <DrawioCanvas layoutKey={boardLayoutKey} scopeLabel={nested.projected?`Overview · ${canvasNodes.length} of ${project.nodes.length} elements. Open a component for details.`:`All ${canvasNodes.length} elements`} onDropShape={drawingBoard&&!boardToolLocked?addDrawingTool:null} graphRef={boardApi} scene={nativeBoard} label="Architecture board"
+        {drawingScope&&!nativeBoard.vertices.length&&<div className="drawing-interior-empty">Add shapes or blocks inside this system.</div>}
+        <DrawioCanvas properties={level!=='block'&&boardItem&&<aside key={'record:'+boardRecord} className="drawio-board-source" aria-label="Selected diagram record">
+          <header><strong>{boardItem.name}</strong><button className="icon" aria-label="Close diagram source" onClick={()=>setBoardRecord(null)}><X size={15}/></button></header>
+          {recordNode&&<div className="board-inspector-tabs" role="group" aria-label="Element inspector">
+            {(recordNode.data.kind==='note'?['Mermaid','Style']:['Properties','Mermaid','Style']).map(tab=><button key={tab}
+              aria-pressed={(recordNode.data.kind==='note'&&boardPane==='Properties'?'Mermaid':boardPane)===tab} onClick={()=>setBoardPane(tab)}>{tab==='Properties'?'Specification':tab}</button>)}
+          </div>}
+          {recordNode&&recordNode.data.kind!=='note'&&boardPane==='Properties'&&<EditableBlockName key={'name:'+recordNode.id} name={recordNode.data.label} disabled={boardToolLocked} onRename={name=>renameBlock(recordNode.id,name)}/> }
+          {recordNode&&boardPane==='Properties'&&renderBlockProperties(recordNode.id)}
+          {(!recordNode&&!boardItem.visualGroup||boardPane==='Mermaid'||(recordNode?.data.kind==='note'&&boardPane==='Properties'))&&<DiagramMermaid code={graphMermaid(nativeBoard,{selected:boardItem.id})}/>}
+          {boardItem.source&&<section aria-label="Connection properties"><h4>Interfaces</h4>{(boardItem.interfaceIds||[boardItem.id]).map(id=>project.edges.find(e=>e.id===id)).filter(Boolean).map(edge=><details key={edge.id}><summary>{edge.label||edge.id}</summary><dl>{Object.entries(interfaceFields).filter(([key])=>edge.interfaceSpec?.[key]).map(([key,label])=><React.Fragment key={key}><dt>{label}</dt><dd>{edge.interfaceSpec[key]}</dd></React.Fragment>)}</dl><button className="btn" disabled={boardToolLocked} onClick={()=>editBoardConnection(edge.id)}>Edit connection</button><button className="btn" onClick={()=>openBlock(edge.source,edge)}>Open interface</button></details>)}</section>}
+          {recordNode&&boardPane==='Style'&&<div className="board-style-fields">
+            <label>Fill<input type="color" disabled={boardToolLocked} value={recordNode.data.drawingFill||boardItem.style.match(/fillColor=(#[0-9a-f]{6})/i)?.[1]||'#ffffff'} onChange={event=>styleBoardBlock('drawingFill',event.target.value)}/></label>
+            <label>Outline<input type="color" disabled={boardToolLocked} value={recordNode.data.drawingStroke||'#7a8696'} onChange={event=>styleBoardBlock('drawingStroke',event.target.value)}/></label>
+          </div>}
+          {!boardItem.source&&!boardItem.visualGroup&&<button className="btn" onClick={()=>recordNode?.data.drawingShape||recordNode?.data.kind==='note'?setModal('edit-board-note'):openBlock(boardItem.id)}>{recordNode?.data.drawingShape?'Edit label':recordNode?.data.kind==='note'?'Edit comment':'Open specification'}</button>}
+        </aside>} scopeId={drawingScope} onOpenInside={id=>{boardApi.current?.fit({nodes:[{id}],minZoom:.2,maxZoom:1});setDrawingTrail(trail=>[...trail,id]);setBoardRecord(null);setSelected(null);setPicked(new Set());setNestedScope('*');refit(undefined,.2);}} layoutKey={boardLayoutKey} scopeLabel={nested.projected?`Overview · ${canvasNodes.length} of ${project.nodes.length} elements. Open a component for details.`:`All ${canvasNodes.length} elements`} onDropShape={drawingBoard&&!boardToolLocked?addDrawingTool:null} graphRef={boardApi} scene={nativeBoard} label="Architecture board"
           selected={picked.size?[...picked]:boardRecord||selected} onSelect={(id,event)=>{
             setBoardRecord(id||null);
             if(!id){setCtx(null);setPicked(new Set());setSelected(null);setPalette(false);return;}
             const node=canvasNodes.find(row=>row.id===id);
-            if(!node||level==='system')return;
+            if(level==='system')return;
             if(event?.shiftKey||event?.metaKey||event?.ctrlKey)setPicked(current=>{
               const next=new Set(current.size?current:selected?[selected]:[]);
               if(next.has(id))next.delete(id);else next.add(id);
               return next;
             });
             else setPicked(new Set());
-            setSelected(id);setProbe(null);
+            setSelected(node?id:null);setProbe(null);
           }}
-          onDoubleClick={openBoardRecord}
-          onLayout={!busy&&!previewing?changes=>saveDrawingLayout(boardLayoutKey,changes):null} onMove={boardEditable?moveBoard:null}
+          onDoubleClick={id=>nativeBoard.wires.some(row=>row.id===id)?editBoardConnection(id):openBoardRecord(id)}
+          onEditRecord={!boardToolLocked?editBoardConnection:null}
+          groups={boardGroups} onGroupsChange={!boardToolLocked?(groups,options)=>saveDrawingGroups(boardLayoutKey,groups,options):null}
+          onSelectMany={ids=>{setPicked(new Set(ids));setBoardRecord(ids[0]||null);setSelected(ids[0]||null);}}
+          onLayout={!busy&&!previewing?(changes,options)=>saveDrawingLayout(boardLayoutKey,changes,options):null} onMove={boardEditable?moveBoard:null}
           onConnect={boardEditable?connectBoard:null}
           onRemove={boardEditable?removeBoard:null}
           onContext={(e,id)=>{
@@ -2578,21 +2699,7 @@ function App() {
               node:level==='system'?null:canvasNodes.find(row=>row.id===id)});
           }}
         />
-        {level!=='block'&&boardItem&&<aside className="drawio-board-source" aria-label="Selected diagram record">
-          <header><strong>{boardItem.name}</strong><button className="icon" aria-label="Close diagram source" onClick={()=>setBoardRecord(null)}><X size={15}/></button></header>
-          {recordNode&&<div className="board-inspector-tabs" role="group" aria-label="Element inspector">
-            {(recordNode.data.kind==='note'?['Mermaid','Style']:['Properties','Mermaid','Style']).map(tab=><button key={tab}
-              aria-pressed={(recordNode.data.kind==='note'&&boardPane==='Properties'?'Mermaid':boardPane)===tab} onClick={()=>setBoardPane(tab)}>{tab}</button>)}
-          </div>}
-          {recordNode&&boardPane==='Properties'&&renderBlockProperties(recordNode.id)}
-          {(!recordNode||boardPane==='Mermaid'||(recordNode.data.kind==='note'&&boardPane==='Properties'))&&<DiagramMermaid code={graphMermaid(nativeBoard,{selected:boardItem.id})}/>}
-          {boardItem.source&&<section aria-label="Connection properties"><h4>Interfaces</h4>{(boardItem.interfaceIds||[boardItem.id]).map(id=>project.edges.find(e=>e.id===id)).filter(Boolean).map(edge=><details key={edge.id}><summary>{edge.label||edge.id}</summary><dl>{Object.entries(interfaceFields).filter(([key])=>edge.interfaceSpec?.[key]).map(([key,label])=><React.Fragment key={key}><dt>{label}</dt><dd>{edge.interfaceSpec[key]}</dd></React.Fragment>)}</dl><button className="btn" onClick={()=>openBlock(edge.source,edge)}>Open interface</button></details>)}</section>}
-          {recordNode&&boardPane==='Style'&&<div className="board-style-fields">
-            <label>Fill<input type="color" disabled={boardToolLocked} value={recordNode.data.drawingFill||boardItem.style.match(/fillColor=(#[0-9a-f]{6})/i)?.[1]||'#ffffff'} onChange={event=>styleBoardBlock('drawingFill',event.target.value)}/></label>
-            <label>Outline<input type="color" disabled={boardToolLocked} value={recordNode.data.drawingStroke||'#7a8696'} onChange={event=>styleBoardBlock('drawingStroke',event.target.value)}/></label>
-          </div>}
-          {!boardItem.source&&<button className="btn" onClick={()=>openBoardRecord(boardItem.id)}>{recordNode?.data.drawingShape?'Edit label':recordNode?.data.kind==='note'?'Edit comment':'Open component'}</button>}
-        </aside>}
+
         </div>
         {drawingBoard&&<DiagramPages pages={boardPages} active="board" onSelect={openDrawingPage} onAdd={boardToolLocked?null:createArchitectureDiagram}/>}
         {palette && <Palette onAdd={(item) => addComponent(item, paletteAt.current || undefined)} onClose={() => ((paletteAt.current = null), setPalette(false))} disabled={busy} />}
@@ -2602,7 +2709,7 @@ function App() {
             {ctx.node ? (
               <>
                 <button role="menuitem" onClick={()=>{copySelection(picked.size>1&&picked.has(ctx.node.id)?picked:[ctx.node.id]);setCtx(null);}}>Copy</button>
-                <button role="menuitem" onClick={()=>{reviewBlock(ctx.node.id);setCtx(null);}}>Edit block</button>
+                <button role="menuitem" onClick={()=>{openBlock(ctx.node.id);setCtx(null);}}>Edit block</button>
                 <button role="menuitem" onClick={()=>{openBlock(ctx.node.id);setCtx(null);requestAnimationFrame(()=>{
                   const control=document.querySelector('.block-spec-content .module-facts + .design-comments');
                   if(control){control.open=true;control.querySelector('textarea')?.focus();}
@@ -2772,7 +2879,7 @@ function App() {
         </div>
         {mode==='design'&&designView==='overview'&&<ProjectOverview project={project} onDrawings={()=>{setDesignView('board');setStudioTab('Pages');}} onRequirements={()=>visitJourney('scope')} onReview={()=>visitJourney('review')} onBlock={id=>{setDesignView('board');openBlock(id);}}/>}
         {mode==='design'&&designView==='system-diagrams'&&<ArchitectureDiagramWorkspace
-          key={project.id+':'+(entryPage||'')} project={project} onLayoutPage={saveDrawingLayout} onBack={()=>setDesignView('board')} librarySlot={librarySlot} onNewPage={createArchitectureDiagram} initialPage={entryPage} onPage={openDrawingPage} initiallyGenerating={openSpecOnEntry} initiallyCreating={openDiagramPicker} initialMermaid={openMermaidOnEntry}
+          key={project.id+':'+(entryPage||'')} project={project} onGroupsPage={saveDrawingGroups} onLayoutPage={saveDrawingLayout} onBack={()=>setDesignView('board')} librarySlot={librarySlot} onNewPage={createArchitectureDiagram} initialPage={entryPage} onPage={openDrawingPage} initiallyGenerating={openSpecOnEntry} initiallyCreating={openDiagramPicker} initialMermaid={openMermaidOnEntry}
           onSave={saveArchitectureDiagrams} onSaveProject={saveCurrentProject}
           onUndo={undo} onRedo={redo} canUndo={history.length>0} canRedo={future.length>0}
           onDraft={draftArchitectureDiagrams} locked={busy||agentBusy||!!pending}
@@ -2780,10 +2887,10 @@ function App() {
           onComments={renderDesignComments}
           onLegacy={(pending?.systemModel||project.extensions?.systemModel)?()=>setDesignView('system-model-legacy'):null}/>}
         {mode==='design'&&designView==='engineering-page'&&<div className="studio-engineering">
-          <EngineeringModelView drawingLayouts={project.extensions?.drawingLayouts} onLayoutPage={saveDrawingLayout} key={entryPage} model={project.extensions?.engineeringModel} pageId={entryPage} onPageChange={setEntryPage} renderBlockProperties={renderBlockProperties} renderComments={renderDesignComments}/>
+          <EngineeringModelView onGroupsPage={saveDrawingGroups} drawingLayouts={project.extensions?.drawingLayouts} onLayoutPage={saveDrawingLayout} key={entryPage} model={project.extensions?.engineeringModel} pageId={entryPage} onPageChange={setEntryPage} renderBlockProperties={renderBlockProperties} renderComments={renderDesignComments}/>
           <DiagramPages pages={boardPages} active={'engineering/'+entryPage} onSelect={openDrawingPage} onAdd={boardToolLocked?null:createArchitectureDiagram}/>
         </div>}
-        {mode==='design'&&designView==='system-model-legacy'&&<SystemModelWorkspace onLayoutPage={saveDrawingLayout}
+        {mode==='design'&&designView==='system-model-legacy'&&<SystemModelWorkspace onGroupsPage={saveDrawingGroups} onLayoutPage={saveDrawingLayout}
           key={project.id}
           project={pending?.systemModel?{...pending.next,...canvasProposalRecords(project,pending)}:project}
           renderBlockProperties={pending?undefined:renderBlockProperties} onBack={()=>openDrawingPage('board')} initialPage={entryPage} onPage={openDrawingPage} onNewDiagram={createArchitectureDiagram}
@@ -2791,7 +2898,7 @@ function App() {
           onSave={busy||agentBusy||pending?undefined:saveDiagramModel}
           onSaveProject={saveCurrentProject}
           renderComments={pending?undefined:renderDesignComments}
-          onOpenBlock={pending?undefined:id=>{setDesignView('board');openBlock(id);}}
+          onOpenBlock={pending?undefined:id=>{setDesignView('board');setLevel('flow');setNestedScope('*');setDrawingTrail([id]);setBoardRecord(null);setSelected(null);refit(undefined,.2);}}
           onGenerate={nativeDesignEnabled?()=>startArchitecture():undefined}/>}
         <div className={`review-workspace${boardProgressVisible?' board-engineering-panel':''}`}
           hidden={mode!=='review'&&mode!=='estimate'&&!(boardProgressVisible)}>
@@ -3056,6 +3163,7 @@ function App() {
           {toast === "Preparing documents and diagram exports…"&&<BrainActivity/>}{toast}
         </div>
       )}
+      <PendingFeedback/>
       <StarPrompt offer={starOffer}/>
 
       {modal && (
@@ -3075,7 +3183,17 @@ function App() {
                 <label>File name<input name="filename" defaultValue={`${slug}.atmem-ai-architect.json`} required maxLength={200} autoFocus onFocus={event=>event.target.select()}/></label>
                 <button className="btn primary" type="submit"><Download size={16}/>Download project</button>
               </form>
-            </> : modal === 'edit-board-note' ? <form onSubmit={event=>{
+            </> : modal === 'edit-board-connection' ? <><h2>Edit connection</h2>
+              {editingConnection?.edge?<InterfaceEditor key={editingConnection.edge.id} edge={editingConnection.edge} node={project.nodes.find(node=>node.id===editingConnection.edge.source)} nodes={project.nodes} busy={boardToolLocked}
+                onSave={edge=>{
+                  const current=projectRef.current;
+                  if(current.id!==editingConnection.projectId||current.edges.find(row=>row.id===edge.id)!==editingConnection.edge)throw Error('The connection changed. Reopen its editor.');
+                  saveBlockInterface(edge);
+                }} onClose={()=>{setModal(null);setEditingConnection(null);}}/>:
+                <div className="fields">{editingConnection?.edges.map(edge=><button className="btn" key={edge.id} onClick={()=>setEditingConnection({...editingConnection,edge})}>{edge.label||edge.id}</button>)}</div>}
+            </> : modal === 'add-contained-block' ? <form onSubmit={event=>{event.preventDefault();const name=String(new FormData(event.currentTarget).get('name')||'').trim();if(name)addInsideBoard(boardRecord,name);}}>
+              <h2>Add inside {recordNode?.data.label}</h2><label>Component name<input name="name" aria-label="Component name" maxLength={180} autoFocus required/></label>
+              <button className="btn primary">Add component</button></form> : modal === 'edit-board-note' ? <form onSubmit={event=>{
               event.preventDefault();
               noteText(boardRecord,String(new FormData(event.currentTarget).get('note')||''));
               setModal(null);
@@ -3162,6 +3280,7 @@ function App() {
   );
 }
 
+installPendingFeedback();
 async function mountArchitect(){
  await connectHostedWorkspace();
  document.documentElement.dataset.theme=savedTheme();

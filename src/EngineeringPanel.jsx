@@ -1,3 +1,4 @@
+import {usePendingWork} from './PendingFeedback.jsx';
 import {CANVAS_ARTIFACT,CANVAS_REVIEW,DESIGN_WITH_CODEX,REFINE_CODEX_CANVAS} from './codex-canvas.mjs';
 import {BrainActivity} from './BrainActivity.jsx';
 import React,{useEffect,useMemo,useRef,useState} from 'react';
@@ -12,6 +13,8 @@ export function EngineeringPanel({projectId,session,connection,saveProject,onCon
   const draftKey=`atmem-engineering-draft-v1:${projectId}`;
   const [job,setJob]=useState(null),[events,setEvents]=useState([]),[draft,setDraft]=useState(()=>{try{return localStorage.getItem(draftKey)||'';}catch{return '';}}),
     [busy,setBusy]=useState(false),[error,setError]=useState(''),[loading,setLoading]=useState(true),[artifact,setArtifact]=useState(null);
+  usePendingWork('Connecting to project work…',loading);
+  usePendingWork('Working on project…',busy);
   const [draftError,setDraftError]=useState(''),[mappingStatus,setMappingStatus]=useState('');
   const [retainedOrder,setRetainedOrder]=useState(()=>{try{return loadBlockOrder(localStorage,projectId);}catch{return {pending:null,error:'Browser storage is unavailable. Block requests cannot be retained.'};}});
   const [failedBuildRequest,setFailedBuildRequest]=useState(null);

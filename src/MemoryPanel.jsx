@@ -1,3 +1,4 @@
+import {usePendingWork} from './PendingFeedback.jsx';
 import {BrainActivity} from "./BrainActivity.jsx";
 import React, { useEffect, useState } from "react";
 import { memoryCall } from "./local-agent.mjs";
@@ -16,6 +17,8 @@ export function MemoryPanel({session,project,onError,onStatus}){
  const [report,setReport]=useState(null),[tab,setTab]=useState('project'),[error,setError]=useState(''),[working,setWorking]=useState(false),[loading,setLoading]=useState(true);
  const [query,setQuery]=useState(''),[search,setSearch]=useState(''),[status,setStatus]=useState('active'),[cursor,setCursor]=useState(null),[history,setHistory]=useState([]),[page,setPage]=useState(null),[revision,setRevision]=useState(0);
  const [selected,setSelected]=useState(null),[preview,setPreview]=useState(null),[field,setField]=useState('preferences'),[value,setValue]=useState(''),[profileName,setProfileName]=useState('Default profile');
+ usePendingWork('Loading memory…',loading&&['project','profile'].includes(tab));
+ usePendingWork('Updating memory…',working);
  const scope=tab==='profile'?'user':'project',payload={projectId:project.id},date=value=>value?new Date(value).toLocaleString():'Unknown',short=value=>value?value.slice(0,8):'Unknown';
  async function refresh(){
   setWorking(true);setError('');try{

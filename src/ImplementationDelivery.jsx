@@ -1,3 +1,4 @@
+import {usePendingWork} from './PendingFeedback.jsx';
 import {unzipSync,zipSync,strToU8} from 'fflate';
 import {FinalChecklist} from './FinalChecklist.jsx';
 import {BrainActivity} from './BrainActivity.jsx';
@@ -12,6 +13,8 @@ export function ImplementationDelivery({project,session,workStatus,onBuild,onSav
  const [prepared,setPrepared]=useState(null),[preparing,setPreparing]=useState(false);
  const [captureNotice,setCaptureNotice]=useState('');
  const [loaded,setLoaded]=useState(null),[error,setError]=useState(''),[retry,setRetry]=useState(0),[busy,setBusy]=useState(false);
+ usePendingWork('Preparing delivery…',preparing||busy);
+ usePendingWork('Loading delivery…',!loaded&&!error);
  const report=loaded?.project===project?loaded.report:null;
  useEffect(()=>{
   const controller=new AbortController();setError('');setLoaded(null);
