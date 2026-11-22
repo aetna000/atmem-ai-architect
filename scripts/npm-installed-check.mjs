@@ -41,9 +41,10 @@ try{
 
  const response=await fetch(base+'/api/memory/inspect',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.token}`},body:JSON.stringify({projectId:'npm-clean-install-test'})});const memory=await response.json();assert.equal(response.status,200);assert.notEqual(memory.status,'unavailable');assert.equal(memory.enabled,true);assert.match(memory.engine,/AtMem/i);
  browser=await chromium.launch({headless:true});const page=await browser.newPage();const errors=[],failures=[],modelCalls=[];page.on('pageerror',e=>errors.push(e.message));page.on('requestfailed',r=>failures.push(r.url()));page.on('request',r=>{if(/\/api\/architect$|\/engineering\/(create|start|steer)$/.test(r.url()))modelCalls.push(r.url());});
- await page.goto(base,{waitUntil:'networkidle',timeout:60000});assert.equal(await page.getByRole('tablist',{name:'Project stages'}).getByRole('tab').count(),5);await page.getByLabel('Architecture board',{exact:true}).waitFor();assert.equal(await page.locator('.drawio-canvas').count(),1);assert.deepEqual(errors,[]);assert.deepEqual(failures,[]);assert.deepEqual(modelCalls,[]);
+ await page.goto(base,{waitUntil:'networkidle',timeout:60000});await page.locator('.drawing-journey-menu>summary').click();assert.equal(await page.getByRole('tablist',{name:'Project stages'}).getByRole('tab').count(),5);await page.locator('.drawing-journey-menu>summary').click();await page.getByLabel('Architecture board',{exact:true}).waitFor();assert.equal(await page.locator('.drawio-canvas').count(),1);assert.deepEqual(errors,[]);assert.deepEqual(failures,[]);assert.deepEqual(modelCalls,[]);
  await page.getByRole('button',{name:'Explore runnable AI example',exact:true}).click();
  await page.getByRole('button',{name:'Download example ZIP',exact:true}).waitFor();
+ if(!await page.getByRole('tab',{name:'Delivery',exact:true}).isVisible())await page.locator('.drawing-journey-menu>summary').click();
  await page.getByRole('tab',{name:'Delivery',exact:true}).click();
  await page.locator('summary').filter({hasText:/^Bundled runtime evidence$/}).click();
  assert.equal(await page.locator('.ready-reference .check-complete').count(),8);
