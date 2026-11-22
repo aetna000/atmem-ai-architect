@@ -1,3 +1,4 @@
+import {usePendingWork} from './PendingFeedback.jsx';
 import {BrainActivity} from "./BrainActivity.jsx";
 import React, { useState } from "react";
 import { Cloud, Code2, GitBranch, Plus, ShieldCheck, Sparkles, Upload } from "lucide-react";
@@ -52,6 +53,7 @@ export function Connections({ session, connection, onCheck, onSave, onRetry, wel
     [effort, setEffort] = useState(connection?.effort || ""),
     [reason, setReason] = useState(""),
     [keyStored, setKeyStored] = useState(0);
+  usePendingWork('Checking connection…',state==='checking'||state==='signing-in');
   const kind = PROVIDER_OPTIONS.find((o) => o[0] === choice)?.[2];
   const capability = session?.providers?.[choice];
   const name = PROVIDER_OPTIONS.find((o) => o[0] === choice)?.[1];

@@ -1,3 +1,4 @@
+import {usePendingWork} from './PendingFeedback.jsx';
 import React, {useEffect, useRef, useState} from 'react';
 import {FilePenLine, ImagePlus, List, MessageSquare, Printer, Table2} from 'lucide-react';
 import {documentState, refreshRichBindings, richBindingBasis, richPage, supportedImage, validDocumentBlock} from './requirements-document.mjs';
@@ -83,6 +84,7 @@ function BlockEditor({original, initial, change, close}) {
   const [block, setBlock] = useState(initial);
   const [error, setError] = useState('');
   const [reading, setReading] = useState(false);
+  usePendingWork('Reading image…',reading);
   const patch = values => setBlock(current => ({...current, ...values}));
   const commit = after => {
     try {change({type: 'edit', target: {kind: 'block', id: block.id}, before: original, after}); close();}

@@ -1,8 +1,7 @@
 import {validateBlockSpecs} from './block-spec.mjs';
 
 export function preferredNestedScope(project){
-  const roots=project.nodes.filter(node=>node.data.kind!=='note'&&!node.data.parentBlockId);
-  return roots.length===1&&project.nodes.some(node=>node.data.parentBlockId===roots[0].id)?roots[0].id:null;
+  return project.nodes.some(node=>node.data.parentBlockId)?'*':null;
 }
 
 // Collapse only presentation. Original components, contracts and evidence stay intact.

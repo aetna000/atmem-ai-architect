@@ -8,7 +8,7 @@ local service and isolated AtMem memory runtime.
 Install Node.js 22 or later, then run:
 
 ```sh
-npx @atmem/architect@0.2.6
+npx @atmem/architect@0.2.7
 ```
 
 First run downloads checksum-verified uv, managed Python 3.13 and hash-locked

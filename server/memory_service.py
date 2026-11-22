@@ -142,19 +142,19 @@ class MemoryService:
         # The editable project already holds the diagram, comments and conversation brief.
         # Only durable, confirmed facts belong in long-term memory.
         for category in ('requirements', 'assumptions', 'openQuestions'):
-            for item in file.get(category, [])[:300]:
+            for item in file.get(category, []):
                 if category != 'requirements' or item.get('source') != 'user' or item.get('priority') != 'must' or str(item.get('id','')).startswith('drv-'):
                     continue
                 key = str(item.get('id', ''))
                 content = item.get('statement') or item.get('question')
                 if key and content:
                     values[f'{category}.{key}'] = f'{category} [{key}]: {content}; status: {item.get("status", "recorded")}'[:1800]
-        for item in file.get('discovery', {}).get('facts', [])[:300]:
+        for item in file.get('discovery', {}).get('facts', []):
             if isinstance(item, dict) and item.get('name') == 'budget.per_month' and not item.get('conflictsWith'):
                 name = str(item['name'])
                 values['fact.' + name] = f'Project fact {name}: {item.get("value")} {item.get("unit", "")}; stated {item.get("madeAt", "unknown")}' + ('; unresolved conflict: confirm with user' if item.get('conflictsWith') else '')
         decisions = file.get('decisions', [])
-        for item in decisions[:200]:
+        for item in decisions:
             if item.get('status') != 'Accepted':
                 continue
             subject = str(item.get('subject') or item.get('id') or 'decision')

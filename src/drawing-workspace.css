@@ -1,0 +1,98 @@
+/* Drawing chrome occupies one row; the rest belongs to the drawing. */
+.app.compact-drawing-workspace {
+  height:100dvh;min-height:0;overflow:hidden;
+  grid-template-rows:44px minmax(0,1fr);
+}
+.app.compact-drawing-workspace.drawing-top-collapsed {grid-template-rows:0 minmax(0,1fr);}
+.compact-drawing-workspace>.bar {
+  grid-row:1;min-height:0;height:44px;padding:4px 30px 4px 8px;gap:7px;
+  flex-wrap:nowrap;box-sizing:border-box;z-index:30;
+}
+.compact-drawing-workspace>.bar[hidden] {display:none;}
+.compact-drawing-workspace>.canvas {grid-row:2;min-height:0;height:auto;overflow:hidden;}
+.compact-drawing-workspace>.chat {grid-row:2;min-height:0;}
+.compact-drawing-workspace .bar .brand {flex:none;padding:0;width:24px;min-width:24px;}
+.compact-drawing-workspace .bar .brand svg {width:23px;height:23px;}
+.compact-drawing-workspace .bar .crumbs {order:0;flex:0 1 230px;flex-basis:230px;min-width:90px;gap:6px;}
+.compact-drawing-workspace .bar .workspace-label {display:none;}
+.compact-drawing-workspace .bar .projects-btn {padding:4px 7px;min-height:30px;font-size:12px;gap:5px;}
+.compact-drawing-workspace .bar .projects-btn svg {width:17px;height:17px;}
+.compact-drawing-workspace .bar .project-rename {flex:1;min-width:40px;}
+.compact-drawing-workspace .bar .project-name {font-size:12px;padding:4px;min-height:28px;height:28px;}
+.compact-drawing-workspace .bar .bar-actions {margin-left:auto;gap:3px;flex:none;}
+.compact-drawing-workspace .bar .icon {width:28px;height:28px;min-height:28px;}
+.drawing-top-toggle {position:fixed;z-index:40;right:3px;top:6px;width:24px;height:28px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink);font-size:18px;line-height:1;}
+.drawing-top-collapsed>.drawing-top-toggle {top:0;height:20px;border-radius:0 0 6px 6px;box-shadow:var(--shadow);}
+.compact-tools-toggle,.drawing-journey-menu>summary,.board-actions-menu>summary {display:flex;align-items:center;gap:5px;white-space:nowrap;min-height:30px;padding:4px 8px;border:1px solid var(--line);border-radius:6px;font-size:12px;cursor:pointer;box-sizing:border-box;color:var(--ink);background:var(--paper);}
+.compact-tools-toggle {flex:none;}
+.compact-tools-toggle[aria-expanded=true] {color:var(--accent);background:var(--accent-soft);}
+.drawing-journey-menu {flex:none;}
+.drawing-journey-menu>summary {list-style:none;}
+.drawing-journey-menu>summary::-webkit-details-marker,.board-actions-menu>summary::-webkit-details-marker {display:none;}
+.drawing-journey-menu:not([open])>.journey-wizard,.board-actions-menu:not([open])>div {display:none;}
+.drawing-journey-menu>.journey-wizard {position:absolute;left:8px;top:43px;display:flex;flex-direction:column;align-items:stretch;width:230px;max-width:calc(100vw - 16px);padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--paper);box-shadow:var(--shadow);}
+.drawing-journey-menu .stage-tabs {display:flex;flex-direction:column;align-items:stretch;width:auto;gap:3px;overflow:visible;}
+.drawing-journey-menu .stage-tabs>button {justify-content:flex-start;min-height:32px;padding:5px 8px;font-size:12px;}
+.drawing-journey-menu .stage-tabs>button>span {width:20px;height:20px;}
+.drawing-journey-menu .journey-current {width:100%;max-width:none;}
+.drawing-journey-menu .journey-current .btn {width:100%;}
+.drawing-toolbar-scroll {flex:1;min-width:0;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;}
+.drawing-toolbar-scroll::-webkit-scrollbar {display:none;}
+.drawing-toolbar-scroll .board-overlays,.drawing-toolbar-scroll .board-top-controls,.drawing-toolbar-scroll .board-top-actions,.drawing-toolbar-scroll .nested-view-control,.drawing-toolbar-scroll .board-controls,.drawing-toolbar-scroll .toolbar,.drawing-toolbar-scroll .zoom {position:static;display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:4px;inset:auto;margin:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;min-width:max-content;}
+.drawing-toolbar-scroll .board-overlays {height:34px;}
+.drawing-toolbar-scroll .drawing-breadcrumbs {gap:4px;font-size:12px;white-space:nowrap;}
+.drawing-toolbar-scroll .drawing-breadcrumbs button {padding:5px 7px;}
+.drawing-toolbar-scroll .nested-scope-control {display:flex;align-items:center;gap:4px;padding:0;margin:0;border:0;font-size:12px;white-space:nowrap;}
+.drawing-toolbar-scroll .nested-scope-control select {width:auto;max-width:170px;font-size:12px;min-height:28px;padding:3px 6px;}
+.drawing-toolbar-scroll :is(.btn,.apply-launcher) {height:30px;min-height:30px;padding:4px 8px;font-size:12px;white-space:nowrap;}
+.board-actions-menu>summary {list-style:none;}
+.board-actions-menu>div {position:fixed;top:43px;right:70px;width:220px;max-height:calc(100dvh - 55px);overflow:auto;display:flex;flex-direction:column;align-items:stretch;gap:4px;padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--paper);box-shadow:var(--shadow);z-index:32;}
+.board-actions-menu>div>.icon {width:100%!important;justify-content:flex-start;}
+.board-actions-menu .board-secondary {display:flex!important;}
+.compact-drawing-workspace .drawing-studio.library-collapsed>:is(.drawing-board,.architecture-workspace,.system-model-workspace,.studio-engineering) {top:0;height:100%;}
+.compact-drawing-workspace .drawing-studio>.drawing-board:not([hidden]) {grid-template-rows:minmax(0,1fr) auto;grid-template-areas:"viewport" "pages";}
+/* Properties and connection details share a full-height, independently scrolling left rail. */
+.drawio-surface:has(>.diagram-references) {display:grid;grid-template-columns:36px minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto auto;}
+.drawio-surface[data-properties-open=true]:has(>.diagram-references) {grid-template-columns:clamp(240px,23vw,320px) minmax(0,1fr);}
+.drawio-surface>.diagram-scope-label {grid-column:2;grid-row:1;}
+.drawio-surface:has(>.diagram-references)>.drawio-canvas {grid-column:2;grid-row:2;position:relative;inset:auto;width:100%;height:100%;min-height:0;min-width:0;}
+.drawio-surface>.diagram-layout-issues {grid-column:2;grid-row:3;}
+.drawio-surface>.diagram-navigation {grid-column:2;grid-row:4;min-height:30px;padding:3px 8px;}
+.drawio-surface>.diagram-references {grid-column:1;grid-row:1/-1;position:relative;min-width:0;min-height:0;max-height:none;border:0;border-right:1px solid var(--line);overflow:hidden;display:flex;flex-direction:column;}
+.drawing-properties-header {flex:none;min-height:32px;border-bottom:1px solid var(--line);}
+.drawing-properties-toggle {display:flex;align-items:center;gap:9px;padding:6px 10px;width:100%;min-height:32px;text-align:left;font-size:12px;font-weight:650;}
+.drawing-properties-toggle>span:first-child {font-size:19px;line-height:1;}
+.diagram-references[data-open=false] .drawing-properties-toggle {writing-mode:vertical-rl;padding:9px 6px;gap:10px;}
+.diagram-references .drawing-bottom-tabs {flex:none;flex-wrap:wrap;gap:0;}
+.diagram-references .diagram-references-toggle {padding:7px 9px!important;min-height:32px;font-size:12px!important;}
+.diagram-references .diagram-reference-content {flex:1;min-height:0;max-height:none;padding:10px;overflow:auto;}
+.diagram-references .drawing-bottom-properties {min-height:0;}
+.diagram-references .drawing-bottom-properties .block-property-list {display:block!important;}
+.diagram-references .diagram-reference-content ol {grid-template-columns:minmax(0,1fr);}
+.diagram-references .diagram-reference-content .editable-block-name input {font-size:16px;}
+@media(max-width:900px) {
+ .app.compact-drawing-workspace:not(.chat-closed) {grid-template-rows:44px minmax(0,2fr) minmax(240px,3fr);}
+ .app.compact-drawing-workspace.drawing-top-collapsed:not(.chat-closed) {grid-template-rows:0 minmax(0,2fr) minmax(240px,3fr);}
+ .compact-drawing-workspace>.chat {grid-row:3;}
+ .compact-drawing-workspace .bar .crumbs {flex:0 1 150px;flex-basis:150px;min-width:70px;}
+ .compact-drawing-workspace .bar .projects-btn span {display:none;}
+ .drawio-surface[data-properties-open=true]:has(>.diagram-references) {grid-template-columns:min(240px,48vw) minmax(0,1fr);}
+}
+@media(max-width:600px) {
+ .compact-drawing-workspace>.bar {gap:4px;}
+ .compact-drawing-workspace .bar .crumbs {flex:none;min-width:0;}
+ .compact-drawing-workspace .bar .project-rename,.compact-drawing-workspace .compact-tools-toggle>span {display:none;}
+ .compact-drawing-workspace .drawing-toolbar-scroll {min-width:35px;}
+ .drawing-journey-menu>summary,.compact-tools-toggle {padding:4px 6px;}
+ .board-actions-menu>div {right:8px;}
+ .diagram-navigation label {max-width:100%;}
+ .diagram-navigation select {max-width:110px;}
+}
+/* Keep navigation compact even while the left rail is open on a narrow screen. */
+.drawio-surface>.diagram-navigation {flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin;}
+.diagram-navigation>* {flex:none;}
+.diagram-navigation .diagram-transform form {position:fixed;bottom:74px;right:12px;max-width:calc(100vw - 24px);}
+.diagram-arrangement-note {color:var(--ink-2);font-size:12px;}
+.drawio-surface>.diagram-arrangement-note {grid-column:2;grid-row:3;padding:6px 10px;background:var(--paper);}
+.diagram-layout-issues[aria-busy=true] {cursor:progress;}
+.diagram-layout-issues details button {text-align:left;}

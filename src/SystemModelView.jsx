@@ -60,7 +60,7 @@ const newId=()=>crypto.randomUUID();
 const blankModel=()=>({format:'atmem.system-model',version:1,id:newId(),authoring:'manual',elements:[],exchanges:[],diagrams:[]});
 const baseRecord=(kind,name,description)=>({id:newId(),kind,name,description,basis:'proposed',requirementIds:[]});
 
-export function SystemModelWorkspace({project,onLayoutPage,onBack,onPage,initialPage=null,renderBlockProperties,onNewDiagram,onOpenBlock,onGenerate,onSave,onSaveProject,renderComments,onUndo,onRedo,canUndo,canRedo}) {
+export function SystemModelWorkspace({project,onLayoutPage,onGroupsPage,onBack,onPage,initialPage=null,renderBlockProperties,onNewDiagram,onOpenBlock,onGenerate,onSave,onSaveProject,renderComments,onUndo,onRedo,canUndo,canRedo}) {
   const savedModel=project.extensions?.systemModel;
   const model=useMemo(()=>savedModel?systemModelOnBoard(savedModel,project):blankModel(),[savedModel,project.nodes,project.edges]);
   const index=useMemo(()=>systemModelIndex(model),[model]);
@@ -188,6 +188,36 @@ export function SystemModelWorkspace({project,onLayoutPage,onBack,onPage,initial
     (diagram.kind==='sequence'||!diagram.exchangeIds.includes(exchange.id))):[];
   const portOptions=direction=>ports.filter(port=>port.direction===direction||port.direction==='inout');
 
+  const modelProperties=<aside ref={inspector} className="system-model-inspector" aria-label="System model properties">
+        {error&&<p role="alert">{error}</p>}
+        {!editing&&diagram&&renderComments?.({kind:'diagram',id:diagram.id},'Diagram comments')}
+        {!editing&&record&&renderComments?.({kind:index.exchanges.has(record.id)?'exchange':'element',id:record.id},index.exchanges.has(record.id)?'Exchange comments':'Element comments')}
+        {!editing&&step>=0&&step<count&&renderComments?.({kind:'step',id:diagram.id,
+          index:exchangeOffsets(savedModel.diagrams.find(row=>row.id===diagram.id),diagram)[step],
+          exchangeId:diagram.exchangeIds[step]},'Step comments')}
+        {editing==='delete-view'||editing==='delete-record'?<div className="system-model-form">
+          <p>{editing==='delete-view'?'Delete this diagram? Its shared elements remain available.':'Delete this element from every view and remove its incident exchanges?'}</p>
+          <button className="btn danger" onClick={()=>{
+            const done=editing==='delete-view'?apply(model=>({...model,diagrams:model.diagrams.filter(view=>view.id!==diagram.id)})):
+              apply(model=>removeModelRecord(model,record.id));
+            if(done)openView(editing==='delete-view'?null:diagram.id);
+          }}>Confirm delete</button>
+          <button className="btn" onClick={()=>setEditing(null)}>Cancel</button>
+        </div>:editing?<ModelForm {...{editing,diagram,record,index,project,available,availableExchanges,portOptions,submit}} onCancel={()=>edit(null)}/>:
+          record?<><Inspector {...{record,index,project,onOpenBlock}} select={selectRecord}/>
+          {record.blockId&&renderBlockProperties?.(record.blockId)}
+          <DiagramMermaid code={graphMermaid(scene,{selected,timeline:diagram.kind==='sequence'})}/>
+          {onSave&&<div className="system-model-tools">
+            <button className="btn" onClick={()=>edit('edit')}>Edit properties</button>
+            {['actor','function','component'].includes(record.kind)&&<button className="btn" onClick={()=>edit('port')}>Add port</button>}
+            {containing.some(view=>view.id===diagram?.id)&&diagram&&(diagram.elementIds.includes(record.id)||diagram.kind!=='sequence')&&
+              <button className="btn" onClick={()=>{if(apply(model=>removeModelRecord(model,record.id,diagram.id)))setSelected(null);}}>Remove from diagram</button>}
+            <button className="btn danger" onClick={()=>edit('delete-record')}>Delete from model</button>
+          </div>}
+          {!!containing.length&&<><h4>Appears in</h4><ul>{containing.map(row=><li key={row.id}>
+            <button type="button" className="link" onClick={()=>{setView(row.id);setStep(-1);setPlaying(false);}}>{row.name}</button>
+          </li>)}</ul></>}</>:<p>Select an element or exchange to inspect it.</p>}
+      </aside>;
   return <section className="system-model-workspace" aria-labelledby="system-model-heading">
     <header className="system-model-header">
       <div className="system-model-heading"><button className="icon" aria-label="Back to Board" onClick={onBack}><ArrowLeft size={19}/></button>
@@ -248,53 +278,26 @@ export function SystemModelWorkspace({project,onLayoutPage,onBack,onPage,initial
           </>}
         </div>}
         <div className="system-model-drawing system-model-native">
-          {diagram.elementIds.length?<DrawioCanvas key={diagram.id} graphRef={graphApi} label={diagram.name} scene={applyDrawingLayout(scene,project.extensions?.drawingLayouts?.pages?.['system/'+diagram.id])} onLayout={onSave?changes=>onLayoutPage?.('system/'+diagram.id,changes):null}
+          {<DrawioCanvas propertiesVisible={!!editing} properties={modelProperties} key={diagram.id} graphRef={graphApi} label={diagram.name} scene={applyDrawingLayout(scene,project.extensions?.drawingLayouts?.pages?.['system/'+diagram.id],project.extensions?.drawingLayouts?.groups?.['system/'+diagram.id],project.extensions?.drawingLayouts?.parents?.['system/'+diagram.id])} groups={project.extensions?.drawingLayouts?.groups?.['system/'+diagram.id]||[]} onGroupsChange={onSave&&onGroupsPage?(groups,options)=>onGroupsPage('system/'+diagram.id,groups,options):null} onLayout={onSave?(changes,options)=>onLayoutPage?.('system/'+diagram.id,changes,options):null}
             selected={selected} onSelect={id=>{
               if(!id)return;
               const position=diagram.exchangeIds.indexOf(id);
               if(diagram.kind==='sequence'&&position>=0){setPlaying(false);setStep(position);}
               selectRecord(id);
             }}
+            onEditRecord={onSave?id=>{setSelected(id);edit('edit');}:null}
+            onDoubleClick={id=>{const element=index.elements.get(id);if(element?.blockId)onOpenBlock?.(element.blockId);else if(index.exchanges.has(id)){setSelected(id);edit('edit');}}}
             onMove={onSave&&diagram.kind!=='sequence'?moves=>updateView(view=>({...view,positions:{...view.positions,
               ...Object.fromEntries(moves.map(({id,x,y})=>[id,{x:Math.max(0,Math.min(100000,x)),y:Math.max(0,Math.min(100000,y))}]))}})):null}
-            />:<p className="system-model-empty">Add or place an element to start this diagram.</p>}
+            />}
         </div><DiagramPages pages={projectPages(project.extensions?.architectureDiagrams?.views,model.diagrams,project.extensions?.engineeringModel?.diagrams)} active={'system/'+diagram.id}
           onSelect={key=>{if(key.startsWith('system/')){openView(key.slice(7));}else onPage(key);}}
           onAdd={onSave?onNewDiagram:null}/></>:<div className="system-model-empty">
-          <p>Create a diagram or generate one from a specification.</p>
+          <p>Create a diagram or generate one from a specification.</p><DrawioCanvas scene={{vertices:[],wires:[]}} properties={modelProperties} propertiesVisible={!!editing} label="System drawing"/>
           {onGenerate&&<button className="btn" onClick={onGenerate}>Generate from specification</button>}
         </div>}
       </div>
-      <aside ref={inspector} className="system-model-inspector" aria-label="System model properties">
-        {error&&<p role="alert">{error}</p>}
-        {!editing&&diagram&&renderComments?.({kind:'diagram',id:diagram.id},'Diagram comments')}
-        {!editing&&record&&renderComments?.({kind:index.exchanges.has(record.id)?'exchange':'element',id:record.id},index.exchanges.has(record.id)?'Exchange comments':'Element comments')}
-        {!editing&&step>=0&&step<count&&renderComments?.({kind:'step',id:diagram.id,
-          index:exchangeOffsets(savedModel.diagrams.find(row=>row.id===diagram.id),diagram)[step],
-          exchangeId:diagram.exchangeIds[step]},'Step comments')}
-        {editing==='delete-view'||editing==='delete-record'?<div className="system-model-form">
-          <p>{editing==='delete-view'?'Delete this diagram? Its shared elements remain available.':'Delete this element from every view and remove its incident exchanges?'}</p>
-          <button className="btn danger" onClick={()=>{
-            const done=editing==='delete-view'?apply(model=>({...model,diagrams:model.diagrams.filter(view=>view.id!==diagram.id)})):
-              apply(model=>removeModelRecord(model,record.id));
-            if(done)openView(editing==='delete-view'?null:diagram.id);
-          }}>Confirm delete</button>
-          <button className="btn" onClick={()=>setEditing(null)}>Cancel</button>
-        </div>:editing?<ModelForm {...{editing,diagram,record,index,project,available,availableExchanges,portOptions,submit}} onCancel={()=>edit(null)}/>:
-          record?<><Inspector {...{record,index,project,onOpenBlock}} select={selectRecord}/>
-          {record.blockId&&renderBlockProperties?.(record.blockId)}
-          <DiagramMermaid code={graphMermaid(scene,{selected,timeline:diagram.kind==='sequence'})}/>
-          {onSave&&<div className="system-model-tools">
-            <button className="btn" onClick={()=>edit('edit')}>Edit properties</button>
-            {['actor','function','component'].includes(record.kind)&&<button className="btn" onClick={()=>edit('port')}>Add port</button>}
-            {containing.some(view=>view.id===diagram?.id)&&diagram&&(diagram.elementIds.includes(record.id)||diagram.kind!=='sequence')&&
-              <button className="btn" onClick={()=>{if(apply(model=>removeModelRecord(model,record.id,diagram.id)))setSelected(null);}}>Remove from diagram</button>}
-            <button className="btn danger" onClick={()=>edit('delete-record')}>Delete from model</button>
-          </div>}
-          {!!containing.length&&<><h4>Appears in</h4><ul>{containing.map(row=><li key={row.id}>
-            <button type="button" className="link" onClick={()=>{setView(row.id);setStep(-1);setPlaying(false);}}>{row.name}</button>
-          </li>)}</ul></>}</>:<p>Select an element or exchange to inspect it.</p>}
-      </aside>
+
     </div>
   </section>;
 }

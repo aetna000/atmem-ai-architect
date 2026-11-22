@@ -1,0 +1,15 @@
+import test from 'node:test';import assert from 'node:assert/strict';
+import {boardGraph} from '../src/drawio-model.mjs';import {applyDrawingLayout,updateDrawingLayout} from '../src/drawing-layout.mjs';import {drawingInterior,updateDrawingPlacement,validateDrawingParents} from '../src/drawing-parents.mjs';import {toProjectFile,parseProjectFile} from '../src/project-file.mjs';import {drawioHandoffFiles} from '../src/drawio-handoff.mjs';
+for(const domain of ['Archive','Clinic'])test(domain+' drawing membership is editable independently of software ownership',()=>{
+ const node=(id,parent)=>({id,position:{x:40,y:40},data:{kind:'resource',provider:'tools',label:domain+' '+id,...(parent?{parentBlockId:parent}:{})}}),project={id:'editable-drawing',version:1,revision:1,name:domain,provider:'tools',nodes:[node('system'),node('a','system'),node('outside')],edges:[{id:'link',source:'a',target:'outside',label:'Publish'}]},before=structuredClone(project),base=boardGraph(project.nodes,project.edges);
+ let layout=updateDrawingLayout(undefined,'board/full',[{id:'a',x:1600,y:900}]);layout=updateDrawingPlacement(layout,'board/full',[],{parents:{a:null}});
+ let scene=applyDrawingLayout(base,layout.pages['board/full'],[],layout.parents['board/full']);assert.equal(scene.vertices.find(v=>v.id==='a').containerParentId,undefined);assert.equal(scene.vertices.find(v=>v.id==='a').x,1600);
+ layout=updateDrawingPlacement(layout,'board/full',[],{parents:{a:'outside'}});scene=applyDrawingLayout(base,layout.pages['board/full'],[],layout.parents['board/full']);assert.equal(scene.vertices.find(v=>v.id==='a').containerParentId,'outside');assert.equal(scene.vertices.find(v=>v.id==='outside').container,true);assert.deepEqual(project,before);
+ assert.deepEqual(drawingInterior(scene,'outside').vertices.map(v=>v.id),['a']);assert.equal(drawingInterior(scene,'outside').wires.length,0);assert.deepEqual(project.edges,before.edges);
+ const saved={...project,extensions:{drawingLayouts:layout}},reopened=parseProjectFile(JSON.stringify(toProjectFile(saved))).project;assert.deepEqual(reopened.extensions.drawingLayouts.parents,layout.parents);assert.match(drawioHandoffFiles(saved)['architecture.drawio'],/parent="atmem-outside"/);
+});
+test('drawing nesting rejects cycles without rewriting records, and retains empty visual groups',()=>{
+ assert.throws(()=>validateDrawingParents({page:{a:'a'}}),/cycle/);assert.throws(()=>validateDrawingParents({page:{a:'b',b:'a'}}),/cycle/);
+ const groups=[{id:'@visual-group-team',name:'Team',memberIds:['a']}];let layout={version:1,pages:{page:{'@visual-group-team':{x:50,y:60,width:500,height:300}}},groups:{page:groups}};layout=updateDrawingPlacement(layout,'page',[],{parents:{a:null}});assert.deepEqual(layout.groups.page[0].memberIds,[]);
+ const scene=applyDrawingLayout({vertices:[{id:'a',name:'Record',body:'Record',selectable:true,x:900,y:900,width:150,height:90,style:''}],wires:[]},layout.pages.page,layout.groups.page,layout.parents.page);assert.equal(scene.vertices.find(v=>v.id==='@visual-group-team').width,500);assert.equal(scene.vertices.find(v=>v.id==='a').containerParentId,undefined);
+});

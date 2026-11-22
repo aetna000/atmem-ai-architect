@@ -1,4 +1,4 @@
-// Preserve authoritative records across the bounded API context contract.
+// Preserve every authoritative record; chunk individual text fields for the API contract.
 export function consultationContext(records){
  const result=[];
  for(const [index,record]of records.entries()){
@@ -10,6 +10,5 @@ export function consultationContext(records){
    result.push(part===0?{...record,text}:{type:'discovery',id:`context-continuation-${index}-${part+1}`,text:`Continuation of ${record.type} ${record.id}, part ${part+1}/${total}: ${text}`});
   }
  }
- if(result.length>300)throw Error('The consultation exceeds 300 context records. Narrow the active consultation or split the project before sending; no records were truncated.');
  return result;
 }

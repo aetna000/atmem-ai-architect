@@ -15,7 +15,7 @@ export function routeDiagramWires(scene){
  if(scene.timeline||!scene.wires.length)return scene;
  const nodes=scene.vertices.filter(v=>v.selectable!==false),byId=new Map(nodes.map(v=>[v.id,v]));
  const bounds=v=>{const angle=(v.rotation||0)*Math.PI/180,c=Math.abs(Math.cos(angle)),s=Math.abs(Math.sin(angle)),width=v.width*c+v.height*s,height=v.width*s+v.height*c;return{x:v.x+v.width/2-width/2,y:v.y+v.height/2-height/2,width,height};};
- const obstacles=nodes.map(v=>{const b=bounds(v);return{x:b.x-inset,y:b.y-inset,width:b.width+inset*2,height:b.height+inset*2};});
+ const obstacles=nodes.filter(v=>!v.container).map(v=>{const b=bounds(v);return{x:b.x-inset,y:b.y-inset,width:b.width+inset*2,height:b.height+inset*2};});
  const allocations=new Map(),selfCounts=new Map();
  const baseStyles=scene.wires.map(w=>w.routingBaseStyle??w.style??'');
  const endpoints=scene.wires.map((w,index)=>{
@@ -58,10 +58,30 @@ export function routeDiagramWires(scene){
   const list=[[x-1,y],[x+1,y],[x,y-1],[x,y+1]].filter(([x,y])=>x>=0&&y>=0&&x<xs.length&&y<ys.length).map(([x,y])=>id(x,y))
    .filter(j=>allowed(j)&&clear(a,point(j),obstacles));links.set(i,list);return list;
  }
- const drawn=[];
- const overlap=(a,b,c,d)=>a.x===b.x&&c.x===d.x&&Math.abs(a.x-c.x)<12?Math.max(0,Math.min(Math.max(a.y,b.y),Math.max(c.y,d.y))-Math.max(Math.min(a.y,b.y),Math.min(c.y,d.y))):a.y===b.y&&c.y===d.y&&Math.abs(a.y-c.y)<12?Math.max(0,Math.min(Math.max(a.x,b.x),Math.max(c.x,d.x))-Math.max(Math.min(a.x,b.x),Math.min(c.x,d.x))):0;
- const sharedScore=path=>path.slice(1).reduce((sum,b,i)=>sum+drawn.reduce((total,old)=>total+old.slice(1).reduce((part,d,j)=>{const n=overlap(path[i],b,old[j],d);return part+(n>24?n:0);},0),0),0);
- const shared=(a,b)=>drawn.some(path=>path.slice(1).some((d,j)=>overlap(a,b,path[j],d)>24));
+ // Only nearby parallel segments can share a trunk. Index their lanes instead
+ // of repeatedly scanning every segment of every already routed connector.
+ const lanes={x:new Map(),y:new Map()},laneWidth=12;
+ const segment=(a,b)=>a.x===b.x?{axis:'x',position:a.x,min:Math.min(a.y,b.y),max:Math.max(a.y,b.y)}:
+  a.y===b.y?{axis:'y',position:a.y,min:Math.min(a.x,b.x),max:Math.max(a.x,b.x)}:null;
+ function sharedLength(a,b,firstOnly=false){
+  const row=segment(a,b);if(!row)return 0;
+  const index=lanes[row.axis],bucket=Math.floor(row.position/laneWidth);let total=0;
+  for(let key=bucket-1;key<=bucket+1;key++)for(const old of index.get(key)||[]){
+   if(Math.abs(row.position-old.position)>=12)continue;
+   const length=Math.min(row.max,old.max)-Math.max(row.min,old.min);
+   if(length>24){if(firstOnly)return length;total+=length;}
+  }
+  return total;
+ }
+ const sharedScore=path=>{let sum=0;for(let i=1;i<path.length;i++)sum+=sharedLength(path[i-1],path[i]);return sum;};
+ const shared=(a,b)=>sharedLength(a,b,true)>0;
+ function reservePath(path){
+  for(let i=1;i<path.length;i++){
+   const row=segment(path[i-1],path[i]);if(!row)continue;
+   const index=lanes[row.axis],key=Math.floor(row.position/laneWidth);
+   if(!index.has(key))index.set(key,[]);index.get(key).push(row);
+  }
+ }
  const wires=scene.wires.map((wire,i)=>{
   const ports=endpoints[i];if(!ports)return wire.start&&wire.end?wire:{...wire,routingIssue:'A connector endpoint is missing.'};
   const start=id(xs.indexOf(ports.a.x),ys.indexOf(ports.a.y)),goal=id(xs.indexOf(ports.b.x),ys.indexOf(ports.b.y));
@@ -103,7 +123,7 @@ export function routeDiagramWires(scene){
     if(candidate.slice(1).every((p,k)=>clear(candidate[k],p,obstacles))&&score(candidate)+1<score(points)){points=candidate;break;}
    }
   }
-  drawn.push(fullPath(points));
+  reservePath(fullPath(points));
   return{...wire,points,routingIssue:undefined,routingBaseStyle:baseStyles[i],style:baseStyles[i].split(';').filter(part=>part&&!/^(?:noEdgeStyle|exitX|exitY|entryX|entryY)=/.test(part)).join(';')+';noEdgeStyle=1;exitX='+ports.source[0]+';exitY='+ports.source[1]+';entryX='+ports.target[0]+';entryY='+ports.target[1]+';'};
  });
  return{...scene,wires};

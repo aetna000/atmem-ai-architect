@@ -11,7 +11,8 @@ export function populateDrawioGraph(mx,graph,scene){
   try{
     graph.removeCells(graph.getChildCells(parent),true);
     for(const row of scene.vertices){
-      const cell=graph.insertVertex(parent,row.id,row.body,row.x,row.y,row.width,row.height,row.style);
+      const owner=cells.get(row.containerParentId),offset=owner?.atmem;
+      const cell=graph.insertVertex(owner||parent,row.id,row.body,row.x-(offset?.x||0),row.y-(offset?.y||0),row.width,row.height,row.style);
       cell.atmem=row;
       cells.set(row.id,cell);
     }
@@ -37,7 +38,7 @@ export function populateDrawioGraph(mx,graph,scene){
     if(shape){shape.setAttribute('data-record-id',row.recordId||row.id);shape.setAttribute('data-cell-kind',model.isVertex(cell)?'vertex':'edge');}
   }
   graph.atmemRenderedScene=scene;
-  return graph.getChildCells(parent);
+  return [...cells.values(),...scene.wires.map(w=>model.getCell(w.id))];
 }
 
 // A bounded native pass resolves differences between abstract routes and actual
@@ -48,19 +49,23 @@ export function repairPaintedConnectorRoutes(mx,graph,scene){
  const score=id=>paintedConnectorOverlaps(graph,scene,id?[id]:undefined).reduce((sum,r)=>sum+r.pixels,0);
  const crosses=wire=>{
   const s=graph.view.getState(model.getCell(wire.id)),points=s?.absolutePoints?.filter(Boolean)||[];
-  const rectangles=scene.vertices.filter(v=>v.selectable!==false&&![wire.source,wire.target].includes(v.id)).map(v=>graph.view.getState(model.getCell(v.id))?.shape?.boundingBox).filter(Boolean);
+  const rectangles=scene.vertices.filter(v=>v.selectable!==false&&!v.container&&![wire.source,wire.target].includes(v.id)).map(v=>graph.view.getState(model.getCell(v.id))?.shape?.boundingBox).filter(Boolean);
   return points.slice(1).some((b,i)=>rectangles.some(r=>{
    const a=points[i],dx=b.x-a.x,dy=b.y-a.y;let lo=0,hi=1;
    for(const[p,q]of [[-dx,a.x-r.x-2],[dx,r.x+r.width-2-a.x],[-dy,a.y-r.y-2],[dy,r.y+r.height-2-a.y]]){if(p===0){if(q<0)return false;}else{const t=q/p;if(p<0)lo=Math.max(lo,t);else hi=Math.min(hi,t);}}
    return lo<hi;
   }));
  };
- let repairs=0;
- for(let pass=0;pass<12;pass++){
+ // Interactive repair is best effort. Exhaustive diagnostics still run below;
+ // unresolved overlaps remain visible and continue to block verified exports.
+ const started=performance.now();let repairs=0,totalAttempts=0;
+ repair:for(let pass=0;pass<12;pass++){
+  if(totalAttempts>=48||performance.now()-started>160)break;
   const issues=paintedConnectorOverlaps(graph,scene);if(!issues.length)break;
   let changed=false;
   for(const issue of issues){
    for(const id of [issue.id,issue.other]){
+   if(totalAttempts>=48||performance.now()-started>160)break repair;
    const row=scene.wires.find(w=>w.id===id),cell=model.getCell(id),state=graph.view.getState(cell),original=model.getGeometry(cell).clone(),before=score(id);
    const full=state.absolutePoints.filter(Boolean).map(p=>({x:p.x/scale-translate.x,y:p.y/scale-translate.y}));
    const host=graph.container.getBoundingClientRect(),shared=(id===issue.id?issue.shared.slice(0,2):issue.shared.slice(2)).map(p=>({x:(p.x-host.left+graph.container.scrollLeft)/scale-translate.x,y:(p.y-host.top+graph.container.scrollTop)/scale-translate.y}));
@@ -70,7 +75,8 @@ export function repairPaintedConnectorRoutes(mx,graph,scene){
     const along=axis==='x'?'y':'x';
     if(Math.abs(a[axis]-(shared[0][axis]+shared[1][axis])/2)>24/scale||Math.min(Math.max(a[along],b[along])+20/scale,Math.max(shared[0][along],shared[1][along]))-Math.max(Math.min(a[along],b[along])-20/scale,Math.min(shared[0][along],shared[1][along]))<0)continue;
     for(const delta of [12,-12,24,-24,36,-36,48,-48,72,-72,96,-96]){
-     attempts++;const points=full.map(p=>({...p}));
+     if(totalAttempts>=48||performance.now()-started>160)break repair;
+     totalAttempts++;attempts++;const points=full.map(p=>({...p}));
      if(at-1>0)points[at-1][axis]+=delta;if(at<points.length-1)points[at][axis]+=delta;
      if(at===1&&points.length===2){points.splice(1,0,{x:a.x+(b.x-a.x)*.3+(axis==='x'?delta:0),y:a.y+(b.y-a.y)*.3+(axis==='y'?delta:0)},{x:a.x+(b.x-a.x)*.7+(axis==='x'?delta:0),y:a.y+(b.y-a.y)*.7+(axis==='y'?delta:0)});}
      const geometry=original.clone();geometry.points=points.slice(1,-1).map(p=>new mx.mxPoint(p.x,p.y));model.setGeometry(cell,geometry);
@@ -93,12 +99,16 @@ export function repairPaintedConnectorRoutes(mx,graph,scene){
 export function placeConnectionNumbers(mx,graph,scene){
  if(!graph.container.clientWidth||!graph.container.clientHeight)return;
  const model=graph.getModel(),scale=graph.view.scale;
- const boxes=scene.vertices.filter(v=>v.selectable!==false).map(v=>graph.view.getState(model.getCell(v.id))).filter(Boolean)
+ const boxes=scene.vertices.filter(v=>v.selectable!==false&&!v.container).map(v=>graph.view.getState(model.getCell(v.id))).filter(Boolean)
   .map(s=>({x:s.x-7*scale,y:s.y-7*scale,width:s.width+14*scale,height:s.height+14*scale}));
  const occupied=[...boxes];
  const wireStates=scene.wires.map(w=>({id:w.id,points:graph.view.getState(model.getCell(w.id))?.absolutePoints?.filter(Boolean)||[]}));
  const distance=(p,points)=>Math.min(...points.slice(1).map((b,i)=>{const a=points[i],dx=b.x-a.x,dy=b.y-a.y,t=Math.max(0,Math.min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/(dx*dx+dy*dy||1)));return Math.hypot(p.x-a.x-t*dx,p.y-a.y-t*dy);}));
  const hits=(a,b)=>a.x<b.x+b.width&&a.x+a.width>b.x&&a.y<b.y+b.height&&a.y+a.height>b.y;
+ // Label offsets do not change connector paths. Commit them together instead
+ // of forcing a full native graph validation for every individual number.
+ model.beginUpdate();
+ try{
  for(const wire of scene.wires){
   if(!wire.reference)continue;
   const cell=model.getCell(wire.id),state=graph.view.getState(cell),box=state?.text?.boundingBox;
@@ -124,6 +134,7 @@ export function placeConnectionNumbers(mx,graph,scene){
   wire.labelOffset={x:geometry.offset.x,y:geometry.offset.y};
   occupied.push(candidate);
  }
+ }finally{model.endUpdate();}
 }
 
 const ns='http://www.w3.org/2000/svg';

@@ -1,3 +1,4 @@
+import {EditableBlockName} from './EditableBlockName.jsx';
 import {EngineeringModelView} from './EngineeringModelView.jsx';
 import {architectureConsistency} from './architecture-consistency.mjs';
 import React, {lazy, Suspense, useEffect, useMemo, useState} from 'react';
@@ -9,17 +10,17 @@ import {BlockAgentHandoff} from './BlockAgentHandoff.jsx';
 
 const DiagramPreview=lazy(()=>import('./DiagramPreview.jsx'));
 
-export function NestedBlocks({ nodes, parent = null, selected, onOpen }) {
+export function NestedBlocks({ nodes, parent = null, selected, busyId, onOpen }) {
   return <ul className="nested-blocks">
     {blockChildren(nodes, parent).map(node => <li key={node.id}>
-      <button aria-current={selected === node.id ? 'true' : undefined} onClick={() => onOpen(node.id)}>{node.data.label}</button>
+      <button aria-busy={busyId===node.id} aria-current={selected === node.id ? 'true' : undefined} onClick={() => onOpen(node.id)}>{busyId===node.id&&<span className="layer-spinner" aria-hidden="true"/>}{node.data.label}</button>
       {nodes.some(child => child.data.parentBlockId === node.id) &&
-        <NestedBlocks nodes={nodes} parent={node.id} selected={selected} onOpen={onOpen}/>}
+        <NestedBlocks nodes={nodes} parent={node.id} selected={selected} busyId={busyId} onOpen={onOpen}/>}
     </li>)}
   </ul>;
 }
 
-export function BlockHierarchy({ nodes, node, busy, onOpen, onReparent }) {
+export function BlockHierarchy({ nodes, node, busy, onOpen, onReparent, onRename, compact = false }) {
   const parents = new Map(nodes.map(block => [block.id, block]));
   const ancestors = [];
   for (let current = parents.get(node.data.parentBlockId); current; current = parents.get(current.data.parentBlockId)) {
@@ -36,6 +37,11 @@ export function BlockHierarchy({ nodes, node, busy, onOpen, onReparent }) {
     return true;
   }
 
+  const picker=<label className="module-parent-picker">Nest under
+    <select aria-label="Nest under" value={node.data.parentBlockId||''} disabled={busy} onChange={event=>onReparent(event.target.value||undefined)}>
+      <option value="">System level</option>{nodes.filter(canParent).map(block=><option key={block.id} value={block.id}>{block.data.label}</option>)}
+    </select></label>;
+  if(compact)return picker;
   return <header className="module-overview">
     <nav className="module-breadcrumb" aria-label="Block hierarchy">
       <span>System</span>
@@ -45,13 +51,8 @@ export function BlockHierarchy({ nodes, node, busy, onOpen, onReparent }) {
       <span aria-hidden="true">/</span><strong aria-current="page">{node.data.label}</strong>
     </nav>
     <div className="module-overview-body">
-      <h3>{node.data.label}</h3>
-      <label className="module-parent-picker">Nest under
-        <select value={node.data.parentBlockId || ''} disabled={busy} onChange={event => onReparent(event.target.value || undefined)}>
-          <option value="">System level</option>
-          {nodes.filter(canParent).map(block => <option key={block.id} value={block.id}>{block.data.label}</option>)}
-        </select>
-      </label>
+      {onRename?<EditableBlockName name={node.data.label} onRename={onRename} disabled={busy}/>:<h3>{node.data.label}</h3>}
+      {picker}
     </div>
   </header>;
 }
@@ -133,7 +134,7 @@ export function BlockBuildSpec({ project, node, busy, onOpen, onDraft, onInterfa
   </div>;
 }
 
-function InterfaceEditor({edge, node, nodes, busy, onSave, onClose}) {
+export function InterfaceEditor({edge, node, nodes, busy, onSave, onClose}) {
   const [error, setError] = useState('');
   function save(event) {
     event.preventDefault();

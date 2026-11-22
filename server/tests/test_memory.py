@@ -26,6 +26,24 @@ class MemoryTests(unittest.TestCase):
  def setUp(self):
   self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup)
   self.memory=MemoryService(self.tmp.name)
+ def test_large_snapshots_keep_all_eligible_records_in_the_durable_outbox(self):
+  snapshot=file()
+  snapshot['requirements']=[{'id':f'req-{i}','statement':f'Required archive behavior {i}','priority':'must','source':'user'} for i in range(700)]
+  snapshot['decisions']=[{'id':f'adr-{i}','subject':f'policy.{i}','decision':f'Keep accepted choice {i}','status':'Accepted'} for i in range(350)]
+  snapshot['discovery']['facts']=[{'name':f'other.{i}','value':i} for i in range(350)]+[{'name':'budget.per_month','value':321,'unit':'USD'}]
+  with patch.object(self.memory,'flush',return_value=False):self.memory.sync(PROJECT,snapshot)
+  with self.memory.db() as db:
+   values=json.loads(db.execute('SELECT entities FROM snapshots WHERE project=?',(PROJECT,)).fetchone()[0])
+   queued=dict(db.execute('SELECT key,text FROM queue WHERE project=?',(PROJECT,)).fetchall())
+  self.assertEqual(len(values),1051)
+  self.assertEqual(queued,values)
+  self.assertIn('requirements.req-699',values)
+  self.assertIn('decision.policy.349',values)
+  self.assertIn('321',values['fact.budget.per_month'])
+  # Eligibility still excludes inferred requirements; removing a cap is not consent to remember them.
+  snapshot['requirements'][0]['source']='agent'
+  self.assertNotIn('requirements.req-0',MemoryService.entities(snapshot))
+
  def test_real_atmem_restart_recall_and_supersession(self):
   m=self.memory;m.sync(PROJECT,file());m.profile(PROJECT,'iac','Prefer Pulumi and concise answers')
   m=MemoryService(self.tmp.name);rows,status=m.recall(PROJECT,'region infrastructure preference');self.assertEqual(status['status'],'ready');self.assertIn('Pulumi',json.dumps(rows))

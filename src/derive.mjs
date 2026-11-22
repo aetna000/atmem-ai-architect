@@ -18,9 +18,9 @@ export function withDerived(project){
  project=prefillAcceptedSettings(project);
  const mine=(project.needs||[]).filter(r=>!(r.source==='agent'&&r.id.startsWith('drv-')));
  const excluded=new Set([...(project.extensions?.dismissedRequirements||[]),...mine.map(r=>r.id)]);
- const needs=[...mine,...(mine.some(r=>r.id.startsWith("ai-")) ? [] : deriveRequirements(project)).filter(r=>!excluded.has(r.id))].slice(0,300);
+ const needs=[...mine,...(mine.some(r=>r.id.startsWith("ai-")) ? [] : deriveRequirements(project)).filter(r=>!excluded.has(r.id))];
  const numbers={...(project.extensions?.requirementNumbers || {})};
- let next=Math.max(0,...Object.values(numbers).filter(n=>Number.isSafeInteger(n)&&n>0))+1;
+ let next=Object.values(numbers).reduce((max,n)=>Number.isSafeInteger(n)&&n>max?n:max,0)+1;
  for(const r of needs)if(!Number.isSafeInteger(numbers[r.id]) || numbers[r.id]<1)numbers[r.id]=next++;
  return {...project,needs,extensions:{...project.extensions,requirementNumbers:numbers}};
 }

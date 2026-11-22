@@ -25,6 +25,15 @@ class BoundaryTests(unittest.TestCase):
         with patch('server.app.ARCHITECT.call',new=AsyncMock(return_value=response)) as call:
             result=self.client.post('/api/architect',headers={'Authorization':f'Bearer {TOKEN}'},json={'message':'Help design this','model':'claude-opus-5-5','provider':'claude-code','project':PROJECT,'history':[]})
             self.assertEqual(result.status_code,200);self.assertEqual(result.json()['phase'],'Discovery');call.assert_awaited_once()
+    def test_large_consultation_reaches_agent_intact_over_http(self):
+        context=[{'type':'requirement','id':f'req-{i}','text':f'Required behavior {i}'} for i in range(1500)]
+        response=ArchitectResponse(message='Reviewed the submitted context.',phase='Discovery')
+        with patch('server.app.ARCHITECT.call',new=AsyncMock(return_value=response)) as call:
+            result=self.client.post('/api/architect',headers={'Authorization':f'Bearer {TOKEN}'},json={'message':'Review all records','model':'default','provider':'codex','project':PROJECT,'context':context})
+        self.assertEqual(result.status_code,200,result.text)
+        request=call.await_args.args[0]
+        self.assertEqual(json.loads(AtMemArchitect.context(request))['readOnlyContext'],context)
+
     def test_request_rejects_executable_config(self):
         project=dict(PROJECT);project['nodes']=[{'id':'x','position':{'x':0,'y':0},'data':{'label':'Unsafe','kind':'tool','provider':'tools','config':{'command':'curl example.com'}}}]
         response=self.client.post('/api/architect',headers={'Authorization':f'Bearer {TOKEN}'},json={'message':'Help','model':'claude-opus-5-5','project':project})

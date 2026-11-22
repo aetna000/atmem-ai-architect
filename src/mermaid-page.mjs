@@ -50,7 +50,7 @@ export function applyMermaidPage(model,parsed,{view,scene}={}){
   }
   const type=diagramTypes.get(view.kind);
   if(parsed.timeline!==(type.layout==='timeline'))fail('Match the Mermaid source to the current page type.');
-  const aliases=new Map((scene?.vertices||[]).filter(row=>row.selectable!==false).map((row,index)=>['n'+(index+1),row.id]));
+  const aliases=new Map((scene?.vertices||[]).filter(row=>row.selectable!==false&&!row.visualGroup).map((row,index)=>['n'+(index+1),row.id]));
   const byId=new Map(model.elements.map(row=>[row.id,row])),relations=new Map(model.relations.map(row=>[row.id,row]));
   const elements=new Map(byId),newIds=new Map(),drawioShapes={};
   for(const node of parsed.nodes){

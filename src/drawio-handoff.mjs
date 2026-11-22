@@ -26,7 +26,7 @@ export function drawioPages(project,model=project.extensions?.architectureDiagra
       ...linked(legacyGraph(view,systemIndex),id=>systemIndex.elements.get(id)?.blockId)})),
     ...(engineering?.diagrams||[]).map(view=>({id:'engineering/'+view.id,name:view.name,
       ...linked(engineeringGraph(engineeringDiagram(engineering,view.id),engineeringIndex),id=>engineeringIndex.get(id)?.element.blockId)})),
-  ].map(page=>({...page,...applyDrawingLayout(page,(project.extensions?.drawingLayouts?.pages?.[page.id==='board'?'board/full':page.id.startsWith('system/')||page.id.startsWith('engineering/')?page.id:'view/'+page.id]??(page.id==='board'&&!project.nodes.some(n=>n.data.parentBlockId)?project.extensions?.drawingLayouts?.pages?.board:undefined)))}));
+  ].map(page=>({...page,...applyDrawingLayout(page,(project.extensions?.drawingLayouts?.pages?.[page.id==='board'?'board/full':page.id.startsWith('system/')||page.id.startsWith('engineering/')?page.id:'view/'+page.id]??(page.id==='board'&&!project.nodes.some(n=>n.data.parentBlockId)?project.extensions?.drawingLayouts?.pages?.board:undefined)),project.extensions?.drawingLayouts?.groups?.[page.id==='board'?'board/full':page.id.startsWith('system/')||page.id.startsWith('engineering/')?page.id:'view/'+page.id],project.extensions?.drawingLayouts?.parents?.[page.id==='board'?'board/full':page.id.startsWith('system/')||page.id.startsWith('engineering/')?page.id:'view/'+page.id])}));
 }
 
 export function drawioHandoffFiles(project,model){

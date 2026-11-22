@@ -12,7 +12,7 @@ export function DiagramPages({pages,active,onSelect,onAdd}){
     <div ref={strip} className="drawio-pages" role="tablist" aria-label="Drawing pages">
       {pages.map(page=><button key={page.id} type="button" role="tab" aria-selected={page.id===active} onClick={()=>onSelect(page.id)}>{page.name}</button>)}
     </div>
-    {pages.length>1&&<label className="drawing-page-jump" title="Go to page"><Layers3 size={16}/><select aria-label="Go to page" value={active} onChange={event=>onSelect(event.target.value)}>
+    {pages.length>1&&<label className="drawing-page-jump"><Layers3 size={20} aria-hidden="true"/><span>Pages</span><select aria-label="Go to page" value={active} onChange={event=>onSelect(event.target.value)}>
       {pages.map(page=><option key={page.id} value={page.id}>{page.name}</option>)}
     </select></label>}
   </nav>;
