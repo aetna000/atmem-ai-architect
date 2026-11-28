@@ -15,10 +15,10 @@ export async function outputBundle(project,run,environment,checks,{deferVisuals=
   const manifest=JSON.parse(files['manifest.json']);manifest.files=Object.keys(files);
   files['manifest.json']=JSON.stringify(manifest,null,2);
   const slug=snapshot.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'')||'atflow';
-  const base={project,files,manifest,filename:`${slug}-r${snapshot.revision}-delivery.zip`,visualPaths:VISUAL_PATHS};
-  let pending;
-  async function prepare(){
-    if(!pending)pending=(async()=>{
+  const base={project,snapshot,files,manifest,filename:`${slug}-r${snapshot.revision}-delivery.zip`,visualPaths:VISUAL_PATHS};
+  const pending=new Map();
+  async function prepare(team=false){
+    if(!pending.has(team))pending.set(team,(async()=>{
       const sourceSession=(snapshot.extensions?.architectureDocuments||snapshot.extensions?.designSources?.some(source=>source.figureEvidence?.figures?.length))&&prepareSources?await prepareSources(project):session;
       const {attachReviewedDraftFiles}=await import('./reviewed-draft.mjs');
       const evidence=await attachReviewedDraftFiles(snapshot,files,{session:sourceSession});
@@ -27,8 +27,9 @@ export async function outputBundle(project,run,environment,checks,{deferVisuals=
       const {attachSourceFigureFiles}=await import('./source-handoff.mjs');
       const figures=await attachSourceFigureFiles(snapshot,captured.files,{session:sourceSession});
       const {visualFiles}=await import('./visual-export.mjs');
-      const {projectSceneFiles}=await import('./architecture-scene-export.jsx');
-      const fullFiles={...figures.files,...await projectSceneFiles(snapshot),...await visualFiles(snapshot,files['specification.md'],files['spec-kit/implementation-spec.md'])};
+      const {renderProjectScenes}=await import('./architecture-scene-export.jsx');
+      const scenes=await renderProjectScenes(snapshot,{allowConnectionSheets:team});
+      const fullFiles={...figures.files,...scenes.files,...await visualFiles(snapshot,files['specification.md'],files['spec-kit/implementation-spec.md'],scenes.board)};
       const fileDigests=Object.fromEntries(await Promise.all(Object.entries(fullFiles).filter(([name])=>name!=='manifest.json').map(async([name,content])=>{
         const bytes=typeof content==='string'?new TextEncoder().encode(content):content;
         const digest=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(byte=>byte.toString(16).padStart(2,'0')).join('');
@@ -38,10 +39,10 @@ export async function outputBundle(project,run,environment,checks,{deferVisuals=
       fullFiles['manifest.json']=JSON.stringify(fullManifest,null,2);
       const full={...base,files:fullFiles,manifest:fullManifest,visualPaths:[]};
       const incomplete=captured.receipt.status==='unavailable'||evidence.receipt.status==='unavailable'||figures.evidence?.complete===false;
-      if(incomplete)pending=null;
-      return {...full,prepare:incomplete?prepare:()=>Promise.resolve(full)};
-    })().catch(error=>{pending=null;throw error;});
-    return pending;
+      if(incomplete)pending.delete(team);
+      return {...full,prepare:()=>prepare(),prepareTeam:()=>prepare(true)};
+    })().catch(error=>{pending.delete(team);throw error;}));
+    return pending.get(team);
   }
-  return deferVisuals?{...base,prepare}:prepare();
+  return deferVisuals?{...base,prepare:()=>prepare(),prepareTeam:()=>prepare(true)}:prepare();
 }

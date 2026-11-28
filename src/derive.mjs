@@ -3,6 +3,7 @@ import {prefillAcceptedSettings} from './engineering-defaults.mjs';
 // not invented company policies or a large list of fields for the user to complete.
 import { roleOf } from './review.mjs';
 import { cleanRequirement } from './records.mjs';
+export const usesModels=project=>project.nodes.some(node=>node.data.kind!=='note'&&['llm','model'].includes(roleOf(node)));
 export function deriveRequirements(project) {
   const nodes=project.nodes.filter(n=>n.data.kind!=='note');
   if(!nodes.length)return [];
@@ -10,9 +11,9 @@ export function deriveRequirements(project) {
   const group=(roles)=>nodes.filter(n=>roles.includes(roleOf(n))).map(n=>n.id);
   const add=(id,category,statement,links)=>{if(links.length)out.push(cleanRequirement({id:`drv-${id}`,source:'agent',kind:'nonfunctional',category,priority:'should',status:'open',statement,links}));};
   add('data-access','security','Agree who can access the data and which content each person is allowed to use.',group(['data','index','llm']));
-  add('data-location','compliance','Confirm where source data, model requests and logs may be processed and stored.',group(['data','index','llm']));
+  add('data-location','compliance',usesModels(project)?'Confirm where source data, model requests and logs may be processed and stored.':'Confirm where project data and logs may be processed and stored.',group(['data','index','llm']));
 
-  return out.map(r=>({...r,rationale:r.id==='drv-data-access' ? 'The design uses information that people may have different rights to access. Clarifying this early helps prevent inappropriate disclosure.' : 'The design processes and stores information. We need to establish any location constraints before choosing services and regions.',basis:'Inferred from the data and AI components on the board; this is a question to validate, not an established company policy.'}));
+  return out.map(r=>({...r,rationale:r.id==='drv-data-access' ? 'The design uses information that people may have different rights to access. Clarifying this early helps prevent inappropriate disclosure.' : 'The design processes and stores information. We need to establish any location constraints before choosing services and regions.',basis:'Proposed from the components on the board. Confirm the applicable policy with its owner.'}));
 }
 export function withDerived(project){
  project=prefillAcceptedSettings(project);

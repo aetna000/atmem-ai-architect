@@ -42,14 +42,14 @@ export function ImplementationDelivery({project,session,workStatus,onBuild,onSav
   const zipBase64=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result.split(',')[1]);reader.onerror=()=>reject(Error('Could not prepare the project ZIP.'));reader.readAsDataURL(blob);});
   const result=await engineeringCall(session,'orca/open',{projectId:project.id,zipBase64});setOrcaResult(result);if(!result.opened)throw Error(result.message);
  }
- async function downloadDesign(){if(busy||contextBusy)return;setBusy(true);setError('');try{await onDesignDownload?.(designBundle);}catch(error){setError(error.message);}finally{setBusy(false);}}
+ async function downloadDesign(team=false){if(busy||contextBusy)return;setBusy(true);setError('');try{await onDesignDownload?.(designBundle,{team});}catch(error){setError(error.message);}finally{setBusy(false);}}
  async function openOrca(){
   if(busy||contextBusy)return;
   setOrcaResult(null);
   if(report?.artifact)return download(true);
   setBusy(true);setError('');try{if(!designBundle||designBundle.project!==project)throw Error('Project files are still preparing.');if(onSave)await onSave(project);const full=await(designBundle.prepare?.()||designBundle);if(projectRef.current!==project)throw Error('Design changed while preparing files. Try again.');await launchOrca(new Blob([zipSync(Object.fromEntries(Object.entries(full.files).map(([name,value])=>[name,typeof value==='string'?strToU8(value):value])))]));}catch(error){setError(error.message);}finally{setBusy(false);}
  }
- async function download(openInOrca=false){
+ async function download(openInOrca=false,team=false){
   if(!report?.artifact||busy||contextBusy)return;
   setBusy(true);setError('');
   try{
@@ -68,13 +68,22 @@ export function ImplementationDelivery({project,session,workStatus,onBuild,onSav
    const payload={projectId:project.id,sessionId:current.session.id,artifactId:current.artifact.id};
    const captured=await verifiedHandoffDownload(session,{...payload,savedDesignSha256:current.savedDesignSha256},current.artifact);
    if(designBundle?.project!==project)throw Error('The design documents are refreshing. Try downloading again when preparation finishes.');
-   const full=await(designBundle.prepare?.()||designBundle);
+   const full=await((team&&designBundle.prepareTeam?designBundle.prepareTeam():designBundle.prepare?.())||designBundle);
    if(projectRef.current!==project)throw Error('Design changed while preparing files. Try again.');
    const captureEvidence=full.files['captured-evidence.json']?JSON.parse(full.files['captured-evidence.json']):null;setCaptureNotice(captureEvidence?.status==='unavailable'?'Capture evidence unavailable. Download again to retry; see captured-evidence.json.':'');
    const blob=await completeProjectZip(captured,full);
    if(openInOrca){await launchOrca(blob);return;}
-   const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;
-   link.download=`architect-handoff-${report.artifact.id}.zip`;link.click();onDownloaded?.();setTimeout(()=>URL.revokeObjectURL(url),1000);
+   let handoff=blob,name=`architect-handoff-${report.artifact.id}.zip`;
+   if(team){
+     const {teamHandoffFiles,teamFilename,zipFiles}=await import('./team-handoff.mjs');
+     const archive=new Uint8Array(await blob.arrayBuffer());
+     const files=await teamHandoffFiles(full,{archive,captureRelation:current.relation});
+     handoff=new Blob([await zipFiles(files)],{type:'application/zip'});
+     name=teamFilename(project.name,project.revision);
+   }
+   if(projectRef.current!==project)throw Error('Design changed while preparing files. Try again.');
+   const url=URL.createObjectURL(handoff),link=document.createElement('a');link.href=url;
+   link.download=name;link.click();onDownloaded?.();setTimeout(()=>URL.revokeObjectURL(url),1000);
   }catch(e){setError(e.message)}finally{setBusy(false)}
  }
  return <section aria-label="Implementation delivery">
@@ -82,12 +91,12 @@ export function ImplementationDelivery({project,session,workStatus,onBuild,onSav
   {captureNotice&&<p role="status">{captureNotice}</p>}
   {!report&&!error&&<p role="status">Preparing package…</p>}
   {report&&!report.artifact&&<p>Design package · implementation not generated.</p>}
-  {report&&!report.canPackage&&<button className="btn primary" disabled={busy||!designBundle||designBundle.project!==project||contextBusy} onClick={downloadDesign}>{busy?'Preparing ZIP…' :'Download design snapshot'}</button>}
+  {report&&!report.canPackage&&<><button className="btn primary" disabled={busy||!designBundle||designBundle.project!==project||contextBusy} onClick={()=>downloadDesign(true)}>{busy?'Preparing ZIP…':'Download design team handoff'}</button><button className="btn" disabled={busy||!designBundle||designBundle.project!==project||contextBusy} onClick={()=>downloadDesign()}>Download design snapshot</button></>}
   {report?.artifact&&<>
    <p className="delivery-state">{report.relation==='matches_saved_design'?'Captured against this revision':report.relation==='design_changed'?'! Design changed since generation':'! Earlier or unverified capture'}</p>
 
    <p>{report.artifact.files.filter(file=>file.kind==='file').length} files · {report.artifact.model} · {report.artifact.effort}</p>
-   {report.canPackage&&<button className="btn primary" disabled={busy||preparing||!prepared||contextBusy||!designBundle||designBundle.project!==project} onClick={()=>download()}>Download captured workspace</button>}
+   {report.canPackage&&<><button className="btn primary" disabled={busy||preparing||!prepared||contextBusy||!designBundle||designBundle.project!==project} onClick={()=>download(false,true)}>{busy?'Preparing ZIP…':'Download team handoff'}</button><button className="btn" disabled={busy||preparing||!prepared||contextBusy||!designBundle||designBundle.project!==project} onClick={()=>download()}>Download captured workspace</button><p>Extract the team handoff and open index.html. The engineering package includes the captured workspace.</p></>}
 
 
 

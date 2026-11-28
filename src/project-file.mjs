@@ -1,4 +1,5 @@
 import {validateDrawingLayouts} from './drawing-layout.mjs';
+import packageMetadata from '../package.json' with {type:'json'};
 import {validateDiagramModel} from './architecture-diagrams.mjs';
 import {validateRequirementsDocument} from './requirements-document.mjs';
 import {validateBlockSpecs,validateInterfaceSpec} from './block-spec.mjs';
@@ -17,7 +18,7 @@ export const FORMAT = "atmem.ai-architect.project";
 export const FORMAT_VERSION = "2.3.0";
 export const APPROVAL_FORMAT_VERSION = "3.0.0";
 const approvalFormat=nodes=>Array.isArray(nodes)&&nodes.some(n=>n.data?.implementation==='approval-workflow'||n.data?.approvalProfile!=null);
-const GENERATOR = "atmem-ai-architect 0.2.1";
+const GENERATOR = 'atmem-ai-architect '+packageMetadata.version;
 
 // Section keys the 2.0 reader understands; anything else is kept in extensions.
 const KNOWN_TOP = ["format", "formatVersion", "meta", "design", "discovery", "requirements", "assumptions", "openQuestions", "decisions", "options", "estimate", "review", "extensions"];

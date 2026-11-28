@@ -16,7 +16,7 @@ import {artifactWorkProjection} from './artifact-work.mjs';
 import {terraformSketch} from './terraform.mjs';
 import {implementationOutcome} from './implementation-outcome.mjs';
 // Implementation handoff, derived from requirements and the graph; never mutates them.
-import {requirementNumber} from './derive.mjs';
+import {requirementNumber,usesModels} from './derive.mjs';
 import {resourcePlan} from './resources.mjs';
 import {handoffAssessment,handoffMarkdown,engineeringSteps} from './handoff.mjs';
 const json=v=>JSON.stringify(v,null,2);
@@ -30,7 +30,9 @@ export function specKit(project,{snapshotId,stamp,environment,now,sourceFile='pr
  const accepted=(project.decisions||[]).filter(d=>d.status==='Accepted'&&!isDiagramRevision(d));
  const questions=[...(project.openQuestions||[]).filter(q=>q.status==='open').map(q=>({id:q.id,text:q.question,...(q.owner?{owner:q.owner}:{}),...(q.requirementIds?.length?{requirementIds:q.requirementIds}:{}),...(q.interfaceIds?.length?{interfaceIds:q.interfaceIds}:{}),...(q.decisionBy?{decisionBy:q.decisionBy}:{}),...(q.interim?{interim:q.interim}:{})})),...requirements.filter(r=>r.source!=='user'&&!sourceDerived(r)).map(r=>({id:r.id,text:`Confirm ${r.number}: ${r.statement}`})),...requirements.filter(r=>!r.measure&&!r.acceptance).map(r=>({id:`acceptance-${r.id}`,text:`Agree a measurable acceptance check for ${r.number}: ${r.statement}`}))];
  const placementPending=!!project.extensions?.systemSpec&&!accepted.some(d=>d.subject==='platform.cloud');
- const targetQuestions=placementPending?[['deployment.profile','Confirm the site, cloud or hybrid deployment boundary before destination planning.'],['data.country','Confirm the applicable data-residency policy for sources, logs and processing.']]:[['platform.cloud','Confirm cloud provider; diagram labels alone are not a selection.'],['data.country','Confirm the country and data-residency boundary, including sources, logs and model processing.'],['cloud.region','Engineering verification: choose and document a suitable proposed region within the accepted country, then verify service/model support, residency, quota and account policy before deployment. Escalate only a material business trade-off.']];
+ const modelWorkload=usesModels(project);
+ const country=modelWorkload?'Confirm the country and data-residency boundary, including sources, logs and model processing.':'Confirm the country and data-residency boundary for data processing and logs.';
+ const targetQuestions=placementPending?[['deployment.profile','Confirm the site, cloud or hybrid deployment boundary before destination planning.'],['data.country','Confirm the applicable data-residency policy for sources, logs and processing.']]:[['platform.cloud','Confirm cloud provider; diagram labels alone are not a selection.'],['data.country',country],['cloud.region',`Engineering verification: choose and document a suitable proposed region within the accepted country, then verify ${modelWorkload?'service/model':'service'} support, residency, quota and account policy before deployment. Escalate only a material business trade-off.`]];
  for(const [subject,text] of targetQuestions)if(!accepted.some(d=>d.subject===subject))questions.push({id:subject,text});
  if(!resources.rows.length)questions.push({id:'architecture',text:'Define the system components and interactions before implementation.'});
  const readiness=handoffAssessment(project,now);
@@ -50,7 +52,7 @@ export function specKit(project,{snapshotId,stamp,environment,now,sourceFile='pr
  'Document local setup and use non-secret example configuration. Store secrets in the chosen secret manager or approved environment.'
  ],['Repository structure and setup guide','CI configuration and dependency locks'],['A clean checkout can install dependencies and run the documented local checks.','CI executes actual tests and does not require production credentials.']);
  const costBaseline=add('TASK-COST-BASELINE','Foundation','Agree usage assumptions and an initial cost envelope',[scope],[
- 'Record workload volumes, concurrency, document sizes, model token assumptions, retention and budget or explicitly deferred budget decisions.',
+ modelWorkload?'Record workload volumes, concurrency, document sizes, model token assumptions, retention and budget or explicitly deferred budget decisions.':'Record workload volume, concurrency, data transfer, retention and the budget decision. Identify assumptions that still need measurement.',
  'Identify every proposed billable dimension, including networking, logs, backups, model/embedding requests, third-party licences and one-off delivery effort.',
  'Use dated regional primary prices or quotes where available; show missing rates and currency boundaries without invented totals.'
  ],['Initial cost model and assumptions','Unpriced dimensions and budget decision'],['Unknown charges remain explicit.','Capacity and cost assumptions are reviewed before destination planning; independent local coding can proceed.']);

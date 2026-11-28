@@ -9,6 +9,8 @@ import React,{useEffect,useState,useRef,useMemo} from 'react';
 import {EmulationPanel} from './EmulationPanel.jsx';
 import {outputBundle} from './output-bundle.mjs';
 import {ImplementationDelivery} from './ImplementationDelivery.jsx';
+import {HandoffWebsitePreview} from './HandoffWebsitePreview.jsx';
+import {usePendingWork} from './PendingFeedback.jsx';
 
 // Render generated Markdown as text elements, never executable HTML.
 function Document({text}){
@@ -44,6 +46,8 @@ export function OutputsView({project,run,environment,session,workStatus,onDownlo
  const prepareSourcesRef=useRef(onPrepareSources);prepareSourcesRef.current=onPrepareSources;
  const projectRef=useRef(project);projectRef.current=project;
  const [packing,setPacking]=useState(false),[showFiles,setShowFiles]=useState(false);
+ const [preview,setPreview]=useState(null),[previewBusy,setPreviewBusy]=useState(false);
+ usePendingWork('Preparing handoff website…',previewBusy);
  const designReview=useMemo(()=>buildReview(project),[project]);
  const verdict=designReadiness(designReview,!!project.extensions?.diagramCatalogueRequired);
  const [bundle,setBundle]=useState(null),[error,setError]=useState(''),[loading,setLoading]=useState(true),[retry,setRetry]=useState(0),[selected,setSelected]=useState('START_HERE.md');
@@ -59,7 +63,17 @@ export function OutputsView({project,run,environment,session,workStatus,onDownlo
  const fileValues=useMemo(()=>artifactMode?{...exploration.files,...Object.fromEntries(Object.entries(bundle?.files||{}).map(([name,value])=>[prefix+name,value]))}:bundle?.files||{},[artifactMode,exploration,bundle,prefix]);
  const treeFiles=useMemo(()=>({...Object.fromEntries((bundle?.visualPaths||[]).map(path=>[prefix+path,null])),...fileValues}),[bundle,fileValues,prefix]);
  async function selectFile(name){setSelected(name);if(treeFiles[name]===null){try{const full=await bundle.prepare();if(projectRef.current===project)setBundle(full);}catch(error){if(projectRef.current===project)setError(error.message);}}}
- async function downloadDesign(){if(packing)return;setPacking(true);setError('');try{const full=await bundle.prepare();if(projectRef.current!==project)throw Error('Design changed while preparing files. Download again.');setBundle(full);await onDownload(full);}catch(error){if(projectRef.current.id===project.id)setError(error.message);}finally{setPacking(false);}}
+ async function downloadDesign(team=false){if(packing)return;setPacking(true);setError('');try{if(team){await onDownload(bundle,{team:true});return;}const full=await bundle.prepare();if(projectRef.current!==project)throw Error('Design changed while preparing files. Download again.');setBundle(full);await onDownload(full);}catch(error){if(projectRef.current.id===project.id)setError(error.message);}finally{setPacking(false);}}
+ async function previewWebsite(){
+   if(previewBusy||!bundle||bundle.project!==project)return;
+   setPreviewBusy(true);setError('');
+   try{
+     const {designHandoffWebsite}=await import('./team-handoff.mjs');
+     const full=await bundle.prepareTeam();
+     const files=await designHandoffWebsite(full);
+     if(projectRef.current.id===project.id)setPreview({project,files});
+   }catch(e){if(projectRef.current.id===project.id)setError(e.message);}finally{setPreviewBusy(false);}
+ }
  const selectedPath=Object.hasOwn(treeFiles,selected)?selected:fileValues['START_HERE.md']?'START_HERE.md':Object.keys(fileValues).find(name=>name.endsWith('implementation-spec.md'))||Object.keys(fileValues)[0];
  const raw=treeFiles[selectedPath],content=typeof raw==='string'?raw:raw&&/\.(?:md|txt|json|py|js|mjs|tf|sh|yaml|yml|toml|html|css)$/.test(selectedPath)?strFromU8(raw):raw;
 
@@ -69,6 +83,9 @@ export function OutputsView({project,run,environment,session,workStatus,onDownlo
   {generating&&<p role="status">Architecture generation is running. This download contains the currently accepted snapshot.</p>}
   {!populated&&<p role="status">No architecture applied. Open Review to inspect generation or recover the draft.</p>}
   <section className="delivery-reading-order" aria-label="Current design handoff">
+   <button type="button" className="btn" disabled={!bundle||bundle.project!==project||loading||previewBusy} onClick={previewWebsite}>{previewBusy?'Preparing website…':'Preview handoff website'}</button>
+   {preview?.project.id===project.id&&<HandoffWebsitePreview files={preview.files} revision={preview.project.revision} snapshotChanged={preview.project!==project} onClose={()=>setPreview(null)}/>}
+   {(!session?.engineeringEnabled||!hasCapturedCode)&&<div><button type="button" className="btn primary" disabled={!bundle||bundle.project!==project||loading||packing} onClick={()=>downloadDesign(true)}>{packing?'Preparing ZIP…':'Download team handoff'}</button><p>Extract the ZIP and open index.html for diagrams, work orders and checks.</p></div>}
    <h3>Start with the handoff</h3><aside className="handoff-verdict"><strong>{verdict.title}</strong>{verdict.gaps.length>0&&<ul>{verdict.gaps.map(g=><li key={g}>{g}</li>)}</ul>}</aside><p>Revision {project.revision} · {designReview.requirements.length} requirements · {designReview.counts.dedicatedCovered}/{designReview.requirements.length} dedicated · {designReview.counts.covered}/{designReview.requirements.length} linked · {designReview.counts.open} open owner decisions</p>
    <div>{[['Read scope','specification.md'],['Build work orders','spec-kit/implementation-spec.md'],['Review remaining work','spec-kit/readiness.md']].map(([name,file])=><button key={file} className="btn" disabled={!bundle} onClick={()=>setSelected(prefix+file)}>{name}</button>)}<button className="btn" onClick={onBack}>Open drawings</button></div>
   </section>
@@ -76,7 +93,7 @@ export function OutputsView({project,run,environment,session,workStatus,onDownlo
   {session?.engineeringEnabled&&(hasCapturedCode?<ImplementationDelivery key={project.id} project={project} session={session} workStatus={workStatus} onBuild={onBuild} onSave={onSave} contextBusy={discussionBusy} designBundle={loading?null:bundle} onDesignDownload={onDownload} onDownloaded={onDownloaded} checkReceipt={checkReceipt} onExplore={setExploration} onNavigate={onNavigate}/>:<details onToggle={event=>{setCaptureOpen(event.currentTarget.open);if(!event.currentTarget.open)setExploration(null);}}><summary>{isReadyExample(project)?'Checks for your edited project':'Captured workspace details'}</summary>{captureOpen&&<ImplementationDelivery key={project.id} project={project} session={session} workStatus={workStatus} onBuild={onBuild} onSave={onSave} contextBusy={discussionBusy} designBundle={loading?null:bundle} onDesignDownload={onDownload} onDownloaded={onDownloaded} checkReceipt={checkReceipt} onExplore={setExploration} onNavigate={onNavigate}/>}</details>)}
   <section aria-label="Project file explorer"><h3>Explore files</h3>
 
-  {(!session?.engineeringEnabled||!hasCapturedCode)&&<><p>Current design, Spec Kit and recorded evidence. Check readiness before implementation.</p><button className="btn" disabled={!bundle||loading||!!error||packing} onClick={downloadDesign}>{packing?'Preparing ZIP…':populated?'Download project ZIP':'Download interim snapshot'}</button></>}
+  {(!session?.engineeringEnabled||!hasCapturedCode)&&<><p>Editable engineering files and recorded evidence.</p><button className="btn" disabled={!bundle||loading||!!error||packing} onClick={()=>downloadDesign()}>{packing?'Preparing ZIP…':populated?'Download project ZIP':'Download interim snapshot'}</button></>}
 
   {readiness?.capturedEvidence?.status==='unavailable'&&<p role="status">Capture evidence unavailable. Download again to retry; see captured-evidence.json.</p>}
   {loading&&<p role="status"><BrainActivity/> Preparing the current outputs…</p>}

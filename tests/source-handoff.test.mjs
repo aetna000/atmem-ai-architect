@@ -21,6 +21,15 @@ test('offline and unavailable services retain explicit missing evidence without 
   const {files}=await attachHandoffSourceFigures(handoff(),config),readiness=JSON.parse(files['handoff-readiness.json']);assert.equal(readiness.sourceEvidence.embedded,0);assert.equal(readiness.sourceEvidence.complete,false);assert.equal(Object.keys(files).some(path=>path.endsWith('.png')),false);
  }
 });
+test('an offline handoff recovers matching retained pixels under a different name',async()=>{
+ const input=handoff();input.files['attachments/retained.png']=pixels;
+ input.files['attachments/lookalike.png']=new Uint8Array(pixels.length);
+ const {files}=await attachHandoffSourceFigures(input,{fetcher:()=>assert.fail('Unexpected network call')});
+ const receipt=JSON.parse(files['source-figures.json']);
+ assert.equal(receipt.embedded,1);assert.deepEqual(files[receipt.figures[0].path],pixels);
+ delete input.files['attachments/retained.png'];
+ assert.equal(JSON.parse((await attachHandoffSourceFigures(input,{})).files['source-figures.json']).embedded,0);
+});
 test('successful HTTP cannot substitute image bytes, provenance, type or oversized streaming content',async()=>{
  for(const make of [()=>response(new Uint8Array([0])),()=>response(pixels,{'X-Source-Sha256':'c'.repeat(64)}),()=>response(pixels,{'Content-Type':'text/html'}),()=>response(pixels,{'Content-Length':String(4*1024*1024)}),()=>response(new Uint8Array(3*1024*1024+1))]){
   await assert.rejects(()=>attachHandoffSourceFigures(handoff(),{session:{token:'fixture'},fetcher:async()=>make()}),/provenance|integrity|bound/);

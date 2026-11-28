@@ -1,0 +1,2426 @@
+{
+  "format": "atmem.ai-architect.project",
+  "formatVersion": "2.3.0",
+  "meta": {
+    "id": "protective-dns-reference",
+    "name": "NextDNS-style DNS platform",
+    "createdAt": "2026-11-28T00:00:00Z",
+    "updatedAt": "2026-11-28T00:00:00.000Z",
+    "revision": 1,
+    "generator": "atmem-ai-architect 0.2.8-handoff.1"
+  },
+  "design": {
+    "provider": "tools",
+    "nodes": [
+      {
+        "id": "admin",
+        "type": "resource",
+        "position": {
+          "x": 40,
+          "y": 40
+        },
+        "data": {
+          "label": "Tenant administrator",
+          "kind": "source",
+          "origin": "existing",
+          "provider": "tools",
+          "role": "human",
+          "description": "Manage the filtering rules, privacy settings and deletion requests for one tenant.",
+          "drawingShape": "rounded",
+          "drawingFill": "#f1f3fa",
+          "drawingStroke": "#688678",
+          "config": {
+            "region": "Design decision pending",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "buildSpec": {
+            "inputs": "An authenticated administrator and a selected tenant.",
+            "outputs": "An auditable request for a policy revision or history deletion.",
+            "behavior": "Manage the filtering rules, privacy settings and deletion requests for one tenant.",
+            "implementation": "Show a rule diff and require confirmation of a change to retention.",
+            "infrastructure": "Existing identity provider and administrator browser.",
+            "operations": "Review operator membership quarterly and revoke departed administrators.",
+            "failures": "End revoked sessions and verify another tenant cannot read the profile.",
+            "tests": "Use two synthetic tenants to verify the boundary."
+          }
+        }
+      },
+      {
+        "id": "control",
+        "type": "resource",
+        "position": {
+          "x": 390,
+          "y": 40
+        },
+        "data": {
+          "label": "Configuration API",
+          "kind": "tool",
+          "origin": "proposed",
+          "provider": "tools",
+          "role": "app",
+          "description": "Authorize profile changes and keep their revision history.",
+          "drawingShape": "rounded",
+          "drawingFill": "#e9f1ed",
+          "drawingStroke": "#688678",
+          "config": {
+            "region": "Design decision pending",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "buildSpec": {
+            "inputs": "An authenticated change with tenant, profile, expected version and request ID.",
+            "outputs": "A committed revision or a conflict response.",
+            "behavior": "Authorize profile changes and keep their revision history.",
+            "implementation": "Check tenant membership on every request. Use optimistic concurrency and idempotency keys.",
+            "infrastructure": "Replicated control-plane database with encrypted backups and a restore rehearsal.",
+            "operations": "Audit administrative actions using tenant, action and revision. Exclude DNS questions.",
+            "failures": "Reject stale writes. Recover an acknowledged revision from backup before reopening edits.",
+            "tests": "Verify cross-tenant denial and retrying an accepted write.",
+            "verificationCases": [
+              {
+                "id": "case-tenancy",
+                "name": "Reject a cross-tenant profile change",
+                "category": "security",
+                "requirementIds": [
+                  "tenancy"
+                ],
+                "environment": "Isolated two-tenant service fixture with team-controlled DNS records.",
+                "setup": "Tenant A and B each own a profile and a test administrator.",
+                "input": "Administrator A submits an edit to profile B.",
+                "action": "Attempt the change and read back both profile revisions.",
+                "expected": "The edit is denied. Both revisions retain their original contents.",
+                "evidence": "Response status and before-and-after revision digests."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "publish",
+        "type": "resource",
+        "position": {
+          "x": 740,
+          "y": 40
+        },
+        "data": {
+          "label": "Policy publisher",
+          "kind": "tool",
+          "origin": "proposed",
+          "provider": "tools",
+          "role": "app",
+          "description": "Compile and distribute an immutable policy snapshot to the resolver fleet.",
+          "drawingShape": "rounded",
+          "drawingFill": "#e9f1ed",
+          "drawingStroke": "#688678",
+          "config": {
+            "region": "Design decision pending",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "buildSpec": {
+            "inputs": "A committed profile revision with allow rules, deny rules and logging consent.",
+            "outputs": "A signed snapshot, version digest and per-region activation acknowledgment.",
+            "behavior": "Compile and distribute an immutable policy snapshot to the resolver fleet.",
+            "implementation": "Compile deterministically, sign the manifest and activate it atomically. Keep the last working version.",
+            "infrastructure": "Pinned signing identity and regional read-only distribution replicas.",
+            "operations": "Compare desired and active versions. Pause a rollout when activation diverges.",
+            "failures": "Reject an incomplete or unsigned snapshot. Restore the previous digest without changing the source history.",
+            "tests": "Simulate interrupted distribution and replay the same version.",
+            "verificationCases": [
+              {
+                "id": "case-version",
+                "name": "Retain the last working policy",
+                "category": "recovery",
+                "requirementIds": [
+                  "version"
+                ],
+                "environment": "Isolated two-tenant service fixture with team-controlled DNS records.",
+                "setup": "Both regions serve revision A and a canary distinguishes revisions A and B.",
+                "input": "An interrupted transfer of revision B.",
+                "action": "Stop publication halfway and query the canary in each region.",
+                "expected": "Each lookup uses one complete revision. The incomplete revision never becomes active.",
+                "evidence": "Region-specific active digest and query result."
+              }
+            ],
+            "scenarios": [
+              {
+                "name": "Promote a filtering policy",
+                "steps": [
+                  {
+                    "sender": "Tenant administrator",
+                    "receiver": "Configuration API",
+                    "action": "Submit a reviewed policy diff against the current version."
+                  },
+                  {
+                    "sender": "Configuration API",
+                    "receiver": "Policy publisher",
+                    "action": "Commit and compile the tenant-scoped version."
+                  },
+                  {
+                    "sender": "Policy publisher",
+                    "receiver": "Regional evaluator",
+                    "action": "Verify signature and canaries before atomic activation."
+                  },
+                  {
+                    "sender": "Regional operator",
+                    "receiver": "Release owner",
+                    "action": "Compare digests and roll back a divergent region."
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "client",
+        "type": "resource",
+        "position": {
+          "x": 40,
+          "y": 275
+        },
+        "data": {
+          "label": "Client devices",
+          "kind": "source",
+          "origin": "existing",
+          "provider": "tools",
+          "role": "app",
+          "description": "Send DNS questions over an encrypted transport using the selected profile.",
+          "drawingShape": "rounded",
+          "drawingFill": "#f1f3fa",
+          "drawingStroke": "#688678",
+          "config": {
+            "region": "Design decision pending",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "buildSpec": {
+            "inputs": "A configured endpoint and a controlled fixture name.",
+            "outputs": "A DNS answer, policy block or bounded failure.",
+            "behavior": "Send DNS questions over an encrypted transport using the selected profile.",
+            "implementation": "Qualify a native DoH client and a router proxy. Treat the profile identifier as routing data.",
+            "infrastructure": "Customer device or branch router. Keep the previous resolver configuration available.",
+            "operations": "Record the effective resolver and transport on a designated canary device.",
+            "failures": "Restore the saved device profile if the rollout fails.",
+            "tests": "Repeat the allow and deny fixtures on both client paths."
+          }
+        }
+      },
+      {
+        "id": "ingress",
+        "type": "resource",
+        "position": {
+          "x": 390,
+          "y": 275
+        },
+        "data": {
+          "label": "Resolver ingress",
+          "kind": "tool",
+          "origin": "proposed",
+          "provider": "tools",
+          "role": "app",
+          "description": "Terminate encrypted DNS, select the profile and enforce bounded request budgets.",
+          "drawingShape": "rounded",
+          "drawingFill": "#e9f1ed",
+          "drawingStroke": "#688678",
+          "config": {
+            "region": "Design decision pending",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "buildSpec": {
+            "inputs": "A DNS wire message over DoH or DoT.",
+            "outputs": "A DNS wire response returned to the originating client.",
+            "behavior": "Terminate encrypted DNS, select the profile and enforce bounded request budgets.",
+            "implementation": "Validate message size, apply admission limits and pass a typed request context to the evaluator.",
+            "infrastructure": "Two independently drainable regions with health-checked ingress and expiring certificates.",
+            "operations": "Check certificate expiry, saturation, transport errors and synthetic resolution from both regions.",
+            "failures": "Drain an unhealthy region and keep the surviving region within its capacity budget.",
+            "tests": "Run DoH and DoT canaries and a controlled regional drain.",
+            "verificationCases": [
+              {
+                "id": "case-transport",
+                "name": "Run both encrypted transports",
+                "category": "integration",
+                "requirementIds": [
+                  "transport"
+                ],
+                "environment": "Isolated two-tenant service fixture with team-controlled DNS records.",
+                "setup": "One native DoH client and one DoT test client point to the same synthetic profile.",
+                "input": "An allowed fixture name with a known A record.",
+                "action": "Query both endpoints and compare decoded DNS messages.",
+                "expected": "Both return the expected record under the selected profile.",
+                "evidence": "Redacted wire transcripts with time and transport."
+              },
+              {
+                "id": "case-regional",
+                "name": "Drain one resolver region",
+                "category": "recovery",
+                "requirementIds": [
+                  "regional"
+                ],
+                "environment": "Isolated two-tenant service fixture with team-controlled DNS records.",
+                "setup": "Two test regions have identical policies. The surviving region has reserved headroom.",
+                "input": "Synthetic allowed and denied queries during a regional drain.",
+                "action": "Withdraw one region and measure successful answers from external probes.",
+                "expected": "Both policy outcomes recover within the proposed 60-second target.",
+                "evidence": "Probe timeline, active regions and capacity during the drain."
+              }
+            ],
+            "scenarios": [
+              {
+                "name": "Recover a degraded region",
+                "steps": [
+                  {
+                    "sender": "External canary",
+                    "receiver": "On-call operator",
+                    "action": "Report rising failures by region and protocol."
+                  },
+                  {
+                    "sender": "On-call operator",
+                    "receiver": "Traffic director",
+                    "action": "Check secondary headroom and drain the affected region."
+                  },
+                  {
+                    "sender": "Recovery probe",
+                    "receiver": "Release owner",
+                    "action": "Verify allow and deny outcomes before restoring traffic."
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "policy",
+        "type": "resource",
+        "position": {
+          "x": 740,
+          "y": 275
+        },
+        "data": {
+          "label": "Policy evaluator",
+          "kind": "guard",
+          "origin": "proposed",
+          "provider": "tools",
+          "role": "guard",
+          "description": "Evaluate the active tenant policy before releasing an answer or starting recursion.",
+          "drawingShape": "rounded",
+          "drawingFill": "#e3f1df",
+          "drawingStroke": "#688678",
+          "config": {
+            "region": "Design decision pending",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "buildSpec": {
+            "inputs": "A normalized question and an immutable tenant, profile and policy version.",
+            "outputs": "A local deny result or an allowed lookup tagged with its policy version.",
+            "behavior": "Evaluate the active tenant policy before releasing an answer or starting recursion.",
+            "implementation": "Pin one snapshot per query. Evaluate explicit custom rules before default lists. Define ties in the policy contract.",
+            "infrastructure": "Region-local policy snapshots. A cached raw upstream answer still passes through the requesting profile policy.",
+            "operations": "Sample decision latency and active versions using aggregate counters.",
+            "failures": "Serve the last valid snapshot during a control-plane outage. Return a bounded error for an unknown profile.",
+            "tests": "Prime the cache with tenant A, then deny the same name for tenant B.",
+            "verificationCases": [
+              {
+                "id": "case-precedence",
+                "name": "Isolate policy after a shared cache hit",
+                "category": "contract",
+                "requirementIds": [
+                  "precedence"
+                ],
+                "environment": "Isolated two-tenant service fixture with team-controlled DNS records.",
+                "setup": "Tenant A allows a controlled name and tenant B denies it.",
+                "input": "Two requests for the same name with different profiles.",
+                "action": "Prime raw DNS data through A, then query through B.",
+                "expected": "A receives the fixture record. B receives its configured block response.",
+                "evidence": "Both DNS responses, active policy versions and the upstream counter."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "recurse",
+        "type": "resource",
+        "position": {
+          "x": 1090,
+          "y": 275
+        },
+        "data": {
+          "label": "Recursive resolver",
+          "kind": "tool",
+          "origin": "proposed",
+          "provider": "tools",
+          "role": "app",
+          "description": "Resolve permitted questions and cache upstream DNS data within its TTL.",
+          "drawingShape": "rounded",
+          "drawingFill": "#e9f1ed",
+          "drawingStroke": "#688678",
+          "config": {
+            "region": "Design decision pending",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "buildSpec": {
+            "inputs": "An allowed DNS question, deadline and DNSSEC validation context.",
+            "outputs": "Validated DNS data or the corresponding resolution error.",
+            "behavior": "Resolve permitted questions and cache upstream DNS data within its TTL.",
+            "implementation": "Use a maintained validating resolver. Cache raw DNS data independently of tenant-specific policy decisions.",
+            "infrastructure": "Regional cache and egress to authoritative DNS. Keep capacity for cold-cache recovery.",
+            "operations": "Track cache hit rate, resolution errors and upstream latency by region.",
+            "failures": "Return an appropriate error on bogus validation or expired query deadlines.",
+            "tests": "Compare a signed good fixture with a deliberately invalid signed test fixture.",
+            "verificationCases": [
+              {
+                "id": "case-upstream-gate",
+                "name": "Keep a blocked name off the upstream path",
+                "category": "contract",
+                "requirementIds": [
+                  "upstream-gate"
+                ],
+                "environment": "Isolated two-tenant service fixture with team-controlled DNS records.",
+                "setup": "An empty recursive cache and a controlled upstream counter start at zero.",
+                "input": "A fresh name on the deny list.",
+                "action": "Send the request and read the counter.",
+                "expected": "The response indicates the configured block and the upstream counter stays zero.",
+                "evidence": "Counter snapshots and the blocked result."
+              },
+              {
+                "id": "case-latency",
+                "name": "Measure throughput and tail latency",
+                "category": "load",
+                "requirementIds": [
+                  "latency"
+                ],
+                "environment": "Isolated two-tenant service fixture with team-controlled DNS records.",
+                "setup": "Use a controlled zone and a fixed mix of fresh and repeated names.",
+                "input": "A proposed 500 queries per second with an 80 percent warm-cache mix.",
+                "action": "Run the load window and record latency histograms per cache state.",
+                "expected": "Both distributions and error rates are reported. Expansion requires owner review of the budget.",
+                "evidence": "Load parameters, p50, p95, error rate and CPU utilization."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "authority",
+        "type": "resource",
+        "position": {
+          "x": 1440,
+          "y": 275
+        },
+        "data": {
+          "label": "Authoritative DNS",
+          "kind": "tool",
+          "origin": "existing",
+          "provider": "tools",
+          "role": "app",
+          "description": "Provide upstream DNS records for permitted names.",
+          "drawingShape": "rounded",
+          "drawingFill": "#f1f3fa",
+          "drawingStroke": "#688678",
+          "config": {
+            "region": "Design decision pending",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "buildSpec": {
+            "inputs": "A recursive lookup for the team-owned fixture zone.",
+            "outputs": "Authoritative DNS data and DNSSEC material where configured.",
+            "behavior": "Provide upstream DNS records for permitted names.",
+            "implementation": "Reference the public DNS ecosystem. Operate a separate controlled test zone for repeatable qualification.",
+            "infrastructure": "External authoritative servers and team-owned test zone.",
+            "operations": "Record fixture revisions and TTLs when comparing observations.",
+            "failures": "Distinguish authoritative timeout from policy denial in aggregate outcomes.",
+            "tests": "Use fresh and cached fixture names to observe both query paths."
+          }
+        }
+      },
+      {
+        "id": "consent",
+        "type": "resource",
+        "position": {
+          "x": 740,
+          "y": 510
+        },
+        "data": {
+          "label": "Privacy gate",
+          "kind": "guard",
+          "origin": "proposed",
+          "provider": "tools",
+          "role": "guard",
+          "description": "Discard query events unless the profile permits storage in the approved region.",
+          "drawingShape": "rounded",
+          "drawingFill": "#e3f1df",
+          "drawingStroke": "#688678",
+          "config": {
+            "region": "Design decision pending",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "buildSpec": {
+            "inputs": "A query event, consent version and nominated storage region.",
+            "outputs": "A minimal regional event or immediate discard.",
+            "behavior": "Discard query events unless the profile permits storage in the approved region.",
+            "implementation": "Discard on missing, revoked or inconsistent consent. Recheck queued events before writing.",
+            "infrastructure": "Bounded regional queue. Backpressure must never hold a DNS response open.",
+            "operations": "Alert on discarded backlog and regional routing mismatches using aggregate counts.",
+            "failures": "Drop optional events when the gate or log store is unavailable.",
+            "tests": "Revoke consent with an event queued and verify it cannot reach storage.",
+            "verificationCases": [
+              {
+                "id": "case-consent",
+                "name": "Discard an event after revocation",
+                "category": "security",
+                "requirementIds": [
+                  "consent"
+                ],
+                "environment": "Isolated two-tenant service fixture with team-controlled DNS records.",
+                "setup": "A diagnostic event is queued in a synthetic opted-in profile.",
+                "input": "A revocation committed before the queued write.",
+                "action": "Resume the consumer and inspect both candidate stores.",
+                "expected": "No query row is written after the revocation. Resolution still completes.",
+                "evidence": "Consent versions, synthetic query response and empty result set."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "history",
+        "type": "resource",
+        "position": {
+          "x": 1090,
+          "y": 510
+        },
+        "data": {
+          "label": "Regional query history",
+          "kind": "output",
+          "origin": "proposed",
+          "provider": "tools",
+          "role": "output",
+          "description": "Store explicitly opted-in records under the tenant’s region and retention settings.",
+          "drawingShape": "cylinder",
+          "drawingFill": "#e9f1ed",
+          "drawingStroke": "#688678",
+          "config": {
+            "region": "Design decision pending",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "buildSpec": {
+            "inputs": "A permitted event or an authorized deletion request.",
+            "outputs": "Tenant-scoped query history or a deletion receipt.",
+            "behavior": "Store explicitly opted-in records under the tenant’s region and retention settings.",
+            "implementation": "Partition by tenant and time. Apply expiration and idempotent deletion over the selected profile.",
+            "infrastructure": "Separate regional storage and restricted operator access. Decide backup deletion policy before launch.",
+            "operations": "Verify retention expiry with a synthetic tenant and periodically rehearse deletion.",
+            "failures": "On storage failure shed optional telemetry. Track incomplete erasure as owned operational work.",
+            "tests": "Verify expiry, cross-tenant isolation and a deletion retry.",
+            "verificationCases": [
+              {
+                "id": "case-erase-history",
+                "name": "Resume tenant-scoped erasure",
+                "category": "recovery",
+                "requirementIds": [
+                  "erase-history"
+                ],
+                "environment": "Isolated two-tenant service fixture with team-controlled DNS records.",
+                "setup": "Create expired and current fixtures for two tenants in the chosen region.",
+                "input": "A deletion operation interrupted after its first batch.",
+                "action": "Resume twice and inspect the requested range and the other tenant.",
+                "expected": "The selected rows are gone. The other tenant retains its rows. The receipt completes once.",
+                "evidence": "Region, deletion receipt, before-and-after row counts."
+              }
+            ]
+          }
+        }
+      },
+      {
+        "id": "metrics",
+        "type": "resource",
+        "position": {
+          "x": 390,
+          "y": 510
+        },
+        "data": {
+          "label": "Fleet telemetry",
+          "kind": "output",
+          "origin": "proposed",
+          "provider": "tools",
+          "role": "monitor",
+          "description": "Measure service health without retaining individual questions or client addresses.",
+          "drawingShape": "rounded",
+          "drawingFill": "#e9f1ed",
+          "drawingStroke": "#688678",
+          "config": {
+            "region": "Design decision pending",
+            "classification": "Internal",
+            "timeout": 5000
+          },
+          "buildSpec": {
+            "inputs": "Region, protocol, outcome class, duration bucket and count.",
+            "outputs": "Bounded aggregate metrics, alerts and an availability dashboard.",
+            "behavior": "Measure service health without retaining individual questions or client addresses.",
+            "implementation": "Allowlist metric labels. Never attach query names, profile IDs or client network addresses.",
+            "infrastructure": "Independent monitoring sink with fixed label cardinality.",
+            "operations": "Page the on-call resolver operator on sustained error rate or regional saturation.",
+            "failures": "Use an independent canary when the metrics pipeline is down.",
+            "tests": "Inspect exported metric labels during a controlled outage.",
+            "verificationCases": [
+              {
+                "id": "case-observability",
+                "name": "Inspect telemetry field boundaries",
+                "category": "security",
+                "requirementIds": [
+                  "observability"
+                ],
+                "environment": "Isolated two-tenant service fixture with team-controlled DNS records.",
+                "setup": "Capture a metrics export for an isolated workload.",
+                "input": "A unique synthetic query name and a unique profile selector.",
+                "action": "Generate success and failure queries and inspect all metric labels.",
+                "expected": "Only the documented bounded dimensions appear. Neither unique value occurs.",
+                "evidence": "Schema inspection and redacted sample of emitted metrics."
+              }
+            ]
+          }
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "edit",
+        "source": "admin",
+        "target": "control",
+        "type": "smoothstep",
+        "label": "Profile change",
+        "interfaceSpec": {
+          "transport": "HTTPS JSON with a revision precondition",
+          "input": "Tenant, profile, expected revision, rule diff and idempotency key.",
+          "output": "Committed revision or a conflict.",
+          "authorization": "Resolve tenant membership server-side on every request.",
+          "failure": "Retry with the same key. On conflict show the current revision.",
+          "verification": "Replay a write and attempt a write from another tenant."
+        }
+      },
+      {
+        "id": "revision",
+        "source": "control",
+        "target": "publish",
+        "type": "smoothstep",
+        "label": "Committed revision",
+        "interfaceSpec": {
+          "transport": "Versioned change stream",
+          "input": "Tenant-scoped revision, consent settings and content digest.",
+          "output": "Compilation receipt bound to the source revision.",
+          "authorization": "Publisher reads committed revisions with a dedicated identity.",
+          "failure": "Replay by revision and refuse a mismatched digest.",
+          "verification": "Deliver the same change twice and compare compiled digests."
+        }
+      },
+      {
+        "id": "snapshot",
+        "source": "publish",
+        "target": "policy",
+        "type": "smoothstep",
+        "label": "Signed policy snapshot",
+        "interfaceSpec": {
+          "transport": "Versioned snapshot distribution",
+          "input": "Manifest, signature and immutable rule payload.",
+          "output": "Acknowledged active digest per region.",
+          "authorization": "Verify the signing key before activation.",
+          "failure": "Keep the previous snapshot on integrity failure or interruption.",
+          "verification": "Interrupt a regional update and confirm atomic activation."
+        }
+      },
+      {
+        "id": "encrypted-query",
+        "source": "client",
+        "target": "ingress",
+        "type": "smoothstep",
+        "label": "Encrypted DNS",
+        "interfaceSpec": {
+          "transport": "DNS over HTTPS or DNS over TLS",
+          "input": "DNS query and selected resolver endpoint.",
+          "output": "DNS wire response or documented transport error.",
+          "authorization": "TLS authenticates the service. The profile selector grants no management access.",
+          "failure": "Honor the query deadline and retain the client’s documented rollback path.",
+          "verification": "Compare allowed and denied fixtures over both transports."
+        }
+      },
+      {
+        "id": "request",
+        "source": "ingress",
+        "target": "policy",
+        "type": "smoothstep",
+        "label": "Profile-bound query",
+        "interfaceSpec": {
+          "transport": "Region-local typed request",
+          "input": "Question, profile, deadline and correlation context without durable tracking.",
+          "output": "Allow or block result under one active version.",
+          "authorization": "Only the ingress workload can call the evaluator.",
+          "failure": "Unknown profiles fail with a bounded error. Never borrow another tenant’s rules.",
+          "verification": "Use contradictory policies for the same name across two tenants."
+        }
+      },
+      {
+        "id": "allowed",
+        "source": "policy",
+        "target": "recurse",
+        "type": "smoothstep",
+        "label": "Permitted lookup",
+        "interfaceSpec": {
+          "transport": "Regional resolver interface",
+          "input": "Allowed question with remaining budget and validation flags.",
+          "output": "Validated DNS data or a resolver failure.",
+          "authorization": "Only the evaluator can request recursion.",
+          "failure": "Expire requests at the deadline. A block must generate zero upstream lookups.",
+          "verification": "Count upstream calls for allowed and denied names."
+        }
+      },
+      {
+        "id": "upstream",
+        "source": "recurse",
+        "target": "authority",
+        "type": "smoothstep",
+        "label": "Uncached DNS lookup",
+        "interfaceSpec": {
+          "transport": "Authoritative DNS query",
+          "input": "A cache miss for a permitted fixture name.",
+          "output": "Resource records, TTL or authoritative failure.",
+          "authorization": "Validate DNSSEC where the trust chain applies.",
+          "failure": "Bound retries and preserve the distinction between failure and denial.",
+          "verification": "Test a valid response, a timeout and bogus signed data."
+        }
+      },
+      {
+        "id": "event",
+        "source": "policy",
+        "target": "consent",
+        "type": "smoothstep",
+        "label": "Optional query event",
+        "interfaceSpec": {
+          "transport": "Nonblocking regional event",
+          "input": "Minimal decision event and consent context.",
+          "output": "Accepted for privacy checks or discarded.",
+          "authorization": "Evaluator can submit events only to its regional gate.",
+          "failure": "Shed optional events on saturation while continuing resolution.",
+          "verification": "Make history unavailable during an allowed lookup."
+        }
+      },
+      {
+        "id": "retain",
+        "source": "consent",
+        "target": "history",
+        "type": "smoothstep",
+        "label": "Consented event",
+        "interfaceSpec": {
+          "transport": "Region-bound event write",
+          "input": "Tenant-scoped event, retention deadline and consent version.",
+          "output": "Stored event identifier or a discard result.",
+          "authorization": "Verify current opt-in and approved region before writing.",
+          "failure": "Discard after consent revocation. Never send overflow to another region.",
+          "verification": "Revoke a queued event and inspect both regional stores."
+        }
+      },
+      {
+        "id": "metrics-flow",
+        "source": "ingress",
+        "target": "metrics",
+        "type": "smoothstep",
+        "label": "Aggregate health",
+        "interfaceSpec": {
+          "transport": "Batched metrics with a fixed dimension set",
+          "input": "Region, protocol, outcome and duration bucket.",
+          "output": "A monotonic aggregate or a dropped batch counter.",
+          "authorization": "Allow only regional ingress identities.",
+          "failure": "DNS continues if metrics are unavailable.",
+          "verification": "Assert absence of query names, addresses and profile identifiers."
+        }
+      },
+      {
+        "id": "erase",
+        "source": "control",
+        "target": "history",
+        "type": "smoothstep",
+        "label": "Erase profile history",
+        "interfaceSpec": {
+          "transport": "Authenticated regional deletion job",
+          "input": "Tenant, profile, time range and idempotency key.",
+          "output": "A durable receipt with completion state.",
+          "authorization": "Require a tenant administrator and restrict the worker to that tenant and region.",
+          "failure": "Resume partial deletion using the same operation ID.",
+          "verification": "Delete a fixture range twice and retain rows belonging to another tenant."
+        }
+      }
+    ]
+  },
+  "discovery": {
+    "problem": "Design a multi-tenant protective DNS service.",
+    "brief": {
+      "application": "An independent reference design for encrypted DNS filtering, versioned tenant policies and opt-in query history. NextDNS provides the public product reference."
+    },
+    "useCases": [
+      {
+        "title": "Resolve and filter DNS per tenant",
+        "verdict": "Pursue",
+        "reason": "Support encrypted queries, rule evaluation and validated recursion."
+      },
+      {
+        "title": "Manage policy and privacy settings",
+        "verdict": "Pursue",
+        "reason": "Roll out versioned changes, disable optional history and support erasure."
+      },
+      {
+        "title": "Billing and commercial account plans",
+        "verdict": "Park",
+        "reason": "Usage metering, pricing and entitlements need a commercial owner before general availability."
+      },
+      {
+        "title": "Inspect URL paths or application payloads",
+        "verdict": "Rule out",
+        "reason": "The proposed service operates on DNS questions and responses."
+      }
+    ]
+  },
+  "requirements": [
+    {
+      "id": "transport",
+      "statement": "Support encrypted DNS on native clients and a branch proxy.",
+      "acceptance": "Both return the expected record under the selected profile.",
+      "links": [
+        "client",
+        "ingress"
+      ],
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "status": "open",
+      "priority": "must",
+      "source": "import",
+      "basis": "Proposed acceptance criterion for this independent reference design."
+    },
+    {
+      "id": "tenancy",
+      "statement": "Keep management operations isolated by tenant.",
+      "acceptance": "The edit is denied. Both revisions retain their original contents.",
+      "links": [
+        "admin",
+        "control"
+      ],
+      "kind": "nonfunctional",
+      "category": "security",
+      "status": "open",
+      "priority": "must",
+      "source": "import",
+      "basis": "Proposed acceptance criterion for this independent reference design."
+    },
+    {
+      "id": "precedence",
+      "statement": "A profile deny rule must apply even when another tenant warmed the cache.",
+      "acceptance": "A receives the fixture record. B receives its configured block response.",
+      "links": [
+        "policy",
+        "recurse"
+      ],
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "status": "open",
+      "priority": "must",
+      "source": "import",
+      "basis": "Proposed acceptance criterion for this independent reference design."
+    },
+    {
+      "id": "upstream-gate",
+      "statement": "Blocked questions must stop before recursion.",
+      "acceptance": "The response indicates the configured block and the upstream counter stays zero.",
+      "links": [
+        "policy",
+        "recurse",
+        "authority"
+      ],
+      "kind": "nonfunctional",
+      "category": "reliability",
+      "status": "open",
+      "priority": "must",
+      "source": "import",
+      "basis": "Proposed acceptance criterion for this independent reference design."
+    },
+    {
+      "id": "version",
+      "statement": "Activate policy revisions atomically and survive a missing publisher.",
+      "acceptance": "Each lookup uses one complete revision. The incomplete revision never becomes active.",
+      "links": [
+        "publish",
+        "policy"
+      ],
+      "kind": "nonfunctional",
+      "category": "availability",
+      "status": "open",
+      "priority": "must",
+      "source": "import",
+      "basis": "Proposed acceptance criterion for this independent reference design."
+    },
+    {
+      "id": "consent",
+      "statement": "Keep query history off by default and after consent is revoked.",
+      "acceptance": "No query row is written after the revocation. Resolution still completes.",
+      "links": [
+        "policy",
+        "consent",
+        "history"
+      ],
+      "kind": "nonfunctional",
+      "category": "security",
+      "status": "open",
+      "priority": "must",
+      "source": "import",
+      "basis": "Proposed acceptance criterion for this independent reference design."
+    },
+    {
+      "id": "erase-history",
+      "statement": "Apply retention and deletion within the selected jurisdiction.",
+      "acceptance": "The selected rows are gone. The other tenant retains its rows. The receipt completes once.",
+      "links": [
+        "control",
+        "history"
+      ],
+      "kind": "nonfunctional",
+      "category": "availability",
+      "status": "open",
+      "priority": "must",
+      "source": "import",
+      "basis": "Proposed acceptance criterion for this independent reference design."
+    },
+    {
+      "id": "regional",
+      "statement": "Restore resolver service after draining one region.",
+      "acceptance": "Both policy outcomes recover within the proposed 60-second target.",
+      "links": [
+        "ingress",
+        "publish",
+        "policy"
+      ],
+      "kind": "nonfunctional",
+      "category": "availability",
+      "status": "open",
+      "priority": "must",
+      "source": "import",
+      "basis": "Proposed acceptance criterion for this independent reference design."
+    },
+    {
+      "id": "observability",
+      "statement": "Keep identities and query names out of aggregate telemetry.",
+      "acceptance": "Only the documented bounded dimensions appear. Neither unique value occurs.",
+      "links": [
+        "ingress",
+        "metrics"
+      ],
+      "kind": "nonfunctional",
+      "category": "security",
+      "status": "open",
+      "priority": "must",
+      "source": "import",
+      "basis": "Proposed acceptance criterion for this independent reference design."
+    },
+    {
+      "id": "latency",
+      "statement": "Measure resolution time separately for warm and cold paths.",
+      "acceptance": "Both distributions and error rates are reported. Expansion requires owner review of the budget.",
+      "links": [
+        "ingress",
+        "policy",
+        "recurse"
+      ],
+      "kind": "nonfunctional",
+      "category": "performance",
+      "status": "open",
+      "priority": "must",
+      "source": "import",
+      "basis": "Proposed acceptance criterion for this independent reference design."
+    }
+  ],
+  "assumptions": [
+    {
+      "id": "cap",
+      "statement": "Illustrative baseline of 500 queries per second for 30 days, giving 1.296 billion queries per month.",
+      "owner": "Capacity lead",
+      "source": "import",
+      "madeAt": "2026-11-28"
+    },
+    {
+      "id": "cache",
+      "statement": "An 80% cache hit assumption gives approximately 259.2 million upstream lookups per month before retries.",
+      "owner": "Resolver team",
+      "source": "import",
+      "madeAt": "2026-11-28"
+    },
+    {
+      "id": "opt",
+      "statement": "With 1% opt-in and 200 bytes per event, raw log ingestion is approximately 2.592 GB per month before indexes and replication.",
+      "owner": "Data platform",
+      "source": "import",
+      "madeAt": "2026-11-28"
+    },
+    {
+      "id": "price",
+      "statement": "Destination, transit, compute, storage, support and engineering rates require quotations.",
+      "owner": "Finance lead",
+      "source": "import",
+      "madeAt": "2026-11-28"
+    }
+  ],
+  "openQuestions": [
+    {
+      "id": "tie",
+      "question": "Which rule wins when an explicit allow and deny conflict?",
+      "owner": "Product owner",
+      "decisionBy": "Before policy compiler acceptance",
+      "interim": "Use independent fixtures and keep the conflicting case blocked.",
+      "links": [
+        "policy",
+        "publish"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "residency",
+      "question": "Which regions and backup deletion guarantees can we offer?",
+      "owner": "Privacy owner",
+      "decisionBy": "Before enabling query history",
+      "interim": "Keep history disabled until the regional retention and backup policy is agreed.",
+      "links": [
+        "consent",
+        "history"
+      ],
+      "status": "open"
+    },
+    {
+      "id": "capacity",
+      "question": "What failover headroom and latency budget can operations fund?",
+      "owner": "Service owner",
+      "decisionBy": "Before a second region accepts production traffic",
+      "interim": "Measure both cache states and verify secondary capacity in the lab.",
+      "links": [
+        "ingress",
+        "metrics",
+        "recurse"
+      ],
+      "status": "open"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "isolation",
+      "title": "Evaluate policy before serving cached data",
+      "subject": "design.isolation",
+      "owner": "Resolver team",
+      "status": "Proposed",
+      "date": "2026-11-28",
+      "decision": "Evaluate policy before serving cached data",
+      "reason": "Avoid sharing a final policy decision across tenants. The raw DNS cache obeys normal TTL and validation rules.",
+      "revision": 1
+    },
+    {
+      "id": "publish",
+      "title": "Use immutable signed policy snapshots",
+      "subject": "design.publish",
+      "owner": "Control-plane team",
+      "status": "Proposed",
+      "date": "2026-11-28",
+      "decision": "Use immutable signed policy snapshots",
+      "reason": "Keep resolution running during a publisher outage and make rollback reproducible.",
+      "revision": 1
+    },
+    {
+      "id": "obs",
+      "title": "Separate health metrics from query history",
+      "subject": "design.obs",
+      "owner": "Privacy owner",
+      "status": "Proposed",
+      "date": "2026-11-28",
+      "decision": "Separate health metrics from query history",
+      "reason": "Retain operational visibility while allowing opt-out from per-query storage.",
+      "revision": 1
+    }
+  ],
+  "estimate": {
+    "details": [
+      {
+        "id": "query-load",
+        "componentId": "ingress",
+        "description": "Resolver capacity",
+        "quantity": 1296,
+        "unit": "million queries",
+        "currency": "USD",
+        "source": "Illustrative workload assumption. Supplier rate outstanding.",
+        "date": "2026-11-28",
+        "region": "Pending owner decision",
+        "service": "Reference capacity model"
+      },
+      {
+        "id": "recursion",
+        "componentId": "recurse",
+        "description": "Uncached upstream traffic",
+        "quantity": 259.2,
+        "unit": "million lookups",
+        "currency": "USD",
+        "source": "Illustrative workload assumption. Supplier rate outstanding.",
+        "date": "2026-11-28",
+        "region": "Pending owner decision",
+        "service": "Reference capacity model"
+      },
+      {
+        "id": "logs",
+        "componentId": "history",
+        "description": "Raw opted-in events",
+        "quantity": 2.592,
+        "unit": "GB ingested",
+        "currency": "USD",
+        "source": "Illustrative workload assumption. Supplier rate outstanding.",
+        "date": "2026-11-28",
+        "region": "Pending owner decision",
+        "service": "Reference capacity model"
+      },
+      {
+        "id": "evaluation",
+        "componentId": "policy",
+        "description": "Per-profile policy evaluations",
+        "quantity": 1296,
+        "unit": "million queries",
+        "currency": "USD",
+        "source": "Illustrative workload assumption. Supplier rate outstanding.",
+        "date": "2026-11-28",
+        "region": "Pending owner decision",
+        "service": "Reference capacity model"
+      },
+      {
+        "id": "privacy",
+        "componentId": "consent",
+        "description": "Consent gate evaluations",
+        "quantity": null,
+        "unit": "million events",
+        "currency": "USD",
+        "source": "Illustrative workload assumption. Supplier rate outstanding.",
+        "date": "2026-11-28",
+        "region": "Pending owner decision",
+        "service": "Reference capacity model"
+      },
+      {
+        "id": "management",
+        "componentId": "control",
+        "description": "Management API requests",
+        "quantity": null,
+        "unit": "million requests",
+        "currency": "USD",
+        "source": "Illustrative workload assumption. Supplier rate outstanding.",
+        "date": "2026-11-28",
+        "region": "Pending owner decision",
+        "service": "Reference capacity model"
+      },
+      {
+        "id": "publication",
+        "componentId": "publish",
+        "description": "Policy distribution",
+        "quantity": null,
+        "unit": "GB transferred",
+        "currency": "USD",
+        "source": "Illustrative workload assumption. Supplier rate outstanding.",
+        "date": "2026-11-28",
+        "region": "Pending owner decision",
+        "service": "Reference capacity model"
+      },
+      {
+        "id": "monitoring",
+        "componentId": "metrics",
+        "description": "Stored aggregate series",
+        "quantity": null,
+        "unit": "series-hours",
+        "currency": "USD",
+        "source": "Illustrative workload assumption. Supplier rate outstanding.",
+        "date": "2026-11-28",
+        "region": "Pending owner decision",
+        "service": "Reference capacity model"
+      }
+    ]
+  },
+  "extensions": {
+    "systemSpec": {
+      "title": "Protective DNS service",
+      "decomposition": "Start with a controlled zone, two contradictory tenant profiles and one regional resolver. Prove allow, block and cache isolation before connecting the policy publisher. Add opt-in history after tests cover revocation and deletion. Rehearse a regional drain before broadening traffic.",
+      "infrastructure": "Separate configuration and signing workloads from regional query handling. Serve immutable policy revisions locally. Keep each opted-in query history in its selected jurisdiction. Select the hosting provider and regional pair after capacity and residency review.",
+      "operations": "Roll out a single signed revision to a canary region, verify synthetic allow and deny responses, then advance or restore the last accepted digest. On sustained resolver errors, check secondary capacity, drain traffic, verify both transports and reintroduce traffic in stages. Continue DNS during a history outage.",
+      "testing": "Use two synthetic tenants, conflicting policies and a controlled authoritative zone. Trace outbound lookups, inspect both regional stores, and record the active policy revision. Run warm and cold load separately. Collect latency, failure rate and recovery measurements before approving a production target.",
+      "journeys": [
+        {
+          "name": "Enable then revoke query history",
+          "steps": [
+            {
+              "sender": "Tenant administrator",
+              "receiver": "Configuration API",
+              "action": "Opt in for an approved region and a bounded retention period."
+            },
+            {
+              "sender": "Privacy gate",
+              "receiver": "Regional query history",
+              "action": "Admit only events covered by current consent and region."
+            },
+            {
+              "sender": "Tenant administrator",
+              "receiver": "Configuration API",
+              "action": "Revoke consent and request deletion."
+            },
+            {
+              "sender": "Configuration API",
+              "receiver": "Regional query history",
+              "action": "Run the tenant-scoped deletion and retain a completion receipt."
+            }
+          ]
+        }
+      ],
+      "deploymentUnits": [
+        {
+          "name": "Management and policy publication",
+          "placement": "Restricted control network",
+          "blocks": [
+            "control",
+            "publish"
+          ]
+        },
+        {
+          "name": "Regional resolution",
+          "placement": "Each serving region",
+          "blocks": [
+            "ingress",
+            "policy",
+            "recurse"
+          ]
+        },
+        {
+          "name": "Regional privacy and storage",
+          "placement": "Tenant-approved jurisdiction",
+          "blocks": [
+            "consent",
+            "history"
+          ]
+        },
+        {
+          "name": "Service health monitoring",
+          "placement": "Independent operational plane",
+          "blocks": [
+            "metrics"
+          ]
+        }
+      ],
+      "stateMachines": [
+        {
+          "name": "Policy release",
+          "initial": "Draft",
+          "states": [
+            "Draft",
+            "Signed",
+            "Canary",
+            "Active",
+            "Reverted"
+          ],
+          "transitions": [
+            {
+              "from": "Draft",
+              "to": "Signed",
+              "event": "Validation and signing complete."
+            },
+            {
+              "from": "Signed",
+              "to": "Canary",
+              "event": "Publish the signed digest to the first region."
+            },
+            {
+              "from": "Canary",
+              "to": "Active",
+              "event": "Allow and deny fixtures pass against the new digest."
+            },
+            {
+              "from": "Canary",
+              "to": "Reverted",
+              "event": "A fixture fails or health degrades."
+            },
+            {
+              "from": "Active",
+              "to": "Reverted",
+              "event": "Restore the previous signed revision after a failed regional check."
+            }
+          ]
+        }
+      ]
+    },
+    "architectureDiagrams": {
+      "version": 1,
+      "elements": [
+        {
+          "id": "context-client",
+          "name": "Subscriber devices",
+          "kind": "external-system",
+          "basis": "proposed",
+          "source": "https://github.com/nextdns/nextdns/blob/469b3a1c1a8116df02b003504eb4a7cdd9500844/README.md",
+          "details": [
+            {
+              "name": "Owner",
+              "value": "Subscriber"
+            }
+          ]
+        },
+        {
+          "id": "context-service",
+          "name": "Protective DNS platform",
+          "kind": "system",
+          "basis": "proposed",
+          "source": "https://nextdns.io/",
+          "details": [
+            {
+              "name": "Boundary",
+              "value": "Encrypted ingress, filtering, policy distribution and optional query history."
+            }
+          ]
+        },
+        {
+          "id": "context-auth",
+          "name": "Authoritative DNS",
+          "kind": "external-system",
+          "basis": "proposed",
+          "source": "https://nextdns.io/",
+          "details": [
+            {
+              "name": "Owner",
+              "value": "Domain operator"
+            }
+          ]
+        },
+        {
+          "id": "context-admin",
+          "name": "Tenant administrator",
+          "kind": "actor",
+          "basis": "proposed",
+          "source": "https://nextdns.io/",
+          "details": [
+            {
+              "name": "Role",
+              "value": "Manages policy and consent."
+            }
+          ]
+        },
+        {
+          "id": "allowed-client",
+          "name": "Client device",
+          "kind": "external-system",
+          "basis": "proposed",
+          "source": "https://www.rfc-editor.org/rfc/rfc8484",
+          "details": [
+            {
+              "name": "Owner",
+              "value": "Subscriber"
+            }
+          ]
+        },
+        {
+          "id": "allowed-edge",
+          "name": "Resolver ingress",
+          "kind": "component",
+          "basis": "proposed",
+          "source": "https://www.rfc-editor.org/rfc/rfc8484",
+          "details": [
+            {
+              "name": "Responsibility",
+              "value": "Terminate encrypted DNS."
+            }
+          ]
+        },
+        {
+          "id": "allowed-policy",
+          "name": "Policy evaluator",
+          "kind": "component",
+          "basis": "proposed",
+          "source": "https://www.rfc-editor.org/rfc/rfc8484",
+          "details": [
+            {
+              "name": "Responsibility",
+              "value": "Apply the active profile."
+            }
+          ]
+        },
+        {
+          "id": "allowed-recursive",
+          "name": "Recursive cache",
+          "kind": "component",
+          "basis": "proposed",
+          "source": "https://www.rfc-editor.org/rfc/rfc8484",
+          "details": [
+            {
+              "name": "Responsibility",
+              "value": "Validate and cache upstream DNS."
+            }
+          ]
+        },
+        {
+          "id": "denied-client",
+          "name": "Client device",
+          "kind": "external-system",
+          "basis": "proposed",
+          "source": "https://nextdns.io/",
+          "details": [
+            {
+              "name": "Owner",
+              "value": "Subscriber"
+            }
+          ]
+        },
+        {
+          "id": "denied-edge",
+          "name": "Resolver ingress",
+          "kind": "component",
+          "basis": "proposed",
+          "source": "https://nextdns.io/",
+          "details": [
+            {
+              "name": "Responsibility",
+              "value": "Terminate encrypted DNS."
+            }
+          ]
+        },
+        {
+          "id": "denied-policy",
+          "name": "Policy evaluator",
+          "kind": "component",
+          "basis": "proposed",
+          "source": "https://nextdns.io/",
+          "details": [
+            {
+              "name": "Responsibility",
+              "value": "Apply the active profile."
+            }
+          ]
+        },
+        {
+          "id": "rollout-start",
+          "name": "Change requested",
+          "kind": "start",
+          "basis": "proposed",
+          "source": "https://nextdns.io/",
+          "details": []
+        },
+        {
+          "id": "rollout-draft",
+          "name": "Committed revision",
+          "kind": "state",
+          "basis": "proposed",
+          "source": "https://nextdns.io/",
+          "details": [
+            {
+              "name": "Invariant",
+              "value": "Tenant-scoped immutable version."
+            }
+          ]
+        },
+        {
+          "id": "rollout-staged",
+          "name": "Signed candidate",
+          "kind": "state",
+          "basis": "proposed",
+          "source": "https://nextdns.io/",
+          "details": [
+            {
+              "name": "Invariant",
+              "value": "Signature and digest verified."
+            }
+          ]
+        },
+        {
+          "id": "rollout-active",
+          "name": "Region active",
+          "kind": "state",
+          "basis": "proposed",
+          "source": "https://nextdns.io/",
+          "details": [
+            {
+              "name": "Invariant",
+              "value": "Canaries passed."
+            }
+          ]
+        },
+        {
+          "id": "rollout-old",
+          "name": "Previous version restored",
+          "kind": "state",
+          "basis": "proposed",
+          "source": "https://nextdns.io/",
+          "details": [
+            {
+              "name": "Invariant",
+              "value": "Rollback digest confirmed."
+            }
+          ]
+        },
+        {
+          "id": "private-query",
+          "name": "Query event",
+          "kind": "external-system",
+          "basis": "proposed",
+          "source": "https://nextdns.io/privacy",
+          "details": [
+            {
+              "name": "Owner",
+              "value": "Policy evaluator"
+            }
+          ]
+        },
+        {
+          "id": "private-filter",
+          "name": "Check current consent",
+          "kind": "process",
+          "basis": "proposed",
+          "source": "https://nextdns.io/privacy",
+          "details": [
+            {
+              "name": "Responsibility",
+              "value": "Drop by default, accept only opted-in fields."
+            }
+          ]
+        },
+        {
+          "id": "private-store",
+          "name": "Regional history",
+          "kind": "store",
+          "basis": "proposed",
+          "source": "https://nextdns.io/privacy",
+          "details": [
+            {
+              "name": "Technology",
+              "value": "Region-bound store"
+            },
+            {
+              "name": "Data ownership",
+              "value": "Tenant controls collection"
+            },
+            {
+              "name": "Retention",
+              "value": "Profile-specific expiry"
+            }
+          ]
+        },
+        {
+          "id": "private-erase",
+          "name": "Apply erasure",
+          "kind": "process",
+          "basis": "proposed",
+          "source": "https://nextdns.io/privacy",
+          "details": [
+            {
+              "name": "Responsibility",
+              "value": "Resume idempotent deletion jobs."
+            }
+          ]
+        },
+        {
+          "id": "network-client",
+          "name": "Native DNS client",
+          "kind": "device",
+          "basis": "proposed",
+          "source": "https://www.rfc-editor.org/rfc/rfc7858",
+          "details": []
+        },
+        {
+          "id": "network-branch",
+          "name": "Branch DoH proxy",
+          "kind": "device",
+          "basis": "proposed",
+          "source": "https://github.com/nextdns/nextdns/blob/469b3a1c1a8116df02b003504eb4a7cdd9500844/README.md",
+          "details": []
+        },
+        {
+          "id": "network-edge",
+          "name": "Regional resolver endpoint",
+          "kind": "endpoint",
+          "basis": "proposed",
+          "source": "https://www.rfc-editor.org/rfc/rfc8484",
+          "details": []
+        },
+        {
+          "id": "recover-start",
+          "name": "Canary reports failure",
+          "kind": "start",
+          "basis": "proposed",
+          "source": "https://nextdns.io/",
+          "details": []
+        },
+        {
+          "id": "recover-reserve",
+          "name": "Check secondary headroom",
+          "kind": "activity",
+          "basis": "proposed",
+          "source": "https://nextdns.io/",
+          "details": [
+            {
+              "name": "Acceptance",
+              "value": "A controlled load probe confirms the secondary can absorb the diverted query rate within the agreed latency budget."
+            }
+          ]
+        },
+        {
+          "id": "recover-drain",
+          "name": "Drain affected region",
+          "kind": "activity",
+          "basis": "proposed",
+          "source": "https://nextdns.io/",
+          "details": [
+            {
+              "name": "Acceptance",
+              "value": "Probe traffic no longer reaches the impaired ingress and the secondary reports the same active policy digest."
+            }
+          ]
+        },
+        {
+          "id": "recover-prove",
+          "name": "Verify allow and deny",
+          "kind": "activity",
+          "basis": "proposed",
+          "source": "https://nextdns.io/",
+          "details": [
+            {
+              "name": "Acceptance",
+              "value": "Both transports return the expected outcomes for synthetic allow and deny names. No blocked request reaches the authoritative fixture."
+            }
+          ]
+        },
+        {
+          "id": "recover-end",
+          "name": "Resume traffic gradually",
+          "kind": "end",
+          "basis": "proposed",
+          "source": "https://nextdns.io/",
+          "details": []
+        },
+        {
+          "id": "metrics-edge",
+          "name": "Resolver ingress",
+          "kind": "component",
+          "basis": "proposed",
+          "source": "https://nextdns.io/privacy",
+          "details": [
+            {
+              "name": "Responsibility",
+              "value": "Emit aggregate health."
+            }
+          ]
+        },
+        {
+          "id": "metrics-collect",
+          "name": "Metrics collector",
+          "kind": "collector",
+          "basis": "proposed",
+          "source": "https://nextdns.io/privacy",
+          "details": [
+            {
+              "name": "Configuration",
+              "value": "Allowlist region, protocol, outcome and timing buckets."
+            }
+          ]
+        },
+        {
+          "id": "metrics-store",
+          "name": "Health metrics",
+          "kind": "telemetry-store",
+          "basis": "proposed",
+          "source": "https://nextdns.io/privacy",
+          "details": []
+        },
+        {
+          "id": "metrics-alert",
+          "name": "Regional health alert",
+          "kind": "alert",
+          "basis": "proposed",
+          "source": "https://nextdns.io/privacy",
+          "details": [
+            {
+              "name": "Condition",
+              "value": "Sustained lookup failures"
+            },
+            {
+              "name": "Window",
+              "value": "Agreed observation window"
+            },
+            {
+              "name": "Owner",
+              "value": "Resolver on-call"
+            }
+          ]
+        }
+      ],
+      "relations": [
+        {
+          "id": "context-link-0",
+          "name": "Resolve under a profile",
+          "kind": "interaction",
+          "from": "context-client",
+          "to": "context-service",
+          "basis": "proposed",
+          "source": "https://nextdns.io/",
+          "details": [
+            {
+              "name": "Purpose",
+              "value": "Apply the subscriber’s filtering rules."
+            }
+          ]
+        },
+        {
+          "id": "context-link-1",
+          "name": "Manage profile",
+          "kind": "interaction",
+          "from": "context-admin",
+          "to": "context-service",
+          "basis": "proposed",
+          "source": "https://nextdns.io/",
+          "details": [
+            {
+              "name": "Purpose",
+              "value": "Edit rules, consent and retention."
+            }
+          ]
+        },
+        {
+          "id": "context-link-2",
+          "name": "Resolve a permitted cache miss",
+          "kind": "interaction",
+          "from": "context-service",
+          "to": "context-auth",
+          "basis": "proposed",
+          "source": "https://nextdns.io/",
+          "details": [
+            {
+              "name": "Purpose",
+              "value": "Retrieve authoritative DNS data."
+            }
+          ]
+        },
+        {
+          "id": "allowed-link-0",
+          "name": "Send encrypted question",
+          "kind": "call",
+          "from": "allowed-client",
+          "to": "allowed-edge",
+          "basis": "proposed",
+          "source": "https://www.rfc-editor.org/rfc/rfc8484",
+          "details": [
+            {
+              "name": "Operation",
+              "value": "Send encrypted question"
+            },
+            {
+              "name": "Request",
+              "value": "Tenant-scoped fixture question"
+            },
+            {
+              "name": "Fragment",
+              "value": "Main path"
+            },
+            {
+              "name": "Guard",
+              "value": "A valid profile is selected."
+            }
+          ]
+        },
+        {
+          "id": "allowed-link-1",
+          "name": "Select profile version",
+          "kind": "call",
+          "from": "allowed-edge",
+          "to": "allowed-policy",
+          "basis": "proposed",
+          "source": "https://www.rfc-editor.org/rfc/rfc8484",
+          "details": [
+            {
+              "name": "Operation",
+              "value": "Select profile version"
+            },
+            {
+              "name": "Request",
+              "value": "Tenant-scoped fixture question"
+            },
+            {
+              "name": "Fragment",
+              "value": "Main path"
+            },
+            {
+              "name": "Guard",
+              "value": "A valid profile is selected."
+            }
+          ]
+        },
+        {
+          "id": "allowed-link-2",
+          "name": "Resolve allowed name",
+          "kind": "call",
+          "from": "allowed-policy",
+          "to": "allowed-recursive",
+          "basis": "proposed",
+          "source": "https://www.rfc-editor.org/rfc/rfc8484",
+          "details": [
+            {
+              "name": "Operation",
+              "value": "Resolve allowed name"
+            },
+            {
+              "name": "Request",
+              "value": "Tenant-scoped fixture question"
+            },
+            {
+              "name": "Fragment",
+              "value": "Main path"
+            },
+            {
+              "name": "Guard",
+              "value": "A valid profile is selected."
+            }
+          ]
+        },
+        {
+          "id": "allowed-link-3",
+          "name": "Return DNS data",
+          "kind": "return",
+          "from": "allowed-recursive",
+          "to": "allowed-policy",
+          "basis": "proposed",
+          "source": "https://www.rfc-editor.org/rfc/rfc8484",
+          "details": [
+            {
+              "name": "Response",
+              "value": "Return DNS data"
+            },
+            {
+              "name": "Fragment",
+              "value": "Main path"
+            },
+            {
+              "name": "Guard",
+              "value": "The request remains within its deadline."
+            }
+          ]
+        },
+        {
+          "id": "allowed-link-4",
+          "name": "Return allowed answer",
+          "kind": "return",
+          "from": "allowed-policy",
+          "to": "allowed-edge",
+          "basis": "proposed",
+          "source": "https://www.rfc-editor.org/rfc/rfc8484",
+          "details": [
+            {
+              "name": "Response",
+              "value": "Return allowed answer"
+            },
+            {
+              "name": "Fragment",
+              "value": "Main path"
+            },
+            {
+              "name": "Guard",
+              "value": "The request remains within its deadline."
+            }
+          ]
+        },
+        {
+          "id": "allowed-link-5",
+          "name": "Return DNS response",
+          "kind": "return",
+          "from": "allowed-edge",
+          "to": "allowed-client",
+          "basis": "proposed",
+          "source": "https://www.rfc-editor.org/rfc/rfc8484",
+          "details": [
+            {
+              "name": "Response",
+              "value": "Return DNS response"
+            },
+            {
+              "name": "Fragment",
+              "value": "Main path"
+            },
+            {
+              "name": "Guard",
+              "value": "The request remains within its deadline."
+            }
+          ]
+        },
+        {
+          "id": "denied-link-0",
+          "name": "Send denied fixture",
+          "kind": "call",
+          "from": "denied-client",
+          "to": "denied-edge",
+          "basis": "proposed",
+          "source": "https://nextdns.io/",
+          "details": [
+            {
+              "name": "Operation",
+              "value": "Send denied fixture"
+            },
+            {
+              "name": "Request",
+              "value": "Tenant-scoped fixture question"
+            },
+            {
+              "name": "Fragment",
+              "value": "Main path"
+            },
+            {
+              "name": "Guard",
+              "value": "A valid profile is selected."
+            }
+          ]
+        },
+        {
+          "id": "denied-link-1",
+          "name": "Evaluate active rules",
+          "kind": "call",
+          "from": "denied-edge",
+          "to": "denied-policy",
+          "basis": "proposed",
+          "source": "https://nextdns.io/",
+          "details": [
+            {
+              "name": "Operation",
+              "value": "Evaluate active rules"
+            },
+            {
+              "name": "Request",
+              "value": "Tenant-scoped fixture question"
+            },
+            {
+              "name": "Fragment",
+              "value": "Main path"
+            },
+            {
+              "name": "Guard",
+              "value": "A valid profile is selected."
+            }
+          ]
+        },
+        {
+          "id": "denied-link-2",
+          "name": "Return local policy block",
+          "kind": "return",
+          "from": "denied-policy",
+          "to": "denied-edge",
+          "basis": "proposed",
+          "source": "https://nextdns.io/",
+          "details": [
+            {
+              "name": "Response",
+              "value": "Return local policy block"
+            },
+            {
+              "name": "Fragment",
+              "value": "Main path"
+            },
+            {
+              "name": "Guard",
+              "value": "The request remains within its deadline."
+            }
+          ]
+        },
+        {
+          "id": "denied-link-3",
+          "name": "Return block response",
+          "kind": "return",
+          "from": "denied-edge",
+          "to": "denied-client",
+          "basis": "proposed",
+          "source": "https://nextdns.io/",
+          "details": [
+            {
+              "name": "Response",
+              "value": "Return block response"
+            },
+            {
+              "name": "Fragment",
+              "value": "Main path"
+            },
+            {
+              "name": "Guard",
+              "value": "The request remains within its deadline."
+            }
+          ]
+        },
+        {
+          "id": "rollout-link-0",
+          "name": "Commit edit",
+          "kind": "transition",
+          "from": "rollout-start",
+          "to": "rollout-draft",
+          "basis": "proposed",
+          "source": "https://nextdns.io/",
+          "details": [
+            {
+              "name": "Event",
+              "value": "Commit edit"
+            },
+            {
+              "name": "Guard",
+              "value": "Verify the prior revision and tenant."
+            },
+            {
+              "name": "Action",
+              "value": "Commit edit"
+            },
+            {
+              "name": "Test",
+              "value": "Observe the bound digest before and after this transition."
+            }
+          ]
+        },
+        {
+          "id": "rollout-link-1",
+          "name": "Compile and sign",
+          "kind": "transition",
+          "from": "rollout-draft",
+          "to": "rollout-staged",
+          "basis": "proposed",
+          "source": "https://nextdns.io/",
+          "details": [
+            {
+              "name": "Event",
+              "value": "Compile and sign"
+            },
+            {
+              "name": "Guard",
+              "value": "Verify the prior revision and tenant."
+            },
+            {
+              "name": "Action",
+              "value": "Compile and sign"
+            },
+            {
+              "name": "Test",
+              "value": "Observe the bound digest before and after this transition."
+            }
+          ]
+        },
+        {
+          "id": "rollout-link-2",
+          "name": "Promote canary",
+          "kind": "transition",
+          "from": "rollout-staged",
+          "to": "rollout-active",
+          "basis": "proposed",
+          "source": "https://nextdns.io/",
+          "details": [
+            {
+              "name": "Event",
+              "value": "Promote canary"
+            },
+            {
+              "name": "Guard",
+              "value": "Verify the prior revision and tenant."
+            },
+            {
+              "name": "Action",
+              "value": "Promote canary"
+            },
+            {
+              "name": "Test",
+              "value": "Observe the bound digest before and after this transition."
+            }
+          ]
+        },
+        {
+          "id": "rollout-link-3",
+          "name": "Roll back failed canary",
+          "kind": "transition",
+          "from": "rollout-active",
+          "to": "rollout-old",
+          "basis": "proposed",
+          "source": "https://nextdns.io/",
+          "details": [
+            {
+              "name": "Event",
+              "value": "Roll back failed canary"
+            },
+            {
+              "name": "Guard",
+              "value": "Verify the prior revision and tenant."
+            },
+            {
+              "name": "Action",
+              "value": "Roll back failed canary"
+            },
+            {
+              "name": "Test",
+              "value": "Observe the bound digest before and after this transition."
+            }
+          ]
+        },
+        {
+          "id": "private-link-0",
+          "name": "Minimal query metadata",
+          "kind": "data-flow",
+          "from": "private-query",
+          "to": "private-filter",
+          "basis": "proposed",
+          "source": "https://nextdns.io/privacy",
+          "details": [
+            {
+              "name": "Payload",
+              "value": "Tenant, consent version, time and allowed fields."
+            }
+          ]
+        },
+        {
+          "id": "private-link-1",
+          "name": "Opted-in events only",
+          "kind": "data-flow",
+          "from": "private-filter",
+          "to": "private-store",
+          "basis": "proposed",
+          "source": "https://nextdns.io/privacy",
+          "details": [
+            {
+              "name": "Payload",
+              "value": "Regional event and expiry timestamp."
+            }
+          ]
+        },
+        {
+          "id": "private-link-2",
+          "name": "Authorized deletion range",
+          "kind": "data-flow",
+          "from": "private-erase",
+          "to": "private-store",
+          "basis": "proposed",
+          "source": "https://nextdns.io/privacy",
+          "details": [
+            {
+              "name": "Payload",
+              "value": "Tenant, range and operation ID."
+            }
+          ]
+        },
+        {
+          "id": "network-link-0",
+          "name": "Encrypted DNS over TLS",
+          "kind": "traffic",
+          "from": "network-client",
+          "to": "network-edge",
+          "basis": "proposed",
+          "source": "https://www.rfc-editor.org/rfc/rfc8484",
+          "details": [
+            {
+              "name": "Protocol",
+              "value": "TLS"
+            },
+            {
+              "name": "Port",
+              "value": "853"
+            },
+            {
+              "name": "Direction",
+              "value": "Inbound"
+            },
+            {
+              "name": "Enforcing device",
+              "value": "Regional listener"
+            }
+          ]
+        },
+        {
+          "id": "network-link-1",
+          "name": "DNS over HTTPS",
+          "kind": "traffic",
+          "from": "network-branch",
+          "to": "network-edge",
+          "basis": "proposed",
+          "source": "https://www.rfc-editor.org/rfc/rfc8484",
+          "details": [
+            {
+              "name": "Protocol",
+              "value": "HTTPS"
+            },
+            {
+              "name": "Port",
+              "value": "443"
+            },
+            {
+              "name": "Direction",
+              "value": "Inbound"
+            },
+            {
+              "name": "Enforcing device",
+              "value": "Regional listener"
+            }
+          ]
+        },
+        {
+          "id": "recover-link-0",
+          "name": "Page operator",
+          "kind": "control-flow",
+          "from": "recover-start",
+          "to": "recover-reserve",
+          "basis": "proposed",
+          "source": "https://nextdns.io/",
+          "details": [
+            {
+              "name": "Guard",
+              "value": "Page operator"
+            }
+          ]
+        },
+        {
+          "id": "recover-link-1",
+          "name": "Reserve confirmed",
+          "kind": "control-flow",
+          "from": "recover-reserve",
+          "to": "recover-drain",
+          "basis": "proposed",
+          "source": "https://nextdns.io/",
+          "details": [
+            {
+              "name": "Guard",
+              "value": "Reserve confirmed"
+            }
+          ]
+        },
+        {
+          "id": "recover-link-2",
+          "name": "Routing converged",
+          "kind": "control-flow",
+          "from": "recover-drain",
+          "to": "recover-prove",
+          "basis": "proposed",
+          "source": "https://nextdns.io/",
+          "details": [
+            {
+              "name": "Guard",
+              "value": "Routing converged"
+            }
+          ]
+        },
+        {
+          "id": "recover-link-3",
+          "name": "Canaries pass",
+          "kind": "control-flow",
+          "from": "recover-prove",
+          "to": "recover-end",
+          "basis": "proposed",
+          "source": "https://nextdns.io/",
+          "details": [
+            {
+              "name": "Guard",
+              "value": "Canaries pass"
+            }
+          ]
+        },
+        {
+          "id": "metrics-link-0",
+          "name": "Bounded health counters",
+          "kind": "signal",
+          "from": "metrics-edge",
+          "to": "metrics-collect",
+          "basis": "proposed",
+          "source": "https://nextdns.io/privacy",
+          "details": [
+            {
+              "name": "Signal type",
+              "value": "Counter and histogram"
+            },
+            {
+              "name": "Correlation",
+              "value": "Region and time bucket"
+            },
+            {
+              "name": "Destination",
+              "value": "Regional collector"
+            }
+          ]
+        },
+        {
+          "id": "metrics-link-1",
+          "name": "Aggregate time series",
+          "kind": "signal",
+          "from": "metrics-collect",
+          "to": "metrics-store",
+          "basis": "proposed",
+          "source": "https://nextdns.io/privacy",
+          "details": [
+            {
+              "name": "Signal type",
+              "value": "Time series"
+            },
+            {
+              "name": "Correlation",
+              "value": "Region and time window"
+            },
+            {
+              "name": "Destination",
+              "value": "Metrics store"
+            }
+          ]
+        },
+        {
+          "id": "metrics-link-2",
+          "name": "Error budget alert",
+          "kind": "alerts",
+          "from": "metrics-store",
+          "to": "metrics-alert",
+          "basis": "proposed",
+          "source": "https://nextdns.io/privacy",
+          "details": []
+        }
+      ],
+      "views": [
+        {
+          "id": "context-view",
+          "name": "Service boundaries",
+          "kind": "context",
+          "elementIds": [
+            "context-client",
+            "context-service",
+            "context-auth",
+            "context-admin"
+          ],
+          "relationIds": [
+            "context-link-0",
+            "context-link-1",
+            "context-link-2"
+          ],
+          "gaps": []
+        },
+        {
+          "id": "allowed-view",
+          "name": "Allowed lookup sequence",
+          "kind": "sequence",
+          "elementIds": [
+            "allowed-client",
+            "allowed-edge",
+            "allowed-policy",
+            "allowed-recursive"
+          ],
+          "relationIds": [
+            "allowed-link-0",
+            "allowed-link-1",
+            "allowed-link-2",
+            "allowed-link-3",
+            "allowed-link-4",
+            "allowed-link-5"
+          ],
+          "gaps": []
+        },
+        {
+          "id": "denied-view",
+          "name": "Blocked lookup sequence",
+          "kind": "sequence",
+          "elementIds": [
+            "denied-client",
+            "denied-edge",
+            "denied-policy"
+          ],
+          "relationIds": [
+            "denied-link-0",
+            "denied-link-1",
+            "denied-link-2",
+            "denied-link-3"
+          ],
+          "gaps": []
+        },
+        {
+          "id": "rollout-view",
+          "name": "Policy promotion and rollback",
+          "kind": "state",
+          "elementIds": [
+            "rollout-start",
+            "rollout-draft",
+            "rollout-staged",
+            "rollout-active",
+            "rollout-old"
+          ],
+          "relationIds": [
+            "rollout-link-0",
+            "rollout-link-1",
+            "rollout-link-2",
+            "rollout-link-3"
+          ],
+          "gaps": []
+        },
+        {
+          "id": "private-view",
+          "name": "Consent and regional retention",
+          "kind": "data-flow",
+          "elementIds": [
+            "private-query",
+            "private-filter",
+            "private-store",
+            "private-erase"
+          ],
+          "relationIds": [
+            "private-link-0",
+            "private-link-1",
+            "private-link-2"
+          ],
+          "gaps": []
+        },
+        {
+          "id": "network-view",
+          "name": "Encrypted transport paths",
+          "kind": "network",
+          "elementIds": [
+            "network-client",
+            "network-branch",
+            "network-edge"
+          ],
+          "relationIds": [
+            "network-link-0",
+            "network-link-1"
+          ],
+          "gaps": []
+        },
+        {
+          "id": "recover-view",
+          "name": "Regional failover procedure",
+          "kind": "workflow",
+          "elementIds": [
+            "recover-start",
+            "recover-reserve",
+            "recover-drain",
+            "recover-prove",
+            "recover-end"
+          ],
+          "relationIds": [
+            "recover-link-0",
+            "recover-link-1",
+            "recover-link-2",
+            "recover-link-3"
+          ],
+          "gaps": []
+        },
+        {
+          "id": "metrics-view",
+          "name": "Signals and on-call response",
+          "kind": "observability",
+          "elementIds": [
+            "metrics-edge",
+            "metrics-collect",
+            "metrics-store",
+            "metrics-alert"
+          ],
+          "relationIds": [
+            "metrics-link-0",
+            "metrics-link-1",
+            "metrics-link-2"
+          ],
+          "gaps": []
+        }
+      ]
+    }
+  }
+}

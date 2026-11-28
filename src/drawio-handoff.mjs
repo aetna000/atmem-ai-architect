@@ -29,13 +29,17 @@ export function drawioPages(project,model=project.extensions?.architectureDiagra
   ].map(page=>({...page,...applyDrawingLayout(page,(project.extensions?.drawingLayouts?.pages?.[page.id==='board'?'board/full':page.id.startsWith('system/')||page.id.startsWith('engineering/')?page.id:'view/'+page.id]??(page.id==='board'&&!project.nodes.some(n=>n.data.parentBlockId)?project.extensions?.drawingLayouts?.pages?.board:undefined)),project.extensions?.drawingLayouts?.groups?.[page.id==='board'?'board/full':page.id.startsWith('system/')||page.id.startsWith('engineering/')?page.id:'view/'+page.id],project.extensions?.drawingLayouts?.parents?.[page.id==='board'?'board/full':page.id.startsWith('system/')||page.id.startsWith('engineering/')?page.id:'view/'+page.id])}));
 }
 
+export function diagramFileStem(name,index){
+  const slug=name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,90)||'page';
+  return String(index+1).padStart(2,'0')+'-'+slug;
+}
+
 export function drawioHandoffFiles(project,model){
   const pages=drawioPages(project,model);
   return {
     'architecture.drawio':drawioFile(pages),
     ...Object.fromEntries(pages.map((page,index)=>{
-      const slug=page.name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,90)||'page';
-      return ['diagrams/'+String(index+1).padStart(2,'0')+'-'+slug+'.mmd',graphMermaid(page,{timeline:page.timeline})];
+      return ['diagrams/'+diagramFileStem(page.name,index)+'.mmd',graphMermaid(page,{timeline:page.timeline})];
     })),
   };
 }

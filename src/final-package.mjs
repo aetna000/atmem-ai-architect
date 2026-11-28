@@ -1,4 +1,5 @@
-import{unzipSync,zipSync,strToU8,strFromU8}from'fflate';
+import{unzipSync,strToU8,strFromU8}from'fflate';
+import{compressZipEntries}from'./handoff-zip.mjs';
 const safe=name=>name&&!name.startsWith('/')&&!name.includes('\\')&&!name.split('/').some(p=>p==='..'||p==='.')&&!name.includes('\0');
 function attributes(bytes){
  const view=new DataView(bytes.buffer,bytes.byteOffset,bytes.byteLength);let end=bytes.length-22;
@@ -30,5 +31,5 @@ export async function completeProjectZip(verified,design){
  output['package-contents.json']=strToU8(JSON.stringify(manifest,null,2));
  const readme=strFromU8(original['START_HERE.md']||new Uint8Array());
  output['START_HERE.md']=strToU8('# Open this project\n\nUnzip this package, then open this folder as a project in Orca or your editor. Read this file, the captured README and the Spec Kit before running commands.\n\n- implementation/: captured agent-workspace files; these may contain architecture documents only.\n- design-documents/: requirements, Spec Kit, diagram, cost assumptions and generated design references.\n- evidence/: captured source ZIP and recorded checks.\n\nUse the recorded checks to establish what code and tests exist. Design references do not establish implementation of changed requirements.\n\n'+readme);
- return new Blob([zipSync(output)],{type:'application/zip'});
+ return new Blob([await compressZipEntries(output)],{type:'application/zip'});
 }

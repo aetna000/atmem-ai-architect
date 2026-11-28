@@ -2027,17 +2027,23 @@ function App() {
   const exportFiles = (files, suffix) => {
     download(zipSync(Object.fromEntries(Object.entries(files).map(([name, content]) => [name, typeof content === "string" ? strToU8(content) : content]))), `${slug}-r${project.revision}-${suffix}.zip`, "application/zip");
   };
-  const downloadBundle = async bundle => withPendingWork('Preparing download…',async()=>{
-    bundle=await(bundle.prepare?.()||bundle);
+  const downloadBundle = async (bundle,{team=false}={}) => withPendingWork('Preparing download…',async()=>{
+    bundle=await((team&&bundle.prepareTeam?bundle.prepareTeam():bundle.prepare?.())||bundle);
     if(bundle.project!==projectRef.current)throw Error('Design changed while preparing files. Download again.');
-    download(zipSync(Object.fromEntries(Object.entries(bundle.files).map(([name,content])=>[name,typeof content === "string"?strToU8(content):content]))),bundle.filename,"application/zip");
+    if(team){
+      const {designHandoffWebsite,teamFilename,zipFiles}=await import('./team-handoff.mjs');
+      const files=await designHandoffWebsite(bundle);
+      const bytes=await zipFiles(files);
+      if(bundle.project!==projectRef.current)throw Error('Design changed while preparing the handoff. Download again.');
+      download(bytes,teamFilename(bundle.project.name,bundle.project.revision),'application/zip');
+    }else download(zipSync(Object.fromEntries(Object.entries(bundle.files).map(([name,content])=>[name,typeof content === "string"?strToU8(content):content]))),bundle.filename,"application/zip");
     if(bundle.project?.id===projectRef.current.id)updateEngagement(acknowledgeStage(projectRef.current,'delivery'));
     notify("ZIP downloaded.");setStarOffer(value=>value+1);
   });
   const exportPack = async () => withPendingWork('Exporting project…',async()=>{
     try {
       notify("Preparing documents and diagram exports…");
-      await downloadBundle(await outputBundle(project,run,environment,null,{session:sessionRef.current,prepareSources:prepareSourceEvidence}));
+      await downloadBundle(await outputBundle(project,run,environment,null,{deferVisuals:true,session:sessionRef.current,prepareSources:prepareSourceEvidence}),{team:true});
     } catch(e) { notify(e.message); }
   });
   const exportTerraform = async (validation = null) => withPendingWork('Exporting Terraform…',async()=>{
@@ -2202,12 +2208,22 @@ function App() {
     switchTo(validateImport(emptyProject()));setModal(connection?null:'connections');
     requestAnimationFrame(()=>document.querySelector('input[aria-label="Project name"]')?.focus());
   }
-  async function openReadyExample(){
+  async function openExample(loadExample,view){
     if(busy||agentBusy||intake.length)return;
-    const example=readyExample();example.id=crypto.randomUUID();
-    if(HOSTED){try{await saveEngineeringProject(projectRef.current.id);const {file}=await hostedCall('import-project',{file:toProjectFile(example)});switchTo(fromProjectFile(file).project);setModal(null);}catch(error){notify(error.message);}return;}
-    switchTo(example);setModal(null);
+    return withPendingWork('Opening example…',async()=>{
+      try{
+        let example=await loadExample();example.id=crypto.randomUUID();
+        if(HOSTED){
+          await saveEngineeringProject(projectRef.current.id);
+          const {file}=await hostedCall('import-project',{file:toProjectFile(example)});
+          example=fromProjectFile(file).project;
+        }
+        switchTo(example);if(view)setDesignView(view);setModal(null);
+      }catch(error){notify(error.message);}
+    });
   }
+  const openReadyExample=()=>openExample(readyExample);
+  const openDnsExample=()=>openExample(async()=>fromProjectFile((await import('../examples/nextdns/project.json')).default).project,'outputs');
   async function binProject(id) {
     try {
       binned.current.add(id);
@@ -2574,6 +2590,7 @@ function App() {
               <button role="menuitem" tabIndex={-1} onClick={() => setModal("import")} disabled={busy}><GitBranch/>Import diagram</button>
               <button role="menuitem" tabIndex={-1} onClick={() => setModal("templates")} disabled={busy}><LayoutTemplate/>Templates</button>
               <button role="menuitem" tabIndex={-1} onClick={openReadyExample} disabled={busy||agentBusy}><LayoutGrid/>Open runnable AI example</button>
+              <button role="menuitem" tabIndex={-1} onClick={openDnsExample} disabled={busy||agentBusy}><LayoutGrid/>Open DNS handoff example</button>
             </div>
             <div className="project-menu-group" role="group" aria-label="Workspace settings">
               {!HOSTED&&<button role="menuitem" tabIndex={-1} onClick={() => showConnections()}><Waypoints/>AI providers</button>}

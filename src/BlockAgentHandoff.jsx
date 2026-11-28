@@ -1,10 +1,11 @@
 import {usePendingWork} from './PendingFeedback.jsx';
-import React,{useState} from 'react';
+import React,{useRef,useState} from 'react';
 import {zipSync,strToU8} from 'fflate';
 import {toProjectFile} from './project-file.mjs';
 
 export function BlockAgentHandoff({project,node,busy,session,onPrepareSources}){
  const [working,setWorking]=useState(false),[error,setError]=useState(''),[status,setStatus]=useState('');
+ const projectRef=useRef(project);projectRef.current=project;
  usePendingWork('Preparing handoff…',working);
  async function prepare(withFigures=false){
   const snapshot=structuredClone(project),now=new Date();
@@ -16,16 +17,22 @@ export function BlockAgentHandoff({project,node,busy,session,onPrepareSources}){
   return {handoff,files:blockHandoffExportFiles(handoff)};
  }
  async function run(action){if(working)return;setWorking(true);setError('');setStatus('');try{await action();}catch(error){setError(error.message);}finally{setWorking(false);}}
- async function download(){
-  const {files}=await prepare(true),archive=zipSync(Object.fromEntries(Object.entries(files).map(([name,text])=>[name,typeof text==='string'?strToU8(text):text])));
+ async function download(team=false){
+  const {files,handoff}=await prepare(true);
+  let archive;
+  if(team){
+    const {teamHandoffFiles,zipFiles}=await import('./team-handoff.mjs');
+    archive=await zipFiles(await teamHandoffFiles({project,files},{blockIds:handoff.blockIds,focusId:node.id}));
+  }else archive=zipSync(Object.fromEntries(Object.entries(files).map(([name,text])=>[name,typeof text==='string'?strToU8(text):text])));
+  if(projectRef.current!==project)throw Error('Design changed while preparing the handoff. Download again.');
   const url=URL.createObjectURL(new Blob([archive],{type:'application/zip'}));const link=document.createElement('a');
   const slug=text=>text.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,60)||'module';
-  link.href=url;link.download=`${slug(project.name)}-${slug(node.data.label)}-r${project.revision}-agent-handoff.zip`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);const ready=JSON.parse(files['handoff-readiness.json']),evidence=ready.sourceEvidence;setStatus(ready.capturedEvidence?.status==='unavailable'?'Handoff downloaded with unavailable capture evidence. See captured-evidence.json.':ready.reviewedDraft?.status==='unavailable'?'Handoff downloaded with unavailable draft evidence. See design-evidence.json.':evidence?.referenced?`Handoff downloaded. ${evidence.embedded}/${evidence.referenced} source images included.${evidence.complete?'':' See missing evidence in the package.'}`:'Agent handoff downloaded. Implementation and tests remain external.');
+  link.href=url;link.download=`${slug(project.name)}-${slug(node.data.label)}-r${project.revision}-${team?'team':'agent'}-handoff.zip`;link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);const ready=JSON.parse(files['handoff-readiness.json']),evidence=ready.sourceEvidence;setStatus(team?'Team handoff downloaded. Extract the ZIP and open index.html.':ready.capturedEvidence?.status==='unavailable'?'Handoff downloaded with unavailable capture evidence. See captured-evidence.json.':ready.reviewedDraft?.status==='unavailable'?'Handoff downloaded with unavailable draft evidence. See design-evidence.json.':evidence?.referenced?`Handoff downloaded. ${evidence.embedded}/${evidence.referenced} source images included.${evidence.complete?'':' See missing evidence in the package.'}`:'Agent handoff downloaded. Implementation and tests remain external.');
  }
  async function copy(){const {files}=await prepare();await navigator.clipboard.writeText(files['AGENT_PROMPT.md']);setStatus('Agent prompt copied. Give it the handoff ZIP.');}
  return <section aria-label="External agent handoff" className="module-agent-handoff">
   <h4>Hand off this module</h4><p>Download its specifications, contracts, diagrams, tasks and operating requirements for an external team or coding agent.</p>
-  <div className="row"><button className="btn primary" disabled={busy||working} onClick={()=>void run(download)}>{working?'Preparing handoff…':'Download agent handoff'}</button>
+  <div className="row"><button className="btn primary" disabled={busy||working} onClick={()=>void run(()=>download(true))}>{working?'Preparing handoff…':'Download team handoff'}</button><button className="btn" disabled={busy||working} onClick={()=>void run(download)}>Download agent handoff</button>
    <button className="btn" disabled={busy||working} onClick={()=>void run(copy)}>Copy agent prompt</button></div>
   <p className="muted">Includes the full project context and assigned descendant modules. This does not authorize deployment.</p>
   {status&&<p role="status">{status}</p>}{error&&<p role="alert">{error}</p>}

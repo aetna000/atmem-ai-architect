@@ -1,3 +1,4 @@
+import './embed-handoff-brand.mjs';
 import {WORKFLOW_RUNTIME_FILES}from '../src/workflow-runtime-inventory.mjs';
 import {invoiceDependencies}from '../src/invoice-dependencies.mjs';
 import fs from 'node:fs';

@@ -144,6 +144,12 @@ function element(type,attributes){
   return node;
 }
 
+export class DiagramLayoutError extends Error{
+  constructor(name,readability){
+    super((name||'Diagram')+' has '+readability.issues.length+' layout issues ('+readability.issues.slice(0,4).map(r=>r.kind+': '+r.id).join(', ')+'). Use Arrange page or adjust the affected elements before exporting.');
+    this.readability=readability;
+  }
+}
 export async function renderDiagramSvg(scene,{name,revision}={}){
   const mx=await drawioRuntime();
   const host=document.createElement('div');
@@ -157,7 +163,7 @@ export async function renderDiagramSvg(scene,{name,revision}={}){
     populateDrawioGraph(mx,graph,scene);
     scene=graph.atmemRenderedScene;
     const readability=inspectDiagramReadability(graph,scene);
-    if(!readability.passed)throw Error((name||'Diagram')+' has '+readability.issues.length+' layout issues ('+readability.issues.slice(0,4).map(r=>r.kind+': '+r.id).join(', ')+'). Reset its layout or adjust its elements before exporting.');
+    if(!readability.passed)throw new DiagramLayoutError(name,readability);
     const bounds=graph.getGraphBounds(),x=Math.floor(bounds.x)-24,y=Math.floor(bounds.y)-24;
     const width=Math.max(800,Math.ceil(bounds.width)+50),drawingHeight=Math.max(180,Math.ceil(bounds.height)+50);
     const referenceLines=[['Connections',true],...diagramReferenceRows(scene).flatMap(row=>
@@ -171,11 +177,22 @@ export async function renderDiagramSvg(scene,{name,revision}={}){
     const desc=element('desc',{});desc.textContent=scene.vertices.filter(row=>row.selectable!==false)
       .map(row=>row.name).concat(scene.wires.map(row=>row.name)).join('. ');
     const metadata=element('metadata',{});metadata.textContent=JSON.stringify({name,revision,readability});
-    svg.append(title,desc,metadata,element('rect',{x,y,width,height,fill:'#fafbf9'}));
+    const paper=element('rect',{x,y,width,height,fill:'#fafbf9'});
+    svg.append(title,desc,metadata,paper);
     const draw=graph.view.getDrawPane();
     const defs=draw.ownerSVGElement?.querySelector('defs');
     if(defs)svg.append(defs.cloneNode(true));
     svg.append(draw.cloneNode(true));
+    // Publish the very same checked geometry at a useful reading scale. The
+    // standalone engineering figure below still includes its full text appendix.
+    const diagramWidth=Math.max(100,Math.ceil(bounds.width)+50);
+    const diagramHeight=Math.max(80,Math.ceil(bounds.height)+50);
+    const serializer=new XMLSerializer();
+    svg.setAttribute('width',diagramWidth);svg.setAttribute('height',diagramHeight);
+    svg.setAttribute('viewBox',`${x} ${y} ${diagramWidth} ${diagramHeight}`);
+    const drawingSvg=serializer.serializeToString(svg);
+    svg.setAttribute('width',width);svg.setAttribute('height',height);
+    svg.setAttribute('viewBox',`${x} ${y} ${width} ${height}`);
     const legend=element('g',{'data-diagram-references':'true','font-family':'Arial, Helvetica','font-size':14,fill:'#172033'});
     const groups=new Map();
     referenceLines.forEach(([line,heading,reference],i)=>{
@@ -183,6 +200,6 @@ export async function renderDiagramSvg(scene,{name,revision}={}){
       if(reference){if(!groups.has(reference.id)){const group=element('g',{'data-connection-reference':reference.number,'data-record-id':reference.id,'data-from':reference.from,'data-to':reference.to});groups.set(reference.id,group);legend.append(group);}groups.get(reference.id).append(text);}else legend.append(text);
     });
     svg.append(legend);
-    return {svg:new XMLSerializer().serializeToString(svg),width,height,scene,readability};
+    return {svg:serializer.serializeToString(svg),drawingSvg,width,height,scene,readability};
   }finally{graph.destroy();host.remove();}
 }

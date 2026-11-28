@@ -654,3 +654,16 @@ Shared rendering and manual interaction contracts are recorded in the [diagram v
 
 The owner authorized publication on main with client documents and history kept private.
 Follow [the release privacy plan](../032-public-release-privacy/plan.md) and exact installed/registry checks.
+
+## Team handoff website · 28 November 2026
+
+GEN-011 now delivers a portable reader for project and module handoffs. The
+NextDNS-style reference design exercises diagram presentation, interface contracts,
+implementation assignments, operating procedures, cost assumptions and acceptance
+evidence. The full engineering archive remains accessible through Project files.
+The [review and independent checks](evidence/20261128-team-handoff/review.md)
+record the local candidate, transfer cases, known limits and rollback.
+
+The project and module readers share AtMem's wordmarks, typefaces and color
+tokens. The [branding check](evidence/20261128-handoff-brand/README.md)
+covers the in-app preview, downloaded website and print layout.

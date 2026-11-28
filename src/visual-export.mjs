@@ -83,9 +83,9 @@ export async function pngOf({svg,width,height}){
     const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));if(!blob)throw Error('Diagram PNG could not be generated.');return new Uint8Array(await blob.arrayBuffer());
   }finally{URL.revokeObjectURL(url);}
 }
-export async function visualFiles(project,markdown,implementationMarkdown){
+export async function visualFiles(project,markdown,implementationMarkdown,renderedBoard){
   const [{renderDiagramSvg},{boardGraph}]=await Promise.all([import('./drawio-render.mjs'),import('./drawio-model.mjs')]);
-  const data=await font(),diagram=await renderDiagramSvg(boardGraph(project.nodes,project.edges),{
+  const data=await font(),diagram=renderedBoard??await renderDiagramSvg(boardGraph(project.nodes,project.edges),{
     name:project.name,revision:project.revision,
   }),png=await pngOf(diagram);
   const doc=pdf(data,{orientation:diagram.width>=diagram.height?'landscape':'portrait',unit:'mm',format:'a3'});
